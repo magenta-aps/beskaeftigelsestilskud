@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Havneafgifter
+Upstream-Contact: Magenta ApS <info@magenta.dk>
+
+Files: bf/* log/* dev-environment/* docker/* docker-compose.yml docker-compose.override.template.yml SUMMARY README.md .gitignore .gitlab-ci.yml mypy.ini requirements.txt .coveragerc .pre-commit-config.yaml dev-idp/*
+Copyright: 2024 Magenta ApS <info@magenta.dk>
+License: MPL-2.0
