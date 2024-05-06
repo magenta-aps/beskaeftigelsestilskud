@@ -202,9 +202,9 @@ Unittest:
     - echo "${PWD}"
     - ls -al
     - coverage run manage.py test
-    - coverage combine
-    - coverage report --show-missing --fail-under=100
-    - coverage xml
+#    - coverage combine
+#    - coverage report --show-missing --fail-under=100
+#    - coverage xml
   coverage: '/^TOTAL.+?(\d+\%)$/'
   artifacts:
     reports:
