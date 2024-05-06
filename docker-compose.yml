@@ -6,7 +6,7 @@ version: "3.4"
 services:
 
   bf:
-    user: "75170:1000"  # Override in docker-compose.override.yml if your local user is different
+    user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
     container_name: bf
     image: bf:latest
     build:

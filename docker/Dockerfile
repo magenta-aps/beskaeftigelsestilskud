@@ -9,9 +9,9 @@ RUN mkdir /app && \
     mkdir -p /var/cache/bf && \
     mkdir /static && \
     #gid/uid from salt
-    groupadd -g 75170 -r bf && \
+    groupadd -g 75180 -r bf && \
     groupadd -g 75100 -r certificate_exporter && \
-    useradd -u 75170 --no-log-init -r -g bf -G certificate_exporter bf && \
+    useradd -u 75180 --no-log-init -r -g bf -G certificate_exporter bf && \
     chown -R bf:bf /static && \
     chown -R bf:bf /var/cache/bf && \
     chmod a+w /var/cache/bf
