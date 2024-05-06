@@ -40,8 +40,8 @@ services:
       - postgres-data:/var/lib/postgresql/data
     network_mode: "host"
 
-  mailhog:
-    container_name: mailhog
+  bf-mailhog:
+    container_name: bf-mailhog
     image: mailhog/mailhog
     logging:
       driver: 'none' # Disable saving logs

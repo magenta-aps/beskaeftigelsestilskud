@@ -10,24 +10,33 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import json
 import os
 from pathlib import Path
 from typing import List
 
+from project.util import strtobool
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+VERSION = os.environ.get("VERSION", "1.0.0")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-4ygx+g!rk8!%dtdvqb2hbqw0-3*_r#n%oy!r)^^0bo^_u8(u@s"
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = bool(strtobool(os.environ.get("DJANGO_DEBUG", "False")))
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS: List[str] = []
+HOST_DOMAIN = os.environ.get("HOST_DOMAIN", "http://bf.aka.gl")
+ALLOWED_HOSTS: List[str] = json.loads(os.environ.get("ALLOWED_HOSTS", "[]"))
 
 
 # Application definition
@@ -52,7 +61,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "bf.urls"
+ROOT_URLCONF = "project.urls"
 
 TEMPLATES = [
     {
@@ -70,7 +79,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "bf.wsgi.application"
+WSGI_APPLICATION = "project.wsgi.application"
 
 
 # Database
@@ -130,3 +139,58 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+LOGGING: dict = {
+    "version": 1,
+    "disable_existing_loggers": True,
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+    },
+    "formatters": {
+        "simple": {
+            "format": "{levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "gunicorn": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "root": {
+        "handlers": ["gunicorn"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["gunicorn"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "fontTools": {
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "weasyprint": {
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
+log_filename = "/bf.log"
+if os.path.isfile(log_filename) and ENVIRONMENT != "development":
+    LOGGING["handlers"]["file"] = {
+        "class": "logging.FileHandler",  # eller WatchedFileHandler
+        "filename": log_filename,
+        "formatter": "simple",
+    }
+    LOGGING["root"] = {
+        "handlers": ["gunicorn", "file"],
+        "level": "INFO",
+    }
+    LOGGING["loggers"]["django"]["handlers"].append("file")
