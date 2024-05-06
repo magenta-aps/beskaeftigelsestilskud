@@ -1,0 +1,13 @@
+django==5.0.4
+psycopg2-binary==2.9.9
+gunicorn==22.0.0
+whitenoise==6.0.0
+mypy==1.7.0
+django-stubs[compatible-mypy]==4.2.7
+coverage==7.3.0
+django-bootstrap5==24.1
+djangosaml2==1.9.2
+requests==2.31.0
+types-requests==2.31.0.20240218
+django-csp==3.8
+django-forms-dynamic==1.0.0

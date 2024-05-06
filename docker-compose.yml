@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+version: "3.4"
+services:
+
+  beskaeftigelsestilskud:
+    user: "75170:1000"  # Override in docker-compose.override.yml if your local user is different
+    container_name: beskaeftigelsestilskud
+    image: beskaeftigelsestilskud:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    env_file:
+      - ./dev-environment/beskaeftigelsestilskud.env
+    depends_on:
+      - beskaeftigelsestilskud-db
+    volumes:
+      - ./beskaeftigelsestilskud/:/app
+      - file-data:/upload  # rw for at kunne teste; bør være ro i deployments
+      - ./log/beskaeftigelsestilskud.log:/log/beskaeftigelsestilskud.log:rw
+      - ./dev-environment/cert:/ssl:ro
+    environment:
+      - MAKE_MIGRATIONS=true
+      - MIGRATE=true
+      - LOAD_FIXTURES=true
+      - TEST=true
+      - HOME=/tmp/
+    network_mode: "host"
+    command: gunicorn -b 0.0.0.0:8000 project.wsgi:application --reload -w 1 --access-logfile - --error-logfile - --capture-output # reload on code changes
+
+  beskaeftigelsestilskud-db:
+    # Do not set `user` here
+    container_name: beskaeftigelsestilskud-db
+    image: postgres:16
+    env_file:
+      - ./dev-environment/beskaeftigelsestilskud.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    network_mode: "host"
+
+  mailhog:
+    container_name: mailhog
+    image: mailhog/mailhog
+    logging:
+      driver: 'none' # Disable saving logs
+    network_mode: "host"
+
+  beskaeftigelsestilskud-test-idp:
+    user: "1000:1000"  # Override in docker-compose.override.yml if your local user is different
+    image: kenchan0130/simplesamlphp
+    container_name: toldbehandling-test-idp
+    network_mode: "host"
+    environment:
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:8000/saml/metadata/
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:8000/saml2/acs/
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost:8000/saml2/ls/
+      SIMPLESAMLPHP_IDP_CERTIFICATE: /var/www/simplesamlphp/cert/selfsigned.crt
+      SIMPLESAMLPHP_IDP_PRIVATEKEY: /var/www/simplesamlphp/cert/selfsigned.key
+
+    volumes:
+      - ./dev-environment/cert/idp/selfsigned.crt:/var/www/simplesamlphp/cert/server.crt:ro
+      - ./dev-environment/cert/idp/selfsigned.key:/var/www/simplesamlphp/cert/server.pem:ro
+      - ./dev-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
+      - ./dev-idp/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php:ro
+
+volumes:
+  postgres-data:
+  file-data:

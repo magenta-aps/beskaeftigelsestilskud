@@ -1,0 +1,15 @@
+*.pyc
+*.mo
+env/
+.idea/
+docker-compose.override.yml
+data/er/*
+!data/er/.gitkeep
+*.sqlite3
+**/.coverage
+*.log.*
+
+*.venv*/
+*.vscode/
+*.code-workspace
+**/.DS_Store
