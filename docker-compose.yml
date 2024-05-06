@@ -5,21 +5,21 @@
 version: "3.4"
 services:
 
-  beskaeftigelsestilskud:
+  bf:
     user: "75170:1000"  # Override in docker-compose.override.yml if your local user is different
-    container_name: beskaeftigelsestilskud
-    image: beskaeftigelsestilskud:latest
+    container_name: bf
+    image: bf:latest
     build:
       context: .
       dockerfile: docker/Dockerfile
     env_file:
-      - ./dev-environment/beskaeftigelsestilskud.env
+      - ./dev-environment/bf.env
     depends_on:
-      - beskaeftigelsestilskud-db
+      - bf-db
     volumes:
-      - ./beskaeftigelsestilskud/:/app
+      - ./bf/:/app
       - file-data:/upload  # rw for at kunne teste; bør være ro i deployments
-      - ./log/beskaeftigelsestilskud.log:/log/beskaeftigelsestilskud.log:rw
+      - ./log/bf.log:/log/bf.log:rw
       - ./dev-environment/cert:/ssl:ro
     environment:
       - MAKE_MIGRATIONS=true
@@ -30,12 +30,12 @@ services:
     network_mode: "host"
     command: gunicorn -b 0.0.0.0:8000 project.wsgi:application --reload -w 1 --access-logfile - --error-logfile - --capture-output # reload on code changes
 
-  beskaeftigelsestilskud-db:
+  bf-db:
     # Do not set `user` here
-    container_name: beskaeftigelsestilskud-db
+    container_name: bf-db
     image: postgres:16
     env_file:
-      - ./dev-environment/beskaeftigelsestilskud.env
+      - ./dev-environment/bf.env
     volumes:
       - postgres-data:/var/lib/postgresql/data
     network_mode: "host"
@@ -47,7 +47,7 @@ services:
       driver: 'none' # Disable saving logs
     network_mode: "host"
 
-  beskaeftigelsestilskud-test-idp:
+  bf-test-idp:
     user: "1000:1000"  # Override in docker-compose.override.yml if your local user is different
     image: kenchan0130/simplesamlphp
     container_name: toldbehandling-test-idp

@@ -1,5 +1,5 @@
 """
-WSGI config for beskaeftigelsestilskud project.
+WSGI config for bf project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
