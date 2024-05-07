@@ -223,3 +223,42 @@ Django check:
   script:
     - cd /app
     - python manage.py check bf
+
+
+# Release stage
+###############
+
+Release image:
+  stage: release
+  image: alpine
+  variables:
+    GIT_STRATEGY: none # We do not need the source code
+  dependencies: []
+  before_script:
+    # install skopeo
+    - apk add skopeo
+  # Releases both stable and RC releases.
+  extends:
+    - .rules:semver-all
+  needs:
+    ["Build image", "Unittest", "Django check", "Mypy"]
+  script:
+    - skopeo copy
+      --src-creds=${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}
+      --dest-creds=${RELEASE_REGISTRY_USER}:${RELEASE_REGISTRY_PASSWORD}
+      "docker://${IMAGE_SHA}"
+      "docker://${IMAGE_TAG}"
+
+
+Release Semantic commit:
+  extends: .release:semantic-commit
+
+Release Generate changelog:
+  extends: .release:generate-changelog
+
+Docs Export changelog:
+  extends:
+    - .rules:semver-all
+    - .docs:export-changelog
+  variables:
+    CHANGELOG_EXTRA_FLAGS: "--merge-prerelease"
