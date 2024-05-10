@@ -16,8 +16,9 @@ import sys
 from pathlib import Path
 from typing import List
 
-from project.util import strtobool
 import django.conf.locale
+from project.util import strtobool
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 VERSION = os.environ.get("VERSION", "1.0.0")
@@ -154,7 +155,6 @@ USE_L10N = True
 USE_TZ = True
 THOUSAND_SEPARATOR = "."
 DECIMAL_SEPARATOR = ","
-
 
 
 # Static files (CSS, JavaScript, Images)
