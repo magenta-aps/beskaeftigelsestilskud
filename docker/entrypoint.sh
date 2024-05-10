@@ -22,6 +22,9 @@ if [ "${MIGRATE,,}" = true ]; then
   python manage.py migrate
 fi
 
+echo 'collecting static files'
+python manage.py collectstatic --no-input --clear
+
 if [ "${TEST,,}" = true ]; then
   echo 'running tests'
   coverage run manage.py test
