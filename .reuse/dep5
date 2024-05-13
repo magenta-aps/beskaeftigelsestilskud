@@ -5,3 +5,11 @@ Upstream-Contact: Magenta ApS <info@magenta.dk>
 Files: bf/* log/* dev-environment/* docker/* docker-compose.yml docker-compose.override.template.yml SUMMARY README.md .gitignore .gitlab-ci.yml mypy.ini requirements.txt .coveragerc .pre-commit-config.yaml dev-idp/*
 Copyright: 2024 Magenta ApS <info@magenta.dk>
 License: MPL-2.0
+
+Files: bf/bf/static/jquery/*
+Copyright: 2022 OpenJS Foundation and jQuery contributors
+License: MIT
+
+Files: havneafgifter/havneafgifter/static/bootstrap/*
+Copyright: 2011-2021 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
+License: MIT
