@@ -8,7 +8,7 @@ from project.util import strtobool
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-VERSION = os.environ.get("VERSION", "1.0.0")
+VERSION = os.environ.get("COMMIT_TAG", "")
 TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
 
 # SECURITY WARNING: don't run with debug turned on in production!
