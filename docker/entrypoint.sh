@@ -25,12 +25,7 @@ fi
 echo 'collecting static files'
 python manage.py collectstatic --no-input --clear
 
-if [ "${TEST,,}" = true ]; then
-  echo 'running tests'
-  coverage run manage.py test
-#  coverage combine
-#  coverage report --show-missing
-fi
+
 if [ "${MAKEMESSAGES,,}" = true ]; then
   echo 'making messages'
   python manage.py makemessages --locale=kl --no-obsolete --add-location file
@@ -41,5 +36,11 @@ if [ "${COMPILEMESSAGES,,}" = true ]; then
   python manage.py compilemessages --locale=kl
   python manage.py compilemessages --locale=da
 fi
+if [ "${TEST,,}" = true ]; then
+    echo 'running tests'
+    coverage run manage.py test
+  #  coverage combine
+  #  coverage report --show-missing
+  fi
 
 exec "$@"

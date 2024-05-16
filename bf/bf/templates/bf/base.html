@@ -1,14 +1,15 @@
 {% load static %}
 {% load i18n %}
+{% load csp %}
 <!doctype html>
 <html lang="da">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}" >
-    <link rel="stylesheet" href="{% static 'bf/style.css' %}" >
-    <script src="{% static 'jquery/jquery-3.7.1.min.js' %}"></script>
-    <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}"  nonce="{{request.csp_nonce}}">
+    <link rel="stylesheet" href="{% static 'bf/style.css' %}"  nonce="{{request.csp_nonce}}">
+    <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+    <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <title>{% translate "Beskæftigelsesfradrag" %}</title>
     {% block extra_headers %}
     {% endblock %}
@@ -22,7 +23,7 @@
             </p>
         </nav>
     {% endif %}
-    <nav class="nav flex-column flex-sm-row p-1">
+    <nav class="nav flex-column flex-sm-row p-1 bg-dark" data-bs-theme="dark">
 
         <span class="locale-changer navbar-text ms-auto">
         <form action="{% url 'set_language' %}" method="post">
