@@ -1,7 +1,7 @@
 from split_settings.tools import include
 
 include(
-    'base.py',
+    "base.py",
     "apps.py",
     "middleware.py",
     "database.py",
@@ -10,5 +10,5 @@ include(
     "login.py",
     "staticfiles.py",
     "logging.py",
-    'csp.py'
+    "csp.py",
 )

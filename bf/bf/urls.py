@@ -8,5 +8,3 @@ app_name = "bf"
 urlpatterns: List[URLResolver | URLPattern] = [
     path("", TemplateView.as_view(template_name="bf/base.html"))
 ]
-
-
