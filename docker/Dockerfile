@@ -3,7 +3,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 FROM python:3.12
-ENV PYTHONUNBUFFERED=1
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64 \
+    SUPERCRONIC=supercronic-linux-amd64 \
+    SUPERCRONIC_SHA1SUM=7dadd4ac827e7bd60b386414dfefc898ae5b6c63\
+    PYTHONUNBUFFERED=1
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir /app && \
     mkdir -p /var/cache/bf && \
@@ -14,7 +17,13 @@ RUN mkdir /app && \
     useradd -u 75180 --no-log-init -r -g bf -G certificate_exporter bf && \
     chown -R bf:bf /static && \
     chown -R bf:bf /var/cache/bf && \
-    chmod a+w /var/cache/bf
+    chmod a+w /var/cache/bf && \
+    # supercronic
+    curl -fsSLO "$SUPERCRONIC_URL" && \
+    echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - && \
+    chmod +x "$SUPERCRONIC" && \
+    mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" && \
+    ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
 
 # hadolint ignore=DL3008
 RUN apt-get update && \

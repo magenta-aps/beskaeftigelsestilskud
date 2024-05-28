@@ -40,6 +40,31 @@ services:
       - postgres-data:/var/lib/postgresql/data
     network_mode: "host"
 
+  bf-cron:
+    user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
+    container_name: bf-cron
+    image: bf:latest
+    env_file:
+      - ./dev-environment/bf.env
+    depends_on:
+      - bf-db
+    volumes:
+      - ./bf/:/app
+      - file-data:/upload:ro
+      - ./log/cron.log:/log/cron.log:rw
+      - ./dev-environment/cert:/ssl:ro
+      - ./dev-environment/crontab:/crontab:ro
+    environment:
+      - MAKE_MIGRATIONS=false
+      - MIGRATE=false
+      - LOAD_FIXTURES=false
+      - MAKEMESSAGES=false
+      - TEST=false
+      - HOME=/tmp/
+    network_mode: "host"
+    command: [ "supercronic", "/crontab" ]
+
+
   bf-mailhog:
     container_name: bf-mailhog
     image: mailhog/mailhog
