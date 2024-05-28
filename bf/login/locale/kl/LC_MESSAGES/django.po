@@ -1,0 +1,76 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-29 08:27-0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: kl-GL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: login/forms.py
+msgid "Username"
+msgstr ""
+
+#: login/forms.py
+msgid "Password"
+msgstr ""
+
+#: login/templates/login/error.html
+msgid "Log ud"
+msgstr ""
+
+#: login/templates/login/error.html
+msgid "Log ind"
+msgstr ""
+
+#: login/templates/login/logged_out.html
+msgid "Logged out"
+msgstr ""
+
+#: login/templates/login/logged_out.html
+msgid ""
+"You are now logged out. We recommend that you close this browser tab to "
+"remove remaining cookie data"
+msgstr ""
+
+#: login/templates/login/logged_out.html login/templates/login/login.html
+msgid "Log in"
+msgstr ""
+
+#: login/templates/login/login.html
+msgid "Log in using MitID"
+msgstr ""
+
+#: login/templates/login/login_failed.html
+#: login/templates/login/login_no_cpr.html
+#: login/templates/login/login_repeat.html
+#: login/templates/login/login_timeout.html
+msgid "Adgang nægtet"
+msgstr ""
+
+#: login/templates/login/login_failed.html
+msgid "Der kunne ikke logges ind med den angivne bruger."
+msgstr ""
+
+#: login/templates/login/login_no_cpr.html
+msgid "Det anvendte login har ikke et CPR-nummer tilknyttet."
+msgstr ""
+
+#: login/templates/login/login_repeat.html
+msgid "Det anvendte login er allerede anvendt. Prøv at logge ind igen."
+msgstr ""
+
+#: login/templates/login/login_timeout.html
+msgid "Det anvendte login er timet ud. Prøv at logge ind igen."
+msgstr ""
