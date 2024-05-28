@@ -108,7 +108,7 @@ Lint Python:
     - pip3 install isort==5.13.2
     #- pip3 install -r django/requirements.txt
   script:
-    - flake8 --max-line-length 88 --exclude=migrations,settings.py --extend-ignore E226,E203 bf/ --
+    - flake8 --max-line-length 88 --exclude=migrations,settings --extend-ignore E226,E203 bf/ --
     - black --check --diff --exclude=migrations bf/
     - isort -c --profile black --diff --skip migrations bf/
 
