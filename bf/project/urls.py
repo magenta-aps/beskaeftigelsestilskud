@@ -28,4 +28,11 @@ urlpatterns = [
             namespace="bf",
         ),
     ),
+    path(
+        "",
+        include(
+            "login.urls",
+            namespace="login",
+        ),
+    ),
 ]

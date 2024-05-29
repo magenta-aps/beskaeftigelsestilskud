@@ -1,0 +1,11 @@
+{% extends 'common/base.html' %}
+{% load i18n %}
+
+{% block userinfo %}
+{% endblock %}
+
+{% block content %}
+    {% translate "Adgang nægtet" as header %}
+    {% translate 'Det anvendte login har ikke et CPR-nummer tilknyttet.' as body %}
+    {% include 'login/error.html' with header=header body=body logout=True %}
+{% endblock %}

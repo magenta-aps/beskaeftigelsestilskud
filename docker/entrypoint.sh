@@ -10,6 +10,8 @@ MIGRATE=${MIGRATE:=false}
 TEST=${TEST:=false}
 MAKEMESSAGES=${MAKEMESSAGES:=false}
 COMPILEMESSAGES=${COMPILEMESSAGES:=false}
+PULL_IDP_METADATA=${PULL_IDP_METADATA:=false}
+CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
 
 python manage.py wait_for_db
 
@@ -22,9 +24,19 @@ if [ "${MIGRATE,,}" = true ]; then
   python manage.py migrate
 fi
 
+if [ "${CREATE_DUMMY_ADMIN}" = true ]; then
+  echo 'creating superuser'
+  DJANGO_SUPERUSER_PASSWORD=admin DJANGO_SUPERUSER_USERNAME=admin DJANGO_SUPERUSER_EMAIL=admin@admin.admin ./manage.py createsuperuser --noinput
+fi
+
 echo 'collecting static files'
 python manage.py collectstatic --no-input --clear
 
+python manage.py createcachetable
+if [ "${PULL_IDP_METADATA,,}" = true ]; then
+  echo "Updating metadata"
+  python manage.py update_mitid_idp_metadata
+fi
 
 if [ "${MAKEMESSAGES,,}" = true ]; then
   echo 'making messages'
@@ -39,8 +51,8 @@ fi
 if [ "${TEST,,}" = true ]; then
     echo 'running tests'
     coverage run manage.py test
-  #  coverage combine
-  #  coverage report --show-missing
+    coverage combine
+    coverage report --show-missing
   fi
 
 exec "$@"

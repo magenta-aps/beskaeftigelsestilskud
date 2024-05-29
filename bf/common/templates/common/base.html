@@ -24,26 +24,31 @@
         </nav>
     {% endif %}
     <nav class="nav flex-column flex-sm-row p-1 bg-dark" data-bs-theme="dark">
+        <span class="m-2 pt-2 ms-auto">
+            {{user.first_name}} {{user.last_name}}
+        </span>
+        {% if user.is_authenticated %}
+            <a href="{% url 'login:logout' %}" class="btn btn-primary mx-1 my-2" id="logout-link">
+                {% translate "Log out" %}
+            </a>
+        {% endif %}
 
-        <span class="locale-changer navbar-text ms-auto">
-        <form action="{% url 'set_language' %}" method="post">
-            {% csrf_token %}
-            {% get_current_language as current_language %}
-            {% get_available_languages as languages %}
-            {% get_language_info_list for languages as languages %}
-            <select class="form-control form-select" name="language">
-            {% for language in languages %}
-                <option value="{{ language.code }}"{% if language.code == current_language %} selected{% endif %}>
-                    {{ language.name_local|capfirst }}
-                </option>
-            {% endfor %}
-            </select>
-        </form>
-    </span>
+        <span class="locale-changer navbar-text">
+            <form action="{% url 'set_language' %}" method="post">
+                {% csrf_token %}
+                {% get_current_language as current_language %}
+                {% get_available_languages as languages %}
+                {% get_language_info_list for languages as languages %}
+                <select class="form-control form-select" name="language">
+                {% for language in languages %}
+                    <option value="{{ language.code }}"{% if language.code == current_language %} selected{% endif %}>
+                        {{ language.name_local|capfirst }}
+                    </option>
+                {% endfor %}
+                </select>
+            </form>
+        </span>
 
-        <span class="m-2 pt-2">
-        {{user.first_name}} {{user.last_name}}
-    </span>
         <button type="button" class="btn btn-outline-primary mx-1 my-2" data-bs-toggle="modal" data-bs-target="#about_modal">
             Om
         </button>
