@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-05-10 08:33-0100\n"
+"POT-Creation-Date: 2024-05-29 08:49-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,14 +18,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: bf/templates/bf/base.html
-msgid "Beskæftigelsesfradrag"
+#: bf/forms.py
+msgid "Username"
 msgstr ""
 
-#: bf/templates/bf/base.html
-msgid "Version"
-msgstr ""
-
-#: bf/templates/bf/base.html
-msgid "Kildekode"
+#: bf/forms.py
+msgid "Password"
 msgstr ""

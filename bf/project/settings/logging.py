@@ -4,7 +4,7 @@ from project.settings.base import ENVIRONMENT
 
 LOGGING: dict = {
     "version": 1,
-    "disable_existing_loggers": True,
+    "disable_existing_loggers": False,
     "filters": {
         "require_debug_false": {
             "()": "django.utils.log.RequireDebugFalse",
@@ -30,14 +30,6 @@ LOGGING: dict = {
         "django": {
             "handlers": ["gunicorn"],
             "level": "INFO",
-            "propagate": False,
-        },
-        "fontTools": {
-            "level": "ERROR",
-            "propagate": False,
-        },
-        "weasyprint": {
-            "level": "ERROR",
             "propagate": False,
         },
     },

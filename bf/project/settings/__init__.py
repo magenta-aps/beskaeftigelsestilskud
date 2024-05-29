@@ -11,4 +11,5 @@ include(
     "staticfiles.py",
     "logging.py",
     "csp.py",
+    "cache.py",
 )

@@ -6,5 +6,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_bootstrap5",
+    "common",
     "bf",
+    "login",
+    "django_mitid_auth",
 ]
