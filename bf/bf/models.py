@@ -36,6 +36,7 @@ class PersonMonth(models.Model):
     address_line_4 = models.TextField(blank=True, null=True)
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
+    fully_tax_liable = models.BooleanField(blank=True, null=True)
 
     @classmethod
     def from_eskat_mandtal(
@@ -53,4 +54,5 @@ class PersonMonth(models.Model):
             address_line_4=eskat_mandtal.adresselinje4,
             address_line_5=eskat_mandtal.adresselinje5,
             full_address=eskat_mandtal.fuld_adresse,
+            fully_tax_liable=eskat_mandtal.fully_tax_liable,
         )

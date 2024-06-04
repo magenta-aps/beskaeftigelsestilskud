@@ -2,6 +2,12 @@
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 import os
 
+from project.settings.base import ENVIRONMENT, TESTING
+
+
+def use_mock_db():
+    return (ENVIRONMENT == "development") or TESTING
+
 
 def get_oracle_db_name():
     return (
@@ -20,14 +26,20 @@ DATABASES = {
         "PASSWORD": os.environ["POSTGRES_PASSWORD"],
         "HOST": os.environ["POSTGRES_HOST"],
     },
-    "eskat": {
-        "ENGINE": "django.db.backends.oracle",
-        "NAME": get_oracle_db_name(),
-        "USER": os.environ["ESKAT_USER"],
-        "PASSWORD": os.environ["ESKAT_PASSWORD"],
-        "HOST": "",
-        "PORT": "",
-    },
+    "eskat": (
+        {
+            "ENGINE": "django.db.backends.sqlite3",
+        }
+        if use_mock_db()
+        else {
+            "ENGINE": "django.db.backends.oracle",
+            "NAME": get_oracle_db_name(),
+            "USER": os.environ["ESKAT_USER"],
+            "PASSWORD": os.environ["ESKAT_PASSWORD"],
+            "HOST": "",
+            "PORT": "",
+        }
+    ),
 }
 
 DATABASE_ROUTERS = ["eskat.database_routers.ESkatRouter"]
