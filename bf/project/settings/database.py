@@ -27,7 +27,7 @@ DATABASES = {
         "PASSWORD": os.environ["ESKAT_PASSWORD"],
         "HOST": "",
         "PORT": "",
-    }
+    },
 }
 
 DATABASE_ROUTERS = ["eskat.database_routers.ESkatRouter"]

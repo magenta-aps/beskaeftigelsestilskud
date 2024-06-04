@@ -1,9 +1,10 @@
 from unittest.mock import patch
-from django.test import TestCase
 
-from bf.models import PersonMonth
-from bf.management.commands.import_persons_from_eskat import Command
+from django.test import TestCase
 from eskat.models import ESkatMandtal
+
+from bf.management.commands.import_persons_from_eskat import Command
+from bf.models import PersonMonth
 
 
 class TestImportPersonsFromESkat(TestCase):

@@ -3,17 +3,16 @@ from datetime import date
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
 from eskat.models import ESkatMandtal
 
 
 class PersonMonth(models.Model):
     class Meta:
         ordering = ["cpr"]
-        unique_together = ["cpr", "date"]
-        index_together = ["cpr", "date"]
+        unique_together = ["cpr", "import_date"]
+        index_together = ["cpr", "import_date"]
 
-    date = models.DateField(
+    import_date = models.DateField(
         null=False,
         blank=False,
         verbose_name=_("Dato"),
@@ -26,7 +25,6 @@ class PersonMonth(models.Model):
         validators=(RegexValidator(regex=r"\d{10}"),),
         verbose_name=_("CPR nummer"),
         help_text=_("CPR nummer"),
-
     )
 
     name = models.TextField(blank=True, null=True)
@@ -40,9 +38,11 @@ class PersonMonth(models.Model):
     full_address = models.TextField(blank=True, null=True)
 
     @classmethod
-    def from_eskat_mandtal(cls, eskat_mandtal: ESkatMandtal, date: date) -> "PersonMonth":
+    def from_eskat_mandtal(
+        cls, eskat_mandtal: ESkatMandtal, import_date: date
+    ) -> "PersonMonth":
         return PersonMonth(
-            date=date,
+            import_date=import_date,
             cpr=eskat_mandtal.cpr,
             name=eskat_mandtal.navn,
             municipality_code=eskat_mandtal.kommune_no,

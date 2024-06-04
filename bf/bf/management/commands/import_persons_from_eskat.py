@@ -1,9 +1,9 @@
 from datetime import date
 
 from django.core.management.base import BaseCommand
+from eskat.models import ESkatMandtal
 
 from bf.models import PersonMonth
-from eskat.models import ESkatMandtal
 
 
 class Command(BaseCommand):
