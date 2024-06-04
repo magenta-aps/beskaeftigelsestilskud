@@ -12,5 +12,6 @@ omit =
     */migrations/*
     */tests/*
     */mitid_test/*
+    */management/commands/wait_for_db.py
 parallel = true
 concurrency = multiprocessing
