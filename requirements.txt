@@ -1,5 +1,6 @@
 django==5.0.4
 psycopg2-binary==2.9.9
+oracledb==2.2.1
 gunicorn==22.0.0
 whitenoise==6.0.0
 mypy==1.7.0
