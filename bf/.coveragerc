@@ -1,7 +1,7 @@
 [run]
 relative_files = True
 source = .
-omit = 
+omit =
     */manage.py
     */project/*
     */admin.py
@@ -10,7 +10,6 @@ omit =
     */tests.py
     */__init__.py
     */migrations/*
-    */management/*
     */tests/*
     */mitid_test/*
 parallel = true
