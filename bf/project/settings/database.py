@@ -18,6 +18,22 @@ def get_oracle_db_name():
     )
 
 
+def get_eskat_database_config():
+    if use_mock_db():
+        return {
+            "ENGINE": "django.db.backends.sqlite3",
+        }
+    else:
+        return {
+            "ENGINE": "django.db.backends.oracle",
+            "NAME": get_oracle_db_name(),
+            "USER": os.environ["ESKAT_USER"],
+            "PASSWORD": os.environ["ESKAT_PASSWORD"],
+            "HOST": "",
+            "PORT": "",
+        }
+
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
@@ -26,20 +42,7 @@ DATABASES = {
         "PASSWORD": os.environ["POSTGRES_PASSWORD"],
         "HOST": os.environ["POSTGRES_HOST"],
     },
-    "eskat": (
-        {
-            "ENGINE": "django.db.backends.sqlite3",
-        }
-        if use_mock_db()
-        else {
-            "ENGINE": "django.db.backends.oracle",
-            "NAME": get_oracle_db_name(),
-            "USER": os.environ["ESKAT_USER"],
-            "PASSWORD": os.environ["ESKAT_PASSWORD"],
-            "HOST": "",
-            "PORT": "",
-        }
-    ),
+    "eskat": get_eskat_database_config(),
 }
 
 DATABASE_ROUTERS = ["eskat.database_routers.ESkatRouter"]
