@@ -3,7 +3,7 @@ from django.db import models
 
 class ESkatMandtal(models.Model):
     class Meta:
-        managed = False  # Created from a view. Don't remove.
+        managed = False  # Created from a view in a remote database. Don't remove.
         db_table = "eskat_mandtal"
 
     pt_census_guid = models.UUIDField(primary_key=True)
