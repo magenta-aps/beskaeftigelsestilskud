@@ -1,0 +1,32 @@
+repos:
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies:
+        - flake8-absolute-import
+        args:
+        - "--max-line-length=88"
+        - "--exclude=**/migrations/*.py,settings.py"
+        - "--extend-ignore=E226,E203"
+
+  - repo: https://github.com/psf/black
+    rev: 24.4.1
+    hooks:
+      - id: black
+        exclude: migrations
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+        exclude: migrations
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.24.0
+    hooks:
+      - id: commitizen
+      - id: commitizen-branch
+        stages: [ push ]
