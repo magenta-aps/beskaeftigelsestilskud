@@ -19,3 +19,4 @@ django-session-timeout @ git+https://github.com/Lapeth/django-session-timeout@ma
 pysaml2==7.5.0
 xmltodict>=0.12.0
 beautifulsoup4==4.12.2
+django-simple-history==3.7.0
