@@ -24,7 +24,7 @@ Forslag til beregningsmetoder:
 
 
 class InYearExtrapolationEngine(CalculationEngine):
-    description = "Ekstrapolation af beløb for måneder i indeværende year"
+    description = "Ekstrapolation af beløb for måneder i indeværende år"
 
     @classmethod
     def calculate(cls, datapoints: QuerySet[MonthIncome]) -> CalculationResult:
