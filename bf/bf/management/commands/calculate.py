@@ -1,22 +1,29 @@
+from datetime import date
 from typing import List
 
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
 from tabulate import SEPARATING_LINE, tabulate
 
-from bf.calculate import CalculationEngine, InYearExtrapolationEngine
+from bf.calculate import CalculationEngine, InYearExtrapolationEngine, TwelveMonthsSummationEngine
 from bf.models import MonthIncome, Person
 
 
 class Command(BaseCommand):
     engines: List[CalculationEngine] = [
         InYearExtrapolationEngine(),
+        TwelveMonthsSummationEngine(),
     ]
 
+    def add_arguments(self, parser):
+        parser.add_argument("--year", type=int)
+
+
     def handle(self, *args, **kwargs):
+        year = kwargs.get("year") or date.today().year
         for person in Person.objects.all():
             # person = Person.objects.first()
-            qs = MonthIncome.objects.filter(person=person)
+            qs = MonthIncome.objects.filter(person=person, year=year)
             companies = [x.company for x in qs.distinct("company")]
             for company in companies:
                 print("====================================")

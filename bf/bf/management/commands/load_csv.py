@@ -1,5 +1,6 @@
 import csv
 from dataclasses import dataclass
+from datetime import date
 
 from django.core.management.base import BaseCommand
 
@@ -56,17 +57,19 @@ class IndkomstCSVFileLine:
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("file", type=str)
-        parser.add_argument("count", type=int)
+        parser.add_argument("--count", type=int)
+        parser.add_argument("--year", type=int)
 
     def handle(self, *args, **kwargs):
         with open(kwargs["file"]) as input_stream:
-            self._read_csv(input_stream, kwargs.get("count"))
+            count = kwargs.get("count")
+            year = kwargs.get("year") or date.today().year
+            self._read_csv(input_stream, year, count)
 
-    def _read_csv(self, input_stream, count=None):
+    def _read_csv(self, input_stream, year, count=None):
         reader = csv.reader(input_stream, delimiter=";")
 
-        # file_header = next(reader)  # read file header
-        next(reader)  # skip "csv header" (second line of file)
+        next(reader)  # skip csv header
 
         for i, row in enumerate(reader):
             if count is not None and i > count:
@@ -74,7 +77,6 @@ class Command(BaseCommand):
             # We are not yet at last line in file. Parse it as a regular item
             line = IndkomstCSVFileLine.from_csv_row(row)
             print(line)
-            year = 2024
             if line:
                 person, _ = Person.objects.get_or_create(cpr=line.cpr, defaults={})
                 company, _ = Company.objects.get_or_create(cvr=line.cvr, defaults={})
