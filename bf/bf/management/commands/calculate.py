@@ -2,10 +2,14 @@ from datetime import date
 from typing import List
 
 from django.core.management.base import BaseCommand
-from django.db.models import Sum, Q
+from django.db.models import Q, Sum
 from tabulate import SEPARATING_LINE, tabulate
 
-from bf.calculate import CalculationEngine, InYearExtrapolationEngine, TwelveMonthsSummationEngine
+from bf.calculate import (
+    CalculationEngine,
+    InYearExtrapolationEngine,
+    TwelveMonthsSummationEngine,
+)
 from bf.models import MonthIncome, Person
 
 
@@ -17,7 +21,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--year", type=int)
-
 
     def handle(self, *args, **kwargs):
         year = kwargs.get("year") or date.today().year
@@ -31,10 +34,17 @@ class Command(BaseCommand):
                 print(f"CVR: {company.cvr}")
                 print("")
                 employment = qs.filter(company=company).order_by("year", "month")
-                actual_year_sum = employment.filter(year=year).aggregate(s=Sum("amount"))["s"]
+                actual_year_sum = employment.filter(year=year).aggregate(
+                    s=Sum("amount")
+                )["s"]
                 print(
                     tabulate(
-                        list([[item.year, item.month, item.amount] for item in employment])
+                        list(
+                            [
+                                [item.year, item.month, item.amount]
+                                for item in employment
+                            ]
+                        )
                         + [SEPARATING_LINE, ["Sum", actual_year_sum]],
                         headers=["År", "Måned", "Beløb"],
                         tablefmt="simple",
@@ -44,7 +54,9 @@ class Command(BaseCommand):
                 for engine in self.engines:
                     predictions = []
                     for month in range(1, 13):
-                        visible_datapoints = employment.filter(Q(year__lt=year)|Q(year=year, month__lte=month))
+                        visible_datapoints = employment.filter(
+                            Q(year__lt=year) | Q(year=year, month__lte=month)
+                        )
                         resultat = engine.calculate(visible_datapoints)
                         predictions.append(
                             [
