@@ -5,13 +5,15 @@ from django.db.models import Avg, Q, QuerySet, Sum
 from bf.models import MonthIncome
 
 
-class CalculationEngine:
-    pass
-
-
 @dataclass
 class CalculationResult:
     year_prediction: int
+
+
+class CalculationEngine:
+    @classmethod
+    def calculate(cls, datapoints: QuerySet[MonthIncome]) -> CalculationResult:
+        raise NotImplementedError
 
 
 """
