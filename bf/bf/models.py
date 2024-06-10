@@ -1,5 +1,5 @@
 from datetime import date
-
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -106,6 +106,12 @@ class PersonMonth(models.Model):
 
 class Employer(models.Model):
     cvr = models.PositiveIntegerField(
+        verbose_name=_("CVR-nummer"),
+        db_index=True,
+        validators=(
+            MinValueValidator(1000000),
+            MaxValueValidator(99999999),
+        ),
         null=False,
         blank=False,
         db_index=True,
