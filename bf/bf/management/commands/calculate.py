@@ -39,12 +39,7 @@ class Command(BaseCommand):
                 )["s"]
                 print(
                     tabulate(
-                        list(
-                            [
-                                [item.year, item.month, item.amount]
-                                for item in employment
-                            ]
-                        )
+                        [[item.year, item.month, item.amount] for item in employment]
                         + [SEPARATING_LINE, ["Sum", actual_year_sum]],
                         headers=["År", "Måned", "Beløb"],
                         tablefmt="simple",
