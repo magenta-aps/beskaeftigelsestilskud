@@ -64,14 +64,16 @@ class Command(BaseCommand):
                                 resultat.year_prediction,
                                 resultat.year_prediction - actual_year_sum,
                                 (
-                                    abs(
-                                        (resultat.year_prediction - actual_year_sum)
-                                        / actual_year_sum
+                                    (
+                                        abs(
+                                            (resultat.year_prediction - actual_year_sum)
+                                            / actual_year_sum
+                                        )
+                                        * 100
                                     )
-                                    * 100
-                                )
-                                if actual_year_sum != 0
-                                else None,
+                                    if actual_year_sum != 0
+                                    else None
+                                ),
                             ]
                         )
                     print(engine.description)
