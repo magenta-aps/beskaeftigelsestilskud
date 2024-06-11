@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from typing import TypeAlias
 
 from django.core.management.base import BaseCommand
@@ -16,38 +16,42 @@ CPR: TypeAlias = str
 class MandtalResult:
     mandtal_by_cpr: dict[CPR, ESkatMandtal]
     new_mandtal_objects: list[ESkatMandtal]
+    year: int  # The year that was queried from the database
+    import_date: date  # The date we got data from the database
+
+    @property
+    def month(self) -> int:
+        if self.year == self.import_date.year:
+            # We import part of a year
+            return self.import_date.month
+        else:
+            # We import a prior, completed year
+            return 12
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument(  # pragma: nocover
-            "import_date",
-            type=str,
-            help="Import date (format: YYYY-MM-DD)",
-        )
+        parser.add_argument("year", type=int, help="Import year")
 
     def handle(self, *args, **options):
-        # Parse mandatory `import_date` command line option
-        import_date = datetime.strptime(options["import_date"], "%Y-%m-%d")
         # Convert to date and force to 1st of month
-        import_date = import_date.date().replace(day=1)
+        year = options["year"]
 
         # Load mandtal data from external eSkat database
-        mandtal_result: MandtalResult = self._get_mandtal()
+        mandtal_result: MandtalResult = self._get_mandtal(year)
 
         # Create and update objects in application database
         with transaction.atomic():
             # Create `Person` objects for new mandtal objects
-            persons_created = self._create_persons(mandtal_result, import_date)
+            persons_created = self._create_persons(mandtal_result)
             # Update `Person` objects for mandtal objects we already know
-            persons_updated = self._update_persons(mandtal_result, import_date)
+            persons_updated = self._update_persons(mandtal_result)
             # Create or update `PersonMonth` objects for total set of mandtal objects
             # (new and updated.)
             person_months_created, person_months_updated = (
                 self._create_or_update_person_months(
                     mandtal_result,
                     persons_created + persons_updated,
-                    import_date,
                 )
             )
 
@@ -60,9 +64,9 @@ class Command(BaseCommand):
                 )
             )
 
-    def _get_mandtal(self) -> MandtalResult:
-        # Create map of (mandtal CPR, mandtal object)
-        mandtal_by_cpr = {m.cpr: m for m in ESkatMandtal.objects.all()}
+    def _get_mandtal(self, year: int) -> MandtalResult:
+        # Create map of (mandtal CPR, mandtal object) for a given year
+        mandtal_by_cpr = {m.cpr: m for m in ESkatMandtal.objects.filter(skatteaar=year)}
         # Find any new CPRs in mandtal by comparing to current set of
         # `Person` CPRs.
         mandtal_cprs = set(mandtal_by_cpr.keys())
@@ -73,12 +77,13 @@ class Command(BaseCommand):
         return MandtalResult(
             mandtal_by_cpr=mandtal_by_cpr,
             new_mandtal_objects=new_mandtal_objects,
+            year=year,
+            import_date=date.today(),
         )
 
     def _create_persons(
         self,
         mandtal_result: MandtalResult,
-        import_date: date,
     ) -> list[Person]:
         persons_to_create = [
             Person.from_eskat_mandtal(eskat_mandtal)
@@ -87,14 +92,13 @@ class Command(BaseCommand):
         bulk_create_with_history(
             persons_to_create,
             Person,
-            default_date=import_date,
+            default_date=mandtal_result.import_date,
         )
         return persons_to_create
 
     def _update_persons(
         self,
         mandtal_result: MandtalResult,
-        import_date: date,
     ) -> list[Person]:
         # Update `Person` objects whose CPR are in `mandtal_by_cpr` but not in
         # `new_mandtal_objects`.
@@ -126,7 +130,7 @@ class Command(BaseCommand):
                 "address_line_5",
                 "full_address",
             ],
-            default_date=import_date,
+            default_date=mandtal_result.import_date,
         )
         return list(persons_to_update)
 
@@ -134,18 +138,21 @@ class Command(BaseCommand):
         self,
         mandtal_result: MandtalResult,
         persons: list[Person],
-        import_date: date,
     ) -> tuple[list[PersonMonth], list[PersonMonth]]:
         # Build list of `PersonMonth` objects to create, and `PersonMonth` objects
         # to update (in case there is already data for the same CPRs on the same import
         # date.)
-        current_person_months = PersonMonth.objects.filter(import_date=import_date)
+        current_person_months = PersonMonth.objects.filter(
+            person_year__year=mandtal_result.year, month=mandtal_result.month
+        )
         persons_by_cpr = {p.cpr: p for p in persons}
         person_months = [
             PersonMonth.from_eskat_mandtal(
                 mandtal,
                 persons_by_cpr[mandtal_cpr],
-                import_date,
+                mandtal_result.import_date,
+                mandtal_result.year,
+                mandtal_result.month,
             )
             for mandtal_cpr, mandtal in mandtal_result.mandtal_by_cpr.items()
         ]
@@ -155,7 +162,9 @@ class Command(BaseCommand):
             person_month
             for person_month in person_months
             if person_month.person.cpr
-            not in current_person_months.values_list("person__cpr", flat=True)
+            not in current_person_months.values_list(
+                "person_year__person__cpr", flat=True
+            )
         ]
         PersonMonth.objects.bulk_create(person_months_to_create)
 
@@ -163,7 +172,7 @@ class Command(BaseCommand):
         # seen once.
         person_months_to_update = list(
             current_person_months.exclude(
-                person__cpr__in={
+                person_year__person__cpr__in={
                     person_month.person.cpr for person_month in person_months_to_create
                 }
             )

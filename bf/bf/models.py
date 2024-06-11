@@ -44,9 +44,28 @@ class Person(models.Model):
         )
 
 
-class PersonMonth(models.Model):
+class PersonYear(models.Model):
     person = models.ForeignKey(
         Person,
+        on_delete=models.CASCADE,
+    )
+    year = models.PositiveSmallIntegerField(
+        blank=False,
+        null=False,
+    )
+
+    class Meta:
+        unique_together = (("person", "year"),)
+        indexes = [
+            models.Index(fields=("person", "year"))
+            # index on "person" by itself is implicit because it's a ForeignKey
+        ]
+
+
+class PersonMonth(models.Model):
+
+    person_year = models.ForeignKey(
+        PersonYear,
         on_delete=models.CASCADE,
     )
 
@@ -59,6 +78,11 @@ class PersonMonth(models.Model):
     municipality_code = models.IntegerField(blank=True, null=True)
     municipality_name = models.TextField(blank=True, null=True)
     fully_tax_liable = models.BooleanField(blank=True, null=True)
+    month = models.PositiveSmallIntegerField(blank=False, null=False)
+
+    @property
+    def person(self):
+        return self.person_year.person
 
     @classmethod
     def from_eskat_mandtal(
@@ -66,11 +90,41 @@ class PersonMonth(models.Model):
         eskat_mandtal: ESkatMandtal,
         person: Person,
         import_date: date,
+        year: int,
+        month: int,
     ) -> "PersonMonth":
+        person_year, _ = PersonYear.objects.get_or_create(person=person, year=year)
         return PersonMonth(
-            person=person,
+            person_year=person_year,
+            month=month,
             import_date=import_date,
             municipality_code=eskat_mandtal.kommune_no,
             municipality_name=eskat_mandtal.kommune,
             fully_tax_liable=eskat_mandtal.fully_tax_liable,
         )
+
+
+class Employer(models.Model):
+    cvr = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    name = models.CharField(
+        null=True,
+        blank=True,
+    )
+
+
+class ASalaryReport(models.Model):
+    person_month = models.ForeignKey(
+        PersonMonth,
+        on_delete=models.CASCADE,
+    )
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE)
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )

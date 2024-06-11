@@ -1,2 +1,2 @@
-cpr;kommune_no;kommune,navn,adresselinje1,adresselinje2,adresselinje3,adresselinje4,adresselinje5,fuld_adresse;skatteomfang,skattedage
-0101012222;102;Kommune;Updated Name;;;;;;;;
+cpr;kommune_no;kommune;skatteaar;navn;adresselinje1;adresselinje2;adresselinje3;adresselinje4;adresselinje5;fuld_adresse;skatteomfang;skattedage
+0101012222;102;Kommune;2020;Updated Name;;;;;;;;
