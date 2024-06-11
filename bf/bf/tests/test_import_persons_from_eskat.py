@@ -2,6 +2,7 @@ import os
 from csv import reader
 from datetime import date
 from io import StringIO
+from typing import Dict
 from uuid import uuid4
 
 from django.core.management import call_command
@@ -16,7 +17,8 @@ class TestImportPersonsFromESkat(TestCase):
     databases = ["default", "eskat"]
 
     _expected_mandtal_cpr = "0101012222"
-    _import_date = date(2020, 1, 1)
+    year = 2020
+    month = 12
 
     def setUp(self):
         super().setUp()
@@ -29,11 +31,11 @@ class TestImportPersonsFromESkat(TestCase):
 
         # Act: load data
         self._load_mock_eskat_db_fixture("mandtal.csv")
-        output = self._call_command(self._import_date)
+        output = self._call_command(self.year)
 
         # Assert that a new `Person` and `PersonMonth` is created
         self._assert_person_exists_with_name("Original Name")
-        self._assert_person_month_exists(self._import_date)
+        self._assert_person_month_exists(self.year, self.month)
 
         # Assert output matches expectation
         self.assertIn(
@@ -48,10 +50,10 @@ class TestImportPersonsFromESkat(TestCase):
 
         # 1. Load original data
         self._load_mock_eskat_db_fixture("mandtal.csv")
-        output_1 = self._call_command(self._import_date)
+        output_1 = self._call_command(self.year)
         # 1. Assert original CPR data is imported
         self._assert_person_exists_with_name("Original Name")
-        self._assert_person_month_exists(self._import_date, municipality_code=101)
+        self._assert_person_month_exists(self.year, self.month, municipality_code=101)
         # 1. Assert output matches expectation
         self.assertIn(
             "Created 1 new persons, updated 0 persons, "
@@ -61,13 +63,13 @@ class TestImportPersonsFromESkat(TestCase):
 
         # 2. Load updated data
         self._load_mock_eskat_db_fixture("mandtal_updated.csv")
-        output_2 = self._call_command(self._import_date)
+        output_2 = self._call_command(self.year)
         # 2. Assert `Person` object is updated
         self._assert_person_exists_with_name("Updated Name")
         # 2. Assert `PersonMonth` object is not duplicated (due to two imports for the
         # same import date.) Assert `PersonMonth` is updated (the `municipality_code`
         # is updated.)
-        self._assert_person_month_exists(self._import_date, municipality_code=102)
+        self._assert_person_month_exists(self.year, self.month, municipality_code=102)
         # 2. Assert output matches expectation
         self.assertIn(
             "Created 0 new persons, updated 1 persons, "
@@ -81,7 +83,7 @@ class TestImportPersonsFromESkat(TestCase):
 
         # Load empty dataset
         self._load_mock_eskat_db_fixture("mandtal_empty.csv")
-        output = self._call_command(self._import_date)
+        output = self._call_command(self.year)
 
         # Assert that no `Person` or `PersonMonth` objects have been created or updated
         self._assert_empty_state()
@@ -89,6 +91,25 @@ class TestImportPersonsFromESkat(TestCase):
             "Created 0 new persons, updated 0 persons, "
             "created 0 new person months, and updated 0 person months",
             output,
+        )
+
+    def test_load_current_year(self):
+        # Assert that we start from an empty state:
+        self._assert_empty_state()
+
+        year = date.today().year
+        # Check that loading from the current year automatically infers the month
+        self._load_mock_eskat_db_fixture("mandtal.csv", {3: str(year)})
+        output_1 = self._call_command(year)
+        self._assert_person_exists_with_name("Original Name")
+        self._assert_person_month_exists(
+            year, date.today().month, municipality_code=101
+        )
+        # 1. Assert output matches expectation
+        self.assertIn(
+            "Created 1 new persons, updated 0 persons, "
+            "created 1 new person months, and updated 0 person months.",
+            output_1,
         )
 
     def _assert_empty_state(self):
@@ -102,20 +123,20 @@ class TestImportPersonsFromESkat(TestCase):
         )
         self.assertQuerySetEqual(qs, [(self._expected_mandtal_cpr, name)])
 
-    def _assert_person_month_exists(self, import_date: date, **field_values):
+    def _assert_person_month_exists(self, year: int, month: int, **field_values):
         self.assertQuerySetEqual(
-            PersonMonth.objects.filter(import_date=import_date).values_list(
-                "person__cpr",
+            PersonMonth.objects.filter(person_year__year=year, month=month).values_list(
+                "person_year__person__cpr",
                 *field_values.keys(),
             ),
             [(self._expected_mandtal_cpr, *field_values.values())],
         )
 
-    def _call_command(self, import_date: date) -> str:
+    def _call_command(self, year: int) -> str:
         buf = StringIO()
         call_command(
             self.command,
-            import_date.strftime("%Y-%m-%d"),
+            year,
             stdout=buf,
             stderr=buf,
         )
@@ -132,6 +153,7 @@ class TestImportPersonsFromESkat(TestCase):
                     cpr TEXT NOT NULL,
                     kommune_no INTEGER,
                     kommune TEXT,
+                    skatteaar INTEGER,
                     navn TEXT,
                     adresselinje1 TEXT,
                     adresselinje2 TEXT,
@@ -145,7 +167,9 @@ class TestImportPersonsFromESkat(TestCase):
                 """
             )
 
-    def _load_mock_eskat_db_fixture(self, name: str):
+    def _load_mock_eskat_db_fixture(
+        self, name: str, override: Dict[int, str] | None = None
+    ):
         # Load CSV
         csv_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
@@ -154,6 +178,10 @@ class TestImportPersonsFromESkat(TestCase):
         )
         with open(csv_path) as csv_file:
             rows = list(reader(csv_file, delimiter=";"))[1:]
+            if override is not None:
+                for row in rows:
+                    for index, value in override.items():
+                        row[index] = value
 
         # Clear table and load CSV into it
         mock_eskat_db = connections["eskat"]
@@ -168,6 +196,7 @@ class TestImportPersonsFromESkat(TestCase):
                         cpr,
                         kommune_no,
                         kommune,
+                        skatteaar,
                         navn,
                         adresselinje1,
                         adresselinje2,
@@ -179,7 +208,7 @@ class TestImportPersonsFromESkat(TestCase):
                         skattedage
                     )
                 VALUES
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [(str(uuid4()), *row) for row in rows],
             )

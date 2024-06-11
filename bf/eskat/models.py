@@ -12,7 +12,7 @@ class ESkatMandtal(models.Model):
     # bank_konto_nr = models.TextField(blank=True, null=True)
     kommune_no = models.IntegerField(blank=True, null=True)
     kommune = models.TextField(blank=True, null=True)
-    # skatteaar = models.IntegerField()
+    skatteaar = models.IntegerField()
     navn = models.TextField(blank=True, null=True)
     adresselinje1 = models.TextField(blank=True, null=True)
     adresselinje2 = models.TextField(blank=True, null=True)
