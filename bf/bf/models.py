@@ -1,6 +1,6 @@
 from datetime import date
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.core.validators import RegexValidator
+
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
@@ -67,6 +67,8 @@ class PersonMonth(models.Model):
     person_year = models.ForeignKey(
         PersonYear,
         on_delete=models.CASCADE,
+        null=False,
+        blank=False,
     )
 
     import_date = models.DateField(
@@ -83,6 +85,10 @@ class PersonMonth(models.Model):
     @property
     def person(self):
         return self.person_year.person
+
+    @property
+    def year(self):
+        return self.person_year.year
 
     @classmethod
     def from_eskat_mandtal(
@@ -114,7 +120,6 @@ class Employer(models.Model):
         ),
         null=False,
         blank=False,
-        db_index=True,
     )
     name = models.CharField(
         null=True,
@@ -123,6 +128,7 @@ class Employer(models.Model):
 
 
 class ASalaryReport(models.Model):
+
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,
@@ -134,3 +140,11 @@ class ASalaryReport(models.Model):
         null=False,
         blank=False,
     )
+
+    @property
+    def year(self):
+        return self.person_month.person_year.year
+
+    @property
+    def month(self):
+        return self.person_month.month

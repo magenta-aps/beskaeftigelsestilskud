@@ -3,6 +3,7 @@ from typing import List
 
 from django.core.management.base import BaseCommand
 from django.db.models import Q, Sum
+from django.db.models.expressions import F
 from tabulate import SEPARATING_LINE, tabulate
 
 from bf.calculate import (
@@ -10,7 +11,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import MonthIncome, Person
+from bf.models import ASalaryReport, Person
 
 
 class Command(BaseCommand):
@@ -26,14 +27,19 @@ class Command(BaseCommand):
         year = kwargs.get("year") or date.today().year
         for person in Person.objects.all():
             # person = Person.objects.first()
-            qs = MonthIncome.objects.filter(person=person)
-            companies = [x.company for x in qs.distinct("company")]
-            for company in companies:
+            qs = ASalaryReport.objects.alias(
+                person=F("person_month__person_year__person"),
+                year=F("person_month__person_year__year"),
+                month=F("person_month__month"),
+            ).filter(person=person.pk)
+            print(qs)
+            employers = [x.employer for x in qs.distinct("employer")]
+            for employer in employers:
                 print("====================================")
                 print(f"CPR: {person.cpr}")
-                print(f"CVR: {company.cvr}")
+                print(f"CVR: {employer.cvr}")
                 print("")
-                employment = qs.filter(company=company).order_by("year", "month")
+                employment = qs.filter(employer=employer)
                 actual_year_sum = employment.filter(year=year).aggregate(
                     s=Sum("amount")
                 )["s"]

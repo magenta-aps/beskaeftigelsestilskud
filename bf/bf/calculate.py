@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from django.db.models import Avg, Q, QuerySet, Sum
+from django.db.models import Avg, F, Max, Q, QuerySet, Sum
 
-from bf.models import MonthIncome
+from bf.models import ASalaryReport
 
 
 @dataclass
@@ -12,7 +12,7 @@ class CalculationResult:
 
 class CalculationEngine:
     @classmethod
-    def calculate(cls, datapoints: QuerySet[MonthIncome]) -> CalculationResult:
+    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult:
         raise NotImplementedError
 
 
@@ -29,7 +29,10 @@ class InYearExtrapolationEngine(CalculationEngine):
     description = "Ekstrapolation af beløb for måneder i indeværende år"
 
     @classmethod
-    def calculate(cls, datapoints: QuerySet[MonthIncome]) -> CalculationResult:
+    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult:
+        datapoints = datapoints.annotate(
+            year=F("person_month__person_year__year"), month=F("person_month__month")
+        )
         year = datapoints.order_by("-year", "-month").values_list("year", flat=True)[0]
         year_prediction = int(
             12 * datapoints.filter(year=year).aggregate(avg=Avg("amount"))["avg"]
@@ -41,11 +44,17 @@ class TwelveMonthsSummationEngine(CalculationEngine):
     description = "Summation af beløb for de seneste 12 måneder"
 
     @classmethod
-    def calculate(cls, datapoints: QuerySet[MonthIncome]) -> CalculationResult:
-        latest = datapoints.order_by("-year", "-month")[0]
+    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult:
+        datapoints = datapoints.annotate(
+            year=F("person_month__person_year__year"), month=F("person_month__month")
+        )
+        latest_year = datapoints.aggregate(max_year=Max("year"))["max_year"]
+        latest_month = datapoints.filter(year=latest_year).aggregate(
+            max_month=Max("month")
+        )["max_month"]
         relevant = datapoints.filter(
-            Q(year=latest.year, month__lte=latest.month)
-            | Q(year=latest.year - 1, month__gt=latest.month)
+            Q(year=latest_year, month__lte=latest_month)
+            | Q(year=latest_year - 1, month__gt=latest_month)
         )
         year_prediction = int(relevant.aggregate(sum=Sum("amount"))["sum"])
         return CalculationResult(year_prediction=year_prediction)
