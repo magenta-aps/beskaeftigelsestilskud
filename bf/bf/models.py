@@ -43,6 +43,9 @@ class Person(models.Model):
             full_address=eskat_mandtal.fuld_adresse,
         )
 
+    def __str__(self):
+        return self.name
+
 
 class PersonYear(models.Model):
     person = models.ForeignKey(
@@ -60,6 +63,9 @@ class PersonYear(models.Model):
             models.Index(fields=("person", "year"))
             # index on "person" by itself is implicit because it's a ForeignKey
         ]
+
+    def __str__(self):
+        return f"{self.person} ({self.year})"
 
 
 class PersonMonth(models.Model):
@@ -109,6 +115,9 @@ class PersonMonth(models.Model):
             fully_tax_liable=eskat_mandtal.fully_tax_liable,
         )
 
+    def __str__(self):
+        return f"{self.person} ({self.year}/{self.month})"
+
 
 class Employer(models.Model):
     cvr = models.PositiveIntegerField(
@@ -125,6 +134,9 @@ class Employer(models.Model):
         null=True,
         blank=True,
     )
+
+    def __str__(self):
+        return f"{self.name} ({self.cvr})"
 
 
 class ASalaryReport(models.Model):
@@ -148,3 +160,6 @@ class ASalaryReport(models.Model):
     @property
     def month(self):
         return self.person_month.month
+
+    def __str__(self):
+        return f"{self.person_month} | {self.employer}"

@@ -8,7 +8,7 @@ from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear
 class ModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.person = Person.objects.create(cpr="1234567890")
+        cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
         cls.year = PersonYear.objects.create(
             person=cls.person,
             year=2024,
@@ -17,6 +17,7 @@ class ModelTest(TestCase):
             person_year=cls.year, month=6, import_date=date.today()
         )
         cls.employer = Employer.objects.create(
+            name="Kolbøttefabrikken",
             cvr=12345678,
         )
         cls.report = ASalaryReport.objects.create(
@@ -27,3 +28,12 @@ class ModelTest(TestCase):
         self.assertEqual(self.month.year, 2024)
         self.assertEqual(self.report.year, 2024)
         self.assertEqual(self.report.month, 6)
+
+    def test_string_methods(self):
+        self.assertEqual(str(self.person), "Jens Hansen")
+        self.assertEqual(str(self.year), "Jens Hansen (2024)")
+        self.assertEqual(str(self.month), "Jens Hansen (2024/6)")
+        self.assertEqual(str(self.employer), "Kolbøttefabrikken (12345678)")
+        self.assertEqual(
+            str(self.report), "Jens Hansen (2024/6) | Kolbøttefabrikken (12345678)"
+        )
