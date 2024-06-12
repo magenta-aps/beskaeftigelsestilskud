@@ -32,7 +32,6 @@ class Command(BaseCommand):
                 year=F("person_month__person_year__year"),
                 month=F("person_month__month"),
             ).filter(person=person.pk)
-            print(qs)
             employers = [x.employer for x in qs.distinct("employer")]
             for employer in employers:
                 print("====================================")
