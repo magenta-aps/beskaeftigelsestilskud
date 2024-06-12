@@ -26,7 +26,6 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         year = kwargs.get("year") or date.today().year
         for person in Person.objects.all():
-            # person = Person.objects.first()
             qs = ASalaryReport.objects.alias(
                 person=F("person_month__person_year__person"),
                 year=F("person_month__person_year__year"),
