@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.core.validators import RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
@@ -43,6 +43,9 @@ class Person(models.Model):
             full_address=eskat_mandtal.fuld_adresse,
         )
 
+    def __str__(self):
+        return self.name
+
 
 class PersonYear(models.Model):
     person = models.ForeignKey(
@@ -61,12 +64,17 @@ class PersonYear(models.Model):
             # index on "person" by itself is implicit because it's a ForeignKey
         ]
 
+    def __str__(self):
+        return f"{self.person} ({self.year})"
+
 
 class PersonMonth(models.Model):
 
     person_year = models.ForeignKey(
         PersonYear,
         on_delete=models.CASCADE,
+        null=False,
+        blank=False,
     )
 
     import_date = models.DateField(
@@ -83,6 +91,10 @@ class PersonMonth(models.Model):
     @property
     def person(self):
         return self.person_year.person
+
+    @property
+    def year(self):
+        return self.person_year.year
 
     @classmethod
     def from_eskat_mandtal(
@@ -103,20 +115,32 @@ class PersonMonth(models.Model):
             fully_tax_liable=eskat_mandtal.fully_tax_liable,
         )
 
+    def __str__(self):
+        return f"{self.person} ({self.year}/{self.month})"
+
 
 class Employer(models.Model):
     cvr = models.PositiveIntegerField(
+        verbose_name=_("CVR-nummer"),
+        db_index=True,
+        validators=(
+            MinValueValidator(1000000),
+            MaxValueValidator(99999999),
+        ),
         null=False,
         blank=False,
-        db_index=True,
     )
     name = models.CharField(
         null=True,
         blank=True,
     )
 
+    def __str__(self):
+        return f"{self.name} ({self.cvr})"
+
 
 class ASalaryReport(models.Model):
+
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,
@@ -128,3 +152,14 @@ class ASalaryReport(models.Model):
         null=False,
         blank=False,
     )
+
+    @property
+    def year(self):
+        return self.person_month.person_year.year
+
+    @property
+    def month(self):
+        return self.person_month.month
+
+    def __str__(self):
+        return f"{self.person_month} | {self.employer}"

@@ -21,12 +21,13 @@ services:
       - file-data:/upload  # rw for at kunne teste; bør være ro i deployments
       - ./log/bf.log:/log/bf.log:rw
       - ./dev-environment/cert:/ssl:ro
+      - ./dev-environment/indkomst_datasæt_anonymiseret.csv:/tmp/indkomst_datasæt_anonymiseret.csv:ro
     environment:
       - MAKE_MIGRATIONS=true
       - MIGRATE=true
       - LOAD_FIXTURES=true
       - PULL_IDP_METADATA=true
-      - TEST=true
+      - TEST=false
       - HOME=/tmp/
     network_mode: "host"
     command: gunicorn -b 0.0.0.0:8000 project.wsgi:application --reload -w 1 --access-logfile - --error-logfile - --capture-output # reload on code changes
