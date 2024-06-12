@@ -4,7 +4,7 @@ from datetime import date
 from typing import List
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.db.models.expressions import F
 from numpy import std
 from tabulate import SEPARATING_LINE, tabulate

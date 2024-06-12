@@ -21,6 +21,7 @@ services:
       - file-data:/upload  # rw for at kunne teste; bør være ro i deployments
       - ./log/bf.log:/log/bf.log:rw
       - ./dev-environment/cert:/ssl:ro
+      - ./dev-environment/indkomst_datasæt_anonymiseret.csv:/tmp/indkomst_datasæt_anonymiseret.csv:ro
     environment:
       - MAKE_MIGRATIONS=true
       - MIGRATE=true
