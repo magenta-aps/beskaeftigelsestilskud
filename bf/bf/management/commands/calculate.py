@@ -1,9 +1,12 @@
+import csv
+from collections import defaultdict
 from datetime import date
 from typing import List
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.db.models.expressions import F
+from numpy import std
 from tabulate import SEPARATING_LINE, tabulate
 
 from bf.calculate import (
@@ -25,6 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         year = kwargs.get("year") or date.today().year
+        summary_table_by_engine = defaultdict(list)
         for person in Person.objects.all():
             qs = ASalaryReport.objects.alias(
                 person=F("person_month__person_year__person"),
@@ -38,9 +42,11 @@ class Command(BaseCommand):
                 print(f"CVR: {employer.cvr}")
                 print("")
                 employment = qs.filter(employer=employer)
-                actual_year_sum = employment.filter(year=year).aggregate(
-                    s=Sum("amount")
-                )["s"]
+                amounts = [item.amount for item in employment if item.year == year]
+                actual_year_sum = sum(amounts)
+                stddev_over_sum = (
+                    std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
+                )
                 print(
                     tabulate(
                         [[item.year, item.month, item.amount] for item in employment]
@@ -71,7 +77,7 @@ class Command(BaseCommand):
                                         * 100
                                     )
                                     if actual_year_sum != 0
-                                    else None
+                                    else 0
                                 ),
                             ]
                         )
@@ -89,3 +95,48 @@ class Command(BaseCommand):
                         )
                     )
                     print("")
+                    summary_table_by_engine[engine.__class__.__name__].append(
+                        {
+                            "cpr": person.cpr,
+                            "cvr": employer.cvr,
+                            "year_sum": actual_year_sum,
+                            "stddev_over_sum": stddev_over_sum,
+                            "month_predictions": predictions,
+                        }
+                    )
+        for engine, results in summary_table_by_engine.items():
+            with open(f"predictions_{engine}.csv", "w") as fp:
+                writer = csv.writer(fp, delimiter=";")
+                writer.writerow(
+                    ["CPR", "CVR", "Year sum", "Std.Dev / Sum"]
+                    + [
+                        f"{x} % miss"
+                        for x in [
+                            "Jan",
+                            "Feb",
+                            "Mar",
+                            "Apr",
+                            "May",
+                            "Jun",
+                            "Jul",
+                            "Aug",
+                            "Sep",
+                            "Oct",
+                            "Nov",
+                            "Dec",
+                        ]
+                    ]
+                )
+                for result in results:
+                    writer.writerow(
+                        [
+                            result["cpr"],
+                            result["cvr"],
+                            result["year_sum"],
+                            "{:.3f}".format(result["stddev_over_sum"]),
+                        ]
+                        + [
+                            "{:.1f}".format(prediction[3])
+                            for prediction in result["month_predictions"]
+                        ]
+                    )

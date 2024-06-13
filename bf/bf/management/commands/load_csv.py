@@ -89,3 +89,4 @@ class Command(BaseCommand):
                             "amount": amount,
                         },
                     )
+            print(i, end="\r")
