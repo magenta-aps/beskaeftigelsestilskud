@@ -2,6 +2,7 @@ from datetime import date
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.db.models import Index
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
@@ -69,6 +70,12 @@ class PersonYear(models.Model):
 
 
 class PersonMonth(models.Model):
+
+    class Meta:
+        indexes = [
+            Index(fields=("month",)),
+            Index(fields=("municipality_code",)),
+        ]
 
     person_year = models.ForeignKey(
         PersonYear,
