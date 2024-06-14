@@ -77,7 +77,7 @@ services:
   bf-test-idp:
     user: "1000:1000"  # Override in docker-compose.override.yml if your local user is different
     image: kenchan0130/simplesamlphp
-    container_name: toldbehandling-test-idp
+    container_name: bf-test-idp
     network_mode: "host"
     environment:
       SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:8000/mitid/saml/metadata/
