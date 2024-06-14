@@ -17,27 +17,131 @@ class ModelTest(TestCase):
             person=cls.person,
             year=2024,
         )
-        cls.month = PersonMonth.objects.create(
-            person_year=cls.year, month=6, import_date=date.today()
+        cls.month1 = PersonMonth.objects.create(
+            person_year=cls.year, month=1, import_date=date.today()
         )
-        cls.employer = Employer.objects.create(
-            name="Kolbøttefabrikken",
+        cls.month2 = PersonMonth.objects.create(
+            person_year=cls.year, month=2, import_date=date.today()
+        )
+        cls.month3 = PersonMonth.objects.create(
+            person_year=cls.year, month=3, import_date=date.today()
+        )
+        cls.month4 = PersonMonth.objects.create(
+            person_year=cls.year, month=4, import_date=date.today()
+        )
+        cls.employer1 = Employer.objects.create(
+            name="Fredes Fisk",
             cvr=12345678,
         )
-        cls.report = ASalaryReport.objects.create(
-            employer=cls.employer, person_month=cls.month, amount=100
+        cls.employer2 = Employer.objects.create(
+            name="Ronnis Rejer",
+            cvr=87654321,
+        )
+        cls.report1 = ASalaryReport.objects.create(
+            employer=cls.employer1,
+            person_month=cls.month1,
+            amount=100,
+            calculated_year_result=12 * 100,
+        )
+        cls.report2 = ASalaryReport.objects.create(
+            employer=cls.employer1,
+            person_month=cls.month2,
+            amount=110,
+            calculated_year_result=6 * (100 + 110),
+        )
+        cls.report3 = ASalaryReport.objects.create(
+            employer=cls.employer1,
+            person_month=cls.month3,
+            amount=120,
+            calculated_year_result=4 * (100 + 110 + 120),
+        )
+        cls.report4 = ASalaryReport.objects.create(
+            employer=cls.employer1,
+            person_month=cls.month4,
+            amount=130,
+            calculated_year_result=3 * (100 + 110 + 120 + 130),
+        )
+        cls.report5 = ASalaryReport.objects.create(
+            employer=cls.employer2,
+            person_month=cls.month1,
+            amount=150,
+            calculated_year_result=12 * 150,
+        )
+        cls.report6 = ASalaryReport.objects.create(
+            employer=cls.employer2,
+            person_month=cls.month2,
+            amount=120,
+            calculated_year_result=6 * (150 + 120),
+        )
+        cls.report7 = ASalaryReport.objects.create(
+            employer=cls.employer2,
+            person_month=cls.month3,
+            amount=100,
+            calculated_year_result=4 * (150 + 120 + 100),
+        )
+        cls.report8 = ASalaryReport.objects.create(
+            employer=cls.employer2,
+            person_month=cls.month4,
+            amount=80,
+            calculated_year_result=3 * (150 + 120 + 100 + 80),
         )
 
-    def test_shortcuts(self):
-        self.assertEqual(self.month.year, 2024)
-        self.assertEqual(self.report.year, 2024)
-        self.assertEqual(self.report.month, 6)
+
+class TestPerson(ModelTest):
 
     def test_string_methods(self):
         self.assertEqual(str(self.person), "Jens Hansen")
+
+
+class TestPersonYear(ModelTest):
+
+    def test_string_methods(self):
         self.assertEqual(str(self.year), "Jens Hansen (2024)")
-        self.assertEqual(str(self.month), "Jens Hansen (2024/6)")
-        self.assertEqual(str(self.employer), "Kolbøttefabrikken (12345678)")
+
+    def test_salary_reports(self):
         self.assertEqual(
-            str(self.report), "Jens Hansen (2024/6) | Kolbøttefabrikken (12345678)"
+            list(self.year.salary_reports),
+            [
+                self.report1,
+                self.report5,
+                self.report2,
+                self.report6,
+                self.report3,
+                self.report7,
+                self.report4,
+                self.report8,
+            ],
+        )
+
+    def test_latest_calculation(self):
+        self.assertEqual(
+            self.year.latest_calculation,
+            self.report4.calculated_year_result + self.report8.calculated_year_result,
+        )
+
+
+class TestPersonMonth(ModelTest):
+
+    def test_shortcuts(self):
+        self.assertEqual(self.month1.year, 2024)
+
+    def test_string_methods(self):
+        self.assertEqual(str(self.month1), "Jens Hansen (2024/1)")
+
+
+class TestEmployer(ModelTest):
+
+    def test_string_methods(self):
+        self.assertEqual(str(self.employer1), "Fredes Fisk (12345678)")
+
+
+class TestSalaryReport(ModelTest):
+
+    def test_shortcuts(self):
+        self.assertEqual(self.report1.year, 2024)
+        self.assertEqual(self.report1.month, 1)
+
+    def test_string_methods(self):
+        self.assertEqual(
+            str(self.report1), "Jens Hansen (2024/1) | Fredes Fisk (12345678)"
         )
