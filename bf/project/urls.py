@@ -35,4 +35,11 @@ urlpatterns = [
             namespace="login",
         ),
     ),
+    path(
+        "analysis/",
+        include(
+            "data_analysis.urls",
+            namespace="data_analysis",
+        ),
+    ),
 ]
