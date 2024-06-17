@@ -10,10 +10,13 @@ omit =
     */tests.py
     */__init__.py
     */migrations/*
-    */management/*
     */tests/*
     */mitid_test/*
-    */management/commands/wait_for_db.py
     */bf/calculate.py
+    */bf/simulation.py
+    */management/commands/calculate.py
+    */management/commands/load_csv.py
+    */management/commands/wait_for_db.py
+    */data_analysis/views.py
 parallel = true
 concurrency = multiprocessing

@@ -1,0 +1,127 @@
+{% extends "common/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load csp %}
+
+{% block extra_headers %}
+<link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+<script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+// Basic chart configuration
+const chartOptions = {
+    chart: {
+        type: "line",
+        height: 600,
+        animations: {
+            enabled: false,
+        }
+    },
+    plotOptions: {
+        bar: {
+            horizontal: false,
+        }
+    },
+    xaxis: {
+        type: "datetime",
+    },
+    dataLabels: {
+        enabled: true
+    },
+    legend: {
+        show: true,
+        position: "top",
+        horizontalAlign: "left",
+    },
+};
+
+// Build chart data based on each "row" in dataset
+const getChartData = function (doc, row, rowId, options) {
+    const series = [];
+
+    // Add "income" data series
+    const income = [];
+    for (const item of row.income_series) {
+        income.push({
+            x: new Date(item.year, item.month, 1),
+            y: item.value,
+        });
+    }
+    series.push({
+        data: income,
+        name: "Income",
+        type: "column",
+    });
+
+    // Add data series for each prediction engine's output
+    for (const prediction of row.predictions) {
+        const predictionData = [];
+        for (const item of prediction.items) {
+            predictionData.push({
+                x: new Date(item.year, item.month, 1),
+                y: item.predicted_value,
+                difference: item.prediction_difference,
+                differencePct: item.prediction_difference_pct,
+            });
+        }
+        series.push({
+            data: predictionData,
+            name: prediction.engine.description,
+            type: "column",
+        });
+    }
+
+    // Add line graph for "income_sum"
+    series.push({
+        data: [
+            {
+                x: new Date(doc.year, 1, 1),
+                y: row.income_sum,
+            },
+            {
+                x: new Date(doc.year, 12, 1),
+                y: row.income_sum,
+            },
+        ],
+        name: "Income sum",
+        type: "line",
+    });
+
+    // Construct chart data by combining series and options
+    const chartData = structuredClone(options);
+    chartData.chart.id = rowId;
+    chartData.series = series;
+    return chartData;
+}
+
+$(document).ready(
+    async function () {
+        // Fetch dataset from server and render each row of dataset as separate charts.
+        // There is currently one row per employer.
+        const response = await fetch("?format=json");
+        const doc = await response.json();
+
+        for (const rowId in doc.rows) {
+            const row = doc.rows[rowId];
+
+            // Insert DOM element for heading
+            const headingElem = $(`<h1>Employer: ${row.employer.cvr}</h1>`);
+            $("body").append(headingElem);
+
+            // Insert DOM element for chart
+            const chartElem = document.createElement("div");
+            document.querySelector("body").appendChild(chartElem);
+
+            // Get chart data
+            const chartData = getChartData(doc, row, rowId, chartOptions);
+
+            // Render chart into DOM element
+            const chart = new ApexCharts(chartElem, chartData);
+            chart.render();
+        }
+    }
+)
+</script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
