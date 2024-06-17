@@ -11,4 +11,5 @@ INSTALLED_APPS = [
     "bf",
     "login",
     "django_mitid_auth",
+    "data_analysis",
 ]
