@@ -36,10 +36,10 @@ const chartOptions = {
 
 // Build chart data based on each "row" in dataset
 const getChartData = function (doc, row, rowId, options) {
-    let series = [];
+    const series = [];
 
     // Add "income" data series
-    let income = [];
+    const income = [];
     for (const item of row.income_series) {
         income.push({
             x: new Date(item.year, item.month, 1),
@@ -54,7 +54,7 @@ const getChartData = function (doc, row, rowId, options) {
 
     // Add data series for each prediction engine's output
     for (const prediction of row.predictions) {
-        let predictionData = [];
+        const predictionData = [];
         for (const item of prediction.items) {
             predictionData.push({
                 x: new Date(item.year, item.month, 1),
@@ -73,15 +73,21 @@ const getChartData = function (doc, row, rowId, options) {
     // Add line graph for "income_sum"
     series.push({
         data: [
-            {x: new Date(doc.year, 1, 1), y: row.income_sum},
-            {x: new Date(doc.year, 12, 1), y: row.income_sum},
+            {
+                x: new Date(doc.year, 1, 1),
+                y: row.income_sum,
+            },
+            {
+                x: new Date(doc.year, 12, 1),
+                y: row.income_sum,
+            },
         ],
         name: "Income sum",
         type: "line",
     });
 
     // Construct chart data by combining series and options
-    let chartData = structuredClone(options);
+    const chartData = structuredClone(options);
     chartData.chart.id = rowId;
     chartData.series = series;
     return chartData;
