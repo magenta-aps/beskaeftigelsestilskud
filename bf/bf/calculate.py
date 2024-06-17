@@ -2,16 +2,10 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from dataclasses import dataclass
-
-from django.db.models import Avg, F, Max, Q, QuerySet, Sum
 
 from bf.models import ASalaryReport
-
-
-@dataclass
-class CalculationResult:
-    year_prediction: int
+from data_analysis.models import CalculationResult
+from django.db.models import Avg, F, Max, Q, QuerySet, Sum
 
 
 class CalculationEngine:
@@ -52,7 +46,7 @@ class InYearExtrapolationEngine(CalculationEngine):
         latest: ASalaryReport = relevant.last()  # type: ignore
         latest.calculated_year_result = year_prediction
         latest.save(update_fields=("calculated_year_result",))
-        return CalculationResult(year_prediction=year_prediction)
+        return CalculationResult(year_prediction=year_prediction, a_salary_report=latest, engine=cls.__name__)
 
 
 class TwelveMonthsSummationEngine(CalculationEngine):
@@ -78,4 +72,4 @@ class TwelveMonthsSummationEngine(CalculationEngine):
         latest: ASalaryReport = relevant.last()  # type: ignore
         latest.calculated_year_result = year_prediction
         latest.save(update_fields=("calculated_year_result",))
-        return CalculationResult(year_prediction=year_prediction)
+        return CalculationResult(year_prediction=year_prediction, a_salary_report=latest, engine=cls.__name__)

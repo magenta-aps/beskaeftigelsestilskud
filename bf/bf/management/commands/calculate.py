@@ -67,24 +67,27 @@ class Command(BaseCommand):
                             Q(year__lt=year) | Q(year=year, month__lte=month)
                         )
                         resultat = engine.calculate(visible_datapoints)
-                        predictions.append(
-                            [
-                                month,
-                                resultat.year_prediction,
-                                resultat.year_prediction - actual_year_sum,
-                                (
+                        if resultat is not None:
+                            predictions.append(
+                                [
+                                    month,
+                                    resultat.year_prediction,
+                                    resultat.year_prediction - actual_year_sum,
                                     (
-                                        abs(
-                                            (resultat.year_prediction - actual_year_sum)
-                                            / actual_year_sum
+                                        (
+                                            abs(
+                                                (resultat.year_prediction - actual_year_sum)
+                                                / actual_year_sum
+                                            )
+                                            * 100
                                         )
-                                        * 100
-                                    )
-                                    if actual_year_sum != 0
-                                    else 0
-                                ),
-                            ]
-                        )
+                                        if actual_year_sum != 0
+                                        else 0
+                                    ),
+                                ]
+                            )
+                            resultat.actual_year_result = actual_year_sum
+                            resultat.save()
                     print(engine.description)
                     print(
                         tabulate(

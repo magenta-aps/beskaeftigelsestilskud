@@ -197,13 +197,6 @@ class ASalaryReport(models.Model):
         blank=False,
     )
 
-    calculated_year_result = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
-
     @property
     def year(self):
         return self.person_month.person_year.year
@@ -211,6 +204,12 @@ class ASalaryReport(models.Model):
     @property
     def month(self):
         return self.person_month.month
+
+    @property
+    def calculated_year_result(self) -> Decimal | None:
+        if self.calculationresult_set.exists():
+            return self.calculationresult_set.first().calculated_year_result
+        return None
 
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
