@@ -90,13 +90,16 @@ class Simulation:
                         PredictionItem(
                             year=self.year,
                             month=month,
-                            predicted_value=resultat.year_prediction,
-                            prediction_difference=resultat.year_prediction
+                            predicted_value=resultat.calculated_year_result,
+                            prediction_difference=resultat.calculated_year_result
                             - actual_year_sum,
                             prediction_difference_pct=(
                                 (
                                     abs(
-                                        (resultat.year_prediction - actual_year_sum)
+                                        (
+                                            resultat.calculated_year_result
+                                            - actual_year_sum
+                                        )
                                         / actual_year_sum
                                     )
                                     * 100
