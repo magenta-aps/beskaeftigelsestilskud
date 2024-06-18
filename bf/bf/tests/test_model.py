@@ -179,6 +179,8 @@ class TestEmployer(ModelTest):
 class TestSalaryReport(ModelTest):
 
     def test_shortcuts(self):
+        self.assertEqual(self.report1.person_year, self.year)
+        self.assertEqual(self.report1.person, self.person)
         self.assertEqual(self.report1.year, 2024)
         self.assertEqual(self.report1.month, 1)
 

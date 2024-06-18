@@ -215,9 +215,10 @@ class ASalaryReport(models.Model):
 
     @property
     def calculated_year_result(self) -> Decimal | None:
-        if self.calculationresult_set.exists():
-            return self.calculationresult_set.first().calculated_year_result
-        return None
+        first_item = self.calculationresult_set.first()
+        if first_item is None:
+            return None
+        return first_item.calculated_year_result
 
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
