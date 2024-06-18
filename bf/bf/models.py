@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from datetime import date
+from decimal import Decimal
+from typing import Dict
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import Index
+from django.db.models import F, Index
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
@@ -71,6 +73,37 @@ class PersonYear(models.Model):
 
     def __str__(self):
         return f"{self.person} ({self.year})"
+
+    @property
+    def salary_reports(self):
+        return (
+            ASalaryReport.objects.filter(person_month__person_year=self)
+            .annotate(
+                f_year=F("person_month__person_year__year"),
+                f_month=F("person_month__month"),
+            )
+            .order_by("f_year", "f_month", "employer")
+        )
+
+    @property
+    def latest_calculation_by_employer(self) -> Dict["Employer", Decimal]:
+        """
+        Extracts the lastest year-estimates from reports for each employer
+        :return:
+        """
+        latest_by_employer = {}
+        for report in self.salary_reports.reverse():
+            if report.employer not in latest_by_employer:
+                latest_by_employer[report.employer] = report.calculated_year_result
+        return latest_by_employer
+
+    @property
+    def latest_calculation(self) -> Decimal:
+        """
+        Returns the total lastest year-estimates from reports
+        :return:
+        """
+        return sum(self.latest_calculation_by_employer.values())  # type: ignore
 
 
 class PersonMonth(models.Model):
@@ -165,12 +198,27 @@ class ASalaryReport(models.Model):
     )
 
     @property
-    def year(self):
+    def month(self) -> int:
+        return self.person_month.month
+
+    @property
+    def person_year(self) -> PersonYear:
+        return self.person_month.person_year
+
+    @property
+    def year(self) -> int:
         return self.person_month.person_year.year
 
     @property
-    def month(self):
-        return self.person_month.month
+    def person(self) -> Person:
+        return self.person_month.person_year.person
+
+    @property
+    def calculated_year_result(self) -> Decimal | None:
+        first_item = self.calculationresult_set.first()
+        if first_item is None:
+            return None
+        return first_item.calculated_year_result
 
     def __str__(self):
         return f"{self.person_month} | {self.employer}"

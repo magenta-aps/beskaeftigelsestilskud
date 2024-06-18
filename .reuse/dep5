@@ -2,7 +2,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Beskæftigelsestilskud
 Upstream-Contact: Magenta ApS <info@magenta.dk>
 
-Files:  bf/eskat/fixtures/* log/* dev-environment/*   README.md  dev-idp/*
+Files:  bf/*/migrations/* bf/eskat/fixtures/* log/* dev-environment/*   README.md  dev-idp/*
 Copyright: 2024 Magenta ApS <info@magenta.dk>
 License: MPL-2.0
 

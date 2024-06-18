@@ -73,7 +73,9 @@ class Command(BaseCommand):
             # We are not yet at last line in file. Parse it as a regular item
             line = IndkomstCSVFileLine.from_csv_row(row)
             if line:
-                person, _ = Person.objects.get_or_create(cpr=line.cpr, defaults={})
+                person, _ = Person.objects.get_or_create(
+                    name=line.cpr, cpr=line.cpr, defaults={}
+                )
                 person_year, _ = PersonYear.objects.get_or_create(
                     person=person, year=year
                 )

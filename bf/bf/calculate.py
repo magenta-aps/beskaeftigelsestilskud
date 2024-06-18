@@ -2,21 +2,16 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from dataclasses import dataclass
 
+from data_analysis.models import CalculationResult
 from django.db.models import Avg, F, Max, Q, QuerySet, Sum
 
 from bf.models import ASalaryReport
 
 
-@dataclass
-class CalculationResult:
-    year_prediction: int
-
-
 class CalculationEngine:
     @classmethod
-    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult:
+    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult | None:
         raise NotImplementedError
 
 
@@ -33,32 +28,53 @@ class InYearExtrapolationEngine(CalculationEngine):
     description = "Ekstrapolation af beløb for måneder i indeværende år"
 
     @classmethod
-    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult:
+    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult | None:
+        if not datapoints.exists():
+            return None
         datapoints = datapoints.annotate(
-            year=F("person_month__person_year__year"), month=F("person_month__month")
+            # Do not use any properties on the class as annotation names.
+            # Django will explode trying to put values into the properties.
+            f_year=F("person_month__person_year__year"),
+            f_month=F("person_month__month"),
         )
-        year = datapoints.order_by("-year", "-month").values_list("year", flat=True)[0]
-        year_prediction = int(
-            12 * datapoints.filter(year=year).aggregate(avg=Avg("amount"))["avg"]
+        year = datapoints.order_by("-f_year", "-f_month").values_list(
+            "f_year", flat=True
+        )[0]
+        relevant: QuerySet[ASalaryReport] = datapoints.filter(f_year=year).order_by(
+            "f_month"
         )
-        return CalculationResult(year_prediction=year_prediction)
+        year_prediction = int(12 * relevant.aggregate(avg=Avg("amount"))["avg"])
+        latest: ASalaryReport = relevant.last()  # type: ignore
+        return CalculationResult(
+            calculated_year_result=year_prediction,
+            a_salary_report=latest,
+            engine=cls.__name__,
+        )
 
 
 class TwelveMonthsSummationEngine(CalculationEngine):
     description = "Summation af beløb for de seneste 12 måneder"
 
     @classmethod
-    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult:
+    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult | None:
+        if not datapoints.exists():
+            return None
         datapoints = datapoints.annotate(
-            year=F("person_month__person_year__year"), month=F("person_month__month")
+            f_year=F("person_month__person_year__year"),
+            f_month=F("person_month__month"),
         )
-        latest_year = datapoints.aggregate(max_year=Max("year"))["max_year"]
-        latest_month = datapoints.filter(year=latest_year).aggregate(
-            max_month=Max("month")
+        latest_year = datapoints.aggregate(max_year=Max("f_year"))["max_year"]
+        latest_month = datapoints.filter(f_year=latest_year).aggregate(
+            max_month=Max("f_month")
         )["max_month"]
-        relevant = datapoints.filter(
-            Q(year=latest_year, month__lte=latest_month)
-            | Q(year=latest_year - 1, month__gt=latest_month)
-        )
+        relevant: QuerySet[ASalaryReport] = datapoints.filter(
+            Q(f_year=latest_year, f_month__lte=latest_month)
+            | Q(f_year=latest_year - 1, f_month__gt=latest_month)
+        ).order_by("f_year", "f_month")
         year_prediction = int(relevant.aggregate(sum=Sum("amount"))["sum"])
-        return CalculationResult(year_prediction=year_prediction)
+        latest: ASalaryReport = relevant.last()  # type: ignore
+        return CalculationResult(
+            calculated_year_result=year_prediction,
+            a_salary_report=latest,
+            engine=cls.__name__,
+        )
