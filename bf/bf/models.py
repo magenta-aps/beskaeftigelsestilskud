@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 from datetime import date
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
