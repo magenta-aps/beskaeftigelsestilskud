@@ -71,12 +71,15 @@ class Command(BaseCommand):
                             predictions.append(
                                 [
                                     month,
-                                    resultat.year_prediction,
-                                    resultat.year_prediction - actual_year_sum,
+                                    resultat.calculated_year_result,
+                                    resultat.calculated_year_result - actual_year_sum,
                                     (
                                         (
                                             abs(
-                                                (resultat.year_prediction - actual_year_sum)
+                                                (
+                                                    resultat.calculated_year_result
+                                                    - actual_year_sum
+                                                )
                                                 / actual_year_sum
                                             )
                                             * 100
@@ -88,6 +91,9 @@ class Command(BaseCommand):
                             )
                             resultat.actual_year_result = actual_year_sum
                             resultat.save()
+                            print(
+                                f"{resultat.calculated_year_result} / {resultat.actual_year_result}"
+                            )
                     print(engine.description)
                     print(
                         tabulate(

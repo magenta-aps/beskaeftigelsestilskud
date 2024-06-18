@@ -3,9 +3,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 
-from bf.models import ASalaryReport
 from data_analysis.models import CalculationResult
 from django.db.models import Avg, F, Max, Q, QuerySet, Sum
+
+from bf.models import ASalaryReport
 
 
 class CalculationEngine:
@@ -44,9 +45,11 @@ class InYearExtrapolationEngine(CalculationEngine):
         )
         year_prediction = int(12 * relevant.aggregate(avg=Avg("amount"))["avg"])
         latest: ASalaryReport = relevant.last()  # type: ignore
-        latest.calculated_year_result = year_prediction
-        latest.save(update_fields=("calculated_year_result",))
-        return CalculationResult(year_prediction=year_prediction, a_salary_report=latest, engine=cls.__name__)
+        return CalculationResult(
+            calculated_year_result=year_prediction,
+            a_salary_report=latest,
+            engine=cls.__name__,
+        )
 
 
 class TwelveMonthsSummationEngine(CalculationEngine):
@@ -70,6 +73,8 @@ class TwelveMonthsSummationEngine(CalculationEngine):
         ).order_by("f_year", "f_month")
         year_prediction = int(relevant.aggregate(sum=Sum("amount"))["sum"])
         latest: ASalaryReport = relevant.last()  # type: ignore
-        latest.calculated_year_result = year_prediction
-        latest.save(update_fields=("calculated_year_result",))
-        return CalculationResult(year_prediction=year_prediction, a_salary_report=latest, engine=cls.__name__)
+        return CalculationResult(
+            calculated_year_result=year_prediction,
+            a_salary_report=latest,
+            engine=cls.__name__,
+        )

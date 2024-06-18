@@ -1,0 +1,29 @@
+{% extends "common/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load csp %}
+
+{% block content %}
+    <table class="table">
+    <thead>
+    <tr>
+        <th>Person</th>
+        <th>Employer</th>
+        <th>InYearExtrapolationEngine offset</th>
+        <th>TwelveMonthsSummationEngine offset</th>
+        <th>Actual year sum</th>
+    </tr>
+    </thead>
+    <tbody>
+{% for object in object_list %}
+    <tr>
+        <td><a href="{% url 'data_analysis:person_analysis' pk=object.person.pk year=year %}">{{ object.person.cpr }}</a></td>
+        <td>{{ object.employer.cvr }}</td>
+        <td>{{ object.InYearExtrapolationEngine|floatformat:2 }} %</td>
+        <td>{{ object.TwelveMonthsSummationEngine|floatformat:2 }} %</td>
+        <td>{{ object.actual_sum }}</td>
+    </tr>
+{% endfor %}
+    </tbody>
+    </table>
+{% endblock %}

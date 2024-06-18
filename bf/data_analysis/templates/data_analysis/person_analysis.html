@@ -110,7 +110,7 @@ $(document).ready(
             const row = doc.rows[rowId];
 
             // Insert DOM element for heading
-            const headingElem = $(`<h1>Employer: ${row.employer.cvr}</h1>`);
+            const headingElem = $(`<h1 id="employer_${row.employer.cvr}">Employer: ${row.employer.cvr}</h1>`);
             $("body").append(headingElem);
 
             // Insert DOM element for chart

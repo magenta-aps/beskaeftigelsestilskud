@@ -4,11 +4,10 @@
 
 from datetime import date
 
+from data_analysis.models import CalculationResult
 from django.test import TestCase
 
 from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear
-
-from data_analysis.models import CalculationResult
 
 
 class ModelTest(TestCase):

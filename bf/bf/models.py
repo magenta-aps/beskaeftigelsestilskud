@@ -198,12 +198,20 @@ class ASalaryReport(models.Model):
     )
 
     @property
-    def year(self):
+    def month(self) -> int:
+        return self.person_month.month
+
+    @property
+    def person_year(self) -> PersonYear:
+        return self.person_month.person_year
+
+    @property
+    def year(self) -> int:
         return self.person_month.person_year.year
 
     @property
-    def month(self):
-        return self.person_month.month
+    def person(self) -> Person:
+        return self.person_month.person_year.person
 
     @property
     def calculated_year_result(self) -> Decimal | None:
