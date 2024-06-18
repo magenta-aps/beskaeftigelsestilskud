@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 asgiref==3.8.1
 beautifulsoup4==4.12.2
 certifi==2024.6.2

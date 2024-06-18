@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 from bs4 import BeautifulSoup
 from common.models import User
 from django.conf import settings

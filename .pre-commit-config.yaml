@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 repos:
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0

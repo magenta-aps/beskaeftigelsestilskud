@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 import os

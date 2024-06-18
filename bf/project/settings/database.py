@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 import os

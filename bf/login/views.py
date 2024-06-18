@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 from django.conf import settings
 from django.contrib.auth import (
     BACKEND_SESSION_KEY,

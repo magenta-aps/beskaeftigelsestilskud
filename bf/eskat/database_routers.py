@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+
 class ESkatRouter:
     # Makes all non managed models in the eskat app use the actual eskat database.
     # Disallows migrations for the eskat database.
