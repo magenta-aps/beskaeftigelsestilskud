@@ -115,7 +115,8 @@ class EmploymentListView(
             )
             offsets = {}
             for engine, engine_calculations in calculations.items():
-                # Percent offset. Basically, how much off is the sum of estimations from the sum of actual values
+                # Percent offset.
+                # Basically, how much off is the sum of estimations from the sum of actual values
                 offsets[engine] = (
                     100
                     * sum(

@@ -12,7 +12,10 @@ class CalculationResult(models.Model):
     engine = models.CharField(
         max_length=100,
         choices=(
-            # We could create this list with [(cls.__name__, cls.description) for cls in CalculationEngine.__subclasses__()]
+            # We could create this list with [
+            #     (cls.__name__, cls.description)
+            #     for cls in CalculationEngine.__subclasses__()
+            # ]
             # but that would make a circular import
             (
                 "InYearExtrapolationEngine",

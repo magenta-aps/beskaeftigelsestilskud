@@ -91,9 +91,6 @@ class Command(BaseCommand):
                             )
                             resultat.actual_year_result = actual_year_sum
                             resultat.save()
-                            print(
-                                f"{resultat.calculated_year_result} / {resultat.actual_year_result}"
-                            )
                     print(engine.description)
                     print(
                         tabulate(
