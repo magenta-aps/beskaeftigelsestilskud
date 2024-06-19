@@ -8,7 +8,7 @@ from typing import Dict
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index
+from django.db.models import F, Index, Sum
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
@@ -105,6 +105,10 @@ class PersonYear(models.Model):
         """
         return sum(self.latest_calculation_by_employer.values())  # type: ignore
 
+    @staticmethod
+    def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
+        raise NotImplementedError  # pragma: no cover
+
 
 class PersonMonth(models.Model):
 
@@ -131,6 +135,13 @@ class PersonMonth(models.Model):
     municipality_name = models.TextField(blank=True, null=True)
     fully_tax_liable = models.BooleanField(blank=True, null=True)
     month = models.PositiveSmallIntegerField(blank=False, null=False)
+
+    paid_out = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
 
     @property
     def person(self):
@@ -161,6 +172,29 @@ class PersonMonth(models.Model):
 
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
+
+    def calculate_benefit(self) -> Decimal:
+        estimated_year_income: Decimal = sum(
+            [
+                salary_report.calculated_year_result
+                for salary_report in self.asalaryreport_set.all()
+            ]
+        )
+
+        # TODO: Foretag en beregning af beskæftigelsestilskud for hele året
+        year_benefit = PersonYear.calculate_benefit(estimated_year_income)
+
+        # Tidligere måneder i året for denne person
+        prior_months = self.person_year.personmonth_set.filter(month__lt=self.month)
+        # Totalt beløb der allerede er udbetalt tidligere på året
+        already_paid_out = prior_months.aggregate(sum=Sum("paid_out"))["sum"] or 0
+
+        # Denne måneds udbetaling = manglende udbetaling for resten af året (inkl. denne måned)
+        # divideret med antal måneder vi udbetaler dette beløb over (inkl. denne måned)
+        benefit_this_month = (year_benefit - already_paid_out) / (13 - self.month)
+
+        # TODO: Gem mellemregninger så vi kan vise dem til borgeren
+        return benefit_this_month
 
 
 class Employer(models.Model):

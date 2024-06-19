@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from datetime import date
+from decimal import Decimal
+from unittest.mock import patch
 
 from data_analysis.models import CalculationResult
 from django.test import TestCase
@@ -168,6 +170,29 @@ class TestPersonMonth(ModelTest):
 
     def test_string_methods(self):
         self.assertEqual(str(self.month1), "Jens Hansen (2024/1)")
+
+    def test_calculation(self):
+        with patch.object(
+            PersonYear, "calculate_benefit", return_value=Decimal("3600")
+        ):
+            month_benefit = self.month1.calculate_benefit()
+            self.month1.paid_out = month_benefit
+            self.month1.save(update_fields=("paid_out",))
+            self.assertEqual(month_benefit, Decimal("300.00"))
+        with patch.object(
+            PersonYear, "calculate_benefit", return_value=Decimal("3600")
+        ):
+            month_benefit = self.month2.calculate_benefit()
+            self.month2.paid_out = month_benefit
+            self.month2.save(update_fields=("paid_out",))
+            self.assertEqual(month_benefit, Decimal("300.00"))
+        with patch.object(
+            PersonYear, "calculate_benefit", return_value=Decimal("4600")
+        ):
+            month_benefit = self.month3.calculate_benefit()
+            self.month3.paid_out = month_benefit
+            self.month3.save(update_fields=("paid_out",))
+            self.assertEqual(month_benefit, Decimal("400.00"))
 
 
 class TestEmployer(ModelTest):
