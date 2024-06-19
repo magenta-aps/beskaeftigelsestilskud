@@ -172,28 +172,36 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(str(self.month1), "Jens Hansen (2024/1)")
 
     def test_calculation(self):
+        # Første måned i året
         with patch.object(
             PersonYear, "calculate_benefit", return_value=Decimal("3600")
         ):
-            month_benefit = self.month1.calculate_benefit()
-            self.month1.benefit_paid = month_benefit
-            self.month1.save(update_fields=("benefit_paid",))
-            self.assertEqual(month_benefit, Decimal("300.00"))
+            self.month1.calculate_benefit()
+            self.month1.save()
+            self.assertEqual(self.month1.estimated_year_benefit, Decimal("3600"))
+            self.assertEqual(self.month1.prior_benefit_paid, Decimal(0))
+            # 3600 / 12
+            self.assertEqual(self.month1.benefit_paid, Decimal("300.00"))
+        # Anden måned. Samme indkomstgrundlag
         with patch.object(
             PersonYear, "calculate_benefit", return_value=Decimal("3600")
         ):
-            month_benefit = self.month2.calculate_benefit()
-            self.month2.benefit_paid = month_benefit
-            self.month2.save(update_fields=("benefit_paid",))
-            self.assertEqual(month_benefit, Decimal("300.00"))
+            self.month2.calculate_benefit()
+            self.month2.save()
+            self.assertEqual(self.month2.estimated_year_benefit, Decimal("3600"))
+            self.assertEqual(self.month2.prior_benefit_paid, Decimal("300.00"))
+            # (3600 - 300) / (12 - 1)
+            self.assertEqual(self.month2.benefit_paid, Decimal("300.00"))
+        # Tredje måned. Højere indkomstgrundlag
         with patch.object(
             PersonYear, "calculate_benefit", return_value=Decimal("4600")
         ):
-            month_benefit = self.month3.calculate_benefit()
-            self.month3.benefit_paid = month_benefit
-            self.month3.save(update_fields=("benefit_paid",))
+            self.month3.calculate_benefit()
+            self.month3.save()
+            self.assertEqual(self.month3.estimated_year_benefit, Decimal("4600"))
+            self.assertEqual(self.month3.prior_benefit_paid, Decimal("600.00"))
             # (4600 - 300 - 300) / (12 - 2)
-            self.assertEqual(month_benefit, Decimal("400.00"))
+            self.assertEqual(self.month3.benefit_paid, Decimal("400.00"))
 
 
 class TestEmployer(ModelTest):

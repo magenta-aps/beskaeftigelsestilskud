@@ -143,6 +143,18 @@ class PersonMonth(models.Model):
         null=True,
         blank=True,
     )
+    estimated_year_benefit = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    prior_benefit_paid = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
 
     @property
     def person(self):
@@ -181,21 +193,24 @@ class PersonMonth(models.Model):
             estimated_year_income += salary_report.calculated_year_result or 0
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
-        estimated_year_benefit: Decimal = PersonYear.calculate_benefit(
+        self.estimated_year_benefit: Decimal = PersonYear.calculate_benefit(
             estimated_year_income
         )
 
         # Tidligere måneder i året for denne person
         prior_months = self.person_year.personmonth_set.filter(month__lt=self.month)
         # Totalt beløb der allerede er udbetalt tidligere på året
-        already_paid_out = prior_months.aggregate(sum=Sum("benefit_paid"))["sum"] or 0
+        self.prior_benefit_paid = (
+            prior_months.aggregate(sum=Sum("benefit_paid"))["sum"] or 0
+        )
 
         # Denne måneds udbetaling =
         # manglende udbetaling for resten af året (inkl. denne måned)
         # divideret med antal måneder vi udbetaler dette beløb over (inkl. denne måned)
-        benefit_this_month = (estimated_year_benefit - already_paid_out) / (
+        benefit_this_month = (self.estimated_year_benefit - self.prior_benefit_paid) / (
             13 - self.month
         )
+        self.benefit_paid = benefit_this_month
 
         # TODO: Gem mellemregninger så vi kan vise dem til borgeren
         return benefit_this_month
