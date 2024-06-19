@@ -175,15 +175,13 @@ class PersonMonth(models.Model):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
-        estimated_year_income: Decimal = sum(  # type: ignore
-            [
-                salary_report.calculated_year_result or 0
-                for salary_report in self.asalaryreport_set.all()
-            ]
-        )
+        estimated_year_income: Decimal = Decimal(0)
+        for salary_report in self.asalaryreport_set.all():
+            # Using a list comp. in a sum() makes MyPy complain
+            estimated_year_income += salary_report.calculated_year_result or 0
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
-        year_benefit = PersonYear.calculate_benefit(estimated_year_income)
+        year_benefit: Decimal = PersonYear.calculate_benefit(estimated_year_income)
 
         # Tidligere måneder i året for denne person
         prior_months = self.person_year.personmonth_set.filter(month__lt=self.month)
