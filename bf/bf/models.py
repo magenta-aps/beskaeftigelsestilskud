@@ -107,6 +107,7 @@ class PersonYear(models.Model):
 
     @staticmethod
     def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
+        # TODO
         raise NotImplementedError  # pragma: no cover
 
 
@@ -181,7 +182,7 @@ class PersonMonth(models.Model):
             ]
         )
 
-        # TODO: Foretag en beregning af beskæftigelsestilskud for hele året
+        # Foretag en beregning af beskæftigelsestilskud for hele året
         year_benefit = PersonYear.calculate_benefit(estimated_year_income)
 
         # Tidligere måneder i året for denne person
