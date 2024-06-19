@@ -192,7 +192,7 @@ class PersonMonth(models.Model):
             estimated_year_income += salary_report.calculated_year_result or 0
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
-        self.estimated_year_benefit: Decimal = self.person_year.calculate_benefit(
+        self.estimated_year_benefit = self.person_year.calculate_benefit(
             estimated_year_income
         )
 
@@ -202,6 +202,7 @@ class PersonMonth(models.Model):
         self.prior_benefit_paid = (
             prior_months.aggregate(sum=Sum("benefit_paid"))["sum"] or 0
         )
+        assert self.prior_benefit_paid is not None  # To shut MyPy up
 
         # Denne måneds udbetaling =
         # manglende udbetaling for resten af året (inkl. denne måned)
