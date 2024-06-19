@@ -176,22 +176,23 @@ class TestPersonMonth(ModelTest):
             PersonYear, "calculate_benefit", return_value=Decimal("3600")
         ):
             month_benefit = self.month1.calculate_benefit()
-            self.month1.paid_out = month_benefit
-            self.month1.save(update_fields=("paid_out",))
+            self.month1.benefit_paid = month_benefit
+            self.month1.save(update_fields=("benefit_paid",))
             self.assertEqual(month_benefit, Decimal("300.00"))
         with patch.object(
             PersonYear, "calculate_benefit", return_value=Decimal("3600")
         ):
             month_benefit = self.month2.calculate_benefit()
-            self.month2.paid_out = month_benefit
-            self.month2.save(update_fields=("paid_out",))
+            self.month2.benefit_paid = month_benefit
+            self.month2.save(update_fields=("benefit_paid",))
             self.assertEqual(month_benefit, Decimal("300.00"))
         with patch.object(
             PersonYear, "calculate_benefit", return_value=Decimal("4600")
         ):
             month_benefit = self.month3.calculate_benefit()
-            self.month3.paid_out = month_benefit
-            self.month3.save(update_fields=("paid_out",))
+            self.month3.benefit_paid = month_benefit
+            self.month3.save(update_fields=("benefit_paid",))
+            # (4600 - 300 - 300) / (12 - 2)
             self.assertEqual(month_benefit, Decimal("400.00"))
 
 
