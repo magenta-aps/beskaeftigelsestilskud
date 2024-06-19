@@ -106,7 +106,7 @@ class PersonYear(models.Model):
         return sum(self.latest_calculation_by_employer.values())  # type: ignore
 
     @staticmethod
-    def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
+    def calculate_benefit(estimated_year_income: Decimal) -> Decimal:
         # TODO
         raise NotImplementedError  # pragma: no cover
 
@@ -175,9 +175,9 @@ class PersonMonth(models.Model):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
-        estimated_year_income: Decimal = sum(
+        estimated_year_income: Decimal = sum(  # type: ignore
             [
-                salary_report.calculated_year_result
+                salary_report.calculated_year_result or 0
                 for salary_report in self.asalaryreport_set.all()
             ]
         )
