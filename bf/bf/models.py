@@ -190,7 +190,8 @@ class PersonMonth(models.Model):
         # Totalt beløb der allerede er udbetalt tidligere på året
         already_paid_out = prior_months.aggregate(sum=Sum("paid_out"))["sum"] or 0
 
-        # Denne måneds udbetaling = manglende udbetaling for resten af året (inkl. denne måned)
+        # Denne måneds udbetaling =
+        # manglende udbetaling for resten af året (inkl. denne måned)
         # divideret med antal måneder vi udbetaler dette beløb over (inkl. denne måned)
         benefit_this_month = (year_benefit - already_paid_out) / (13 - self.month)
 
