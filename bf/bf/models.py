@@ -7,6 +7,8 @@ from decimal import Decimal
 from functools import cached_property
 from typing import Dict
 
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import F, Index, Sum
@@ -23,7 +25,7 @@ class WorkingTaxCreditCalculationMethod(models.Model):
         raise NotImplementedError  # pragma: no cover
 
 
-class StandardWorkBenefitCalculationMethod(WorkBenefitCalculationMethod):
+class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
 
     benefit_rate_percent = models.DecimalField(
         max_digits=5,
@@ -36,7 +38,7 @@ class StandardWorkBenefitCalculationMethod(WorkBenefitCalculationMethod):
     def benefit_rate(self) -> Decimal:
         return self.benefit_rate_percent * Decimal("0.01")
 
-    person_deduction = models.DecimalField(
+    personal_allowance = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=False,
@@ -75,14 +77,31 @@ class StandardWorkBenefitCalculationMethod(WorkBenefitCalculationMethod):
     def calculate(self, amount: Decimal) -> Decimal:
         zero = Decimal(0)
         rateable_amount = max(
-            amount - self.person_deduction - self.standard_deduction, zero
+            amount - self.personal_allowance - self.standard_allowance, zero
         )
         scaledown_amount = max(amount - self.scaledown_ceiling, zero)
-        return max(
-            min(self.benefit_rate * rateable_amount, self.max_benefit)
-            - self.scaledown_date * scaledown_amount,
-            zero,
+        return round(
+            max(
+                min(self.benefit_rate * rateable_amount, self.max_benefit)
+                - self.scaledown_date * scaledown_amount,
+                zero,
+            ),
+            2,
         )
+
+
+class Year(models.Model):
+    year = models.PositiveSmallIntegerField(primary_key=True)
+    calculation_method_content_type = models.ForeignKey(
+        ContentType, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    calculation_method_object_id = models.PositiveIntegerField(null=True, blank=True)
+    calculation_method = GenericForeignKey(
+        "calculation_method_content_type", "calculation_method_object_id"
+    )
+
+    def __str__(self):
+        return str(self.year)
 
 
 class Person(models.Model):
@@ -130,8 +149,12 @@ class PersonYear(models.Model):
     person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,
+        blank=False,
+        null=False,
     )
-    year = models.PositiveSmallIntegerField(
+    year = models.ForeignKey(
+        Year,
+        on_delete=models.CASCADE,
         blank=False,
         null=False,
     )
@@ -151,7 +174,7 @@ class PersonYear(models.Model):
         return (
             ASalaryReport.objects.filter(person_month__person_year=self)
             .annotate(
-                f_year=F("person_month__person_year__year"),
+                f_year=F("person_month__person_year__year_id"),
                 f_month=F("person_month__month"),
             )
             .order_by("f_year", "f_month", "employer")
@@ -178,8 +201,7 @@ class PersonYear(models.Model):
         return sum(self.latest_calculation_by_employer.values())  # type: ignore
 
     def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
-        # TODO
-        raise NotImplementedError  # pragma: no cover
+        return self.year.calculation_method.calculate(estimated_year_income)
 
 
 class PersonMonth(models.Model):
@@ -234,7 +256,7 @@ class PersonMonth(models.Model):
 
     @property
     def year(self):
-        return self.person_year.year
+        return self.person_year.year_id
 
     @classmethod
     def from_eskat_mandtal(
@@ -245,7 +267,8 @@ class PersonMonth(models.Model):
         year: int,
         month: int,
     ) -> "PersonMonth":
-        person_year, _ = PersonYear.objects.get_or_create(person=person, year=year)
+        year_obj, _ = Year.objects.get_or_create(year=year)
+        person_year, _ = PersonYear.objects.get_or_create(person=person, year=year_obj)
         return PersonMonth(
             person_year=person_year,
             month=month,
@@ -281,8 +304,9 @@ class PersonMonth(models.Model):
         # Denne måneds udbetaling =
         # manglende udbetaling for resten af året (inkl. denne måned)
         # divideret med antal måneder vi udbetaler dette beløb over (inkl. denne måned)
-        benefit_this_month = (self.estimated_year_benefit - self.prior_benefit_paid) / (
-            13 - self.month
+        benefit_this_month = round(
+            (self.estimated_year_benefit - self.prior_benefit_paid) / (13 - self.month),
+            2,
         )
 
         # Hvis vi har udbetalt for meget før, og denne måned er negativ,
@@ -340,7 +364,7 @@ class ASalaryReport(models.Model):
 
     @property
     def year(self) -> int:
-        return self.person_month.person_year.year
+        return self.person_month.person_year.year_id
 
     @property
     def person(self) -> Person:

@@ -16,35 +16,46 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     StandardWorkBenefitCalculationMethod,
+    Year,
 )
 
 
 class ModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
-        cls.year = PersonYear.objects.create(
-            person=cls.person,
-            year=2024,
+        cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
         )
-        cls.year2 = PersonYear.objects.create(
+        cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
+        cls.year2 = Year.objects.create(year=2025, calculation_method=cls.calc)
+        cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
+        cls.person_year = PersonYear.objects.create(
             person=cls.person,
-            year=2025,
+            year=cls.year,
+        )
+        cls.person_year2 = PersonYear.objects.create(
+            person=cls.person,
+            year=cls.year2,
         )
         cls.month1 = PersonMonth.objects.create(
-            person_year=cls.year, month=1, import_date=date.today()
+            person_year=cls.person_year, month=1, import_date=date.today()
         )
         cls.month2 = PersonMonth.objects.create(
-            person_year=cls.year, month=2, import_date=date.today()
+            person_year=cls.person_year, month=2, import_date=date.today()
         )
         cls.month3 = PersonMonth.objects.create(
-            person_year=cls.year, month=3, import_date=date.today()
+            person_year=cls.person_year, month=3, import_date=date.today()
         )
         cls.month4 = PersonMonth.objects.create(
-            person_year=cls.year, month=4, import_date=date.today()
+            person_year=cls.person_year, month=4, import_date=date.today()
         )
         cls.month5 = PersonMonth.objects.create(
-            person_year=cls.year2, month=1, import_date=date.today()
+            person_year=cls.person_year2, month=1, import_date=date.today()
         )
         cls.employer1 = Employer.objects.create(
             name="Fredes Fisk",
@@ -57,95 +68,84 @@ class ModelTest(TestCase):
         cls.report1 = ASalaryReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month1,
-            amount=100,
+            amount=10000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report1,
-            calculated_year_result=12 * 100,
+            calculated_year_result=12 * 10000,
         )
         cls.report2 = ASalaryReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month2,
-            amount=110,
+            amount=11000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report2,
-            calculated_year_result=6 * (100 + 110),
+            calculated_year_result=6 * (10000 + 11000),
         )
         cls.report3 = ASalaryReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month3,
-            amount=120,
+            amount=12000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report3,
-            calculated_year_result=4 * (100 + 110 + 120),
+            calculated_year_result=4 * (10000 + 11000 + 12000),
         )
         cls.report4 = ASalaryReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month4,
-            amount=130,
+            amount=13000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report4,
-            calculated_year_result=3 * (100 + 110 + 120 + 130),
+            calculated_year_result=3 * (10000 + 11000 + 12000 + 13000),
         )
         cls.report5 = ASalaryReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month1,
-            amount=150,
+            amount=15000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report5,
-            calculated_year_result=12 * 150,
+            calculated_year_result=12 * 15000,
         )
         cls.report6 = ASalaryReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month2,
-            amount=120,
+            amount=12000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report6,
-            calculated_year_result=6 * (150 + 120),
+            calculated_year_result=6 * (15000 + 12000),
         )
         cls.report7 = ASalaryReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month3,
-            amount=100,
+            amount=10000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report7,
-            calculated_year_result=4 * (150 + 120 + 100),
+            calculated_year_result=4 * (15000 + 12000 + 10000),
         )
         cls.report8 = ASalaryReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month4,
-            amount=80,
+            amount=8000,
         )
         CalculationResult.objects.create(
             a_salary_report=cls.report8,
-            calculated_year_result=3 * (150 + 120 + 100 + 80),
+            calculated_year_result=3 * (15000 + 12000 + 10000 + 8000),
         )
         cls.report9 = ASalaryReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month5,
-            amount=80,
+            amount=8000,
         )
         # No CalculationResult
 
 
-class TestStandardWorkBenefitCalculationMethod(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
-            benefit_rate_percent=Decimal("17.5"),
-            person_deduction=Decimal("58000.00"),
-            standard_deduction=Decimal("10000"),
-            max_benefit=Decimal("15750.00"),
-            scaledown_rate_percent=Decimal("6.3"),
-            scaledown_ceiling=Decimal("250000.00"),
-        )
+class TestStandardWorkBenefitCalculationMethod(ModelTest):
 
     def test_low(self):
         self.assertEqual(self.calc.calculate(Decimal("0")), Decimal(0))
@@ -153,13 +153,13 @@ class TestStandardWorkBenefitCalculationMethod(TestCase):
         self.assertEqual(self.calc.calculate(Decimal("58000")), Decimal(0))
 
     def test_ramp_up(self):
-        self.assertEqual(self.calc.calculate(Decimal("58000")), Decimal(0))
-        self.assertEqual(self.calc.calculate(Decimal("60000")), Decimal("350.00"))
-        self.assertEqual(self.calc.calculate(Decimal("120000")), Decimal("10850.00"))
-        self.assertEqual(self.calc.calculate(Decimal("148000")), Decimal("15750.00"))
+        self.assertEqual(self.calc.calculate(Decimal("68000")), Decimal(0))
+        self.assertEqual(self.calc.calculate(Decimal("70000")), Decimal("350.00"))
+        self.assertEqual(self.calc.calculate(Decimal("130000")), Decimal("10850.00"))
+        self.assertEqual(self.calc.calculate(Decimal("158000")), Decimal("15750.00"))
 
     def test_plateau(self):
-        self.assertEqual(self.calc.calculate(Decimal("148000")), Decimal("15750.00"))
+        self.assertEqual(self.calc.calculate(Decimal("158000")), Decimal("15750.00"))
         self.assertEqual(self.calc.calculate(Decimal("200000")), Decimal("15750.00"))
         self.assertEqual(self.calc.calculate(Decimal("250000")), Decimal("15750.00"))
 
@@ -185,11 +185,11 @@ class TestPerson(ModelTest):
 class TestPersonYear(ModelTest):
 
     def test_string_methods(self):
-        self.assertEqual(str(self.year), "Jens Hansen (2024)")
+        self.assertEqual(str(self.person_year), "Jens Hansen (2024)")
 
     def test_salary_reports(self):
         self.assertEqual(
-            list(self.year.salary_reports),
+            list(self.person_year.salary_reports),
             [
                 self.report1,
                 self.report5,
@@ -204,7 +204,7 @@ class TestPersonYear(ModelTest):
 
     def test_latest_calculation(self):
         self.assertEqual(
-            self.year.latest_calculation,
+            self.person_year.latest_calculation,
             self.report4.calculated_year_result + self.report8.calculated_year_result,
         )
 
@@ -220,7 +220,7 @@ class TestPersonMonth(ModelTest):
     def test_string_methods(self):
         self.assertEqual(str(self.month1), "Jens Hansen (2024/1)")
 
-    def test_calculation(self):
+    def test_calculation_overloaded(self):
         # Første måned i året
         with patch.object(
             PersonYear, "calculate_benefit", return_value=Decimal("3600")
@@ -252,7 +252,7 @@ class TestPersonMonth(ModelTest):
             # (4600 - 300 - 300) / (12 - 2)
             self.assertEqual(self.month3.benefit_paid, Decimal("400.00"))
 
-    def test_calculation_negative(self):
+    def test_calculation_overloaded_negative(self):
         # Første måned i året
         with patch.object(
             PersonYear, "calculate_benefit", return_value=Decimal("12000")
@@ -272,6 +272,19 @@ class TestPersonMonth(ModelTest):
             self.assertEqual(self.month2.prior_benefit_paid, Decimal("1000.00"))
             self.assertEqual(self.month2.benefit_paid, Decimal("0.00"))
 
+    def test_calculation_direct(self):
+        self.month1.calculate_benefit()
+        self.month1.save()
+        self.assertEqual(self.month1.estimated_year_benefit, Decimal("12600.00"))
+        self.assertEqual(self.month1.prior_benefit_paid, Decimal(0))
+        self.assertEqual(self.month1.benefit_paid, Decimal("1050.00"))
+
+        self.month2.calculate_benefit()
+        self.month2.save()
+        self.assertEqual(self.month2.estimated_year_benefit, Decimal("13356.00"))
+        self.assertEqual(self.month2.prior_benefit_paid, Decimal("1050.00"))
+        self.assertEqual(self.month2.benefit_paid, Decimal("1118.73"))
+
 
 class TestEmployer(ModelTest):
 
@@ -282,7 +295,7 @@ class TestEmployer(ModelTest):
 class TestSalaryReport(ModelTest):
 
     def test_shortcuts(self):
-        self.assertEqual(self.report1.person_year, self.year)
+        self.assertEqual(self.report1.person_year, self.person_year)
         self.assertEqual(self.report1.person, self.person)
         self.assertEqual(self.report1.year, 2024)
         self.assertEqual(self.report1.month, 1)

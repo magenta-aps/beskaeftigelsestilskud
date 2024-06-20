@@ -11,7 +11,7 @@ from django.db import transaction
 from eskat.models import ESkatMandtal
 from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
-from bf.models import Person, PersonMonth
+from bf.models import Person, PersonMonth, Year
 
 CPR: TypeAlias = str
 
@@ -147,7 +147,7 @@ class Command(BaseCommand):
         # to update (in case there is already data for the same CPRs on the same import
         # date.)
         current_person_months = PersonMonth.objects.filter(
-            person_year__year=mandtal_result.year, month=mandtal_result.month
+            person_year__year_id=mandtal_result.year, month=mandtal_result.month
         )
         persons_by_cpr = {p.cpr: p for p in persons}
         person_months = [
