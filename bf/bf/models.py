@@ -190,6 +190,7 @@ class PersonMonth(models.Model):
         for salary_report in self.asalaryreport_set.all():
             # Using a list comp. in a sum() makes MyPy complain
             estimated_year_income += salary_report.calculated_year_result or 0
+        # TODO: medtag andre relevante indkomster i summen
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
         self.estimated_year_benefit = self.person_year.calculate_benefit(
