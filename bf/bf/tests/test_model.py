@@ -9,7 +9,14 @@ from unittest.mock import patch
 from data_analysis.models import CalculationResult
 from django.test import TestCase
 
-from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear
+from bf.models import (
+    ASalaryReport,
+    Employer,
+    Person,
+    PersonMonth,
+    PersonYear,
+    StandardWorkBenefitCalculationMethod,
+)
 
 
 class ModelTest(TestCase):
@@ -125,6 +132,48 @@ class ModelTest(TestCase):
             amount=80,
         )
         # No CalculationResult
+
+
+class TestStandardWorkBenefitCalculationMethod(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            person_deduction=Decimal("58000.00"),
+            standard_deduction=Decimal("0"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+
+    def test_low(self):
+        self.assertEqual(self.calc.calculate(Decimal("0")), Decimal(0))
+        self.assertEqual(self.calc.calculate(Decimal("25000")), Decimal(0))
+        self.assertEqual(self.calc.calculate(Decimal("58000")), Decimal(0))
+
+    def test_ramp_up(self):
+        self.assertEqual(self.calc.calculate(Decimal("58000")), Decimal(0))
+        self.assertEqual(self.calc.calculate(Decimal("60000")), Decimal("350.00"))
+        self.assertEqual(self.calc.calculate(Decimal("120000")), Decimal("10850.00"))
+        self.assertEqual(self.calc.calculate(Decimal("148000")), Decimal("15750.00"))
+
+    def test_plateau(self):
+        self.assertEqual(self.calc.calculate(Decimal("148000")), Decimal("15750.00"))
+        self.assertEqual(self.calc.calculate(Decimal("200000")), Decimal("15750.00"))
+        self.assertEqual(self.calc.calculate(Decimal("250000")), Decimal("15750.00"))
+
+    def test_ramp_down(self):
+        self.assertEqual(self.calc.calculate(Decimal("250000")), Decimal("15750.00"))
+        self.assertEqual(self.calc.calculate(Decimal("261000")), Decimal("15057.00"))
+        self.assertEqual(self.calc.calculate(Decimal("340000")), Decimal("10080.00"))
+        self.assertEqual(self.calc.calculate(Decimal("490000")), Decimal("630.00"))
+        self.assertEqual(self.calc.calculate(Decimal("500000")), Decimal(0))
+
+    def test_high(self):
+        self.assertEqual(self.calc.calculate(Decimal("500000")), Decimal(0))
+        self.assertEqual(self.calc.calculate(Decimal("750000")), Decimal(0))
+        self.assertEqual(self.calc.calculate(Decimal("1000000")), Decimal(0))
 
 
 class TestPerson(ModelTest):

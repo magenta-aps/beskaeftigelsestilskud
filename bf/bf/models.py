@@ -4,6 +4,7 @@
 
 from datetime import date
 from decimal import Decimal
+from functools import cached_property
 from typing import Dict
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -12,6 +13,76 @@ from django.db.models import F, Index, Sum
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
+
+
+class WorkBenefitCalculationMethod(models.Model):
+    class Meta:
+        abstract = True
+
+    def calculate(self, amount: Decimal) -> Decimal:
+        raise NotImplementedError  # pragma: no cover
+
+
+class StandardWorkBenefitCalculationMethod(WorkBenefitCalculationMethod):
+
+    benefit_rate_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=3,
+        null=False,
+        blank=False,
+    )
+
+    @cached_property
+    def benefit_rate(self) -> Decimal:
+        return self.benefit_rate_percent * Decimal("0.01")
+
+    person_deduction = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+    standard_deduction = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+    max_benefit = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+    scaledown_rate_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=3,
+        null=False,
+        blank=False,
+    )
+
+    @cached_property
+    def scaledown_date(self) -> Decimal:
+        return self.scaledown_rate_percent * Decimal("0.01")
+
+    scaledown_ceiling = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
+    def calculate(self, amount: Decimal) -> Decimal:
+        zero = Decimal(0)
+        rateable_amount = max(
+            amount - self.person_deduction - self.standard_deduction, zero
+        )
+        scaledown_amount = max(amount - self.scaledown_ceiling, zero)
+        return max(
+            min(self.benefit_rate * rateable_amount, self.max_benefit)
+            - self.scaledown_date * scaledown_amount,
+            zero,
+        )
 
 
 class Person(models.Model):
