@@ -47,9 +47,9 @@ class Migration(migrations.Migration):
                 ('municipality_name', models.TextField(blank=True, null=True)),
                 ('fully_tax_liable', models.BooleanField(blank=True, null=True)),
                 ('month', models.PositiveSmallIntegerField()),
-                ('benefit_paid', models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True)),
-                ('estimated_year_benefit', models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True)),
-                ('prior_benefit_paid', models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True)),
+                ('benefit_paid', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
+                ('estimated_year_benefit', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
+                ('prior_benefit_paid', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
             ],
         ),
         migrations.CreateModel(

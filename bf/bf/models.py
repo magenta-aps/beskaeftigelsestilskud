@@ -137,19 +137,19 @@ class PersonMonth(models.Model):
     month = models.PositiveSmallIntegerField(blank=False, null=False)
 
     benefit_paid = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
     )
     estimated_year_benefit = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
     )
     prior_benefit_paid = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
@@ -215,7 +215,7 @@ class PersonMonth(models.Model):
         # Hvis vi har udbetalt for meget før, og denne måned er negativ,
         # lad være med at udbetale noget
         if benefit_this_month < 0:
-            benefit_this_month = 0
+            benefit_this_month = Decimal(0)
 
         self.benefit_paid = benefit_this_month
 
