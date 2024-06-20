@@ -11,7 +11,7 @@ from django.db import transaction
 from eskat.models import ESkatMandtal
 from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
-from bf.models import Person, PersonMonth, Year
+from bf.models import Person, PersonMonth
 
 CPR: TypeAlias = str
 
