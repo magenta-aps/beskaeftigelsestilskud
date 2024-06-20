@@ -21,6 +21,7 @@ services:
       - file-data:/upload  # rw for at kunne teste; bør være ro i deployments
       - ./log/bf.log:/log/bf.log:rw
       - ./dev-environment/cert:/ssl:ro
+      - ./mypy.ini:/mypy.ini:ro
     environment:
       - MAKE_MIGRATIONS=true
       - MIGRATE=true
