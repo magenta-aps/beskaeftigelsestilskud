@@ -203,6 +203,26 @@ class TestPersonMonth(ModelTest):
             # (4600 - 300 - 300) / (12 - 2)
             self.assertEqual(self.month3.benefit_paid, Decimal("400.00"))
 
+    def test_calculation_negative(self):
+        # Første måned i året
+        with patch.object(
+            PersonYear, "calculate_benefit", return_value=Decimal("12000")
+        ):
+            self.month1.calculate_benefit()
+            self.month1.save()
+            self.assertEqual(self.month1.estimated_year_benefit, Decimal("12000"))
+            self.assertEqual(self.month1.prior_benefit_paid, Decimal(0))
+            # 12000 / 12
+            self.assertEqual(self.month1.benefit_paid, Decimal("1000.00"))
+        # Anden måned. Mindre indkomstgrundlag.
+        # Test at vi ikke får negativt beløb ud, men 0
+        with patch.object(PersonYear, "calculate_benefit", return_value=Decimal("500")):
+            self.month2.calculate_benefit()
+            self.month2.save()
+            self.assertEqual(self.month2.estimated_year_benefit, Decimal("500"))
+            self.assertEqual(self.month2.prior_benefit_paid, Decimal("1000.00"))
+            self.assertEqual(self.month2.benefit_paid, Decimal("0.00"))
+
 
 class TestEmployer(ModelTest):
 
