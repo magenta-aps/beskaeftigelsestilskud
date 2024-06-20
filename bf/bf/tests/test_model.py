@@ -141,7 +141,7 @@ class TestStandardWorkBenefitCalculationMethod(TestCase):
         cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
             benefit_rate_percent=Decimal("17.5"),
             person_deduction=Decimal("58000.00"),
-            standard_deduction=Decimal("0"),
+            standard_deduction=Decimal("10000"),
             max_benefit=Decimal("15750.00"),
             scaledown_rate_percent=Decimal("6.3"),
             scaledown_ceiling=Decimal("250000.00"),

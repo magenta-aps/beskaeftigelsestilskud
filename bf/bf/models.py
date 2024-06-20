@@ -15,7 +15,7 @@ from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
 
 
-class WorkBenefitCalculationMethod(models.Model):
+class WorkingTaxCreditCalculationMethod(models.Model):
     class Meta:
         abstract = True
 
@@ -42,7 +42,7 @@ class StandardWorkBenefitCalculationMethod(WorkBenefitCalculationMethod):
         null=False,
         blank=False,
     )
-    standard_deduction = models.DecimalField(
+    standard_allowance = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=False,
