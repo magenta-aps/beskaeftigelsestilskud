@@ -8,7 +8,7 @@ from typing import Dict
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index
+from django.db.models import F, Index, Sum
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
@@ -105,6 +105,10 @@ class PersonYear(models.Model):
         """
         return sum(self.latest_calculation_by_employer.values())  # type: ignore
 
+    def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
+        # TODO
+        raise NotImplementedError  # pragma: no cover
+
 
 class PersonMonth(models.Model):
 
@@ -131,6 +135,25 @@ class PersonMonth(models.Model):
     municipality_name = models.TextField(blank=True, null=True)
     fully_tax_liable = models.BooleanField(blank=True, null=True)
     month = models.PositiveSmallIntegerField(blank=False, null=False)
+
+    benefit_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    estimated_year_benefit = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    prior_benefit_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
 
     @property
     def person(self):
@@ -161,6 +184,42 @@ class PersonMonth(models.Model):
 
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
+
+    def calculate_benefit(self) -> Decimal:
+        estimated_year_income: Decimal = Decimal(0)
+        for salary_report in self.asalaryreport_set.all():
+            # Using a list comp. in a sum() makes MyPy complain
+            estimated_year_income += salary_report.calculated_year_result or 0
+        # TODO: medtag andre relevante indkomster i summen
+
+        # Foretag en beregning af beskæftigelsestilskud for hele året
+        self.estimated_year_benefit = self.person_year.calculate_benefit(
+            estimated_year_income
+        )
+
+        # Tidligere måneder i året for denne person
+        prior_months = self.person_year.personmonth_set.filter(month__lt=self.month)
+        # Totalt beløb der allerede er udbetalt tidligere på året
+        self.prior_benefit_paid = (
+            prior_months.aggregate(sum=Sum("benefit_paid"))["sum"] or 0
+        )
+        assert self.prior_benefit_paid is not None  # To shut MyPy up
+
+        # Denne måneds udbetaling =
+        # manglende udbetaling for resten af året (inkl. denne måned)
+        # divideret med antal måneder vi udbetaler dette beløb over (inkl. denne måned)
+        benefit_this_month = (self.estimated_year_benefit - self.prior_benefit_paid) / (
+            13 - self.month
+        )
+
+        # Hvis vi har udbetalt for meget før, og denne måned er negativ,
+        # lad være med at udbetale noget
+        if benefit_this_month < 0:
+            benefit_this_month = Decimal(0)
+
+        self.benefit_paid = benefit_this_month
+
+        return benefit_this_month
 
 
 class Employer(models.Model):
