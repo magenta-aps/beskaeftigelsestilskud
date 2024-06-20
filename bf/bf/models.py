@@ -201,6 +201,10 @@ class PersonYear(models.Model):
         return sum(self.latest_calculation_by_employer.values())  # type: ignore
 
     def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
+        if self.year.calculation_method is None:
+            raise ReferenceError(
+                f"Cannot calculate benefit; calculation method not set for year {self.year}"
+            )
         return self.year.calculation_method.calculate(estimated_year_income)
 
 
