@@ -29,11 +29,17 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--year", type=int)
+        parser.add_argument("--count", type=int)
 
     def handle(self, *args, **kwargs):
+        self._verbose = kwargs["verbosity"] > 1
         year = kwargs.get("year") or date.today().year
+        person_qs = Person.objects.all()
+        if kwargs["count"]:
+            person_qs = person_qs[: kwargs["count"]]
+
         summary_table_by_engine = defaultdict(list)
-        for person in Person.objects.all():
+        for person in person_qs:
             qs = ASalaryReport.objects.alias(
                 person=F("person_month__person_year__person"),
                 year=F("person_month__person_year__year"),
@@ -41,17 +47,17 @@ class Command(BaseCommand):
             ).filter(person=person.pk)
             employers = [x.employer for x in qs.distinct("employer")]
             for employer in employers:
-                print("====================================")
-                print(f"CPR: {person.cpr}")
-                print(f"CVR: {employer.cvr}")
-                print("")
+                self._write_verbose("====================================")
+                self._write_verbose(f"CPR: {person.cpr}")
+                self._write_verbose(f"CVR: {employer.cvr}")
+                self._write_verbose("")
                 employment = qs.filter(employer=employer)
                 amounts = [item.amount for item in employment if item.year == year]
                 actual_year_sum = sum(amounts)
                 stddev_over_sum = (
                     std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
                 )
-                print(
+                self._write_verbose(
                     tabulate(
                         [[item.year, item.month, item.amount] for item in employment]
                         + [SEPARATING_LINE, ["Sum", actual_year_sum]],
@@ -59,7 +65,7 @@ class Command(BaseCommand):
                         tablefmt="simple",
                     )
                 )
-                print("")
+                self._write_verbose("")
                 for engine in self.engines:
                     predictions = []
                     for month in range(1, 13):
@@ -91,8 +97,8 @@ class Command(BaseCommand):
                             )
                             resultat.actual_year_result = actual_year_sum
                             resultat.save()
-                    print(engine.description)
-                    print(
+                    self._write_verbose(engine.description)
+                    self._write_verbose(
                         tabulate(
                             predictions,
                             headers=[
@@ -104,7 +110,7 @@ class Command(BaseCommand):
                             intfmt=("d", "d", "+d", "d"),
                         )
                     )
-                    print("")
+                    self._write_verbose("")
                     summary_table_by_engine[engine.__class__.__name__].append(
                         {
                             "cpr": person.cpr,
@@ -150,3 +156,7 @@ class Command(BaseCommand):
                             for prediction in result["month_predictions"]
                         ]
                     )
+
+    def _write_verbose(self, *args):
+        if self._verbose:
+            self.stdout.write(*args)
