@@ -37,16 +37,18 @@ class IndkomstCSVFileLine:
                 amounts=cls._get_columns(row, 3, 3 + 24),
             )
 
-    @classmethod
-    def _get_column(cls, row, index: int, default: int = 0) -> int:
+    @staticmethod
+    def _get_column(row, index: int, default: int = 0) -> int:
         try:
             return int(row[index]) or default
         except (ValueError, IndexError):
             return default
 
-    @classmethod
-    def _get_columns(cls, row, start: int, end: int) -> list[int]:
-        return [cls._get_column(row, index) for index in range(start, end)]
+    @staticmethod
+    def _get_columns(row, start: int, end: int) -> list[int]:
+        return [
+            IndkomstCSVFileLine._get_column(row, index) for index in range(start, end)
+        ]
 
 
 class Command(BaseCommand):
