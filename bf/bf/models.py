@@ -64,7 +64,7 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
     )
 
     @cached_property
-    def scaledown_date(self) -> Decimal:
+    def scaledown_rate(self) -> Decimal:
         return self.scaledown_rate_percent * Decimal("0.01")
 
     scaledown_ceiling = models.DecimalField(
@@ -83,7 +83,7 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         return round(
             max(
                 min(self.benefit_rate * rateable_amount, self.max_benefit)
-                - self.scaledown_date * scaledown_amount,
+                - self.scaledown_rate * scaledown_amount,
                 zero,
             ),
             2,
