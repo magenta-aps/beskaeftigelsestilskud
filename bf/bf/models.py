@@ -23,6 +23,7 @@ class Person(models.Model):
     cpr = models.TextField(
         null=False,
         blank=False,
+        unique=True,
         max_length=10,
         validators=(RegexValidator(regex=r"\d{10}"),),
         verbose_name=_("CPR nummer"),
@@ -117,6 +118,7 @@ class PersonMonth(models.Model):
             Index(fields=("month",)),
             Index(fields=("municipality_code",)),
         ]
+        unique_together = ("person_year", "month")
 
     person_year = models.ForeignKey(
         PersonYear,
@@ -226,6 +228,7 @@ class Employer(models.Model):
     cvr = models.PositiveIntegerField(
         verbose_name=_("CVR-nummer"),
         db_index=True,
+        unique=True,
         validators=(
             MinValueValidator(1000000),
             MaxValueValidator(99999999),
