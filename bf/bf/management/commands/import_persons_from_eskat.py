@@ -147,7 +147,7 @@ class Command(BaseCommand):
         # to update (in case there is already data for the same CPRs on the same import
         # date.)
         current_person_months = PersonMonth.objects.filter(
-            person_year__year=mandtal_result.year, month=mandtal_result.month
+            person_year__year_id=mandtal_result.year, month=mandtal_result.month
         )
         persons_by_cpr = {p.cpr: p for p in persons}
         person_months = [
