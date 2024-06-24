@@ -2,8 +2,11 @@ import json
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_analysis.views import SimulationJSONEncoder
+from data_analysis.views import PersonAnalysisView, SimulationJSONEncoder
+from django.http import HttpResponse
+from django.template.response import TemplateResponse
 from django.test import TestCase
+from django.test.client import RequestFactory
 
 from bf.calculate import TwelveMonthsSummationEngine
 from bf.models import Person
@@ -74,3 +77,32 @@ class TestSimulationJSONEncoder(TestCase):
             json.dumps(obj, cls=SimulationJSONEncoder),
             expected_data,
         )
+
+
+class TestPersonAnalysisView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls._person, _ = Person.objects.get_or_create(cpr="0101012222")
+        cls._request_factory = RequestFactory()
+        cls._view = PersonAnalysisView()
+
+    def test_setup(self):
+        self._view.setup(self._request_factory.get(""), pk=self._person.pk, year=2020)
+        self.assertEqual(self._view.year, 2020)
+        self.assertIsInstance(self._view.simulation, Simulation)
+        self.assertEqual(self._view.simulation.year, 2020)
+        self.assertEqual(self._view.simulation.person, self._person)
+
+    def test_get_returns_json(self):
+        self._view.setup(self._request_factory.get(""), pk=self._person.pk, year=2020)
+        response = self._view.get(self._request_factory.get("?format=json"))
+        self.assertIsInstance(response, HttpResponse)
+        doc = json.loads(response.getvalue())
+        self.assertEqual(doc["person"]["cpr"], "0101012222")
+        self.assertEqual(doc["year"], 2020)
+
+    def test_get_returns_html(self):
+        self._view.setup(self._request_factory.get(""), pk=self._person.pk, year=2020)
+        response = self._view.get(self._request_factory.get(""))
+        self.assertIsInstance(response, TemplateResponse)
