@@ -10,6 +10,13 @@ SPDX-License-Identifier: MPL-2.0
 {% load csp %}
 
 {% block content %}
+    <div id="histograms">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">{% translate 'Building histograms ...' %}</span>
+        </div>
+        <p>{% translate 'Building histograms ...' %}</p>
+    </div>
+
     <table class="table">
     <thead>
     <tr>
@@ -32,4 +39,96 @@ SPDX-License-Identifier: MPL-2.0
 {% endfor %}
     </tbody>
     </table>
+{% endblock %}
+
+{% block extra_headers %}
+<link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+<style nonce="{{ request.csp_nonce }}">
+#histograms {
+    display: block;
+    min-height: 200px;
+    background: #eee;
+    text-align: center;
+}
+#histograms .spinner-border {
+    margin: 50px auto 0 auto;
+}
+</style>
+<script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+// Basic chart configuration
+const chartOptions = {
+    chart: {
+        type: "bar",
+        height: 600,
+        animations: {
+            enabled: false,
+        }
+    },
+    xaxis: {
+        type: "category",
+        // Buckets: 0, 10, 20 ... 250
+        categories: Array.from({ length: 26 }, (v, i) => i * 10),
+    },
+};
+
+// Build chart data
+const getChartData = function (histo, key, options) {
+    const series = [];
+
+    // Convert histogram (percentile -> num observations map) into X/Y pairs
+    const items = [];
+    for (const percentile in histo) {
+        items.push({
+            x: percentile,
+            y: histo[percentile],
+        });
+    }
+    series.push({
+        data: items,
+        name: "Number of observations",
+    });
+
+    // Construct chart data by combining series and options
+    const chartData = structuredClone(options);
+    chartData.chart.id = key;
+    chartData.series = series;
+    chartData.xaxis.labels = {
+        formatter: function (value, timestamp, opts) {
+            const val = parseInt(value, 10);
+            return `${val}%-${val + 10}%`;
+        }
+    }
+    return chartData;
+}
+
+$(document).ready(
+    async function () {
+        const rootElemName = "#histograms";
+        const response = await fetch("?format=json");
+        const doc = await response.json();
+
+        $(rootElemName).html("");
+
+        for (const key in doc) {
+            const histo = doc[key];
+
+            // Insert DOM element for heading
+            const headingElem = $(`<h1>${key}</h1>`);
+            $(rootElemName).append(headingElem);
+
+            // Insert DOM element for chart
+            const chartElem = document.createElement("div");
+            document.querySelector(rootElemName).appendChild(chartElem);
+
+            // Get chart data
+            const chartData = getChartData(histo, key, chartOptions);
+
+            // Render chart into DOM element
+            const chart = new ApexCharts(chartElem, chartData);
+            chart.render();
+        }
+    }
+)
+</script>
 {% endblock %}
