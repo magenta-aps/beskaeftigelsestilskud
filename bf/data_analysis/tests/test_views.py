@@ -1,15 +1,24 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
 import json
+from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_analysis.views import PersonAnalysisView, SimulationJSONEncoder
+from data_analysis.models import CalculationResult
+from data_analysis.views import (
+    EmploymentListView,
+    PersonAnalysisView,
+    SimulationJSONEncoder,
+)
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
 
 from bf.calculate import TwelveMonthsSummationEngine
-from bf.models import Person
+from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear
 from bf.simulation import IncomeItem, Simulation
 
 
@@ -106,3 +115,50 @@ class TestPersonAnalysisView(TestCase):
         self._view.setup(self._request_factory.get(""), pk=self._person.pk, year=2020)
         response = self._view.get(self._request_factory.get(""))
         self.assertIsInstance(response, TemplateResponse)
+
+
+class TestEmploymentListView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls._person, _ = Person.objects.get_or_create(cpr="0101012222")
+        cls._employer, _ = Employer.objects.get_or_create(cvr="1212122222")
+        cls._person_year, _ = PersonYear.objects.get_or_create(
+            person=cls._person,
+            year=2020,
+        )
+        cls._person_month, _ = PersonMonth.objects.get_or_create(
+            person_year=cls._person_year,
+            month=1,
+            import_date=date(2020, 1, 1),
+        )
+        cls._a_salary_report, _ = ASalaryReport.objects.get_or_create(
+            person_month=cls._person_month,
+            employer=cls._employer,
+            amount=42,
+        )
+        cls._calculation_result, _ = CalculationResult.objects.get_or_create(
+            engine="EngineClassName",
+            a_salary_report=cls._a_salary_report,
+            actual_year_result=42,
+            calculated_year_result=21,
+        )
+        cls._request_factory = RequestFactory()
+        cls._view = EmploymentListView()
+
+    def test_get(self):
+        self._view.setup(self._request_factory.get(""), year=2020)
+        response = self._view.get(self._request_factory.get(""))
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        self.assertListEqual(
+            response.context_data["object_list"],
+            [
+                {
+                    "person": self._person,
+                    "employer": self._employer,
+                    "actual_sum": Decimal(self._a_salary_report.amount),
+                    "EngineClassName": Decimal(50),
+                }
+            ],
+        )
