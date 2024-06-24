@@ -32,7 +32,7 @@ class ModelTest(TestCase):
             scaledown_ceiling=Decimal("250000.00"),
         )
         cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
-        cls.year2 = Year.objects.create(year=2025, calculation_method=cls.calc)
+        cls.year2 = Year.objects.create(year=2025)
         cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
@@ -284,6 +284,14 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(self.month2.estimated_year_benefit, Decimal("13356.00"))
         self.assertEqual(self.month2.prior_benefit_paid, Decimal("1050.00"))
         self.assertEqual(self.month2.benefit_paid, Decimal("1118.73"))
+
+    def test_calculation_engine_missing(self):
+        with self.assertRaises(
+            ReferenceError,
+            msg=f"Cannot calculate benefit; "
+            f"calculation method not set for year {self.year2}",
+        ):
+            self.month5.calculate_benefit()
 
 
 class TestEmployer(ModelTest):
