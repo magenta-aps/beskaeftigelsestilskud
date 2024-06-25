@@ -123,7 +123,7 @@ class TestEmploymentListView(TestCase):
         super().setUpTestData()
         cls._person, _ = Person.objects.get_or_create(cpr="0101012222")
         cls._employer, _ = Employer.objects.get_or_create(cvr="1212122222")
-        cls._year = Year.objects.create(year=2020)
+        cls._year, _ = Year.objects.get_or_create(year=2020)
         cls._person_year, _ = PersonYear.objects.get_or_create(
             person=cls._person,
             year=cls._year,
