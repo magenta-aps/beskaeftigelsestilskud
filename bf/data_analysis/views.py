@@ -4,7 +4,7 @@
 
 import dataclasses
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from decimal import Decimal
 
 from data_analysis.models import CalculationResult
@@ -83,6 +83,11 @@ class EmploymentListView(
     def get(self, request, *args, **kwargs):
         self.year = self.kwargs["year"]
         self.object_list = self.get_objects()
+        if request.GET.get("format") == "json":
+            return HttpResponse(
+                json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
+                content_type="application/json",
+            )
         context = self.get_context_data()
         return self.render_to_response(context)
 
@@ -95,8 +100,9 @@ class EmploymentListView(
         reports = AIncomeReport.objects.filter(
             person_month__person_year__year=self.year
         ).select_related(
+            "employer",
             "person_month",
-            "person_month__person_year",
+            "person_month__person_year__year",
             "person_month__person_year__person",
         )
         by_person_employer = defaultdict(list)
@@ -139,3 +145,14 @@ class EmploymentListView(
             row.update(offsets)
             rows.append(row)
         return rows
+
+    def get_histogram(self) -> defaultdict:
+        percentile_size = 10
+        observations: defaultdict = defaultdict(Counter)
+        for item in self.object_list:
+            for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+                if key in item:
+                    val = item[key]
+                    bucket = int(percentile_size * (val // percentile_size))
+                    observations[key][bucket] += 1
+        return observations
