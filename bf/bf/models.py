@@ -403,3 +403,53 @@ class AIncomeReport(models.Model):
 
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
+
+
+class MonthlyBIncomeReport(models.Model):
+    person_month = models.ForeignKey(
+        PersonMonth,
+        on_delete=models.CASCADE,
+    )
+    trader = models.ForeignKey(
+        Employer,
+        verbose_name=_("Indhandler"),
+        on_delete=models.CASCADE,
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
+
+class SelfAssessedYearlyBIncome(models.Model):
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+    reported_date = models.DateTimeField(
+        auto_now_add=True,
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
+
+class FinalBIncomeReport(models.Model):
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+    reported_date = models.DateTimeField(
+        auto_now_add=True,
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
