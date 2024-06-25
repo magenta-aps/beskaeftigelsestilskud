@@ -7,10 +7,19 @@ from dataclasses import dataclass
 from datetime import date
 from typing import List
 
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from bf.models import AIncomeReport, Employer, Person, PersonMonth, PersonYear, Year
+from bf.models import (
+    AIncomeReport,
+    Employer,
+    MonthlyBIncomeReport,
+    Person,
+    PersonMonth,
+    PersonYear,
+    Year,
+)
 
 
 def list_get(list, index):
@@ -25,7 +34,11 @@ class IndkomstCSVFileLine:
     cpr: int
     arbejdsgiver: str
     cvr: int
-    amounts: List[int]
+    a_amounts: List[int]
+    b_amounts: List[int]
+    low: int
+    high: int
+    sum: int
 
     @classmethod
     def from_csv_row(cls, row):
@@ -34,7 +47,11 @@ class IndkomstCSVFileLine:
                 cpr=int(list_get(row, 0)),
                 arbejdsgiver=list_get(row, 1),
                 cvr=int(list_get(row, 2)),
-                amounts=cls._get_columns(row, 3, 3 + 24),
+                a_amounts=cls._get_columns(row, 3, 3 + 12),
+                b_amounts=cls._get_columns(row, 3 + 12, 3 + 24),
+                low=list_get(row, 3 + 24),
+                high=list_get(row, 3 + 24 + 1),
+                sum=list_get(row, 3 + 24 + 2),
             )
 
     @staticmethod
@@ -49,6 +66,44 @@ class IndkomstCSVFileLine:
         return [
             IndkomstCSVFileLine._get_column(row, index) for index in range(start, end)
         ]
+
+    @classmethod
+    def validate_header_labels(cls, labels: List[str]):
+        expected = (
+            "CPR",
+            "Arbejdsgiver navn",
+            "Arbejdsgiver CVR",
+            "Jan a-indkomst",
+            "Feb a-indkomst",
+            "Mar a-indkomst",
+            "Apr a-indkomst",
+            "Maj a-indkomst",
+            "Jun a-indkomst",
+            "Jul a-indkomst",
+            "Aug a-indkomst",
+            "Sep a-indkomst",
+            "Okt a-indkomst",
+            "Nov a-indkomst",
+            "Dec a-indkomst",
+            "Jan indh.-indkomst",
+            "Feb indh.-indkomst",
+            "Mar indh.-indkomst",
+            "Apr indh.-indkomst",
+            "Maj indh.-indkomst",
+            "Jun indh.-indkomst",
+            "Jul indh.-indkomst",
+            "Aug indh.-indkomst",
+            "Sep indh.-indkomst",
+            "Okt indh.-indkomst",
+            "Nov indh.-indkomst",
+            "Dec indh.-indkomst",
+            "Laveste indkomst beløb",
+            "Højeste indkomst beløb",
+            "A-indkomst for året",
+        )
+        for i, label in enumerate(expected):
+            if i >= len(labels) or label != labels[i]:
+                raise ValidationError(f"Expected '{label}' in header at position {i}")
 
 
 class Command(BaseCommand):
@@ -74,7 +129,7 @@ class Command(BaseCommand):
     def _read_csv(self, input_stream, count=None):
         reader = csv.reader(input_stream, delimiter=self._delimiter)
 
-        next(reader)  # skip csv header
+        IndkomstCSVFileLine.validate_header_labels(next(reader))
 
         for i, row in enumerate(reader):
             if count is not None and i >= count:
@@ -145,17 +200,37 @@ class Command(BaseCommand):
         self.stdout.write(f"Processed {len(person_months)} PersonMonth objects")
 
         # Create AIncomeReport objects (existing objects for this year will be deleted!)
-        a_salary_reports = [
+        a_income_reports = [
             AIncomeReport(
                 person_month=person_months[(row.cpr, (index % 12) + 1)],
                 employer=employers[row.cvr],
                 amount=amount,
             )
             for row in rows
-            for index, amount in enumerate(row.amounts)
+            for index, amount in enumerate(row.a_amounts)
+            if amount != 0
         ]
         AIncomeReport.objects.filter(
             person_month__person_year__year=self._year
         ).delete()
-        AIncomeReport.objects.bulk_create(a_salary_reports)
-        self.stdout.write(f"Created {len(a_salary_reports)} AIncomeReport objects")
+        AIncomeReport.objects.bulk_create(a_income_reports)
+        self.stdout.write(f"Created {len(a_income_reports)} AIncomeReport objects")
+
+        # Create MonthlyBIncomeReport objects (existing objects for this year will be deleted!)
+        b_income_reports = [
+            MonthlyBIncomeReport(
+                person_month=person_months[(row.cpr, (index % 12) + 1)],
+                trader=employers[row.cvr],
+                amount=amount,
+            )
+            for row in rows
+            for index, amount in enumerate(row.b_amounts)
+            if amount != 0
+        ]
+        MonthlyBIncomeReport.objects.filter(
+            person_month__person_year__year=self._year
+        ).delete()
+        MonthlyBIncomeReport.objects.bulk_create(b_income_reports)
+        self.stdout.write(
+            f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
+        )
