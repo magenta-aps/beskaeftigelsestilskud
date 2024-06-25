@@ -33,6 +33,7 @@ class TestSimulationJSONEncoder(TestCase):
         "full_address": None,
         "id": None,
         "name": None,
+        "preferred_prediction_engine": "",
     }
 
     def test_can_serialize_dataclass(self):
