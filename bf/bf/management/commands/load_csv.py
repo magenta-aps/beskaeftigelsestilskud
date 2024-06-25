@@ -10,7 +10,7 @@ from typing import List
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear
+from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear, Year
 
 
 def list_get(list, index):
@@ -88,6 +88,9 @@ class Command(BaseCommand):
     def _create_or_update_objects(self, rows):
         rows = list(rows)
 
+        # Create or update Year object
+        year, _ = Year.objects.get_or_create(year=self._year)
+
         # Create or update Person objects
         persons = {
             cpr: Person(cpr=cpr, name=cpr) for cpr in set(row.cpr for row in rows)
@@ -112,7 +115,7 @@ class Command(BaseCommand):
 
         # Create or update PersonYear objects
         person_years = [
-            PersonYear(person=person, year=self._year) for person in persons.values()
+            PersonYear(person=person, year=year) for person in persons.values()
         ]
         PersonYear.objects.bulk_create(
             person_years,
@@ -151,8 +154,6 @@ class Command(BaseCommand):
             for row in rows
             for index, amount in enumerate(row.amounts)
         ]
-        ASalaryReport.objects.filter(
-            person_month__person_year__year=self._year
-        ).delete()
+        ASalaryReport.objects.filter(person_month__person_year__year=year).delete()
         ASalaryReport.objects.bulk_create(a_salary_reports)
         self.stdout.write(f"Created {len(a_salary_reports)} ASalaryReport objects")
