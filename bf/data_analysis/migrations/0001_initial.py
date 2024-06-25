@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('engine', models.CharField(choices=[('InYearExtrapolationEngine', 'Ekstrapolation af beløb for måneder i indeværende år'), ('TwelveMonthsSummationEngine', 'Summation af beløb for de seneste 12 måneder')], max_length=100)),
                 ('calculated_year_result', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
                 ('actual_year_result', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
-                ('a_salary_report', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='bf.aIncomeReport')),
+                ('a_salary_report', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='bf.AIncomeReport')),
             ],
         ),
     ]

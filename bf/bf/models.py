@@ -307,7 +307,7 @@ class PersonMonth(models.Model):
 
     def calculate_benefit(self) -> Decimal:
         estimated_year_income: Decimal = Decimal(0)
-        for salary_report in self.aIncomeReport_set.all():
+        for salary_report in self.aincomereport_set.all():
             # Using a list comp. in a sum() makes MyPy complain
             estimated_year_income += salary_report.calculated_year_result or 0
         # TODO: medtag andre relevante indkomster i summen
