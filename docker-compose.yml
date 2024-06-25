@@ -30,7 +30,7 @@ services:
       - TEST=false
       - HOME=/tmp/
     network_mode: "host"
-    command: gunicorn -b 0.0.0.0:8000 project.wsgi:application --reload -w 1 --access-logfile - --error-logfile - --capture-output # reload on code changes
+    command: gunicorn -b 0.0.0.0:8000 project.wsgi:application --timeout 120 --reload -w 1 --access-logfile - --error-logfile - --capture-output # reload on code changes
 
   bf-db:
     # Do not set `user` here
