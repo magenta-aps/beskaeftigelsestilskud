@@ -128,6 +128,25 @@ class Person(models.Model):
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
 
+    preferred_prediction_engine = models.CharField(
+        max_length=100,
+        choices=(
+            # We could create this list with [
+            #     (cls.__name__, cls.description)
+            #     for cls in CalculationEngine.__subclasses__()
+            # ]
+            # but that would make a circular import
+            (
+                "InYearExtrapolationEngine",
+                "Ekstrapolation af beløb for måneder i indeværende år",
+            ),
+            (
+                "TwelveMonthsSummationEngine",
+                "Summation af beløb for de seneste 12 måneder",
+            ),
+        ),
+    )
+
     @classmethod
     def from_eskat_mandtal(cls, eskat_mandtal: ESkatMandtal) -> "Person":
         return Person(
