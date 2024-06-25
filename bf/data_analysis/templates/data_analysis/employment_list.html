@@ -118,14 +118,14 @@ $(document).ready(
             $(rootElemName).append(headingElem);
 
             // Insert DOM element for chart
-            const chartElem = document.createElement("div");
-            document.querySelector(rootElemName).appendChild(chartElem);
+            const chartElem = $("<div>");
+            $(rootElemName).append(chartElem);
 
             // Get chart data
             const chartData = getChartData(histo, key, chartOptions);
 
             // Render chart into DOM element
-            const chart = new ApexCharts(chartElem, chartData);
+            const chart = new ApexCharts(chartElem.get(0), chartData);
             chart.render();
         }
     }
