@@ -17,7 +17,7 @@ from django.template.response import TemplateResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from bf.calculate import TwelveMonthsSummationEngine
+from bf.calculate import InYearExtrapolationEngine, TwelveMonthsSummationEngine
 from bf.models import AIncomeReport, Employer, Person, PersonMonth, PersonYear, Year
 from bf.simulation import IncomeItem, Simulation
 
@@ -139,8 +139,14 @@ class TestEmploymentListView(TestCase):
             employer=cls._employer,
             amount=42,
         )
-        cls._calculation_result, _ = CalculationResult.objects.get_or_create(
-            engine="EngineClassName",
+        cls._calculation_result_a, _ = CalculationResult.objects.get_or_create(
+            engine=TwelveMonthsSummationEngine.__name__,
+            a_salary_report=cls._a_salary_report,
+            actual_year_result=42,
+            calculated_year_result=42,
+        )
+        cls._calculation_result_b, _ = CalculationResult.objects.get_or_create(
+            engine=InYearExtrapolationEngine.__name__,
             a_salary_report=cls._a_salary_report,
             actual_year_result=42,
             calculated_year_result=21,
@@ -148,7 +154,7 @@ class TestEmploymentListView(TestCase):
         cls._request_factory = RequestFactory()
         cls._view = EmploymentListView()
 
-    def test_get(self):
+    def test_get_returns_html(self):
         self._view.setup(self._request_factory.get(""), year=2020)
         response = self._view.get(self._request_factory.get(""))
         self.assertIsInstance(response, TemplateResponse)
@@ -160,7 +166,20 @@ class TestEmploymentListView(TestCase):
                     "person": self._person,
                     "employer": self._employer,
                     "actual_sum": Decimal(self._a_salary_report.amount),
-                    "EngineClassName": Decimal(50),
+                    TwelveMonthsSummationEngine.__name__: Decimal(0),
+                    InYearExtrapolationEngine.__name__: Decimal(50),
                 }
             ],
+        )
+
+    def test_get_returns_json(self):
+        self._view.setup(self._request_factory.get(""), year=2020)
+        response = self._view.get(self._request_factory.get("?format=json"))
+        self.assertIsInstance(response, HttpResponse)
+        self.assertJSONEqual(
+            response.content,
+            {
+                "InYearExtrapolationEngine": {"50": 1},
+                "TwelveMonthsSummationEngine": {"0": 1},
+            },
         )
