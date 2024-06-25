@@ -18,10 +18,8 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from bf.calculate import TwelveMonthsSummationEngine
-from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear
+from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear, Year
 from bf.simulation import IncomeItem, Simulation
-
-from bf.models import Year
 
 
 class TestSimulationJSONEncoder(TestCase):
