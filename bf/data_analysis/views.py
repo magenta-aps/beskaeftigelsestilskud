@@ -25,7 +25,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import ASalaryReport, Person
+from bf.models import AIncomeReport, Person
 from bf.simulation import Simulation
 
 
@@ -92,7 +92,7 @@ class EmploymentListView(
         return context
 
     def get_objects(self):
-        reports = ASalaryReport.objects.filter(
+        reports = AIncomeReport.objects.filter(
             person_month__person_year__year=self.year
         ).select_related(
             "person_month",

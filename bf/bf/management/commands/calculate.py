@@ -18,7 +18,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import ASalaryReport, Person
+from bf.models import AIncomeReport, Person
 
 
 class Command(BaseCommand):
@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
         summary_table_by_engine = defaultdict(list)
         for person in person_qs:
-            qs = ASalaryReport.objects.alias(
+            qs = AIncomeReport.objects.alias(
                 person=F("person_month__person_year__person"),
                 year=F("person_month__person_year__year"),
                 month=F("person_month__month"),

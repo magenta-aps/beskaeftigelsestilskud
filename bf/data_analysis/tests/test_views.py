@@ -18,7 +18,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from bf.calculate import TwelveMonthsSummationEngine
-from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear, Year
+from bf.models import AIncomeReport, Employer, Person, PersonMonth, PersonYear, Year
 from bf.simulation import IncomeItem, Simulation
 
 
@@ -134,7 +134,7 @@ class TestEmploymentListView(TestCase):
             month=1,
             import_date=date(2020, 1, 1),
         )
-        cls._a_salary_report, _ = ASalaryReport.objects.get_or_create(
+        cls._a_salary_report, _ = AIncomeReport.objects.get_or_create(
             person_month=cls._person_month,
             employer=cls._employer,
             amount=42,

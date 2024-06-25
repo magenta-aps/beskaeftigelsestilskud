@@ -6,12 +6,12 @@
 from data_analysis.models import CalculationResult
 from django.db.models import Avg, F, Max, Q, QuerySet, Sum
 
-from bf.models import ASalaryReport
+from bf.models import AIncomeReport
 
 
 class CalculationEngine:
     @classmethod
-    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult | None:
+    def calculate(cls, datapoints: QuerySet[AIncomeReport]) -> CalculationResult | None:
         raise NotImplementedError
 
 
@@ -28,7 +28,7 @@ class InYearExtrapolationEngine(CalculationEngine):
     description = "Ekstrapolation af beløb for måneder i indeværende år"
 
     @classmethod
-    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult | None:
+    def calculate(cls, datapoints: QuerySet[AIncomeReport]) -> CalculationResult | None:
         if not datapoints.exists():
             return None
         datapoints = datapoints.annotate(
@@ -40,11 +40,11 @@ class InYearExtrapolationEngine(CalculationEngine):
         year = datapoints.order_by("-f_year", "-f_month").values_list(
             "f_year", flat=True
         )[0]
-        relevant: QuerySet[ASalaryReport] = datapoints.filter(f_year=year).order_by(
+        relevant: QuerySet[AIncomeReport] = datapoints.filter(f_year=year).order_by(
             "f_month"
         )
         year_prediction = int(12 * relevant.aggregate(avg=Avg("amount"))["avg"])
-        latest: ASalaryReport = relevant.last()  # type: ignore
+        latest: AIncomeReport = relevant.last()  # type: ignore
         return CalculationResult(
             calculated_year_result=year_prediction,
             a_salary_report=latest,
@@ -56,7 +56,7 @@ class TwelveMonthsSummationEngine(CalculationEngine):
     description = "Summation af beløb for de seneste 12 måneder"
 
     @classmethod
-    def calculate(cls, datapoints: QuerySet[ASalaryReport]) -> CalculationResult | None:
+    def calculate(cls, datapoints: QuerySet[AIncomeReport]) -> CalculationResult | None:
         if not datapoints.exists():
             return None
         datapoints = datapoints.annotate(
@@ -67,12 +67,12 @@ class TwelveMonthsSummationEngine(CalculationEngine):
         latest_month = datapoints.filter(f_year=latest_year).aggregate(
             max_month=Max("f_month")
         )["max_month"]
-        relevant: QuerySet[ASalaryReport] = datapoints.filter(
+        relevant: QuerySet[AIncomeReport] = datapoints.filter(
             Q(f_year=latest_year, f_month__lte=latest_month)
             | Q(f_year=latest_year - 1, f_month__gt=latest_month)
         ).order_by("f_year", "f_month")
         year_prediction = int(relevant.aggregate(sum=Sum("amount"))["sum"])
-        latest: ASalaryReport = relevant.last()  # type: ignore
+        latest: AIncomeReport = relevant.last()  # type: ignore
         return CalculationResult(
             calculated_year_result=year_prediction,
             a_salary_report=latest,
