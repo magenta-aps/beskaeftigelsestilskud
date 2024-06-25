@@ -100,8 +100,9 @@ class EmploymentListView(
         reports = AIncomeReport.objects.filter(
             person_month__person_year__year=self.year
         ).select_related(
+            "employer",
             "person_month",
-            "person_month__person_year",
+            "person_month__person_year__year",
             "person_month__person_year__person",
         )
         by_person_employer = defaultdict(list)
