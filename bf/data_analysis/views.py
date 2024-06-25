@@ -151,7 +151,8 @@ class EmploymentListView(
         observations: defaultdict = defaultdict(Counter)
         for item in self.object_list:
             for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
-                val = item[key]
-                bucket = int(percentile_size * (val // percentile_size))
-                observations[key][bucket] += 1
+                if key in item:
+                    val = item[key]
+                    bucket = int(percentile_size * (val // percentile_size))
+                    observations[key][bucket] += 1
         return observations
