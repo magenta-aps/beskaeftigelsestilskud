@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-11 11:56-0100\n"
+"POT-Creation-Date: 2024-06-25 10:46-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,4 +26,8 @@ msgstr ""
 
 #: bf/models.py
 msgid "CVR-nummer"
+msgstr ""
+
+#: bf/models.py
+msgid "Indhandler"
 msgstr ""

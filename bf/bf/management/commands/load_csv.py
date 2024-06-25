@@ -10,7 +10,7 @@ from typing import List
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from bf.models import ASalaryReport, Employer, Person, PersonMonth, PersonYear, Year
+from bf.models import AIncomeReport, Employer, Person, PersonMonth, PersonYear, Year
 
 
 def list_get(list, index):
@@ -144,9 +144,9 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"Processed {len(person_months)} PersonMonth objects")
 
-        # Create ASalaryReport objects (existing objects for this year will be deleted!)
+        # Create AIncomeReport objects (existing objects for this year will be deleted!)
         a_salary_reports = [
-            ASalaryReport(
+            AIncomeReport(
                 person_month=person_months[(row.cpr, (index % 12) + 1)],
                 employer=employers[row.cvr],
                 amount=amount,
@@ -154,6 +154,8 @@ class Command(BaseCommand):
             for row in rows
             for index, amount in enumerate(row.amounts)
         ]
-        ASalaryReport.objects.filter(person_month__person_year__year=year).delete()
-        ASalaryReport.objects.bulk_create(a_salary_reports)
-        self.stdout.write(f"Created {len(a_salary_reports)} ASalaryReport objects")
+        AIncomeReport.objects.filter(
+            person_month__person_year__year=self._year
+        ).delete()
+        AIncomeReport.objects.bulk_create(a_salary_reports)
+        self.stdout.write(f"Created {len(a_salary_reports)} AIncomeReport objects")

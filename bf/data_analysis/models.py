@@ -5,7 +5,7 @@
 
 from django.db import models
 
-from bf.models import ASalaryReport
+from bf.models import AIncomeReport
 
 
 class CalculationResult(models.Model):
@@ -29,7 +29,7 @@ class CalculationResult(models.Model):
     )
 
     a_salary_report = models.ForeignKey(
-        ASalaryReport, null=True, blank=True, on_delete=models.CASCADE
+        AIncomeReport, null=True, blank=True, on_delete=models.CASCADE
     )
 
     calculated_year_result = models.DecimalField(

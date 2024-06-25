@@ -191,7 +191,7 @@ class PersonYear(models.Model):
     @property
     def salary_reports(self):
         return (
-            ASalaryReport.objects.filter(person_month__person_year=self)
+            AIncomeReport.objects.filter(person_month__person_year=self)
             .annotate(
                 f_year=F("person_month__person_year__year_id"),
                 f_month=F("person_month__month"),
@@ -307,7 +307,7 @@ class PersonMonth(models.Model):
 
     def calculate_benefit(self) -> Decimal:
         estimated_year_income: Decimal = Decimal(0)
-        for salary_report in self.asalaryreport_set.all():
+        for salary_report in self.aincomereport_set.all():
             # Using a list comp. in a sum() makes MyPy complain
             estimated_year_income += salary_report.calculated_year_result or 0
         # TODO: medtag andre relevante indkomster i summen
@@ -364,7 +364,7 @@ class Employer(models.Model):
         return f"{self.name} ({self.cvr})"
 
 
-class ASalaryReport(models.Model):
+class AIncomeReport(models.Model):
 
     person_month = models.ForeignKey(
         PersonMonth,
@@ -403,3 +403,53 @@ class ASalaryReport(models.Model):
 
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
+
+
+class MonthlyBIncomeReport(models.Model):
+    person_month = models.ForeignKey(
+        PersonMonth,
+        on_delete=models.CASCADE,
+    )
+    trader = models.ForeignKey(
+        Employer,
+        verbose_name=_("Indhandler"),
+        on_delete=models.CASCADE,
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
+
+class SelfAssessedYearlyBIncome(models.Model):
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+    reported_date = models.DateTimeField(
+        auto_now_add=True,
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
+
+class FinalBIncomeReport(models.Model):
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+    reported_date = models.DateTimeField(
+        auto_now_add=True,
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
