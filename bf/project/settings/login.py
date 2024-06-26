@@ -47,7 +47,7 @@ LOGIN_MITID_REDIRECT_URL = reverse_lazy("login:login")
 LOGIN_URL = reverse_lazy("login:login")
 LOGOUT_REDIRECT_URL = reverse_lazy("login:logged_out")
 LOGIN_PROVIDER_CLASS = os.environ.get("LOGIN_PROVIDER_CLASS") or None
-LOGIN_BYPASS_ENABLED = True
+LOGIN_BYPASS_ENABLED = bool(strtobool(os.environ.get("LOGIN_BYPASS_ENABLED", "False")))
 LOGIN_WHITELISTED_URLS = [
     "/favicon.ico",
     "/_ht/",
