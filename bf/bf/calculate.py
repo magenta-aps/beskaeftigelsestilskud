@@ -4,8 +4,7 @@
 from decimal import Decimal
 
 from data_analysis.models import CalculationResult
-from django.db.models import Q, QuerySet, Sum
-from django.db.models.functions import Coalesce
+from django.db.models import Q, QuerySet
 
 from bf.models import (
     MonthlyAIncomeReport,
@@ -66,7 +65,7 @@ class InYearExtrapolationEngine(CalculationEngine):
         qs = MonthlyIncomeReport.annotate_month(qs)
         qs = MonthlyIncomeReport.annotate_year(qs)
         qs = qs.filter(f_year=year, f_month__lte=month)
-        return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
+        return MonthlyIncomeReport.sum_queryset(qs)
 
 
 class TwelveMonthsSummationEngine(CalculationEngine):
@@ -101,4 +100,4 @@ class TwelveMonthsSummationEngine(CalculationEngine):
         qs = qs.filter(
             Q(f_year=year, f_month__lte=month) | Q(f_year=year - 1, f_month__gt=month)
         )
-        return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
+        return MonthlyIncomeReport.sum_queryset(qs)
