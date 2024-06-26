@@ -6,10 +6,11 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from django.db.models import F, Q, Sum
+from data_analysis.models import CalculationResult
+from django.db.models import Q
 
 from bf.calculate import CalculationEngine
-from bf.models import Employer, MonthlyAIncomeReport, Person
+from bf.models import MonthlyAIncomeReport, MonthlyBIncomeReport, Person, PersonYear
 
 
 @dataclass(frozen=True)
@@ -36,7 +37,6 @@ class Prediction:
 
 @dataclass(frozen=True, repr=False)
 class SimulationResultRow:
-    employer: Employer
     income_series: list[IncomeItem]
     income_sum: int
     predictions: list[Prediction]
@@ -52,69 +52,80 @@ class Simulation:
         self,
         engines: list[CalculationEngine],
         person: Person,
-        year: int = date.today().year,
+        year: int | None,
     ):
+        if year is None:
+            year = date.today().year
         self.engines = engines
         self.person = person
         self.year = year
-        self.result = SimulationResult(rows=list(self._run()))
+        self.person_year: PersonYear = person.personyear_set.get(year__year=year)
+        self.result = SimulationResult(rows=[self._run()])
 
     def _run(self):
-        qs = MonthlyAIncomeReport.objects.alias(
-            person=F("person_month__person_year__person"),
-            year=F("person_month__person_year__year"),
-            month=F("person_month__month"),
-        ).filter(person=self.person.pk)
-        employers = [x.employer for x in qs.distinct("employer")]
-        for employer in employers:
-            employment = qs.filter(employer=employer)
-            actual_year_sum = employment.filter(year=self.year).aggregate(
-                s=Sum("amount")
-            )["s"]
 
-            income_series = [
-                IncomeItem(year=item.year, month=item.month, value=item.amount)
-                for item in employment
-            ]
+        actual_year_sum = self.person_year.sum_amount
 
-            predictions = []
+        income_a = MonthlyAIncomeReport.annotate_year(
+            MonthlyAIncomeReport.objects.all()
+        )
+        income_a = MonthlyAIncomeReport.annotate_month(income_a)
+        income_a = income_a.filter(person_month__person_year__person=self.person)
 
-            for engine in self.engines:
-                prediction_items = []
-                for month in range(1, 13):
-                    visible_datapoints = employment.filter(
-                        Q(year__lt=self.year) | Q(year=self.year, month__lte=month)
+        income_b = MonthlyBIncomeReport.annotate_year(
+            MonthlyBIncomeReport.objects.all()
+        )
+        income_b = MonthlyBIncomeReport.annotate_month(income_b)
+        income_b = income_b.filter(person_month__person_year__person=self.person)
+
+        income_series = [
+            IncomeItem(year=item.year, month=item.month, value=item.amount)
+            for item in list(income_a) + list(income_b)
+        ]
+
+        predictions = []
+
+        for engine in self.engines:
+            prediction_items = []
+            for month in range(1, 13):
+                person_month = self.person_year.personmonth_set.get(month=month)
+                engine_name = engine.__class__.__name__
+                try:
+                    calculation_result = CalculationResult.objects.get(
+                        person_month=person_month, engine=engine_name
                     )
-                    resultat = engine.calculate(visible_datapoints)
+                except CalculationResult.DoesNotExist:
+                    visible_a_reports = income_a.filter(
+                        Q(f_year__lt=self.year) | Q(f_year=self.year, f_month__lte=month)
+                    )
+                    visible_b_reports = income_b.filter(
+                        Q(f_year__lt=self.year) | Q(f_year=self.year, f_month__lte=month)
+                    )
+                    calculation_result = engine.calculate(
+                        visible_a_reports, visible_b_reports, person_month
+                    )
+                    if calculation_result is not None:
+                        calculation_result.calculated_year_result = actual_year_sum
+
+                if calculation_result is not None:
                     prediction_items.append(
                         PredictionItem(
                             year=self.year,
                             month=month,
-                            predicted_value=resultat.calculated_year_result,
-                            prediction_difference=resultat.calculated_year_result
+                            predicted_value=calculation_result.calculated_year_result,
+                            prediction_difference=calculation_result.calculated_year_result
                             - actual_year_sum,
                             prediction_difference_pct=(
-                                (
-                                    abs(
-                                        (
-                                            resultat.calculated_year_result
-                                            - actual_year_sum
-                                        )
-                                        / actual_year_sum
-                                    )
-                                    * 100
-                                )
+                                (calculation_result.offset * 100)
                                 if actual_year_sum != 0
                                 else None
                             ),
                         )
                     )
+            predictions.append(Prediction(engine=engine, items=prediction_items))
 
-                predictions.append(Prediction(engine=engine, items=prediction_items))
-
-            yield SimulationResultRow(
-                employer=employer,
-                income_series=income_series,
-                income_sum=actual_year_sum,
-                predictions=predictions,
-            )
+        return SimulationResultRow(
+            income_series=income_series,
+            income_sum=actual_year_sum,
+            predictions=predictions,
+        )
