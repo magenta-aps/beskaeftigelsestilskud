@@ -189,13 +189,10 @@ class PersonYear(models.Model):
 
     @property
     def sum_amount(self):
-        return (
-            MonthlyAIncomeReport.objects.filter(
-                person_month__person_year=self
-            ).aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
-            + MonthlyBIncomeReport.objects.filter(
-                person_month__person_year=self
-            ).aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
+        return MonthlyIncomeReport.sum_queryset(
+            MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
+        ) + MonthlyIncomeReport.sum_queryset(
+            MonthlyBIncomeReport.objects.filter(person_month__person_year=self)
         )
 
     def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:

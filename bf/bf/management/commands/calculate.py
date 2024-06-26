@@ -5,13 +5,11 @@
 import csv
 from collections import defaultdict
 from datetime import date
-from decimal import Decimal
 from typing import List
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.db.models.expressions import F
-from django.db.models.functions import Coalesce
 from numpy import std
 from tabulate import SEPARATING_LINE, tabulate
 
@@ -20,7 +18,13 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import MonthlyAIncomeReport, MonthlyBIncomeReport, Person, PersonYear
+from bf.models import (
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
+    Person,
+    PersonYear,
+)
 
 
 class Command(BaseCommand):
@@ -61,21 +65,16 @@ class Command(BaseCommand):
             amounts = []
             for month in range(1, 13):
                 amounts.append(
-                    qs_a.filter(year=year, month=month).aggregate(
-                        sum=Coalesce(Sum("amount"), Decimal(0))
-                    )["sum"]
-                    + qs_b.filter(year=year, month=month).aggregate(
-                        sum=Coalesce(Sum("amount"), Decimal(0))
-                    )["sum"]
+                    MonthlyIncomeReport.sum_queryset(
+                        qs_a.filter(year=year, month=month)
+                    )
+                    + MonthlyIncomeReport.sum_queryset(
+                        qs_b.filter(year=year, month=month)
+                    )
                 )
-            actual_year_sum = (
-                qs_a.filter(year=year).aggregate(
-                    sum=Coalesce(Sum("amount"), Decimal(0))
-                )["sum"]
-                + qs_b.filter(year=year).aggregate(
-                    sum=Coalesce(Sum("amount"), Decimal(0))
-                )["sum"]
-            )
+            actual_year_sum = MonthlyIncomeReport.sum_queryset(
+                qs_a.filter(year=year)
+            ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(year=year))
             stddev_over_sum = (
                 std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
             )
