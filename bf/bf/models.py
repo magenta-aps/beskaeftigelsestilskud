@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
@@ -11,7 +10,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index, Sum
+from django.db.models import F, Index, QuerySet, Sum
+from django.db.models.functions import Coalesce
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
@@ -191,12 +191,23 @@ class PersonYear(models.Model):
     @property
     def salary_reports(self):
         return (
-            AIncomeReport.objects.filter(person_month__person_year=self)
+            MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
             .annotate(
                 f_year=F("person_month__person_year__year_id"),
                 f_month=F("person_month__month"),
             )
             .order_by("f_year", "f_month", "employer")
+        )
+
+    @property
+    def sum_amount(self):
+        return (
+            MonthlyAIncomeReport.objects.filter(
+                person_month__person_year=self
+            ).aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
+            + MonthlyBIncomeReport.objects.filter(
+                person_month__person_year=self
+            ).aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
         )
 
     @property
@@ -226,6 +237,30 @@ class PersonYear(models.Model):
                 f"calculation method not set for year {self.year}"
             )
         return self.year.calculation_method.calculate(estimated_year_income)
+
+    #
+    # calculations = group(
+    #     CalculationResult.objects.filter(a_salary_report__in=reportlist),
+    #     "engine",
+    # )
+    # offsets = {}
+    # for engine, engine_calculations in calculations.items():
+    #     # Percent offset. Basically, how much off is the sum
+    #     # of estimations from the sum of actual values
+    #     offsets[engine] = (
+    #             100
+    #             * sum(
+    #         [
+    #             (
+    #                 (ec.absdiff / ec.actual_year_result)
+    #                 if ec.actual_year_result
+    #                 else 0
+    #             )
+    #             for ec in engine_calculations
+    #         ]
+    #     )
+    #             / len(engine_calculations)
+    #     )
 
 
 class PersonMonth(models.Model):
@@ -302,6 +337,17 @@ class PersonMonth(models.Model):
             fully_tax_liable=eskat_mandtal.fully_tax_liable,
         )
 
+    @property
+    def sum_amount(self):
+        return (
+            self.monthlyaincomereport_set.aggregate(sum=Coalesce(Sum("amount"), 0))[
+                "sum"
+            ]
+            + self.monthlybincomereport_set.aggregate(sum=Coalesce(Sum("amount"), 0))[
+                "sum"
+            ]
+        )
+
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
 
@@ -364,7 +410,30 @@ class Employer(models.Model):
         return f"{self.name} ({self.cvr})"
 
 
-class AIncomeReport(models.Model):
+class MonthlyIncomeReport(models.Model):
+    class Meta:
+        abstract = True
+
+    @staticmethod
+    def annotate_month(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_month=F("person_month__month"))
+
+    @staticmethod
+    def annotate_year(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_year=F("person_month__person_year__year"))
+
+    @staticmethod
+    def annotate_person_year(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_person_year=F("person_month__person_year"))
+
+
+class MonthlyAIncomeReport(MonthlyIncomeReport):
 
     person_month = models.ForeignKey(
         PersonMonth,
@@ -405,7 +474,7 @@ class AIncomeReport(models.Model):
         return f"{self.person_month} | {self.employer}"
 
 
-class MonthlyBIncomeReport(models.Model):
+class MonthlyBIncomeReport(MonthlyIncomeReport):
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,

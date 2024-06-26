@@ -10,8 +10,8 @@ from data_analysis.models import CalculationResult
 from django.test import TestCase
 
 from bf.models import (
-    AIncomeReport,
     Employer,
+    MonthlyAIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -65,7 +65,7 @@ class ModelTest(TestCase):
             name="Ronnis Rejer",
             cvr=87654321,
         )
-        cls.report1 = AIncomeReport.objects.create(
+        cls.report1 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month1,
             amount=10000,
@@ -74,7 +74,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report1,
             calculated_year_result=12 * 10000,
         )
-        cls.report2 = AIncomeReport.objects.create(
+        cls.report2 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month2,
             amount=11000,
@@ -83,7 +83,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report2,
             calculated_year_result=6 * (10000 + 11000),
         )
-        cls.report3 = AIncomeReport.objects.create(
+        cls.report3 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month3,
             amount=12000,
@@ -92,7 +92,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report3,
             calculated_year_result=4 * (10000 + 11000 + 12000),
         )
-        cls.report4 = AIncomeReport.objects.create(
+        cls.report4 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month4,
             amount=13000,
@@ -101,7 +101,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report4,
             calculated_year_result=3 * (10000 + 11000 + 12000 + 13000),
         )
-        cls.report5 = AIncomeReport.objects.create(
+        cls.report5 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month1,
             amount=15000,
@@ -110,7 +110,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report5,
             calculated_year_result=12 * 15000,
         )
-        cls.report6 = AIncomeReport.objects.create(
+        cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month2,
             amount=12000,
@@ -119,7 +119,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report6,
             calculated_year_result=6 * (15000 + 12000),
         )
-        cls.report7 = AIncomeReport.objects.create(
+        cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month3,
             amount=10000,
@@ -128,7 +128,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report7,
             calculated_year_result=4 * (15000 + 12000 + 10000),
         )
-        cls.report8 = AIncomeReport.objects.create(
+        cls.report8 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month4,
             amount=8000,
@@ -137,7 +137,7 @@ class ModelTest(TestCase):
             a_salary_report=cls.report8,
             calculated_year_result=3 * (15000 + 12000 + 10000 + 8000),
         )
-        cls.report9 = AIncomeReport.objects.create(
+        cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month5,
             amount=8000,

@@ -12,8 +12,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from bf.models import (
-    AIncomeReport,
     Employer,
+    MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
     PersonMonth,
@@ -199,9 +199,9 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"Processed {len(person_months)} PersonMonth objects")
 
-        # Create AIncomeReport objects (existing objects for this year will be deleted!)
+        # Create MonthlyAIncomeReport objects (existing objects for this year will be deleted!)
         a_income_reports = [
-            AIncomeReport(
+            MonthlyAIncomeReport(
                 person_month=person_months[(row.cpr, (index % 12) + 1)],
                 employer=employers[row.cvr],
                 amount=amount,
@@ -210,11 +210,13 @@ class Command(BaseCommand):
             for index, amount in enumerate(row.a_amounts)
             if amount != 0
         ]
-        AIncomeReport.objects.filter(
+        MonthlyAIncomeReport.objects.filter(
             person_month__person_year__year=self._year
         ).delete()
-        AIncomeReport.objects.bulk_create(a_income_reports)
-        self.stdout.write(f"Created {len(a_income_reports)} AIncomeReport objects")
+        MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
+        self.stdout.write(
+            f"Created {len(a_income_reports)} MonthlyAIncomeReport objects"
+        )
 
         # Create MonthlyBIncomeReport objects (existing objects for this year will be deleted!)
         b_income_reports = [

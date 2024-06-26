@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 from data_analysis.models import CalculationResult
 from data_analysis.views import (
-    EmploymentListView,
     PersonAnalysisView,
+    PersonListView,
     SimulationJSONEncoder,
 )
 from django.http import HttpResponse
@@ -18,7 +18,14 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from bf.calculate import InYearExtrapolationEngine, TwelveMonthsSummationEngine
-from bf.models import AIncomeReport, Employer, Person, PersonMonth, PersonYear, Year
+from bf.models import (
+    Employer,
+    MonthlyAIncomeReport,
+    Person,
+    PersonMonth,
+    PersonYear,
+    Year,
+)
 from bf.simulation import IncomeItem, Simulation
 
 
@@ -118,7 +125,7 @@ class TestPersonAnalysisView(TestCase):
         self.assertIsInstance(response, TemplateResponse)
 
 
-class TestEmploymentListView(TestCase):
+class TestPersonListView(TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -134,7 +141,7 @@ class TestEmploymentListView(TestCase):
             month=1,
             import_date=date(2020, 1, 1),
         )
-        cls._a_salary_report, _ = AIncomeReport.objects.get_or_create(
+        cls._a_salary_report, _ = MonthlyAIncomeReport.objects.get_or_create(
             person_month=cls._person_month,
             employer=cls._employer,
             amount=42,
@@ -152,7 +159,7 @@ class TestEmploymentListView(TestCase):
             calculated_year_result=21,
         )
         cls._request_factory = RequestFactory()
-        cls._view = EmploymentListView()
+        cls._view = PersonListView()
 
     def test_get_returns_html(self):
         self._view.setup(self._request_factory.get(""), year=2020)

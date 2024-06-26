@@ -9,7 +9,7 @@ from decimal import Decimal
 from django.db.models import F, Q, Sum
 
 from bf.calculate import CalculationEngine
-from bf.models import AIncomeReport, Employer, Person
+from bf.models import Employer, MonthlyAIncomeReport, Person
 
 
 @dataclass(frozen=True)
@@ -60,7 +60,7 @@ class Simulation:
         self.result = SimulationResult(rows=list(self._run()))
 
     def _run(self):
-        qs = AIncomeReport.objects.alias(
+        qs = MonthlyAIncomeReport.objects.alias(
             person=F("person_month__person_year__person"),
             year=F("person_month__person_year__year"),
             month=F("person_month__month"),
