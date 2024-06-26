@@ -7,9 +7,9 @@ from collections import defaultdict
 from datetime import date
 from typing import List
 
+from data_analysis.models import CalculationResult
 from django.core.management.base import BaseCommand
 from django.db.models import Q
-from django.db.models.expressions import F
 from numpy import std
 from tabulate import SEPARATING_LINE, tabulate
 
@@ -18,13 +18,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import (
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
-    MonthlyIncomeReport,
-    Person,
-    PersonYear,
-)
+from bf.models import MonthlyAIncomeReport, MonthlyIncomeReport, Person, PersonYear
 
 
 class Command(BaseCommand):
@@ -46,17 +40,21 @@ class Command(BaseCommand):
 
         summary_table_by_engine = defaultdict(list)
         for person in person_qs:
-            person_year: PersonYear = person.personyear_set.get(year=year)
-            qs_a = MonthlyAIncomeReport.objects.alias(
-                person=F("person_month__person_year__person"),
-                year=F("person_month__person_year__year"),
-                month=F("person_month__month"),
-            ).filter(person=person.pk)
-            qs_b = MonthlyBIncomeReport.objects.alias(
-                person=F("person_month__person_year__person"),
-                year=F("person_month__person_year__year"),
-                month=F("person_month__month"),
-            ).filter(person=person.pk)
+            try:
+                person_year: PersonYear = person.personyear_set.get(year=year)
+            except PersonYear.DoesNotExist:
+                continue
+            qs_a = MonthlyAIncomeReport.objects.all()
+            qs_a = MonthlyAIncomeReport.annotate_person(qs_a)
+            qs_a = qs_a.filter(f_person=person.pk)
+            qs_a = MonthlyAIncomeReport.annotate_year(qs_a)
+            qs_a = MonthlyAIncomeReport.annotate_month(qs_a)
+
+            qs_b = MonthlyAIncomeReport.objects.all()
+            qs_b = MonthlyAIncomeReport.annotate_person(qs_b)
+            qs_b = qs_b.filter(f_person=person.pk)
+            qs_b = MonthlyAIncomeReport.annotate_year(qs_b)
+            qs_b = MonthlyAIncomeReport.annotate_month(qs_b)
 
             self._write_verbose("====================================")
             self._write_verbose(f"CPR: {person.cpr}")
@@ -66,15 +64,15 @@ class Command(BaseCommand):
             for month in range(1, 13):
                 amounts.append(
                     MonthlyIncomeReport.sum_queryset(
-                        qs_a.filter(year=year, month=month)
+                        qs_a.filter(f_year=year, f_month=month)
                     )
                     + MonthlyIncomeReport.sum_queryset(
-                        qs_b.filter(year=year, month=month)
+                        qs_b.filter(f_year=year, f_month=month)
                     )
                 )
             actual_year_sum = MonthlyIncomeReport.sum_queryset(
-                qs_a.filter(year=year)
-            ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(year=year))
+                qs_a.filter(f_year=year)
+            ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(f_year=year))
             stddev_over_sum = (
                 std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
             )
@@ -92,12 +90,12 @@ class Command(BaseCommand):
                 for month in range(1, 13):
                     person_month = person_year.personmonth_set.get(month=month)
                     visible_a_reports = qs_a.filter(
-                        Q(year__lt=year) | Q(year=year, month__lte=month)
+                        Q(f_year__lt=year) | Q(f_year=year, f_month__lte=month)
                     )
                     visible_b_reports = qs_b.filter(
-                        Q(year__lt=year) | Q(year=year, month__lte=month)
+                        Q(f_year__lt=year) | Q(f_year=year, f_month__lte=month)
                     )
-                    resultat = engine.calculate(
+                    resultat: CalculationResult = engine.calculate(
                         visible_a_reports, visible_b_reports, person_month
                     )
                     if resultat is not None:
@@ -106,20 +104,7 @@ class Command(BaseCommand):
                                 month,
                                 resultat.calculated_year_result,
                                 resultat.calculated_year_result - actual_year_sum,
-                                (
-                                    (
-                                        abs(
-                                            (
-                                                resultat.calculated_year_result
-                                                - actual_year_sum
-                                            )
-                                            / actual_year_sum
-                                        )
-                                        * 100
-                                    )
-                                    if actual_year_sum != 0
-                                    else 0
-                                ),
+                                100 * resultat.offset,
                             ]
                         )
                         resultat.actual_year_result = actual_year_sum

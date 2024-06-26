@@ -299,3 +299,10 @@ class TestIncomeReport(ModelTest):
             MonthlyAIncomeReport.annotate_person_year(qs).first().f_person_year,
             self.person_year.pk,
         )
+
+    def test_annotate_person(self):
+        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
+        self.assertEqual(
+            MonthlyAIncomeReport.annotate_person(qs).first().f_person,
+            self.person.pk,
+        )

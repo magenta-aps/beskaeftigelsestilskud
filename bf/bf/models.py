@@ -367,6 +367,12 @@ class MonthlyIncomeReport(models.Model):
     ) -> QuerySet["MonthlyIncomeReport"]:
         return qs.annotate(f_person_year=F("person_month__person_year"))
 
+    @staticmethod
+    def annotate_person(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_person=F("person_month__person_year__person"))
+
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
         return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
