@@ -12,6 +12,7 @@ from django.test import TestCase
 from bf.models import (
     Employer,
     MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -70,45 +71,29 @@ class ModelTest(TestCase):
             person_month=cls.month1,
             amount=10000,
         )
-        CalculationResult.objects.create(
-            a_salary_report=cls.report1,
-            calculated_year_result=12 * 10000,
-        )
         cls.report2 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month2,
             amount=11000,
-        )
-        CalculationResult.objects.create(
-            a_salary_report=cls.report2,
-            calculated_year_result=6 * (10000 + 11000),
         )
         cls.report3 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month3,
             amount=12000,
         )
-        CalculationResult.objects.create(
-            a_salary_report=cls.report3,
-            calculated_year_result=4 * (10000 + 11000 + 12000),
-        )
         cls.report4 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month4,
             amount=13000,
         )
-        CalculationResult.objects.create(
-            a_salary_report=cls.report4,
-            calculated_year_result=3 * (10000 + 11000 + 12000 + 13000),
-        )
-        cls.report5 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer2,
+        cls.report5 = MonthlyBIncomeReport.objects.create(
+            trader=cls.employer2,
             person_month=cls.month1,
             amount=15000,
         )
         CalculationResult.objects.create(
-            a_salary_report=cls.report5,
-            calculated_year_result=12 * 15000,
+            person_month=cls.month1,
+            calculated_year_result=12 * 10000 + 12 * 15000,
         )
         cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -116,8 +101,8 @@ class ModelTest(TestCase):
             amount=12000,
         )
         CalculationResult.objects.create(
-            a_salary_report=cls.report6,
-            calculated_year_result=6 * (15000 + 12000),
+            person_month=cls.month2,
+            calculated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
         )
         cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -125,8 +110,9 @@ class ModelTest(TestCase):
             amount=10000,
         )
         CalculationResult.objects.create(
-            a_salary_report=cls.report7,
-            calculated_year_result=4 * (15000 + 12000 + 10000),
+            person_month=cls.month3,
+            calculated_year_result=4 * (10000 + 11000 + 12000)
+            + 4 * (15000 + 12000 + 10000),
         )
         cls.report8 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -134,8 +120,9 @@ class ModelTest(TestCase):
             amount=8000,
         )
         CalculationResult.objects.create(
-            a_salary_report=cls.report8,
-            calculated_year_result=3 * (15000 + 12000 + 10000 + 8000),
+            person_month=cls.month4,
+            calculated_year_result=3 * (10000 + 11000 + 12000 + 13000)
+            + 3 * (15000 + 12000 + 10000 + 8000),
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -187,29 +174,13 @@ class TestPersonYear(ModelTest):
     def test_string_methods(self):
         self.assertEqual(str(self.person_year), "Jens Hansen (2024)")
 
-    def test_salary_reports(self):
-        self.assertEqual(
-            list(self.person_year.salary_reports),
-            [
-                self.report1,
-                self.report5,
-                self.report2,
-                self.report6,
-                self.report3,
-                self.report7,
-                self.report4,
-                self.report8,
-            ],
-        )
-
-    def test_latest_calculation(self):
-        self.assertEqual(
-            self.person_year.latest_calculation,
-            self.report4.calculated_year_result + self.report8.calculated_year_result,
-        )
-
-    def test_no_calculation(self):
-        self.assertIsNone(self.report9.calculated_year_result)
+    def test_calculation_engine_missing(self):
+        with self.assertRaises(
+            ReferenceError,
+            msg=f"Cannot calculate benefit; "
+            f"calculation method not set for year {self.year2}",
+        ):
+            self.person_year2.calculate_benefit(Decimal(100000))
 
 
 class TestPersonMonth(ModelTest):
@@ -285,13 +256,11 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(self.month2.prior_benefit_paid, Decimal("1050.00"))
         self.assertEqual(self.month2.benefit_paid, Decimal("1118.73"))
 
-    def test_calculation_engine_missing(self):
-        with self.assertRaises(
-            ReferenceError,
-            msg=f"Cannot calculate benefit; "
-            f"calculation method not set for year {self.year2}",
-        ):
-            self.month5.calculate_benefit()
+    def test_sum_amount(self):
+        self.assertEqual(self.month1.sum_amount, Decimal(10000 + 15000))
+        self.assertEqual(self.month2.sum_amount, Decimal(11000 + 12000))
+        self.assertEqual(self.month3.sum_amount, Decimal(12000 + 10000))
+        self.assertEqual(self.month4.sum_amount, Decimal(13000 + 8000))
 
 
 class TestEmployer(ModelTest):
@@ -300,7 +269,7 @@ class TestEmployer(ModelTest):
         self.assertEqual(str(self.employer1), "Fredes Fisk (12345678)")
 
 
-class TestSalaryReport(ModelTest):
+class TestIncomeReport(ModelTest):
 
     def test_shortcuts(self):
         self.assertEqual(self.report1.person_year, self.person_year)
@@ -311,4 +280,22 @@ class TestSalaryReport(ModelTest):
     def test_string_methods(self):
         self.assertEqual(
             str(self.report1), "Jens Hansen (2024/1) | Fredes Fisk (12345678)"
+        )
+        self.assertEqual(
+            str(self.report5), "Jens Hansen (2024/1) | Ronnis Rejer (87654321)"
+        )
+
+    def test_annotate_month(self):
+        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
+        self.assertEqual(MonthlyAIncomeReport.annotate_month(qs).first().f_month, 1)
+
+    def test_annotate_year(self):
+        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
+        self.assertEqual(MonthlyAIncomeReport.annotate_year(qs).first().f_year, 2024)
+
+    def test_annotate_person_year(self):
+        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
+        self.assertEqual(
+            MonthlyAIncomeReport.annotate_person_year(qs).first().f_person_year,
+            self.person_year.pk,
         )

@@ -4,7 +4,6 @@
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import Dict
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -161,7 +160,7 @@ class Person(models.Model):
         )
 
     def __str__(self):
-        return self.name
+        return self.name or self.cpr
 
 
 class PersonYear(models.Model):
@@ -189,17 +188,6 @@ class PersonYear(models.Model):
         return f"{self.person} ({self.year})"
 
     @property
-    def salary_reports(self):
-        return (
-            MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
-            .annotate(
-                f_year=F("person_month__person_year__year_id"),
-                f_month=F("person_month__month"),
-            )
-            .order_by("f_year", "f_month", "employer")
-        )
-
-    @property
     def sum_amount(self):
         return (
             MonthlyAIncomeReport.objects.filter(
@@ -210,26 +198,6 @@ class PersonYear(models.Model):
             ).aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
         )
 
-    @property
-    def latest_calculation_by_employer(self) -> Dict["Employer", Decimal]:
-        """
-        Extracts the lastest year-estimates from reports for each employer
-        :return:
-        """
-        latest_by_employer = {}
-        for report in self.salary_reports.reverse():
-            if report.employer not in latest_by_employer:
-                latest_by_employer[report.employer] = report.calculated_year_result
-        return latest_by_employer
-
-    @property
-    def latest_calculation(self) -> Decimal:
-        """
-        Returns the total lastest year-estimates from reports
-        :return:
-        """
-        return sum(self.latest_calculation_by_employer.values())  # type: ignore
-
     def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
         if self.year.calculation_method is None:
             raise ReferenceError(
@@ -237,30 +205,6 @@ class PersonYear(models.Model):
                 f"calculation method not set for year {self.year}"
             )
         return self.year.calculation_method.calculate(estimated_year_income)
-
-    #
-    # calculations = group(
-    #     CalculationResult.objects.filter(a_salary_report__in=reportlist),
-    #     "engine",
-    # )
-    # offsets = {}
-    # for engine, engine_calculations in calculations.items():
-    #     # Percent offset. Basically, how much off is the sum
-    #     # of estimations from the sum of actual values
-    #     offsets[engine] = (
-    #             100
-    #             * sum(
-    #         [
-    #             (
-    #                 (ec.absdiff / ec.actual_year_result)
-    #                 if ec.actual_year_result
-    #                 else 0
-    #             )
-    #             for ec in engine_calculations
-    #         ]
-    #     )
-    #             / len(engine_calculations)
-    #     )
 
 
 class PersonMonth(models.Model):
@@ -339,24 +283,18 @@ class PersonMonth(models.Model):
 
     @property
     def sum_amount(self):
-        return (
-            self.monthlyaincomereport_set.aggregate(sum=Coalesce(Sum("amount"), 0))[
-                "sum"
-            ]
-            + self.monthlybincomereport_set.aggregate(sum=Coalesce(Sum("amount"), 0))[
-                "sum"
-            ]
-        )
+        return MonthlyIncomeReport.sum_queryset(
+            self.monthlyaincomereport_set
+        ) + MonthlyIncomeReport.sum_queryset(self.monthlybincomereport_set)
 
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
-        estimated_year_income: Decimal = Decimal(0)
-        for salary_report in self.aincomereport_set.all():
-            # Using a list comp. in a sum() makes MyPy complain
-            estimated_year_income += salary_report.calculated_year_result or 0
-        # TODO: medtag andre relevante indkomster i summen
+        # Using a list comp. in a sum() makes MyPy complain
+        estimated_year_income = self.calculationresult_set.get(
+            engine=self.person.preferred_prediction_engine
+        ).calculated_year_result
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
         self.estimated_year_benefit = self.person_year.calculate_benefit(
@@ -432,6 +370,10 @@ class MonthlyIncomeReport(models.Model):
     ) -> QuerySet["MonthlyIncomeReport"]:
         return qs.annotate(f_person_year=F("person_month__person_year"))
 
+    @classmethod
+    def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
+        return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
+
 
 class MonthlyAIncomeReport(MonthlyIncomeReport):
 
@@ -463,13 +405,6 @@ class MonthlyAIncomeReport(MonthlyIncomeReport):
     def person(self) -> Person:
         return self.person_month.person_year.person
 
-    @property
-    def calculated_year_result(self) -> Decimal | None:
-        first_item = self.calculationresult_set.first()
-        if first_item is None:
-            return None
-        return first_item.calculated_year_result
-
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
 
@@ -490,6 +425,9 @@ class MonthlyBIncomeReport(MonthlyIncomeReport):
         null=False,
         blank=False,
     )
+
+    def __str__(self):
+        return f"{self.person_month} | {self.trader}"
 
 
 class SelfAssessedYearlyBIncome(models.Model):

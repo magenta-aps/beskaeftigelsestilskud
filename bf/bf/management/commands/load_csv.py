@@ -199,7 +199,8 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"Processed {len(person_months)} PersonMonth objects")
 
-        # Create MonthlyAIncomeReport objects (existing objects for this year will be deleted!)
+        # Create MonthlyAIncomeReport objects
+        # (existing objects for this year will be deleted!)
         a_income_reports = [
             MonthlyAIncomeReport(
                 person_month=person_months[(row.cpr, (index % 12) + 1)],
@@ -218,7 +219,8 @@ class Command(BaseCommand):
             f"Created {len(a_income_reports)} MonthlyAIncomeReport objects"
         )
 
-        # Create MonthlyBIncomeReport objects (existing objects for this year will be deleted!)
+        # Create MonthlyBIncomeReport objects
+        # (existing objects for this year will be deleted!)
         b_income_reports = [
             MonthlyBIncomeReport(
                 person_month=person_months[(row.cpr, (index % 12) + 1)],

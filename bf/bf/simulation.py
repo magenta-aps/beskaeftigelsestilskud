@@ -10,7 +10,13 @@ from data_analysis.models import CalculationResult
 from django.db.models import Q
 
 from bf.calculate import CalculationEngine
-from bf.models import MonthlyAIncomeReport, MonthlyBIncomeReport, Person, PersonYear
+from bf.models import (
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    Person,
+    PersonMonth,
+    PersonYear,
+)
 
 
 @dataclass(frozen=True)
@@ -88,7 +94,10 @@ class Simulation:
         for engine in self.engines:
             prediction_items = []
             for month in range(1, 13):
-                person_month = self.person_year.personmonth_set.get(month=month)
+                try:
+                    person_month = self.person_year.personmonth_set.get(month=month)
+                except PersonMonth.DoesNotExist:
+                    continue
                 engine_name = engine.__class__.__name__
                 try:
                     calculation_result = CalculationResult.objects.get(
@@ -96,10 +105,12 @@ class Simulation:
                     )
                 except CalculationResult.DoesNotExist:
                     visible_a_reports = income_a.filter(
-                        Q(f_year__lt=self.year) | Q(f_year=self.year, f_month__lte=month)
+                        Q(f_year__lt=self.year)
+                        | Q(f_year=self.year, f_month__lte=month)
                     )
                     visible_b_reports = income_b.filter(
-                        Q(f_year__lt=self.year) | Q(f_year=self.year, f_month__lte=month)
+                        Q(f_year__lt=self.year)
+                        | Q(f_year=self.year, f_month__lte=month)
                     )
                     calculation_result = engine.calculate(
                         visible_a_reports, visible_b_reports, person_month
@@ -108,12 +119,13 @@ class Simulation:
                         calculation_result.calculated_year_result = actual_year_sum
 
                 if calculation_result is not None:
+                    calculated_year_result = calculation_result.calculated_year_result
                     prediction_items.append(
                         PredictionItem(
                             year=self.year,
                             month=month,
-                            predicted_value=calculation_result.calculated_year_result,
-                            prediction_difference=calculation_result.calculated_year_result
+                            predicted_value=calculated_year_result,
+                            prediction_difference=calculated_year_result
                             - actual_year_sum,
                             prediction_difference_pct=(
                                 (calculation_result.offset * 100)
@@ -122,7 +134,8 @@ class Simulation:
                             ),
                         )
                     )
-            predictions.append(Prediction(engine=engine, items=prediction_items))
+            if prediction_items:
+                predictions.append(Prediction(engine=engine, items=prediction_items))
 
         return SimulationResultRow(
             income_series=income_series,

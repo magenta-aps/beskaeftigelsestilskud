@@ -16,7 +16,6 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.generic import DetailView
 from django.views.generic.list import (
-    ListView,
     MultipleObjectMixin,
     MultipleObjectTemplateResponseMixin,
 )
@@ -27,7 +26,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import MonthlyAIncomeReport, Person, PersonYear
+from bf.models import Person, PersonYear
 from bf.simulation import Simulation
 
 
@@ -122,7 +121,13 @@ class PersonListView(
                 for engine, engine_calculations in person_calculation_results.items():
                     engine_offset_pct = (
                         100
-                        * sum([ec.absdiff for ec in engine_calculations]) / actual_sum
+                        * sum(
+                            [
+                                engine_calculation.absdiff
+                                for engine_calculation in engine_calculations
+                            ]
+                        )
+                        / actual_sum
                         / len(engine_calculations)
                     )
                     item[engine] = engine_offset_pct

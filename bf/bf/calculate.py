@@ -4,7 +4,7 @@
 from decimal import Decimal
 
 from data_analysis.models import CalculationResult
-from django.db.models import F, Q, QuerySet, Sum
+from django.db.models import Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
 
 from bf.models import (
@@ -52,26 +52,6 @@ class InYearExtrapolationEngine(CalculationEngine):
         amount_sum = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
             b_reports, year, month
         )
-        # a_reports = a_reports.annotate(
-        #     # Do not use any properties on the class as annotation names.
-        #     # Django will explode trying to put values into the properties.
-        #     **cls.annotate_year_month
-        # )
-        # b_reports = b_reports.annotate(
-        #     # Do not use any properties on the class as annotation names.
-        #     # Django will explode trying to put values into the properties.
-        #     **cls.annotate_year_month
-        # )
-        # relevant_a: QuerySet[MonthlyAIncomeReport] = a_reports.filter(
-        #     f_year=year, f_month__lte=month
-        # ).order_by("f_month")
-        # relevant_b: QuerySet[MonthlyBIncomeReport] = b_reports.filter(
-        #     f_year=year, f_month__lte=month
-        # ).order_by("f_month")
-        # amount_sum = (
-        #     relevant_a.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
-        #     + relevant_b.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
-        # )
         year_prediction = int(12 * (amount_sum / month))
         return CalculationResult(
             calculated_year_result=year_prediction,
@@ -106,17 +86,6 @@ class TwelveMonthsSummationEngine(CalculationEngine):
         year_prediction = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
             b_reports, year, month
         )
-        # a_reports = a_reports.annotate(**cls.annotate_year_month)
-        # b_reports = b_reports.annotate(**cls.annotate_year_month)
-        # relevant_a: QuerySet[MonthlyAIncomeReport] = a_reports.filter(
-        #     Q(f_year=year, f_month__lte=month) | Q(f_year=year - 1, f_month__gt=month)
-        # ).order_by("f_year", "f_month")
-        # relevant_b: QuerySet[MonthlyBIncomeReport] = b_reports.filter(
-        #     Q(f_year=year, f_month__lte=month) | Q(f_year=year - 1, f_month__gt=month)
-        # ).order_by("f_year", "f_month")
-        # year_prediction = int(relevant_a.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]) + int(
-        #     relevant_b.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
-        # )
         return CalculationResult(
             calculated_year_result=year_prediction,
             person_month=person_month,

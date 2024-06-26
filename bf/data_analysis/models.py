@@ -40,8 +40,8 @@ class CalculationResult(models.Model):
     calculated_year_result = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        null=True,
-        blank=True,
+        null=False,
+        blank=False,
     )
 
     actual_year_result = models.DecimalField(
@@ -78,3 +78,6 @@ class CalculationResult(models.Model):
         qs: QuerySet["CalculationResult"],
     ) -> QuerySet["CalculationResult"]:
         return qs.annotate(f_person_year=F("person_month__person_year"))
+
+    def __str__(self):
+        return f"{self.engine} ({self.person_month})"
