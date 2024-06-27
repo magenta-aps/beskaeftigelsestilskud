@@ -8,6 +8,7 @@ from typing import List
 
 from data_analysis.models import IncomeEstimate
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from numpy import std
 from tabulate import SEPARATING_LINE, tabulate
 
@@ -92,6 +93,7 @@ class Command(BaseCommand):
                 a_reports = list(qs_a)
                 b_reports = list(qs_b)
 
+                to_delete = Q()
                 for month in range(1, 13):
                     person_month = person_year.personmonth_set.get(month=month)
                     # We used to filter by year and month directly on qs_a
@@ -127,6 +129,7 @@ class Command(BaseCommand):
                         )
                         resultat.actual_year_result = actual_year_sum
                         results.append(resultat)
+                        to_delete |= Q(engine=resultat.engine, person_month=resultat.person_month)
                 self._write_verbose(engine.description)
                 self._write_verbose(
                     tabulate(
@@ -150,6 +153,7 @@ class Command(BaseCommand):
                     }
                 )
 
+                IncomeEstimate.objects.filter(to_delete).delete()
             IncomeEstimate.objects.bulk_create(results)
         for engine, results in summary_table_by_engine.items():
             with open(f"estimates_{engine}.csv", "w") as fp:
