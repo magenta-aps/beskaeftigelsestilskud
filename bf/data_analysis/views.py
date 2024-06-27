@@ -143,7 +143,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView)
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
                 content_type="application/json",
             )
-        return super().get(request, *args, **kwargs)  # pragma: no cover
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
