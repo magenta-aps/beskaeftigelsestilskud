@@ -4,6 +4,7 @@
 
 import dataclasses
 import json
+import time
 from collections import Counter, defaultdict
 from decimal import Decimal
 from typing import Dict, List
@@ -16,6 +17,7 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.generic import DetailView
 from django.views.generic.list import (
+    ListView,
     MultipleObjectMixin,
     MultipleObjectTemplateResponseMixin,
 )
@@ -26,7 +28,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import Person, PersonYear
+from bf.models import Person, PersonMonth, PersonYear
 from bf.simulation import Simulation
 
 
@@ -75,49 +77,50 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class PersonListView(
-    LoginRequiredMixin, MultipleObjectMixin, MultipleObjectTemplateResponseMixin, View
-):
-
+class PersonListView(LoginRequiredMixin, ListView):
+    paginate_by = 30
+    model = PersonYear
     template_name = "data_analysis/personyear_list.html"
 
     @property
     def year(self):
         return self.kwargs["year"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.object_list = None
+
     def get(self, request, *args, **kwargs):
-        self.object_list = self.get_objects()
         if request.GET.get("format") == "json":
             return HttpResponse(
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
                 content_type="application/json",
             )
-        return self.render_to_response(self.get_context_data())
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return (
+            PersonYear.objects.filter(year=self.year)
+            .select_related("person")
+            .order_by("person__cpr")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["year"] = self.year
-        return context
-
-    def get_objects(self):
-        person_years: QuerySet[PersonYear] = PersonYear.objects.filter(
-            year=self.year
-        ).select_related("person")
-        items = []
-
+        person_years = self.object_list = context["object_list"]
+        qs = CalculationResult.annotate_person_year(
+            CalculationResult.objects.all()
+        ).filter(f_person_year__in=person_years)
         calculation_results: Dict[int, List[CalculationResult]] = group(
-            CalculationResult.annotate_person_year(
-                CalculationResult.objects.all()
-            ).filter(f_person_year__in=person_years),
-            "f_person_year",
+            qs, "f_person_year"
         )
         for person_year in person_years:
+            actual_sum = person_year.sum_amount
             person_calculation_results = group(
                 calculation_results[person_year.pk], "engine"
             )
-            actual_sum = person_year.sum_amount
-            item = {"person": person_year.person, "actual_sum": actual_sum}
-            if person_calculation_results:
+            if person_calculation_results and actual_sum:
                 for engine, engine_calculations in person_calculation_results.items():
                     engine_offset_pct = (
                         100
@@ -130,12 +133,12 @@ class PersonListView(
                         / actual_sum
                         / len(engine_calculations)
                     )
-                    item[engine] = engine_offset_pct
+                    setattr(person_year, engine, engine_offset_pct)
             else:
-                item["InYearExtrapolationEngine"] = Decimal(0)
-                item["TwelveMonthsSummationEngine"] = Decimal(0)
-            items.append(item)
-        return items
+                person_year.InYearExtrapolationEngine = Decimal(0)
+                person_year.TwelveMonthsSummationEngine = Decimal(0)
+        self.context_data = context
+        return context
 
     def get_histogram(self) -> defaultdict:
         percentile_size = 10

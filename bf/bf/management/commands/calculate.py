@@ -18,7 +18,13 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import MonthlyAIncomeReport, MonthlyIncomeReport, Person, PersonYear
+from bf.models import (
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
+    Person,
+    PersonYear,
+)
 
 
 class Command(BaseCommand):
@@ -50,11 +56,11 @@ class Command(BaseCommand):
             qs_a = MonthlyAIncomeReport.annotate_year(qs_a)
             qs_a = MonthlyAIncomeReport.annotate_month(qs_a)
 
-            qs_b = MonthlyAIncomeReport.objects.all()
-            qs_b = MonthlyAIncomeReport.annotate_person(qs_b)
+            qs_b = MonthlyBIncomeReport.objects.all()
+            qs_b = MonthlyBIncomeReport.annotate_person(qs_b)
             qs_b = qs_b.filter(f_person=person.pk)
-            qs_b = MonthlyAIncomeReport.annotate_year(qs_b)
-            qs_b = MonthlyAIncomeReport.annotate_month(qs_b)
+            qs_b = MonthlyBIncomeReport.annotate_year(qs_b)
+            qs_b = MonthlyBIncomeReport.annotate_month(qs_b)
 
             self._write_verbose("====================================")
             self._write_verbose(f"CPR: {person.cpr}")
