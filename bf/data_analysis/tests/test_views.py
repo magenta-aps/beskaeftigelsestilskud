@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_analysis.models import Estimate
+from data_analysis.models import IncomeEstimate
 from data_analysis.views import (
     PersonAnalysisView,
     PersonListView,
@@ -161,13 +161,13 @@ class TestPersonListView(TestCase):
             employer=cls.employer,
             amount=42,
         )
-        cls.estimate1, _ = Estimate.objects.get_or_create(
+        cls.estimate1, _ = IncomeEstimate.objects.get_or_create(
             engine=TwelveMonthsSummationEngine.__name__,
             actual_year_result=42,
             estimated_year_result=42,
             person_month=cls.person_month,
         )
-        cls.estimate2, _ = Estimate.objects.get_or_create(
+        cls.estimate2, _ = IncomeEstimate.objects.get_or_create(
             engine=InYearExtrapolationEngine.__name__,
             actual_year_result=42,
             estimated_year_result=21,

@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_analysis.models import Estimate
+from data_analysis.models import IncomeEstimate
 from django.test import TestCase
 
 from bf.models import (
@@ -91,7 +91,7 @@ class ModelTest(TestCase):
             person_month=cls.month1,
             amount=15000,
         )
-        Estimate.objects.create(
+        IncomeEstimate.objects.create(
             person_month=cls.month1,
             estimated_year_result=12 * 10000 + 12 * 15000,
         )
@@ -100,7 +100,7 @@ class ModelTest(TestCase):
             person_month=cls.month2,
             amount=12000,
         )
-        Estimate.objects.create(
+        IncomeEstimate.objects.create(
             person_month=cls.month2,
             estimated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
         )
@@ -109,7 +109,7 @@ class ModelTest(TestCase):
             person_month=cls.month3,
             amount=10000,
         )
-        Estimate.objects.create(
+        IncomeEstimate.objects.create(
             person_month=cls.month3,
             estimated_year_result=4 * (10000 + 11000 + 12000)
             + 4 * (15000 + 12000 + 10000),
@@ -119,7 +119,7 @@ class ModelTest(TestCase):
             person_month=cls.month4,
             amount=8000,
         )
-        Estimate.objects.create(
+        IncomeEstimate.objects.create(
             person_month=cls.month4,
             estimated_year_result=3 * (10000 + 11000 + 12000 + 13000)
             + 3 * (15000 + 12000 + 10000 + 8000),
@@ -129,7 +129,7 @@ class ModelTest(TestCase):
             person_month=cls.month5,
             amount=8000,
         )
-        # No Estimate
+        # No IncomeEstimate
 
 
 class TestStandardWorkBenefitCalculationMethod(ModelTest):

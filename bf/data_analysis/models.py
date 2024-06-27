@@ -9,7 +9,7 @@ from django.db.models import F, QuerySet
 from bf.models import PersonMonth
 
 
-class Estimate(models.Model):
+class IncomeEstimate(models.Model):
 
     class Meta:
         unique_together = (("engine", "person_month"),)
@@ -63,20 +63,20 @@ class Estimate(models.Model):
 
     @staticmethod
     def annotate_month(
-        qs: QuerySet["Estimate"],
-    ) -> QuerySet["Estimate"]:
+        qs: QuerySet["IncomeEstimate"],
+    ) -> QuerySet["IncomeEstimate"]:
         return qs.annotate(f_month=F("person_month__month"))
 
     @staticmethod
     def annotate_year(
-        qs: QuerySet["Estimate"],
-    ) -> QuerySet["Estimate"]:
+        qs: QuerySet["IncomeEstimate"],
+    ) -> QuerySet["IncomeEstimate"]:
         return qs.annotate(f_year=F("person_month__person_year__year"))
 
     @staticmethod
     def annotate_person_year(
-        qs: QuerySet["Estimate"],
-    ) -> QuerySet["Estimate"]:
+        qs: QuerySet["IncomeEstimate"],
+    ) -> QuerySet["IncomeEstimate"]:
         return qs.annotate(f_person_year=F("person_month__person_year"))
 
     def __str__(self):

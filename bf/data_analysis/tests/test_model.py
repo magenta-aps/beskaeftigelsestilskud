@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from data_analysis.models import Estimate
+from data_analysis.models import IncomeEstimate
 
 from bf.tests.test_model import ModelTest
 
@@ -12,7 +12,7 @@ class EstimationTest(ModelTest):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.result1 = Estimate.objects.create(
+        cls.result1 = IncomeEstimate.objects.create(
             engine="InYearExtrapolationEngine",
             person_month=cls.month1,
             estimated_year_result=1200,
@@ -31,16 +31,16 @@ class EstimationTest(ModelTest):
         self.assertEqual(self.result1.offset, 200 / 1400)
 
     def test_annotate_month(self):
-        qs = Estimate.objects.filter(pk=self.result1.pk)
-        self.assertEqual(Estimate.annotate_month(qs).first().f_month, 1)
+        qs = IncomeEstimate.objects.filter(pk=self.result1.pk)
+        self.assertEqual(IncomeEstimate.annotate_month(qs).first().f_month, 1)
 
     def test_annotate_year(self):
-        qs = Estimate.objects.filter(pk=self.result1.pk)
-        self.assertEqual(Estimate.annotate_year(qs).first().f_year, 2024)
+        qs = IncomeEstimate.objects.filter(pk=self.result1.pk)
+        self.assertEqual(IncomeEstimate.annotate_year(qs).first().f_year, 2024)
 
     def test_annotate_person_year(self):
-        qs = Estimate.objects.filter(pk=self.result1.pk)
+        qs = IncomeEstimate.objects.filter(pk=self.result1.pk)
         self.assertEqual(
-            Estimate.annotate_person_year(qs).first().f_person_year,
+            IncomeEstimate.annotate_person_year(qs).first().f_person_year,
             self.person_year.pk,
         )

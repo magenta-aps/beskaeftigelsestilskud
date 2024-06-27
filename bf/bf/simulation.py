@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from data_analysis.models import Estimate
+from data_analysis.models import IncomeEstimate
 from django.db.models import Q
 
 from bf.estimation import EstimationEngine
@@ -100,10 +100,10 @@ class Simulation:
                     continue
                 engine_name = engine.__class__.__name__
                 try:
-                    estimate = Estimate.objects.get(
+                    estimate = IncomeEstimate.objects.get(
                         person_month=person_month, engine=engine_name
                     )
-                except Estimate.DoesNotExist:
+                except IncomeEstimate.DoesNotExist:
                     visible_a_reports = income_a.filter(
                         Q(f_year__lt=self.year)
                         | Q(f_year=self.year, f_month__lte=month)

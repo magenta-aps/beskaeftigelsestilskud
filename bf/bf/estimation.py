@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
 
-from data_analysis.models import Estimate
+from data_analysis.models import IncomeEstimate
 from django.db.models import Q, QuerySet
 
 from bf.models import (
@@ -21,7 +21,7 @@ class EstimationEngine:
         a_reports: QuerySet[MonthlyAIncomeReport],  # A income
         b_reports: QuerySet[MonthlyBIncomeReport],  # B income
         person_month: PersonMonth,
-    ) -> Estimate | None:
+    ) -> IncomeEstimate | None:
         raise NotImplementedError
 
 
@@ -43,7 +43,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         a_reports: QuerySet[MonthlyAIncomeReport],
         b_reports: QuerySet[MonthlyBIncomeReport],
         person_month: PersonMonth,
-    ) -> Estimate | None:
+    ) -> IncomeEstimate | None:
         if not a_reports.exists() and not b_reports.exists():
             return None
         year = person_month.year
@@ -52,7 +52,7 @@ class InYearExtrapolationEngine(EstimationEngine):
             b_reports, year, month
         )
         year_estimate = int(12 * (amount_sum / month))
-        return Estimate(
+        return IncomeEstimate(
             estimated_year_result=year_estimate,
             person_month=person_month,
             engine=cls.__name__,
@@ -77,7 +77,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         a_reports: QuerySet[MonthlyAIncomeReport],
         b_reports: QuerySet[MonthlyBIncomeReport],
         person_month: PersonMonth,
-    ) -> Estimate | None:
+    ) -> IncomeEstimate | None:
         if not a_reports.exists() and not b_reports.exists():
             return None
         year = person_month.year
@@ -85,7 +85,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         year_estimate = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
             b_reports, year, month
         )
-        return Estimate(
+        return IncomeEstimate(
             estimated_year_result=year_estimate,
             person_month=person_month,
             engine=cls.__name__,

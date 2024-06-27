@@ -289,7 +289,7 @@ class PersonMonth(models.Model):
 
     def calculate_benefit(self) -> Decimal:
         # Using a list comp. in a sum() makes MyPy complain
-        estimated_year_income = self.estimate_set.get(
+        estimated_year_income = self.incomeestimate_set.get(
             engine=self.person.preferred_estimation_engine
         ).estimated_year_result
 

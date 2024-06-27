@@ -7,7 +7,7 @@ import json
 from decimal import Decimal
 from typing import Dict, List
 
-from data_analysis.models import Estimate
+from data_analysis.models import IncomeEstimate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
@@ -103,10 +103,12 @@ class PersonListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["year"] = self.year
         person_years = self.object_list = context["object_list"]
-        qs = Estimate.annotate_person_year(Estimate.objects.all()).filter(
+        qs = IncomeEstimate.annotate_person_year(IncomeEstimate.objects.all()).filter(
             f_person_year__in=person_years
         )
-        calculation_results: Dict[int, List[Estimate]] = group(qs, "f_person_year")
+        calculation_results: Dict[int, List[IncomeEstimate]] = group(
+            qs, "f_person_year"
+        )
         for person_year in person_years:
             actual_sum = person_year.sum_amount
             person_calculation_results = group(

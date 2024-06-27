@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import date
 from typing import List
 
-from data_analysis.models import Estimate
+from data_analysis.models import IncomeEstimate
 from django.core.management.base import BaseCommand
 from numpy import std
 from tabulate import SEPARATING_LINE, tabulate
@@ -112,7 +112,7 @@ class Command(BaseCommand):
                             or (item.f_year == year and item.f_month <= month)
                         ]
                     )
-                    resultat: Estimate = engine.estimate(
+                    resultat: IncomeEstimate = engine.estimate(
                         visible_a_reports, visible_b_reports, person_month
                     )
 
@@ -150,7 +150,7 @@ class Command(BaseCommand):
                     }
                 )
 
-            Estimate.objects.bulk_create(results)
+            IncomeEstimate.objects.bulk_create(results)
         for engine, results in summary_table_by_engine.items():
             with open(f"estimates_{engine}.csv", "w") as fp:
                 writer = csv.writer(fp, delimiter=";")
