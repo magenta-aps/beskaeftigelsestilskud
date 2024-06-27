@@ -10,6 +10,17 @@ SPDX-License-Identifier: MPL-2.0
 {% load csp %}
 
 {% block content %}
+<form id="histogram-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
+    <div class="col-12">
+        <div class="input-group">
+            <div class="input-group-text">{{ form.resolution.label }}</div>
+            {{ form.resolution }}
+        </div>
+    </div>
+    <div class="col-12">
+        <button class="btn btn-primary">{% translate 'Opdater' %}</button>
+    </div>
+</form>
 <div id="histograms">
     <div class="spinner-border" role="status">
         <span class="visually-hidden">{% translate 'Building histograms ...' %}</span>
@@ -43,13 +54,11 @@ const chartOptions = {
     },
     xaxis: {
         type: "category",
-        // Buckets: 0, 10, 20 ... 250
-        categories: Array.from({ length: 26 }, (v, i) => i * 10),
     },
 };
 
 // Build chart data
-const getChartData = function (histo, key, options) {
+const getChartData = function (histo, key, percentileSize, options) {
     const series = [];
 
     // Convert histogram (percentile -> num observations map) into X/Y pairs
@@ -72,7 +81,7 @@ const getChartData = function (histo, key, options) {
     chartData.xaxis.labels = {
         formatter: function (value, timestamp, opts) {
             const val = parseInt(value, 10);
-            return `${val}%-${val + 10}%`;
+            return `${val}-${val + percentileSize}%`;
         }
     }
     return chartData;
@@ -80,14 +89,20 @@ const getChartData = function (histo, key, options) {
 
 $(document).ready(
     async function () {
+        const url = new URL(window.location);
+        const params = new URLSearchParams(url.search);
+        params.append("format", "json");
+
         const rootElemName = "#histograms";
-        const response = await fetch("?format=json");
+        const form = $("#histogram-options");
+
+        const response = await fetch(`?${params}`);
         const doc = await response.json();
 
         $(rootElemName).html("");
 
-        for (const key in doc) {
-            const histo = doc[key];
+        for (const key in doc.data) {
+            const histo = doc.data[key];
 
             // Insert DOM element for heading
             const headingElem = $(`<h1>${key}</h1>`);
@@ -98,7 +113,7 @@ $(document).ready(
             $(rootElemName).append(chartElem);
 
             // Get chart data
-            const chartData = getChartData(histo, key, chartOptions);
+            const chartData = getChartData(histo, key, doc.percentile_size, chartOptions);
 
             // Render chart into DOM element
             const chart = new ApexCharts(chartElem.get(0), chartData);

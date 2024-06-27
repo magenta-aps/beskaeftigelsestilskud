@@ -8,6 +8,7 @@ from collections import Counter, defaultdict
 from decimal import Decimal
 from typing import Dict, List
 
+from data_analysis.forms import HistogramOptionsForm
 from data_analysis.models import IncomeEstimate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
@@ -144,10 +145,23 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView)
             )
         return super().get(request, *args, **kwargs)  # pragma: no cover
 
-    def get_histogram(self) -> defaultdict:
-        percentile_size = 10
-        observations: defaultdict = defaultdict(Counter)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = self.get_form()
+        return context
 
+    def get_form(self):
+        return HistogramOptionsForm(data=self.request.GET)
+
+    def get_percentile_size(self):
+        form = self.get_form()
+        if form.is_valid():
+            return form.cleaned_data["resolution"]
+        return 10
+
+    def get_histogram(self) -> dict:
+        percentile_size = self.get_percentile_size()
+        observations: defaultdict = defaultdict(Counter)
         person_years = self._add_predictions(
             PersonYear.objects.filter(year=self.kwargs["year"])
         )
@@ -159,4 +173,9 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView)
                     bucket = int(percentile_size * (val // percentile_size))
                     observations[key][bucket] += 1
 
-        return observations
+        for counter in observations.values():
+            for bucket in range(0, 100, percentile_size):
+                if bucket not in counter:
+                    counter[bucket] = 0
+
+        return {"data": observations, "percentile_size": percentile_size}
