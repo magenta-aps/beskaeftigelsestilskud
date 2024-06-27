@@ -7,7 +7,7 @@ import json
 from decimal import Decimal
 from typing import Dict, List
 
-from data_analysis.models import CalculationResult
+from data_analysis.models import IncomeEstimate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
@@ -16,8 +16,8 @@ from django.views.generic import DetailView
 from django.views.generic.list import ListView
 from project.util import group
 
-from bf.calculate import (
-    CalculationEngine,
+from bf.estimation import (
+    EstimationEngine,
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
@@ -33,7 +33,7 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
             return float(obj)
         if isinstance(obj, Model):
             return {k: v for k, v in obj.__dict__.items() if not k.startswith("_")}
-        if isinstance(obj, CalculationEngine):
+        if isinstance(obj, EstimationEngine):
             return {
                 "class": obj.__class__.__name__,
                 "description": obj.description,
@@ -103,10 +103,10 @@ class PersonListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["year"] = self.year
         person_years = self.object_list = context["object_list"]
-        qs = CalculationResult.annotate_person_year(
-            CalculationResult.objects.all()
-        ).filter(f_person_year__in=person_years)
-        calculation_results: Dict[int, List[CalculationResult]] = group(
+        qs = IncomeEstimate.annotate_person_year(IncomeEstimate.objects.all()).filter(
+            f_person_year__in=person_years
+        )
+        calculation_results: Dict[int, List[IncomeEstimate]] = group(
             qs, "f_person_year"
         )
         for person_year in person_years:
