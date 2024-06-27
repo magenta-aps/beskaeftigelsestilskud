@@ -116,7 +116,7 @@ class Simulation:
                         visible_a_reports, visible_b_reports, person_month
                     )
                     if estimate is not None:
-                        estimate.estimated_year_result = actual_year_sum
+                        estimate.actual_year_result = actual_year_sum
 
                 if estimate is not None:
                     estimated_year_result = estimate.estimated_year_result
