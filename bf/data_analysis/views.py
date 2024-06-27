@@ -4,7 +4,6 @@
 
 import dataclasses
 import json
-from collections import Counter, defaultdict
 from decimal import Decimal
 from typing import Dict, List
 
