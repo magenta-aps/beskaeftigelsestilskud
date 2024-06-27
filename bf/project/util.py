@@ -4,6 +4,9 @@
 
 
 from collections import defaultdict
+from typing import Iterable
+
+from django.db.models import QuerySet
 
 
 def strtobool(val):
@@ -23,7 +26,7 @@ def get(item, field):
         return getattr(item, field)
 
 
-def group(qs, field: str):
+def group(qs: Iterable | QuerySet, field: str):
     groups = defaultdict(list)
     for item in qs:
         groups[get(item, field)].append(item)

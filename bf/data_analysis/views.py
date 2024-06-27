@@ -4,20 +4,16 @@
 
 import dataclasses
 import json
-from collections import Counter, defaultdict
 from decimal import Decimal
+from typing import Dict, List
 
 from data_analysis.models import CalculationResult
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
 from django.http import HttpResponse
-from django.views import View
 from django.views.generic import DetailView
-from django.views.generic.list import (
-    MultipleObjectMixin,
-    MultipleObjectTemplateResponseMixin,
-)
+from django.views.generic.list import ListView
 from project.util import group
 
 from bf.calculate import (
@@ -25,7 +21,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import AIncomeReport, Person
+from bf.models import Person, PersonYear
 from bf.simulation import Simulation
 
 
@@ -74,85 +70,77 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class EmploymentListView(
-    LoginRequiredMixin, MultipleObjectMixin, MultipleObjectTemplateResponseMixin, View
-):
+class PersonListView(LoginRequiredMixin, ListView):
+    paginate_by = 30
+    model = PersonYear
+    template_name = "data_analysis/personyear_list.html"
 
-    template_name = "data_analysis/employment_list.html"
+    @property
+    def year(self):
+        return self.kwargs["year"]
 
-    def get(self, request, *args, **kwargs):
-        self.year = self.kwargs["year"]
-        self.object_list = self.get_objects()
-        if request.GET.get("format") == "json":
-            return HttpResponse(
-                json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
-                content_type="application/json",
-            )
-        context = self.get_context_data()
-        return self.render_to_response(context)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.object_list = None
+
+    #
+    # def get(self, request, *args, **kwargs):
+    #     if request.GET.get("format") == "json":
+    #         return HttpResponse(
+    #             json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
+    #             content_type="application/json",
+    #         )
+    #     return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return (
+            PersonYear.objects.filter(year=self.year)
+            .select_related("person")
+            .order_by("person__cpr")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["year"] = self.year
+        person_years = self.object_list = context["object_list"]
+        qs = CalculationResult.annotate_person_year(
+            CalculationResult.objects.all()
+        ).filter(f_person_year__in=person_years)
+        calculation_results: Dict[int, List[CalculationResult]] = group(
+            qs, "f_person_year"
+        )
+        for person_year in person_years:
+            actual_sum = person_year.sum_amount
+            person_calculation_results = group(
+                calculation_results[person_year.pk], "engine"
+            )
+            if person_calculation_results and actual_sum:
+                for engine, engine_calculations in person_calculation_results.items():
+                    engine_offset_pct = (
+                        100
+                        * sum(
+                            [
+                                engine_calculation.absdiff
+                                for engine_calculation in engine_calculations
+                            ]
+                        )
+                        / actual_sum
+                        / len(engine_calculations)
+                    )
+                    setattr(person_year, engine, engine_offset_pct)
+            else:
+                person_year.InYearExtrapolationEngine = Decimal(0)
+                person_year.TwelveMonthsSummationEngine = Decimal(0)
+        self.context_data = context
         return context
 
-    def get_objects(self):
-        reports = AIncomeReport.objects.filter(
-            person_month__person_year__year=self.year
-        ).select_related(
-            "employer",
-            "person_month",
-            "person_month__person_year__year",
-            "person_month__person_year__person",
-        )
-        by_person_employer = defaultdict(list)
-        rows = []
-        for report in reports:
-            # by_person_employer[report.person.pk][report.employer.pk].append(report)
-            by_person_employer[f"{report.person.pk}_{report.employer.pk}"].append(
-                report
-            )
-
-        for reportlist in by_person_employer.values():
-            first = reportlist[0]
-            calculations = group(
-                CalculationResult.objects.filter(a_salary_report__in=reportlist),
-                "engine",
-            )
-            offsets = {}
-            for engine, engine_calculations in calculations.items():
-                # Percent offset. Basically, how much off is the sum
-                # of estimations from the sum of actual values
-                offsets[engine] = (
-                    100
-                    * sum(
-                        [
-                            (
-                                (ec.absdiff / ec.actual_year_result)
-                                if ec.actual_year_result
-                                else 0
-                            )
-                            for ec in engine_calculations
-                        ]
-                    )
-                    / len(engine_calculations)
-                )
-            row = {
-                "person": first.person,
-                "employer": first.employer,
-                "actual_sum": sum([x.amount for x in reportlist]),
-            }
-            row.update(offsets)
-            rows.append(row)
-        return rows
-
-    def get_histogram(self) -> defaultdict:
-        percentile_size = 10
-        observations: defaultdict = defaultdict(Counter)
-        for item in self.object_list:
-            for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
-                if key in item:
-                    val = item[key]
-                    bucket = int(percentile_size * (val // percentile_size))
-                    observations[key][bucket] += 1
-        return observations
+    # def get_histogram(self) -> defaultdict:
+    #     percentile_size = 10
+    #     observations: defaultdict = defaultdict(Counter)
+    #     for item in self.object_list:
+    #         for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+    #             if key in item:
+    #                 val = item[key]
+    #                 bucket = int(percentile_size * (val // percentile_size))
+    #                 observations[key][bucket] += 1
+    #     return observations
