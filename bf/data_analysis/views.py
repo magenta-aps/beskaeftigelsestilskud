@@ -71,7 +71,7 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class _PersonYearEstimationMixin:
+class PersonYearEstimationMixin:
     def _add_predictions(self, person_years):
         qs = IncomeEstimate.annotate_person_year(IncomeEstimate.objects.all()).filter(
             f_person_year__in=person_years
@@ -106,7 +106,7 @@ class _PersonYearEstimationMixin:
         return person_years
 
 
-class PersonListView(_PersonYearEstimationMixin, LoginRequiredMixin, ListView):
+class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView):
     paginate_by = 30
     model = PersonYear
     template_name = "data_analysis/personyear_list.html"
@@ -133,7 +133,7 @@ class PersonListView(_PersonYearEstimationMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class HistogramView(LoginRequiredMixin, _PersonYearEstimationMixin, TemplateView):
+class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView):
     template_name = "data_analysis/histogram.html"
 
     def get(self, request, *args, **kwargs):

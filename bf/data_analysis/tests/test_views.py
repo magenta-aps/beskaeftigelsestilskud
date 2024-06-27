@@ -141,7 +141,7 @@ class TestPersonAnalysisView(TestCase):
         self.assertIsInstance(response, TemplateResponse)
 
 
-class _PersonYearEstimationSetupMixin:
+class PersonYearEstimationSetupMixin:
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -178,7 +178,7 @@ class _PersonYearEstimationSetupMixin:
         cls._view = cls.view_class()
 
 
-class TestPersonListView(_PersonYearEstimationSetupMixin, TestCase):
+class TestPersonListView(PersonYearEstimationSetupMixin, TestCase):
     view_class = PersonListView
 
     def test_get_returns_html(self):
@@ -208,7 +208,7 @@ class TestPersonListView(_PersonYearEstimationSetupMixin, TestCase):
         self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(0))
 
 
-class TestHistogramView(_PersonYearEstimationSetupMixin, TestCase):
+class TestHistogramView(PersonYearEstimationSetupMixin, TestCase):
     view_class = HistogramView
 
     def test_get_returns_json(self):
