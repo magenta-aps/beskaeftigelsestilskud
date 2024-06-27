@@ -4,6 +4,7 @@
 
 import dataclasses
 import json
+from collections import Counter, defaultdict
 from decimal import Decimal
 from typing import Dict, List
 
@@ -12,7 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
 from django.http import HttpResponse
-from django.views.generic import DetailView
+from django.views.generic import DetailView, TemplateView
 from django.views.generic.list import ListView
 from project.util import group
 
@@ -70,45 +71,15 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class PersonListView(LoginRequiredMixin, ListView):
-    paginate_by = 30
-    model = PersonYear
-    template_name = "data_analysis/personyear_list.html"
-
-    @property
-    def year(self):
-        return self.kwargs["year"]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.object_list = None
-
-    #
-    # def get(self, request, *args, **kwargs):
-    #     if request.GET.get("format") == "json":
-    #         return HttpResponse(
-    #             json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
-    #             content_type="application/json",
-    #         )
-    #     return super().get(request, *args, **kwargs)
-
-    def get_queryset(self):
-        return (
-            PersonYear.objects.filter(year=self.year)
-            .select_related("person")
-            .order_by("person__cpr")
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["year"] = self.year
-        person_years = self.object_list = context["object_list"]
+class PersonYearEstimationMixin:
+    def _add_predictions(self, person_years):
         qs = IncomeEstimate.annotate_person_year(IncomeEstimate.objects.all()).filter(
             f_person_year__in=person_years
         )
         calculation_results: Dict[int, List[IncomeEstimate]] = group(
             qs, "f_person_year"
         )
+
         for person_year in person_years:
             actual_sum = person_year.sum_amount
             person_calculation_results = group(
@@ -131,16 +102,61 @@ class PersonListView(LoginRequiredMixin, ListView):
             else:
                 person_year.InYearExtrapolationEngine = Decimal(0)
                 person_year.TwelveMonthsSummationEngine = Decimal(0)
-        self.context_data = context
+
+        return person_years
+
+
+class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView):
+    paginate_by = 30
+    model = PersonYear
+    template_name = "data_analysis/personyear_list.html"
+
+    @property
+    def year(self):
+        return self.kwargs["year"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.object_list = None
+
+    def get_queryset(self):
+        return (
+            PersonYear.objects.filter(year=self.year)
+            .select_related("person")
+            .order_by("person__cpr")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["year"] = self.year
+        self.object_list = self._add_predictions(context["object_list"])
         return context
 
-    # def get_histogram(self) -> defaultdict:
-    #     percentile_size = 10
-    #     observations: defaultdict = defaultdict(Counter)
-    #     for item in self.object_list:
-    #         for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
-    #             if key in item:
-    #                 val = item[key]
-    #                 bucket = int(percentile_size * (val // percentile_size))
-    #                 observations[key][bucket] += 1
-    #     return observations
+
+class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView):
+    template_name = "data_analysis/histogram.html"
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get("format") == "json":
+            return HttpResponse(
+                json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
+                content_type="application/json",
+            )
+        return super().get(request, *args, **kwargs)  # pragma: no cover
+
+    def get_histogram(self) -> defaultdict:
+        percentile_size = 10
+        observations: defaultdict = defaultdict(Counter)
+
+        person_years = self._add_predictions(
+            PersonYear.objects.filter(year=self.kwargs["year"])
+        )
+
+        for item in person_years:
+            for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+                val = getattr(item, key, None)
+                if val is not None:
+                    bucket = int(percentile_size * (val // percentile_size))
+                    observations[key][bucket] += 1
+
+        return observations

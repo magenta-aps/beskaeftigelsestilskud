@@ -1,0 +1,16 @@
+<!--
+SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+
+SPDX-License-Identifier: MPL-2.0
+-->
+{% extends "common/base.html" %}
+{% load i18n %}
+
+{% block nav_items %}
+<a class="btn btn-primary mx-1 my-2" href="{% url 'data_analysis:person_years' year=2023 %}">
+    {% translate 'Estimeringer af årsindtægt for hver person' %}
+</a>
+<a class="btn btn-primary mx-1 my-2" href="{% url 'data_analysis:histogram' year=2023 %}">
+    {% translate 'Histogram over estimeringernes afvigelse' %}
+</a>
+{% endblock %}
