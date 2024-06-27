@@ -4,7 +4,6 @@
 
 import dataclasses
 import json
-import time
 from collections import Counter, defaultdict
 from decimal import Decimal
 from typing import Dict, List
@@ -12,15 +11,10 @@ from typing import Dict, List
 from data_analysis.models import CalculationResult
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Model, QuerySet
+from django.db.models import Model
 from django.http import HttpResponse
-from django.views import View
 from django.views.generic import DetailView
-from django.views.generic.list import (
-    ListView,
-    MultipleObjectMixin,
-    MultipleObjectTemplateResponseMixin,
-)
+from django.views.generic.list import ListView
 from project.util import group
 
 from bf.calculate import (
@@ -28,7 +22,7 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import Person, PersonMonth, PersonYear
+from bf.models import Person, PersonYear
 from bf.simulation import Simulation
 
 
@@ -90,13 +84,14 @@ class PersonListView(LoginRequiredMixin, ListView):
         super().__init__(*args, **kwargs)
         self.object_list = None
 
-    def get(self, request, *args, **kwargs):
-        if request.GET.get("format") == "json":
-            return HttpResponse(
-                json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
-                content_type="application/json",
-            )
-        return super().get(request, *args, **kwargs)
+    #
+    # def get(self, request, *args, **kwargs):
+    #     if request.GET.get("format") == "json":
+    #         return HttpResponse(
+    #             json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
+    #             content_type="application/json",
+    #         )
+    #     return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return (
@@ -140,13 +135,13 @@ class PersonListView(LoginRequiredMixin, ListView):
         self.context_data = context
         return context
 
-    def get_histogram(self) -> defaultdict:
-        percentile_size = 10
-        observations: defaultdict = defaultdict(Counter)
-        for item in self.object_list:
-            for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
-                if key in item:
-                    val = item[key]
-                    bucket = int(percentile_size * (val // percentile_size))
-                    observations[key][bucket] += 1
-        return observations
+    # def get_histogram(self) -> defaultdict:
+    #     percentile_size = 10
+    #     observations: defaultdict = defaultdict(Counter)
+    #     for item in self.object_list:
+    #         for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+    #             if key in item:
+    #                 val = item[key]
+    #                 bucket = int(percentile_size * (val // percentile_size))
+    #                 observations[key][bucket] += 1
+    #     return observations
