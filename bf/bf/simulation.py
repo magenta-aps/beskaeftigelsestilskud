@@ -85,7 +85,7 @@ class Simulation:
         income_b = income_b.filter(person_month__person_year__person=self.person)
 
         income_series = [
-            IncomeItem(year=item.year, month=item.month, value=item.amount)
+            IncomeItem(year=item.f_year, month=item.f_month, value=item.amount)
             for item in list(income_a) + list(income_b)
         ]
 
