@@ -129,7 +129,9 @@ class Command(BaseCommand):
                         )
                         resultat.actual_year_result = actual_year_sum
                         results.append(resultat)
-                        to_delete |= Q(engine=resultat.engine, person_month=resultat.person_month)
+                        to_delete |= Q(
+                            engine=resultat.engine, person_month=resultat.person_month
+                        )
                 self._write_verbose(engine.description)
                 self._write_verbose(
                     tabulate(
