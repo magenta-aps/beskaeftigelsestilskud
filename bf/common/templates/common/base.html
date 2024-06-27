@@ -30,6 +30,9 @@ SPDX-License-Identifier: MPL-2.0
         </nav>
     {% endif %}
     <nav class="nav flex-column flex-sm-row p-1 bg-dark" data-bs-theme="dark">
+        {% block nav_items %}
+        {% endblock %}
+
         <span class="m-2 pt-2 ms-auto">
             {{user.first_name}} {{user.last_name}}
         </span>

@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from data_analysis.models import IncomeEstimate
 from data_analysis.views import (
+    HistogramView,
     PersonAnalysisView,
     PersonListView,
     SimulationJSONEncoder,
@@ -140,7 +141,7 @@ class TestPersonAnalysisView(TestCase):
         self.assertIsInstance(response, TemplateResponse)
 
 
-class TestPersonListView(TestCase):
+class _PersonYearEstimationSetupMixin:
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -174,7 +175,11 @@ class TestPersonListView(TestCase):
             person_month=cls.person_month,
         )
         cls._request_factory = RequestFactory()
-        cls._view = PersonListView()
+        cls._view = cls.view_class()
+
+
+class TestPersonListView(_PersonYearEstimationSetupMixin, TestCase):
+    view_class = PersonListView
 
     def test_get_returns_html(self):
         self._view.setup(self._request_factory.get(""), year=2020)
@@ -187,18 +192,6 @@ class TestPersonListView(TestCase):
         self.assertEqual(object_list[0].sum_amount, Decimal(42))
         self.assertEqual(object_list[0].TwelveMonthsSummationEngine, Decimal(0))
         self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(50))
-
-    # def test_get_returns_json(self):
-    #     self._view.setup(self._request_factory.get(""), year=2020)
-    #     response = self._view.get(self._request_factory.get("?format=json"))
-    #     self.assertIsInstance(response, HttpResponse)
-    #     self.assertJSONEqual(
-    #         response.content,
-    #         {
-    #             "InYearExtrapolationEngine": {"50": 1},
-    #             "TwelveMonthsSummationEngine": {"0": 1},
-    #         },
-    #     )
 
     def test_get_no_results(self):
         self.estimate1.delete()
@@ -213,3 +206,19 @@ class TestPersonListView(TestCase):
         self.assertEqual(object_list[0].sum_amount, Decimal("42.00"))
         self.assertEqual(object_list[0].TwelveMonthsSummationEngine, Decimal(0))
         self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(0))
+
+
+class TestHistogramView(_PersonYearEstimationSetupMixin, TestCase):
+    view_class = HistogramView
+
+    def test_get_returns_json(self):
+        self._view.setup(self._request_factory.get(""), year=2020)
+        response = self._view.get(self._request_factory.get("?format=json"))
+        self.assertIsInstance(response, HttpResponse)
+        self.assertJSONEqual(
+            response.content,
+            {
+                "TwelveMonthsSummationEngine": {"0": 1},
+                "InYearExtrapolationEngine": {"50": 1},
+            },
+        )
