@@ -127,12 +127,12 @@ class Person(models.Model):
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
 
-    preferred_prediction_engine = models.CharField(
+    preferred_estimation_engine = models.CharField(
         max_length=100,
         choices=(
             # We could create this list with [
             #     (cls.__name__, cls.description)
-            #     for cls in CalculationEngine.__subclasses__()
+            #     for cls in EstimationEngine.__subclasses__()
             # ]
             # but that would make a circular import
             (
@@ -289,9 +289,9 @@ class PersonMonth(models.Model):
 
     def calculate_benefit(self) -> Decimal:
         # Using a list comp. in a sum() makes MyPy complain
-        estimated_year_income = self.calculationresult_set.get(
-            engine=self.person.preferred_prediction_engine
-        ).calculated_year_result
+        estimated_year_income = self.estimate_set.get(
+            engine=self.person.preferred_estimation_engine
+        ).estimated_year_result
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
         self.estimated_year_benefit = self.person_year.calculate_benefit(

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
 
-from data_analysis.models import CalculationResult
+from data_analysis.models import Estimate
 from django.db.models import Q, QuerySet
 
 from bf.models import (
@@ -14,14 +14,14 @@ from bf.models import (
 )
 
 
-class CalculationEngine:
+class EstimationEngine:
     @classmethod
-    def calculate(
+    def estimate(
         cls,
         a_reports: QuerySet[MonthlyAIncomeReport],  # A income
         b_reports: QuerySet[MonthlyBIncomeReport],  # B income
         person_month: PersonMonth,
-    ) -> CalculationResult | None:
+    ) -> Estimate | None:
         raise NotImplementedError
 
 
@@ -34,16 +34,16 @@ Forslag til beregningsmetoder:
 """
 
 
-class InYearExtrapolationEngine(CalculationEngine):
+class InYearExtrapolationEngine(EstimationEngine):
     description = "Ekstrapolation af beløb for måneder i indeværende år"
 
     @classmethod
-    def calculate(
+    def estimate(
         cls,
         a_reports: QuerySet[MonthlyAIncomeReport],
         b_reports: QuerySet[MonthlyBIncomeReport],
         person_month: PersonMonth,
-    ) -> CalculationResult | None:
+    ) -> Estimate | None:
         if not a_reports.exists() and not b_reports.exists():
             return None
         year = person_month.year
@@ -51,9 +51,9 @@ class InYearExtrapolationEngine(CalculationEngine):
         amount_sum = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
             b_reports, year, month
         )
-        year_prediction = int(12 * (amount_sum / month))
-        return CalculationResult(
-            calculated_year_result=year_prediction,
+        year_estimate = int(12 * (amount_sum / month))
+        return Estimate(
+            estimated_year_result=year_estimate,
             person_month=person_month,
             engine=cls.__name__,
         )
@@ -68,25 +68,25 @@ class InYearExtrapolationEngine(CalculationEngine):
         return MonthlyIncomeReport.sum_queryset(qs)
 
 
-class TwelveMonthsSummationEngine(CalculationEngine):
+class TwelveMonthsSummationEngine(EstimationEngine):
     description = "Summation af beløb for de seneste 12 måneder"
 
     @classmethod
-    def calculate(
+    def estimate(
         cls,
         a_reports: QuerySet[MonthlyAIncomeReport],
         b_reports: QuerySet[MonthlyBIncomeReport],
         person_month: PersonMonth,
-    ) -> CalculationResult | None:
+    ) -> Estimate | None:
         if not a_reports.exists() and not b_reports.exists():
             return None
         year = person_month.year
         month = person_month.month
-        year_prediction = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
+        year_estimate = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
             b_reports, year, month
         )
-        return CalculationResult(
-            calculated_year_result=year_prediction,
+        return Estimate(
+            estimated_year_result=year_estimate,
             person_month=person_month,
             engine=cls.__name__,
         )

@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_analysis.models import CalculationResult
+from data_analysis.models import Estimate
 from django.test import TestCase
 
 from bf.models import (
@@ -91,27 +91,27 @@ class ModelTest(TestCase):
             person_month=cls.month1,
             amount=15000,
         )
-        CalculationResult.objects.create(
+        Estimate.objects.create(
             person_month=cls.month1,
-            calculated_year_result=12 * 10000 + 12 * 15000,
+            estimated_year_result=12 * 10000 + 12 * 15000,
         )
         cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month2,
             amount=12000,
         )
-        CalculationResult.objects.create(
+        Estimate.objects.create(
             person_month=cls.month2,
-            calculated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
+            estimated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
         )
         cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month3,
             amount=10000,
         )
-        CalculationResult.objects.create(
+        Estimate.objects.create(
             person_month=cls.month3,
-            calculated_year_result=4 * (10000 + 11000 + 12000)
+            estimated_year_result=4 * (10000 + 11000 + 12000)
             + 4 * (15000 + 12000 + 10000),
         )
         cls.report8 = MonthlyAIncomeReport.objects.create(
@@ -119,9 +119,9 @@ class ModelTest(TestCase):
             person_month=cls.month4,
             amount=8000,
         )
-        CalculationResult.objects.create(
+        Estimate.objects.create(
             person_month=cls.month4,
-            calculated_year_result=3 * (10000 + 11000 + 12000 + 13000)
+            estimated_year_result=3 * (10000 + 11000 + 12000 + 13000)
             + 3 * (15000 + 12000 + 10000 + 8000),
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(
@@ -129,7 +129,7 @@ class ModelTest(TestCase):
             person_month=cls.month5,
             amount=8000,
         )
-        # No CalculationResult
+        # No Estimate
 
 
 class TestStandardWorkBenefitCalculationMethod(ModelTest):

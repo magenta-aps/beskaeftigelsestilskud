@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from data_analysis.models import CalculationResult
+from data_analysis.models import Estimate
 from django.db.models import Q
 
-from bf.calculate import CalculationEngine
+from bf.estimation import EstimationEngine
 from bf.models import (
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
@@ -37,7 +37,7 @@ class PredictionItem:
 
 @dataclass(frozen=True)
 class Prediction:
-    engine: CalculationEngine
+    engine: EstimationEngine
     items: list[PredictionItem]
 
 
@@ -56,7 +56,7 @@ class SimulationResult:
 class Simulation:
     def __init__(
         self,
-        engines: list[CalculationEngine],
+        engines: list[EstimationEngine],
         person: Person,
         year: int | None,
     ):
@@ -89,7 +89,7 @@ class Simulation:
             for item in list(income_a) + list(income_b)
         ]
 
-        predictions = []
+        estimates = []
 
         for engine in self.engines:
             prediction_items = []
@@ -100,10 +100,10 @@ class Simulation:
                     continue
                 engine_name = engine.__class__.__name__
                 try:
-                    calculation_result = CalculationResult.objects.get(
+                    estimate = Estimate.objects.get(
                         person_month=person_month, engine=engine_name
                     )
-                except CalculationResult.DoesNotExist:
+                except Estimate.DoesNotExist:
                     visible_a_reports = income_a.filter(
                         Q(f_year__lt=self.year)
                         | Q(f_year=self.year, f_month__lte=month)
@@ -112,33 +112,33 @@ class Simulation:
                         Q(f_year__lt=self.year)
                         | Q(f_year=self.year, f_month__lte=month)
                     )
-                    calculation_result = engine.calculate(
+                    estimate = engine.estimate(
                         visible_a_reports, visible_b_reports, person_month
                     )
-                    if calculation_result is not None:
-                        calculation_result.calculated_year_result = actual_year_sum
+                    if estimate is not None:
+                        estimate.estimated_year_result = actual_year_sum
 
-                if calculation_result is not None:
-                    calculated_year_result = calculation_result.calculated_year_result
+                if estimate is not None:
+                    estimated_year_result = estimate.estimated_year_result
                     prediction_items.append(
                         PredictionItem(
                             year=self.year,
                             month=month,
-                            predicted_value=calculated_year_result,
-                            prediction_difference=calculated_year_result
+                            predicted_value=estimated_year_result,
+                            prediction_difference=estimated_year_result
                             - actual_year_sum,
                             prediction_difference_pct=(
-                                (calculation_result.offset * 100)
+                                (estimate.offset * 100)
                                 if actual_year_sum != 0
                                 else None
                             ),
                         )
                     )
             if prediction_items:
-                predictions.append(Prediction(engine=engine, items=prediction_items))
+                estimates.append(Prediction(engine=engine, items=prediction_items))
 
         return SimulationResultRow(
             income_series=income_series,
             income_sum=actual_year_sum,
-            predictions=predictions,
+            predictions=estimates,
         )

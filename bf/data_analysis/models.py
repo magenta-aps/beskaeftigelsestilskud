@@ -9,7 +9,7 @@ from django.db.models import F, QuerySet
 from bf.models import PersonMonth
 
 
-class CalculationResult(models.Model):
+class Estimate(models.Model):
 
     class Meta:
         unique_together = (("engine", "person_month"),)
@@ -19,7 +19,7 @@ class CalculationResult(models.Model):
         choices=(
             # We could create this list with [
             #     (cls.__name__, cls.description)
-            #     for cls in CalculationEngine.__subclasses__()
+            #     for cls in EstimationEngine.__subclasses__()
             # ]
             # but that would make a circular import
             (
@@ -37,7 +37,7 @@ class CalculationResult(models.Model):
         PersonMonth, null=True, blank=True, on_delete=models.CASCADE
     )
 
-    calculated_year_result = models.DecimalField(
+    estimated_year_result = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=False,
@@ -53,7 +53,7 @@ class CalculationResult(models.Model):
 
     @property
     def absdiff(self):
-        return abs(self.actual_year_result - self.calculated_year_result)
+        return abs(self.actual_year_result - self.estimated_year_result)
 
     @property
     def offset(self):
@@ -63,20 +63,20 @@ class CalculationResult(models.Model):
 
     @staticmethod
     def annotate_month(
-        qs: QuerySet["CalculationResult"],
-    ) -> QuerySet["CalculationResult"]:
+        qs: QuerySet["Estimate"],
+    ) -> QuerySet["Estimate"]:
         return qs.annotate(f_month=F("person_month__month"))
 
     @staticmethod
     def annotate_year(
-        qs: QuerySet["CalculationResult"],
-    ) -> QuerySet["CalculationResult"]:
+        qs: QuerySet["Estimate"],
+    ) -> QuerySet["Estimate"]:
         return qs.annotate(f_year=F("person_month__person_year__year"))
 
     @staticmethod
     def annotate_person_year(
-        qs: QuerySet["CalculationResult"],
-    ) -> QuerySet["CalculationResult"]:
+        qs: QuerySet["Estimate"],
+    ) -> QuerySet["Estimate"]:
         return qs.annotate(f_person_year=F("person_month__person_year"))
 
     def __str__(self):
