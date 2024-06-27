@@ -6,13 +6,13 @@ from collections import defaultdict
 from datetime import date
 from typing import List
 
-from data_analysis.models import CalculationResult
+from data_analysis.models import IncomeEstimate
 from django.core.management.base import BaseCommand
 from numpy import std
 from tabulate import SEPARATING_LINE, tabulate
 
-from bf.calculate import (
-    CalculationEngine,
+from bf.estimation import (
+    EstimationEngine,
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
@@ -25,7 +25,7 @@ from bf.models import (
 
 
 class Command(BaseCommand):
-    engines: List[CalculationEngine] = [
+    engines: List[EstimationEngine] = [
         InYearExtrapolationEngine(),
         TwelveMonthsSummationEngine(),
     ]
@@ -87,7 +87,7 @@ class Command(BaseCommand):
             self._write_verbose("")
             results = []
             for engine in self.engines:
-                predictions = []
+                estimates = []
 
                 a_reports = list(qs_a)
                 b_reports = list(qs_b)
@@ -112,16 +112,16 @@ class Command(BaseCommand):
                             or (item.f_year == year and item.f_month <= month)
                         ]
                     )
-                    resultat: CalculationResult = engine.calculate(
+                    resultat: IncomeEstimate = engine.estimate(
                         visible_a_reports, visible_b_reports, person_month
                     )
 
                     if resultat is not None:
-                        predictions.append(
+                        estimates.append(
                             [
                                 month,
-                                resultat.calculated_year_result,
-                                resultat.calculated_year_result - actual_year_sum,
+                                resultat.estimated_year_result,
+                                resultat.estimated_year_result - actual_year_sum,
                                 100 * resultat.offset,
                             ]
                         )
@@ -130,7 +130,7 @@ class Command(BaseCommand):
                 self._write_verbose(engine.description)
                 self._write_verbose(
                     tabulate(
-                        predictions,
+                        estimates,
                         headers=[
                             "month",
                             "Forudset årssum",
@@ -146,13 +146,13 @@ class Command(BaseCommand):
                         "cpr": person.cpr,
                         "year_sum": actual_year_sum,
                         "stddev_over_sum": stddev_over_sum,
-                        "month_predictions": predictions,
+                        "month_estimates": estimates,
                     }
                 )
 
-            CalculationResult.objects.bulk_create(results)
+            IncomeEstimate.objects.bulk_create(results)
         for engine, results in summary_table_by_engine.items():
-            with open(f"predictions_{engine}.csv", "w") as fp:
+            with open(f"estimates_{engine}.csv", "w") as fp:
                 writer = csv.writer(fp, delimiter=";")
                 writer.writerow(
                     ["CPR", "Year sum", "Std.Dev / Sum"]
@@ -182,8 +182,8 @@ class Command(BaseCommand):
                             "{:.3f}".format(result["stddev_over_sum"]),
                         ]
                         + [
-                            "{:.1f}".format(prediction[3])
-                            for prediction in result["month_predictions"]
+                            "{:.1f}".format(estimate[3])
+                            for estimate in result["month_estimates"]
                         ]
                     )
 
