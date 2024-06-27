@@ -1,17 +1,16 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import Dict
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index, Sum
+from django.db.models import F, Index, QuerySet, Sum
+from django.db.models.functions import Coalesce
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
@@ -161,7 +160,7 @@ class Person(models.Model):
         )
 
     def __str__(self):
-        return self.name
+        return self.name or self.cpr
 
 
 class PersonYear(models.Model):
@@ -189,35 +188,12 @@ class PersonYear(models.Model):
         return f"{self.person} ({self.year})"
 
     @property
-    def salary_reports(self):
-        return (
-            AIncomeReport.objects.filter(person_month__person_year=self)
-            .annotate(
-                f_year=F("person_month__person_year__year_id"),
-                f_month=F("person_month__month"),
-            )
-            .order_by("f_year", "f_month", "employer")
+    def sum_amount(self):
+        return MonthlyIncomeReport.sum_queryset(
+            MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
+        ) + MonthlyIncomeReport.sum_queryset(
+            MonthlyBIncomeReport.objects.filter(person_month__person_year=self)
         )
-
-    @property
-    def latest_calculation_by_employer(self) -> Dict["Employer", Decimal]:
-        """
-        Extracts the lastest year-estimates from reports for each employer
-        :return:
-        """
-        latest_by_employer = {}
-        for report in self.salary_reports.reverse():
-            if report.employer not in latest_by_employer:
-                latest_by_employer[report.employer] = report.calculated_year_result
-        return latest_by_employer
-
-    @property
-    def latest_calculation(self) -> Decimal:
-        """
-        Returns the total lastest year-estimates from reports
-        :return:
-        """
-        return sum(self.latest_calculation_by_employer.values())  # type: ignore
 
     def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
         if self.year.calculation_method is None:
@@ -302,15 +278,20 @@ class PersonMonth(models.Model):
             fully_tax_liable=eskat_mandtal.fully_tax_liable,
         )
 
+    @property
+    def sum_amount(self):
+        return MonthlyIncomeReport.sum_queryset(
+            self.monthlyaincomereport_set
+        ) + MonthlyIncomeReport.sum_queryset(self.monthlybincomereport_set)
+
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
-        estimated_year_income: Decimal = Decimal(0)
-        for salary_report in self.aincomereport_set.all():
-            # Using a list comp. in a sum() makes MyPy complain
-            estimated_year_income += salary_report.calculated_year_result or 0
-        # TODO: medtag andre relevante indkomster i summen
+        # Using a list comp. in a sum() makes MyPy complain
+        estimated_year_income = self.calculationresult_set.get(
+            engine=self.person.preferred_prediction_engine
+        ).calculated_year_result
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
         self.estimated_year_benefit = self.person_year.calculate_benefit(
@@ -364,7 +345,40 @@ class Employer(models.Model):
         return f"{self.name} ({self.cvr})"
 
 
-class AIncomeReport(models.Model):
+class MonthlyIncomeReport(models.Model):
+    class Meta:
+        abstract = True
+
+    @staticmethod
+    def annotate_month(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_month=F("person_month__month"))
+
+    @staticmethod
+    def annotate_year(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_year=F("person_month__person_year__year"))
+
+    @staticmethod
+    def annotate_person_year(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_person_year=F("person_month__person_year"))
+
+    @staticmethod
+    def annotate_person(
+        qs: QuerySet["MonthlyIncomeReport"],
+    ) -> QuerySet["MonthlyIncomeReport"]:
+        return qs.annotate(f_person=F("person_month__person_year__person"))
+
+    @classmethod
+    def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
+        return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
+
+
+class MonthlyAIncomeReport(MonthlyIncomeReport):
 
     person_month = models.ForeignKey(
         PersonMonth,
@@ -394,18 +408,11 @@ class AIncomeReport(models.Model):
     def person(self) -> Person:
         return self.person_month.person_year.person
 
-    @property
-    def calculated_year_result(self) -> Decimal | None:
-        first_item = self.calculationresult_set.first()
-        if first_item is None:
-            return None
-        return first_item.calculated_year_result
-
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
 
 
-class MonthlyBIncomeReport(models.Model):
+class MonthlyBIncomeReport(MonthlyIncomeReport):
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,
@@ -421,6 +428,9 @@ class MonthlyBIncomeReport(models.Model):
         null=False,
         blank=False,
     )
+
+    def __str__(self):
+        return f"{self.person_month} | {self.trader}"
 
 
 class SelfAssessedYearlyBIncome(models.Model):

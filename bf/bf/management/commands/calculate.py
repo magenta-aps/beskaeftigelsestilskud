@@ -7,9 +7,9 @@ from collections import defaultdict
 from datetime import date
 from typing import List
 
+from data_analysis.models import CalculationResult
 from django.core.management.base import BaseCommand
 from django.db.models import Q
-from django.db.models.expressions import F
 from numpy import std
 from tabulate import SEPARATING_LINE, tabulate
 
@@ -18,7 +18,13 @@ from bf.calculate import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import AIncomeReport, Person
+from bf.models import (
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
+    Person,
+    PersonYear,
+)
 
 
 class Command(BaseCommand):
@@ -40,91 +46,102 @@ class Command(BaseCommand):
 
         summary_table_by_engine = defaultdict(list)
         for person in person_qs:
-            qs = AIncomeReport.objects.alias(
-                person=F("person_month__person_year__person"),
-                year=F("person_month__person_year__year"),
-                month=F("person_month__month"),
-            ).filter(person=person.pk)
-            employers = [x.employer for x in qs.distinct("employer")]
-            for employer in employers:
-                self._write_verbose("====================================")
-                self._write_verbose(f"CPR: {person.cpr}")
-                self._write_verbose(f"CVR: {employer.cvr}")
-                self._write_verbose("")
-                employment = qs.filter(employer=employer)
-                amounts = [item.amount for item in employment if item.year == year]
-                actual_year_sum = sum(amounts)
-                stddev_over_sum = (
-                    std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
+            try:
+                person_year: PersonYear = person.personyear_set.get(year=year)
+            except PersonYear.DoesNotExist:
+                continue
+            qs_a = MonthlyAIncomeReport.objects.all()
+            qs_a = MonthlyAIncomeReport.annotate_person(qs_a)
+            qs_a = qs_a.filter(f_person=person.pk)
+            qs_a = MonthlyAIncomeReport.annotate_year(qs_a)
+            qs_a = MonthlyAIncomeReport.annotate_month(qs_a)
+
+            qs_b = MonthlyBIncomeReport.objects.all()
+            qs_b = MonthlyBIncomeReport.annotate_person(qs_b)
+            qs_b = qs_b.filter(f_person=person.pk)
+            qs_b = MonthlyBIncomeReport.annotate_year(qs_b)
+            qs_b = MonthlyBIncomeReport.annotate_month(qs_b)
+
+            self._write_verbose("====================================")
+            self._write_verbose(f"CPR: {person.cpr}")
+            self._write_verbose("")
+
+            amounts = []
+            for month in range(1, 13):
+                amounts.append(
+                    MonthlyIncomeReport.sum_queryset(
+                        qs_a.filter(f_year=year, f_month=month)
+                    )
+                    + MonthlyIncomeReport.sum_queryset(
+                        qs_b.filter(f_year=year, f_month=month)
+                    )
                 )
+            actual_year_sum = MonthlyIncomeReport.sum_queryset(
+                qs_a.filter(f_year=year)
+            ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(f_year=year))
+            stddev_over_sum = (
+                std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
+            )
+            self._write_verbose(
+                tabulate(
+                    [[year, month, amounts[month - 1]] for month in range(1, 13)]
+                    + [SEPARATING_LINE, ["Sum", actual_year_sum]],
+                    headers=["År", "Måned", "Beløb"],
+                    tablefmt="simple",
+                )
+            )
+            self._write_verbose("")
+            for engine in self.engines:
+                predictions = []
+                for month in range(1, 13):
+                    person_month = person_year.personmonth_set.get(month=month)
+                    visible_a_reports = qs_a.filter(
+                        Q(f_year__lt=year) | Q(f_year=year, f_month__lte=month)
+                    )
+                    visible_b_reports = qs_b.filter(
+                        Q(f_year__lt=year) | Q(f_year=year, f_month__lte=month)
+                    )
+                    resultat: CalculationResult = engine.calculate(
+                        visible_a_reports, visible_b_reports, person_month
+                    )
+                    if resultat is not None:
+                        predictions.append(
+                            [
+                                month,
+                                resultat.calculated_year_result,
+                                resultat.calculated_year_result - actual_year_sum,
+                                100 * resultat.offset,
+                            ]
+                        )
+                        resultat.actual_year_result = actual_year_sum
+                        resultat.save()
+                self._write_verbose(engine.description)
                 self._write_verbose(
                     tabulate(
-                        [[item.year, item.month, item.amount] for item in employment]
-                        + [SEPARATING_LINE, ["Sum", actual_year_sum]],
-                        headers=["År", "Måned", "Beløb"],
-                        tablefmt="simple",
+                        predictions,
+                        headers=[
+                            "month",
+                            "Forudset årssum",
+                            "Difference (beløb)",
+                            "Difference (abs.pct)",
+                        ],
+                        intfmt=("d", "d", "+d", "d"),
                     )
                 )
                 self._write_verbose("")
-                for engine in self.engines:
-                    predictions = []
-                    for month in range(1, 13):
-                        visible_datapoints = employment.filter(
-                            Q(year__lt=year) | Q(year=year, month__lte=month)
-                        )
-                        resultat = engine.calculate(visible_datapoints)
-                        if resultat is not None:
-                            predictions.append(
-                                [
-                                    month,
-                                    resultat.calculated_year_result,
-                                    resultat.calculated_year_result - actual_year_sum,
-                                    (
-                                        (
-                                            abs(
-                                                (
-                                                    resultat.calculated_year_result
-                                                    - actual_year_sum
-                                                )
-                                                / actual_year_sum
-                                            )
-                                            * 100
-                                        )
-                                        if actual_year_sum != 0
-                                        else 0
-                                    ),
-                                ]
-                            )
-                            resultat.actual_year_result = actual_year_sum
-                            resultat.save()
-                    self._write_verbose(engine.description)
-                    self._write_verbose(
-                        tabulate(
-                            predictions,
-                            headers=[
-                                "month",
-                                "Forudset årssum",
-                                "Difference (beløb)",
-                                "Difference (abs.pct)",
-                            ],
-                            intfmt=("d", "d", "+d", "d"),
-                        )
-                    )
-                    self._write_verbose("")
-                    summary_table_by_engine[engine.__class__.__name__].append(
-                        {
-                            "cpr": person.cpr,
-                            "cvr": employer.cvr,
-                            "year_sum": actual_year_sum,
-                            "stddev_over_sum": stddev_over_sum,
-                            "month_predictions": predictions,
-                        }
-                    )
+                summary_table_by_engine[engine.__class__.__name__].append(
+                    {
+                        "cpr": person.cpr,
+                        "year_sum": actual_year_sum,
+                        "stddev_over_sum": stddev_over_sum,
+                        "month_predictions": predictions,
+                    }
+                )
         for engine, results in summary_table_by_engine.items():
             with open(f"predictions_{engine}.csv", "w") as fp:
                 writer = csv.writer(fp, delimiter=";")
                 writer.writerow(
-                    ["CPR", "CVR", "Year sum", "Std.Dev / Sum"]
+                    ["CPR", "Year sum", "Std.Dev / Sum"]
                     + [
                         f"{x} % miss"
                         for x in [
@@ -147,7 +164,6 @@ class Command(BaseCommand):
                     writer.writerow(
                         [
                             result["cpr"],
-                            result["cvr"],
                             result["year_sum"],
                             "{:.3f}".format(result["stddev_over_sum"]),
                         ]
