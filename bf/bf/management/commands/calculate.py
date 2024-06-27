@@ -94,6 +94,8 @@ class Command(BaseCommand):
 
                 for month in range(1, 13):
                     person_month = person_year.personmonth_set.get(month=month)
+                    # We used to filter by year and month directly on qs_a
+                    # but extracting once and filtering here is ~20%-30% faster
                     visible_a_reports = MonthlyAIncomeReport.objects.filter(
                         id__in=[
                             item.id
