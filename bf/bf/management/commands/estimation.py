@@ -35,7 +35,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         start = time.time()
-        self._verbose = kwargs["verbosity"] > 1
         year = kwargs.get("year") or date.today().year
         qs = PersonYear.objects.filter(year__year=year).select_related("person")
         if kwargs["count"]:
@@ -50,15 +49,10 @@ class Command(BaseCommand):
             qs_a = MonthlyAIncomeReport.objects.filter(person_id=person.pk)
             qs_b = MonthlyBIncomeReport.objects.filter(person_id=person.pk)
 
-            self._write_verbose("====================================")
-            self._write_verbose(f"CPR: {person.cpr}")
-            self._write_verbose("")
-
             actual_year_sum = MonthlyIncomeReport.sum_queryset(
                 qs_a.filter(year=year)
             ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(year=year))
 
-            self._write_verbose("")
             a_reports = qs_a.values("year", "month", "id")
             b_reports = qs_b.values("year", "month", "id")
             for engine in self.engines:
@@ -147,7 +141,3 @@ class Command(BaseCommand):
                         ]
                     )
         print(time.time() - start)
-
-    def _write_verbose(self, *args):
-        if self._verbose:
-            self.stdout.write(*args)
