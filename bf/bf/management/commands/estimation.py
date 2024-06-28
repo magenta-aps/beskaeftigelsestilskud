@@ -43,6 +43,8 @@ class Command(BaseCommand):
             qs = qs[: kwargs["count"]]
 
         summary_table_by_engine = defaultdict(list)
+
+        results = []
         for person_year in qs:
             person = person_year.person
             qs_a = MonthlyAIncomeReport.objects.all()
@@ -86,7 +88,6 @@ class Command(BaseCommand):
                 )
             )
             self._write_verbose("")
-            results = []
             for engine in self.engines:
                 estimates = []
 
@@ -119,6 +120,7 @@ class Command(BaseCommand):
                     )
 
                     if resultat is not None:
+                        resultat.actual_year_result = actual_year_sum
                         estimates.append(
                             [
                                 month,
@@ -127,7 +129,6 @@ class Command(BaseCommand):
                                 100 * resultat.offset,
                             ]
                         )
-                        resultat.actual_year_result = actual_year_sum
                         results.append(resultat)
                         to_delete |= Q(
                             engine=resultat.engine, person_month=resultat.person_month
@@ -156,7 +157,7 @@ class Command(BaseCommand):
                 )
 
                 IncomeEstimate.objects.filter(to_delete).delete()
-            IncomeEstimate.objects.bulk_create(results)
+        IncomeEstimate.objects.bulk_create(results)
         for engine, results in summary_table_by_engine.items():
             with open(f"estimates_{engine}.csv", "w") as fp:
                 writer = csv.writer(fp, delimiter=";")
