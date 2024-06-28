@@ -8,12 +8,13 @@ from collections import Counter, defaultdict
 from decimal import Decimal
 from typing import Dict, List
 
+from data_analysis.forms import HistogramOptionsForm
 from data_analysis.models import IncomeEstimate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
 from django.http import HttpResponse
-from django.views.generic import DetailView, TemplateView
+from django.views.generic import DetailView, FormView
 from django.views.generic.list import ListView
 from project.util import group
 
@@ -133,8 +134,9 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView):
+class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
     template_name = "data_analysis/histogram.html"
+    form_class = HistogramOptionsForm
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("format") == "json":
@@ -142,12 +144,27 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView)
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
                 content_type="application/json",
             )
-        return super().get(request, *args, **kwargs)  # pragma: no cover
+        return super().get(request, *args, **kwargs)
 
-    def get_histogram(self) -> defaultdict:
-        percentile_size = 10
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["data"] = self.request.GET
+        return kwargs
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["resolution"] = self.request.GET.get("resolution", 10)
+        return initial
+
+    def get_percentile_size(self):
+        form = self.get_form()
+        if form.is_valid():
+            return form.cleaned_data["resolution"]
+        return 10
+
+    def get_histogram(self) -> dict:
+        percentile_size = self.get_percentile_size()
         observations: defaultdict = defaultdict(Counter)
-
         person_years = self._add_predictions(
             PersonYear.objects.filter(year=self.kwargs["year"])
         )
@@ -159,4 +176,9 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView)
                     bucket = int(percentile_size * (val // percentile_size))
                     observations[key][bucket] += 1
 
-        return observations
+        for counter in observations.values():
+            for bucket in range(0, 100, percentile_size):
+                if bucket not in counter:
+                    counter[bucket] = 0
+
+        return {"data": observations, "percentile_size": percentile_size}
