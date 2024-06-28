@@ -162,6 +162,9 @@ class PersonYearEstimationSetupMixin:
             person_month=cls.person_month,
             employer=cls.employer,
             amount=42,
+            month=cls.person_month.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         cls.estimate1, _ = IncomeEstimate.objects.get_or_create(
             engine=TwelveMonthsSummationEngine.__name__,

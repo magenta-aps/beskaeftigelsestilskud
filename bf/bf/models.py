@@ -349,6 +349,26 @@ class MonthlyIncomeReport(models.Model):
     class Meta:
         abstract = True
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.month = self.person_month.month
+        self.year = self.person_month.year
+        self.person = self.person_month.person
+
+    month = models.PositiveSmallIntegerField(db_index=True)
+    year = models.PositiveSmallIntegerField(db_index=True)
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    person_month = models.ForeignKey(
+        PersonMonth,
+        on_delete=models.CASCADE,
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
     @staticmethod
     def annotate_month(
         qs: QuerySet["MonthlyIncomeReport"],
@@ -380,53 +400,22 @@ class MonthlyIncomeReport(models.Model):
 
 class MonthlyAIncomeReport(MonthlyIncomeReport):
 
-    person_month = models.ForeignKey(
-        PersonMonth,
-        on_delete=models.CASCADE,
-    )
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE)
-    amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=False,
-        blank=False,
-    )
-
-    @property
-    def month(self) -> int:
-        return self.person_month.month
 
     @property
     def person_year(self) -> PersonYear:
         return self.person_month.person_year
-
-    @property
-    def year(self) -> int:
-        return self.person_month.person_year.year_id
-
-    @property
-    def person(self) -> Person:
-        return self.person_month.person_year.person
 
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
 
 
 class MonthlyBIncomeReport(MonthlyIncomeReport):
-    person_month = models.ForeignKey(
-        PersonMonth,
-        on_delete=models.CASCADE,
-    )
+
     trader = models.ForeignKey(
         Employer,
         verbose_name=_("Indhandler"),
         on_delete=models.CASCADE,
-    )
-    amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=False,
-        blank=False,
     )
 
     def __str__(self):
