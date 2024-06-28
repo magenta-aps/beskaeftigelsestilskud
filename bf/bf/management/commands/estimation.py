@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import csv
+import time
 from collections import defaultdict
 from datetime import date
 from typing import List
@@ -36,6 +37,7 @@ class Command(BaseCommand):
         parser.add_argument("--count", type=int)
 
     def handle(self, *args, **kwargs):
+        start = time.time()
         self._verbose = kwargs["verbosity"] > 1
         year = kwargs.get("year") or date.today().year
         qs = PersonYear.objects.filter(year__year=year).select_related("person")
@@ -49,15 +51,10 @@ class Command(BaseCommand):
             person = person_year.person
             qs_a = MonthlyAIncomeReport.objects.all()
             qs_a = MonthlyAIncomeReport.annotate_person(qs_a)
-            qs_a = qs_a.filter(f_person=person.pk)
-            qs_a = MonthlyAIncomeReport.annotate_year(qs_a)
-            qs_a = MonthlyAIncomeReport.annotate_month(qs_a)
-
+            qs_a = qs_a.filter(person=person.pk)
             qs_b = MonthlyBIncomeReport.objects.all()
             qs_b = MonthlyBIncomeReport.annotate_person(qs_b)
-            qs_b = qs_b.filter(f_person=person.pk)
-            qs_b = MonthlyBIncomeReport.annotate_year(qs_b)
-            qs_b = MonthlyBIncomeReport.annotate_month(qs_b)
+            qs_b = qs_b.filter(person=person.pk)
 
             self._write_verbose("====================================")
             self._write_verbose(f"CPR: {person.cpr}")
@@ -67,15 +64,15 @@ class Command(BaseCommand):
             for month in range(1, 13):
                 amounts.append(
                     MonthlyIncomeReport.sum_queryset(
-                        qs_a.filter(f_year=year, f_month=month)
+                        qs_a.filter(year=year, month=month)
                     )
                     + MonthlyIncomeReport.sum_queryset(
-                        qs_b.filter(f_year=year, f_month=month)
+                        qs_b.filter(year=year, month=month)
                     )
                 )
             actual_year_sum = MonthlyIncomeReport.sum_queryset(
-                qs_a.filter(f_year=year)
-            ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(f_year=year))
+                qs_a.filter(year=year)
+            ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(year=year))
             stddev_over_sum = (
                 std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
             )
@@ -103,16 +100,16 @@ class Command(BaseCommand):
                         id__in=[
                             item.id
                             for item in a_reports
-                            if item.f_year < year
-                            or (item.f_year == year and item.f_month <= month)
+                            if item.year < year
+                            or (item.year == year and item.month <= month)
                         ]
                     )
                     visible_b_reports = MonthlyBIncomeReport.objects.filter(
                         id__in=[
                             item.id
                             for item in b_reports
-                            if item.f_year < year
-                            or (item.f_year == year and item.f_month <= month)
+                            if item.year < year
+                            or (item.year == year and item.month <= month)
                         ]
                     )
                     resultat: IncomeEstimate = engine.estimate(
@@ -193,6 +190,7 @@ class Command(BaseCommand):
                             for estimate in result["month_estimates"]
                         ]
                     )
+        print(time.time() - start)
 
     def _write_verbose(self, *args):
         if self._verbose:

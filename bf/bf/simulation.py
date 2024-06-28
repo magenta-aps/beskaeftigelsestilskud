@@ -72,20 +72,11 @@ class Simulation:
 
         actual_year_sum = self.person_year.sum_amount
 
-        income_a = MonthlyAIncomeReport.annotate_year(
-            MonthlyAIncomeReport.objects.all()
-        )
-        income_a = MonthlyAIncomeReport.annotate_month(income_a)
-        income_a = income_a.filter(person_month__person_year__person=self.person)
-
-        income_b = MonthlyBIncomeReport.annotate_year(
-            MonthlyBIncomeReport.objects.all()
-        )
-        income_b = MonthlyBIncomeReport.annotate_month(income_b)
-        income_b = income_b.filter(person_month__person_year__person=self.person)
+        income_a = MonthlyAIncomeReport.objects.filter(person=self.person)
+        income_b = MonthlyBIncomeReport.objects.filter(person=self.person)
 
         income_series = [
-            IncomeItem(year=item.f_year, month=item.f_month, value=item.amount)
+            IncomeItem(year=item.year, month=item.month, value=item.amount)
             for item in list(income_a) + list(income_b)
         ]
 
@@ -105,12 +96,10 @@ class Simulation:
                     )
                 except IncomeEstimate.DoesNotExist:
                     visible_a_reports = income_a.filter(
-                        Q(f_year__lt=self.year)
-                        | Q(f_year=self.year, f_month__lte=month)
+                        Q(year__lt=self.year) | Q(year=self.year, month__lte=month)
                     )
                     visible_b_reports = income_b.filter(
-                        Q(f_year__lt=self.year)
-                        | Q(f_year=self.year, f_month__lte=month)
+                        Q(year__lt=self.year) | Q(year=self.year, month__lte=month)
                     )
                     estimate = engine.estimate(
                         visible_a_reports, visible_b_reports, person_month

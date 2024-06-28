@@ -201,16 +201,18 @@ class Command(BaseCommand):
 
         # Create MonthlyAIncomeReport objects
         # (existing objects for this year will be deleted!)
-        a_income_reports = [
-            MonthlyAIncomeReport(
-                person_month=person_months[(row.cpr, (index % 12) + 1)],
-                employer=employers[row.cvr],
-                amount=amount,
-            )
-            for row in rows
-            for index, amount in enumerate(row.a_amounts)
-            if amount != 0
-        ]
+        a_income_reports = []
+        for row in rows:
+            for index, amount in enumerate(row.a_amounts):
+                if amount != 0:
+                    person_month = person_months[(row.cpr, (index % 12) + 1)]
+                    a_income_reports.append(
+                        MonthlyAIncomeReport(
+                            person_month=person_month,
+                            employer=employers[row.cvr],
+                            amount=amount,
+                        )
+                    )
         MonthlyAIncomeReport.objects.filter(
             person_month__person_year__year=self._year
         ).delete()
@@ -221,16 +223,18 @@ class Command(BaseCommand):
 
         # Create MonthlyBIncomeReport objects
         # (existing objects for this year will be deleted!)
-        b_income_reports = [
-            MonthlyBIncomeReport(
-                person_month=person_months[(row.cpr, (index % 12) + 1)],
-                trader=employers[row.cvr],
-                amount=amount,
-            )
-            for row in rows
-            for index, amount in enumerate(row.b_amounts)
-            if amount != 0
-        ]
+        b_income_reports = []
+        for row in rows:
+            for index, amount in enumerate(row.b_amounts):
+                if amount != 0:
+                    person_month = person_months[(row.cpr, (index % 12) + 1)]
+                    b_income_reports.append(
+                        MonthlyBIncomeReport(
+                            person_month=person_month,
+                            trader=employers[row.cvr],
+                            amount=amount,
+                        )
+                    )
         MonthlyBIncomeReport.objects.filter(
             person_month__person_year__year=self._year
         ).delete()

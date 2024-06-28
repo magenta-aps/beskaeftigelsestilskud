@@ -70,26 +70,41 @@ class ModelTest(TestCase):
             employer=cls.employer1,
             person_month=cls.month1,
             amount=10000,
+            month=cls.month1.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         cls.report2 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month2,
             amount=11000,
+            month=cls.month2.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         cls.report3 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month3,
             amount=12000,
+            month=cls.month3.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         cls.report4 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month4,
             amount=13000,
+            month=cls.month4.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         cls.report5 = MonthlyBIncomeReport.objects.create(
             trader=cls.employer2,
             person_month=cls.month1,
             amount=15000,
+            month=cls.month1.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month1,
@@ -99,6 +114,9 @@ class ModelTest(TestCase):
             employer=cls.employer2,
             person_month=cls.month2,
             amount=12000,
+            month=cls.month2.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month2,
@@ -108,6 +126,9 @@ class ModelTest(TestCase):
             employer=cls.employer2,
             person_month=cls.month3,
             amount=10000,
+            month=cls.month3.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month3,
@@ -118,6 +139,9 @@ class ModelTest(TestCase):
             employer=cls.employer2,
             person_month=cls.month4,
             amount=8000,
+            month=cls.month4.month,
+            year=cls.year.year,
+            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month4,
@@ -128,6 +152,9 @@ class ModelTest(TestCase):
             employer=cls.employer2,
             person_month=cls.month5,
             amount=8000,
+            month=cls.month5.month,
+            year=cls.year2.year,
+            person=cls.person,
         )
         # No IncomeEstimate
 

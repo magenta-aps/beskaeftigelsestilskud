@@ -62,9 +62,7 @@ class InYearExtrapolationEngine(EstimationEngine):
     def queryset_sum(cls, qs: QuerySet, year: int, month: int) -> Decimal:
         # Do not use any properties on the class as annotation names.
         # Django will explode trying to put values into the properties.
-        qs = MonthlyIncomeReport.annotate_month(qs)
-        qs = MonthlyIncomeReport.annotate_year(qs)
-        qs = qs.filter(f_year=year, f_month__lte=month)
+        qs = qs.filter(year=year, month__lte=month)
         return MonthlyIncomeReport.sum_queryset(qs)
 
 
@@ -95,9 +93,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     def queryset_sum(cls, qs: QuerySet, year: int, month: int) -> Decimal:
         # Do not use any properties on the class as annotation names.
         # Django will explode trying to put values into the properties.
-        qs = MonthlyIncomeReport.annotate_month(qs)
-        qs = MonthlyIncomeReport.annotate_year(qs)
         qs = qs.filter(
-            Q(f_year=year, f_month__lte=month) | Q(f_year=year - 1, f_month__gt=month)
+            Q(year=year, month__lte=month) | Q(year=year - 1, month__gt=month)
         )
         return MonthlyIncomeReport.sum_queryset(qs)
