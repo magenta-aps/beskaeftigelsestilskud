@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
+from data_analysis.forms import HistogramOptionsForm
 from data_analysis.models import IncomeEstimate
 from data_analysis.views import (
     HistogramView,
@@ -211,14 +212,48 @@ class TestPersonListView(PersonYearEstimationSetupMixin, TestCase):
 class TestHistogramView(PersonYearEstimationSetupMixin, TestCase):
     view_class = HistogramView
 
-    def test_get_returns_json(self):
+    def test_context_data_includes_form(self):
         self._view.setup(self._request_factory.get(""), year=2020)
-        response = self._view.get(self._request_factory.get("?format=json"))
-        self.assertIsInstance(response, HttpResponse)
-        self.assertJSONEqual(
-            response.content,
-            {
-                "TwelveMonthsSummationEngine": {"0": 1},
-                "InYearExtrapolationEngine": {"50": 1},
-            },
-        )
+        response = self._view.get(self._request_factory.get(""))
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertIsInstance(response.context_data["form"], HistogramOptionsForm)
+
+    def test_get_percentile_size_from_form(self):
+        self._view.setup(self._request_factory.get("?resolution=1"), year=2020)
+        self.assertEqual(self._view.get_percentile_size(), 1)
+
+    def test_get_returns_json(self):
+        tests = [
+            ("", 10),
+            ("&resolution=10", 10),
+            ("&resolution=1", 1),
+        ]
+        for query, percentile_size in tests:
+            with self.subTest(f"resolution={percentile_size}"):
+                url = f"?format=json{query}"
+                self._view.setup(self._request_factory.get(url), year=2020)
+                response = self._view.get(self._request_factory.get(url))
+                self.assertIsInstance(response, HttpResponse)
+                self.assertJSONEqual(
+                    response.content,
+                    {
+                        "data": {
+                            "TwelveMonthsSummationEngine": self._get_expected_histogram(
+                                "0",
+                                1,
+                                size=percentile_size,
+                            ),
+                            "InYearExtrapolationEngine": self._get_expected_histogram(
+                                "50",
+                                1,
+                                size=percentile_size,
+                            ),
+                        },
+                        "percentile_size": percentile_size,
+                    },
+                )
+
+    def _get_expected_histogram(self, bucket, count, size=10):
+        data = dict.fromkeys([str(bucket) for bucket in range(0, 100, size)], 0)
+        data[bucket] = count
+        return data
