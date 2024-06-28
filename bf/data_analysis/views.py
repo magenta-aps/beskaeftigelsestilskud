@@ -14,7 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
 from django.http import HttpResponse
-from django.views.generic import DetailView, TemplateView
+from django.views.generic import DetailView, FormView
 from django.views.generic.list import ListView
 from project.util import group
 
@@ -134,8 +134,9 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView):
+class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
     template_name = "data_analysis/histogram.html"
+    form_class = HistogramOptionsForm
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("format") == "json":
@@ -145,13 +146,15 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, TemplateView)
             )
         return super().get(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["form"] = self.get_form()
-        return context
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["data"] = self.request.GET
+        return kwargs
 
-    def get_form(self):
-        return HistogramOptionsForm(data=self.request.GET)
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["resolution"] = self.request.GET.get("resolution", 10)
+        return initial
 
     def get_percentile_size(self):
         form = self.get_form()
