@@ -109,9 +109,9 @@ class IndkomstCSVFileLine:
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("file", type=str)
+        parser.add_argument("year", type=int)
         parser.add_argument("--count", type=int)
-        parser.add_argument("--year", type=int)
-        parser.add_argument("--delimiter", type=str, default=";")
+        parser.add_argument("--delimiter", type=str, default=",")
         parser.add_argument("--dry", action="store_true")
 
     def handle(self, *args, **kwargs):
