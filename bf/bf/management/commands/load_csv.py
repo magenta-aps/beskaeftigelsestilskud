@@ -211,9 +211,6 @@ class Command(BaseCommand):
                             person_month=person_month,
                             employer=employers[row.cvr],
                             amount=amount,
-                            month=index + 1,
-                            year=self._year,
-                            person=person_month.person_year.person,
                         )
                     )
         MonthlyAIncomeReport.objects.filter(
@@ -236,9 +233,6 @@ class Command(BaseCommand):
                             person_month=person_month,
                             trader=employers[row.cvr],
                             amount=amount,
-                            month=index + 1,
-                            year=self._year,
-                            person=person_month.person_year.person,
                         )
                     )
         MonthlyBIncomeReport.objects.filter(
