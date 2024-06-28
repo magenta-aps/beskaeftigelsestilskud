@@ -12,6 +12,7 @@ from data_analysis.views import (
     HistogramView,
     PersonAnalysisView,
     PersonListView,
+    PersonYearEstimationMixin,
     SimulationJSONEncoder,
 )
 from django.http import HttpResponse
@@ -178,11 +179,57 @@ class PersonYearEstimationSetupMixin:
             estimated_year_result=21,
             person_month=cls.person_month,
         )
+
+
+class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls._instance = PersonYearEstimationMixin()
+
+    def test_handles_actual_year_income_zero(self):
+        """Verify that we handle a person month where the recorded actual year income
+        is zero.
+        This is a regression test showing that we do not encounter a division by zero
+        in such cases.
+        """
+        # Arrange: create a new person month
+        person_month, _ = PersonMonth.objects.get_or_create(
+            person_year=self.person_year,
+            month=2,
+            import_date=date(2020, 1, 1),
+        )
+        # Arrange: give this person month an actual year result of 0
+        IncomeEstimate.objects.get_or_create(
+            engine=TwelveMonthsSummationEngine.__name__,
+            actual_year_result=0,
+            estimated_year_result=100,
+            person_month=person_month,
+        )
+        # Act
+        result = self._instance._add_predictions(PersonYear.objects.all())
+        # Assert
+        self.assertQuerySetEqual(
+            result,
+            PersonYear.objects.all(),
+        )
+        # Assert: verify correct offset for "normal" month
+        self.assertEqual(result[0].InYearExtrapolationEngine, Decimal("50"))
+        # Assert: verify correct offset for month containing zero
+        self.assertEqual(result[0].TwelveMonthsSummationEngine, Decimal("0"))
+
+
+class ViewTestCase(TestCase):
+    view_class = None
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
         cls._request_factory = RequestFactory()
         cls._view = cls.view_class()
 
 
-class TestPersonListView(PersonYearEstimationSetupMixin, TestCase):
+class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
     view_class = PersonListView
 
     def test_get_returns_html(self):
@@ -212,7 +259,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, TestCase):
         self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(0))
 
 
-class TestHistogramView(PersonYearEstimationSetupMixin, TestCase):
+class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
     view_class = HistogramView
 
     def test_context_data_includes_form(self):
