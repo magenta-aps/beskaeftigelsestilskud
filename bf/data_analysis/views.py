@@ -10,7 +10,17 @@ from decimal import Decimal
 from data_analysis.forms import HistogramOptionsForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count, F, Model, QuerySet, Sum, Value
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    F,
+    Model,
+    QuerySet,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Abs
 from django.http import HttpResponse
 from django.views.generic import DetailView, FormView
@@ -89,10 +99,19 @@ class PersonYearEstimationMixin:
                 ),
             )
             .annotate(
-                offset_pct=Value(100)
-                * F("sum")
-                / F("personmonth__incomeestimate__actual_year_result")
-                / F("num")
+                offset_pct=Case(
+                    When(
+                        personmonth__incomeestimate__actual_year_result=0,
+                        then=Value(0),
+                    ),
+                    default=(
+                        Value(100)
+                        * F("sum")
+                        / F("personmonth__incomeestimate__actual_year_result")
+                        / F("num")
+                    ),
+                    output_field=DecimalField(),
+                ),
             )
         )
 
