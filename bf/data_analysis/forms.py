@@ -12,6 +12,7 @@ class HistogramOptionsForm(forms.Form):
             (10, "10%"),
         ],
         required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
     def clean_resolution(self):
