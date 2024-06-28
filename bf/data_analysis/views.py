@@ -6,17 +6,15 @@ import dataclasses
 import json
 from collections import Counter, defaultdict
 from decimal import Decimal
-from typing import Dict, List
 
 from data_analysis.forms import HistogramOptionsForm
-from data_analysis.models import IncomeEstimate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Model
+from django.db.models import Count, F, Model, QuerySet, Sum, Value
+from django.db.models.functions import Abs
 from django.http import HttpResponse
 from django.views.generic import DetailView, FormView
 from django.views.generic.list import ListView
-from project.util import group
 
 from bf.estimation import (
     EstimationEngine,
@@ -73,36 +71,47 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView):
 
 
 class PersonYearEstimationMixin:
-    def _add_predictions(self, person_years):
-        qs = IncomeEstimate.annotate_person_year(IncomeEstimate.objects.all()).filter(
-            f_person_year__in=person_years
-        )
-        calculation_results: Dict[int, List[IncomeEstimate]] = group(
-            qs, "f_person_year"
+    def _add_predictions(self, person_years) -> QuerySet[PersonYear]:
+        # Use the DB to calculate offset in percent between the actual and the
+        # estimated yearly income.
+        # (This produces a "values queryset" with >1 row per person year, as each
+        # person year will usually have predictions made by two engines.)
+        qs = (
+            person_years.prefetch_related("personmonth_set__incomeestimate_set")
+            .values("pk", "personmonth__incomeestimate__engine")
+            .annotate(
+                num=Count("personmonth__incomeestimate__id"),
+                sum=Sum(
+                    Abs(
+                        F("personmonth__incomeestimate__actual_year_result")
+                        - F("personmonth__incomeestimate__estimated_year_result")
+                    )
+                ),
+            )
+            .annotate(
+                offset_pct=Value(100)
+                * F("sum")
+                / F("personmonth__incomeestimate__actual_year_result")
+                / F("num")
+            )
         )
 
+        # Transform the queryset into a dict mapping `PersonYear` PKs to dictionaries
+        # containing "InYearExtrapolationEngine" and "TwelveMonthsSummationEngine" keys.
+        qs_dict: defaultdict = defaultdict(dict)
+        for row in qs:
+            pk = row["pk"]
+            engine = row["personmonth__incomeestimate__engine"]
+            qs_dict[pk][engine] = row["offset_pct"]
+
+        # Add "InYearExtrapolationEngine" and "TwelveMonthsSummationEngine" attributes
+        # to all `PersonYear` instances passed in `person_years`.
+        # This keeps the new implementation identical to the former implementation.
         for person_year in person_years:
-            actual_sum = person_year.sum_amount
-            person_calculation_results = group(
-                calculation_results[person_year.pk], "engine"
-            )
-            if person_calculation_results and actual_sum:
-                for engine, engine_calculations in person_calculation_results.items():
-                    engine_offset_pct = (
-                        100
-                        * sum(
-                            [
-                                engine_calculation.absdiff
-                                for engine_calculation in engine_calculations
-                            ]
-                        )
-                        / actual_sum
-                        / len(engine_calculations)
-                    )
-                    setattr(person_year, engine, engine_offset_pct)
-            else:
-                person_year.InYearExtrapolationEngine = Decimal(0)
-                person_year.TwelveMonthsSummationEngine = Decimal(0)
+            data = qs_dict[person_year.pk]
+            for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+                val = data.get(key, Decimal("0"))
+                setattr(person_year, key, val)
 
         return person_years
 
