@@ -349,6 +349,10 @@ class MonthlyIncomeReport(models.Model):
     class Meta:
         abstract = True
 
+    month = models.PositiveSmallIntegerField(db_index=True)
+    year = models.PositiveSmallIntegerField(db_index=True)
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+
     @staticmethod
     def annotate_month(
         qs: QuerySet["MonthlyIncomeReport"],
@@ -393,20 +397,8 @@ class MonthlyAIncomeReport(MonthlyIncomeReport):
     )
 
     @property
-    def month(self) -> int:
-        return self.person_month.month
-
-    @property
     def person_year(self) -> PersonYear:
         return self.person_month.person_year
-
-    @property
-    def year(self) -> int:
-        return self.person_month.person_year.year_id
-
-    @property
-    def person(self) -> Person:
-        return self.person_month.person_year.person
 
     def __str__(self):
         return f"{self.person_month} | {self.employer}"
