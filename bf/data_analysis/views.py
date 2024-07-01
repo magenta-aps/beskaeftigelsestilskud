@@ -60,6 +60,7 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
 
 class PersonAnalysisView(LoginRequiredMixin, DetailView):
     model = Person
+    context_object_name = "person"
     template_name = "data_analysis/person_analysis.html"
 
     def setup(self, request, *args, **kwargs):
