@@ -7,7 +7,7 @@ import json
 from collections import Counter, defaultdict
 from decimal import Decimal
 
-from data_analysis.forms import HistogramOptionsForm
+from data_analysis.forms import HistogramOptionsForm, PersonAnalysisOptionsForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import (
@@ -23,7 +23,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Abs
 from django.http import HttpResponse
-from django.views.generic import DetailView, FormView
+from django.views.generic import FormView, UpdateView
 from django.views.generic.list import ListView
 
 from bf.estimation import (
@@ -58,10 +58,11 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
         return super().default(obj)
 
 
-class PersonAnalysisView(LoginRequiredMixin, DetailView):
+class PersonAnalysisView(LoginRequiredMixin, UpdateView):
     model = Person
     context_object_name = "person"
     template_name = "data_analysis/person_analysis.html"
+    form_class = PersonAnalysisOptionsForm
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
@@ -79,6 +80,11 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView):
                 content_type="application/json",
             )
         return super().get(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["year"] = self.year
+        return kwargs
 
 
 class PersonYearEstimationMixin:
