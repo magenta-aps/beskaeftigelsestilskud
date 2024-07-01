@@ -9,9 +9,6 @@ from typing import List
 
 from data_analysis.models import IncomeEstimate
 from django.core.management.base import BaseCommand
-from django.db.models import Q
-from numpy import std
-from tabulate import SEPARATING_LINE, tabulate
 
 from bf.estimation import (
     EstimationEngine,
@@ -38,7 +35,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         start = time.time()
-        self._verbose = kwargs["verbosity"] > 1
         year = kwargs.get("year") or date.today().year
         qs = PersonYear.objects.filter(year__year=year).select_related("person")
         if kwargs["count"]:
@@ -46,72 +42,52 @@ class Command(BaseCommand):
 
         summary_table_by_engine = defaultdict(list)
 
+        IncomeEstimate.objects.filter(person_month__person_year__in=qs).delete()
         results = []
         for person_year in qs:
             person = person_year.person
-            qs_a = MonthlyAIncomeReport.objects.all()
-            qs_a = MonthlyAIncomeReport.annotate_person(qs_a)
-            qs_a = qs_a.filter(person=person.pk)
-            qs_b = MonthlyBIncomeReport.objects.all()
-            qs_b = MonthlyBIncomeReport.annotate_person(qs_b)
-            qs_b = qs_b.filter(person=person.pk)
+            qs_a = MonthlyAIncomeReport.objects.filter(person_id=person.pk)
+            qs_b = MonthlyBIncomeReport.objects.filter(person_id=person.pk)
 
-            self._write_verbose("====================================")
-            self._write_verbose(f"CPR: {person.cpr}")
-            self._write_verbose("")
-
-            amounts = []
-            for month in range(1, 13):
-                amounts.append(
-                    MonthlyIncomeReport.sum_queryset(
-                        qs_a.filter(year=year, month=month)
-                    )
-                    + MonthlyIncomeReport.sum_queryset(
-                        qs_b.filter(year=year, month=month)
-                    )
-                )
             actual_year_sum = MonthlyIncomeReport.sum_queryset(
                 qs_a.filter(year=year)
             ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(year=year))
-            stddev_over_sum = (
-                std(amounts) / actual_year_sum if actual_year_sum != 0 else 0
-            )
-            self._write_verbose(
-                tabulate(
-                    [[year, month, amounts[month - 1]] for month in range(1, 13)]
-                    + [SEPARATING_LINE, ["Sum", actual_year_sum]],
-                    headers=["År", "Måned", "Beløb"],
-                    tablefmt="simple",
-                )
-            )
-            self._write_verbose("")
+
+            a_reports = qs_a.values("year", "month", "id")
+            b_reports = qs_b.values("year", "month", "id")
             for engine in self.engines:
                 estimates = []
 
-                a_reports = list(qs_a)
-                b_reports = list(qs_b)
-
-                to_delete = Q()
                 for month in range(1, 13):
                     person_month = person_year.personmonth_set.get(month=month)
                     # We used to filter by year and month directly on qs_a
                     # but extracting once and filtering here is ~20%-30% faster
                     visible_a_reports = MonthlyAIncomeReport.objects.filter(
                         id__in=[
-                            item.id
+                            item["id"]
                             for item in a_reports
-                            if item.year < year
-                            or (item.year == year and item.month <= month)
+                            if item["year"] < year
+                            or (item["year"] == year and item["month"] <= month)
                         ]
                     )
                     visible_b_reports = MonthlyBIncomeReport.objects.filter(
                         id__in=[
-                            item.id
+                            item["id"]
                             for item in b_reports
-                            if item.year < year
-                            or (item.year == year and item.month <= month)
+                            if item["year"] < year
+                            or (item["year"] == year and item["month"] <= month)
                         ]
                     )
+
+                    # visible_a_reports = qs_a.filter(
+                    #     Q(year__lt=year) |
+                    #     Q(year=year, month__in=range(1, month+1))
+                    # )
+                    # visible_b_reports = qs_b.filter(
+                    #         Q(year__lt=year) |
+                    #         Q(year=year, month__in=range(1, month+1))
+                    # )
+
                     resultat: IncomeEstimate = engine.estimate(
                         visible_a_reports, visible_b_reports, person_month
                     )
@@ -127,33 +103,7 @@ class Command(BaseCommand):
                             ]
                         )
                         results.append(resultat)
-                        to_delete |= Q(
-                            engine=resultat.engine, person_month=resultat.person_month
-                        )
-                self._write_verbose(engine.description)
-                self._write_verbose(
-                    tabulate(
-                        estimates,
-                        headers=[
-                            "month",
-                            "Forudset årssum",
-                            "Difference (beløb)",
-                            "Difference (abs.pct)",
-                        ],
-                        intfmt=("d", "d", "+d", "d"),
-                    )
-                )
-                self._write_verbose("")
-                summary_table_by_engine[engine.__class__.__name__].append(
-                    {
-                        "cpr": person.cpr,
-                        "year_sum": actual_year_sum,
-                        "stddev_over_sum": stddev_over_sum,
-                        "month_estimates": estimates,
-                    }
-                )
 
-                IncomeEstimate.objects.filter(to_delete).delete()
         IncomeEstimate.objects.bulk_create(results)
         for engine, results in summary_table_by_engine.items():
             with open(f"estimates_{engine}.csv", "w") as fp:
@@ -191,7 +141,3 @@ class Command(BaseCommand):
                         ]
                     )
         print(time.time() - start)
-
-    def _write_verbose(self, *args):
-        if self._verbose:
-            self.stdout.write(*args)

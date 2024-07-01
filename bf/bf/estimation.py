@@ -44,8 +44,6 @@ class InYearExtrapolationEngine(EstimationEngine):
         b_reports: QuerySet[MonthlyBIncomeReport],
         person_month: PersonMonth,
     ) -> IncomeEstimate | None:
-        if not a_reports.exists() and not b_reports.exists():
-            return None
         year = person_month.year
         month = person_month.month
         amount_sum = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
@@ -62,7 +60,8 @@ class InYearExtrapolationEngine(EstimationEngine):
     def queryset_sum(cls, qs: QuerySet, year: int, month: int) -> Decimal:
         # Do not use any properties on the class as annotation names.
         # Django will explode trying to put values into the properties.
-        qs = qs.filter(year=year, month__lte=month)
+        qs = qs.filter(year=year, month__in=range(1, month + 1))
+        # print(qs.explain())
         return MonthlyIncomeReport.sum_queryset(qs)
 
 
@@ -76,8 +75,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         b_reports: QuerySet[MonthlyBIncomeReport],
         person_month: PersonMonth,
     ) -> IncomeEstimate | None:
-        if not a_reports.exists() and not b_reports.exists():
-            return None
+
         year = person_month.year
         month = person_month.month
         year_estimate = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
@@ -94,6 +92,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         # Do not use any properties on the class as annotation names.
         # Django will explode trying to put values into the properties.
         qs = qs.filter(
-            Q(year=year, month__lte=month) | Q(year=year - 1, month__gt=month)
+            Q(year=year, month__in=range(1, month + 1))
+            | Q(year=year - 1, month__in=range(month + 1, 13))
         )
         return MonthlyIncomeReport.sum_queryset(qs)
