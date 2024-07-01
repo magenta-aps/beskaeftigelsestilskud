@@ -176,6 +176,10 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
     template_name = "data_analysis/histogram.html"
     form_class = HistogramOptionsForm
 
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.year = self.kwargs["year"]
+
     def get(self, request, *args, **kwargs):
         if request.GET.get("format") == "json":
             return HttpResponse(
@@ -187,6 +191,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["data"] = self.request.GET
+        kwargs["year"] = self.year
         return kwargs
 
     def get_initial(self):

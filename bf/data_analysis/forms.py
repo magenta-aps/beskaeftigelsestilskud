@@ -4,11 +4,19 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
-from bf.models import PersonYear
+from bf.models import PersonYear, Year
 
 
 class HistogramOptionsForm(forms.Form):
+    year = forms.ChoiceField(
+        choices=[],  # populated in `__init__`
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("År"),
+    )
+
     resolution = forms.ChoiceField(
         choices=[
             (1, "1%"),
@@ -16,7 +24,23 @@ class HistogramOptionsForm(forms.Form):
         ],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("Opløsning"),
     )
+
+    def __init__(self, *args, **kwargs):
+        year = kwargs.pop("year", None)
+        super().__init__(*args, **kwargs)
+        self.fields["year"].choices = [
+            (self._get_year_url(year), year.year)
+            for year in Year.objects.order_by("year")
+        ]
+        if year is not None:
+            self.fields["year"].initial = self._get_year_url(
+                Year.objects.get(year=year)
+            )
+
+    def _get_year_url(self, year):
+        return reverse("data_analysis:histogram", kwargs={"year": year.year})
 
     def clean_resolution(self):
         try:
@@ -30,6 +54,7 @@ class PersonAnalysisOptionsForm(forms.Form):
         choices=[],  # populated in `__init__`
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("År"),
     )
 
     def __init__(self, *args, **kwargs):
