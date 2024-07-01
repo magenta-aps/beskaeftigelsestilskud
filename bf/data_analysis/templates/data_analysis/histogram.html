@@ -13,6 +13,12 @@ SPDX-License-Identifier: MPL-2.0
 <form id="histogram-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
     <div class="col-12">
         <div class="input-group">
+            <div class="input-group-text">{{ form.year.label }}</div>
+            {{ form.year }}
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="input-group">
             <div class="input-group-text">{{ form.resolution.label }}</div>
             {{ form.resolution }}
         </div>
@@ -94,7 +100,6 @@ $(document).ready(
         params.append("format", "json");
 
         const rootElemName = "#histograms";
-        const form = $("#histogram-options");
 
         const response = await fetch(`?${params}`);
         const doc = await response.json();
@@ -119,6 +124,27 @@ $(document).ready(
             const chart = new ApexCharts(chartElem.get(0), chartData);
             chart.render();
         }
+    }
+)
+
+$(document).ready(
+    function () {
+        const url = new URL(window.location);
+        const params = new URLSearchParams();
+        const form = $("#histogram-options");
+
+        form.submit(function (evt) {
+            evt.preventDefault();
+            for (const param of form.serializeArray()) {
+                if (param.name !== "year") {
+                    params.set(param.name, param.value);
+                }
+            }
+            const newHref = $("#id_year", form).val();
+            url.href = url.origin + newHref;
+            url.search = params;
+            window.location.replace(url);
+        });
     }
 )
 </script>

@@ -2,13 +2,20 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from django import forms
-from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
-from bf.models import PersonYear
+from bf.models import PersonYear, Year
 
 
 class HistogramOptionsForm(forms.Form):
+    year = forms.ChoiceField(
+        choices=[],  # populated in `__init__`
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("År"),
+    )
+
     resolution = forms.ChoiceField(
         choices=[
             (1, "1%"),
@@ -16,13 +23,18 @@ class HistogramOptionsForm(forms.Form):
         ],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("Opløsning"),
     )
 
-    def clean_resolution(self):
-        try:
-            return int(self.cleaned_data["resolution"])
-        except ValueError:
-            raise ValidationError("")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["year"].choices = [
+            (self.get_year_url(year), year.year)
+            for year in Year.objects.order_by("year")
+        ]
+
+    def get_year_url(self, year):
+        return reverse("data_analysis:histogram", kwargs={"year": year.year})
 
 
 class PersonAnalysisOptionsForm(forms.Form):
@@ -30,6 +42,7 @@ class PersonAnalysisOptionsForm(forms.Form):
         choices=[],  # populated in `__init__`
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("År"),
     )
 
     def __init__(self, *args, **kwargs):

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+import copy
 import dataclasses
 import json
 from collections import Counter, defaultdict
@@ -31,7 +31,7 @@ from bf.estimation import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import Person, PersonYear
+from bf.models import Person, PersonYear, Year
 from bf.simulation import Simulation
 
 
@@ -182,22 +182,27 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
                 content_type="application/json",
             )
-        return super().get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)  # pragma: no cover
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["data"] = self.request.GET
+        # Make `data` a mutable dict, as we need to update it below
+        kwargs["data"] = copy.copy(self.request.GET)
+        # Set resolution to 10% if not provided by GET parameters
+        kwargs["data"].setdefault("resolution", "10")
+        # Get the initial value (URL) for the `year` form field.
+        # Since this form is bound, we need to pass the initial value via
+        # the `data` form kwarg.
+        year_initial_value = self.form_class().get_year_url(
+            Year.objects.get(year=self.kwargs["year"])
+        )
+        kwargs["data"]["year"] = year_initial_value
         return kwargs
-
-    def get_initial(self):
-        initial = super().get_initial()
-        initial["resolution"] = self.request.GET.get("resolution", 10)
-        return initial
 
     def get_percentile_size(self):
         form = self.get_form()
         if form.is_valid():
-            return form.cleaned_data["resolution"]
+            return int(form.cleaned_data["resolution"])
         return 10
 
     def get_histogram(self) -> dict:
