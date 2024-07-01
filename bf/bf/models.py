@@ -355,8 +355,8 @@ class MonthlyIncomeReport(models.Model):
         self.year = self.person_month.year
         self.person = self.person_month.person
 
-    month = models.PositiveSmallIntegerField(db_index=True)
-    year = models.PositiveSmallIntegerField(db_index=True)
+    month = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField()
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     person_month = models.ForeignKey(
         PersonMonth,
@@ -395,10 +395,38 @@ class MonthlyIncomeReport(models.Model):
 
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
+        # if qs.exists():
+        #     print(qs.explain())
         return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
 
 
 class MonthlyAIncomeReport(MonthlyIncomeReport):
+    class Meta:
+        indexes = (
+            Index(
+                name="MonthlyAIncomeReport_person",
+                fields=("person_id",),
+                include=(
+                    "id",
+                    "person",
+                    "month",
+                    "year",
+                    "person_month",
+                    "amount",
+                    "employer",
+                ),
+            ),
+            Index(
+                name="MonthlyAIncomeReport_year",
+                fields=("year",),
+                include=("id", "person", "month", "person_month", "amount", "employer"),
+            ),
+            Index(
+                name="MonthlyAIncomeReport_month",
+                fields=("month",),
+                include=("id", "person", "year", "person_month", "amount", "employer"),
+            ),
+        )
 
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE)
 
@@ -411,6 +439,32 @@ class MonthlyAIncomeReport(MonthlyIncomeReport):
 
 
 class MonthlyBIncomeReport(MonthlyIncomeReport):
+    class Meta:
+        indexes = (
+            Index(
+                name="MonthlyBIncomeReport_person",
+                fields=("person_id",),
+                include=(
+                    "id",
+                    "person",
+                    "month",
+                    "year",
+                    "person_month",
+                    "amount",
+                    "trader",
+                ),
+            ),
+            Index(
+                name="MonthlyBIncomeReport_year",
+                fields=("year",),
+                include=("id", "person", "month", "person_month", "amount", "trader"),
+            ),
+            Index(
+                name="MonthlyBIncomeReport_month",
+                fields=("month",),
+                include=("id", "person", "year", "person_month", "amount", "trader"),
+            ),
+        )
 
     trader = models.ForeignKey(
         Employer,
