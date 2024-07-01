@@ -9,6 +9,10 @@ SPDX-License-Identifier: MPL-2.0
 {% load i18n %}
 {% load csp %}
 
+{% block content %}
+<h1>{{ person }}</h1>
+{% endblock %}
+
 {% block extra_headers %}
 <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
 <script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
@@ -123,7 +127,4 @@ $(document).ready(
     }
 )
 </script>
-{% endblock %}
-
-{% block content %}
 {% endblock %}
