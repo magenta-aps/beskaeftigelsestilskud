@@ -69,11 +69,16 @@ class Simulation:
         self.result = SimulationResult(rows=[self._run()])
 
     def _run(self):
-
         actual_year_sum = self.person_year.sum_amount
 
-        income_a = MonthlyAIncomeReport.objects.filter(person=self.person)
-        income_b = MonthlyBIncomeReport.objects.filter(person=self.person)
+        income_a = MonthlyAIncomeReport.objects.filter(
+            person=self.person,
+            person_month__person_year__year=self.year,
+        )
+        income_b = MonthlyBIncomeReport.objects.filter(
+            person=self.person,
+            person_month__person_year__year=self.year,
+        )
 
         income_series = [
             IncomeItem(year=item.year, month=item.month, value=item.amount)
@@ -123,6 +128,7 @@ class Simulation:
                             ),
                         )
                     )
+
             if prediction_items:
                 estimates.append(Prediction(engine=engine, items=prediction_items))
 
