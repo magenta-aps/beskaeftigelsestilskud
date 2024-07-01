@@ -116,7 +116,7 @@ class TestPersonAnalysisView(TestCase):
         super().setUpTestData()
         cls.person, _ = Person.objects.get_or_create(cpr="0101012222")
         cls.year, _ = Year.objects.get_or_create(year=2020)
-        cls.person_year = PersonYear.objects.get_or_create(
+        cls.person_year, _ = PersonYear.objects.get_or_create(
             person=cls.person, year=cls.year
         )
         cls._request_factory = RequestFactory()
@@ -141,6 +141,11 @@ class TestPersonAnalysisView(TestCase):
         self._view.setup(self._request_factory.get(""), pk=self.person.pk, year=2020)
         response = self._view.get(self._request_factory.get(""))
         self.assertIsInstance(response, TemplateResponse)
+
+    def test_get_form_kwargs(self):
+        self._view.setup(self._request_factory.get(""), pk=self.person.pk, year=2020)
+        form_kwargs = self._view.get_form_kwargs()
+        self.assertEqual(form_kwargs["year"], 2020)
 
 
 class PersonYearEstimationSetupMixin:

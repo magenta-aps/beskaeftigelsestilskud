@@ -11,6 +11,17 @@ SPDX-License-Identifier: MPL-2.0
 
 {% block content %}
 <h1>{{ person }}</h1>
+<form id="graph-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
+    <div class="col-12">
+        <div class="input-group">
+            <div class="input-group-text">{{ form.year.label }}</div>
+            {{ form.year }}
+        </div>
+    </div>
+    <div class="col-12">
+        <button class="btn btn-primary">{% translate 'Opdater' %}</button>
+    </div>
+</form>
 {% endblock %}
 
 {% block extra_headers %}
@@ -124,6 +135,18 @@ $(document).ready(
             const chart = new ApexCharts(chartElem, chartData);
             chart.render();
         }
+    }
+)
+
+$(document).ready(
+    function () {
+        const form = $("#graph-options");
+
+        form.submit(function (evt) {
+            evt.preventDefault();
+            const newUrl = $("#id_year", form).val();
+            window.location.replace(newUrl);
+        });
     }
 )
 </script>
