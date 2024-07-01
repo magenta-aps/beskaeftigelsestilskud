@@ -87,7 +87,10 @@ class PersonYearEstimationMixin:
         # (This produces a "values queryset" with >1 row per person year, as each
         # person year will usually have predictions made by two engines.)
         qs = (
-            person_years.prefetch_related("personmonth_set__incomeestimate_set")
+            # person_years may be subject to offset & limit,
+            # which would bleed into qs if we just use that queryset
+            PersonYear.objects.filter(pk__in=person_years)
+            .prefetch_related("personmonth_set__incomeestimate_set")
             .values("pk", "personmonth__incomeestimate__engine")
             .annotate(
                 num=Count("personmonth__incomeestimate__id"),
