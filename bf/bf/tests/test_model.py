@@ -96,7 +96,7 @@ class ModelTest(TestCase):
         cls.report4 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month4,
-            amount=12050,
+            amount=13000,
             month=cls.month4.month,
             year=cls.year.year,
             person=cls.person,
@@ -148,8 +148,8 @@ class ModelTest(TestCase):
         )
         IncomeEstimate.objects.create(
             person_month=cls.month4,
-            estimated_year_result=3 * (10000 + 11000 + 12000 + 12050)
-            + 3 * (15000 + 12000 + 10000 + 1000),
+            estimated_year_result=3 * (10000 + 11000 + 12000 + 13000)
+            + 3 * (15000 + 12000 + 10000 + 8000),
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -305,7 +305,7 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(self.month1.sum_amount, Decimal(10000 + 15000))
         self.assertEqual(self.month2.sum_amount, Decimal(11000 + 12000))
         self.assertEqual(self.month3.sum_amount, Decimal(12000 + 10000))
-        self.assertEqual(self.month4.sum_amount, Decimal(12050 + 8000))
+        self.assertEqual(self.month4.sum_amount, Decimal(13000 + 8000))
 
     def test_next(self):
         self.assertEqual(self.month1.next, self.month2)
