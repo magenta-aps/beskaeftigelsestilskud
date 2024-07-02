@@ -15,7 +15,7 @@ from django.db.models import F, Index, QuerySet, Sum
 from django.db.models.functions import Coalesce
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
-from project import settings
+from django.conf import settings
 from simple_history.models import HistoricalRecords
 
 
@@ -363,11 +363,13 @@ class PersonMonth(models.Model):
 
         if self.prev is not None:
             benefit_last_month = self.prev.benefit_paid
+            threshold: Decimal = settings.CALCULATION_STICKY_THRESHOLD  # type: ignore
             if (
-                not benefit_this_month.is_zero()
+                benefit_last_month is not None
+                and not benefit_this_month.is_zero()
                 and not benefit_last_month.is_zero()
                 and abs(benefit_last_month - benefit_this_month) / benefit_last_month
-                < settings.CALCULATION_STICKY_THRESHOLD
+                < threshold
             ):
                 benefit_this_month = benefit_last_month
 
