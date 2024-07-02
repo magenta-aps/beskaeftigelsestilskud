@@ -7,7 +7,11 @@ import json
 from collections import Counter, defaultdict
 from decimal import Decimal
 
-from data_analysis.forms import HistogramOptionsForm, PersonYearListOptionsForm
+from data_analysis.forms import (
+    HistogramOptionsForm,
+    PersonAnalysisOptionsForm,
+    PersonYearListOptionsForm,
+)
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import (
@@ -34,10 +38,6 @@ from bf.estimation import (
 )
 from bf.models import Person, PersonYear
 from bf.simulation import Simulation
-
-from project.util import strtobool
-
-from data_analysis.forms import PersonYearListOptionsForm
 
 
 class SimulationJSONEncoder(DjangoJSONEncoder):
@@ -193,11 +193,7 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
         return {**super().get_form_kwargs(), "data": self.request.GET}
 
     def get_queryset(self):
-        return (
-            super().get_queryset()
-            .select_related("person")
-            .order_by("person__cpr")
-        )
+        return super().get_queryset().select_related("person").order_by("person__cpr")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -263,6 +263,26 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list[0].TwelveMonthsSummationEngine, Decimal(0))
         self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(0))
 
+    def test_filter_no_a(self):
+        self._view.setup(
+            self._request_factory.get("?has_a=False&has_b=True"), year=2020
+        )
+        response = self._view.get(self._request_factory.get(""), year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 0)
+
+    def test_filter_a(self):
+        self._view.setup(
+            self._request_factory.get("?has_a=True&has_b=False"), year=2020
+        )
+        response = self._view.get(self._request_factory.get(""), year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 1)
+
 
 class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
     view_class = HistogramView
