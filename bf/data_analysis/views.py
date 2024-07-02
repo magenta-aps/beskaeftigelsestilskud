@@ -34,6 +34,10 @@ from bf.estimation import (
 from bf.models import Person, PersonYear
 from bf.simulation import Simulation
 
+from project.util import strtobool
+
+from data_analysis.forms import PersonYearListOptionsForm
+
 
 class SimulationJSONEncoder(DjangoJSONEncoder):
     def default(self, obj):
@@ -88,6 +92,35 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
 
 
 class PersonYearEstimationMixin:
+
+    def get_queryset(self):
+        qs = PersonYear.objects.filter(year=self.year)
+
+        form = self.get_form()
+        if form.is_valid():
+
+            a_income = form.cleaned_data["has_a"]
+            if a_income not in (None, ""):
+                qs = qs.annotate(a_count=Count("personmonth__monthlyaincomereport"))
+                if strtobool(a_income):
+                    qs = qs.filter(a_count__gt=0)
+                else:
+                    qs = qs.filter(a_count=0)
+
+            b_income = form.cleaned_data["has_b"]
+            if b_income not in (None, ""):
+                qs = qs.annotate(b_count=Count("personmonth__monthlybincomereport"))
+                if strtobool(b_income):
+                    qs = qs.filter(b_count__gt=0)
+                else:
+                    qs = qs.filter(b_count=0)
+
+        return qs
+
+    @property
+    def year(self):
+        return self.kwargs["year"]
+
     def _add_predictions(self, person_years) -> QuerySet[PersonYear]:
         # Use the DB to calculate offset in percent between the actual and the
         # estimated yearly income.
@@ -145,22 +178,22 @@ class PersonYearEstimationMixin:
         return person_years
 
 
-class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView):
+class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, FormView):
     paginate_by = 30
     model = PersonYear
     template_name = "data_analysis/personyear_list.html"
-
-    @property
-    def year(self):
-        return self.kwargs["year"]
+    form_class = PersonYearListOptionsForm
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.object_list = None
 
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "data": self.request.GET}
+
     def get_queryset(self):
         return (
-            PersonYear.objects.filter(year=self.year)
+            super().get_queryset()
             .select_related("person")
             .order_by("person__cpr")
         )
@@ -203,9 +236,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
     def get_histogram(self) -> dict:
         percentile_size = self.get_percentile_size()
         observations: defaultdict = defaultdict(Counter)
-        person_years = self._add_predictions(
-            PersonYear.objects.filter(year=self.kwargs["year"])
-        )
+        person_years = self._add_predictions(self.get_queryset())
 
         for item in person_years:
             for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
