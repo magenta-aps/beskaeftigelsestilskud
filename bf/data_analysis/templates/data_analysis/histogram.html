@@ -50,29 +50,63 @@ const chartOptions = {
         height: 600,
         animations: {
             enabled: false,
-        }
+        },
+    },
+    dataLabels: {
+        enabled: false,
     },
     xaxis: {
         type: "category",
     },
+    yaxis: [
+        {
+            // Absolute scale
+            type: "numeric",
+            forceNiceScale: true,
+            stepSize: 100,
+            opposite: false,
+        },
+        {
+            // Percentage scale
+            type: "numeric",
+            forceNiceScale: true,
+            min: 0,
+            max: 100,
+            stepSize: 10,
+            opposite: true,
+        }
+    ],
+    legend: {
+        show: true,
+    }
 };
 
 // Build chart data
 const getChartData = function (histo, key, percentileSize, options) {
     const series = [];
+    const totalObservations = Object.values(histo).reduce(function (a, b) { return a + b} );
 
     // Convert histogram (percentile -> num observations map) into X/Y pairs
     const items = [];
+    const percentages = [];
     for (const percentile in histo) {
         items.push({
             x: percentile,
             y: histo[percentile],
+        });
+        percentages.push({
+            x: percentile,
+            y: 100.0 * (histo[percentile] / totalObservations),
         });
     }
     series.push({
         data: items,
         name: "Number of observations",
     });
+    series.push({
+        data: percentages,
+        name: "Percentage of total observations",
+    })
 
     // Construct chart data by combining series and options
     const chartData = structuredClone(options);
@@ -84,6 +118,21 @@ const getChartData = function (histo, key, percentileSize, options) {
             return `${val}-${val + percentileSize}%`;
         }
     }
+    // Absolute scale formatter
+    chartData.yaxis[0].labels = {
+        formatter: function (value, timestamp, opts) {
+            const val = parseInt(value, 10);
+            return `${val}`;
+        }
+    }
+    // Percentage scale formatter
+    chartData.yaxis[1].labels = {
+        formatter: function (value, timestamp, opts) {
+            const val = parseInt(value, 10);
+            return `${val}%`;
+        }
+    }
+
     return chartData;
 }
 
