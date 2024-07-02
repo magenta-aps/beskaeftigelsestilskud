@@ -5,6 +5,7 @@
 import json
 import os
 import sys
+from decimal import Decimal
 from pathlib import Path
 from typing import List
 
@@ -29,3 +30,7 @@ ROOT_URLCONF = "project.urls"
 WSGI_APPLICATION = "project.wsgi.application"
 
 AUTH_USER_MODEL = "common.User"
+
+# When a calculated benefit differs from last month's benefit by less
+# than this amount, reuse prior benefit
+CALCULATION_STICKY_THRESHOLD = Decimal("0.05")
