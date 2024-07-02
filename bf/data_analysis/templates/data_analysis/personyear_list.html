@@ -8,8 +8,29 @@ SPDX-License-Identifier: MPL-2.0
 {% load static %}
 {% load i18n %}
 {% load csp %}
+{% load bf_tags %}
 
 {% block content %}
+    <form id="list-options" method="get" action="." class="g-3 p-2">
+        <div class="row justify-content-start">
+            <div class="col-3">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.has_a.label }}</div>
+                    {{ form.has_a }}
+                </div>
+
+            </div>
+            <div class="col-3">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.has_b.label }}</div>
+                    {{ form.has_b }}
+                </div>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
+            </div>
+        </div>
+    </form>
     <table class="table">
     <thead>
     <tr>
@@ -34,9 +55,9 @@ SPDX-License-Identifier: MPL-2.0
     <div class="pagination">
     <span class="step-links btn-group">
         {% if page_obj.has_previous %}
-            <a href="?page=1" class="btn btn-outline-primary">1</a>
+            <a href="?page=1&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">1</a>
             {% if page_obj.previous_page_number != 1 %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline-primary">{{ page_obj.previous_page_number }}</a>
+                <a href="?page={{ page_obj.previous_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.previous_page_number }}</a>
             {% endif %}
         {% endif %}
         <a class="current btn btn-outline-primary active">
@@ -44,9 +65,9 @@ SPDX-License-Identifier: MPL-2.0
         </a>
         {% if page_obj.has_next %}
             {% if page_obj.next_page_number != page_obj.paginator.num_pages %}
-            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline-primary">{{ page_obj.next_page_number }}</a>
+            <a href="?page={{ page_obj.next_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.next_page_number }}</a>
             {% endif %}
-            <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-outline-primary">{{ page_obj.paginator.num_pages }}</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.paginator.num_pages }}</a>
         {% endif %}
     </span>
     </div>

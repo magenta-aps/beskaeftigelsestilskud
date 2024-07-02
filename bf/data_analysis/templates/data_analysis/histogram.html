@@ -10,15 +10,29 @@ SPDX-License-Identifier: MPL-2.0
 {% load csp %}
 
 {% block content %}
-<form id="histogram-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
-    <div class="col-12">
-        <div class="input-group">
-            <div class="input-group-text">{{ form.resolution.label }}</div>
-            {{ form.resolution }}
+<form id="histogram-options" method="get" action="." class="g-3 p-2">
+    <div class="row justify-content-start">
+        <div class="col-3">
+            <div class="input-group">
+                <div class="input-group-text">{{ form.resolution.label }}</div>
+                {{ form.resolution }}
+            </div>
         </div>
-    </div>
-    <div class="col-12">
-        <button class="btn btn-primary">{% translate 'Opdater' %}</button>
+        <div class="col-3">
+            <div class="input-group">
+                <div class="input-group-text">{{ form.has_a.label }}</div>
+                {{ form.has_a }}
+            </div>
+        </div>
+            <div class="col-3">
+            <div class="input-group">
+                <div class="input-group-text">{{ form.has_b.label }}</div>
+                {{ form.has_b }}
+            </div>
+        </div>
+        <div class="col-3">
+            <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
+        </div>
     </div>
 </form>
 <div id="histograms">

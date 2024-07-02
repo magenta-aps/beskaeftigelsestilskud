@@ -8,7 +8,30 @@ from django.urls import reverse
 from bf.models import PersonYear
 
 
-class HistogramOptionsForm(forms.Form):
+class PersonYearListOptionsForm(forms.Form):
+    has_a = forms.ChoiceField(
+        label="A-indkomst",
+        choices=(
+            (None, "Alle"),
+            (True, "Har A-indkomst"),
+            (False, "Har ikke A-indkomst"),
+        ),
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+    )
+    has_b = forms.ChoiceField(
+        label="B-indkomst",
+        choices=(
+            (None, "Alle"),
+            (True, "Har B-indkomst"),
+            (False, "Har ikke B-indkomst"),
+        ),
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+    )
+
+
+class HistogramOptionsForm(PersonYearListOptionsForm):
     resolution = forms.ChoiceField(
         choices=[
             (1, "1%"),
