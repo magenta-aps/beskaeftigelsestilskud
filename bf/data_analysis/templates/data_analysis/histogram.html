@@ -107,14 +107,17 @@ const getChartData = function (histo, key, percentileSize, options) {
     const items = [];
     const percentages = [];
     for (const percentile in histo) {
-        items.push({
-            x: percentile,
-            y: histo[percentile],
-        });
-        percentages.push({
-            x: percentile,
-            y: 100.0 * (histo[percentile] / totalObservations),
-        });
+        const percentageValue = 100.0 * (histo[percentile] / totalObservations);
+        if (percentageValue >= 0.1) {
+            items.push({
+                x: percentile,
+                y: histo[percentile],
+            });
+            percentages.push({
+                x: percentile,
+                y: percentageValue,
+            });
+        }
     }
     series.push({
         data: items,
