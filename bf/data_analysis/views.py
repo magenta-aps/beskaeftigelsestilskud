@@ -7,7 +7,7 @@ import json
 from collections import Counter, defaultdict
 from decimal import Decimal
 
-from data_analysis.forms import HistogramOptionsForm, PersonAnalysisOptionsForm
+from data_analysis.forms import HistogramOptionsForm, PersonYearListOptionsForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import (
@@ -25,6 +25,7 @@ from django.db.models.functions import Abs
 from django.http import HttpResponse
 from django.views.generic import FormView, UpdateView
 from django.views.generic.list import ListView
+from project.util import strtobool
 
 from bf.estimation import (
     EstimationEngine,

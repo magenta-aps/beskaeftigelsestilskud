@@ -14,7 +14,7 @@ class PersonYearListOptionsForm(forms.Form):
         choices=(
             (None, "Alle"),
             (True, "Har A-indkomst"),
-            (False, "Har ikke A-indkomst")
+            (False, "Har ikke A-indkomst"),
         ),
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
@@ -24,7 +24,7 @@ class PersonYearListOptionsForm(forms.Form):
         choices=(
             (None, "Alle"),
             (True, "Har B-indkomst"),
-            (False, "Har ikke B-indkomst")
+            (False, "Har ikke B-indkomst"),
         ),
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
