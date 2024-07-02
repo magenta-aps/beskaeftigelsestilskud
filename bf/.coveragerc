@@ -18,7 +18,7 @@ omit =
     */mitid_test/*
     */bf/estimation.py
     */bf/simulation.py
-    */management/commands/estimation.py
+    */management/commands/estimate_income.py
     */management/commands/load_csv.py
     */management/commands/wait_for_db.py
 parallel = true
