@@ -4,7 +4,6 @@
 import csv
 import time
 from collections import defaultdict
-from datetime import date
 from typing import List
 
 from data_analysis.models import IncomeEstimate
@@ -30,12 +29,12 @@ class Command(BaseCommand):
     ]
 
     def add_arguments(self, parser):
-        parser.add_argument("--year", type=int)
+        parser.add_argument("year", type=int)
         parser.add_argument("--count", type=int)
 
     def handle(self, *args, **kwargs):
         start = time.time()
-        year = kwargs.get("year") or date.today().year
+        year = kwargs["year"]
         qs = PersonYear.objects.filter(year__year=year).select_related("person")
         if kwargs["count"]:
             qs = qs[: kwargs["count"]]
