@@ -7,6 +7,7 @@ from datetime import date
 from decimal import Decimal
 from functools import cached_property
 
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -15,7 +16,6 @@ from django.db.models import F, Index, QuerySet, Sum
 from django.db.models.functions import Coalesce
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
-from django.conf import settings
 from simple_history.models import HistoricalRecords
 
 
