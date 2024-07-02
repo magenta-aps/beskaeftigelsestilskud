@@ -6,7 +6,6 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_analysis.forms import HistogramOptionsForm
 from data_analysis.models import IncomeEstimate
 from data_analysis.views import (
     HistogramView,
@@ -287,15 +286,32 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
 class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
     view_class = HistogramView
 
-    def test_context_data_includes_form(self):
-        self._view.setup(self._request_factory.get(""), year=2020)
-        response = self._view.get(self._request_factory.get(""))
-        self.assertIsInstance(response, TemplateResponse)
-        self.assertIsInstance(response.context_data["form"], HistogramOptionsForm)
+    def test_get_form_kwargs_populates_data_kwarg(self):
+        tests = [
+            ("", "10"),
+            ("?resolution=10", "10"),
+            ("?resolution=1", "1"),
+        ]
+        for query, percentile_size in tests:
+            with self.subTest(f"resolution={percentile_size}"):
+                self._view.setup(self._request_factory.get(query), year=2020)
+                form_kwargs = self._view.get_form_kwargs()
+                self.assertEqual(form_kwargs["data"]["resolution"], percentile_size)
+                expected_year_url = self._view.form_class().get_year_url(self.year)
+                self.assertEqual(form_kwargs["data"]["year"], expected_year_url)
 
     def test_get_percentile_size_from_form(self):
-        self._view.setup(self._request_factory.get("?resolution=1"), year=2020)
-        self.assertEqual(self._view.get_percentile_size(), 1)
+        tests = [
+            ("", 10),
+            ("?resolution=10", 10),
+            ("?resolution=1", 1),
+            ("?resolution=invalid", 10),
+        ]
+        for query, percentile_size in tests:
+            with self.subTest(f"resolution={percentile_size}"):
+                self._view.setup(self._request_factory.get(query), year=2020)
+                # self._view.get(self._request_factory.get(query), year=2020)
+                self.assertEqual(self._view.get_percentile_size(), percentile_size)
 
     def test_get_returns_json(self):
         tests = [
