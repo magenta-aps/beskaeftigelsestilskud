@@ -55,7 +55,10 @@ class ModelTest(TestCase):
         cls.month4 = PersonMonth.objects.create(
             person_year=cls.person_year, month=4, import_date=date.today()
         )
-        cls.month5 = PersonMonth.objects.create(
+        cls.month12 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=12, import_date=date.today()
+        )
+        cls.year2month1 = PersonMonth.objects.create(
             person_year=cls.person_year2, month=1, import_date=date.today()
         )
         cls.employer1 = Employer.objects.create(
@@ -150,9 +153,9 @@ class ModelTest(TestCase):
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
-            person_month=cls.month5,
+            person_month=cls.year2month1,
             amount=8000,
-            month=cls.month5.month,
+            month=cls.year2month1.month,
             year=cls.year2.year,
             person=cls.person,
         )
@@ -208,6 +211,14 @@ class TestPersonYear(ModelTest):
             f"calculation method not set for year {self.year2}",
         ):
             self.person_year2.calculate_benefit(Decimal(100000))
+
+    def test_next(self):
+        self.assertEqual(self.person_year.next, self.person_year2)
+        self.assertIsNone(self.person_year2.next)
+
+    def test_prev(self):
+        self.assertEqual(self.person_year2.prev, self.person_year)
+        self.assertIsNone(self.person_year.prev)
 
 
 class TestPersonMonth(ModelTest):
@@ -283,11 +294,29 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(self.month2.prior_benefit_paid, Decimal("1050.00"))
         self.assertEqual(self.month2.benefit_paid, Decimal("1118.73"))
 
+        self.month3.calculate_benefit()
+        self.month3.save()
+        self.assertEqual(self.month3.estimated_year_benefit, Decimal("13860.00"))
+        self.assertEqual(self.month3.prior_benefit_paid, Decimal("2168.73"))
+        # Reusing last month's benefit
+        self.assertEqual(self.month3.benefit_paid, Decimal("1118.73"))
+
     def test_sum_amount(self):
         self.assertEqual(self.month1.sum_amount, Decimal(10000 + 15000))
         self.assertEqual(self.month2.sum_amount, Decimal(11000 + 12000))
         self.assertEqual(self.month3.sum_amount, Decimal(12000 + 10000))
         self.assertEqual(self.month4.sum_amount, Decimal(13000 + 8000))
+
+    def test_next(self):
+        self.assertEqual(self.month1.next, self.month2)
+        self.assertEqual(self.month12.next, self.year2month1)
+        self.assertIsNone(self.year2month1.next)
+
+    def test_prev(self):
+        self.assertEqual(self.month2.prev, self.month1)
+        self.assertEqual(self.year2month1.prev, self.month12)
+        self.assertIsNone(self.month1.prev)
+        self.assertIsNone(self.month12.prev)
 
 
 class TestEmployer(ModelTest):
