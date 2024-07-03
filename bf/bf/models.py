@@ -1,10 +1,13 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from __future__ import annotations
+
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
 
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -203,6 +206,20 @@ class PersonYear(models.Model):
             )
         return self.year.calculation_method.calculate(estimated_year_income)
 
+    @cached_property
+    def prev(self):
+        try:
+            return self.person.personyear_set.get(year__year=self.year.year - 1)
+        except PersonYear.DoesNotExist:
+            return None
+
+    @cached_property
+    def next(self):
+        try:
+            return self.person.personyear_set.get(year__year=self.year.year + 1)
+        except PersonYear.DoesNotExist:
+            return None
+
 
 class PersonMonth(models.Model):
 
@@ -258,6 +275,32 @@ class PersonMonth(models.Model):
     def year(self):
         return self.person_year.year_id
 
+    @cached_property
+    def prev(self) -> PersonMonth | None:
+        try:
+            if self.month == 1:
+                year: PersonYear = self.person_year.prev
+                if year is not None:
+                    return year.personmonth_set.get(month=12)
+            else:
+                return self.person_year.personmonth_set.get(month=self.month - 1)
+        except PersonMonth.DoesNotExist:
+            pass
+        return None
+
+    @cached_property
+    def next(self) -> PersonMonth | None:
+        try:
+            if self.month == 12:
+                year: PersonYear = self.person_year.next
+                if year is not None:
+                    return year.personmonth_set.get(month=1)
+            else:
+                return self.person_year.personmonth_set.get(month=self.month + 1)
+        except PersonMonth.DoesNotExist:
+            pass
+        return None
+
     @classmethod
     def from_eskat_mandtal(
         cls,
@@ -288,7 +331,6 @@ class PersonMonth(models.Model):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
-        # Using a list comp. in a sum() makes MyPy complain
         estimated_year_income = self.incomeestimate_set.get(
             engine=self.person.preferred_estimation_engine
         ).estimated_year_result
@@ -318,6 +360,18 @@ class PersonMonth(models.Model):
         # lad være med at udbetale noget
         if benefit_this_month < 0:
             benefit_this_month = Decimal(0)
+
+        if self.prev is not None:
+            benefit_last_month = self.prev.benefit_paid
+            threshold: Decimal = settings.CALCULATION_STICKY_THRESHOLD  # type: ignore
+            if (
+                benefit_last_month is not None
+                and not benefit_this_month.is_zero()
+                and not benefit_last_month.is_zero()
+                and abs(benefit_last_month - benefit_this_month) / benefit_last_month
+                < threshold
+            ):
+                benefit_this_month = benefit_last_month
 
         self.benefit_paid = benefit_this_month
 
