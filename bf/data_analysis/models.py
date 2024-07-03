@@ -1,12 +1,11 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from collections import defaultdict
 
 from django.db import models
 from django.db.models import F, QuerySet
 
-from bf.models import Person, PersonMonth
+from bf.models import PersonMonth
 
 
 class IncomeEstimate(models.Model):
