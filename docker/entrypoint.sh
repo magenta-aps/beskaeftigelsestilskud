@@ -38,6 +38,9 @@ if [ "${PULL_IDP_METADATA,,}" = true ]; then
   python manage.py update_mitid_idp_metadata
 fi
 
+python manage.py load_dummy_calculation_method
+
+
 if [ "${MAKEMESSAGES,,}" = true ]; then
   echo 'making messages'
   python manage.py makemessages --locale=kl --no-obsolete --add-location file
