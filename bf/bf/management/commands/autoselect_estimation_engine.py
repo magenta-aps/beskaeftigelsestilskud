@@ -21,8 +21,8 @@ class Command(BaseCommand):
             for estimate in estimates:
                 offsets[estimate.engine].append(estimate.offset)
             averages = {
-                engine: sum(offsets) / len(offsets)
-                for engine, offsets in offsets.items()
+                engine: sum(current_offsets) / len(current_offsets)
+                for engine, current_offsets in offsets.items()
             }
             person.preferred_estimation_engine = min(averages, key=averages.get)
             person.save(update_fields=("preferred_estimation_engine",))
