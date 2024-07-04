@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-
 from django.db import models
 from django.db.models import F, QuerySet
 
