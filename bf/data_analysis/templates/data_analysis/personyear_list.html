@@ -41,13 +41,13 @@
                 {% include "data_analysis/sort_icon.html" with field="person__cpr" %}
             </a>
         </th>
-        <th class="col-4">
+        <th class="col-3">
             <a href="?{{ sort_params.InYearExtrapolationEngine }}" class="link-dark">
                 InYearExtrapolationEngine offset
                 {% include "data_analysis/sort_icon.html" with field="InYearExtrapolationEngine" %}
             </a>
         </th>
-        <th class="col-4">
+        <th class="col-3">
             <a href="?{{ sort_params.TwelveMonthsSummationEngine }}" class="link-dark">
                 TwelveMonthsSummationEngine offset
                 {% include "data_analysis/sort_icon.html" with field="TwelveMonthsSummationEngine" %}
@@ -59,6 +59,12 @@
                 {% include "data_analysis/sort_icon.html" with field="actual_sum" %}
             </a>
         </th>
+        <th>
+            <a href="?{{ sort_params.payout }}" class="link-dark">
+                Benefit paid out
+                {% include "data_analysis/sort_icon.html" with field="payout" %}
+            </a>
+        </th>
     </tr>
     </thead>
     <tbody>
@@ -68,6 +74,7 @@
         <td>{{ object.InYearExtrapolationEngine|floatformat:2 }} %</td>
         <td>{{ object.TwelveMonthsSummationEngine|floatformat:2 }} %</td>
         <td>{{ object.actual_sum }}</td>
+        <td>{{ object.payout|default_if_none:"" }}</td>
     </tr>
 {% endfor %}
     </tbody>

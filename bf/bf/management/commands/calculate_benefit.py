@@ -11,13 +11,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
-        parser.add_argument("month", type=int)
+        parser.add_argument("--month", type=int)
 
     def handle(self, *args, **kwargs):
 
         months = PersonMonth.objects.filter(
-            person_year__year__year=kwargs["year"], month=kwargs["month"]
-        ).select_related("person_year")
+            person_year__year__year=kwargs["year"]
+        )
+        month=kwargs["month"]
+        if month and month >= 1 and month <= 12:
+            months = months.filter(month=month)
+
+        months = months.select_related("person_year")
         for person_month in months:
             person_month.calculate_benefit()
             person_month.save()

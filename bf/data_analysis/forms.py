@@ -39,6 +39,7 @@ class PersonYearListOptionsForm(forms.Form):
                 "InYearExtrapolationEngine",
                 "TwelveMonthsSummationEngine",
                 "actual_sum",
+                "payout",
             )
             for prefix in ("", "-")
         ),

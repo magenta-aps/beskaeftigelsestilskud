@@ -88,43 +88,45 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
 class PersonYearEstimationMixin:
 
     def get_queryset(self):
-        qs = PersonYear.objects.filter(year=self.year)
+        qs = PersonYear.objects.filter(year=self.year, person__cpr=16013)
 
-        form = self.get_form()
-        if form.is_valid():
-
-            a_income = form.cleaned_data["has_a"]
-            if a_income not in (None, ""):
-                qs = qs.annotate(a_count=Count("personmonth__monthlyaincomereport"))
-                if strtobool(a_income):
-                    qs = qs.filter(a_count__gt=0)
-                else:
-                    qs = qs.filter(a_count=0)
-
-            b_income = form.cleaned_data["has_b"]
-            if b_income not in (None, ""):
-                qs = qs.annotate(b_count=Count("personmonth__monthlybincomereport"))
-                if strtobool(b_income):
-                    qs = qs.filter(b_count__gt=0)
-                else:
-                    qs = qs.filter(b_count=0)
-
-        for engine in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
-            qs = qs.annotate(
-                **{
-                    engine: Subquery(
-                        PersonYearEstimateSummary.objects.filter(
-                            person_year=OuterRef("pk"), estimation_engine=engine
-                        ).values("offset_percent")
-                    )
-                }
-            )
+        # form = self.get_form()
+        # if form.is_valid():
+        #
+        #     a_income = form.cleaned_data["has_a"]
+        #     if a_income not in (None, ""):
+        #         qs = qs.annotate(a_count=Count("personmonth__monthlyaincomereport"))
+        #         if strtobool(a_income):
+        #             qs = qs.filter(a_count__gt=0)
+        #         else:
+        #             qs = qs.filter(a_count=0)
+        #
+        #     b_income = form.cleaned_data["has_b"]
+        #     if b_income not in (None, ""):
+        #         qs = qs.annotate(b_count=Count("personmonth__monthlybincomereport"))
+        #         if strtobool(b_income):
+        #             qs = qs.filter(b_count__gt=0)
+        #         else:
+        #             qs = qs.filter(b_count=0)
+        #
+        # for engine in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+        #     qs = qs.annotate(
+        #         **{
+        #             engine: Subquery(
+        #                 PersonYearEstimateSummary.objects.filter(
+        #                     person_year=OuterRef("pk"), estimation_engine=engine
+        #                 ).values("offset_percent")
+        #             )
+        #         }
+        #     )
 
         qs = qs.annotate(
-            actual_sum=Coalesce(
-                Sum("personmonth__monthlyaincomereport__amount"), Decimal(0)
-            )
-            + Coalesce(Sum("personmonth__monthlybincomereport__amount"), Decimal(0))
+            actual_sum=
+                Sum("personmonth__monthlyaincomereport__amount")
+            #
+            # +
+            #     Sum("personmonth__monthlybincomereport__amount")
+
         )
 
         return qs
@@ -154,6 +156,15 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("person")
+
+        # `None` is an accepted value here, when benefits have not been calculated yet
+        qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
+        qs = qs.annotate(count=Count("personmonth__pk"))
+        for x in qs:
+            print(x.count)
+            for m in x.personmonth_set.order_by("month"):
+                print(m)
+
         qs = qs.order_by(*self.get_ordering())
         return qs
 

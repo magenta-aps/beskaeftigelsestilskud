@@ -34,10 +34,15 @@ class ModelTest(TestCase):
         )
         cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
         cls.year2 = Year.objects.create(year=2025)
-        cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
+        cls.person = Person.objects.create(
+            name="Jens Hansen",
+            cpr="1234567890",
+            preferred_estimation_engine="InYearExtrapolationEngine"
+        )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
+
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
@@ -112,6 +117,7 @@ class ModelTest(TestCase):
         IncomeEstimate.objects.create(
             person_month=cls.month1,
             estimated_year_result=12 * 10000 + 12 * 15000,
+            engine="InYearExtrapolationEngine",
         )
         cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -124,6 +130,7 @@ class ModelTest(TestCase):
         IncomeEstimate.objects.create(
             person_month=cls.month2,
             estimated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
+            engine="InYearExtrapolationEngine",
         )
         cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -137,6 +144,7 @@ class ModelTest(TestCase):
             person_month=cls.month3,
             estimated_year_result=4 * (10000 + 11000 + 12000)
             + 4 * (15000 + 12000 + 10000),
+            engine="InYearExtrapolationEngine",
         )
         cls.report8 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -150,6 +158,7 @@ class ModelTest(TestCase):
             person_month=cls.month4,
             estimated_year_result=3 * (10000 + 11000 + 12000 + 13000)
             + 3 * (15000 + 12000 + 10000 + 8000),
+            engine="InYearExtrapolationEngine",
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,

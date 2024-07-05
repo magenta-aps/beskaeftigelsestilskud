@@ -331,6 +331,8 @@ class PersonMonth(models.Model):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
+        if not self.person.preferred_estimation_engine:
+            raise Exception(f"Preferred estimation engine is not set for person {self.person}")
         estimated_year_income = self.incomeestimate_set.get(
             engine=self.person.preferred_estimation_engine
         ).estimated_year_result
