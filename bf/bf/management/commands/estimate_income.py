@@ -92,7 +92,9 @@ class Command(BaseCommand):
             return Sum(Coalesce(F(field), Value(0), output_field=DecimalField()))
 
         qs = (
-            PersonMonth.objects.filter(person_year__in=person_year_qs)
+            PersonMonth.objects.filter(
+                person_year__person__in=person_year_qs.values("person")
+            )
             .prefetch_related("monthlyaincomereport_set", "monthlybincomereport_set")
             .values(
                 _person_pk=F("person_year__person__pk"),
