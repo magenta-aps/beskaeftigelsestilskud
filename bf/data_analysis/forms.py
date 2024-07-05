@@ -40,6 +40,8 @@ class PersonYearListOptionsForm(forms.Form):
                 "TwelveMonthsSummationEngine",
                 "actual_sum",
                 "payout",
+                "correct_payout",
+                "payout_offset",
             )
             for prefix in ("", "-")
         ),

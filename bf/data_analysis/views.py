@@ -17,7 +17,18 @@ from data_analysis.forms import (
 from data_analysis.models import PersonYearEstimateSummary
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count, Model, OuterRef, Subquery, Sum
+from django.db.models import (
+    Case,
+    Count,
+    F,
+    Model,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import FormView, UpdateView
@@ -29,7 +40,7 @@ from bf.estimation import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import Person, PersonYear, Year
+from bf.models import Person, PersonMonth, PersonYear, Year
 from bf.simulation import Simulation
 
 
@@ -124,6 +135,8 @@ class PersonYearEstimationMixin:
         # personmonth__monthlyaincomereport__amount, but that produced weird
         # results in other annotations, such as Sum("personmonth__benefit_paid")
         # including two months twice for a few PersonYears
+        # Probably
+        # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
         # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
             actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
@@ -159,6 +172,21 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
 
         # `None` is an accepted value here, when benefits have not been calculated yet
         qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
+
+        qs = qs.annotate(
+            correct_payout=Subquery(
+                PersonMonth.objects.filter(person_year=OuterRef("pk"))
+                .order_by("-month")
+                .values("estimated_year_benefit")[:1]
+            )
+        )
+        # qs = qs.annotate(
+        #     payout_offset=Case(
+        #         When(~Q(correct_payout=Decimal(0)), then=(F("payout") - F("correct_payout")) / F("correct_payout")),
+        #         default=Value(Decimal(0))
+        #     )
+        # )
+        qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
 
         qs = qs.order_by(*self.get_ordering())
         return qs

@@ -35,19 +35,19 @@
     <table class="table">
     <thead>
     <tr>
-        <th class="col-2">
+        <th class="col-1">
             <a href="?{{ sort_params.person__cpr }}" class="link-dark">
                 Person
                 {% include "data_analysis/sort_icon.html" with field="person__cpr" %}
             </a>
         </th>
-        <th class="col-3">
+        <th class="col-2">
             <a href="?{{ sort_params.InYearExtrapolationEngine }}" class="link-dark">
                 InYearExtrapolationEngine offset
                 {% include "data_analysis/sort_icon.html" with field="InYearExtrapolationEngine" %}
             </a>
         </th>
-        <th class="col-3">
+        <th class="col-2">
             <a href="?{{ sort_params.TwelveMonthsSummationEngine }}" class="link-dark">
                 TwelveMonthsSummationEngine offset
                 {% include "data_analysis/sort_icon.html" with field="TwelveMonthsSummationEngine" %}
@@ -59,12 +59,26 @@
                 {% include "data_analysis/sort_icon.html" with field="actual_sum" %}
             </a>
         </th>
-        <th>
+        <th class="col-2">
             <a href="?{{ sort_params.payout }}" class="link-dark">
                 Benefit paid out
                 {% include "data_analysis/sort_icon.html" with field="payout" %}
             </a>
         </th>
+        <th class="col-2">
+            <a href="?{{ sort_params.correct_payout }}" class="link-dark">
+                Correct benefit
+                {% include "data_analysis/sort_icon.html" with field="correct_payout" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.payout_offset }}" class="link-dark">
+                Payout offset
+                {% include "data_analysis/sort_icon.html" with field="payout_offset" %}
+            </a>
+        </th>
+
+
     </tr>
     </thead>
     <tbody>
@@ -75,6 +89,8 @@
         <td>{{ object.TwelveMonthsSummationEngine|floatformat:2 }} %</td>
         <td>{{ object.actual_sum }}</td>
         <td>{{ object.payout|default_if_none:"" }}</td>
+        <td>{{ object.correct_payout|default_if_none:"" }}</td>
+        <td>{{ object.payout_offset|default_if_none:"" }}</td>
     </tr>
 {% endfor %}
     </tbody>
