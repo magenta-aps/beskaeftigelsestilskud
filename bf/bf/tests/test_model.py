@@ -326,6 +326,15 @@ class TestPersonMonth(ModelTest):
         self.assertIsNone(self.month1.prev)
         self.assertIsNone(self.month12.prev)
 
+    def test_calculation_engine_missing(self):
+        self.person.preferred_estimation_engine = None
+        self.person.save(update_fields=("preferred_estimation_engine",))
+        with self.assertRaises(
+                Exception,
+                msg=f"Preferred estimation engine is not set for person {self.person}",
+        ):
+            self.month1.calculate_benefit()
+
 
 class TestEmployer(ModelTest):
 

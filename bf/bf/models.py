@@ -149,6 +149,7 @@ class Person(models.Model):
                 "Summation af beløb for de seneste 12 måneder",
             ),
         ),
+        null=True,
     )
 
     @classmethod
