@@ -6,7 +6,8 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_analysis.models import IncomeEstimate
+from data_analysis.forms import PersonYearListOptionsForm
+from data_analysis.models import IncomeEstimate, PersonYearEstimateSummary
 from data_analysis.views import (
     HistogramView,
     PersonAnalysisView,
@@ -183,6 +184,16 @@ class PersonYearEstimationSetupMixin:
             estimated_year_result=21,
             person_month=cls.person_month,
         )
+        cls.summary1, _ = PersonYearEstimateSummary.objects.get_or_create(
+            person_year=cls.person_year,
+            estimation_engine=TwelveMonthsSummationEngine.__name__,
+            offset_percent=Decimal(0),
+        )
+        cls.summary2, _ = PersonYearEstimateSummary.objects.get_or_create(
+            person_year=cls.person_year,
+            estimation_engine=InYearExtrapolationEngine.__name__,
+            offset_percent=Decimal(50),
+        )
 
 
 class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
@@ -190,6 +201,9 @@ class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         cls._instance = PersonYearEstimationMixin()
+        cls._instance.kwargs = {"year": 2020}
+        cls._form = PersonYearListOptionsForm(data={})
+        cls._instance.get_form = lambda: cls._form
 
     def test_handles_actual_year_income_zero(self):
         """Verify that we handle a person month where the recorded actual year income
@@ -210,8 +224,11 @@ class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
             estimated_year_result=100,
             person_month=person_month,
         )
+        self.summary2.offset_percent = Decimal(50)
+        self.summary2.save()
+
         # Act
-        result = self._instance._add_predictions(PersonYear.objects.all())
+        result = self._instance.get_queryset()
         # Assert
         self.assertQuerySetEqual(
             result,
@@ -251,6 +268,10 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
     def test_get_no_results(self):
         self.estimate1.delete()
         self.estimate2.delete()
+        self.summary1.offset_percent = Decimal(0)
+        self.summary2.offset_percent = Decimal(0)
+        self.summary1.save()
+        self.summary2.save()
         self._view.setup(self._request_factory.get(""), year=2020)
         response = self._view.get(self._request_factory.get(""))
         self.assertIsInstance(response, TemplateResponse)

@@ -31,6 +31,20 @@ class PersonYearListOptionsForm(forms.Form):
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
+    order_by = forms.ChoiceField(
+        choices=(
+            (f"{prefix}{field}", f"{prefix}{field}")
+            for field in (
+                "person__cpr",
+                "InYearExtrapolationEngine",
+                "TwelveMonthsSummationEngine",
+                "actual_sum",
+            )
+            for prefix in ("", "-")
+        ),
+        required=False,
+    )
+
 
 class HistogramOptionsForm(PersonYearListOptionsForm):
     year = forms.ChoiceField(

@@ -4,9 +4,10 @@
 import csv
 import time
 from collections import defaultdict
+from decimal import Decimal
 from typing import List
 
-from data_analysis.models import IncomeEstimate
+from data_analysis.models import IncomeEstimate, PersonYearEstimateSummary
 from django.core.management.base import BaseCommand
 
 from bf.estimation import (
@@ -42,7 +43,8 @@ class Command(BaseCommand):
         summary_table_by_engine = defaultdict(list)
 
         IncomeEstimate.objects.filter(person_month__person_year__in=qs).delete()
-        results = []
+        income_estimates = []
+        summaries = []
         for person_year in qs:
             person = person_year.person
             qs_a = MonthlyAIncomeReport.objects.filter(person_id=person.pk)
@@ -56,6 +58,7 @@ class Command(BaseCommand):
             b_reports = qs_b.values("year", "month", "id")
             for engine in self.engines:
                 estimates = []
+                engine_results = []
 
                 for month in range(1, 13):
                     person_month = person_year.personmonth_set.get(month=month)
@@ -101,10 +104,24 @@ class Command(BaseCommand):
                                 100 * resultat.offset,
                             ]
                         )
-                        results.append(resultat)
+                        income_estimates.append(resultat)
+                        engine_results.append(resultat)
+                if engine_results and actual_year_sum:
+                    year_offset = sum(
+                        [resultat.absdiff for resultat in engine_results]
+                    ) / (actual_year_sum * len(engine_results))
+                else:
+                    year_offset = Decimal(0)
+                summary = PersonYearEstimateSummary(
+                    person_year=person_year,
+                    estimation_engine=engine.__class__.__name__,
+                    offset_percent=100 * year_offset,
+                )
+                summaries.append(summary)
 
-        IncomeEstimate.objects.bulk_create(results)
-        for engine, results in summary_table_by_engine.items():
+        IncomeEstimate.objects.bulk_create(income_estimates)
+        PersonYearEstimateSummary.objects.bulk_create(summaries)
+        for engine, income_estimates in summary_table_by_engine.items():
             with open(f"estimates_{engine}.csv", "w") as fp:
                 writer = csv.writer(fp, delimiter=";")
                 writer.writerow(
@@ -127,7 +144,7 @@ class Command(BaseCommand):
                         ]
                     ]
                 )
-                for result in results:
+                for result in income_estimates:
                     writer.writerow(
                         [
                             result["cpr"],

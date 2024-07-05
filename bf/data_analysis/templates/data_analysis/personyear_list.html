@@ -7,6 +7,10 @@
 {% load csp %}
 {% load bf_tags %}
 
+{% block extra_headers %}
+    <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+{% endblock %}
+
 {% block content %}
     <form id="list-options" method="get" action="." class="g-3 p-2">
         <div class="row justify-content-start">
@@ -31,10 +35,30 @@
     <table class="table">
     <thead>
     <tr>
-        <th>Person</th>
-        <th>InYearExtrapolationEngine offset</th>
-        <th>TwelveMonthsSummationEngine offset</th>
-        <th>Actual year sum</th>
+        <th class="col-2">
+            <a href="?{{ sort_params.person__cpr }}" class="link-dark">
+                Person
+                {% include "data_analysis/sort_icon.html" with field="person__cpr" %}
+            </a>
+        </th>
+        <th class="col-4">
+            <a href="?{{ sort_params.InYearExtrapolationEngine }}" class="link-dark">
+                InYearExtrapolationEngine offset
+                {% include "data_analysis/sort_icon.html" with field="InYearExtrapolationEngine" %}
+            </a>
+        </th>
+        <th class="col-4">
+            <a href="?{{ sort_params.TwelveMonthsSummationEngine }}" class="link-dark">
+                TwelveMonthsSummationEngine offset
+                {% include "data_analysis/sort_icon.html" with field="TwelveMonthsSummationEngine" %}
+            </a>
+        </th>
+        <th class="col-2">
+            <a href="?{{ sort_params.actual_sum }}" class="link-dark">
+                Actual year sum
+                {% include "data_analysis/sort_icon.html" with field="actual_sum" %}
+            </a>
+        </th>
     </tr>
     </thead>
     <tbody>
@@ -43,7 +67,7 @@
         <td><a href="{% url 'data_analysis:person_analysis' pk=object.person.pk year=year %}">{{ object.person.cpr }}</a></td>
         <td>{{ object.InYearExtrapolationEngine|floatformat:2 }} %</td>
         <td>{{ object.TwelveMonthsSummationEngine|floatformat:2 }} %</td>
-        <td>{{ object.sum_amount }}</td>
+        <td>{{ object.actual_sum }}</td>
     </tr>
 {% endfor %}
     </tbody>
