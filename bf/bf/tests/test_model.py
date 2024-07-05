@@ -37,12 +37,11 @@ class ModelTest(TestCase):
         cls.person = Person.objects.create(
             name="Jens Hansen",
             cpr="1234567890",
-            preferred_estimation_engine="InYearExtrapolationEngine"
+            preferred_estimation_engine="InYearExtrapolationEngine",
         )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
-
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,

@@ -52,3 +52,4 @@ wheel==0.43.0
 whitenoise==6.0.0
 xmlschema==2.5.1
 xmltodict==0.13.0
+django-sql-utils==0.7.0

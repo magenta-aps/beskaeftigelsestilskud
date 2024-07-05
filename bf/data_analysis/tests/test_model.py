@@ -18,7 +18,7 @@ class EstimationTest(ModelTest):
             defaults={
                 "estimated_year_result": 1200,
                 "actual_year_result": 1400,
-            }
+            },
         )
 
     def test_str(self):

@@ -15,10 +15,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
 
-        months = PersonMonth.objects.filter(
-            person_year__year__year=kwargs["year"]
-        )
-        month=kwargs["month"]
+        months = PersonMonth.objects.filter(person_year__year__year=kwargs["year"])
+        month = kwargs["month"]
         if month and month >= 1 and month <= 12:
             months = months.filter(month=month)
 
