@@ -120,9 +120,10 @@ class PersonYearEstimationMixin:
                 }
             )
 
-        # Originally this annotated on the sum of personmonth__monthlyaincomereport__amount,
-        # but that produced weird results in other annotations, such as
-        # Sum("personmonth__benefit_paid") including two months twice for a few PersonYears
+        # Originally this annotated on the sum of
+        # personmonth__monthlyaincomereport__amount, but that produced weird
+        # results in other annotations, such as Sum("personmonth__benefit_paid")
+        # including two months twice for a few PersonYears
         # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
             actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
