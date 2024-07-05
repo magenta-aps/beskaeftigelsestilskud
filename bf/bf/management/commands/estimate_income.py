@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import DecimalField, F, Sum, Value
 from django.db.models.functions import Coalesce
+from tabulate import tabulate
 
 from bf.estimation import (
     EstimationEngine,
@@ -30,6 +31,7 @@ class Command(BaseCommand):
         parser.add_argument("year", type=int)
         parser.add_argument("--count", type=int)
         parser.add_argument("--dry", action="store_true")
+        parser.add_argument("--person", type=int)
 
     @transaction.atomic
     def handle(self, *args, **kwargs):
@@ -44,6 +46,8 @@ class Command(BaseCommand):
         ).select_related("person")
         if kwargs["count"]:
             person_year_qs = person_year_qs[: kwargs["count"]]
+        if kwargs["person"]:
+            person_year_qs = person_year_qs.filter(person=kwargs["person"])
 
         if not self._dry:
             self._write_verbose("Removing current `IncomeEstimate` objects ...")
@@ -78,6 +82,22 @@ class Command(BaseCommand):
         if not self._dry:
             self._write_verbose(f"Writing {len(results)} `IncomeEstimate` objects ...")
             IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+        elif self._dry and kwargs["person"]:
+            self._write_verbose(
+                tabulate(
+                    [
+                        {
+                            "engine": r.engine,
+                            "year": r.person_month.year,
+                            "month": r.person_month.month,
+                            "actual": r.actual_year_result,
+                            "estimate": r.estimated_year_result,
+                        }
+                        for r in results
+                    ],
+                    headers="keys",
+                )
+            )
 
         duration = datetime.datetime.utcfromtimestamp(time.time() - start)
         self._write_verbose(f"Done (took {duration.strftime('%H:%M:%S')})")
