@@ -17,20 +17,19 @@ from data_analysis.forms import (
 from data_analysis.models import PersonYearEstimateSummary
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count, DecimalField, Model, OuterRef, Subquery, Sum
+from django.db.models import Count, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import FormView, UpdateView
 from django.views.generic.list import ListView
 from project.util import strtobool
-from sql_util.utils import SubquerySum
 
 from bf.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import MonthlyAIncomeReport, Person, PersonYear, Year
+from bf.models import Person, PersonYear, Year
 from bf.simulation import Simulation
 
 
@@ -122,12 +121,7 @@ class PersonYearEstimationMixin:
             )
 
         qs = qs.annotate(
-            actual_sum=Coalesce(
-                SubquerySum("personmonth__monthlyaincomereport__amount"), Decimal(0)
-            )
-            + Coalesce(
-                SubquerySum("personmonth__monthlybincomereport__amount"), Decimal(0)
-            )
+            actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
         )
 
         return qs

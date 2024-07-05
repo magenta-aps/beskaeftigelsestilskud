@@ -309,11 +309,11 @@ class TestPersonMonth(ModelTest):
         # Reusing last month's benefit
         self.assertEqual(self.month3.benefit_paid, Decimal("1118.73"))
 
-    def test_sum_amount(self):
-        self.assertEqual(self.month1.sum_amount, Decimal(10000 + 15000))
-        self.assertEqual(self.month2.sum_amount, Decimal(11000 + 12000))
-        self.assertEqual(self.month3.sum_amount, Decimal(12000 + 10000))
-        self.assertEqual(self.month4.sum_amount, Decimal(13000 + 8000))
+    def test_amount_sum(self):
+        self.assertEqual(self.month1.amount_sum, Decimal(10000 + 15000))
+        self.assertEqual(self.month2.amount_sum, Decimal(11000 + 12000))
+        self.assertEqual(self.month3.amount_sum, Decimal(12000 + 10000))
+        self.assertEqual(self.month4.amount_sum, Decimal(13000 + 8000))
 
     def test_next(self):
         self.assertEqual(self.month1.next, self.month2)

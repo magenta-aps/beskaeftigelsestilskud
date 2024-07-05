@@ -69,7 +69,7 @@ class Simulation:
         self.result = SimulationResult(rows=[self._run()])
 
     def _run(self):
-        actual_year_sum = self.person_year.sum_amount
+        actual_year_sum = self.person_year.amount_sum
 
         income_a = MonthlyAIncomeReport.objects.filter(
             person=self.person,
