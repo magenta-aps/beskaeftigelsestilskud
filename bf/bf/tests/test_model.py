@@ -330,8 +330,8 @@ class TestPersonMonth(ModelTest):
         self.person.preferred_estimation_engine = None
         self.person.save(update_fields=("preferred_estimation_engine",))
         with self.assertRaises(
-                Exception,
-                msg=f"Preferred estimation engine is not set for person {self.person}",
+            Exception,
+            msg=f"Preferred estimation engine is not set for person {self.person}",
         ):
             self.month1.calculate_benefit()
 
