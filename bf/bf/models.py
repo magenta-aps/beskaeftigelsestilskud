@@ -449,8 +449,6 @@ class MonthlyIncomeReport(models.Model):
 
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
-        # if qs.exists():
-        #     print(qs.explain())
         return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
 
 

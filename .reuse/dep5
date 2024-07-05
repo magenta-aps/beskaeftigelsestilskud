@@ -10,7 +10,7 @@ Files: bf/bf/static/jquery/*
 Copyright: 2022 OpenJS Foundation and jQuery contributors
 License: MIT
 
-Files: bf/bf/static/bootstrap/*.map
+Files: bf/bf/static/bootstrap/*.map bf/bf/static/bootstrap-icons/*.svg bf/bf/static/bootstrap-icons/font/fonts/* bf/bf/static/bootstrap-icons/font/bootstrap-icons.json
 Copyright: 2011-2021 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
 License: MIT
 

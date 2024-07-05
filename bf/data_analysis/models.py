@@ -5,7 +5,7 @@
 from django.db import models
 from django.db.models import F, QuerySet
 
-from bf.models import PersonMonth
+from bf.models import PersonMonth, PersonYear
 
 
 class IncomeEstimate(models.Model):
@@ -80,3 +80,22 @@ class IncomeEstimate(models.Model):
 
     def __str__(self):
         return f"{self.engine} ({self.person_month})"
+
+
+class PersonYearEstimateSummary(models.Model):
+    class Meta:
+        unique_together = (("person_year", "estimation_engine"),)
+
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+    estimation_engine = models.CharField(
+        max_length=100,
+        null=False,
+        blank=False,
+    )
+    offset_percent = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+    )

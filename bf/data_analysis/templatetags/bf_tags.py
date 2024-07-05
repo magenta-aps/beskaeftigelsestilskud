@@ -8,5 +8,5 @@ from django.template.defaultfilters import register
 
 
 @register.filter
-def urlparams(value: dict):
+def urlparams(value: dict) -> str:
     return urlencode(value)
