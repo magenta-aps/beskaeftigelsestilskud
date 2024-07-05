@@ -9,7 +9,7 @@ from operator import itemgetter
 from data_analysis.models import IncomeEstimate
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import DecimalField, F, Sum, Value
+from django.db.models import DecimalField, F, OuterRef, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from tabulate import tabulate
 
@@ -18,7 +18,12 @@ from bf.estimation import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import PersonMonth, PersonYear
+from bf.models import (
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    PersonMonth,
+    PersonYear,
+)
 
 
 class Command(BaseCommand):
@@ -108,8 +113,17 @@ class Command(BaseCommand):
         # Each row also contains summed values for monthly reported A and B income, as
         # each person month can have one or more A or B incomes reported.
 
-        def sum_amount(field):
-            return Sum(Coalesce(F(field), Value(0), output_field=DecimalField()))
+        def sum_subquery(cls):
+            return Coalesce(
+                Subquery(
+                    cls.objects.filter(person_month__pk=OuterRef("pk"))
+                    .values("person_month__pk")
+                    .annotate(sum=Sum("amount"))
+                    .values("sum")
+                ),
+                Value(0),
+                output_field=DecimalField(),
+            )
 
         qs = (
             PersonMonth.objects.filter(
@@ -123,8 +137,8 @@ class Command(BaseCommand):
                 _month=F("month"),
             )
             .annotate(
-                _a_amount=sum_amount("monthlyaincomereport__amount"),
-                _b_amount=sum_amount("monthlybincomereport__amount"),
+                _a_amount=sum_subquery(MonthlyAIncomeReport),
+                _b_amount=sum_subquery(MonthlyBIncomeReport),
             )
             .order_by(
                 "_person_pk",
