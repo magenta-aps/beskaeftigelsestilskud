@@ -22,6 +22,8 @@ from bf.estimation import (
 )
 from bf.models import PersonMonth, PersonYear
 
+from data_analysis.models import PersonYearEstimateSummary
+
 
 class Command(BaseCommand):
     engines: List[EstimationEngine] = [
@@ -63,6 +65,7 @@ class Command(BaseCommand):
 
         self._write_verbose("Computing estimates ...")
         results = []
+        summaries = []
         for idx, subset in enumerate(self._iterate_by_person(data_qs)):
             self._write_verbose(f"{idx}", ending="\r")
             actual_year_sum = sum(
@@ -70,7 +73,10 @@ class Command(BaseCommand):
                 for row in subset
                 if row["_year"] == self._year
             )
+            person_pk = subset[0]["_person_pk"]
+            person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
+                engine_results = []
                 for month in range(1, 13):
                     result: IncomeEstimate = engine.estimate(subset, self._year, month)
                     if result is not None:
@@ -79,11 +85,25 @@ class Command(BaseCommand):
                         )
                         result.person_month = person_month
                         result.actual_year_result = actual_year_sum
+                        engine_results.append(result)
                         results.append(result)
+                if engine_results and actual_year_sum:
+                    year_offset = sum(
+                        [resultat.absdiff for resultat in engine_results]
+                    ) / (actual_year_sum * len(engine_results))
+                else:
+                    year_offset = Decimal(0)
+                summary = PersonYearEstimateSummary(
+                    person_year=person_year,
+                    estimation_engine=engine.__class__.__name__,
+                    offset_percent=100 * year_offset,
+                )
+                summaries.append(summary)
 
         if not self._dry:
             self._write_verbose(f"Writing {len(results)} `IncomeEstimate` objects ...")
             IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+            PersonYearEstimateSummary.objects.bulk_create(summaries, batch_size=1000)
         elif self._dry and kwargs["person"]:
             self._write_verbose(
                 tabulate(
