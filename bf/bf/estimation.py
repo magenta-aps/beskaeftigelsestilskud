@@ -13,7 +13,7 @@ class EstimationEngine:
         # a_reports: QuerySet[MonthlyAIncomeReport],  # A income
         # b_reports: QuerySet[MonthlyBIncomeReport],  # B income
         # person_month: PersonMonth,
-        subset: list,
+        subset: list[dict[str, int|Decimal]],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -38,7 +38,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         # a_reports: QuerySet[MonthlyAIncomeReport],
         # b_reports: QuerySet[MonthlyBIncomeReport],
         # person_month: PersonMonth,
-        subset: list,
+        subset: list[dict[str, int|Decimal]],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -64,7 +64,7 @@ class InYearExtrapolationEngine(EstimationEngine):
     #     return MonthlyIncomeReport.sum_queryset(qs)
 
     @classmethod
-    def subset_sum(cls, subset: list, year: int, month: int) -> Decimal:
+    def subset_sum(cls, subset: list[dict[str, int|Decimal]], year: int, month: int) -> Decimal:
         return sum(
             [
                 row["_a_amount"] + row["_b_amount"]
@@ -111,7 +111,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     #     return MonthlyIncomeReport.sum_queryset(qs)
 
     @classmethod
-    def subset_sum(cls, subset: list, year: int, month: int) -> Decimal:
+    def subset_sum(cls, subset: list[dict[str, int|Decimal]], year: int, month: int) -> Decimal:
         return sum(
             [
                 row["_a_amount"] + row["_b_amount"]
