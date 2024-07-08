@@ -68,13 +68,14 @@ class InYearExtrapolationEngine(EstimationEngine):
     def subset_sum(
         cls, subset: List[Dict[str, int | Decimal]], year: int, month: int
     ) -> Decimal:
+        # Add Decimal(0) to shut MyPy up
         return Decimal(0) + sum(
             [
                 row["_a_amount"] + row["_b_amount"]
                 for row in subset
                 if row["_year"] == year and row["_month"] <= month
             ]
-        ) or Decimal(0)
+        )
 
 
 class TwelveMonthsSummationEngine(EstimationEngine):
@@ -117,7 +118,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     def subset_sum(
         cls, subset: list[dict[str, int | Decimal]], year: int, month: int
     ) -> Decimal:
-        return sum(  # type: ignore
+        return Decimal(0) + sum(  # type: ignore
             [
                 row["_a_amount"] + row["_b_amount"]
                 for row in subset
@@ -126,4 +127,4 @@ class TwelveMonthsSummationEngine(EstimationEngine):
                     or (row["_year"] == (year - 1) and row["_month"] > month)
                 )
             ]
-        ) or Decimal(0)
+        )
