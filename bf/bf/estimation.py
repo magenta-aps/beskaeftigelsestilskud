@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
+from typing import List, Dict
 
 from data_analysis.models import IncomeEstimate
 
@@ -65,7 +66,7 @@ class InYearExtrapolationEngine(EstimationEngine):
 
     @classmethod
     def subset_sum(
-        cls, subset: list[dict[str, int | Decimal]], year: int, month: int
+        cls, subset: List[Dict[str, int | Decimal]], year: int, month: int
     ) -> Decimal:
         return sum(
             [
@@ -73,7 +74,7 @@ class InYearExtrapolationEngine(EstimationEngine):
                 for row in subset
                 if row["_year"] == year and row["_month"] <= month
             ]
-        )
+        ) or Decimal(0)
 
 
 class TwelveMonthsSummationEngine(EstimationEngine):

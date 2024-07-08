@@ -76,15 +76,16 @@ class Command(BaseCommand):
             for engine in self.engines:
                 engine_results = []
                 for month in range(1, 13):
-                    result: IncomeEstimate = engine.estimate(subset, self._year, month)
-                    if result is not None:
-                        person_month = self._get_person_month_for_row(
-                            subset, self._year, month
-                        )
-                        result.person_month = person_month
-                        result.actual_year_result = actual_year_sum
-                        engine_results.append(result)
-                        results.append(result)
+                    person_month = self._get_person_month_for_row(
+                        subset, self._year, month
+                    )
+                    if person_month is not None:
+                        result: IncomeEstimate = engine.estimate(subset, self._year, month)
+                        if result is not None:
+                            result.person_month = person_month
+                            result.actual_year_result = actual_year_sum
+                            engine_results.append(result)
+                            results.append(result)
                 if engine_results and actual_year_sum:
                     year_offset = sum(
                         [resultat.absdiff for resultat in engine_results]
@@ -165,10 +166,11 @@ class Command(BaseCommand):
 
     def _get_person_month_for_row(
         self, subset: List[Dict[str, int | Decimal]], year: int, month: int
-    ) -> int:
+    ) -> int | None:
         for row in subset:
             if row["_year"] == year and row["_month"] == month:
                 return self._person_month_map[row["_person_month_pk"]]
+        return None
 
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
