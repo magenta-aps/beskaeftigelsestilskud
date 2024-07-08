@@ -3,13 +3,15 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 import time
+from decimal import Decimal
 from itertools import groupby
 from operator import itemgetter
+from typing import Dict, Iterable, List
 
 from data_analysis.models import IncomeEstimate
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import DecimalField, F, OuterRef, Subquery, Sum, Value
+from django.db.models import DecimalField, F, QuerySet, Sum, Value
 from django.db.models.functions import Coalesce
 from tabulate import tabulate
 
@@ -18,12 +20,7 @@ from bf.estimation import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import (
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
-    PersonMonth,
-    PersonYear,
-)
+from bf.models import PersonMonth, PersonYear
 
 
 class Command(BaseCommand):
@@ -107,23 +104,14 @@ class Command(BaseCommand):
         duration = datetime.datetime.utcfromtimestamp(time.time() - start)
         self._write_verbose(f"Done (took {duration.strftime('%H:%M:%S')})")
 
-    def _get_data_qs(self, person_year_qs):
+    def _get_data_qs(self, person_year_qs: QuerySet[PersonYear]):
         # Return queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
         # Each row also contains summed values for monthly reported A and B income, as
         # each person month can have one or more A or B incomes reported.
 
-        def sum_subquery(cls):
-            return Coalesce(
-                Subquery(
-                    cls.objects.filter(person_month__pk=OuterRef("pk"))
-                    .values("person_month__pk")
-                    .annotate(sum=Sum("amount"))
-                    .values("sum")
-                ),
-                Value(0),
-                output_field=DecimalField(),
-            )
+        def sum_amount(field):
+            return Sum(Coalesce(F(field), Value(0), output_field=DecimalField()))
 
         qs = (
             PersonMonth.objects.filter(
@@ -137,8 +125,8 @@ class Command(BaseCommand):
                 _month=F("month"),
             )
             .annotate(
-                _a_amount=sum_subquery(MonthlyAIncomeReport),
-                _b_amount=sum_subquery(MonthlyBIncomeReport),
+                _a_amount=sum_amount("monthlyaincomereport__amount"),
+                _b_amount=sum_amount("monthlybincomereport__amount"),
             )
             .order_by(
                 "_person_pk",
@@ -149,13 +137,17 @@ class Command(BaseCommand):
 
         return qs
 
-    def _iterate_by_person(self, data_qs):
+    def _iterate_by_person(
+        self, data_qs: QuerySet
+    ) -> Iterable[List[Dict[str, int | Decimal]]]:
         # Iterate over `data_qs` and yield a subset of rows for each `_person_pk`
         return (
             list(vals) for key, vals in groupby(data_qs, key=itemgetter("_person_pk"))
         )
 
-    def _get_person_month_for_row(self, subset, year, month):
+    def _get_person_month_for_row(
+        self, subset: List[Dict[str, int | Decimal]], year: int, month: int
+    ) -> int:
         for row in subset:
             if row["_year"] == year and row["_month"] == month:
                 return self._person_month_map[row["_person_month_pk"]]
