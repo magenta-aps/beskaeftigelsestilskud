@@ -1,26 +1,26 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import csv
+import datetime
 import time
-from collections import defaultdict
 from decimal import Decimal
-from typing import List
+from itertools import groupby
+from operator import itemgetter
+from typing import Dict, Iterable, List
 
 from data_analysis.models import IncomeEstimate, PersonYearEstimateSummary
 from django.core.management.base import BaseCommand
+from django.db import transaction
+from django.db.models import DecimalField, F, QuerySet, Sum, Value
+from django.db.models.functions import Coalesce
+from tabulate import tabulate
 
 from bf.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import (
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
-    MonthlyIncomeReport,
-    PersonYear,
-)
+from bf.models import PersonMonth, PersonYear
 
 
 class Command(BaseCommand):
@@ -32,80 +32,62 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
         parser.add_argument("--count", type=int)
+        parser.add_argument("--dry", action="store_true")
+        parser.add_argument("--person", type=int)
 
+    @transaction.atomic
     def handle(self, *args, **kwargs):
         start = time.time()
-        year = kwargs["year"]
-        qs = PersonYear.objects.filter(year__year=year).select_related("person")
+
+        self._year = kwargs["year"]
+        self._verbose = kwargs["verbosity"] > 1
+        self._dry = kwargs["dry"]
+
+        person_year_qs = PersonYear.objects.filter(
+            year__year=self._year
+        ).select_related("person")
         if kwargs["count"]:
-            qs = qs[: kwargs["count"]]
+            person_year_qs = person_year_qs[: kwargs["count"]]
+        if kwargs["person"]:
+            person_year_qs = person_year_qs.filter(person=kwargs["person"])
 
-        summary_table_by_engine = defaultdict(list)
+        if not self._dry:
+            self._write_verbose("Removing current `IncomeEstimate` objects ...")
+            IncomeEstimate.objects.filter(
+                person_month__person_year__in=person_year_qs
+            ).delete()
 
-        IncomeEstimate.objects.filter(person_month__person_year__in=qs).delete()
-        income_estimates = []
+        self._write_verbose("Fetching income data ...")
+        data_qs = self._get_data_qs(person_year_qs)
+        self._person_month_map = {pm.pk: pm for pm in PersonMonth.objects.all()}
+
+        self._write_verbose("Computing estimates ...")
+        results = []
         summaries = []
-        for person_year in qs:
-            person = person_year.person
-            qs_a = MonthlyAIncomeReport.objects.filter(person_id=person.pk)
-            qs_b = MonthlyBIncomeReport.objects.filter(person_id=person.pk)
-
-            actual_year_sum = MonthlyIncomeReport.sum_queryset(
-                qs_a.filter(year=year)
-            ) + MonthlyIncomeReport.sum_queryset(qs_b.filter(year=year))
-
-            a_reports = qs_a.values("year", "month", "id")
-            b_reports = qs_b.values("year", "month", "id")
+        for idx, subset in enumerate(self._iterate_by_person(data_qs)):
+            self._write_verbose(f"{idx}", ending="\r")
+            actual_year_sum = sum(
+                row["_a_amount"] + row["_b_amount"]
+                for row in subset
+                if row["_year"] == self._year
+            )
+            person_pk = subset[0]["_person_pk"]
+            person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
-                estimates = []
                 engine_results = []
-
                 for month in range(1, 13):
-                    person_month = person_year.personmonth_set.get(month=month)
-                    # We used to filter by year and month directly on qs_a
-                    # but extracting once and filtering here is ~20%-30% faster
-                    visible_a_reports = MonthlyAIncomeReport.objects.filter(
-                        id__in=[
-                            item["id"]
-                            for item in a_reports
-                            if item["year"] < year
-                            or (item["year"] == year and item["month"] <= month)
-                        ]
+                    person_month = self._get_person_month_for_row(
+                        subset, self._year, month
                     )
-                    visible_b_reports = MonthlyBIncomeReport.objects.filter(
-                        id__in=[
-                            item["id"]
-                            for item in b_reports
-                            if item["year"] < year
-                            or (item["year"] == year and item["month"] <= month)
-                        ]
-                    )
-
-                    # visible_a_reports = qs_a.filter(
-                    #     Q(year__lt=year) |
-                    #     Q(year=year, month__in=range(1, month+1))
-                    # )
-                    # visible_b_reports = qs_b.filter(
-                    #         Q(year__lt=year) |
-                    #         Q(year=year, month__in=range(1, month+1))
-                    # )
-
-                    resultat: IncomeEstimate = engine.estimate(
-                        visible_a_reports, visible_b_reports, person_month
-                    )
-
-                    if resultat is not None:
-                        resultat.actual_year_result = actual_year_sum
-                        estimates.append(
-                            [
-                                month,
-                                resultat.estimated_year_result,
-                                resultat.estimated_year_result - actual_year_sum,
-                                100 * resultat.offset,
-                            ]
+                    if person_month is not None:
+                        result: IncomeEstimate = engine.estimate(
+                            subset, self._year, month
                         )
-                        income_estimates.append(resultat)
-                        engine_results.append(resultat)
+                        if result is not None:
+                            result.person_month = person_month
+                            result.actual_year_result = actual_year_sum
+                            engine_results.append(result)
+                            results.append(result)
                 if engine_results and actual_year_sum:
                     year_offset = sum(
                         [resultat.absdiff for resultat in engine_results]
@@ -119,41 +101,79 @@ class Command(BaseCommand):
                 )
                 summaries.append(summary)
 
-        IncomeEstimate.objects.bulk_create(income_estimates)
-        PersonYearEstimateSummary.objects.bulk_create(summaries)
-        for engine, income_estimates in summary_table_by_engine.items():
-            with open(f"estimates_{engine}.csv", "w") as fp:
-                writer = csv.writer(fp, delimiter=";")
-                writer.writerow(
-                    ["CPR", "Year sum", "Std.Dev / Sum"]
-                    + [
-                        f"{x} % miss"
-                        for x in [
-                            "Jan",
-                            "Feb",
-                            "Mar",
-                            "Apr",
-                            "May",
-                            "Jun",
-                            "Jul",
-                            "Aug",
-                            "Sep",
-                            "Oct",
-                            "Nov",
-                            "Dec",
-                        ]
-                    ]
+        if not self._dry:
+            self._write_verbose(f"Writing {len(results)} `IncomeEstimate` objects ...")
+            IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+            PersonYearEstimateSummary.objects.bulk_create(summaries, batch_size=1000)
+        elif self._dry and kwargs["person"]:
+            self._write_verbose(
+                tabulate(
+                    [
+                        {
+                            "engine": r.engine,
+                            "year": r.person_month.year,
+                            "month": r.person_month.month,
+                            "actual": r.actual_year_result,
+                            "estimate": r.estimated_year_result,
+                        }
+                        for r in results
+                    ],
+                    headers="keys",
                 )
-                for result in income_estimates:
-                    writer.writerow(
-                        [
-                            result["cpr"],
-                            result["year_sum"],
-                            "{:.3f}".format(result["stddev_over_sum"]),
-                        ]
-                        + [
-                            "{:.1f}".format(estimate[3])
-                            for estimate in result["month_estimates"]
-                        ]
-                    )
-        print(time.time() - start)
+            )
+
+        duration = datetime.datetime.utcfromtimestamp(time.time() - start)
+        self._write_verbose(f"Done (took {duration.strftime('%H:%M:%S')})")
+
+    def _get_data_qs(self, person_year_qs: QuerySet[PersonYear]):
+        # Return queryset with one row for each `PersonMonth`.
+        # Each row contains PKs for person, person month, and values for year and month.
+        # Each row also contains summed values for monthly reported A and B income, as
+        # each person month can have one or more A or B incomes reported.
+
+        def sum_amount(field):
+            return Sum(Coalesce(F(field), Value(0), output_field=DecimalField()))
+
+        qs = (
+            PersonMonth.objects.filter(
+                person_year__person__in=person_year_qs.values("person")
+            )
+            .prefetch_related("monthlyaincomereport_set", "monthlybincomereport_set")
+            .values(
+                _person_pk=F("person_year__person__pk"),
+                _person_month_pk=F("pk"),
+                _year=F("person_year__year__year"),
+                _month=F("month"),
+            )
+            .annotate(
+                _a_amount=sum_amount("monthlyaincomereport__amount"),
+                _b_amount=sum_amount("monthlybincomereport__amount"),
+            )
+            .order_by(
+                "_person_pk",
+                "_year",
+                "_month",
+            )
+        )
+
+        return qs
+
+    def _iterate_by_person(
+        self, data_qs: QuerySet
+    ) -> Iterable[List[Dict[str, int | Decimal]]]:
+        # Iterate over `data_qs` and yield a subset of rows for each `_person_pk`
+        return (
+            list(vals) for key, vals in groupby(data_qs, key=itemgetter("_person_pk"))
+        )
+
+    def _get_person_month_for_row(
+        self, subset: List[Dict[str, int | Decimal]], year: int, month: int
+    ) -> int | None:
+        for row in subset:
+            if row["_year"] == year and row["_month"] == month:
+                return self._person_month_map[row["_person_month_pk"]]
+        return None
+
+    def _write_verbose(self, msg, **kwargs):
+        if self._verbose:
+            self.stdout.write(msg, **kwargs)
