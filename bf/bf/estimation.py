@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
-from typing import List, Dict
+from typing import Dict, List
 
 from data_analysis.models import IncomeEstimate
 

@@ -80,7 +80,9 @@ class Command(BaseCommand):
                         subset, self._year, month
                     )
                     if person_month is not None:
-                        result: IncomeEstimate = engine.estimate(subset, self._year, month)
+                        result: IncomeEstimate = engine.estimate(
+                            subset, self._year, month
+                        )
                         if result is not None:
                             result.person_month = person_month
                             result.actual_year_result = actual_year_sum
