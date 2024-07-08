@@ -69,7 +69,7 @@ class InYearExtrapolationEngine(EstimationEngine):
             [
                 row["_a_amount"] + row["_b_amount"]
                 for row in subset
-                if row["_year"] == year and row["_month"] in range(1, month + 1)
+                if row["_year"] == year and row["_month"] <= month
             ]
         )
 
@@ -117,10 +117,10 @@ class TwelveMonthsSummationEngine(EstimationEngine):
                 row["_a_amount"] + row["_b_amount"]
                 for row in subset
                 if (
-                    (row["_year"] == year and row["_month"] in range(1, month + 1))
+                    (row["_year"] == year and row["_month"] <= month)
                     or (
                         row["_year"] == (year - 1)
-                        and row["_month"] in range(month + 1, 13)
+                        and row["_month"] > month
                     )
                 )
             ]
