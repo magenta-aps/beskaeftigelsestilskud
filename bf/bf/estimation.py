@@ -74,7 +74,7 @@ class InYearExtrapolationEngine(EstimationEngine):
                 for row in subset
                 if row["_year"] == year and row["_month"] <= month
             ]
-        ) or Decimal(0)
+        ) or Decimal(0)  # type: ignore
 
 
 class TwelveMonthsSummationEngine(EstimationEngine):
@@ -126,4 +126,4 @@ class TwelveMonthsSummationEngine(EstimationEngine):
                     or (row["_year"] == (year - 1) and row["_month"] > month)
                 )
             ]
-        )
+        ) or Decimal(0)  # type: ignore
