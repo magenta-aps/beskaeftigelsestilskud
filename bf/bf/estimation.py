@@ -68,7 +68,7 @@ class InYearExtrapolationEngine(EstimationEngine):
     def subset_sum(
         cls, subset: List[Dict[str, int | Decimal]], year: int, month: int
     ) -> Decimal:
-        return sum(  # type: ignore
+        return Decimal(0) + sum(
             [
                 row["_a_amount"] + row["_b_amount"]
                 for row in subset
