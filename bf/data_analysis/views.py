@@ -88,7 +88,7 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
 class PersonYearEstimationMixin:
 
     def get_queryset(self):
-        qs = PersonYear.objects.filter(year=self.year)
+        qs = PersonYear.objects.filter(year=self.year).select_related("person")
 
         form = self.get_form()
         if form.is_valid():
@@ -157,7 +157,7 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
         return ordering.split(",")
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("person")
+        qs = super().get_queryset()
 
         # `None` is an accepted value here, when benefits have not been calculated yet
         qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
@@ -231,8 +231,10 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         observations: defaultdict = defaultdict(Counter)
         person_years = self.get_queryset()
 
-        for item in person_years:
-            for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+        for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+            for item in person_years:
+                # if item.person.preferred_estimation_engine != key:
+                #     continue
                 val = getattr(item, key, None)
                 if val is not None:
                     bucket = int(percentile_size * (val // percentile_size))

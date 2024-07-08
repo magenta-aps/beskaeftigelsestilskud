@@ -350,13 +350,13 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
                     response.content,
                     {
                         "data": {
-                            "TwelveMonthsSummationEngine": self._get_expected_histogram(
-                                "0",
+                            "InYearExtrapolationEngine": self._get_expected_histogram(
+                                "50",
                                 1,
                                 size=percentile_size,
                             ),
-                            "InYearExtrapolationEngine": self._get_expected_histogram(
-                                "50",
+                            "TwelveMonthsSummationEngine": self._get_expected_histogram(
+                                "0",
                                 1,
                                 size=percentile_size,
                             ),
