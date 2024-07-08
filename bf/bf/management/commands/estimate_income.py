@@ -8,7 +8,7 @@ from itertools import groupby
 from operator import itemgetter
 from typing import Dict, Iterable, List
 
-from data_analysis.models import IncomeEstimate
+from data_analysis.models import IncomeEstimate, PersonYearEstimateSummary
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import DecimalField, F, QuerySet, Sum, Value
@@ -21,8 +21,6 @@ from bf.estimation import (
     TwelveMonthsSummationEngine,
 )
 from bf.models import PersonMonth, PersonYear
-
-from data_analysis.models import PersonYearEstimateSummary
 
 
 class Command(BaseCommand):
