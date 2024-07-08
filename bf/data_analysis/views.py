@@ -169,12 +169,6 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
                 .values("estimated_year_benefit")[:1]
             )
         )
-        # qs = qs.annotate(
-        #     payout_offset=Case(
-        #         When(~Q(correct_payout=Decimal(0)), then=(F("payout") - F("correct_payout")) / F("correct_payout")),
-        #         default=Value(Decimal(0))
-        #     )
-        # )
         qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
 
         qs = qs.order_by(*self.get_ordering())
