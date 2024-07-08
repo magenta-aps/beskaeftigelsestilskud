@@ -17,18 +17,7 @@ from data_analysis.forms import (
 from data_analysis.models import PersonYearEstimateSummary
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import (
-    Case,
-    Count,
-    F,
-    Model,
-    OuterRef,
-    Q,
-    Subquery,
-    Sum,
-    Value,
-    When,
-)
+from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import FormView, UpdateView
