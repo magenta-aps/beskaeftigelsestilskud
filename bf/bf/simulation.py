@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from django.db.models import Q
-
 from bf.estimation import EstimationEngine
 from bf.models import (
     IncomeEstimate,
@@ -100,17 +98,7 @@ class Simulation:
                         person_month=person_month, engine=engine_name
                     )
                 except IncomeEstimate.DoesNotExist:
-                    visible_a_reports = income_a.filter(
-                        Q(year__lt=self.year) | Q(year=self.year, month__lte=month)
-                    )
-                    visible_b_reports = income_b.filter(
-                        Q(year__lt=self.year) | Q(year=self.year, month__lte=month)
-                    )
-                    estimate = engine.estimate(
-                        visible_a_reports, visible_b_reports, person_month
-                    )
-                    if estimate is not None:
-                        estimate.actual_year_result = actual_year_sum
+                    continue
 
                 if estimate is not None:
                     estimated_year_result = estimate.estimated_year_result

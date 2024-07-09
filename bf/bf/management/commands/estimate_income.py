@@ -71,10 +71,19 @@ class Command(BaseCommand):
                 if row["_year"] == self._year
             )
             person_pk = subset[0]["_person_pk"]
+            first_income_month = 1
+            for month_data in subset:
+                if (
+                    not month_data["_a_amount"].is_zero()
+                    or not month_data["_b_amount"].is_zero()
+                ):
+                    first_income_month = month_data["_month"]
+                    break
+
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
                 engine_results = []
-                for month in range(1, 13):
+                for month in range(first_income_month, 13):
                     person_month = self._get_person_month_for_row(
                         subset, self._year, month
                     )
@@ -88,15 +97,17 @@ class Command(BaseCommand):
                             engine_results.append(result)
                             results.append(result)
                 if engine_results and actual_year_sum:
-                    year_offset = sum(
-                        [resultat.absdiff for resultat in engine_results]
-                    ) / (actual_year_sum * len(engine_results))
+                    year_offset = (
+                        100
+                        * sum([resultat.absdiff for resultat in engine_results])
+                        / (actual_year_sum * len(engine_results))
+                    )
                 else:
-                    year_offset = Decimal(0)
+                    year_offset = None
                 summary = PersonYearEstimateSummary(
                     person_year=person_year,
                     estimation_engine=engine.__class__.__name__,
-                    offset_percent=100 * year_offset,
+                    offset_percent=year_offset,
                 )
                 summaries.append(summary)
 
@@ -167,7 +178,7 @@ class Command(BaseCommand):
 
     def _get_person_month_for_row(
         self, subset: List[Dict[str, int | Decimal]], year: int, month: int
-    ) -> int | None:
+    ) -> PersonMonth | None:
         for row in subset:
             if row["_year"] == year and row["_month"] == month:
                 return self._person_month_map[row["_person_month_pk"]]
