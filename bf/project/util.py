@@ -4,7 +4,7 @@
 
 
 from collections import defaultdict
-from typing import Iterable
+from typing import Callable, Dict, Iterable, List
 
 from django.db.models import QuerySet
 
@@ -31,3 +31,14 @@ def group(qs: Iterable | QuerySet, field: str):
     for item in qs:
         groups[get(item, field)].append(item)
     return groups
+
+
+def trim_list_first(items: List[Dict], filter: Callable[[Dict], bool]) -> List[Dict]:
+    found = False
+    output: List[Dict] = []
+    for item in items:
+        if filter(item):
+            found = True
+        if found:
+            output.append(item)
+    return output

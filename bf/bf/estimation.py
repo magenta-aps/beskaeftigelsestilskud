@@ -4,6 +4,7 @@
 from decimal import Decimal
 from typing import Iterable
 
+from project.util import trim_list_first
 from bf.data import MonthlyIncomeData
 from bf.models import IncomeEstimate
 
@@ -12,21 +13,25 @@ class EstimationEngine:
     @classmethod
     def estimate(
         cls,
-        # a_reports: QuerySet[MonthlyAIncomeReport],  # A income
-        # b_reports: QuerySet[MonthlyBIncomeReport],  # B income
-        # person_month: PersonMonth,
         subset: Iterable[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
         raise NotImplementedError
 
+    @classmethod
+    def subset_sum(cls, relevant: Iterable[MonthlyIncomeData]) -> Decimal:
+        # Add Decimal(0) to shut MyPy up
+        return Decimal(0) + sum(
+            [row.amount for row in relevant]
+        )
+
 
 """
 Forslag til beregningsmetoder:
 
-* Sum af beløbene for alle måneder i året indtil nu, ekstrapoleret til 12 måneder
-* Sum af beløbene for de seneste 12 måneder
+* Sum af beløbene for alle måneder i året indtil nu, ekstrapoleret til 12 måneder - DONE
+* Sum af beløbene for de seneste 12 måneder - DONE
 
 """
 
@@ -37,99 +42,83 @@ class InYearExtrapolationEngine(EstimationEngine):
     @classmethod
     def estimate(
         cls,
-        # a_reports: QuerySet[MonthlyAIncomeReport],
-        # b_reports: QuerySet[MonthlyBIncomeReport],
-        # person_month: PersonMonth,
         subset: Iterable[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
-        # year = person_month.year
-        # month = person_month.month
-        # amount_sum = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
-        #     b_reports, year, month
-        # )
-        amount_sum = cls.subset_sum(subset, year, month)
-        year_estimate = int(12 * (amount_sum / month))
+        # Cut off initial months with no income, and only extrapolate
+        # on months after income begins
+        relevant_items = cls.relevant(subset, year, month)
+        relevant_count = len(relevant_items)
+        if relevant_count > 0:
+            amount_sum = cls.subset_sum(relevant_items)
+            omitted_count = month - relevant_count
+            year_estimate = (12 - omitted_count) * amount_sum / relevant_count
         return IncomeEstimate(
             estimated_year_result=year_estimate,
             # person_month=person_month,
             engine=cls.__name__,
         )
-
-    # @classmethod
-    # def queryset_sum(cls, qs: QuerySet, year: int, month: int) -> Decimal:
-    #     # Do not use any properties on the class as annotation names.
-    #     # Django will explode trying to put values into the properties.
-    #     qs = qs.filter(year=year, month__in=range(1, month + 1))
-    #     # print(qs.explain())
-    #     return MonthlyIncomeReport.sum_queryset(qs)
+        return None
 
     @classmethod
-    def subset_sum(
+    def relevant(
         cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
-    ) -> Decimal:
-        # Add Decimal(0) to shut MyPy up
-        return Decimal(0) + sum(
-            [
-                item.amount
-                for item in subset
-                if item.year == year and item.month <= month
+    ) -> Iterable[MonthlyIncomeData]:
+        items = [
+            item for item in subset if item.year == year and item.month <= month
             ]
+        # Trim off items with no income from the beginning of the list
+        items = trim_list_first(
+            items,
+            lambda item: not item.amount.is_zero()
         )
+        return items
 
 
 class TwelveMonthsSummationEngine(EstimationEngine):
     description = "Summation af beløb for de seneste 12 måneder"
+    # Styrker: Stabile indkomster, indkomster der har samme mønster hert år
+    # Svagheder: Outliers (store indkomster i enkelte måneder)
 
     @classmethod
     def estimate(
         cls,
-        # a_reports: QuerySet[MonthlyAIncomeReport],
-        # b_reports: QuerySet[MonthlyBIncomeReport],
-        # person_month: PersonMonth,
         subset: Iterable[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
 
-        # year = person_month.year
-        # month = person_month.month
-        # year_estimate = cls.queryset_sum(a_reports, year, month) + cls.queryset_sum(
-        #     b_reports, year, month
-        # )
-        year_estimate = cls.subset_sum(subset, year, month)
+        # Do not estimate if there is no data one year back
+        if not [x for x in subset if x.month == month and x.year == year - 1]:
+            # TODO: How can we decide this better?
+            # * of the last 12 months, less than x months contain data?
+            # * the month 12 months ago doesn't contain data,
+            #   and the month before/after it doesn't either?
+            return None
+
+        relevant_items = cls.relevant(subset, year, month)
+        year_estimate = cls.subset_sum(relevant_items)
+
         return IncomeEstimate(
             estimated_year_result=year_estimate,
             # person_month=person_month,
             engine=cls.__name__,
         )
 
-    # @classmethod
-    # def queryset_sum(cls, qs: QuerySet, year: int, month: int) -> Decimal:
-    #     # Do not use any properties on the class as annotation names.
-    #     # Django will explode trying to put values into the properties.
-    #     qs = qs.filter(
-    #         Q(year=year, month__in=range(1, month + 1))
-    #         | Q(year=year - 1, month__in=range(month + 1, 13))
-    #     )
-    #     return MonthlyIncomeReport.sum_queryset(qs)
-
     @classmethod
-    def subset_sum(
+    def relevant(
         cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
-    ) -> Decimal:
-        # Add Decimal(0) to shut MyPy up
-        return Decimal(0) + sum(
-            [
-                item.amount
-                for item in subset
-                if (
-                    (item.year == year and item.month <= month)
+    ) -> Iterable[MonthlyIncomeData]:
+        items = [
+            item
+            for item in subset
+            if (
+                (item.year == year and item.month <= month)
                     or (item.year == (year - 1) and item.month > month)
                 )
             ]
-        )
+        return items
 
 
 class SameAsLastMonthEngine(EstimationEngine):

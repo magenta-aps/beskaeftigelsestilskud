@@ -702,4 +702,5 @@ class PersonYearEstimateSummary(models.Model):
     offset_percent = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        null=True,
     )

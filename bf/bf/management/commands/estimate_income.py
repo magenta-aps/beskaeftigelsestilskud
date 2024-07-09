@@ -69,13 +69,21 @@ class Command(BaseCommand):
         for idx, subset in enumerate(self._iterate_by_person(data_qs)):
             self._write_verbose(f"{idx}", ending="\r")
             actual_year_sum = sum(
-                row.amount for row in subset if row.year == self._year
+                row.amount
+                for row in subset
+                if row.year == self._year
             )
             person_pk = subset[0].person_pk
+            first_income_month = 1
+            for month_data in subset:
+                if not month_data.amount.is_zero():
+                    first_income_month = month_data.month
+                    break
+
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
                 engine_results = []
-                for month in range(1, 13):
+                for month in range(first_income_month, 13):
                     person_month = self._get_person_month_for_row(
                         subset, self._year, month
                     )
@@ -89,15 +97,17 @@ class Command(BaseCommand):
                             engine_results.append(result)
                             results.append(result)
                 if engine_results and actual_year_sum:
-                    year_offset = sum(
-                        [resultat.diff for resultat in engine_results]
-                    ) / (actual_year_sum * len(engine_results))
+                    year_offset = (
+                        100
+                        * sum([resultat.absdiff for resultat in engine_results])
+                        / (actual_year_sum * len(engine_results))
+                    )
                 else:
-                    year_offset = Decimal(0)
+                    year_offset = None
                 summary = PersonYearEstimateSummary(
                     person_year=person_year,
                     estimation_engine=engine.__class__.__name__,
-                    offset_percent=100 * year_offset,
+                    offset_percent=year_offset,
                 )
                 summaries.append(summary)
 

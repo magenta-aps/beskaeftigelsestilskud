@@ -87,11 +87,34 @@
     </thead>
     <tbody>
 {% for object in object_list %}
+
     <tr>
-        <td><a href="{% url 'data_analysis:person_analysis' pk=object.person.pk year=year %}">{{ object.person.cpr }}</a></td>
-        <td>{{ object.InYearExtrapolationEngine|floatformat:2 }} %</td>
-        <td>{{ object.TwelveMonthsSummationEngine|floatformat:2 }} %</td>
-        <td>{{ object.SameAsLastMonthEngine|floatformat:2 }} %</td>
+        <td>
+            <a href="{% url 'data_analysis:person_analysis' pk=object.person.pk year=year %}">
+                {{ object.person.cpr }}
+            </a>
+        </td>
+        <td>
+            {% if object.InYearExtrapolationEngine is not None %}
+                {{ object.InYearExtrapolationEngine|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+        <td>
+            {% if object.TwelveMonthsSummationEngine is not None %}
+                {{ object.TwelveMonthsSummationEngine|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+        <td>
+            {% if object.SameAsLastMonthEngine is not None %}
+                {{ object.SameAsLastMonthEngine|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
         <td>{{ object.actual_sum }}</td>
         <td>{{ object.payout|default_if_none:"" }}</td>
         <td>{{ object.correct_payout|default_if_none:"" }}</td>
