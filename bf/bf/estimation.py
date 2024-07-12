@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
-from typing import Dict, List
+from typing import Iterable
 
+from bf.data import MonthlyIncomeData
 from bf.models import IncomeEstimate
 
 
@@ -14,7 +15,7 @@ class EstimationEngine:
         # a_reports: QuerySet[MonthlyAIncomeReport],  # A income
         # b_reports: QuerySet[MonthlyBIncomeReport],  # B income
         # person_month: PersonMonth,
-        subset: list[dict[str, int | Decimal]],
+        subset: Iterable[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -39,7 +40,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         # a_reports: QuerySet[MonthlyAIncomeReport],
         # b_reports: QuerySet[MonthlyBIncomeReport],
         # person_month: PersonMonth,
-        subset: list[dict[str, int | Decimal]],
+        subset: Iterable[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -66,14 +67,14 @@ class InYearExtrapolationEngine(EstimationEngine):
 
     @classmethod
     def subset_sum(
-        cls, subset: List[Dict[str, int | Decimal]], year: int, month: int
+        cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
     ) -> Decimal:
         # Add Decimal(0) to shut MyPy up
         return Decimal(0) + sum(
             [
-                row["_a_amount"] + row["_b_amount"]
-                for row in subset
-                if row["_year"] == year and row["_month"] <= month
+                item.amount
+                for item in subset
+                if item.year == year and item.month <= month
             ]
         )
 
@@ -87,7 +88,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         # a_reports: QuerySet[MonthlyAIncomeReport],
         # b_reports: QuerySet[MonthlyBIncomeReport],
         # person_month: PersonMonth,
-        subset: list,
+        subset: Iterable[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -116,16 +117,16 @@ class TwelveMonthsSummationEngine(EstimationEngine):
 
     @classmethod
     def subset_sum(
-        cls, subset: list[dict[str, int | Decimal]], year: int, month: int
+        cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
     ) -> Decimal:
         # Add Decimal(0) to shut MyPy up
         return Decimal(0) + sum(
             [
-                row["_a_amount"] + row["_b_amount"]
-                for row in subset
+                item.amount
+                for item in subset
                 if (
-                    (row["_year"] == year and row["_month"] <= month)
-                    or (row["_year"] == (year - 1) and row["_month"] > month)
+                    (item.year == year and item.month <= month)
+                    or (item.year == (year - 1) and item.month > month)
                 )
             ]
         )

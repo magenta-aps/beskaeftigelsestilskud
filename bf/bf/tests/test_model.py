@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
+from bf.data import MonthlyIncomeData
 from bf.models import (
     Employer,
     IncomeEstimate,
@@ -76,7 +77,7 @@ class ModelTest(TestCase):
         cls.report1 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month1,
-            amount=10000,
+            amount=Decimal(10000),
             month=cls.month1.month,
             year=cls.year.year,
             person=cls.person,
@@ -84,7 +85,7 @@ class ModelTest(TestCase):
         cls.report2 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month2,
-            amount=11000,
+            amount=Decimal(11000),
             month=cls.month2.month,
             year=cls.year.year,
             person=cls.person,
@@ -92,7 +93,7 @@ class ModelTest(TestCase):
         cls.report3 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month3,
-            amount=12000,
+            amount=Decimal(12000),
             month=cls.month3.month,
             year=cls.year.year,
             person=cls.person,
@@ -100,7 +101,7 @@ class ModelTest(TestCase):
         cls.report4 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month4,
-            amount=13000,
+            amount=Decimal(13000),
             month=cls.month4.month,
             year=cls.year.year,
             person=cls.person,
@@ -108,7 +109,7 @@ class ModelTest(TestCase):
         cls.report5 = MonthlyBIncomeReport.objects.create(
             trader=cls.employer2,
             person_month=cls.month1,
-            amount=15000,
+            amount=Decimal(15000),
             month=cls.month1.month,
             year=cls.year.year,
             person=cls.person,
@@ -121,7 +122,7 @@ class ModelTest(TestCase):
         cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month2,
-            amount=12000,
+            amount=Decimal(12000),
             month=cls.month2.month,
             year=cls.year.year,
             person=cls.person,
@@ -134,7 +135,7 @@ class ModelTest(TestCase):
         cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month3,
-            amount=10000,
+            amount=Decimal(10000),
             month=cls.month3.month,
             year=cls.year.year,
             person=cls.person,
@@ -148,7 +149,7 @@ class ModelTest(TestCase):
         cls.report8 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month4,
-            amount=8000,
+            amount=Decimal(8000),
             month=cls.month4.month,
             year=cls.year.year,
             person=cls.person,
@@ -162,7 +163,7 @@ class ModelTest(TestCase):
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.year2month1,
-            amount=8000,
+            amount=Decimal(8000),
             month=cls.year2month1.month,
             year=cls.year2.year,
             person=cls.person,
@@ -379,6 +380,17 @@ class TestIncomeReport(ModelTest):
             MonthlyAIncomeReport.annotate_person(qs).first().f_person,
             self.person.pk,
         )
+
+    def test_data_amount(self):
+        data = MonthlyIncomeData(
+            month=6,
+            year=2024,
+            a_amount=Decimal(15000),
+            b_amount=Decimal(5000),
+            person_pk=1,
+            person_month_pk=1,
+        )
+        self.assertEqual(data.amount, Decimal(20000))
 
 
 class EstimationTest(ModelTest):
