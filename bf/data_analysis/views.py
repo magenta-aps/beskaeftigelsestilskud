@@ -17,7 +17,7 @@ from data_analysis.forms import (
 from data_analysis.models import PersonYearEstimateSummary
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count, Model, OuterRef, Subquery, Sum
+from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import FormView, UpdateView
@@ -29,7 +29,7 @@ from bf.estimation import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import Person, PersonYear, Year
+from bf.models import Person, PersonMonth, PersonYear, Year
 from bf.simulation import Simulation
 
 
@@ -88,7 +88,7 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
 class PersonYearEstimationMixin:
 
     def get_queryset(self):
-        qs = PersonYear.objects.filter(year=self.year)
+        qs = PersonYear.objects.filter(year=self.year).select_related("person")
 
         form = self.get_form()
         if form.is_valid():
@@ -120,11 +120,15 @@ class PersonYearEstimationMixin:
                 }
             )
 
+        # Originally this annotated on the sum of
+        # personmonth__monthlyaincomereport__amount, but that produced weird
+        # results in other annotations, such as Sum("personmonth__benefit_paid")
+        # including two months twice for a few PersonYears
+        # Probably
+        # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
+        # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
-            actual_sum=Coalesce(
-                Sum("personmonth__monthlyaincomereport__amount"), Decimal(0)
-            )
-            + Coalesce(Sum("personmonth__monthlybincomereport__amount"), Decimal(0))
+            actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
         )
 
         return qs
@@ -153,7 +157,20 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
         return ordering.split(",")
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("person")
+        qs = super().get_queryset()
+
+        # `None` is an accepted value here, when benefits have not been calculated yet
+        qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
+
+        qs = qs.annotate(
+            correct_payout=Subquery(
+                PersonMonth.objects.filter(person_year=OuterRef("pk"))
+                .order_by("-month")
+                .values("estimated_year_benefit")[:1]
+            )
+        )
+        qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
+
         qs = qs.order_by(*self.get_ordering())
         return qs
 
@@ -214,8 +231,10 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         observations: defaultdict = defaultdict(Counter)
         person_years = self.get_queryset()
 
-        for item in person_years:
-            for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+        for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+            for item in person_years:
+                # if item.person.preferred_estimation_engine != key:
+                #     continue
                 val = getattr(item, key, None)
                 if val is not None:
                     bucket = int(percentile_size * (val // percentile_size))

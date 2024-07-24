@@ -49,7 +49,7 @@ class TestSimulationJSONEncoder(TestCase):
             "full_address": None,
             "id": cls.person.pk,
             "name": None,
-            "preferred_estimation_engine": "",
+            "preferred_estimation_engine": None,
         }
 
     def test_can_serialize_dataclass(self):
@@ -261,7 +261,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person, self.person)
-        self.assertEqual(object_list[0].sum_amount, Decimal(42))
+        self.assertEqual(object_list[0].amount_sum, Decimal(42))
         self.assertEqual(object_list[0].TwelveMonthsSummationEngine, Decimal(0))
         self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(50))
 
@@ -279,7 +279,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person, self.person)
-        self.assertEqual(object_list[0].sum_amount, Decimal("42.00"))
+        self.assertEqual(object_list[0].amount_sum, Decimal("42.00"))
         self.assertEqual(object_list[0].TwelveMonthsSummationEngine, Decimal(0))
         self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(0))
 
@@ -350,13 +350,13 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
                     response.content,
                     {
                         "data": {
-                            "TwelveMonthsSummationEngine": self._get_expected_histogram(
-                                "0",
+                            "InYearExtrapolationEngine": self._get_expected_histogram(
+                                "50",
                                 1,
                                 size=percentile_size,
                             ),
-                            "InYearExtrapolationEngine": self._get_expected_histogram(
-                                "50",
+                            "TwelveMonthsSummationEngine": self._get_expected_histogram(
+                                "0",
                                 1,
                                 size=percentile_size,
                             ),

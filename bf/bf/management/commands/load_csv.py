@@ -5,6 +5,7 @@
 import csv
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from typing import List
 
 from django.core.exceptions import ValidationError
@@ -188,6 +189,7 @@ class Command(BaseCommand):
                     person_year=person_year,
                     month=month,
                     import_date=date.today(),
+                    amount_sum=Decimal(0),
                 )
                 key = (person_year.person.cpr, month)
                 person_months[key] = person_month
@@ -213,6 +215,8 @@ class Command(BaseCommand):
                             amount=amount,
                         )
                     )
+                    person_month.amount_sum += amount
+                    person_month.save(update_fields=("amount_sum",))
         MonthlyAIncomeReport.objects.filter(
             person_month__person_year__year=self._year
         ).delete()
@@ -235,6 +239,8 @@ class Command(BaseCommand):
                             amount=amount,
                         )
                     )
+                    person_month.amount_sum += amount
+                    person_month.save(update_fields=("amount_sum",))
         MonthlyBIncomeReport.objects.filter(
             person_month__person_year__year=self._year
         ).delete()

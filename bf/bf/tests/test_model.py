@@ -34,7 +34,11 @@ class ModelTest(TestCase):
         )
         cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
         cls.year2 = Year.objects.create(year=2025)
-        cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
+        cls.person = Person.objects.create(
+            name="Jens Hansen",
+            cpr="1234567890",
+            preferred_estimation_engine="InYearExtrapolationEngine",
+        )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
@@ -112,6 +116,7 @@ class ModelTest(TestCase):
         IncomeEstimate.objects.create(
             person_month=cls.month1,
             estimated_year_result=12 * 10000 + 12 * 15000,
+            engine="InYearExtrapolationEngine",
         )
         cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -124,6 +129,7 @@ class ModelTest(TestCase):
         IncomeEstimate.objects.create(
             person_month=cls.month2,
             estimated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
+            engine="InYearExtrapolationEngine",
         )
         cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -137,6 +143,7 @@ class ModelTest(TestCase):
             person_month=cls.month3,
             estimated_year_result=4 * (10000 + 11000 + 12000)
             + 4 * (15000 + 12000 + 10000),
+            engine="InYearExtrapolationEngine",
         )
         cls.report8 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -150,6 +157,7 @@ class ModelTest(TestCase):
             person_month=cls.month4,
             estimated_year_result=3 * (10000 + 11000 + 12000 + 13000)
             + 3 * (15000 + 12000 + 10000 + 8000),
+            engine="InYearExtrapolationEngine",
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -301,11 +309,11 @@ class TestPersonMonth(ModelTest):
         # Reusing last month's benefit
         self.assertEqual(self.month3.benefit_paid, Decimal("1118.73"))
 
-    def test_sum_amount(self):
-        self.assertEqual(self.month1.sum_amount, Decimal(10000 + 15000))
-        self.assertEqual(self.month2.sum_amount, Decimal(11000 + 12000))
-        self.assertEqual(self.month3.sum_amount, Decimal(12000 + 10000))
-        self.assertEqual(self.month4.sum_amount, Decimal(13000 + 8000))
+    def test_amount_sum(self):
+        self.assertEqual(self.month1.amount_sum, Decimal(10000 + 15000))
+        self.assertEqual(self.month2.amount_sum, Decimal(11000 + 12000))
+        self.assertEqual(self.month3.amount_sum, Decimal(12000 + 10000))
+        self.assertEqual(self.month4.amount_sum, Decimal(13000 + 8000))
 
     def test_next(self):
         self.assertEqual(self.month1.next, self.month2)
@@ -317,6 +325,15 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(self.year2month1.prev, self.month12)
         self.assertIsNone(self.month1.prev)
         self.assertIsNone(self.month12.prev)
+
+    def test_calculation_engine_missing(self):
+        self.person.preferred_estimation_engine = None
+        self.person.save(update_fields=("preferred_estimation_engine",))
+        with self.assertRaises(
+            Exception,
+            msg=f"Preferred estimation engine is not set for person {self.person}",
+        ):
+            self.month1.calculate_benefit()
 
 
 class TestEmployer(ModelTest):
