@@ -6,6 +6,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
+from typing import Iterable
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -14,6 +15,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from django.db import models
 from django.db.models import F, Index, QuerySet, Sum
 from django.db.models.functions import Coalesce
+from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
@@ -147,6 +149,7 @@ class Person(models.Model):
                 "Summation af beløb for de seneste 12 måneder",
             ),
         ),
+        null=True,
     )
 
     @classmethod
@@ -191,7 +194,7 @@ class PersonYear(models.Model):
         return f"{self.person} ({self.year})"
 
     @property
-    def sum_amount(self):
+    def amount_sum(self):
         return MonthlyIncomeReport.sum_queryset(
             MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
         ) + MonthlyIncomeReport.sum_queryset(
@@ -248,6 +251,11 @@ class PersonMonth(models.Model):
     fully_tax_liable = models.BooleanField(blank=True, null=True)
     month = models.PositiveSmallIntegerField(blank=False, null=False)
 
+    amount_sum = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal(0),
+    )
     benefit_paid = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -321,9 +329,8 @@ class PersonMonth(models.Model):
             fully_tax_liable=eskat_mandtal.fully_tax_liable,
         )
 
-    @property
-    def sum_amount(self):
-        return MonthlyIncomeReport.sum_queryset(
+    def update_amount_sum(self):
+        self.amount_sum = MonthlyIncomeReport.sum_queryset(
             self.monthlyaincomereport_set
         ) + MonthlyIncomeReport.sum_queryset(self.monthlybincomereport_set)
 
@@ -331,6 +338,10 @@ class PersonMonth(models.Model):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
+        if not self.person.preferred_estimation_engine:
+            raise Exception(
+                f"Preferred estimation engine is not set for person {self.person}"
+            )
         estimated_year_income = self.incomeestimate_set.get(
             engine=self.person.preferred_estimation_engine
         ).estimated_year_result
@@ -451,6 +462,19 @@ class MonthlyIncomeReport(models.Model):
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
         return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
 
+    @staticmethod
+    def on_update_income_report(
+        sender,
+        instance: MonthlyIncomeReport,
+        created: bool,
+        raw: bool,
+        using: str,
+        update_fields: Iterable[str] | None,
+        **kwargs,
+    ):
+        if update_fields is None or "amount" in update_fields:
+            instance.person_month.update_amount_sum()
+
 
 class MonthlyAIncomeReport(MonthlyIncomeReport):
     class Meta:
@@ -490,6 +514,13 @@ class MonthlyAIncomeReport(MonthlyIncomeReport):
         return f"{self.person_month} | {self.employer}"
 
 
+post_save.connect(
+    MonthlyIncomeReport.on_update_income_report,
+    MonthlyAIncomeReport,
+    dispatch_uid="MonthlyAIncomeReport_save",
+)
+
+
 class MonthlyBIncomeReport(MonthlyIncomeReport):
     class Meta:
         indexes = (
@@ -526,6 +557,13 @@ class MonthlyBIncomeReport(MonthlyIncomeReport):
 
     def __str__(self):
         return f"{self.person_month} | {self.trader}"
+
+
+post_save.connect(
+    MonthlyIncomeReport.on_update_income_report,
+    MonthlyBIncomeReport,
+    dispatch_uid="MonthlyBIncomeReport_save",
+)
 
 
 class SelfAssessedYearlyBIncome(models.Model):

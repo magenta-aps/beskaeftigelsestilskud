@@ -12,11 +12,13 @@ class EstimationTest(ModelTest):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.result1 = IncomeEstimate.objects.create(
+        cls.result1, _ = IncomeEstimate.objects.update_or_create(
             engine="InYearExtrapolationEngine",
             person_month=cls.month1,
-            estimated_year_result=1200,
-            actual_year_result=1400,
+            defaults={
+                "estimated_year_result": 1200,
+                "actual_year_result": 1400,
+            },
         )
 
     def test_str(self):
