@@ -12,10 +12,20 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
         parser.add_argument("--month", type=int)
+        parser.add_argument("--cpr", type=int)
 
     def handle(self, *args, **kwargs):
 
-        months = PersonMonth.objects.filter(person_year__year__year=kwargs["year"])
+        if kwargs["cpr"]:
+            months = PersonMonth.objects.filter(
+                person_year__year__year=kwargs["year"],
+                person_year__person__cpr=kwargs["cpr"],
+            )
+        else:
+            months = PersonMonth.objects.filter(
+                person_year__year__year=kwargs["year"],
+            )
+
         month = kwargs["month"]
         if month and month >= 1 and month <= 12:
             months = months.filter(month=month)
