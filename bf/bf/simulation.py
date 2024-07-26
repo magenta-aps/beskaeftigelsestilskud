@@ -6,11 +6,11 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from data_analysis.models import IncomeEstimate
 from django.db.models import Q
 
 from bf.estimation import EstimationEngine
 from bf.models import (
+    IncomeEstimate,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,

@@ -4,7 +4,7 @@
 from decimal import Decimal
 from typing import Dict, List
 
-from data_analysis.models import IncomeEstimate
+from bf.models import IncomeEstimate
 
 
 class EstimationEngine:

@@ -7,7 +7,6 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from data_analysis.forms import PersonYearListOptionsForm
-from data_analysis.models import IncomeEstimate, PersonYearEstimateSummary
 from data_analysis.views import (
     HistogramView,
     PersonAnalysisView,
@@ -23,10 +22,12 @@ from django.test.client import RequestFactory
 from bf.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
 from bf.models import (
     Employer,
+    IncomeEstimate,
     MonthlyAIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearEstimateSummary,
     Year,
 )
 from bf.simulation import IncomeItem, Simulation
