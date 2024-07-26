@@ -3,10 +3,9 @@
 # SPDX-License-Identifier: MPL-2.0
 from collections import defaultdict
 
-from data_analysis.models import IncomeEstimate
 from django.core.management.base import BaseCommand
 
-from bf.models import Person
+from bf.models import IncomeEstimate, Person
 
 
 class Command(BaseCommand):

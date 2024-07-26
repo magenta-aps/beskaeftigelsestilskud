@@ -14,7 +14,6 @@ from data_analysis.forms import (
     PersonAnalysisOptionsForm,
     PersonYearListOptionsForm,
 )
-from data_analysis.models import PersonYearEstimateSummary
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
@@ -29,7 +28,7 @@ from bf.estimation import (
     InYearExtrapolationEngine,
     TwelveMonthsSummationEngine,
 )
-from bf.models import Person, PersonMonth, PersonYear, Year
+from bf.models import Person, PersonMonth, PersonYear, PersonYearEstimateSummary, Year
 from bf.simulation import Simulation
 
 

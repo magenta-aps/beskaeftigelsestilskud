@@ -17,3 +17,5 @@ data/er/*
 *.vscode/
 *.code-workspace
 **/.DS_Store
+bf/2022_a.csv
+bf/2023_a.csv
