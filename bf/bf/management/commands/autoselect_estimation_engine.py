@@ -23,5 +23,10 @@ class Command(BaseCommand):
                 engine: sum(current_offsets) / len(current_offsets)
                 for engine, current_offsets in offsets.items()
             }
-            person.preferred_estimation_engine = min(averages, key=averages.get)
-            person.save(update_fields=("preferred_estimation_engine",))
+            if averages:
+                person.preferred_estimation_engine = min(averages, key=averages.get)
+                person.save(update_fields=("preferred_estimation_engine",))
+            else:
+                self.stdout.write(
+                    f"Could not auto-select preferred estimation engine for {person}"
+                )
