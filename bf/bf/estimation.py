@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from project.util import trim_list_first
 
@@ -14,7 +14,7 @@ class EstimationEngine:
     @classmethod
     def estimate(
         cls,
-        subset: Iterable[MonthlyIncomeData],
+        subset: Sequence[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -41,7 +41,7 @@ class InYearExtrapolationEngine(EstimationEngine):
     @classmethod
     def estimate(
         cls,
-        subset: Iterable[MonthlyIncomeData],
+        subset: Sequence[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -61,8 +61,8 @@ class InYearExtrapolationEngine(EstimationEngine):
 
     @classmethod
     def relevant(
-        cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
-    ) -> Iterable[MonthlyIncomeData]:
+        cls, subset: Sequence[MonthlyIncomeData], year: int, month: int
+    ) -> Sequence[MonthlyIncomeData]:
         items = [item for item in subset if item.year == year and item.month <= month]
         # Trim off items with no income from the beginning of the list
         items = trim_list_first(items, lambda item: not item.amount.is_zero())
@@ -77,7 +77,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     @classmethod
     def estimate(
         cls,
-        subset: Iterable[MonthlyIncomeData],
+        subset: Sequence[MonthlyIncomeData],
         year: int,
         month: int,
     ) -> IncomeEstimate | None:
@@ -101,7 +101,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
 
     @classmethod
     def relevant(
-        cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
+        cls, subset: Sequence[MonthlyIncomeData], year: int, month: int
     ) -> Iterable[MonthlyIncomeData]:
         items = filter(
             lambda item: (item.year == year and item.month <= month)

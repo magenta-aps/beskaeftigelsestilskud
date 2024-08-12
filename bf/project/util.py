@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
-
 from collections import defaultdict
-from typing import Callable, Dict, Iterable, List
+from typing import Callable, Iterable, List, TypeVar
 
 from django.db.models import QuerySet
+
+T = TypeVar("T")
 
 
 def strtobool(val):
@@ -33,11 +33,11 @@ def group(qs: Iterable | QuerySet, field: str):
     return groups
 
 
-def trim_list_first(items: List[Dict], filter: Callable[[Dict], bool]) -> List[Dict]:
+def trim_list_first(items: Iterable[T], filter: Callable[[T], bool]) -> List[T]:
     found = False
-    output: List[Dict] = []
+    output: List[T] = []
     for item in items:
-        if filter(item):
+        if not found and filter(item):
             found = True
         if found:
             output.append(item)

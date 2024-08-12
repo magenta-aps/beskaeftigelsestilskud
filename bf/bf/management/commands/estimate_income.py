@@ -5,7 +5,7 @@ import datetime
 import time
 from itertools import groupby
 from operator import attrgetter
-from typing import Iterable, List
+from typing import Iterator, List
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -168,7 +168,7 @@ class Command(BaseCommand):
 
     def _iterate_by_person(
         self, data_qs: List[MonthlyIncomeData]
-    ) -> Iterable[List[MonthlyIncomeData]]:
+    ) -> Iterator[List[MonthlyIncomeData]]:
         # Iterate over `data_qs` and yield a subset of rows for each `_person_pk`
         return (
             list(vals) for key, vals in groupby(data_qs, key=attrgetter("person_pk"))

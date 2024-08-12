@@ -32,5 +32,6 @@ class Command(BaseCommand):
                     for person_year in person.personyear_set.all()
                 }
                 self.stdout.write(
-                    f"Could not auto-select preferred estimation engine for {person} (id: {person.pk}) (income: {income_sums})"
+                    "Could not auto-select preferred estimation engine "
+                    f"for {person} (id: {person.pk}) (income: {income_sums})"
                 )

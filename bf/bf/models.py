@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import Iterable
+from typing import Sequence
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -473,7 +473,7 @@ class MonthlyIncomeReport(models.Model):
         created: bool,
         raw: bool,
         using: str,
-        update_fields: Iterable[str] | None,
+        update_fields: Sequence[str] | None,
         **kwargs,
     ):
         if update_fields is None or "amount" in update_fields:
