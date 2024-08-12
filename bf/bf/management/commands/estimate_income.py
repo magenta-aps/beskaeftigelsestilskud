@@ -5,8 +5,8 @@ import datetime
 import time
 from decimal import Decimal
 from itertools import groupby
-from operator import itemgetter
-from typing import Dict, Iterable, List
+from operator import attrgetter
+from typing import Iterable, List
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -14,6 +14,7 @@ from django.db.models import DecimalField, F, QuerySet, Sum, Value
 from django.db.models.functions import Coalesce
 from tabulate import tabulate
 
+from bf.data import MonthlyIncomeData
 from bf.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
@@ -66,11 +67,9 @@ class Command(BaseCommand):
         for idx, subset in enumerate(self._iterate_by_person(data_qs)):
             self._write_verbose(f"{idx}", ending="\r")
             actual_year_sum = sum(
-                row["_a_amount"] + row["_b_amount"]
-                for row in subset
-                if row["_year"] == self._year
+                row.amount for row in subset if row.year == self._year
             )
-            person_pk = subset[0]["_person_pk"]
+            person_pk = subset[0].person_pk
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
                 engine_results = []
@@ -124,7 +123,9 @@ class Command(BaseCommand):
         duration = datetime.datetime.utcfromtimestamp(time.time() - start)
         self._write_verbose(f"Done (took {duration.strftime('%H:%M:%S')})")
 
-    def _get_data_qs(self, person_year_qs: QuerySet[PersonYear]):
+    def _get_data_qs(
+        self, person_year_qs: QuerySet[PersonYear]
+    ) -> List[MonthlyIncomeData]:
         # Return queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
         # Each row also contains summed values for monthly reported A and B income, as
@@ -154,23 +155,32 @@ class Command(BaseCommand):
                 "_month",
             )
         )
-
-        return qs
+        return [
+            MonthlyIncomeData(
+                month=value["_month"],
+                year=value["_year"],
+                a_amount=value["_a_amount"],
+                b_amount=value["_b_amount"],
+                person_pk=value["_person_pk"],
+                person_month_pk=value["_person_month_pk"],
+            )
+            for value in qs
+        ]
 
     def _iterate_by_person(
-        self, data_qs: QuerySet
-    ) -> Iterable[List[Dict[str, int | Decimal]]]:
+        self, data_qs: List[MonthlyIncomeData]
+    ) -> Iterable[List[MonthlyIncomeData]]:
         # Iterate over `data_qs` and yield a subset of rows for each `_person_pk`
         return (
-            list(vals) for key, vals in groupby(data_qs, key=itemgetter("_person_pk"))
+            list(vals) for key, vals in groupby(data_qs, key=attrgetter("person_pk"))
         )
 
     def _get_person_month_for_row(
-        self, subset: List[Dict[str, int | Decimal]], year: int, month: int
+        self, subset: List[MonthlyIncomeData], year: int, month: int
     ) -> int | None:
-        for row in subset:
-            if row["_year"] == year and row["_month"] == month:
-                return self._person_month_map[row["_person_month_pk"]]
+        for item in subset:
+            if item.year == year and item.month == month:
+                return self._person_month_map[item.person_month_pk]
         return None
 
     def _write_verbose(self, msg, **kwargs):
