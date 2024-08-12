@@ -27,6 +27,10 @@ class Command(BaseCommand):
                 person.preferred_estimation_engine = min(averages, key=averages.get)
                 person.save(update_fields=("preferred_estimation_engine",))
             else:
+                income_sums = {
+                    person_year.year.year: str(person_year.amount_sum)
+                    for person_year in person.personyear_set.all()
+                }
                 self.stdout.write(
-                    f"Could not auto-select preferred estimation engine for {person}"
+                    f"Could not auto-select preferred estimation engine for {person} (id: {person.pk}) (income: {income_sums})"
                 )
