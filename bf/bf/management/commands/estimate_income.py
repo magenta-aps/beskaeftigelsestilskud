@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 import time
-from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
 from typing import Iterable, List
@@ -69,9 +68,7 @@ class Command(BaseCommand):
         for idx, subset in enumerate(self._iterate_by_person(data_qs)):
             self._write_verbose(f"{idx}", ending="\r")
             actual_year_sum = sum(
-                row.amount
-                for row in subset
-                if row.year == self._year
+                row.amount for row in subset if row.year == self._year
             )
             person_pk = subset[0].person_pk
             first_income_month = 1
@@ -152,32 +149,22 @@ class Command(BaseCommand):
             )
             .prefetch_related("monthlyaincomereport_set", "monthlybincomereport_set")
             .values(
-                _person_pk=F("person_year__person__pk"),
-                _person_month_pk=F("pk"),
-                _year=F("person_year__year__year"),
-                _month=F("month"),
+                "month",
+                person_pk=F("person_year__person__pk"),
+                person_month_pk=F("pk"),
+                year=F("person_year__year__year"),
             )
             .annotate(
-                _a_amount=sum_amount("monthlyaincomereport__amount"),
-                _b_amount=sum_amount("monthlybincomereport__amount"),
+                a_amount=sum_amount("monthlyaincomereport__amount"),
+                b_amount=sum_amount("monthlybincomereport__amount"),
             )
             .order_by(
-                "_person_pk",
-                "_year",
-                "_month",
+                "person_pk",
+                "year",
+                "month",
             )
         )
-        return [
-            MonthlyIncomeData(
-                month=value["_month"],
-                year=value["_year"],
-                a_amount=value["_a_amount"],
-                b_amount=value["_b_amount"],
-                person_pk=value["_person_pk"],
-                person_month_pk=value["_person_month_pk"],
-            )
-            for value in qs
-        ]
+        return [MonthlyIncomeData(**value) for value in qs]
 
     def _iterate_by_person(
         self, data_qs: List[MonthlyIncomeData]

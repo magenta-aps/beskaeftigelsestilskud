@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Iterable
 
 from project.util import trim_list_first
+
 from bf.data import MonthlyIncomeData
 from bf.models import IncomeEstimate
 
@@ -22,9 +23,7 @@ class EstimationEngine:
     @classmethod
     def subset_sum(cls, relevant: Iterable[MonthlyIncomeData]) -> Decimal:
         # Add Decimal(0) to shut MyPy up
-        return Decimal(0) + sum(
-            [row.amount for row in relevant]
-        )
+        return Decimal(0) + sum([row.amount for row in relevant])
 
 
 """
@@ -54,25 +53,19 @@ class InYearExtrapolationEngine(EstimationEngine):
             amount_sum = cls.subset_sum(relevant_items)
             omitted_count = month - relevant_count
             year_estimate = (12 - omitted_count) * amount_sum / relevant_count
-        return IncomeEstimate(
-            estimated_year_result=year_estimate,
-            # person_month=person_month,
-            engine=cls.__name__,
-        )
+            return IncomeEstimate(
+                estimated_year_result=year_estimate,
+                engine=cls.__name__,
+            )
         return None
 
     @classmethod
     def relevant(
         cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
     ) -> Iterable[MonthlyIncomeData]:
-        items = [
-            item for item in subset if item.year == year and item.month <= month
-            ]
+        items = [item for item in subset if item.year == year and item.month <= month]
         # Trim off items with no income from the beginning of the list
-        items = trim_list_first(
-            items,
-            lambda item: not item.amount.is_zero()
-        )
+        items = trim_list_first(items, lambda item: not item.amount.is_zero())
         return items
 
 
@@ -110,14 +103,11 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     def relevant(
         cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
     ) -> Iterable[MonthlyIncomeData]:
-        items = [
-            item
-            for item in subset
-            if (
-                (item.year == year and item.month <= month)
-                    or (item.year == (year - 1) and item.month > month)
-                )
-            ]
+        items = filter(
+            lambda item: (item.year == year and item.month <= month)
+            or (item.year == (year - 1) and item.month > month),
+            subset,
+        )
         return items
 
 
