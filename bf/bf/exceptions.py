@@ -4,7 +4,7 @@
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from bf.models import Person
 
 

@@ -9,6 +9,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from bf.data import MonthlyIncomeData
+from bf.exceptions import EstimationEngineUnset
 from bf.models import (
     Employer,
     IncomeEstimate,
@@ -331,7 +332,7 @@ class TestPersonMonth(ModelTest):
         self.person.preferred_estimation_engine = None
         self.person.save(update_fields=("preferred_estimation_engine",))
         with self.assertRaises(
-            Exception,
+            EstimationEngineUnset,
             msg=f"Preferred estimation engine is not set for person {self.person}",
         ):
             self.month1.calculate_benefit()
