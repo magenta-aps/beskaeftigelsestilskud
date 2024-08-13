@@ -88,7 +88,7 @@ class Command(BaseCommand):
                             results.append(result)
                 if engine_results and actual_year_sum:
                     year_offset = sum(
-                        [resultat.absdiff for resultat in engine_results]
+                        [resultat.diff for resultat in engine_results]
                     ) / (actual_year_sum * len(engine_results))
                 else:
                     year_offset = Decimal(0)
