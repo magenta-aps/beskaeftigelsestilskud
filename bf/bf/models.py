@@ -20,6 +20,8 @@ from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
 
+from bf.exceptions import EstimationEngineUnset
+
 
 class WorkingTaxCreditCalculationMethod(models.Model):
     class Meta:
@@ -343,9 +345,7 @@ class PersonMonth(models.Model):
 
     def calculate_benefit(self) -> Decimal:
         if not self.person.preferred_estimation_engine:
-            raise Exception(
-                f"Preferred estimation engine is not set for person {self.person}"
-            )
+            raise EstimationEngineUnset(self.person)
         estimated_year_income = self.incomeestimate_set.get(
             engine=self.person.preferred_estimation_engine
         ).estimated_year_result
