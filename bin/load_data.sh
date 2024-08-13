@@ -9,7 +9,14 @@ if [ "$1" == "-h" ]; then
   exit 0
 fi
 
-docker exec bf bash -c "python manage.py load_csv --count=$1 /app/2022_a.csv 2022"
-docker exec bf bash -c "python manage.py load_csv --count=$1 /app/2023_a.csv 2023"
+
+if [ "$1" == "" ]; then
+  docker exec bf bash -c "python manage.py load_csv /app/2022_a.csv 2022"
+  docker exec bf bash -c "python manage.py load_csv /app/2023_a.csv 2023"
+else
+  docker exec bf bash -c "python manage.py load_csv --count=$1 /app/2022_a.csv 2022"
+  docker exec bf bash -c "python manage.py load_csv --count=$1 /app/2023_a.csv 2023"
+fi
+
 docker exec bf bash -c "python manage.py estimate_income 2022"
 docker exec bf bash -c "python manage.py estimate_income 2023"
