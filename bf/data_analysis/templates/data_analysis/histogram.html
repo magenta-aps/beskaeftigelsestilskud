@@ -74,27 +74,26 @@ const chartOptions = {
     },
     xaxis: {
         type: "category",
-    },
-    yaxis: [
-        {
-            // Absolute scale
-            type: "numeric",
-            forceNiceScale: true,
-            stepSize: 100,
-            opposite: false,
+        title: {
+            text: "Afvigelse mellem estimeret og reel årsindkomst [%]",
         },
-        {
-            // Percentage scale
-            type: "numeric",
-            forceNiceScale: true,
-            min: 0,
-            max: 100,
-            stepSize: 10,
-            opposite: true,
-        }
-    ],
+    },
+    yaxis: {
+        type: "numeric",
+        forceNiceScale: true,
+        stepSize: 100,
+        opposite: false,
+        title: {
+            text: "Antal personer [-]"
+        },
+    },
     legend: {
         show: true,
+    },
+    tooltip:{
+        x: {
+            show:true,
+        }
     }
 };
 
@@ -105,17 +104,15 @@ const getChartData = function (histo, key, percentileSize, options) {
 
     // Convert histogram (percentile -> num observations map) into X/Y pairs
     const items = [];
-    const percentages = [];
-    for (const percentile in histo) {
+    var keys = Object.keys(histo);   
+    keys.sort(function(a,b){return a - b});
+     
+    for (const percentile of keys) {
         const percentageValue = 100.0 * (histo[percentile] / totalObservations);
         if (percentageValue >= 0.1) {
             items.push({
                 x: percentile,
                 y: histo[percentile],
-            });
-            percentages.push({
-                x: percentile,
-                y: percentageValue,
             });
         }
     }
@@ -123,10 +120,6 @@ const getChartData = function (histo, key, percentileSize, options) {
         data: items,
         name: "Number of observations",
     });
-    series.push({
-        data: percentages,
-        name: "Percentage of total observations",
-    })
 
     // Construct chart data by combining series and options
     const chartData = structuredClone(options);
@@ -135,23 +128,23 @@ const getChartData = function (histo, key, percentileSize, options) {
     chartData.xaxis.labels = {
         formatter: function (value, timestamp, opts) {
             const val = parseInt(value, 10);
-            return `${val}-${val + percentileSize}%`;
+            return `${val}%`;
         }
     }
     // Absolute scale formatter
-    chartData.yaxis[0].labels = {
+    chartData.yaxis.labels = {
         formatter: function (value, timestamp, opts) {
             const val = parseInt(value, 10);
             return `${val}`;
         }
-    }
-    // Percentage scale formatter
-    chartData.yaxis[1].labels = {
-        formatter: function (value, timestamp, opts) {
-            const val = parseInt(value, 10);
-            return `${val}%`;
-        }
-    }
+    }   
+    chartData.tooltip.x= {formatter : function(val) {
+        return val + " ± " +  percentileSize/2 + "%";
+    }}
+    chartData.tooltip.y= {formatter : function(val) {
+        return val +" (" + Math.round(100 * (val / totalObservations) * 10)/10 + "%)";
+    }}
+
 
     return chartData;
 }
