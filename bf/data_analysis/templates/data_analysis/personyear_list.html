@@ -54,18 +54,24 @@
             </a>
         </th>
         <th class="col-2">
+            <a href="?{{ sort_params.SameAsLastMonthEngine }}" class="link-dark">
+                SameAsLastMonthEngine offset
+                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine" %}
+            </a>
+        </th>
+        <th class="col-2">
             <a href="?{{ sort_params.actual_sum }}" class="link-dark">
                 Actual year sum
                 {% include "data_analysis/sort_icon.html" with field="actual_sum" %}
             </a>
         </th>
-        <th class="col-2">
+        <th class="col-1">
             <a href="?{{ sort_params.payout }}" class="link-dark">
                 Udbetalt tilskud
                 {% include "data_analysis/sort_icon.html" with field="payout" %}
             </a>
         </th>
-        <th class="col-2">
+        <th class="col-1">
             <a href="?{{ sort_params.correct_payout }}" class="link-dark">
                 Korrekt tilskud
                 {% include "data_analysis/sort_icon.html" with field="correct_payout" %}
@@ -85,6 +91,7 @@
         <td><a href="{% url 'data_analysis:person_analysis' pk=object.person.pk year=year %}">{{ object.person.cpr }}</a></td>
         <td>{{ object.InYearExtrapolationEngine|floatformat:2 }} %</td>
         <td>{{ object.TwelveMonthsSummationEngine|floatformat:2 }} %</td>
+        <td>{{ object.SameAsLastMonthEngine|floatformat:2 }} %</td>
         <td>{{ object.actual_sum }}</td>
         <td>{{ object.payout|default_if_none:"" }}</td>
         <td>{{ object.correct_payout|default_if_none:"" }}</td>

@@ -38,6 +38,7 @@ class PersonYearListOptionsForm(forms.Form):
                 "person__cpr",
                 "InYearExtrapolationEngine",
                 "TwelveMonthsSummationEngine",
+                "SameAsLastMonthEngine",
                 "actual_sum",
                 "payout",
                 "correct_payout",

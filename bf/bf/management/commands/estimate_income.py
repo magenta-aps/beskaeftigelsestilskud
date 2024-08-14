@@ -18,6 +18,7 @@ from bf.data import MonthlyIncomeData
 from bf.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
+    SameAsLastMonthEngine,
     TwelveMonthsSummationEngine,
 )
 from bf.models import IncomeEstimate, PersonMonth, PersonYear, PersonYearEstimateSummary
@@ -27,6 +28,7 @@ class Command(BaseCommand):
     engines: List[EstimationEngine] = [
         InYearExtrapolationEngine(),
         TwelveMonthsSummationEngine(),
+        SameAsLastMonthEngine(),
     ]
 
     def add_arguments(self, parser):

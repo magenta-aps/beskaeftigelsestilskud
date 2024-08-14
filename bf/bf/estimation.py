@@ -130,3 +130,28 @@ class TwelveMonthsSummationEngine(EstimationEngine):
                 )
             ]
         )
+
+
+class SameAsLastMonthEngine(EstimationEngine):
+    description = "Ekstrapolation af beløb baseret udelukkende på den foregående måned"
+
+    @classmethod
+    def estimate(
+        cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
+    ) -> IncomeEstimate | None:
+        amount_sum = cls.subset_sum(subset, year, month)
+        year_estimate = int(12 * amount_sum)
+        return IncomeEstimate(
+            estimated_year_result=year_estimate,
+            engine=cls.__name__,
+        )
+
+    @classmethod
+    def subset_sum(
+        cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
+    ) -> Decimal:
+
+        for item in subset:
+            if item.year == year and item.month == month:
+                return Decimal(item.amount)
+        return Decimal(0)
