@@ -229,6 +229,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         percentile_size = self.get_percentile_size()
         observations: defaultdict = defaultdict(Counter)
         person_years = self.get_queryset()
+        half_percentile_size = Decimal(percentile_size / 2)
 
         for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
             for item in person_years:
@@ -236,7 +237,11 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
                 #     continue
                 val = getattr(item, key, None)
                 if val is not None:
-                    bucket = int(percentile_size * (val // percentile_size))
+                    # Bucket 0 contains values between -5 and 5
+                    # Bucket 10 contains values between 5 and 15
+                    # And so on
+                    centered_val = val + half_percentile_size
+                    bucket = int(percentile_size * (centered_val // percentile_size))
                     observations[key][bucket] += 1
 
         for counter in observations.values():

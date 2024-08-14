@@ -641,8 +641,14 @@ class IncomeEstimate(models.Model):
     )
 
     @property
+    def diff(self):
+        # If we under-estimate diff is negative
+        # If we over-estimate diff is positive
+        return self.estimated_year_result - self.actual_year_result
+
+    @property
     def absdiff(self):
-        return abs(self.actual_year_result - self.estimated_year_result)
+        return abs(self.diff)
 
     @property
     def offset(self):
