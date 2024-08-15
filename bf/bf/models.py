@@ -148,6 +148,10 @@ class Person(models.Model):
                 "TwelveMonthsSummationEngine",
                 "Summation af beløb for de seneste 12 måneder",
             ),
+            (
+                "SameAsLastMonthEngine",
+                "Ekstrapolation af beløb for den seneste måned",
+            ),
         ),
         null=True,
     )
@@ -618,6 +622,10 @@ class IncomeEstimate(models.Model):
             (
                 "TwelveMonthsSummationEngine",
                 "Summation af beløb for de seneste 12 måneder",
+            ),
+            (
+                "SameAsLastMonthEngine",
+                "Ekstrapolation af beløb for den seneste måned",
             ),
         ),
     )

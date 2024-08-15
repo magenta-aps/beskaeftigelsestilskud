@@ -26,6 +26,7 @@ from project.util import strtobool
 from bf.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
+    SameAsLastMonthEngine,
     TwelveMonthsSummationEngine,
 )
 from bf.models import Person, PersonMonth, PersonYear, PersonYearEstimateSummary, Year
@@ -65,7 +66,11 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
         super().setup(request, *args, **kwargs)
         self.year = self.kwargs["year"]
         self.simulation = Simulation(
-            [InYearExtrapolationEngine(), TwelveMonthsSummationEngine()],
+            [
+                InYearExtrapolationEngine(),
+                TwelveMonthsSummationEngine(),
+                SameAsLastMonthEngine(),
+            ],
             self.get_object(),
             year=self.year,
         )
@@ -108,7 +113,11 @@ class PersonYearEstimationMixin:
                 else:
                     qs = qs.filter(b_count=0)
 
-        for engine in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+        for engine in (
+            "InYearExtrapolationEngine",
+            "TwelveMonthsSummationEngine",
+            "SameAsLastMonthEngine",
+        ):
             qs = qs.annotate(
                 **{
                     engine: Subquery(
@@ -231,7 +240,11 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         person_years = self.get_queryset()
         half_percentile_size = Decimal(percentile_size / 2)
 
-        for key in ("InYearExtrapolationEngine", "TwelveMonthsSummationEngine"):
+        for key in (
+            "InYearExtrapolationEngine",
+            "TwelveMonthsSummationEngine",
+            "SameAsLastMonthEngine",
+        ):
             for item in person_years:
                 # if item.person.preferred_estimation_engine != key:
                 #     continue
