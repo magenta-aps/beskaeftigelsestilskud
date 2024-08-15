@@ -21,7 +21,7 @@ class EstimationEngine:
         raise NotImplementedError
 
     @classmethod
-    def subset_sum(cls, relevant: Iterable[MonthlyIncomeData]) -> Decimal:
+    def subset_sum(cls, relevant: Iterable[MonthlyIncomeData], year: int, month: int) -> Decimal:
         # Add Decimal(0) to shut MyPy up
         return Decimal(0) + sum([row.amount for row in relevant])
 
@@ -129,7 +129,6 @@ class SameAsLastMonthEngine(EstimationEngine):
     def subset_sum(
         cls, subset: Iterable[MonthlyIncomeData], year: int, month: int
     ) -> Decimal:
-
         for item in subset:
             if item.year == year and item.month == month:
                 return Decimal(item.amount)
