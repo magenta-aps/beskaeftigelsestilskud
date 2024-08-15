@@ -3,10 +3,9 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 import time
-from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
-from typing import Iterable, List
+from typing import Iterator, List
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -72,10 +71,16 @@ class Command(BaseCommand):
                 row.amount for row in subset if row.year == self._year
             )
             person_pk = subset[0].person_pk
+            first_income_month = 1
+            for month_data in subset:
+                if not month_data.amount.is_zero():
+                    first_income_month = month_data.month
+                    break
+
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
                 engine_results = []
-                for month in range(1, 13):
+                for month in range(first_income_month, 13):
                     person_month = self._get_person_month_for_row(
                         subset, self._year, month
                     )
@@ -89,15 +94,17 @@ class Command(BaseCommand):
                             engine_results.append(result)
                             results.append(result)
                 if engine_results and actual_year_sum:
-                    year_offset = sum(
-                        [resultat.diff for resultat in engine_results]
-                    ) / (actual_year_sum * len(engine_results))
+                    year_offset = (
+                        100
+                        * sum([resultat.absdiff for resultat in engine_results])
+                        / (actual_year_sum * len(engine_results))
+                    )
                 else:
-                    year_offset = Decimal(0)
+                    year_offset = None
                 summary = PersonYearEstimateSummary(
                     person_year=person_year,
                     estimation_engine=engine.__class__.__name__,
-                    offset_percent=100 * year_offset,
+                    offset_percent=year_offset,
                 )
                 summaries.append(summary)
 
@@ -142,36 +149,26 @@ class Command(BaseCommand):
             )
             .prefetch_related("monthlyaincomereport_set", "monthlybincomereport_set")
             .values(
-                _person_pk=F("person_year__person__pk"),
-                _person_month_pk=F("pk"),
-                _year=F("person_year__year__year"),
-                _month=F("month"),
+                "month",
+                person_pk=F("person_year__person__pk"),
+                person_month_pk=F("pk"),
+                year=F("person_year__year__year"),
             )
             .annotate(
-                _a_amount=sum_amount("monthlyaincomereport__amount"),
-                _b_amount=sum_amount("monthlybincomereport__amount"),
+                a_amount=sum_amount("monthlyaincomereport__amount"),
+                b_amount=sum_amount("monthlybincomereport__amount"),
             )
             .order_by(
-                "_person_pk",
-                "_year",
-                "_month",
+                "person_pk",
+                "year",
+                "month",
             )
         )
-        return [
-            MonthlyIncomeData(
-                month=value["_month"],
-                year=value["_year"],
-                a_amount=value["_a_amount"],
-                b_amount=value["_b_amount"],
-                person_pk=value["_person_pk"],
-                person_month_pk=value["_person_month_pk"],
-            )
-            for value in qs
-        ]
+        return [MonthlyIncomeData(**value) for value in qs]
 
     def _iterate_by_person(
         self, data_qs: List[MonthlyIncomeData]
-    ) -> Iterable[List[MonthlyIncomeData]]:
+    ) -> Iterator[List[MonthlyIncomeData]]:
         # Iterate over `data_qs` and yield a subset of rows for each `_person_pk`
         return (
             list(vals) for key, vals in groupby(data_qs, key=attrgetter("person_pk"))
