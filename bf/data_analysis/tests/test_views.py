@@ -304,6 +304,40 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
 
+    def test_filter_min_max_offset(self):
+
+        params = f"?min_offset={self.summary1.offset_percent-1}"
+        params += f"&max_offset={self.summary1.offset_percent+1}"
+        params += "&selected_model=TwelveMonthsSummationEngine"
+        self._view.setup(self._request_factory.get(params), year=2020)
+        response = self._view.get(self._request_factory.get(""), year=2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 1)
+
+        params = f"?min_offset={self.summary2.offset_percent-1}"
+        params += f"&max_offset={self.summary2.offset_percent+1}"
+        params += "&selected_model=InYearExtrapolationEngine"
+        self._view.setup(self._request_factory.get(params), year=2020)
+        response = self._view.get(self._request_factory.get(""), year=2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 1)
+
+        params = f"?min_offset={self.summary1.offset_percent+1}"
+        params += f"&max_offset={self.summary1.offset_percent+2}"
+        params += "&selected_model=TwelveMonthsSummationEngine"
+        self._view.setup(self._request_factory.get(params), year=2020)
+        response = self._view.get(self._request_factory.get(""), year=2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 0)
+
+        params = f"?min_offset={self.summary2.offset_percent+1}"
+        params += f"&max_offset={self.summary2.offset_percent+2}"
+        params += "&selected_model=InYearExtrapolationEngine"
+        self._view.setup(self._request_factory.get(params), year=2020)
+        response = self._view.get(self._request_factory.get(""), year=2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 0)
+
 
 class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
     view_class = HistogramView

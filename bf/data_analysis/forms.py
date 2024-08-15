@@ -49,6 +49,27 @@ class PersonYearListOptionsForm(forms.Form):
         required=False,
     )
 
+    min_offset = forms.IntegerField(
+        label="Min. offset [%]",
+        widget=forms.widgets.NumberInput(attrs={"class": "form-control"}),
+        required=False,
+    )
+    max_offset = forms.IntegerField(
+        label="Max. offset [%]",
+        widget=forms.widgets.NumberInput(attrs={"class": "form-control"}),
+        required=False,
+    )
+    selected_model = forms.ChoiceField(
+        label="Model",
+        choices=(
+            (None, "Alle"),
+            ("InYearExtrapolationEngine", "InYearExtrapolationEngine"),
+            ("TwelveMonthsSummationEngine", "TwelveMonthsSummationEngine"),
+        ),
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+    )
+
 
 class HistogramOptionsForm(PersonYearListOptionsForm):
     year = forms.ChoiceField(

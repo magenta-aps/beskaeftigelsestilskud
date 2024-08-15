@@ -14,7 +14,7 @@
 {% block content %}
     <form id="list-options" method="get" action="." class="g-3 p-2">
         <div class="row justify-content-start">
-            <div class="col-3">
+            <div class="col-3 my-1">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.has_a.label }}</div>
                     {{ form.has_a }}
@@ -29,6 +29,25 @@
             </div>
             <div class="col-3">
                 <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
+            </div>
+        <div class="row justify-content-start">
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.selected_model.label }}</div>
+                    {{ form.selected_model }}
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.min_offset.label }}</div>
+                    {{ form.min_offset }}
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.max_offset.label }}</div>
+                    {{ form.max_offset }}
+                </div>
             </div>
         </div>
     </form>
@@ -120,4 +139,13 @@
         {% endif %}
     </span>
     </div>
+
+<script nonce="{{ request.csp_nonce }}">
+function invalidateMinMax() {
+    const noValue = !$("#id_selected_model").val();
+    $("#id_min_offset,#id_max_offset").prop('disabled', noValue);
+}
+$("#id_selected_model").change(invalidateMinMax);
+invalidateMinMax()
+</script>
 {% endblock %}
