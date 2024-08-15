@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import datetime
+import math
 import time
 from decimal import Decimal
 from itertools import groupby
@@ -89,9 +90,11 @@ class Command(BaseCommand):
                             engine_results.append(result)
                             results.append(result)
                 if engine_results and actual_year_sum:
-                    year_offset = sum(
-                        [resultat.diff for resultat in engine_results]
-                    ) / (actual_year_sum * len(engine_results))
+                    # Calculate offset as standard deviation.
+                    year_offset = math.sqrt(
+                        sum([resultat.diff**2 for resultat in engine_results])
+                        / len(engine_results)
+                    ) / float(actual_year_sum)
                 else:
                     year_offset = Decimal(0)
                 summary = PersonYearEstimateSummary(
