@@ -52,7 +52,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         relevant_items = cls.relevant(subset, year, month)
         relevant_count = len(relevant_items)
         if relevant_count > 0:
-            amount_sum = cls.subset_sum(relevant_items)
+            amount_sum = cls.subset_sum(relevant_items, year, month)
             omitted_count = month - relevant_count
             year_estimate = (12 - omitted_count) * amount_sum / relevant_count
             return IncomeEstimate(
@@ -93,7 +93,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
             return None
 
         relevant_items = cls.relevant(subset, year, month)
-        year_estimate = cls.subset_sum(relevant_items)
+        year_estimate = cls.subset_sum(relevant_items, year, month)
 
         return IncomeEstimate(
             estimated_year_result=year_estimate,
