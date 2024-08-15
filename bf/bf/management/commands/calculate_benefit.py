@@ -4,6 +4,7 @@
 
 from django.core.management.base import BaseCommand
 
+from bf.exceptions import EstimationEngineUnset
 from bf.models import PersonMonth
 
 
@@ -15,6 +16,7 @@ class Command(BaseCommand):
         parser.add_argument("--cpr", type=int)
 
     def handle(self, *args, **kwargs):
+        self._verbose = kwargs["verbosity"] > 1
 
         if kwargs["cpr"]:
             months = PersonMonth.objects.filter(
@@ -25,6 +27,7 @@ class Command(BaseCommand):
             months = PersonMonth.objects.filter(
                 person_year__year__year=kwargs["year"],
             )
+        months = months.filter(incomeestimate__isnull=False)
 
         month = kwargs["month"]
         if month and month >= 1 and month <= 12:
@@ -34,5 +37,12 @@ class Command(BaseCommand):
             "person_year__person", "month"
         )
         for person_month in months:
-            person_month.calculate_benefit()
-            person_month.save()
+            try:
+                person_month.calculate_benefit()
+                person_month.save()
+            except EstimationEngineUnset as e:
+                self._write_verbose(str(e))
+
+    def _write_verbose(self, msg, **kwargs):
+        if self._verbose:
+            self.stdout.write(msg, **kwargs)

@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import Iterable
+from typing import Sequence
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -19,6 +19,8 @@ from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
+
+from bf.exceptions import EstimationEngineUnset
 
 
 class WorkingTaxCreditCalculationMethod(models.Model):
@@ -343,12 +345,19 @@ class PersonMonth(models.Model):
 
     def calculate_benefit(self) -> Decimal:
         if not self.person.preferred_estimation_engine:
-            raise Exception(
-                f"Preferred estimation engine is not set for person {self.person}"
-            )
-        estimated_year_income = self.incomeestimate_set.get(
-            engine=self.person.preferred_estimation_engine
-        ).estimated_year_result
+            raise EstimationEngineUnset(self.person)
+        try:
+            estimated_year_income = self.incomeestimate_set.get(
+                engine=self.person.preferred_estimation_engine
+            ).estimated_year_result
+        except IncomeEstimate.DoesNotExist:  # pragma: nocover
+            # TODO: preferred_estimation_engine skal ikke være fast for en person,
+            # men defineres over en daterange, dvs. for en given range er en engine
+            # preferred for en person.
+            # Vi kommer hertil fordi en engine, f.eks. TwelveMonthSum, er preferred,
+            # men der foreligger ikke nogen estimater fordi vi er i det første år
+            # af personens indkomst
+            return Decimal(0)
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
         self.estimated_year_benefit = self.person_year.calculate_benefit(
@@ -473,7 +482,7 @@ class MonthlyIncomeReport(models.Model):
         created: bool,
         raw: bool,
         using: str,
-        update_fields: Iterable[str] | None,
+        update_fields: Sequence[str] | None,
         **kwargs,
     ):
         if update_fields is None or "amount" in update_fields:
@@ -702,4 +711,5 @@ class PersonYearEstimateSummary(models.Model):
     offset_percent = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        null=True,
     )
