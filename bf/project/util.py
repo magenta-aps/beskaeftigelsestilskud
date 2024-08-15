@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from collections import defaultdict
-from typing import Callable, Iterable, List, TypeVar
+from typing import Callable, Dict, Iterable, List, TypeVar
 
 from django.db.models import QuerySet
 
@@ -42,3 +42,7 @@ def trim_list_first(items: Iterable[T], filter: Callable[[T], bool]) -> List[T]:
         if found:
             output.append(item)
     return output
+
+
+def params_no_none(items: Dict[str, int | str | None]) -> Dict[str, int | str]:
+    return {key: (value if value is not None else "") for key, value in items.items()}
