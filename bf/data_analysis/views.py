@@ -91,6 +91,12 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
 
 class PersonYearEstimationMixin:
 
+    engines = (
+        "InYearExtrapolationEngine",
+        "TwelveMonthsSummationEngine",
+        "SameAsLastMonthEngine",
+    )
+
     def get_queryset(self):
         qs = PersonYear.objects.filter(year=self.year).select_related("person")
 
@@ -113,20 +119,26 @@ class PersonYearEstimationMixin:
                 else:
                     qs = qs.filter(b_count=0)
 
-        for engine in (
-            "InYearExtrapolationEngine",
-            "TwelveMonthsSummationEngine",
-            "SameAsLastMonthEngine",
-        ):
-            qs = qs.annotate(
-                **{
-                    engine: Subquery(
-                        PersonYearEstimateSummary.objects.filter(
-                            person_year=OuterRef("pk"), estimation_engine=engine
-                        ).values("offset_percent")
-                    )
-                }
-            )
+            for engine in self.engines:
+                qs = qs.annotate(
+                    **{
+                        engine: Subquery(
+                            PersonYearEstimateSummary.objects.filter(
+                                person_year=OuterRef("pk"), estimation_engine=engine
+                            ).values("offset_percent")
+                        )
+                    }
+                )
+
+            selected_model = form.cleaned_data["selected_model"]
+            min_offset = form.cleaned_data["min_offset"]
+            max_offset = form.cleaned_data["max_offset"]
+
+            if selected_model in self.engines:
+                if min_offset is not None:
+                    qs = qs.filter(**{f"{selected_model}__gte": min_offset})
+                if max_offset is not None:
+                    qs = qs.filter(**{f"{selected_model}__lte": max_offset})
 
         # Originally this annotated on the sum of
         # personmonth__monthlyaincomereport__amount, but that produced weird
@@ -222,10 +234,10 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         # Get the initial value (URL) for the `year` form field.
         # Since this form is bound, we need to pass the initial value via
         # the `data` form kwarg.
-        year_initial_value = self.form_class().get_year_url(
-            Year.objects.get(year=self.kwargs["year"])
-        )
-        kwargs["data"]["year"] = year_initial_value
+        year = Year.objects.get(year=self.kwargs["year"])
+        year_url = self.form_class().get_year_url(year)
+        kwargs["data"]["year"] = year_url
+        kwargs["data"]["year_val"] = year
         return kwargs
 
     def get_percentile_size(self):

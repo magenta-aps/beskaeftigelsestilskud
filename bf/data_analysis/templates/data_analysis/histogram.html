@@ -131,6 +131,23 @@ const getChartData = function (histo, key, percentileSize, options) {
             return `${val}%`;
         }
     }
+    
+    chartData.xaxis.categories = keys;
+    chartData.chart.events = {
+        dataPointSelection: function(event, chartContext, opts) {
+            const labels = chartContext.grid.xaxisLabels;
+            const clicked_label = labels[opts.dataPointIndex];    
+            let search_params = "?min_offset=" + (parseInt(clicked_label) - {{form.data.resolution}}/2);
+            search_params += "&max_offset=" + (parseInt(clicked_label) + {{form.data.resolution}}/2);
+            search_params += "&selected_model=" + chartContext.opts.chart.id;
+            search_params += "&has_a={{form.data.has_a}}"; 
+            search_params += "&has_b={{form.data.has_b}}"; 
+                      
+            url = '{% url "data_analysis:person_years" year=form.data.year_val %}' + search_params;
+            window.open(url);
+        }
+    }
+    
     // Absolute scale formatter
     chartData.yaxis.labels = {
         formatter: function (value, timestamp, opts) {
