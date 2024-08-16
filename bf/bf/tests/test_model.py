@@ -118,6 +118,7 @@ class ModelTest(TestCase):
         IncomeEstimate.objects.create(
             person_month=cls.month1,
             estimated_year_result=12 * 10000 + 12 * 15000,
+            actual_year_result=12 * 10000 + 12 * 15000,
             engine="InYearExtrapolationEngine",
         )
         cls.report6 = MonthlyAIncomeReport.objects.create(
@@ -131,6 +132,7 @@ class ModelTest(TestCase):
         IncomeEstimate.objects.create(
             person_month=cls.month2,
             estimated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
+            actual_year_result=12 * 10000 + 12 * 15000,
             engine="InYearExtrapolationEngine",
         )
         cls.report7 = MonthlyAIncomeReport.objects.create(
@@ -145,6 +147,7 @@ class ModelTest(TestCase):
             person_month=cls.month3,
             estimated_year_result=4 * (10000 + 11000 + 12000)
             + 4 * (15000 + 12000 + 10000),
+            actual_year_result=12 * 10000 + 12 * 15000,
             engine="InYearExtrapolationEngine",
         )
         cls.report8 = MonthlyAIncomeReport.objects.create(
@@ -159,6 +162,7 @@ class ModelTest(TestCase):
             person_month=cls.month4,
             estimated_year_result=3 * (10000 + 11000 + 12000 + 13000)
             + 3 * (15000 + 12000 + 10000 + 8000),
+            actual_year_result=12 * 10000 + 12 * 15000,
             engine="InYearExtrapolationEngine",
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(

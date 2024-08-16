@@ -156,6 +156,8 @@ class Person(models.Model):
             ),
         ),
         null=True,
+        # The default model is the simplest model; Makes debugging easier.
+        default="SameAsLastMonthEngine",
     )
 
     @classmethod
@@ -274,6 +276,12 @@ class PersonMonth(models.Model):
         null=True,
         blank=True,
     )
+    actual_year_benefit = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     prior_benefit_paid = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -347,9 +355,11 @@ class PersonMonth(models.Model):
         if not self.person.preferred_estimation_engine:
             raise EstimationEngineUnset(self.person)
         try:
-            estimated_year_income = self.incomeestimate_set.get(
+            income_estimate = self.incomeestimate_set.get(
                 engine=self.person.preferred_estimation_engine
-            ).estimated_year_result
+            )
+            estimated_year_income = income_estimate.estimated_year_result
+            actual_year_income = income_estimate.actual_year_result
         except IncomeEstimate.DoesNotExist:  # pragma: nocover
             # TODO: preferred_estimation_engine skal ikke være fast for en person,
             # men defineres over en daterange, dvs. for en given range er en engine
@@ -363,6 +373,10 @@ class PersonMonth(models.Model):
         self.estimated_year_benefit = self.person_year.calculate_benefit(
             estimated_year_income
         )
+        if actual_year_income:
+            self.actual_year_benefit = self.person_year.calculate_benefit(
+                actual_year_income
+            )
 
         # Tidligere måneder i året for denne person
         prior_months = self.person_year.personmonth_set.filter(month__lt=self.month)
