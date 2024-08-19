@@ -21,7 +21,7 @@ from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import FormView, UpdateView
 from django.views.generic.list import ListView
-from project.util import strtobool
+from project.util import params_no_none, strtobool
 
 from bf.estimation import (
     EstimationEngine,
@@ -200,7 +200,7 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
 
         form = context["form"]
         form.full_clean()
-        params = copy.copy(form.cleaned_data)
+        params = params_no_none(form.cleaned_data)
         current_order_by = params.pop("order_by", None) or self.default_ordering
         params["page"] = context["page_obj"].number
         sort_params = {}
