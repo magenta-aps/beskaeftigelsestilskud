@@ -37,7 +37,8 @@ class PersonYearListOptionsForm(forms.Form):
             (f"{prefix}{field}", f"{prefix}{field}")
             for field in (
                 ("person__cpr",)
-                + engine_keys
+                + tuple([ek + "_mean_error" for ek in engine_keys])
+                + tuple([ek + "_rmse" for ek in engine_keys])
                 + (
                     "actual_sum",
                     "payout",
@@ -61,11 +62,12 @@ class PersonYearListOptionsForm(forms.Form):
         required=False,
     )
     selected_model = forms.ChoiceField(
-        label="Model",
+        label="Model / metric",
         choices=[
             (None, "Alle"),
         ]
-        + [(engine, engine) for engine in engine_keys],
+        + [(engine + "_mean_error", engine + " (ME)") for engine in engine_keys]
+        + [(engine + "_rmse", engine + " (RMSE)") for engine in engine_keys],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
@@ -87,6 +89,15 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Opløsning"),
+    )
+    metric = forms.ChoiceField(
+        choices=[
+            ("mean_error", "Gennemsnitlig afvigelse"),
+            ("rmse", "Kvadratroden af den gennemsnitlige kvadratafvigelse"),
+        ],
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("Metrik"),
     )
 
     def __init__(self, *args, **kwargs):
