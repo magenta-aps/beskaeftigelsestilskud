@@ -5,7 +5,7 @@ from django import forms
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from bf.models import PersonYear, Year
+from bf.models import IncomeEstimate, PersonYear, Year
 
 
 class PersonYearListOptionsForm(forms.Form):
@@ -36,9 +36,7 @@ class PersonYearListOptionsForm(forms.Form):
             (f"{prefix}{field}", f"{prefix}{field}")
             for field in (
                 "person__cpr",
-                "InYearExtrapolationEngine",
-                "TwelveMonthsSummationEngine",
-                "SameAsLastMonthEngine",
+            ) + IncomeEstimate.engine_keys + (
                 "actual_sum",
                 "payout",
                 "correct_payout",
@@ -61,11 +59,10 @@ class PersonYearListOptionsForm(forms.Form):
     )
     selected_model = forms.ChoiceField(
         label="Model",
-        choices=(
+        choices=[
             (None, "Alle"),
-            ("InYearExtrapolationEngine", "InYearExtrapolationEngine"),
-            ("TwelveMonthsSummationEngine", "TwelveMonthsSummationEngine"),
-        ),
+        ]
+        + [(engine, engine) for engine in IncomeEstimate.engine_keys],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
