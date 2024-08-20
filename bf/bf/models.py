@@ -20,6 +20,7 @@ from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
 
+from bf.data import engine_choices
 from bf.exceptions import EstimationEngineUnset
 
 
@@ -136,25 +137,7 @@ class Person(models.Model):
 
     preferred_estimation_engine = models.CharField(
         max_length=100,
-        choices=(
-            # We could create this list with [
-            #     (cls.__name__, cls.description)
-            #     for cls in EstimationEngine.__subclasses__()
-            # ]
-            # but that would make a circular import
-            (
-                "InYearExtrapolationEngine",
-                "Ekstrapolation af beløb for måneder i indeværende år",
-            ),
-            (
-                "TwelveMonthsSummationEngine",
-                "Summation af beløb for de seneste 12 måneder",
-            ),
-            (
-                "SameAsLastMonthEngine",
-                "Ekstrapolation af beløb for den seneste måned",
-            ),
-        ),
+        choices=engine_choices,
         null=True,
     )
 
@@ -616,28 +599,7 @@ class IncomeEstimate(models.Model):
     class Meta:
         unique_together = (("engine", "person_month"),)
 
-    engine = models.CharField(
-        max_length=100,
-        choices=(
-            # We could create this list with [
-            #     (cls.__name__, cls.description)
-            #     for cls in EstimationEngine.__subclasses__()
-            # ]
-            # but that would make a circular import
-            (
-                "InYearExtrapolationEngine",
-                "Ekstrapolation af beløb for måneder i indeværende år",
-            ),
-            (
-                "TwelveMonthsSummationEngine",
-                "Summation af beløb for de seneste 12 måneder",
-            ),
-            (
-                "SameAsLastMonthEngine",
-                "Ekstrapolation af beløb for den seneste måned",
-            ),
-        ),
-    )
+    engine = models.CharField(max_length=100, choices=engine_choices)
 
     person_month = models.ForeignKey(
         PersonMonth, null=True, blank=True, on_delete=models.CASCADE

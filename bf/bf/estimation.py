@@ -27,6 +27,14 @@ class EstimationEngine:
         # Add Decimal(0) to shut MyPy up
         return Decimal(0) + sum([row.amount for row in relevant])
 
+    @staticmethod
+    def classes():
+        return EstimationEngine.__subclasses__()
+
+    @staticmethod
+    def instances():
+        return [cls() for cls in EstimationEngine.classes()]
+
 
 """
 Forslag til beregningsmetoder:

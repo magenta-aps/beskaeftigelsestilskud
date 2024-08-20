@@ -23,12 +23,8 @@ from django.views.generic import FormView, UpdateView
 from django.views.generic.list import ListView
 from project.util import params_no_none, strtobool
 
-from bf.estimation import (
-    EstimationEngine,
-    InYearExtrapolationEngine,
-    SameAsLastMonthEngine,
-    TwelveMonthsSummationEngine,
-)
+from bf.data import engine_keys
+from bf.estimation import EstimationEngine
 from bf.models import Person, PersonMonth, PersonYear, PersonYearEstimateSummary, Year
 from bf.simulation import Simulation
 
@@ -66,11 +62,7 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
         super().setup(request, *args, **kwargs)
         self.year = self.kwargs["year"]
         self.simulation = Simulation(
-            [
-                InYearExtrapolationEngine(),
-                TwelveMonthsSummationEngine(),
-                SameAsLastMonthEngine(),
-            ],
+            EstimationEngine.instances(),
             self.get_object(),
             year=self.year,
         )
@@ -90,12 +82,6 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
 
 
 class PersonYearEstimationMixin:
-
-    engines = (
-        "InYearExtrapolationEngine",
-        "TwelveMonthsSummationEngine",
-        "SameAsLastMonthEngine",
-    )
 
     def get_queryset(self):
         qs = PersonYear.objects.filter(year=self.year).select_related("person")
@@ -119,7 +105,7 @@ class PersonYearEstimationMixin:
                 else:
                     qs = qs.filter(b_count=0)
 
-            for engine in self.engines:
+            for engine in engine_keys:
                 qs = qs.annotate(
                     **{
                         engine: Subquery(
@@ -134,7 +120,7 @@ class PersonYearEstimationMixin:
             min_offset = form.cleaned_data["min_offset"]
             max_offset = form.cleaned_data["max_offset"]
 
-            if selected_model in self.engines:
+            if selected_model in engine_keys:
                 if min_offset is not None:
                     qs = qs.filter(**{f"{selected_model}__gte": min_offset})
                 if max_offset is not None:
@@ -252,11 +238,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         person_years = self.get_queryset()
         half_percentile_size = Decimal(percentile_size / 2)
 
-        for key in (
-            "InYearExtrapolationEngine",
-            "TwelveMonthsSummationEngine",
-            "SameAsLastMonthEngine",
-        ):
+        for key in engine_keys:
             for item in person_years:
                 # if item.person.preferred_estimation_engine != key:
                 #     continue
