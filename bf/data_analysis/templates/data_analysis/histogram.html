@@ -108,13 +108,10 @@ const getChartData = function (histo, key, percentileSize, options) {
     keys.sort(function(a,b){return a - b});
      
     for (const percentile of keys) {
-        const percentageValue = 100.0 * (histo[percentile] / totalObservations);
-        if (percentageValue >= 0.1) {
-            items.push({
-                x: percentile,
-                y: histo[percentile],
-            });
-        }
+        items.push({
+            x: percentile,
+            y: histo[percentile],
+        });
     }
     series.push({
         data: items,
