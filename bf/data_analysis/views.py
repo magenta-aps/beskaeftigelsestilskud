@@ -38,6 +38,7 @@ from bf.models import (
     Year,
 )
 from bf.simulation import Simulation
+from bf.data import engine_keys
 
 
 class SimulationJSONEncoder(DjangoJSONEncoder):
@@ -94,8 +95,6 @@ class PersonAnalysisView(LoginRequiredMixin, UpdateView):
 
 class PersonYearEstimationMixin:
 
-    engines = IncomeEstimate.engine_keys
-
     def get_queryset(self):
         qs = PersonYear.objects.filter(year=self.year).select_related("person")
 
@@ -118,7 +117,7 @@ class PersonYearEstimationMixin:
                 else:
                     qs = qs.filter(b_count=0)
 
-            for engine in self.engines:
+            for engine in engine_keys:
                 qs = qs.annotate(
                     **{
                         engine: Subquery(
@@ -133,7 +132,7 @@ class PersonYearEstimationMixin:
             min_offset = form.cleaned_data["min_offset"]
             max_offset = form.cleaned_data["max_offset"]
 
-            if selected_model in self.engines:
+            if selected_model in engine_keys:
                 if min_offset is not None:
                     qs = qs.filter(**{f"{selected_model}__gte": min_offset})
                 if max_offset is not None:
@@ -251,7 +250,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         person_years = self.get_queryset()
         half_percentile_size = Decimal(percentile_size / 2)
 
-        for key in IncomeEstimate.engine_keys:
+        for key in engine_keys:
             for item in person_years:
                 # if item.person.preferred_estimation_engine != key:
                 #     continue

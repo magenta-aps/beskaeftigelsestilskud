@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from bf.models import IncomeEstimate, PersonYear, Year
+from bf.data import engine_keys
 
 
 class PersonYearListOptionsForm(forms.Form):
@@ -36,7 +37,7 @@ class PersonYearListOptionsForm(forms.Form):
             (f"{prefix}{field}", f"{prefix}{field}")
             for field in (
                 "person__cpr",
-            ) + IncomeEstimate.engine_keys + (
+            ) + engine_keys + (
                 "actual_sum",
                 "payout",
                 "correct_payout",
@@ -62,7 +63,7 @@ class PersonYearListOptionsForm(forms.Form):
         choices=[
             (None, "Alle"),
         ]
-        + [(engine, engine) for engine in IncomeEstimate.engine_keys],
+        + [(engine, engine) for engine in engine_keys],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
