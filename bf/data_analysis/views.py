@@ -23,6 +23,7 @@ from django.views.generic import FormView, UpdateView
 from django.views.generic.list import ListView
 from project.util import params_no_none, strtobool
 
+from bf.data import engine_keys
 from bf.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
@@ -38,7 +39,6 @@ from bf.models import (
     Year,
 )
 from bf.simulation import Simulation
-from bf.data import engine_keys
 
 
 class SimulationJSONEncoder(DjangoJSONEncoder):

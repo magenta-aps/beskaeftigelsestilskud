@@ -5,8 +5,8 @@ from django import forms
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from bf.models import IncomeEstimate, PersonYear, Year
 from bf.data import engine_keys
+from bf.models import IncomeEstimate, PersonYear, Year
 
 
 class PersonYearListOptionsForm(forms.Form):
@@ -35,9 +35,9 @@ class PersonYearListOptionsForm(forms.Form):
     order_by = forms.ChoiceField(
         choices=(
             (f"{prefix}{field}", f"{prefix}{field}")
-            for field in (
-                "person__cpr",
-            ) + engine_keys + (
+            for field in ("person__cpr",)
+            + engine_keys
+            + (
                 "actual_sum",
                 "payout",
                 "correct_payout",

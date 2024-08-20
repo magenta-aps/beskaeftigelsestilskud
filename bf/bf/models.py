@@ -20,8 +20,8 @@ from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from simple_history.models import HistoricalRecords
 
-from bf.exceptions import EstimationEngineUnset
 from bf.data import engine_choices
+from bf.exceptions import EstimationEngineUnset
 
 
 class WorkingTaxCreditCalculationMethod(models.Model):

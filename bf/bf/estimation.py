@@ -35,6 +35,7 @@ class EstimationEngine:
     def instances():
         return [cls() for cls in EstimationEngine.classes()]
 
+
 """
 Forslag til beregningsmetoder:
 
