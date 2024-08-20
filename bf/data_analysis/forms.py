@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from bf.data import engine_keys
-from bf.models import IncomeEstimate, PersonYear, Year
+from bf.models import PersonYear, Year
 
 
 class PersonYearListOptionsForm(forms.Form):
