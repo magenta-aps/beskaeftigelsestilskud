@@ -62,6 +62,7 @@ services:
       - LOAD_FIXTURES=false
       - MAKEMESSAGES=false
       - PULL_IDP_METADATA=false
+      - CREATE_DUMMY_ADMIN=false
       - TEST=false
       - HOME=/tmp/
     network_mode: "host"
