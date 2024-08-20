@@ -67,9 +67,6 @@ class Command(BaseCommand):
         summaries = []
         for idx, subset in enumerate(self._iterate_by_person(data_qs)):
             self._write_verbose(f"{idx}", ending="\r")
-            actual_year_sum = sum(
-                row.amount for row in subset if row.year == self._year
-            )
             person_pk = subset[0].person_pk
             first_income_month = 1
             for month_data in subset:
@@ -83,6 +80,12 @@ class Command(BaseCommand):
                 for month in range(first_income_month, 13):
                     person_month = self._get_person_month_for_row(
                         subset, self._year, month
+                    )
+
+                    actual_year_sum = sum(
+                        row.amount
+                        for row in subset
+                        if row.year == self._year and row.month <= month
                     )
                     if person_month is not None:
                         result: IncomeEstimate = engine.estimate(

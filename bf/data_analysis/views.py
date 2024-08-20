@@ -185,8 +185,8 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
         qs = qs.annotate(
             correct_payout=Subquery(
                 PersonMonth.objects.filter(person_year=OuterRef("pk"))
-                .filter(month=12)
-                .values("actual_year_benefit")
+                .order_by("-month")
+                .values("actual_year_benefit")[:1]
             )
         )
         qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
