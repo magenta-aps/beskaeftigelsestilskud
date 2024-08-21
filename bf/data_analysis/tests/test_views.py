@@ -50,7 +50,7 @@ class TestSimulationJSONEncoder(TestCase):
             "full_address": None,
             "id": cls.person.pk,
             "name": None,
-            "preferred_estimation_engine": None,
+            "preferred_estimation_engine": "SameAsLastMonthEngine",
         }
 
     def test_can_serialize_dataclass(self):
