@@ -105,7 +105,7 @@ const chartOptions = {
 };
 
 // Build chart data
-const getChartData = function (histo, key, percentileSize, options) {
+const getChartData = function (histo, key, percentileSize, unit, options) {
     const series = [];
     const totalObservations = Object.values(histo).reduce(function (a, b) { return a + b} );
 
@@ -132,8 +132,14 @@ const getChartData = function (histo, key, percentileSize, options) {
     chartData.xaxis.labels = {
         formatter: function (value, timestamp, opts) {
             const val = parseInt(value, 10);
-            return `${val}%`;
+            return `${val}` + unit;           
         }
+    }
+       
+    if (key == "payout_offset")   {    
+        chartData.xaxis.title.text = "Afvigelse mellem estimeret og reel udbetaling [kr]"
+    } else {
+        chartData.xaxis.title.text = "Afvigelse mellem estimeret og reel årsindkomst [%]"
     }
     
     chartData.xaxis.categories = keys;
@@ -141,9 +147,14 @@ const getChartData = function (histo, key, percentileSize, options) {
         dataPointSelection: function(event, chartContext, opts) {
             const labels = chartContext.grid.xaxisLabels;
             const clicked_label = labels[opts.dataPointIndex];    
+            var metric = "{{form.data.metric}}"
             let search_params = "?min_offset=" + (parseInt(clicked_label) - {{form.data.resolution}}/2);
             search_params += "&max_offset=" + (parseInt(clicked_label) + {{form.data.resolution}}/2);
-            search_params += "&selected_model=" + chartContext.opts.chart.id + "_{{form.data.metric}}" ;
+            if (metric == "payout_offset"){
+                search_params += "&selected_model=" + metric ;
+            } else {
+                search_params += "&selected_model=" + chartContext.opts.chart.id + "_" + metric ;
+            }
             search_params += "&has_a={{form.data.has_a}}"; 
             search_params += "&has_b={{form.data.has_b}}"; 
                       
@@ -160,8 +171,10 @@ const getChartData = function (histo, key, percentileSize, options) {
         }
     }   
     chartData.tooltip.x= {formatter : function(val) {
-        return val + " ± " +  percentileSize/2 + "%";
+        return val + " ± " +  percentileSize/2 + unit;
+
     }}
+    
     chartData.tooltip.y= {formatter : function(val) {
         return val +" (" + Math.round(100 * (val / totalObservations) * 10)/10 + "%)";
     }}
@@ -195,12 +208,42 @@ $(document).ready(
             $(rootElemName).append(chartElem);
 
             // Get chart data
-            const chartData = getChartData(histo, key, doc.percentile_size, chartOptions);
+            const chartData = getChartData(histo, key, doc.resolution, doc.unit, chartOptions);
 
             // Render chart into DOM element
             const chart = new ApexCharts(chartElem.get(0), chartData);
             chart.render();
         }
+        
+        function invalidateResolution() {
+            // Invalidate resulutions with unit = % when we want to display metrics with 
+            // unit = kr. And the other way around. 
+            metric = $("#id_metric").val();
+
+            selected_resolution = $("#id_resolution").val();           
+            const available_resolutions = [];
+            $("#id_resolution option").each(function(){               
+                txt = $(this).text();
+                resolution = $(this).val();
+                                              
+                if (metric=="payout_offset" && txt.includes("%")){
+                    $(this).hide();
+                } else if (metric!="payout_offset" && txt.includes("kr")) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                    available_resolutions.push(resolution);
+                }
+            });   
+            
+            // Select one of the available resolutions, if the selected resultion is now
+            // hidden        
+            if (!available_resolutions.includes(selected_resolution)){
+                $("#id_resolution").val(available_resolutions[1]);
+            }         
+        }
+        $("#id_metric").change(invalidateResolution);
+        invalidateResolution();
     }
 )
 

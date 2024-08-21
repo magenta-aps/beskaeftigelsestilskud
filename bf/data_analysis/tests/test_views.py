@@ -164,6 +164,8 @@ class PersonYearEstimationSetupMixin:
             person_year=cls.person_year,
             month=1,
             import_date=date(2020, 1, 1),
+            actual_year_benefit=200,
+            benefit_paid=150,
         )
         cls.a_income_report, _ = MonthlyAIncomeReport.objects.get_or_create(
             person_month=cls.person_month,
@@ -356,32 +358,33 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
             ("?resolution=10", "10"),
             ("?resolution=1", "1"),
         ]
-        for query, percentile_size in tests:
-            with self.subTest(f"resolution={percentile_size}"):
+        for query, resolution in tests:
+            with self.subTest(f"resolution={resolution}"):
                 self._view.setup(self._request_factory.get(query), year=2020)
                 form_kwargs = self._view.get_form_kwargs()
-                self.assertEqual(form_kwargs["data"]["resolution"], percentile_size)
+                self.assertEqual(form_kwargs["data"]["resolution"], resolution)
                 expected_year_url = self._view.form_class().get_year_url(self.year)
                 self.assertEqual(form_kwargs["data"]["year"], expected_year_url)
 
-    def test_get_percentile_size_from_form(self):
+    def test_get_resolution_from_form(self):
         tests = [
             ("", 10),
             ("?resolution=10", 10),
             ("?resolution=1", 1),
             ("?resolution=invalid", 10),
         ]
-        for query, percentile_size in tests:
-            with self.subTest(f"resolution={percentile_size}"):
+        for query, resolution in tests:
+            with self.subTest(f"resolution={resolution}"):
                 self._view.setup(self._request_factory.get(query), year=2020)
                 # self._view.get(self._request_factory.get(query), year=2020)
-                self.assertEqual(self._view.get_percentile_size(), percentile_size)
+                self.assertEqual(self._view.get_resolution(), resolution)
 
     def test_get_metric_from_form(self):
         tests = [
             ("", "mean_error"),
             ("?metric=mean_error", "mean_error"),
             ("?metric=rmse", "rmse"),
+            ("?metric=payout_offset", "payout_offset"),
             ("?metric=invalid", "mean_error"),
         ]
         for query, metric in tests:
@@ -395,30 +398,52 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
             ("&resolution=10", 10),
             ("&resolution=1", 1),
         ]
-        for query, percentile_size in tests:
-            with self.subTest(f"resolution={percentile_size}"):
-                url = f"?format=json{query}"
-                self._view.setup(self._request_factory.get(url), year=2020)
-                response = self._view.get(self._request_factory.get(url))
-                self.assertIsInstance(response, HttpResponse)
-                self.assertJSONEqual(
-                    response.content,
-                    {
-                        "data": {
-                            "InYearExtrapolationEngine": self._get_expected_histogram(
-                                "50",
-                                1,
-                                size=percentile_size,
-                            ),
-                            "TwelveMonthsSummationEngine": self._get_expected_histogram(
-                                "0",
-                                1,
-                                size=percentile_size,
-                            ),
-                        },
-                        "percentile_size": percentile_size,
+        for query, resolution in tests:
+            url = f"?format=json{query}"
+            self._view.setup(self._request_factory.get(url), year=2020)
+            response = self._view.get(self._request_factory.get(url))
+            self.assertIsInstance(response, HttpResponse)
+
+            self.assertJSONEqual(
+                response.content,
+                {
+                    "data": {
+                        "InYearExtrapolationEngine": self._get_expected_histogram(
+                            "50",
+                            1,
+                            size=resolution,
+                        ),
+                        "TwelveMonthsSummationEngine": self._get_expected_histogram(
+                            "0",
+                            1,
+                            size=resolution,
+                        ),
                     },
-                )
+                    "resolution": resolution,
+                    "unit": "%",
+                },
+            )
+
+    def test_payout_offset_histogram(self):
+        url = "?format=json&resolution=200&metric=payout_offset"
+        self._view.setup(self._request_factory.get(url), year=2020)
+        response = self._view.get(self._request_factory.get(url))
+        self.assertIsInstance(response, HttpResponse)
+
+        self.assertJSONEqual(
+            response.content,
+            {
+                "data": {
+                    "payout_offset": self._get_expected_histogram(
+                        "0",
+                        1,
+                        size=200,
+                    ),
+                },
+                "resolution": 200,
+                "unit": "kr",
+            },
+        )
 
     def _get_expected_histogram(self, bucket, count, size=10):
         data = dict.fromkeys([str(bucket) for bucket in range(0, 100, size)], 0)

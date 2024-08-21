@@ -123,18 +123,6 @@ class PersonYearEstimationMixin:
                 }
             )
 
-        if form.is_valid():
-
-            selected_model = form.cleaned_data["selected_model"]
-            min_offset = form.cleaned_data["min_offset"]
-            max_offset = form.cleaned_data["max_offset"]
-
-            if selected_model.split("_")[0] in engine_keys:
-                if min_offset is not None:
-                    qs = qs.filter(**{f"{selected_model}__gte": min_offset})
-                if max_offset is not None:
-                    qs = qs.filter(**{f"{selected_model}__lte": max_offset})
-
         # Originally this annotated on the sum of
         # personmonth__monthlyaincomereport__amount, but that produced weird
         # results in other annotations, such as Sum("personmonth__benefit_paid")
@@ -145,6 +133,28 @@ class PersonYearEstimationMixin:
         qs = qs.annotate(
             actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
         )
+
+        qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
+
+        qs = qs.annotate(
+            correct_payout=Subquery(
+                PersonMonth.objects.filter(person_year=OuterRef("pk"))
+                .order_by("-month")
+                .values("actual_year_benefit")[:1]
+            )
+        )
+        qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
+
+        if form.is_valid():
+            selected_model = form.cleaned_data.get("selected_model", None)
+            min_offset = form.cleaned_data.get("min_offset", None)
+            max_offset = form.cleaned_data.get("max_offset", None)
+
+            if selected_model:
+                if min_offset is not None:
+                    qs = qs.filter(**{f"{selected_model}__gte": min_offset})
+                if max_offset is not None:
+                    qs = qs.filter(**{f"{selected_model}__lte": max_offset})
 
         return qs
 
@@ -173,19 +183,6 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
 
     def get_queryset(self):
         qs = super().get_queryset()
-
-        # `None` is an accepted value here, when benefits have not been calculated yet
-        qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
-
-        qs = qs.annotate(
-            correct_payout=Subquery(
-                PersonMonth.objects.filter(person_year=OuterRef("pk"))
-                .order_by("-month")
-                .values("actual_year_benefit")[:1]
-            )
-        )
-        qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
-
         qs = qs.order_by(*self.get_ordering())
         return qs
 
@@ -237,7 +234,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         kwargs["data"]["year_val"] = year
         return kwargs
 
-    def get_percentile_size(self):
+    def get_resolution(self):
         form = self.get_form()
         if form.is_valid():
             return int(form.cleaned_data["resolution"])
@@ -249,29 +246,42 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
             return form.cleaned_data["metric"]
         return "mean_error"
 
+    def get_resolution_label(self):
+        metric = self.get_resolution()
+        form = self.get_form()
+        return dict(form.fields["resolution"].choices)[metric]
+
     def get_histogram(self) -> dict:
-        percentile_size = self.get_percentile_size()
+        resolution = self.get_resolution()
         metric = self.get_metric()
         observations: defaultdict = defaultdict(Counter)
         person_years = self.get_queryset()
-        half_percentile_size = Decimal(percentile_size / 2)
-        for key in engine_keys:
+        half_resolution = Decimal(resolution / 2)
+
+        keys = (metric,) if metric == "payout_offset" else engine_keys
+
+        for key in keys:
             for item in person_years:
-                # if item.person.preferred_estimation_engine != key:
-                #     continue
-                val = getattr(item, key + f"_{metric}", None)
+                if key in engine_keys:
+                    val = getattr(item, key + f"_{metric}", None)
+                else:
+                    val = getattr(item, metric, None)
 
                 if val is not None:
                     # Bucket 0 contains values between -5 and 5
                     # Bucket 10 contains values between 5 and 15
                     # And so on
-                    centered_val = val + half_percentile_size
-                    bucket = int(percentile_size * (centered_val // percentile_size))
+                    sign = -1 if val < 0 else 1
+                    centered_val = (abs(val) + half_resolution) * sign
+                    bucket = int(resolution * (centered_val // resolution))
                     observations[key][bucket] += 1
 
         for counter in observations.values():
-            for bucket in range(0, 100, percentile_size):
+            for bucket in range(0, 100, resolution):
                 if bucket not in counter:
                     counter[bucket] = 0
 
-        return {"data": observations, "percentile_size": percentile_size}
+        resolution_label = self.get_resolution_label()
+        unit = "%" if "%" in resolution_label else "kr"
+
+        return {"data": observations, "resolution": resolution, "unit": unit}
