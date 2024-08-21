@@ -20,3 +20,4 @@ fi
 
 docker exec bf bash -c "python manage.py estimate_income 2022"
 docker exec bf bash -c "python manage.py estimate_income 2023"
+docker exec bf bash -c "python manage.py autoselect_estimation_engine"

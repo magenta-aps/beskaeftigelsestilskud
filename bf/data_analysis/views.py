@@ -19,13 +19,21 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
-from django.views.generic import FormView, UpdateView
+from django.urls import reverse
+from django.views.generic import DetailView, FormView
 from django.views.generic.list import ListView
 from project.util import params_no_none, strtobool
 
 from bf.data import engine_keys
 from bf.estimation import EstimationEngine
-from bf.models import Person, PersonMonth, PersonYear, PersonYearEstimateSummary, Year
+from bf.models import (
+    IncomeType,
+    Person,
+    PersonMonth,
+    PersonYear,
+    PersonYearEstimateSummary,
+    Year,
+)
 from bf.simulation import Simulation
 
 
@@ -52,33 +60,59 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
         return super().default(obj)
 
 
-class PersonAnalysisView(LoginRequiredMixin, UpdateView):
+class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
     model = Person
     context_object_name = "person"
     template_name = "data_analysis/person_analysis.html"
     form_class = PersonAnalysisOptionsForm
 
-    def setup(self, request, *args, **kwargs):
-        super().setup(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
         self.year = self.kwargs["year"]
-        self.simulation = Simulation(
-            EstimationEngine.instances(),
-            self.get_object(),
-            year=self.year,
+        self.income_type = IncomeType.A
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        self.income_type = IncomeType(form.cleaned_data["income_type"] or "A")
+        return self.render_to_response(
+            self.get_context_data(object=self.object, form=form)
         )
 
-    def get(self, request, *args, **kwargs):
-        if request.GET.get("format") == "json":
-            return HttpResponse(
-                json.dumps(self.simulation, cls=SimulationJSONEncoder),
-                content_type="application/json",
+    def get_context_data(self, form=None, **kwargs):
+        if form is not None and form.is_valid():
+            simulation = Simulation(
+                EstimationEngine.instances(),
+                self.get_object(),
+                year=self.year,
+                income_type=self.income_type,
             )
-        return super().get(request, *args, **kwargs)
+            chart_data = json.dumps(simulation, cls=SimulationJSONEncoder)
+        else:
+            chart_data = "{}"
+        return super().get_context_data(
+            **{
+                **kwargs,
+                "year_urls": {
+                    py.year.year: reverse(
+                        "data_analysis:person_analysis",
+                        kwargs={"year": py.year.year, "pk": self.object.pk},
+                    )
+                    for py in self.object.personyear_set.all()
+                },
+                "chart_data": chart_data,
+            }
+        )
 
     def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["year"] = self.year
-        return kwargs
+        return {
+            **super().get_form_kwargs(),
+            "data": {**self.request.GET.dict(), "year": self.year},
+            "instance": self.object,
+        }
 
 
 class PersonYearEstimationMixin:
@@ -106,22 +140,25 @@ class PersonYearEstimationMixin:
                     qs = qs.filter(b_count=0)
 
         for engine in engine_keys:
-            qs = qs.annotate(
-                **{
-                    engine
-                    + "_mean_error": Subquery(
-                        PersonYearEstimateSummary.objects.filter(
-                            person_year=OuterRef("pk"), estimation_engine=engine
-                        ).values("mean_error_percent")
-                    ),
-                    engine
-                    + "_rmse": Subquery(
-                        PersonYearEstimateSummary.objects.filter(
-                            person_year=OuterRef("pk"), estimation_engine=engine
-                        ).values("rmse_percent")
-                    ),
-                }
-            )
+            for income_type in IncomeType:
+                qs = qs.annotate(
+                    **{
+                        f"{engine}_mean_error_{income_type}": Subquery(
+                            PersonYearEstimateSummary.objects.filter(
+                                person_year=OuterRef("pk"),
+                                estimation_engine=engine,
+                                income_type=income_type,
+                            ).values("mean_error_percent")
+                        ),
+                        f"{engine}_rmse_{income_type}": Subquery(
+                            PersonYearEstimateSummary.objects.filter(
+                                person_year=OuterRef("pk"),
+                                estimation_engine=engine,
+                                income_type=income_type,
+                            ).values("rmse_percent")
+                        ),
+                    }
+                )
 
         # Originally this annotated on the sum of
         # personmonth__monthlyaincomereport__amount, but that produced weird
@@ -157,7 +194,8 @@ class PersonYearEstimationMixin:
                     qs = qs.filter(**{f"{selected_model}__lte": max_offset})
 
         qs = qs.annotate(
-            preferred_estimation_engine=F("person__preferred_estimation_engine")
+            preferred_estimation_engine_a=F("person__preferred_estimation_engine_a"),
+            preferred_estimation_engine_b=F("person__preferred_estimation_engine_b"),
         )
 
         return qs
@@ -250,6 +288,12 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
             return form.cleaned_data["metric"]
         return "mean_error"
 
+    def get_income_type(self):
+        form = self.get_form()
+        if form.is_valid():
+            return form.cleaned_data.get("income_type") or IncomeType.A
+        return IncomeType.A
+
     def get_resolution_label(self):
         metric = self.get_resolution()
         form = self.get_form()
@@ -258,6 +302,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
     def get_histogram(self) -> dict:
         resolution = self.get_resolution()
         metric = self.get_metric()
+        income_type = self.get_income_type()
         observations: defaultdict = defaultdict(Counter)
         person_years = self.get_queryset()
         half_resolution = Decimal(resolution / 2)
@@ -267,7 +312,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         for key in keys:
             for item in person_years:
                 if key in engine_keys:
-                    val = getattr(item, key + f"_{metric}", None)
+                    val = getattr(item, f"{key}_{metric}_{income_type}", None)
                 else:
                     val = getattr(item, metric, None)
 
