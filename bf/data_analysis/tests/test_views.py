@@ -188,12 +188,12 @@ class PersonYearEstimationSetupMixin:
         cls.summary1, _ = PersonYearEstimateSummary.objects.get_or_create(
             person_year=cls.person_year,
             estimation_engine=TwelveMonthsSummationEngine.__name__,
-            offset_percent=Decimal(0),
+            mean_error_percent=Decimal(0),
         )
         cls.summary2, _ = PersonYearEstimateSummary.objects.get_or_create(
             person_year=cls.person_year,
             estimation_engine=InYearExtrapolationEngine.__name__,
-            offset_percent=Decimal(50),
+            mean_error_percent=Decimal(50),
         )
 
 
@@ -225,7 +225,7 @@ class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
             estimated_year_result=100,
             person_month=person_month,
         )
-        self.summary2.offset_percent = Decimal(50)
+        self.summary2.mean_error_percent = Decimal(50)
         self.summary2.save()
 
         # Act
@@ -236,9 +236,9 @@ class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
             PersonYear.objects.all(),
         )
         # Assert: verify correct offset for "normal" month
-        self.assertEqual(result[0].InYearExtrapolationEngine, Decimal("50"))
+        self.assertEqual(result[0].InYearExtrapolationEngine_mean_error, Decimal("50"))
         # Assert: verify correct offset for month containing zero
-        self.assertEqual(result[0].TwelveMonthsSummationEngine, Decimal("0"))
+        self.assertEqual(result[0].TwelveMonthsSummationEngine_mean_error, Decimal("0"))
 
 
 class ViewTestCase(TestCase):
@@ -263,14 +263,18 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person, self.person)
         self.assertEqual(object_list[0].amount_sum, Decimal(42))
-        self.assertEqual(object_list[0].TwelveMonthsSummationEngine, Decimal(0))
-        self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(50))
+        self.assertEqual(
+            object_list[0].TwelveMonthsSummationEngine_mean_error, Decimal(0)
+        )
+        self.assertEqual(
+            object_list[0].InYearExtrapolationEngine_mean_error, Decimal(50)
+        )
 
     def test_get_no_results(self):
         self.estimate1.delete()
         self.estimate2.delete()
-        self.summary1.offset_percent = Decimal(0)
-        self.summary2.offset_percent = Decimal(0)
+        self.summary1.mean_error_percent = Decimal(0)
+        self.summary2.mean_error_percent = Decimal(0)
         self.summary1.save()
         self.summary2.save()
         self._view.setup(self._request_factory.get(""), year=2020)
@@ -281,8 +285,12 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person, self.person)
         self.assertEqual(object_list[0].amount_sum, Decimal("42.00"))
-        self.assertEqual(object_list[0].TwelveMonthsSummationEngine, Decimal(0))
-        self.assertEqual(object_list[0].InYearExtrapolationEngine, Decimal(0))
+        self.assertEqual(
+            object_list[0].TwelveMonthsSummationEngine_mean_error, Decimal(0)
+        )
+        self.assertEqual(
+            object_list[0].InYearExtrapolationEngine_mean_error, Decimal(0)
+        )
 
     def test_filter_no_a(self):
         self._view.setup(
@@ -306,33 +314,33 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
 
     def test_filter_min_max_offset(self):
 
-        params = f"?min_offset={self.summary1.offset_percent-1}"
-        params += f"&max_offset={self.summary1.offset_percent+1}"
-        params += "&selected_model=TwelveMonthsSummationEngine"
+        params = f"?min_offset={self.summary1.mean_error_percent-1}"
+        params += f"&max_offset={self.summary1.mean_error_percent+1}"
+        params += "&selected_model=TwelveMonthsSummationEngine_mean_error"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
 
-        params = f"?min_offset={self.summary2.offset_percent-1}"
-        params += f"&max_offset={self.summary2.offset_percent+1}"
-        params += "&selected_model=InYearExtrapolationEngine"
+        params = f"?min_offset={self.summary2.mean_error_percent-1}"
+        params += f"&max_offset={self.summary2.mean_error_percent+1}"
+        params += "&selected_model=InYearExtrapolationEngine_mean_error"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
 
-        params = f"?min_offset={self.summary1.offset_percent+1}"
-        params += f"&max_offset={self.summary1.offset_percent+2}"
-        params += "&selected_model=TwelveMonthsSummationEngine"
+        params = f"?min_offset={self.summary1.mean_error_percent+1}"
+        params += f"&max_offset={self.summary1.mean_error_percent+2}"
+        params += "&selected_model=TwelveMonthsSummationEngine_mean_error"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
-        params = f"?min_offset={self.summary2.offset_percent+1}"
-        params += f"&max_offset={self.summary2.offset_percent+2}"
-        params += "&selected_model=InYearExtrapolationEngine"
+        params = f"?min_offset={self.summary2.mean_error_percent+1}"
+        params += f"&max_offset={self.summary2.mean_error_percent+2}"
+        params += "&selected_model=InYearExtrapolationEngine_mean_error"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
@@ -368,6 +376,18 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
                 self._view.setup(self._request_factory.get(query), year=2020)
                 # self._view.get(self._request_factory.get(query), year=2020)
                 self.assertEqual(self._view.get_percentile_size(), percentile_size)
+
+    def test_get_metric_from_form(self):
+        tests = [
+            ("", "mean_error"),
+            ("?metric=mean_error", "mean_error"),
+            ("?metric=rmse", "rmse"),
+            ("?metric=invalid", "mean_error"),
+        ]
+        for query, metric in tests:
+            with self.subTest(f"metric={metric}"):
+                self._view.setup(self._request_factory.get(query), year=2020)
+                self.assertEqual(self._view.get_metric(), metric)
 
     def test_get_returns_json(self):
         tests = [

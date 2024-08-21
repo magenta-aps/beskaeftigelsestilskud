@@ -33,6 +33,13 @@
                 {{ form.has_b }}
             </div>
         </div>
+        </div>
+            <div class="col-3">
+            <div class="input-group">
+                <div class="input-group-text">{{ form.metric.label }}</div>
+                {{ form.metric }}
+            </div>
+        </div>
         <div class="col-3">
             <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
         </div>
@@ -136,7 +143,7 @@ const getChartData = function (histo, key, percentileSize, options) {
             const clicked_label = labels[opts.dataPointIndex];    
             let search_params = "?min_offset=" + (parseInt(clicked_label) - {{form.data.resolution}}/2);
             search_params += "&max_offset=" + (parseInt(clicked_label) + {{form.data.resolution}}/2);
-            search_params += "&selected_model=" + chartContext.opts.chart.id;
+            search_params += "&selected_model=" + chartContext.opts.chart.id + "_{{form.data.metric}}" ;
             search_params += "&has_a={{form.data.has_a}}"; 
             search_params += "&has_b={{form.data.has_b}}"; 
                       

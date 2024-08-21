@@ -105,22 +105,31 @@ class PersonYearEstimationMixin:
                 else:
                     qs = qs.filter(b_count=0)
 
-            for engine in engine_keys:
-                qs = qs.annotate(
-                    **{
-                        engine: Subquery(
-                            PersonYearEstimateSummary.objects.filter(
-                                person_year=OuterRef("pk"), estimation_engine=engine
-                            ).values("offset_percent")
-                        )
-                    }
-                )
+        for engine in engine_keys:
+            qs = qs.annotate(
+                **{
+                    engine
+                    + "_mean_error": Subquery(
+                        PersonYearEstimateSummary.objects.filter(
+                            person_year=OuterRef("pk"), estimation_engine=engine
+                        ).values("mean_error_percent")
+                    ),
+                    engine
+                    + "_rmse": Subquery(
+                        PersonYearEstimateSummary.objects.filter(
+                            person_year=OuterRef("pk"), estimation_engine=engine
+                        ).values("rmse_percent")
+                    ),
+                }
+            )
+
+        if form.is_valid():
 
             selected_model = form.cleaned_data["selected_model"]
             min_offset = form.cleaned_data["min_offset"]
             max_offset = form.cleaned_data["max_offset"]
 
-            if selected_model in engine_keys:
+            if selected_model.split("_")[0] in engine_keys:
                 if min_offset is not None:
                     qs = qs.filter(**{f"{selected_model}__gte": min_offset})
                 if max_offset is not None:
@@ -217,6 +226,8 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         kwargs["data"] = copy.copy(self.request.GET)
         # Set resolution to 10% if not provided by GET parameters
         kwargs["data"].setdefault("resolution", "10")
+        # Set metric to ME if not provided by GET parameters
+        kwargs["data"].setdefault("metric", "mean_error")
         # Get the initial value (URL) for the `year` form field.
         # Since this form is bound, we need to pass the initial value via
         # the `data` form kwarg.
@@ -232,17 +243,24 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
             return int(form.cleaned_data["resolution"])
         return 10
 
+    def get_metric(self):
+        form = self.get_form()
+        if form.is_valid():
+            return form.cleaned_data["metric"]
+        return "mean_error"
+
     def get_histogram(self) -> dict:
         percentile_size = self.get_percentile_size()
+        metric = self.get_metric()
         observations: defaultdict = defaultdict(Counter)
         person_years = self.get_queryset()
         half_percentile_size = Decimal(percentile_size / 2)
-
         for key in engine_keys:
             for item in person_years:
                 # if item.person.preferred_estimation_engine != key:
                 #     continue
-                val = getattr(item, key, None)
+                val = getattr(item, key + f"_{metric}", None)
+
                 if val is not None:
                     # Bucket 0 contains values between -5 and 5
                     # Bucket 10 contains values between 5 and 15

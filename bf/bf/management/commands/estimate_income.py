@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import datetime
+import math
 import time
+from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
 from typing import Iterator, List
@@ -97,17 +99,30 @@ class Command(BaseCommand):
                             engine_results.append(result)
                             results.append(result)
                 if engine_results and actual_year_sum:
-                    year_offset = (
-                        100
-                        * sum([resultat.absdiff for resultat in engine_results])
-                        / (actual_year_sum * len(engine_results))
+                    # Mean error
+                    mean_error = Decimal(
+                        sum([resultat.diff for resultat in engine_results])
+                        / len(engine_results)
                     )
+                    # Root-mean-squared-error
+                    rmse = Decimal(
+                        math.sqrt(
+                            sum([resultat.diff**2 for resultat in engine_results])
+                            / len(engine_results)
+                        )
+                    )
+
+                    mean_error_percent = 100 * mean_error / actual_year_sum
+                    rmse_percent = 100 * rmse / actual_year_sum
                 else:
-                    year_offset = None
+                    mean_error_percent = None
+                    rmse_percent = None
+
                 summary = PersonYearEstimateSummary(
                     person_year=person_year,
                     estimation_engine=engine.__class__.__name__,
-                    offset_percent=year_offset,
+                    mean_error_percent=mean_error_percent,
+                    rmse_percent=rmse_percent,
                 )
                 summaries.append(summary)
 
