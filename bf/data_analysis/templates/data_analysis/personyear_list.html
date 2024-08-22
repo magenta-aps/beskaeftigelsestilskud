@@ -135,6 +135,12 @@
                 {% include "data_analysis/sort_icon.html" with field="payout_offset" %}
             </a>
         </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.preferred_estimation_engine }}" class="link-dark">
+                Estimeringsmotor
+                {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine" %}
+            </a>
+        </th>
     </tr>
     </thead>
     <tbody>
@@ -192,6 +198,7 @@
         <td>{{ object.payout|default_if_none:"" }}</td>
         <td>{{ object.correct_payout|default_if_none:"" }}</td>
         <td>{{ object.payout_offset|default_if_none:"" }}</td>
+        <td>{{ object.preferred_estimation_engine|default_if_none:"" }}</td>
     </tr>
 {% endfor %}
     </tbody>
