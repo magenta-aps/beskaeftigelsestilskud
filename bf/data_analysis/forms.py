@@ -67,7 +67,8 @@ class PersonYearListOptionsForm(forms.Form):
             (None, "Alle"),
         ]
         + [(engine + "_mean_error", engine + " (ME)") for engine in engine_keys]
-        + [(engine + "_rmse", engine + " (RMSE)") for engine in engine_keys],
+        + [(engine + "_rmse", engine + " (RMSE)") for engine in engine_keys]
+        + [("payout_offset", "Tilskudsafvigelse")],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
@@ -85,6 +86,9 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
         choices=[
             (1, "1%"),
             (10, "10%"),
+            (100, "100kr"),
+            (200, "200kr"),
+            (1000, "1000kr"),
         ],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
@@ -94,6 +98,7 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
         choices=[
             ("mean_error", "Gennemsnitlig afvigelse"),
             ("rmse", "Kvadratroden af den gennemsnitlige kvadratafvigelse"),
+            ("payout_offset", "Tilskudsafvigelse"),
         ],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
