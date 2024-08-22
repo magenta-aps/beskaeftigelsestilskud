@@ -98,17 +98,42 @@ class Command(BaseCommand):
                             result.actual_year_result = actual_year_sum
                             engine_results.append(result)
                             results.append(result)
-                if engine_results and actual_year_sum:
+
+                # If we do not have month 12 in the dataset we do not know
+                # what the real income is and can therefore not evaluate our estimations
+                if (
+                    engine_results
+                    and actual_year_sum
+                    and engine_results[-1].person_month.month == 12
+                ):
+                    actual_year_result = engine_results[-1].actual_year_result
+                    months_without_income = 12 - len(engine_results)
+
+                    monthly_estimates = [Decimal(0)] * months_without_income + [
+                        resultat.estimated_year_result for resultat in engine_results
+                    ]
+
                     # Mean error
                     mean_error = Decimal(
-                        sum([resultat.diff for resultat in engine_results])
-                        / len(engine_results)
+                        sum(
+                            [
+                                estimate - actual_year_result
+                                for estimate in monthly_estimates
+                            ]
+                        )
+                        / 12
                     )
+
                     # Root-mean-squared-error
                     rmse = Decimal(
                         math.sqrt(
-                            sum([resultat.diff**2 for resultat in engine_results])
-                            / len(engine_results)
+                            sum(
+                                [
+                                    (estimate - actual_year_result) ** 2
+                                    for estimate in monthly_estimates
+                                ]
+                            )
+                            / 12
                         )
                     )
 
