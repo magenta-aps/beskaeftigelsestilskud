@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
+import logging
 import os
 import sys
 from decimal import Decimal
@@ -34,3 +35,11 @@ AUTH_USER_MODEL = "common.User"
 # When a calculated benefit differs from last month's benefit by less
 # than this amount, reuse prior benefit
 CALCULATION_STICKY_THRESHOLD = Decimal("0.05")
+
+
+class XMLFilter(logging.Filter):
+    def filter(self, record):
+        message = record.getMessage()
+        if "Resource 'XMLSchema.xsd' is already loaded" in message:
+            return False
+        return True

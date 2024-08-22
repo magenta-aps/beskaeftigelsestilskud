@@ -13,6 +13,9 @@ LOGGING: dict = {
         "require_debug_false": {
             "()": "django.utils.log.RequireDebugFalse",
         },
+        "suppress_xml": {
+            "()": "project.settings.base.XMLFilter",
+        },
     },
     "formatters": {
         "simple": {
@@ -24,6 +27,7 @@ LOGGING: dict = {
         "gunicorn": {
             "class": "logging.StreamHandler",
             "formatter": "simple",
+            "filters": ["suppress_xml"],
         },
     },
     "root": {

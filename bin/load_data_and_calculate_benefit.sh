@@ -18,11 +18,11 @@ else
   docker exec bf bash -c "python manage.py load_csv --count=$1 /app/2023_a.csv 2023"
 fi
 
-docker exec bf bash -c "python manage.py estimate_income 2022"
-docker exec bf bash -c "python manage.py estimate_income 2023"
+docker exec bf bash -c "python manage.py estimate_income 2022 --verbosity=2"
+docker exec bf bash -c "python manage.py estimate_income 2023 --verbosity=2"
 
 # Stick to the default model for now, to keep results comparable.
 # docker exec bf bash -c "python manage.py autoselect_estimation_engine"
 
-docker exec bf bash -c "python manage.py calculate_benefit 2022"
-docker exec bf bash -c "python manage.py calculate_benefit 2023"
+docker exec bf bash -c "python manage.py calculate_benefit 2022 --verbosity=2"
+docker exec bf bash -c "python manage.py calculate_benefit 2023 --verbosity=2"
