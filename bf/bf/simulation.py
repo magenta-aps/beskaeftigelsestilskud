@@ -34,6 +34,14 @@ class PredictionItem:
 
 
 @dataclass(frozen=True)
+class PayoutItem:
+    year: int
+    month: int
+    payout: Decimal
+    correct_payout: Decimal
+
+
+@dataclass(frozen=True)
 class Prediction:
     engine: EstimationEngine
     items: list[PredictionItem]
@@ -44,6 +52,7 @@ class SimulationResultRow:
     income_series: list[IncomeItem]
     income_sum: int
     predictions: list[Prediction]
+    payout: list[PayoutItem]
 
 
 @dataclass(frozen=True)
@@ -120,8 +129,32 @@ class Simulation:
             if prediction_items:
                 estimates.append(Prediction(engine=engine, items=prediction_items))
 
+        payout_items = []
+        correct_payout = None
+
+        # Loop backwards because the last month contains the correct payout.
+        for month in range(12, 0, -1):
+            try:
+                person_month = self.person_year.personmonth_set.get(month=month)
+            except PersonMonth.DoesNotExist:
+                continue
+
+            payout = person_month.benefit_paid
+            if correct_payout is None:
+                correct_payout = person_month.actual_year_benefit / month
+
+            payout_items.append(
+                PayoutItem(
+                    year=self.year,
+                    month=month,
+                    payout=payout,
+                    correct_payout=correct_payout,
+                )
+            )
+
         return SimulationResultRow(
             income_series=income_series,
             income_sum=actual_year_sum,
             predictions=estimates,
+            payout=payout_items[::-1],
         )

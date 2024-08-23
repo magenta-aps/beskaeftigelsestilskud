@@ -111,6 +111,48 @@ const getChartData = function (doc, row, rowId, options) {
     return chartData;
 }
 
+
+const getChart2Data = function (doc, row, rowId, options) {
+    const series = [];
+
+    // Add "payout" data series
+    const payout = [];
+    for (const item of row.payout) {
+        payout.push({
+            x: new Date(item.year, item.month - 1, 1),
+            y: item.payout,
+        });
+    }
+    series.push({
+        data: payout,
+        name: "Udbetaling",
+        type: "column",
+    });
+
+
+    // Add "correct_payout" data series
+    const correct_payout = [];
+    for (const item of row.payout) {
+        correct_payout.push({
+            x: new Date(item.year, item.month - 1, 1),
+            y: item.correct_payout,
+        });
+    }
+    series.push({
+        data: correct_payout,
+        name: "Udbetaling (korrekt)",
+        type: "column",
+    });
+
+
+    // Construct chart data by combining series and options
+    const chartData = structuredClone(options);
+    chartData.chart.id = rowId;
+    chartData.series = series;
+    return chartData;
+}
+
+
 $(document).ready(
     async function () {
         // Fetch dataset from server and render each row of dataset as separate charts.
@@ -131,6 +173,18 @@ $(document).ready(
             // Render chart into DOM element
             const chart = new ApexCharts(chartElem, chartData);
             chart.render();
+
+            // Insert DOM element for chart
+            const chartElem2 = document.createElement("div");
+            document.querySelector("body").appendChild(chartElem2);
+
+            // Get chart data
+            const chartData2 = getChart2Data(doc, row, rowId, chartOptions);
+
+            // Render chart into DOM element
+            const chart2 = new ApexCharts(chartElem2, chartData2);
+            chart2.render();
+
         }
     }
 )
