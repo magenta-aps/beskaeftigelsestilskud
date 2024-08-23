@@ -60,6 +60,13 @@ class Command(BaseCommand):
                 person_month__person_year__in=person_year_qs
             ).delete()
 
+            self._write_verbose(
+                "Removing current `PersonYearEstimateSummary` objects ..."
+            )
+            PersonYearEstimateSummary.objects.filter(
+                person_year__in=person_year_qs
+            ).delete()
+
         self._write_verbose("Fetching income data ...")
         data_qs = self._get_data_qs(person_year_qs)
         self._person_month_map = {pm.pk: pm for pm in PersonMonth.objects.all()}
