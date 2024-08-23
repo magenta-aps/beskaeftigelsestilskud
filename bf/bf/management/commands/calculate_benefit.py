@@ -18,6 +18,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self._verbose = kwargs["verbosity"] > 1
 
+        self._write_verbose(f"Calculating benefit for {kwargs['year']}")
+
         if kwargs["cpr"]:
             months = PersonMonth.objects.filter(
                 person_year__year__year=kwargs["year"],
@@ -42,6 +44,8 @@ class Command(BaseCommand):
                 person_month.save()
             except EstimationEngineUnset as e:
                 self._write_verbose(str(e))
+
+        self._write_verbose("Done")
 
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
