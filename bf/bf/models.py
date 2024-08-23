@@ -620,14 +620,14 @@ class IncomeEstimate(models.Model):
     )
 
     estimated_year_result = models.DecimalField(
-        max_digits=12,
+        max_digits=15,
         decimal_places=2,
         null=False,
         blank=False,
     )
 
     actual_year_result = models.DecimalField(
-        max_digits=12,
+        max_digits=15,
         decimal_places=2,
         null=True,
         blank=True,
