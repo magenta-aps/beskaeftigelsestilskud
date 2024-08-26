@@ -7,7 +7,10 @@
 {% load csp %}
 
 {% block content %}
-<h1>{{ person }}</h1>
+<h1>{{ person.name }}</h1>
+<b>CPR nummer: </b> {{ person.cpr }} <br>
+<b>Adresse: </b> {{ person.full_address|default_if_none:"-" }} <br>
+<b>Estimeringsmotor: </b> {{ person.preferred_estimation_engine }} <br>
 <form id="graph-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
     <div class="col-12">
         <div class="input-group">
