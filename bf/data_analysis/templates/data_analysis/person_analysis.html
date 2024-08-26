@@ -162,11 +162,11 @@ const getChart2Data = function (doc, row, rowId, options) {
     
     chartData.tooltip.y=[{
         formatter : function(val) {    
-            return val + " (Det totale beløb som er på borgerens konto i slutning af denne måned)"
+            return val + " (Det totale beløb som udbetales til borgeren i slutningen af denne måned)"
             }
         },{   
         formatter : function(val) {
-            return val + " (Det totale beløb som skal være på borgerens konto når året er slut)"
+            return val + " (Det totale beløb som skal være udbetalt til borgeren, når året er omme)"
             }
         },
     ]
