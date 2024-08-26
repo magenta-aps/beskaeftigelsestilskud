@@ -53,6 +53,7 @@ class Migration(migrations.Migration):
                 ('show_TwelveMonthsSummationEngine', models.BooleanField(default=True)),
                 ('show_SameAsLastMonthEngine', models.BooleanField(default=False)),
                 ('show_SelfReportedEngine', models.BooleanField(default=False)),
+                ('show_SarimaEngine', models.BooleanField(default=True)),
                 ('user', models.OneToOneField(default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='engine_view_preferences', to=settings.AUTH_USER_MODEL)),
             ],
         ),

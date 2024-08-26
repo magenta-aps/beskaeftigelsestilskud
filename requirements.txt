@@ -35,6 +35,7 @@ mypy-extensions==1.0.0
 numpy==1.26.4
 oracledb==2.2.1
 packaging==24.1
+pmdarima==2.0.4
 psycopg2-binary==2.9.9
 pycparser==2.22
 pyOpenSSL==24.1.0

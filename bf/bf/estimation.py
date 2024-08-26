@@ -6,6 +6,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Iterable, List, Sequence, Tuple
 
+import pmdarima
 from django.db.models import Sum
 from project.util import trim_list_first
 
@@ -236,3 +237,99 @@ class SelfReportedEngine(EstimationEngine):
                 income_type=income_type,
             )
         return None
+
+
+class SarimaEngine(EstimationEngine):
+    description = (
+        "Forudsigelse med SARIMA (seasonal autoregressive integrated moving average)"
+    )
+
+    models: Dict[int, pmdarima.base.BaseARIMA] = {}
+
+    @staticmethod
+    def get_amount(income_data: MonthlyIncomeData, income_type: IncomeType) -> Decimal:
+        if income_type == IncomeType.A:
+            return income_data.a_amount
+        if income_type == IncomeType.B:
+            return income_data.b_amount
+
+    @classmethod
+    def relevant(
+        cls, subset: Sequence[MonthlyIncomeData], year: int, month: int
+    ) -> Sequence[MonthlyIncomeData]:
+        items = [
+            item
+            for item in subset
+            if item.year < year or (item.year == year and item.month <= month)
+        ]
+        # Trim off items with no income from the beginning of the list
+        items = trim_list_first(items, lambda item: not item.amount.is_zero())
+        return items
+
+    @classmethod
+    def estimate(
+        cls,
+        pk: int,
+        subset: Sequence[MonthlyIncomeData],
+        year: int,
+        month: int,
+        income_type: IncomeType,
+    ) -> IncomeEstimate | None:
+        min_required_months = 12
+        relevant = cls.relevant(subset, year, month)
+        if len(relevant) < min_required_months:
+            return None
+        # Oplist alle de indkomster vi har indtil nu, inkl denne måned
+        all_prior_incomes = []
+        this_year_incomes = []
+
+        for item in relevant:
+            amount = cls.get_amount(item, income_type)
+            all_prior_incomes.append(amount)
+            if item.year == year:
+                this_year_incomes.append(amount)
+
+        remaining_months = 12 - month
+        if min(all_prior_incomes) == max(all_prior_incomes):
+            # Samme indkomst i hele træningssættet
+            # SARIMA smider en warning hvis den fodres med dette
+            # Tilføj indkomster for måneder vi mangler op til 12
+            prediction = [min(all_prior_incomes)] * remaining_months
+            this_year_incomes += prediction
+        else:
+            # Forudsig indkomst for hver måned i år frem til nytår
+            try:
+                if remaining_months == 0:
+                    prediction = []
+                else:
+                    try:
+                        model = cls.models.get(pk)
+                        if model is None:
+                            model = pmdarima.auto_arima(
+                                all_prior_incomes, seasonal=True, m=12, d=0
+                            )
+                        else:
+                            model.update(all_prior_incomes[-1:])
+                        prediction = list(model.predict(n_periods=remaining_months))
+                        cls.models[pk] = model
+                    except ValueError:
+                        # Vi kunne ikke lave en god model, så prøv med en dårligere én
+                        model = pmdarima.auto_arima(
+                            all_prior_incomes, seasonal=True, m=12, D=0, d=0
+                        )
+                        prediction = list(model.predict(n_periods=remaining_months))
+                        if pk in cls.models:
+                            del cls.models[pk]
+            except ValueError:
+                # See
+                # http://alkaline-ml.com/pmdarima/seasonal-differencing-issues.html
+                return None
+            # Tilføj så vi får en liste af månedsindkomster for i år
+            this_year_incomes += [Decimal(p) for p in prediction]
+        assert len(this_year_incomes) == 12
+        year_estimate = sum(this_year_incomes)
+        return IncomeEstimate(
+            estimated_year_result=year_estimate,
+            engine=cls.__name__,
+            income_type=income_type,
+        )

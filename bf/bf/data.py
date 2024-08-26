@@ -41,6 +41,10 @@ engine_choices = (
         "SelfReportedEngine",
         "Estimering udfra forskudsopgørelsen",
     ),
+    (
+        "SarimaEngine",
+        "Forudsigelse med SARIMA (seasonal autoregressive integrated moving average)",
+    ),
 )
 
 engine_keys = tuple([key for key, desc in engine_choices])

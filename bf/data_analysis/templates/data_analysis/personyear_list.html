@@ -109,7 +109,10 @@
         <th colspan="2" class="col-2">
             SelfReportedEngine
         </th>
-        <th colspan="12" class="col-5">
+        <th colspan="4" class="col-2">
+        SarimaEngine
+        </th>
+        <th colspan="6" class="col-5">
         </th>
     </tr>
     <tr>
@@ -202,6 +205,31 @@
             <a href="?{{ sort_params.SelfReportedEngine_rmse_B }}" class="link-dark">
                 RMSE (B)
                 {% include "data_analysis/sort_icon.html" with field="SelfReportedEngine_rmse_B" %}
+            </a>
+        </th>
+
+        <th class="col-1">
+            <a href="?{{ sort_params.SarimaEngine_mean_error_A }}" class="link-dark">
+                ME (A)
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_mean_error_A" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.SarimaEngine_mean_error_B }}" class="link-dark">
+                ME (B)
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_mean_error_B" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.SarimaEngine_rmse_B }}" class="link-dark">
+                RMSE (A)
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_rmse_A" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.SarimaEngine_rmse_B }}" class="link-dark">
+                RMSE (B)
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_rmse_B" %}
             </a>
         </th>
 
@@ -362,6 +390,35 @@
         <td>
             {% if object.SelfReportedEngine_rmse_B is not None %}
                 {{ object.SelfReportedEngine_rmse_B|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+
+        <td>
+            {% if object.SarimaEngine_mean_error_A is not None %}
+                {{ object.SarimaEngine_mean_error_A|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+        <td>
+            {% if object.SarimaEngine_mean_error_B is not None %}
+                {{ object.SarimaEngine_mean_error_B|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+        <td>
+            {% if object.SarimaEngine_rmse_A is not None %}
+                {{ object.SarimaEngine_rmse_A|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+        <td>
+            {% if object.SarimaEngine_rmse_B is not None %}
+                {{ object.SarimaEngine_rmse_B|floatformat:2 }} %
             {% else %}
                 No estimate
             {% endif %}
