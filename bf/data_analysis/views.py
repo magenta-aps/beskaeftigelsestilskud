@@ -156,6 +156,10 @@ class PersonYearEstimationMixin:
                 if max_offset is not None:
                     qs = qs.filter(**{f"{selected_model}__lte": max_offset})
 
+        qs = qs.annotate(
+            preferred_estimation_engine=F("person__preferred_estimation_engine")
+        )
+
         return qs
 
     @property

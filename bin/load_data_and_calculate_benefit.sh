@@ -22,7 +22,7 @@ docker exec bf bash -c "python manage.py estimate_income 2022 --verbosity=2"
 docker exec bf bash -c "python manage.py estimate_income 2023 --verbosity=2"
 
 # Stick to the default model for now, to keep results comparable.
-# docker exec bf bash -c "python manage.py autoselect_estimation_engine"
+docker exec bf bash -c "python manage.py autoselect_estimation_engine"
 
 docker exec bf bash -c "python manage.py calculate_benefit 2022 --verbosity=2"
 docker exec bf bash -c "python manage.py calculate_benefit 2023 --verbosity=2"
