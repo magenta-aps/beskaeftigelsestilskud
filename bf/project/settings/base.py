@@ -43,3 +43,8 @@ class XMLFilter(logging.Filter):
         if "Resource 'XMLSchema.xsd' is already loaded" in message:
             return False
         return True
+
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
