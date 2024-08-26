@@ -23,6 +23,10 @@ class Command(BaseCommand):
                 if summary.rmse_percent:
                     rmses[summary.estimation_engine].append(summary.rmse_percent)
 
+            # If there are multiple years in the dataset: Take an average over all years
+            for estimation_engine, rmse_results in rmses.items():
+                rmses[estimation_engine] = sum(rmse_results) / len(rmse_results)
+
             if rmses:
                 person.preferred_estimation_engine = min(rmses, key=rmses.get)
                 person.save(update_fields=("preferred_estimation_engine",))
