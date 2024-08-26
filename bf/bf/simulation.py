@@ -140,7 +140,7 @@ class Simulation:
                 continue
 
             payout = person_month.benefit_paid
-            if correct_payout is None:
+            if correct_payout is None and person_month.actual_year_benefit:
                 correct_payout = person_month.actual_year_benefit / month
 
             payout_items.append(
