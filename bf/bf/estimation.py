@@ -18,6 +18,7 @@ class EstimationEngine:
         year: int,
         month: int,
         income_type: IncomeType,
+        parameters: EstimationParameters,
     ) -> IncomeEstimate | None:
         raise NotImplementedError
 
@@ -55,6 +56,10 @@ class EstimationEngine:
             cls.estimate(subset, year, month, IncomeType.B),
         )
 
+    @classmethod
+    def train(cls, person: Person, subset: Sequence[MonthlyIncomeData]) -> EstimationParameters:
+        return EstimationParameters(person=person, estimation_engine=cls.__name__)
+
 
 """
 Forslag til beregningsmetoder:
@@ -75,6 +80,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         year: int,
         month: int,
         income_type: IncomeType,
+        parameters: EstimationParameters,
     ) -> IncomeEstimate | None:
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
@@ -113,6 +119,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         year: int,
         month: int,
         income_type: IncomeType,
+        parameters: EstimationParameters,
     ) -> IncomeEstimate | None:
 
         # Do not estimate if there is no data one year back
