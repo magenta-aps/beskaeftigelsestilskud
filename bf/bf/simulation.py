@@ -130,25 +130,22 @@ class Simulation:
                 estimates.append(Prediction(engine=engine, items=prediction_items))
 
         payout_items = []
-        correct_payout = None
-
-        # Loop backwards because the last month contains the correct payout.
-        for month in range(12, 0, -1):
+        payout = 0
+        for month in range(1, 13):
             try:
                 person_month = self.person_year.personmonth_set.get(month=month)
             except PersonMonth.DoesNotExist:
                 continue
 
-            payout = person_month.benefit_paid
-            if correct_payout is None and person_month.actual_year_benefit:
-                correct_payout = round(person_month.actual_year_benefit / month, 2)
+            if person_month.benefit_paid:
+                payout += person_month.benefit_paid
 
             payout_items.append(
                 PayoutItem(
                     year=self.year,
                     month=month,
                     payout=payout,
-                    correct_payout=correct_payout,
+                    correct_payout=person_month.actual_year_benefit,
                 )
             )
 
@@ -156,5 +153,5 @@ class Simulation:
             income_series=income_series,
             income_sum=actual_year_sum,
             predictions=estimates,
-            payout=payout_items[::-1],
+            payout=payout_items,
         )

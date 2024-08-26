@@ -50,6 +50,11 @@ const chartOptions = {
         position: "top",
         horizontalAlign: "left",
     },
+    tooltip:{
+        x: {
+            show:true,
+        }
+    }    
 };
 
 // Build chart data based on each "row" in dataset
@@ -125,7 +130,8 @@ const getChart2Data = function (doc, row, rowId, options) {
     }
     series.push({
         data: payout,
-        name: "Udbetaling",
+        // Det totale udbetalte beløb som er på borgerens konto i denne måned
+        name: "Totale udbetaling for året",
         type: "column",
     });
 
@@ -139,8 +145,12 @@ const getChart2Data = function (doc, row, rowId, options) {
         });
     }
     series.push({
-        data: correct_payout,
-        name: "Udbetaling (korrekt)",
+        data: correct_payout,        
+        // Beløbet som skal være på kontoen når året er slut.
+        // Prognosen opdateres hver måned.
+        // Den op-justeres når borgeren begynder at tjene penge over minimunsgrænsen.
+        // Den ned-justeres hvis borgeren begynder at tjene over maksimumsgrænsen
+        name: "Totale udbetaling for året (prognose)", 
         type: "column",
     });
 
@@ -149,6 +159,18 @@ const getChart2Data = function (doc, row, rowId, options) {
     const chartData = structuredClone(options);
     chartData.chart.id = rowId;
     chartData.series = series;
+    
+    chartData.tooltip.y=[{
+        formatter : function(val) {    
+            return val + " (Det totale beløb som er på borgerens konto i slutning af denne måned)"
+            }
+        },{   
+        formatter : function(val) {
+            return val + " (Det totale beløb som skal være på borgerens konto når året er slut)"
+            }
+        },
+    ]
+    
     return chartData;
 }
 
