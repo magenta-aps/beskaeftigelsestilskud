@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Sequence, Tuple
 
 import pmdarima
 from django.db.models import Sum
@@ -269,13 +269,14 @@ class SarimaEngine(EstimationEngine):
     @classmethod
     def estimate(
         cls,
-        pk: int,
+        person_month: PersonMonth,
         subset: Sequence[MonthlyIncomeData],
-        year: int,
-        month: int,
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
         min_required_months = 12
+        year = person_month.year.year
+        month = person_month.month
+        pk = person_month.person_year.person_pk
         relevant = cls.relevant(subset, year, month)
         if len(relevant) < min_required_months:
             return None
@@ -306,7 +307,12 @@ class SarimaEngine(EstimationEngine):
                         model = cls.models.get(pk)
                         if model is None:
                             model = pmdarima.auto_arima(
-                                all_prior_incomes, seasonal=True, m=12, d=0
+                                all_prior_incomes,
+                                seasonal=True,
+                                m=12,
+                                d=0,
+                                error_action="ignore",
+                                stepwise=True,
                             )
                         else:
                             model.update(all_prior_incomes[-1:])
