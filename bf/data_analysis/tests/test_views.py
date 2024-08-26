@@ -88,7 +88,14 @@ class TestSimulationJSONEncoder(TestCase):
             simulation,
             {
                 "person": self.person_serialized,
-                "rows": [{"income_series": [], "income_sum": 0.0, "predictions": []}],
+                "rows": [
+                    {
+                        "income_series": [],
+                        "income_sum": 0.0,
+                        "predictions": [],
+                        "payout": [],
+                    }
+                ],
                 "year": 2020,
             },
         )
