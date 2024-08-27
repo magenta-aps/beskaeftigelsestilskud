@@ -757,10 +757,5 @@ class EstimationParameters(models.Model):
         choices=engine_choices,
         null=False,
     )
-    parameters = models.JSONField(
-        null=True
-    )
-    person = models.ForeignKey(
-        Person,
-        on_delete=models.DELETE
-    )
+    parameters = models.JSONField(null=True)
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)

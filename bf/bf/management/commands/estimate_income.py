@@ -7,11 +7,11 @@ import time
 from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
-from typing import Iterator, List
+from typing import List
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import DecimalField, F, Func, OuterRef, QuerySet, SubQuery, Sum, Value
+from django.db.models import F, Func, OuterRef, QuerySet, Subquery
 from django.db.models.functions import Coalesce
 from tabulate import tabulate
 
@@ -23,6 +23,7 @@ from bf.estimation import (
     TwelveMonthsSummationEngine,
 )
 from bf.models import (
+    EstimationParameters,
     IncomeEstimate,
     IncomeType,
     MonthlyAIncomeReport,
@@ -94,86 +95,85 @@ class Command(BaseCommand):
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
                 for income_type in IncomeType:
-		            parameters = EngineParameters.objects.filter(
-		                person_id=person_pk,
-		                estimation_engine=engine.__class__.__name__
-		            ).first()
-		            print(f"parameters: {parameters}")
-		            engine_results = []
-		            for month in range(first_income_month, 13):
-		                person_month = self._get_person_month_for_row(
-		                    subset, self._year, month
-		                )
+                    parameters = EstimationParameters.objects.filter(
+                        person_id=person_pk, estimation_engine=engine.__class__.__name__
+                    ).first()
+                    print(f"parameters: {parameters}")
+                    engine_results = []
+                    for month in range(first_income_month, 13):
+                        person_month = self._get_person_month_for_row(
+                            subset, self._year, month
+                        )
 
-		                actual_year_sum = sum(
+                        actual_year_sum = sum(
                             row.a_amount if income_type == "A" else row.b_amount
-		                    for row in subset
-		                    if row.year == self._year and row.month <= month
-		                )
-		                if person_month is not None:
-		                    result: IncomeEstimate = engine.estimate(
+                            for row in subset
+                            if row.year == self._year and row.month <= month
+                        )
+                        if person_month is not None:
+                            result: IncomeEstimate = engine.estimate(
                                 subset, self._year, month, income_type
-		                    )
-		                    if result is not None:
-		                        result.person_month = person_month
-		                        result.actual_year_result = actual_year_sum
-		                        engine_results.append(result)
-		                        results.append(result)
+                            )
+                            if result is not None:
+                                result.person_month = person_month
+                                result.actual_year_result = actual_year_sum
+                                engine_results.append(result)
+                                results.append(result)
 
-		            # If we do not have month 12 in the dataset we do not know
+                    # If we do not have month 12 in the dataset we do not know
                     # what the real income is and can therefore
                     # not evaluate our estimations
-		            if (
-		                engine_results
-		                and actual_year_sum
-		                and engine_results[-1].person_month.month == 12
-		            ):
-		                actual_year_result = engine_results[-1].actual_year_result
-		                months_without_income = 12 - len(engine_results)
+                    if (
+                        engine_results
+                        and actual_year_sum
+                        and engine_results[-1].person_month.month == 12
+                    ):
+                        actual_year_result = engine_results[-1].actual_year_result
+                        months_without_income = 12 - len(engine_results)
 
-		                monthly_estimates = [Decimal(0)] * months_without_income + [
+                        monthly_estimates = [Decimal(0)] * months_without_income + [
                             resultat.estimated_year_result
                             for resultat in engine_results
-		                ]
+                        ]
 
-		                # Mean error
-		                mean_error = Decimal(
-		                    sum(
-		                        [
-		                            estimate - actual_year_result
-		                            for estimate in monthly_estimates
-		                        ]
-		                    )
-		                    / 12
-		                )
+                        # Mean error
+                        mean_error = Decimal(
+                            sum(
+                                [
+                                    estimate - actual_year_result
+                                    for estimate in monthly_estimates
+                                ]
+                            )
+                            / 12
+                        )
 
-		                # Root-mean-squared-error
-		                rmse = Decimal(
-		                    math.sqrt(
-		                        sum(
-		                            [
-		                                (estimate - actual_year_result) ** 2
-		                                for estimate in monthly_estimates
-		                            ]
-		                        )
-		                        / 12
-		                    )
-		                )
+                        # Root-mean-squared-error
+                        rmse = Decimal(
+                            math.sqrt(
+                                sum(
+                                    [
+                                        (estimate - actual_year_result) ** 2
+                                        for estimate in monthly_estimates
+                                    ]
+                                )
+                                / 12
+                            )
+                        )
 
-		                mean_error_percent = 100 * mean_error / actual_year_sum
-		                rmse_percent = 100 * rmse / actual_year_sum
-		            else:
-		                mean_error_percent = None
-		                rmse_percent = None
+                        mean_error_percent = 100 * mean_error / actual_year_sum
+                        rmse_percent = 100 * rmse / actual_year_sum
+                    else:
+                        mean_error_percent = None
+                        rmse_percent = None
 
-		            summary = PersonYearEstimateSummary(
-		                person_year=person_year,
-		                estimation_engine=engine.__class__.__name__,
+                    summary = PersonYearEstimateSummary(
+                        person_year=person_year,
+                        estimation_engine=engine.__class__.__name__,
                         income_type=income_type,
-		                mean_error_percent=mean_error_percent,
-		                rmse_percent=rmse_percent,
-		            )
-		            summaries.append(summary)
+                        mean_error_percent=mean_error_percent,
+                        rmse_percent=rmse_percent,
+                    )
+                    summaries.append(summary)
 
         if not self._dry:
             self._write_verbose(f"Writing {len(results)} `IncomeEstimate` objects ...")
@@ -244,7 +244,7 @@ class Command(BaseCommand):
 
     def _iterate_by_person(
         self, data_qs: List[MonthlyIncomeData]
-    ) -> Iterator[List[MonthlyIncomeData]]:
+    ) -> List[List[MonthlyIncomeData]]:
         # Iterate over `data_qs` and yield a subset of rows for each `_person_pk`
         return (
             list(vals) for key, vals in groupby(data_qs, key=attrgetter("person_pk"))

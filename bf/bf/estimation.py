@@ -7,7 +7,7 @@ from typing import Iterable, Sequence, Tuple
 from project.util import trim_list_first
 
 from bf.data import MonthlyIncomeData
-from bf.models import IncomeEstimate, IncomeType
+from bf.models import EstimationParameters, IncomeEstimate, IncomeType, Person
 
 
 class EstimationEngine:
@@ -57,8 +57,10 @@ class EstimationEngine:
         )
 
     @classmethod
-    def train(cls, person: Person, subset: Sequence[MonthlyIncomeData]) -> EstimationParameters:
-        return EstimationParameters(person=person, estimation_engine=cls.__name__)
+    def train(
+        cls, person: Person, subset: Sequence[MonthlyIncomeData]
+    ) -> EstimationParameters | None:
+        return None
 
 
 """
