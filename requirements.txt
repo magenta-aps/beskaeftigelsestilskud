@@ -12,6 +12,7 @@ cryptography==42.0.8
 defusedxml==0.7.1
 Django==5.0.4
 django-bootstrap5==24.1
+django-debug-toolbar==4.4.6
 django-forms-dynamic==1.0.0
 django-session-timeout @ git+https://github.com/Lapeth/django-session-timeout@8e50dc6223164368be8c8e1754a90a2c6dca2dc2
 django-simple-history==3.7.0
