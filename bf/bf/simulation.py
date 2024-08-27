@@ -9,6 +9,7 @@ from decimal import Decimal
 from bf.estimation import EstimationEngine
 from bf.models import (
     IncomeEstimate,
+    IncomeType,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
@@ -66,30 +67,39 @@ class Simulation:
         engines: list[EstimationEngine],
         person: Person,
         year: int | None,
+        income_type: IncomeType,
     ):
         if year is None:
             year = date.today().year
         self.engines = engines
         self.person = person
         self.year = year
+        self.income_type = income_type
         self.person_year: PersonYear = person.personyear_set.get(year__year=year)
         self.result = SimulationResult(rows=[self._run()])
 
     def _run(self):
-        actual_year_sum = self.person_year.amount_sum
-
-        income_a = MonthlyAIncomeReport.objects.filter(
-            person=self.person,
-            person_month__person_year__year=self.year,
-        )
-        income_b = MonthlyBIncomeReport.objects.filter(
-            person=self.person,
-            person_month__person_year__year=self.year,
-        )
+        actual_year_sum = self.person_year.amount_sum_by_type(self.income_type)
+        if self.income_type == IncomeType.A:
+            income = list(
+                MonthlyAIncomeReport.objects.filter(
+                    person=self.person,
+                    person_month__person_year__year=self.year,
+                )
+            )
+        elif self.income_type == IncomeType.B:
+            income = list(
+                MonthlyBIncomeReport.objects.filter(
+                    person=self.person,
+                    person_month__person_year__year=self.year,
+                )
+            )
+        else:
+            income = []
 
         income_series = [
             IncomeItem(year=item.year, month=item.month, value=item.amount)
-            for item in list(income_a) + list(income_b)
+            for item in income
         ]
 
         estimates = []
@@ -104,7 +114,9 @@ class Simulation:
                 engine_name = engine.__class__.__name__
                 try:
                     estimate = IncomeEstimate.objects.get(
-                        person_month=person_month, engine=engine_name
+                        person_month=person_month,
+                        engine=engine_name,
+                        income_type=self.income_type,
                     )
                 except IncomeEstimate.DoesNotExist:
                     continue

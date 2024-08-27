@@ -8,9 +8,28 @@
 
 {% block content %}
 <h1>{{ person.name }}</h1>
-<b>CPR nummer: </b> {{ person.cpr }} <br>
-<b>Adresse: </b> {{ person.full_address|default_if_none:"-" }} <br>
-<b>Estimeringsmotor: </b> {{ person.preferred_estimation_engine }} <br>
+<div class="row">
+    <div class="col-4">
+        <table class="table">
+            <tr>
+                <th>CPR-nummer:</th>
+                <td>{{ person.cpr }}</td>
+            </tr>
+            <tr>
+                <th>Adresse:</th>
+                <td>{{ person.full_address|default_if_none:"-" }}</td>
+            </tr>
+            <tr>
+                <th>Estimeringsmotor for A-indkomst:</th>
+                <td>{{ person.preferred_estimation_engine_a }}</td>
+            </tr>
+            <tr>
+                <th>Estimeringsmotor for B-indkomst:</th>
+                <td>{{ person.preferred_estimation_engine_b }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
 <form id="graph-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
     <div class="col-12">
         <div class="input-group">
@@ -19,14 +38,23 @@
         </div>
     </div>
     <div class="col-12">
-        <button class="btn btn-primary">{% translate 'Opdater' %}</button>
+        <div class="input-group">
+            <div class="input-group-text">{{ form.income_type.label }}</div>
+            {{ form.income_type }}
+        </div>
     </div>
+    <div class="col-12">
+        <button class="btn btn-primary" type="button">{% translate 'Opdatér' %}</button>
+    </div>
+    {{ form.errors }}
 </form>
 {% endblock %}
 
 {% block extra_headers %}
 <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
 <script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+{{year_urls|json_script:"year_urls"}}
+<script id="chart_data" type="application/json">{{chart_data|safe}}</script>
 <script nonce="{{ request.csp_nonce }}">
 // Basic chart configuration
 const chartOptions = {
@@ -182,8 +210,7 @@ $(document).ready(
     async function () {
         // Fetch dataset from server and render each row of dataset as separate charts.
         // There is currently one row per employer.
-        const response = await fetch("?format=json");
-        const doc = await response.json();
+        const doc = JSON.parse($("#chart_data").text());
 
         for (const rowId in doc.rows) {
             const row = doc.rows[rowId];
@@ -216,12 +243,13 @@ $(document).ready(
 
 $(document).ready(
     function () {
+        const year_urls = JSON.parse($("#year_urls").text());
         const form = $("#graph-options");
-
-        form.submit(function (evt) {
-            evt.preventDefault();
-            const newUrl = $("#id_year", form).val();
-            window.location.replace(newUrl);
+        form.find("button").on("click", function(evt) {
+            const yearField = form.find("[name=year]");
+            form.attr("action", year_urls[yearField.val()]);
+            yearField.attr("disabled", "disabled");
+            form.submit();
         });
     }
 )
