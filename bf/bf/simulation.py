@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -67,7 +68,7 @@ class Simulation:
         engines: list[EstimationEngine],
         person: Person,
         year: int | None,
-        income_type: IncomeType,
+        income_type: IncomeType | None,
     ):
         if year is None:
             year = date.today().year
@@ -80,30 +81,37 @@ class Simulation:
 
     def _run(self):
         actual_year_sum = self.person_year.amount_sum_by_type(self.income_type)
-        if self.income_type == IncomeType.A:
-            income = list(
+        income = []
+        if self.income_type in (IncomeType.A, None):
+            income += list(
                 MonthlyAIncomeReport.objects.filter(
                     person=self.person,
                     person_month__person_year__year=self.year,
                 )
             )
-        elif self.income_type == IncomeType.B:
-            income = list(
+        if self.income_type in (IncomeType.B, None):
+            income += list(
                 MonthlyBIncomeReport.objects.filter(
                     person=self.person,
                     person_month__person_year__year=self.year,
                 )
             )
-        else:
-            income = []
 
+        income_series_build = defaultdict(lambda: Decimal(0))
+        for item in income:
+            income_series_build[(item.year, item.month)] += item.amount
         income_series = [
-            IncomeItem(year=item.year, month=item.month, value=item.amount)
-            for item in income
+            IncomeItem(year=year, month=month, value=amount)
+            for (year, month), amount in income_series_build.items()
         ]
+        income_series.sort(
+            key=lambda item: (
+                item.year,
+                item.month,
+            )
+        )
 
         estimates = []
-
         for engine in self.engines:
             prediction_items = []
             for month in range(1, 13):
@@ -112,17 +120,20 @@ class Simulation:
                 except PersonMonth.DoesNotExist:
                     continue
                 engine_name = engine.__class__.__name__
-                try:
-                    estimate = IncomeEstimate.objects.get(
-                        person_month=person_month,
-                        engine=engine_name,
+                estimate_qs = IncomeEstimate.objects.filter(
+                    person_month=person_month,
+                    engine=engine_name,
+                )
+                if self.income_type is not None:
+                    estimate_qs = estimate_qs.filter(
                         income_type=self.income_type,
                     )
-                except IncomeEstimate.DoesNotExist:
-                    continue
 
-                if estimate is not None:
-                    estimated_year_result = estimate.estimated_year_result
+                if estimate_qs.exists():
+                    estimated_year_result = sum(
+                        [estimate.estimated_year_result for estimate in estimate_qs]
+                    )
+                    offset = IncomeEstimate.qs_offset(estimate_qs)
                     prediction_items.append(
                         PredictionItem(
                             year=self.year,
@@ -131,9 +142,7 @@ class Simulation:
                             prediction_difference=estimated_year_result
                             - actual_year_sum,
                             prediction_difference_pct=(
-                                (estimate.offset * 100)
-                                if actual_year_sum != 0
-                                else None
+                                (offset * 100) if actual_year_sum != 0 else None
                             ),
                         )
                     )

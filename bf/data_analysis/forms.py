@@ -141,7 +141,8 @@ class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
     )
 
     income_type = forms.ChoiceField(
-        choices=IncomeType,
+        choices=[(None, _("Begge"))]
+        + [(choice.value, choice.label) for choice in IncomeType],
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Indkomsttype"),
         required=False,

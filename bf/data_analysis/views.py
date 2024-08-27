@@ -69,7 +69,7 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.year = self.kwargs["year"]
-        self.income_type = IncomeType.A
+        self.income_type = None
         form = self.get_form()
         if form.is_valid():
             return self.form_valid(form)
@@ -77,7 +77,9 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
             return self.form_invalid(form)
 
     def form_valid(self, form):
-        self.income_type = IncomeType(form.cleaned_data["income_type"] or "A")
+        income_type_raw = form.cleaned_data["income_type"]
+        if income_type_raw:
+            self.income_type = IncomeType(income_type_raw)
         return self.render_to_response(
             self.get_context_data(object=self.object, form=form)
         )

@@ -155,6 +155,25 @@ class TestPersonAnalysisView(TestCase):
         self.assertIsInstance(response, TemplateResponse)
         self.assertFalse(response.context_data["form"].is_valid())
 
+    def test_income_type(self):
+        request = self.request_factory.get("?income_type=A")
+        self.view.setup(request, pk=self.person.pk, year=2020)
+        response = self.view.get(request)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(self.view.income_type, IncomeType.A)
+
+        request = self.request_factory.get("?income_type=B")
+        self.view.setup(request, pk=self.person.pk, year=2020)
+        response = self.view.get(request)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(self.view.income_type, IncomeType.B)
+
+        request = self.request_factory.get("?income_type=")
+        self.view.setup(request, pk=self.person.pk, year=2020)
+        response = self.view.get(request)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertIsNone(self.view.income_type)
+
 
 class PersonYearEstimationSetupMixin:
     @classmethod

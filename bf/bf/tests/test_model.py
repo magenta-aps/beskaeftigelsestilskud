@@ -431,6 +431,15 @@ class EstimationTest(ModelTest):
                 "actual_year_result": 1400,
             },
         )
+        cls.result2, _ = IncomeEstimate.objects.update_or_create(
+            engine="InYearExtrapolationEngine",
+            person_month=cls.month1,
+            income_type=IncomeType.B,
+            defaults={
+                "estimated_year_result": 150,
+                "actual_year_result": 200,
+            },
+        )
 
     def test_str(self):
         self.assertEqual(
@@ -457,3 +466,7 @@ class EstimationTest(ModelTest):
             IncomeEstimate.annotate_person_year(qs).first().f_person_year,
             self.person_year.pk,
         )
+
+    def test_qs_offset(self):
+        qs = IncomeEstimate.objects.filter(pk__in=[self.result1.pk, self.result2.pk])
+        self.assertEqual(IncomeEstimate.qs_offset(qs), Decimal(250 / 1600))
