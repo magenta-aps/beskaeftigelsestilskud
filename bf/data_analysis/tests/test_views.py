@@ -380,6 +380,17 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
+    def test_filter_cpr(self):
+        test_dict = {"0101012222": 1, "non_exising_number": 0}
+
+        for cpr, expected_items in test_dict.items():
+            self._view.setup(self._request_factory.get(f"?cpr={cpr}"), year=2020)
+            response = self._view.get(self._request_factory.get(""), year=2020)
+            self.assertIsInstance(response, TemplateResponse)
+            self.assertEqual(response.context_data["year"], 2020)
+            object_list = response.context_data["object_list"]
+            self.assertEqual(object_list.count(), expected_items)
+
 
 class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
     view_class = HistogramView

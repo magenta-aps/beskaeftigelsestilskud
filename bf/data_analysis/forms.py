@@ -82,6 +82,11 @@ class PersonYearListOptionsForm(forms.Form):
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
+    cpr = forms.Field(
+        required=False,
+        label="Cpr-nummer",
+        widget=forms.widgets.TextInput(attrs={"class": "form-control"}),
+    )
 
 
 class HistogramOptionsForm(PersonYearListOptionsForm):
