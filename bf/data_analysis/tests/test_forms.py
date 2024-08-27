@@ -40,21 +40,11 @@ class TestPersonAnalysisOptionsForm(DataSetupMixin, TestCase):
         PersonYear.objects.get_or_create(person=cls.person, year=cls.year_2021)
 
     def test_renders_year_choices(self):
-        form = PersonAnalysisOptionsForm(instance=self.person, year=2020)
+        form = PersonAnalysisOptionsForm(instance=self.person, data={"year": 2020})
         self.assertListEqual(
             form.fields["year"].choices,
             [
-                (self._year_url(2020), 2020),
-                (self._year_url(2021), 2021),
+                (2020, 2020),
+                (2021, 2021),
             ],
-        )
-
-    def test_uses_year_as_initial_value(self):
-        form = PersonAnalysisOptionsForm(instance=self.person, year=2021)
-        self.assertEqual(form.fields["year"].initial, self._year_url(2021))
-
-    def _year_url(self, year):
-        return reverse(
-            "data_analysis:person_analysis",
-            kwargs={"pk": self.person.pk, "year": year},
         )

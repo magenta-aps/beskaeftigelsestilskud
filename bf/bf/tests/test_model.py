@@ -13,6 +13,7 @@ from bf.exceptions import EstimationEngineUnset
 from bf.models import (
     Employer,
     IncomeEstimate,
+    IncomeType,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
@@ -39,7 +40,8 @@ class ModelTest(TestCase):
         cls.person = Person.objects.create(
             name="Jens Hansen",
             cpr="1234567890",
-            preferred_estimation_engine="InYearExtrapolationEngine",
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
@@ -117,9 +119,17 @@ class ModelTest(TestCase):
         )
         IncomeEstimate.objects.create(
             person_month=cls.month1,
-            estimated_year_result=12 * 10000 + 12 * 15000,
-            actual_year_result=12 * 10000 + 12 * 15000,
+            estimated_year_result=12 * 10000,
+            actual_year_result=12 * 10000,
             engine="InYearExtrapolationEngine",
+            income_type=IncomeType.A,
+        )
+        IncomeEstimate.objects.create(
+            person_month=cls.month1,
+            estimated_year_result=12 * 15000,
+            actual_year_result=12 * 15000,
+            engine="InYearExtrapolationEngine",
+            income_type=IncomeType.B,
         )
         cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -134,6 +144,7 @@ class ModelTest(TestCase):
             estimated_year_result=6 * (10000 + 11000) + 6 * (15000 + 12000),
             actual_year_result=12 * 10000 + 12 * 15000,
             engine="InYearExtrapolationEngine",
+            income_type=IncomeType.A,
         )
         cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -149,6 +160,7 @@ class ModelTest(TestCase):
             + 4 * (15000 + 12000 + 10000),
             actual_year_result=12 * 10000 + 12 * 15000,
             engine="InYearExtrapolationEngine",
+            income_type=IncomeType.A,
         )
         cls.report8 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -164,6 +176,7 @@ class ModelTest(TestCase):
             + 3 * (15000 + 12000 + 10000 + 8000),
             actual_year_result=12 * 10000 + 12 * 15000,
             engine="InYearExtrapolationEngine",
+            income_type=IncomeType.A,
         )
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
@@ -333,8 +346,14 @@ class TestPersonMonth(ModelTest):
         self.assertIsNone(self.month12.prev)
 
     def test_calculation_engine_missing(self):
-        self.person.preferred_estimation_engine = None
-        self.person.save(update_fields=("preferred_estimation_engine",))
+        self.person.preferred_estimation_engine_a = None
+        self.person.preferred_estimation_engine_b = None
+        self.person.save(
+            update_fields=(
+                "preferred_estimation_engine_a",
+                "preferred_estimation_engine_b",
+            )
+        )
         with self.assertRaises(
             EstimationEngineUnset,
             msg=f"Preferred estimation engine is not set for person {self.person}",
@@ -406,6 +425,7 @@ class EstimationTest(ModelTest):
         cls.result1, _ = IncomeEstimate.objects.update_or_create(
             engine="InYearExtrapolationEngine",
             person_month=cls.month1,
+            income_type=IncomeType.A,
             defaults={
                 "estimated_year_result": 1200,
                 "actual_year_result": 1400,
@@ -414,7 +434,7 @@ class EstimationTest(ModelTest):
 
     def test_str(self):
         self.assertEqual(
-            str(self.result1), "InYearExtrapolationEngine (Jens Hansen (2024/1))"
+            str(self.result1), "InYearExtrapolationEngine (Jens Hansen (2024/1)) (A)"
         )
 
     def test_absdiff(self):

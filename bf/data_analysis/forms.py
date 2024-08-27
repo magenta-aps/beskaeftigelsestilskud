@@ -4,9 +4,10 @@
 from django import forms
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from dynamic_forms import DynamicField, DynamicFormMixin
 
 from bf.data import engine_keys
-from bf.models import PersonYear, Year
+from bf.models import IncomeType, Year
 
 
 class PersonYearListOptionsForm(forms.Form):
@@ -67,8 +68,16 @@ class PersonYearListOptionsForm(forms.Form):
         choices=[
             (None, "Alle"),
         ]
-        + [(engine + "_mean_error", engine + " (ME)") for engine in engine_keys]
-        + [(engine + "_rmse", engine + " (RMSE)") for engine in engine_keys]
+        + [
+            (f"{engine}_mean_error_{income_type}", f"{engine} (ME) ({income_type})")
+            for engine in engine_keys
+            for income_type in IncomeType
+        ]
+        + [
+            (f"{engine}_rmse_{income_type}", f"{engine} (RMSE) ({income_type})")
+            for engine in engine_keys
+            for income_type in IncomeType
+        ]
         + [("payout_offset", "Tilskudsafvigelse")],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
@@ -105,6 +114,11 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Metrik"),
     )
+    income_type = forms.ChoiceField(
+        choices=IncomeType,
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -117,34 +131,24 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
         return reverse("data_analysis:histogram", kwargs={"year": year.year})
 
 
-class PersonAnalysisOptionsForm(forms.Form):
-    year = forms.ChoiceField(
-        choices=[],  # populated in `__init__`
+class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
+    year = DynamicField(
+        forms.ChoiceField,
+        choices=lambda form: [(year, year) for year in form.years],
         required=False,
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("År"),
     )
 
+    income_type = forms.ChoiceField(
+        choices=IncomeType,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("Indkomsttype"),
+        required=False,
+    )
+
     def __init__(self, *args, **kwargs):
         instance = kwargs.pop("instance", None)
-        year = kwargs.pop("year", None)
+        person_years = instance.personyear_set.all().select_related("year")
+        self.years = [person_year.year.year for person_year in person_years]
         super().__init__(*args, **kwargs)
-        person_years = PersonYear.objects.select_related("year").filter(person=instance)
-        current_person_year = person_years.filter(year__year=year)
-        self.fields["year"].choices = [
-            (
-                self._get_year_url(person_year),
-                person_year.year.year,
-            )
-            for person_year in person_years
-        ]
-        if current_person_year.exists():
-            self.fields["year"].initial = self._get_year_url(
-                current_person_year.first()
-            )
-
-    def _get_year_url(self, person_year):
-        return reverse(
-            "data_analysis:person_analysis",
-            kwargs={"pk": person_year.person.pk, "year": person_year.year.year},
-        )

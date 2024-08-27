@@ -13,7 +13,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index, QuerySet, Sum
+from django.db.models import F, Index, QuerySet, Sum, TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -22,6 +22,11 @@ from simple_history.models import HistoricalRecords
 
 from bf.data import engine_choices
 from bf.exceptions import EstimationEngineUnset
+
+
+class IncomeType(TextChoices):
+    A = "A"
+    B = "B"
 
 
 class WorkingTaxCreditCalculationMethod(models.Model):
@@ -135,11 +140,16 @@ class Person(models.Model):
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
 
-    preferred_estimation_engine = models.CharField(
+    preferred_estimation_engine_a = models.CharField(
         max_length=100,
         choices=engine_choices,
         null=True,
-        # The default model is the simplest model; Makes debugging easier.
+        default="SameAsLastMonthEngine",
+    )
+    preferred_estimation_engine_b = models.CharField(
+        max_length=100,
+        choices=engine_choices,
+        null=True,
         default="SameAsLastMonthEngine",
     )
 
@@ -157,7 +167,7 @@ class Person(models.Model):
         )
 
     def __str__(self):
-        return self.name or self.cpr
+        return str(self.name or self.cpr)
 
 
 class PersonYear(models.Model):
@@ -185,12 +195,20 @@ class PersonYear(models.Model):
         return f"{self.person} ({self.year})"
 
     @property
-    def amount_sum(self):
-        return MonthlyIncomeReport.sum_queryset(
-            MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
-        ) + MonthlyIncomeReport.sum_queryset(
-            MonthlyBIncomeReport.objects.filter(person_month__person_year=self)
-        )
+    def amount_sum(self) -> Decimal:
+        return self.amount_sum_by_type(None)
+
+    def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
+        sum = Decimal(0)
+        if income_type in (IncomeType.A, None):
+            sum += MonthlyIncomeReport.sum_queryset(
+                MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
+            )
+        if income_type in (IncomeType.B, None):
+            sum += MonthlyIncomeReport.sum_queryset(
+                MonthlyBIncomeReport.objects.filter(person_month__person_year=self)
+            )
+        return sum
 
     def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
         if self.year.calculation_method is None:
@@ -335,22 +353,37 @@ class PersonMonth(models.Model):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
-        if not self.person.preferred_estimation_engine:
+        if (
+            not self.person.preferred_estimation_engine_a
+            and not self.person.preferred_estimation_engine_b
+        ):
             raise EstimationEngineUnset(self.person)
-        try:
-            income_estimate = self.incomeestimate_set.get(
-                engine=self.person.preferred_estimation_engine
-            )
-            estimated_year_income = income_estimate.estimated_year_result
-            actual_year_income = income_estimate.actual_year_result
-        except IncomeEstimate.DoesNotExist:  # pragma: nocover
-            # TODO: preferred_estimation_engine skal ikke være fast for en person,
-            # men defineres over en daterange, dvs. for en given range er en engine
-            # preferred for en person.
-            # Vi kommer hertil fordi en engine, f.eks. TwelveMonthSum, er preferred,
-            # men der foreligger ikke nogen estimater fordi vi er i det første år
-            # af personens indkomst
-            return Decimal(0)
+
+        estimated_year_income = Decimal(0)
+        actual_year_income = Decimal(0)
+        if self.person.preferred_estimation_engine_a:
+            try:
+                income_estimate = self.incomeestimate_set.get(
+                    engine=self.person.preferred_estimation_engine_a,
+                    income_type=IncomeType.A,
+                )
+                estimated_year_income += income_estimate.estimated_year_result
+                if income_estimate.actual_year_result is not None:
+                    actual_year_income += income_estimate.actual_year_result
+            except IncomeEstimate.DoesNotExist:  # pragma: nocover
+                pass
+
+        if self.person.preferred_estimation_engine_b:
+            try:
+                income_estimate = self.incomeestimate_set.get(
+                    engine=self.person.preferred_estimation_engine_b,
+                    income_type=IncomeType.B,
+                )
+                estimated_year_income += income_estimate.estimated_year_result
+                if income_estimate.actual_year_result is not None:
+                    actual_year_income += income_estimate.actual_year_result
+            except IncomeEstimate.DoesNotExist:  # pragma: nocover
+                pass
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
         self.estimated_year_benefit = self.person_year.calculate_benefit(
@@ -611,9 +644,15 @@ class FinalBIncomeReport(models.Model):
 class IncomeEstimate(models.Model):
 
     class Meta:
-        unique_together = (("engine", "person_month"),)
+        unique_together = (("engine", "person_month", "income_type"),)
 
     engine = models.CharField(max_length=100, choices=engine_choices)
+
+    income_type = models.CharField(
+        choices=IncomeType,
+        default=IncomeType.A,
+        max_length=1,
+    )
 
     person_month = models.ForeignKey(
         PersonMonth, null=True, blank=True, on_delete=models.CASCADE
@@ -668,12 +707,14 @@ class IncomeEstimate(models.Model):
         return qs.annotate(f_person_year=F("person_month__person_year"))
 
     def __str__(self):
-        return f"{self.engine} ({self.person_month})"
+        return (
+            f"{self.engine} ({self.person_month}) ({IncomeType(self.income_type).name})"
+        )
 
 
 class PersonYearEstimateSummary(models.Model):
     class Meta:
-        unique_together = (("person_year", "estimation_engine"),)
+        unique_together = (("person_year", "estimation_engine", "income_type"),)
 
     person_year = models.ForeignKey(
         PersonYear,
@@ -683,6 +724,11 @@ class PersonYearEstimateSummary(models.Model):
         max_length=100,
         null=False,
         blank=False,
+    )
+    income_type = models.CharField(
+        choices=IncomeType,
+        default=IncomeType.A,
+        max_length=1,
     )
     mean_error_percent = models.DecimalField(
         max_digits=10, decimal_places=2, default=None, null=True

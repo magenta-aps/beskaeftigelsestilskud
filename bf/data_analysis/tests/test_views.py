@@ -23,6 +23,7 @@ from bf.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
 from bf.models import (
     Employer,
     IncomeEstimate,
+    IncomeType,
     MonthlyAIncomeReport,
     Person,
     PersonMonth,
@@ -50,7 +51,8 @@ class TestSimulationJSONEncoder(TestCase):
             "full_address": None,
             "id": cls.person.pk,
             "name": None,
-            "preferred_estimation_engine": "SameAsLastMonthEngine",
+            "preferred_estimation_engine_a": "SameAsLastMonthEngine",
+            "preferred_estimation_engine_b": "SameAsLastMonthEngine",
         }
 
     def test_can_serialize_dataclass(self):
@@ -83,6 +85,7 @@ class TestSimulationJSONEncoder(TestCase):
             [TwelveMonthsSummationEngine()],
             self.person,
             year=2020,
+            income_type=IncomeType.A,
         )
         self._assert_json_equal(
             simulation,
@@ -127,33 +130,30 @@ class TestPersonAnalysisView(TestCase):
         cls.person_year, _ = PersonYear.objects.get_or_create(
             person=cls.person, year=cls.year
         )
-        cls._request_factory = RequestFactory()
-        cls._view = PersonAnalysisView()
+        cls.request_factory = RequestFactory()
+        cls.view = PersonAnalysisView()
 
     def test_setup(self):
-        self._view.setup(self._request_factory.get(""), pk=self.person.pk, year=2020)
-        self.assertEqual(self._view.year, 2020)
-        self.assertIsInstance(self._view.simulation, Simulation)
-        self.assertEqual(self._view.simulation.year, 2020)
-        self.assertEqual(self._view.simulation.person, self.person)
-
-    def test_get_returns_json(self):
-        self._view.setup(self._request_factory.get(""), pk=self.person.pk, year=2020)
-        response = self._view.get(self._request_factory.get("?format=json"))
-        self.assertIsInstance(response, HttpResponse)
-        doc = json.loads(response.getvalue())
-        self.assertEqual(doc["person"]["cpr"], "0101012222")
-        self.assertEqual(doc["year"], 2020)
-
-    def test_get_returns_html(self):
-        self._view.setup(self._request_factory.get(""), pk=self.person.pk, year=2020)
-        response = self._view.get(self._request_factory.get(""))
+        request = self.request_factory.get("")
+        self.view.setup(request, pk=self.person.pk, year=2020)
+        response = self.view.get(request)
         self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(self.view.year, 2020)
 
     def test_get_form_kwargs(self):
-        self._view.setup(self._request_factory.get(""), pk=self.person.pk, year=2020)
-        form_kwargs = self._view.get_form_kwargs()
-        self.assertEqual(form_kwargs["year"], 2020)
+        request = self.request_factory.get("")
+        self.view.setup(request, pk=self.person.pk, year=2020)
+        self.view.get(request)
+        form_kwargs = self.view.get_form_kwargs()
+        self.assertEqual(form_kwargs["data"]["year"], 2020)
+        self.assertEqual(form_kwargs["instance"], self.person)
+
+    def test_invalid(self):
+        request = self.request_factory.get("?income_type=foo")
+        self.view.setup(request, pk=self.person.pk, year=2020)
+        response = self.view.get(request)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertFalse(response.context_data["form"].is_valid())
 
 
 class PersonYearEstimationSetupMixin:
@@ -198,11 +198,13 @@ class PersonYearEstimationSetupMixin:
             person_year=cls.person_year,
             estimation_engine=TwelveMonthsSummationEngine.__name__,
             mean_error_percent=Decimal(0),
+            income_type=IncomeType.A,
         )
         cls.summary2, _ = PersonYearEstimateSummary.objects.get_or_create(
             person_year=cls.person_year,
             estimation_engine=InYearExtrapolationEngine.__name__,
             mean_error_percent=Decimal(50),
+            income_type=IncomeType.A,
         )
 
 
@@ -245,9 +247,13 @@ class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
             PersonYear.objects.all(),
         )
         # Assert: verify correct offset for "normal" month
-        self.assertEqual(result[0].InYearExtrapolationEngine_mean_error, Decimal("50"))
+        self.assertEqual(
+            result[0].InYearExtrapolationEngine_mean_error_A, Decimal("50")
+        )
         # Assert: verify correct offset for month containing zero
-        self.assertEqual(result[0].TwelveMonthsSummationEngine_mean_error, Decimal("0"))
+        self.assertEqual(
+            result[0].TwelveMonthsSummationEngine_mean_error_A, Decimal("0")
+        )
 
 
 class ViewTestCase(TestCase):
@@ -273,10 +279,10 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list[0].person, self.person)
         self.assertEqual(object_list[0].amount_sum, Decimal(42))
         self.assertEqual(
-            object_list[0].TwelveMonthsSummationEngine_mean_error, Decimal(0)
+            object_list[0].TwelveMonthsSummationEngine_mean_error_A, Decimal(0)
         )
         self.assertEqual(
-            object_list[0].InYearExtrapolationEngine_mean_error, Decimal(50)
+            object_list[0].InYearExtrapolationEngine_mean_error_A, Decimal(50)
         )
 
     def test_get_no_results(self):
@@ -295,10 +301,10 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list[0].person, self.person)
         self.assertEqual(object_list[0].amount_sum, Decimal("42.00"))
         self.assertEqual(
-            object_list[0].TwelveMonthsSummationEngine_mean_error, Decimal(0)
+            object_list[0].TwelveMonthsSummationEngine_mean_error_A, Decimal(0)
         )
         self.assertEqual(
-            object_list[0].InYearExtrapolationEngine_mean_error, Decimal(0)
+            object_list[0].InYearExtrapolationEngine_mean_error_A, Decimal(0)
         )
 
     def test_filter_no_a(self):
@@ -325,7 +331,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
 
         params = f"?min_offset={self.summary1.mean_error_percent-1}"
         params += f"&max_offset={self.summary1.mean_error_percent+1}"
-        params += "&selected_model=TwelveMonthsSummationEngine_mean_error"
+        params += "&selected_model=TwelveMonthsSummationEngine_mean_error_A"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
@@ -333,7 +339,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
 
         params = f"?min_offset={self.summary2.mean_error_percent-1}"
         params += f"&max_offset={self.summary2.mean_error_percent+1}"
-        params += "&selected_model=InYearExtrapolationEngine_mean_error"
+        params += "&selected_model=InYearExtrapolationEngine_mean_error_A"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
@@ -341,7 +347,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
 
         params = f"?min_offset={self.summary1.mean_error_percent+1}"
         params += f"&max_offset={self.summary1.mean_error_percent+2}"
-        params += "&selected_model=TwelveMonthsSummationEngine_mean_error"
+        params += "&selected_model=TwelveMonthsSummationEngine_mean_error_A"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
@@ -349,7 +355,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
 
         params = f"?min_offset={self.summary2.mean_error_percent+1}"
         params += f"&max_offset={self.summary2.mean_error_percent+2}"
-        params += "&selected_model=InYearExtrapolationEngine_mean_error"
+        params += "&selected_model=InYearExtrapolationEngine_mean_error_A"
         self._view.setup(self._request_factory.get(params), year=2020)
         response = self._view.get(self._request_factory.get(""), year=2020)
         object_list = response.context_data["object_list"]
@@ -399,6 +405,18 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
                 self._view.setup(self._request_factory.get(query), year=2020)
                 self.assertEqual(self._view.get_metric(), metric)
 
+    def test_get_income_type_from_form(self):
+        tests = [
+            ("", "A"),
+            ("?income_type=A", "A"),
+            ("?income_type=B", "B"),
+            ("?income_type=C", "A"),
+        ]
+        for query, income_type in tests:
+            with self.subTest(f"income_type={income_type}"):
+                self._view.setup(self._request_factory.get(query), year=2020)
+                self.assertEqual(self._view.get_income_type(), income_type)
+
     def test_get_returns_json(self):
         tests = [
             ("", 10),
@@ -406,7 +424,7 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
             ("&resolution=1", 1),
         ]
         for query, resolution in tests:
-            url = f"?format=json{query}"
+            url = f"?format=json{query}&income_type=A"
             self._view.setup(self._request_factory.get(url), year=2020)
             response = self._view.get(self._request_factory.get(url))
             self.assertIsInstance(response, HttpResponse)
