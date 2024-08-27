@@ -101,7 +101,7 @@ class Command(BaseCommand):
                         )
 
                         actual_year_sum = sum(
-                            row.amount
+                            row.a_amount if income_type == "A" else row.b_amount
                             for row in subset
                             if row.year == self._year and row.month <= month
                         )
