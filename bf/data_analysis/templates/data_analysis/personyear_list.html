@@ -63,7 +63,7 @@
         TwelveMonthsSummationEngine
         </th>
         <th colspan="4" class="col-2">
-        SameAsLastMonthEngine
+        SarimaEngine
         </th>
         <th colspan="6" class="col-5">
         </th>
@@ -124,27 +124,27 @@
             </a>
         </th>
         <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_mean_error_A }}" class="link-dark">
+            <a href="?{{ sort_params.SarimaEngine_mean_error_A }}" class="link-dark">
                 ME (A)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_mean_error_A" %}
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_mean_error_A" %}
             </a>
         </th>
         <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_mean_error_B }}" class="link-dark">
+            <a href="?{{ sort_params.SarimaEngine_mean_error_B }}" class="link-dark">
                 ME (B)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_mean_error_B" %}
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_mean_error_B" %}
             </a>
         </th>
         <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_rmse_B }}" class="link-dark">
+            <a href="?{{ sort_params.SarimaEngine_rmse_B }}" class="link-dark">
                 RMSE (A)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_rmse_A" %}
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_rmse_A" %}
             </a>
         </th>
         <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_rmse_B }}" class="link-dark">
+            <a href="?{{ sort_params.SarimaEngine_rmse_B }}" class="link-dark">
                 RMSE (B)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_rmse_B" %}
+                {% include "data_analysis/sort_icon.html" with field="SarimaEngine_rmse_B" %}
             </a>
         </th>
         <th class="col-2">
@@ -251,29 +251,29 @@
             {% endif %}
         </td>
         <td>
-            {% if object.SameAsLastMonthEngine_mean_error_A is not None %}
-                {{ object.SameAsLastMonthEngine_mean_error_A|floatformat:2 }} %
+            {% if object.SarimaEngine_mean_error_A is not None %}
+                {{ object.SarimaEngine_mean_error_A|floatformat:2 }} %
             {% else %}
                 No estimate
             {% endif %}
         </td>
         <td>
-            {% if object.SameAsLastMonthEngine_mean_error_B is not None %}
-                {{ object.SameAsLastMonthEngine_mean_error_B|floatformat:2 }} %
+            {% if object.SarimaEngine_mean_error_B is not None %}
+                {{ object.SarimaEngine_mean_error_B|floatformat:2 }} %
             {% else %}
                 No estimate
             {% endif %}
         </td>
         <td>
-            {% if object.SameAsLastMonthEngine_rmse_A is not None %}
-                {{ object.SameAsLastMonthEngine_rmse_A|floatformat:2 }} %
+            {% if object.SarimaEngine_rmse_A is not None %}
+                {{ object.SarimaEngine_rmse_A|floatformat:2 }} %
             {% else %}
                 No estimate
             {% endif %}
         </td>
         <td>
-            {% if object.SameAsLastMonthEngine_rmse_B is not None %}
-                {{ object.SameAsLastMonthEngine_rmse_B|floatformat:2 }} %
+            {% if object.SarimaEngine_rmse_B is not None %}
+                {{ object.SarimaEngine_rmse_B|floatformat:2 }} %
             {% else %}
                 No estimate
             {% endif %}

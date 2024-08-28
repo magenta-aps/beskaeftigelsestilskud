@@ -4,10 +4,11 @@
 from decimal import Decimal
 from typing import Iterable, Sequence, Tuple
 
+import pmdarima
 from project.util import trim_list_first
 
 from bf.data import MonthlyIncomeData
-from bf.models import EstimationParameters, IncomeEstimate, IncomeType, Person
+from bf.models import IncomeEstimate, IncomeType
 
 
 class EstimationEngine:
@@ -18,7 +19,6 @@ class EstimationEngine:
         year: int,
         month: int,
         income_type: IncomeType,
-        parameters: EstimationParameters,
     ) -> IncomeEstimate | None:
         raise NotImplementedError
 
@@ -56,12 +56,6 @@ class EstimationEngine:
             cls.estimate(subset, year, month, IncomeType.B),
         )
 
-    @classmethod
-    def train(
-        cls, person: Person, subset: Sequence[MonthlyIncomeData]
-    ) -> EstimationParameters | None:
-        return None
-
 
 """
 Forslag til beregningsmetoder:
@@ -82,7 +76,6 @@ class InYearExtrapolationEngine(EstimationEngine):
         year: int,
         month: int,
         income_type: IncomeType,
-        parameters: EstimationParameters,
     ) -> IncomeEstimate | None:
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
@@ -121,7 +114,6 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         year: int,
         month: int,
         income_type: IncomeType,
-        parameters: EstimationParameters,
     ) -> IncomeEstimate | None:
 
         # Do not estimate if there is no data one year back
@@ -185,3 +177,82 @@ class SameAsLastMonthEngine(EstimationEngine):
                 subset,
             )
         )
+
+
+class SarimaEngine(EstimationEngine):
+    description = (
+        "Forudsigelse med SARIMA (seasonal autoregressive integrated moving average)"
+    )
+
+    @staticmethod
+    def get_amount(income_data: MonthlyIncomeData, income_type: IncomeType) -> Decimal:
+        if income_type == IncomeType.A:
+            return income_data.a_amount
+        if income_type == IncomeType.B:
+            return income_data.b_amount
+
+    @classmethod
+    def relevant(
+        cls, subset: Sequence[MonthlyIncomeData], year: int, month: int
+    ) -> Sequence[MonthlyIncomeData]:
+        items = [
+            item
+            for item in subset
+            if item.year < year or (item.year == year and item.month <= month)
+        ]
+        # Trim off items with no income from the beginning of the list
+        items = trim_list_first(items, lambda item: not item.amount.is_zero())
+        return items
+
+    @classmethod
+    def estimate(
+        cls,
+        subset: Sequence[MonthlyIncomeData],
+        year: int,
+        month: int,
+        income_type: IncomeType,
+    ) -> IncomeEstimate | None:
+        all_prior_incomes = [
+            cls.get_amount(item, income_type)
+            for item in cls.relevant(subset, year, month)
+        ]
+        this_year_incomes = [
+            cls.get_amount(item, income_type)
+            for item in filter(
+                lambda item: item.year == year, cls.relevant(subset, year, month)
+            )
+        ]
+        remaining_months = 12 - month
+        if len(all_prior_incomes) > 12:
+            if min(all_prior_incomes) == max(all_prior_incomes):
+                # Samme indkomst i hele træningssættet
+                # SARIMA smider en warning hvis den fodres med dette
+                prediction = [min(all_prior_incomes)] * remaining_months
+                this_year_incomes += prediction
+            else:
+                try:
+                    if remaining_months == 0:
+                        prediction = []
+                    else:
+                        try:
+                            model = pmdarima.auto_arima(
+                                all_prior_incomes, seasonal=True, m=12
+                            )
+                            prediction = list(model.predict(n_periods=remaining_months))
+                        except ValueError:
+                            model = pmdarima.auto_arima(
+                                all_prior_incomes, seasonal=True, m=12, D=0
+                            )
+                            prediction = list(model.predict(n_periods=remaining_months))
+                except ValueError:
+                    # See
+                    # http://alkaline-ml.com/pmdarima/seasonal-differencing-issues.html
+                    return None
+            this_year_incomes += [Decimal(p) for p in prediction]
+            year_estimate = sum(this_year_incomes)
+            return IncomeEstimate(
+                estimated_year_result=year_estimate,
+                engine=cls.__name__,
+                income_type=income_type,
+            )
+        return None

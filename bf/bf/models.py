@@ -747,15 +747,3 @@ class PersonYearEstimateSummary(models.Model):
     rmse_percent = models.DecimalField(
         max_digits=10, decimal_places=2, default=None, null=True
     )
-
-
-class EstimationParameters(models.Model):
-    class Meta:
-        unique_together = (("person", "estimation_engine"),)
-
-    estimation_engine = models.CharField(
-        choices=engine_choices,
-        null=False,
-    )
-    parameters = models.JSONField(null=True)
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)

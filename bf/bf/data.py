@@ -37,6 +37,10 @@ engine_choices = (
         "SameAsLastMonthEngine",
         "Ekstrapolation af beløb for den seneste måned",
     ),
+    (
+        "SarimaEngine",
+        "Forudsigelse med SARIMA (seasonal autoregressive integrated moving average)",
+    ),
 )
 
 engine_keys = tuple([key for key, desc in engine_choices])

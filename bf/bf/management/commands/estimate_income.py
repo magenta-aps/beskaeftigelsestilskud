@@ -20,10 +20,10 @@ from bf.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
     SameAsLastMonthEngine,
+    SarimaEngine,
     TwelveMonthsSummationEngine,
 )
 from bf.models import (
-    EstimationParameters,
     IncomeEstimate,
     IncomeType,
     MonthlyAIncomeReport,
@@ -39,6 +39,7 @@ class Command(BaseCommand):
         InYearExtrapolationEngine(),
         TwelveMonthsSummationEngine(),
         SameAsLastMonthEngine(),
+        SarimaEngine(),
     ]
 
     def add_arguments(self, parser):
@@ -95,10 +96,6 @@ class Command(BaseCommand):
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
                 for income_type in IncomeType:
-                    parameters = EstimationParameters.objects.filter(
-                        person_id=person_pk, estimation_engine=engine.__class__.__name__
-                    ).first()
-                    print(f"parameters: {parameters}")
                     engine_results = []
                     for month in range(first_income_month, 13):
                         person_month = self._get_person_month_for_row(
