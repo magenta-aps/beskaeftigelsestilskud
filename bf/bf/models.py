@@ -711,6 +711,17 @@ class IncomeEstimate(models.Model):
             f"{self.engine} ({self.person_month}) ({IncomeType(self.income_type).name})"
         )
 
+    @staticmethod
+    def qs_offset(qs: QuerySet[IncomeEstimate]) -> Decimal:
+        estimated_year_result = Decimal(0)
+        actual_year_result = Decimal(0)
+        for item in qs:
+            estimated_year_result += item.estimated_year_result
+            if item.actual_year_result:
+                actual_year_result += item.actual_year_result
+        absdiff = abs(estimated_year_result - actual_year_result)
+        return (absdiff / actual_year_result) if actual_year_result else Decimal(0)
+
 
 class PersonYearEstimateSummary(models.Model):
     class Meta:
