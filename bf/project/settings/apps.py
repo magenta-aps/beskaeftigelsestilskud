@@ -17,4 +17,5 @@ INSTALLED_APPS = [
     "django_mitid_auth",
     "data_analysis",
     "debug_toolbar",
+    "django_bootstrap_icons",
 ]

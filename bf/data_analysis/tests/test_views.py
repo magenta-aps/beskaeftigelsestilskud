@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
+from common.models import EngineViewPreferences, User
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
     HistogramView,
@@ -18,6 +19,7 @@ from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.urls import reverse
 
 from bf.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
 from bf.models import (
@@ -282,13 +284,22 @@ class ViewTestCase(TestCase):
         cls._request_factory = RequestFactory()
         cls._view = cls.view_class()
 
+        cls.user = User(cpr="0101011111")
+        cls.user.save()
+
+    def format_request(self, params=""):
+        request = self._request_factory.get(params)
+        request.user = self.user
+        return request
+
 
 class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
     view_class = PersonListView
 
     def test_get_returns_html(self):
-        self._view.setup(self._request_factory.get(""), year=2020)
-        response = self._view.get(self._request_factory.get(""))
+        request = self.format_request()
+        self._view.setup(request, year=2020)
+        response = self._view.get(request)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -303,14 +314,15 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         )
 
     def test_get_no_results(self):
+        request = self.format_request()
         self.estimate1.delete()
         self.estimate2.delete()
         self.summary1.mean_error_percent = Decimal(0)
         self.summary2.mean_error_percent = Decimal(0)
         self.summary1.save()
         self.summary2.save()
-        self._view.setup(self._request_factory.get(""), year=2020)
-        response = self._view.get(self._request_factory.get(""))
+        self._view.setup(request, year=2020)
+        response = self._view.get(request)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -325,20 +337,18 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         )
 
     def test_filter_no_a(self):
-        self._view.setup(
-            self._request_factory.get("?has_a=False&has_b=True"), year=2020
-        )
-        response = self._view.get(self._request_factory.get(""), year=2020)
+        request = self.format_request("?has_a=False&has_b=True")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
     def test_filter_a(self):
-        self._view.setup(
-            self._request_factory.get("?has_a=True&has_b=False"), year=2020
-        )
-        response = self._view.get(self._request_factory.get(""), year=2020)
+        request = self.format_request("?has_a=True&has_b=False")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -349,32 +359,40 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         params = f"?min_offset={self.summary1.mean_error_percent-1}"
         params += f"&max_offset={self.summary1.mean_error_percent+1}"
         params += "&selected_model=TwelveMonthsSummationEngine_mean_error_A"
-        self._view.setup(self._request_factory.get(params), year=2020)
-        response = self._view.get(self._request_factory.get(""), year=2020)
+
+        request = self.format_request(params)
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
 
         params = f"?min_offset={self.summary2.mean_error_percent-1}"
         params += f"&max_offset={self.summary2.mean_error_percent+1}"
         params += "&selected_model=InYearExtrapolationEngine_mean_error_A"
-        self._view.setup(self._request_factory.get(params), year=2020)
-        response = self._view.get(self._request_factory.get(""), year=2020)
+
+        request = self.format_request(params)
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
 
         params = f"?min_offset={self.summary1.mean_error_percent+1}"
         params += f"&max_offset={self.summary1.mean_error_percent+2}"
         params += "&selected_model=TwelveMonthsSummationEngine_mean_error_A"
-        self._view.setup(self._request_factory.get(params), year=2020)
-        response = self._view.get(self._request_factory.get(""), year=2020)
+
+        request = self.format_request(params)
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
         params = f"?min_offset={self.summary2.mean_error_percent+1}"
         params += f"&max_offset={self.summary2.mean_error_percent+2}"
         params += "&selected_model=InYearExtrapolationEngine_mean_error_A"
-        self._view.setup(self._request_factory.get(params), year=2020)
-        response = self._view.get(self._request_factory.get(""), year=2020)
+
+        request = self.format_request(params)
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
@@ -382,8 +400,9 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         test_dict = {"0101012222": 1, "non_existing_number": 0}
 
         for cpr, expected_items in test_dict.items():
-            self._view.setup(self._request_factory.get(f"?cpr={cpr}"), year=2020)
-            response = self._view.get(self._request_factory.get(""), year=2020)
+            request = self.format_request(f"?cpr={cpr}")
+            self._view.setup(request, year=2020)
+            response = self._view.get(request, year=2020)
             self.assertIsInstance(response, TemplateResponse)
             self.assertEqual(response.context_data["year"], 2020)
             object_list = response.context_data["object_list"]
@@ -502,3 +521,31 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
         data = dict.fromkeys([str(bucket) for bucket in range(0, 100, size)], 0)
         data[bucket] = count
         return data
+
+
+class TestUpdateEngineViewPreferences(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.user = User.objects.create_user(
+            username="test",
+            password="test",
+            email="test@test.com",
+            cpr="0101011111",
+        )
+
+        cls.preferences = EngineViewPreferences(user=cls.user)
+        cls.preferences.save()
+
+    def test_preferences_updater(self):
+        payload = {"show_SameAsLastMonthEngine": True}
+        url = reverse("data_analysis:update_preferences", kwargs={"pk": self.user.pk})
+
+        self.assertFalse(self.user.engine_view_preferences.show_SameAsLastMonthEngine)
+
+        self.client.login(username="test", password="test")
+        self.client.post(url, data=payload)
+        self.user.refresh_from_db()
+
+        self.assertTrue(self.user.engine_view_preferences.show_SameAsLastMonthEngine)

@@ -22,3 +22,19 @@ class User(AbstractUser):
             RegexValidator(r"\d{10}"),
         ],
     )
+
+
+class EngineViewPreferences(models.Model):
+
+    user = models.OneToOneField(
+        User,
+        related_name="engine_view_preferences",
+        unique=True,
+        default=None,
+        null=True,
+        on_delete=models.CASCADE,
+    )
+
+    show_InYearExtrapolationEngine = models.BooleanField(default=True)
+    show_TwelveMonthsSummationEngine = models.BooleanField(default=True)
+    show_SameAsLastMonthEngine = models.BooleanField(default=False)
