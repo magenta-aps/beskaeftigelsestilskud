@@ -13,8 +13,8 @@
 
 {% block content %}
     <form id="list-options" method="get" action="." class="g-3 p-2">
-        <div class="row justify-content-start">
-            <div class="col-3 my-1">
+        <div class="row justify-content-start my-1">
+            <div class="col-3">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.has_a.label }}</div>
                     {{ form.has_a }}
@@ -30,7 +30,7 @@
             <div class="col-3">
                 <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
             </div>
-        <div class="row justify-content-start">
+        <div class="row justify-content-start my-1">
             <div class="col-2">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.selected_model.label }}</div>
@@ -47,6 +47,14 @@
                 <div class="input-group">
                     <div class="input-group-text">{{ form.max_offset.label }}</div>
                     {{ form.max_offset }}
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-start my-1">
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.cpr.label }}</div>
+                    {{ form.cpr }}
                 </div>
             </div>
         </div>
