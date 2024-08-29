@@ -227,6 +227,13 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
 
     def get_queryset(self):
         qs = super().get_queryset()
+        form = self.get_form()
+
+        if form.is_valid():
+            cpr = form.cleaned_data.get("cpr", None)
+            if cpr:
+                qs = qs.filter(person__cpr__icontains=cpr)
+
         qs = qs.order_by(*self.get_ordering())
         return qs
 
