@@ -225,6 +225,7 @@ $(document).ready(
             // Render chart into DOM element
             const chart = new ApexCharts(chartElem, chartData);
             chart.render();
+            chart.hideSeries('Ekstrapolation af beløb baseret udelukkende på den foregående måned')
 
             // Insert DOM element for chart
             const chartElem2 = document.createElement("div");
