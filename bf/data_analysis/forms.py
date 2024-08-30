@@ -38,8 +38,10 @@ class PersonYearListOptionsForm(forms.Form):
             (f"{prefix}{field}", f"{prefix}{field}")
             for field in (
                 ("person__cpr",)
-                + tuple([ek + "_mean_error" for ek in engine_keys])
-                + tuple([ek + "_rmse" for ek in engine_keys])
+                + tuple([ek + "_mean_error_A" for ek in engine_keys])
+                + tuple([ek + "_rmse_A" for ek in engine_keys])
+                + tuple([ek + "_mean_error_B" for ek in engine_keys])
+                + tuple([ek + "_rmse_B" for ek in engine_keys])
                 + (
                     "actual_sum",
                     "payout",
