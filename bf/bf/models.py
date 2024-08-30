@@ -140,19 +140,6 @@ class Person(models.Model):
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
 
-    preferred_estimation_engine_a = models.CharField(
-        max_length=100,
-        choices=engine_choices,
-        null=True,
-        default="SameAsLastMonthEngine",
-    )
-    preferred_estimation_engine_b = models.CharField(
-        max_length=100,
-        choices=engine_choices,
-        null=True,
-        default="SameAsLastMonthEngine",
-    )
-
     @classmethod
     def from_eskat_mandtal(cls, eskat_mandtal: ESkatMandtal) -> "Person":
         return Person(
@@ -182,6 +169,18 @@ class PersonYear(models.Model):
         on_delete=models.CASCADE,
         blank=False,
         null=False,
+    )
+    preferred_estimation_engine_a = models.CharField(
+        max_length=100,
+        choices=engine_choices,
+        null=True,
+        default="InYearExtrapolationEngine",
+    )
+    preferred_estimation_engine_b = models.CharField(
+        max_length=100,
+        choices=engine_choices,
+        null=True,
+        default="InYearExtrapolationEngine",
     )
 
     class Meta:
@@ -354,17 +353,17 @@ class PersonMonth(models.Model):
 
     def calculate_benefit(self) -> Decimal:
         if (
-            not self.person.preferred_estimation_engine_a
-            and not self.person.preferred_estimation_engine_b
+            not self.person_year.preferred_estimation_engine_a
+            and not self.person_year.preferred_estimation_engine_b
         ):
             raise EstimationEngineUnset(self.person)
 
         estimated_year_income = Decimal(0)
         actual_year_income = Decimal(0)
-        if self.person.preferred_estimation_engine_a:
+        if self.person_year.preferred_estimation_engine_a:
             try:
                 income_estimate = self.incomeestimate_set.get(
-                    engine=self.person.preferred_estimation_engine_a,
+                    engine=self.person_year.preferred_estimation_engine_a,
                     income_type=IncomeType.A,
                 )
                 estimated_year_income += income_estimate.estimated_year_result
@@ -373,10 +372,10 @@ class PersonMonth(models.Model):
             except IncomeEstimate.DoesNotExist:  # pragma: nocover
                 pass
 
-        if self.person.preferred_estimation_engine_b:
+        if self.person_year.preferred_estimation_engine_b:
             try:
                 income_estimate = self.incomeestimate_set.get(
-                    engine=self.person.preferred_estimation_engine_b,
+                    engine=self.person_year.preferred_estimation_engine_b,
                     income_type=IncomeType.B,
                 )
                 estimated_year_income += income_estimate.estimated_year_result
