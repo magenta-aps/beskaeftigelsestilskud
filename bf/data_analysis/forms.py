@@ -45,7 +45,8 @@ class PersonYearListOptionsForm(forms.Form):
                     "payout",
                     "correct_payout",
                     "payout_offset",
-                    "preferred_estimation_engine",
+                    "preferred_estimation_engine_a",
+                    "preferred_estimation_engine_b",
                 )
             )
             for prefix in ("", "-")

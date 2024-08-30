@@ -40,16 +40,18 @@ class ModelTest(TestCase):
         cls.person = Person.objects.create(
             name="Jens Hansen",
             cpr="1234567890",
-            preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year2,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         cls.month1 = PersonMonth.objects.create(
             person_year=cls.person_year, month=1, import_date=date.today()
@@ -346,9 +348,9 @@ class TestPersonMonth(ModelTest):
         self.assertIsNone(self.month12.prev)
 
     def test_calculation_engine_missing(self):
-        self.person.preferred_estimation_engine_a = None
-        self.person.preferred_estimation_engine_b = None
-        self.person.save(
+        self.person_year.preferred_estimation_engine_a = None
+        self.person_year.preferred_estimation_engine_b = None
+        self.person_year.save(
             update_fields=(
                 "preferred_estimation_engine_a",
                 "preferred_estimation_engine_b",

@@ -106,6 +106,9 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
                     for py in self.object.personyear_set.all()
                 },
                 "chart_data": chart_data,
+                "person_year": PersonYear.objects.get(
+                    person=self.object, year=self.year
+                ),
             }
         )
 
@@ -194,11 +197,6 @@ class PersonYearEstimationMixin:
                     qs = qs.filter(**{f"{selected_model}__gte": min_offset})
                 if max_offset is not None:
                     qs = qs.filter(**{f"{selected_model}__lte": max_offset})
-
-        qs = qs.annotate(
-            preferred_estimation_engine_a=F("person__preferred_estimation_engine_a"),
-            preferred_estimation_engine_b=F("person__preferred_estimation_engine_b"),
-        )
 
         return qs
 

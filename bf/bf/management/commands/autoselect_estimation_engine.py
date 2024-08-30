@@ -1,45 +1,48 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from collections import defaultdict
-
 from django.core.management.base import BaseCommand
 
-from bf.models import IncomeType, Person, PersonYearEstimateSummary
+from bf.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
-
         for person in Person.objects.all():
-            has_set = False
             for income_type in IncomeType:
+                preferred_estimation_engine_field = (
+                    f"preferred_estimation_engine_{income_type.value.lower()}"
+                )
+
                 summaries = PersonYearEstimateSummary.objects.filter(
                     person_year__person=person,
                     income_type=income_type,
-                )
-                rmses = defaultdict(list)
-                for summary in summaries:
-                    if summary.rmse_percent:
-                        rmses[summary.estimation_engine].append(summary.rmse_percent)
+                ).order_by("person_year__year")
+                years = set([summary.person_year.year.year for summary in summaries])
 
-                # If there are multiple years in the dataset:
-                # Take an average over all years
-                for estimation_engine, rmse_results in rmses.items():
-                    rmses[estimation_engine] = [sum(rmse_results) / len(rmse_results)]
+                for year in [y for y in years if y != min(years)]:
+                    # Look for LAST year's results to find the best estimation
+                    # engine for THIS year
+                    relevant_summaries = [
+                        summary
+                        for summary in summaries
+                        if summary.person_year.year.year == year - 1
+                        and summary.rmse_percent is not None
+                    ]
+                    rmses = {
+                        summary.estimation_engine: summary.rmse_percent
+                        for summary in relevant_summaries
+                    }
 
-                if rmses:
-                    field = f"preferred_estimation_engine_{income_type.value.lower()}"
-                    setattr(person, field, min(rmses, key=rmses.get))
-                    person.save(update_fields=(field,))
-                    has_set = True
-            if not has_set:
-                income_sums = {
-                    person_year.year.year: str(person_year.amount_sum)
-                    for person_year in person.personyear_set.all()
-                }
-                self.stdout.write(
-                    "Could not auto-select preferred estimation engine "
-                    f"for {person} (id: {person.pk}) (income: {income_sums})"
-                )
+                    if rmses:
+                        best_engine = min(rmses, key=rmses.get)
+                        person_year = PersonYear.objects.get(person=person, year=year)
+                        setattr(
+                            person_year,
+                            preferred_estimation_engine_field,
+                            best_engine,
+                        )
+                        person_year.save(
+                            update_fields=(preferred_estimation_engine_field,)
+                        )
