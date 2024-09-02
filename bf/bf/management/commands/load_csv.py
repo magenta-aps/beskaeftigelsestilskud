@@ -119,7 +119,6 @@ class Command(BaseCommand):
         parser.add_argument("--profile", action="store_true", default=False)
         parser.add_argument("--show-multiyear-pks", type=int)
 
-
     def _handle(self, *args, **kwargs):
         with open(kwargs["file"]) as input_stream:
             self._year = kwargs.get("year") or date.today().year
@@ -269,6 +268,6 @@ class Command(BaseCommand):
         if options.get("profile", False):
             profiler = Profile()
             profiler.runcall(self._handle, *args, **options)
-            profiler.print_stats()
+            profiler.print_stats(sort="tottime")
         else:
             self._handle(*args, **options)

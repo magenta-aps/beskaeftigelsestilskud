@@ -263,6 +263,6 @@ class Command(BaseCommand):
         if options.get("profile", False):
             profiler = Profile()
             profiler.runcall(self._handle, *args, **options)
-            profiler.print_stats()
+            profiler.print_stats(sort="tottime")
         else:
             self._handle(*args, **options)
