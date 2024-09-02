@@ -38,8 +38,10 @@ class Command(BaseCommand):
         if month and month >= 1 and month <= 12:
             months = months.filter(month=month)
 
-        months = months.select_related("person_year").order_by(
-            "person_year__person", "month"
+        months = (
+            months.select_related("person_year")
+            .prefetch_related("incomeestimate_set")
+            .order_by("person_year__person", "month")
         )
         for person_month in months:
             try:
