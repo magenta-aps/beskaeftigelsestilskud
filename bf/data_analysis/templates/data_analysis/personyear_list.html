@@ -6,6 +6,7 @@
 {% load i18n %}
 {% load csp %}
 {% load bf_tags %}
+{% load bootstrap_icons %}
 
 {% block extra_headers %}
     <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
@@ -58,8 +59,30 @@
                 </div>
             </div>
         </div>
-    </form>
-    <table class="table table-bordered">
+    </form>    
+    <div class="dropdown float-end">
+        <a class="btn btn-primary dropdown-toggle" role="button" id="dropdownMenuButton"
+        data-bs-toggle="dropdown" aria-expanded="false">
+        {% bs_icon "funnel" size="1em" %}
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            {% for name, verbose_name, show in columns %}
+            <li>
+                <a class="dropdown-item">
+                    <div class="form-check">
+                        {% if show|default_if_none:True %}
+                            <input class="form-check-input" type="checkbox" value="" id="{{name}}Toggle" checked />
+                        {% else %}
+                            <input class="form-check-input" type="checkbox" value="" id="{{name}}Toggle" />
+                        {% endif %}
+                        <label class="form-check-label" for="{{name}}Toggle" style="display: block">{{verbose_name}}</label>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>    
+    <table class="table table-bordered"  id="table">
     <thead>
     <tr>
         <th class="col-1">
@@ -324,5 +347,53 @@ function invalidateMinMax() {
 }
 $("#id_selected_model").change(invalidateMinMax);
 invalidateMinMax()
+</script>
+
+<script nonce="{{ request.csp_nonce }}">
+function get_cols_to_hide(item_name){
+    var header_col = $(`table tr th:contains('${item_name}')`).index() + 1;
+    var cols_to_hide = [(header_col-2)*4+2,
+                        (header_col-2)*4+3,
+                        (header_col-2)*4+4,
+                        (header_col-2)*4+5];
+      
+    col_string = ""
+    col_string += `tr:first th:nth-child(${header_col})`;
+    for (col_to_hide of cols_to_hide) {
+        col_string += `, tr:not(:first) th:nth-child(${col_to_hide}), td:nth-child(${col_to_hide})`;   
+    }      
+    return col_string
+}
+function hideItem(item_name){   
+    const col_string = get_cols_to_hide(item_name);      
+    $(col_string).hide();
+}
+function showItem(item_name){
+    const col_string = get_cols_to_hide(item_name);      
+    $(col_string).show();
+
+}
+function checkboxHandler(){
+    const $this = $(this);
+    const id = $this.attr('id');
+    const itemName = id.replace("Toggle", "");
+    const itemState = $this.is(":checked");
+
+    const col_string = get_cols_to_hide(itemName);
+    $(col_string).toggle(Boolean(itemState));
+
+    let data = {
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    };
+    data["show_" + itemName] = itemState;
+
+    $.ajax({
+        type: 'POST',
+        url: '{% url "data_analysis:update_preferences" request.user.id %}',
+        data: data,
+    });
+}
+$('input[type=checkbox]').each(checkboxHandler);
+$('input[type=checkbox][id$=Toggle]').change(checkboxHandler);
 </script>
 {% endblock %}

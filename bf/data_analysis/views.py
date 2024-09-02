@@ -9,6 +9,7 @@ from decimal import Decimal
 from typing import List
 from urllib.parse import urlencode
 
+from common.models import EngineViewPreferences
 from data_analysis.forms import (
     HistogramOptionsForm,
     PersonAnalysisOptionsForm,
@@ -20,7 +21,7 @@ from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.urls import reverse
-from django.views.generic import DetailView, FormView
+from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
 from project.util import params_no_none, strtobool
 
@@ -251,6 +252,14 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
         context["sort_params"] = sort_params
         context["order_current"] = current_order_by
 
+        preferences, _ = EngineViewPreferences.objects.get_or_create(
+            user=self.request.user
+        )
+        columns = []
+        for key in engine_keys:
+            columns.append([key, key, getattr(preferences, "show_" + key)])
+        context["columns"] = columns
+
         return context
 
 
@@ -341,3 +350,17 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         unit = "%" if "%" in resolution_label else "kr"
 
         return {"data": observations, "resolution": resolution, "unit": unit}
+
+
+class UpdateEngineViewPreferences(View):
+    model = EngineViewPreferences
+
+    def post(self, request, *args, **kwargs):
+        preferences, _ = self.model.objects.get_or_create(user=self.request.user)
+
+        for field in self.model._meta.fields:
+            if field.name in request.POST and field.name.startswith("show_"):
+                show_field = request.POST[field.name].lower() == "true"
+                setattr(preferences, field.name, show_field)
+        preferences.save()
+        return HttpResponse("ok")
