@@ -379,11 +379,8 @@ function checkboxHandler(){
     const itemName = id.replace("Toggle", "");
     const itemState = $this.is(":checked");
 
-    if (itemState) {
-        showItem(itemName);
-    } else {
-        hideItem(itemName);
-    }
+    const col_string = get_cols_to_hide(itemName);
+    $(col_string).toggle(Boolean(itemState));
 
     let data = {
         csrfmiddlewaretoken: '{{ csrf_token }}'
