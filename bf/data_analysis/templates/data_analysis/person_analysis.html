@@ -71,10 +71,10 @@ const chartOptions = {
         }
     },
     xaxis: {
-        type: "datetime",
+        type: "numeric",
     },
-    dataLabels: {
-        enabled: true
+    stroke: {
+        curve: "stepline",
     },
     legend: {
         show: true,
@@ -88,56 +88,42 @@ const chartOptions = {
     }    
 };
 
-const fillEmpty = function(foundMonths) {
-    data = []
-    for (let i=1; i<=12; i++) {
-        if (!foundMonths.has(i)) {
-            data.push({
-                x: i,
-                y: null,
-            });
-        }
-    }
-    return data;
-}
+
 
 // Build chart data based on each "row" in dataset
 const getChartData = function (doc, row, rowId, options) {
     const series = [];
     let hasData = false;
+    const labelledSeries = [];
 
-    console.log(row);
-
-    if (row.income_sum) {
-        // Add line graph for "income_sum"
-        series.push({
-            data: [
-                {
-                    x: 0,
-                    y: row.income_sum,
-                },
-                {
-                    x: 12,
-                    y: row.income_sum,
-                },
-            ],
-            name: "Faktisk årsindkomst",
-            type: "line",
-        });
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const category = function(year, month) {
+        return monthNames[month-1] + " " + year;
     }
 
+    const bucketize = function(items) {
+        const data = {};
+        for (const item of items) {
+            if (!(item.year in data)) {
+                data[item.year] = {};
+            }
+            data[item.year][item.month] = item;
+        }
+        return data;
+    }
 
     if (row.income_series) {
-        incomeData = []
-        foundMonths = new Set();
-        for (const item of row.income_series) {
-            incomeData.push({
-                x: item.month,
-                y: item.value,
-            });
-            foundMonths.add(item.month);
+        const incomeData = []
+        const data = bucketize(row.income_series);
+        for (let year = doc.year_start; year <= doc.year_end; year++) {
+            for (let month = 1; month <= 12; month++) {
+                const item = data[year] && data[year][month];
+                incomeData.push({
+                    x: category(year, month),
+                    y: item ? item.value : null,
+                });
+            }
         }
-        incomeData.push.apply(incomeData, fillEmpty(foundMonths))
         series.push({
             data: incomeData,
             name: "Indkomst",
@@ -150,17 +136,19 @@ const getChartData = function (doc, row, rowId, options) {
         // Add data series for each prediction engine's output
         for (const prediction of row.predictions) {
             const predictionData = [];
-            const foundMonths = new Set();
-            for (const item of prediction.items) {
-                predictionData.push({
-                    x: item.month,
-                    y: item.predicted_value,
-                    difference: item.prediction_difference,
-                    differencePct: item.prediction_difference_pct,
-                });
-                foundMonths.add(item.month);
+            const data = bucketize(prediction.items);
+            for (let year = doc.year_start; year <= doc.year_end; year++) {
+                for (let month = 1; month <= 12; month++) {
+                    const item = data[year] && data[year][month];
+                    const y = item ? item.value : null;
+                    predictionData.push({
+                        x: category(year, month),
+                        y: item ? item.predicted_value : null,
+                        difference: item ? item.prediction_difference : null,
+                        differencePct: item ? item.prediction_difference_pct : null,
+                    });
+                }
             }
-            predictionData.push.apply(predictionData, fillEmpty(foundMonths));
 
             if (predictionData) {
                 hasData = true;
@@ -170,7 +158,28 @@ const getChartData = function (doc, row, rowId, options) {
                 name: "Estimat af årsindkomst",
                 type: "column",
             });
+            labelledSeries.push(series.length-1);
         }
+    }
+
+
+    if (row.income_sum) {
+        const actualData = [];
+        for (let year = doc.year_start; year <= doc.year_end; year++) {
+            const sum = row.income_sum[year];
+            for (let month = 1; month <= 12; month++) {
+                actualData.push({
+                    x: category(year, month),
+                    y: sum,
+                });
+            }
+        }
+        // Add line graph for "income_sum"
+        series.push({
+            data: actualData,
+            name: "Faktisk årsindkomst",
+            type: "line",
+        });
     }
 
     if (hasData) {
@@ -178,8 +187,22 @@ const getChartData = function (doc, row, rowId, options) {
         const chartData = structuredClone(options);
         chartData.chart.id = rowId;
         chartData.series = series;
-        chartData.xaxis={
-            categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+        const xLabels = [];
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        for (let year=doc.year_start; year<=doc.year_end; year++) {
+            for (let month of monthNames) {
+                xLabels.push(month+" "+year);
+            }
+        }
+
+        chartData.xaxis = {
+            categories: xLabels,
+            type: "category"
+        };
+        chartData.dataLabels = {
+            enabled: true,
+            enabledOnSeries: labelledSeries,
         };
         return chartData;
     }
@@ -253,10 +276,6 @@ $(document).ready(
         // Fetch dataset from server and render each row of dataset as separate charts.
         // There is currently one row per employer.
         const doc = JSON.parse($("#chart_data").text());
-
-        for (const rowId in doc.rows) {
-            console.log(doc.rows[rowId]);
-        }
 
         for (const rowId in doc.rows) {
             const row = doc.rows[rowId];

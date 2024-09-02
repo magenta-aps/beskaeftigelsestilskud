@@ -11,6 +11,7 @@ from typing import List
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import Count
 
 from bf.models import (
     Employer,
@@ -248,3 +249,8 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
         )
+
+        for person in Person.objects.annotate(years=Count("personyear")).filter(
+            years__gte=2
+        ):
+            print(person.pk)

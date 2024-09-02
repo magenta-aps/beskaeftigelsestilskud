@@ -54,7 +54,8 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
         if isinstance(obj, Simulation):
             return {
                 "person": obj.person,
-                "year": obj.year,
+                "year_start": obj.year_start,
+                "year_end": obj.year_end,
                 "rows": obj.result.rows,
             }
 
@@ -90,7 +91,8 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
             simulation = Simulation(
                 EstimationEngine.instances(),
                 self.get_object(),
-                year=self.year,
+                year_start=max(self.object.first_year.year.year, self.year - 5),
+                year_end=self.year,
                 income_type=self.income_type,
             )
             chart_data = json.dumps(simulation, cls=SimulationJSONEncoder)
