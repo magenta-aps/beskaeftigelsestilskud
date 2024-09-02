@@ -88,63 +88,102 @@ const chartOptions = {
     }    
 };
 
+const fillEmpty = function(foundMonths) {
+    data = []
+    for (let i=1; i<=12; i++) {
+        if (!foundMonths.has(i)) {
+            data.push({
+                x: i,
+                y: null,
+            });
+        }
+    }
+    return data;
+}
+
 // Build chart data based on each "row" in dataset
 const getChartData = function (doc, row, rowId, options) {
     const series = [];
+    let hasData = false;
 
-    // Add "income" data series
-    const income = [];
-    for (const item of row.income_series) {
-        income.push({
-            x: new Date(item.year, item.month - 1, 1),
-            y: item.value,
+    console.log(row);
+
+    if (row.income_sum) {
+        // Add line graph for "income_sum"
+        series.push({
+            data: [
+                {
+                    x: 0,
+                    y: row.income_sum,
+                },
+                {
+                    x: 12,
+                    y: row.income_sum,
+                },
+            ],
+            name: "Faktisk årsindkomst",
+            type: "line",
         });
     }
-    series.push({
-        data: income,
-        name: "Income",
-        type: "column",
-    });
 
-    // Add data series for each prediction engine's output
-    for (const prediction of row.predictions) {
-        const predictionData = [];
-        for (const item of prediction.items) {
-            predictionData.push({
-                x: new Date(item.year, item.month - 1, 1),
-                y: item.predicted_value,
-                difference: item.prediction_difference,
-                differencePct: item.prediction_difference_pct,
+
+    if (row.income_series) {
+        incomeData = []
+        foundMonths = new Set();
+        for (const item of row.income_series) {
+            incomeData.push({
+                x: item.month,
+                y: item.value,
             });
+            foundMonths.add(item.month);
         }
+        incomeData.push.apply(incomeData, fillEmpty(foundMonths))
         series.push({
-            data: predictionData,
-            name: prediction.engine.description,
+            data: incomeData,
+            name: "Indkomst",
             type: "column",
         });
+        hasData = true;
     }
 
-    // Add line graph for "income_sum"
-    series.push({
-        data: [
-            {
-                x: new Date(doc.year, 0, 1),
-                y: row.income_sum,
-            },
-            {
-                x: new Date(doc.year, 11, 1),
-                y: row.income_sum,
-            },
-        ],
-        name: "Income sum",
-        type: "line",
-    });
+    if (row.predictions) {
+        // Add data series for each prediction engine's output
+        for (const prediction of row.predictions) {
+            const predictionData = [];
+            const foundMonths = new Set();
+            for (const item of prediction.items) {
+                predictionData.push({
+                    x: item.month,
+                    y: item.predicted_value,
+                    difference: item.prediction_difference,
+                    differencePct: item.prediction_difference_pct,
+                });
+                foundMonths.add(item.month);
+            }
+            predictionData.push.apply(predictionData, fillEmpty(foundMonths));
 
-    // Construct chart data by combining series and options
-    const chartData = structuredClone(options);
-    chartData.chart.id = rowId;
-    chartData.series = series;
-    return chartData;
+            if (predictionData) {
+                hasData = true;
+            }
+            series.push({
+                data: predictionData,
+                name: "Estimat af årsindkomst",
+                type: "column",
+            });
+        }
+    }
+
+    if (hasData) {
+        // Construct chart data by combining series and options
+        const chartData = structuredClone(options);
+        chartData.chart.id = rowId;
+        chartData.series = series;
+        chartData.xaxis={
+            categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        };
+        return chartData;
+    }
+    return null;
 }
 
 
@@ -190,6 +229,9 @@ const getChart2Data = function (doc, row, rowId, options) {
     const chartData = structuredClone(options);
     chartData.chart.id = rowId;
     chartData.series = series;
+    chartData.xaxis={
+        categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    }
     
     chartData.tooltip.y=[{
         formatter : function(val) {    
@@ -207,36 +249,45 @@ const getChart2Data = function (doc, row, rowId, options) {
 
 
 $(document).ready(
-    async function () {
+    function () {
         // Fetch dataset from server and render each row of dataset as separate charts.
         // There is currently one row per employer.
         const doc = JSON.parse($("#chart_data").text());
 
         for (const rowId in doc.rows) {
+            console.log(doc.rows[rowId]);
+        }
+
+        for (const rowId in doc.rows) {
             const row = doc.rows[rowId];
 
             // Insert DOM element for chart
-            const chartElem = document.createElement("div");
-            document.querySelector("body").appendChild(chartElem);
+            const card = $('<div class="card m-2"><div class="card-header">'+row.title+'</div><div class="card-body"></div></div>');
+            $("body").append(card);
+
+            const chartElem = card.find(".card-body");
 
             // Get chart data
             const chartData = getChartData(doc, row, rowId, chartOptions);
+            if (chartData === null) {
+                chartElem.append($('<div class="d-flex justify-content-center">Ingen estimater</div>'));
+            } else {
+                // Render chart into DOM element
+                const chart = new ApexCharts(chartElem.get(0), chartData);
+                chart.render();
+            }
+            {#chart.hideSeries('Ekstrapolation af beløb baseret udelukkende på den foregående måned')#}
 
-            // Render chart into DOM element
-            const chart = new ApexCharts(chartElem, chartData);
-            chart.render();
-            chart.hideSeries('Ekstrapolation af beløb baseret udelukkende på den foregående måned')
-
-            // Insert DOM element for chart
-            const chartElem2 = document.createElement("div");
-            document.querySelector("body").appendChild(chartElem2);
-
-            // Get chart data
-            const chartData2 = getChart2Data(doc, row, rowId, chartOptions);
-
-            // Render chart into DOM element
-            const chart2 = new ApexCharts(chartElem2, chartData2);
-            chart2.render();
+            {#// Insert DOM element for chart#}
+            {#const chartElem2 = document.createElement("div");#}
+            {#document.querySelector("body").appendChild(chartElem2);#}
+            {##}
+            {#// Get chart data#}
+            {#const chartData2 = getChart2Data(doc, row, rowId, chartOptions);#}
+            {##}
+            {#// Render chart into DOM element#}
+            {#const chart2 = new ApexCharts(chartElem2, chartData2);#}
+            {#chart2.render();#}
 
         }
     }
