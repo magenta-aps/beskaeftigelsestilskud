@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from cProfile import Profile
+
 from django.core.management.base import BaseCommand
 
 from bf.exceptions import EstimationEngineUnset
@@ -14,8 +16,9 @@ class Command(BaseCommand):
         parser.add_argument("year", type=int)
         parser.add_argument("--month", type=int)
         parser.add_argument("--cpr", type=int)
+        parser.add_argument("--profile", action="store_true", default=False)
 
-    def handle(self, *args, **kwargs):
+    def _handle(self, *args, **kwargs):
         self._verbose = kwargs["verbosity"] > 1
 
         self._write_verbose(f"Calculating benefit for {kwargs['year']}")
@@ -50,3 +53,11 @@ class Command(BaseCommand):
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
             self.stdout.write(msg, **kwargs)
+
+    def handle(self, *args, **options):
+        if options.get("profile", False):
+            profiler = Profile()
+            profiler.runcall(self._handle, *args, **options)
+            profiler.print_stats()
+        else:
+            self._handle(*args, **options)

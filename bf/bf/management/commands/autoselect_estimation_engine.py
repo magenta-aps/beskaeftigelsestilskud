@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from cProfile import Profile
+
 from django.core.management.base import BaseCommand
 
 from bf.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary
@@ -8,7 +10,10 @@ from bf.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **kwargs):
+    def add_arguments(self, parser):
+        parser.add_argument("--profile", action="store_true", default=False)
+
+    def _handle(self, *args, **kwargs):
         for person in Person.objects.all():
             for income_type in IncomeType:
                 preferred_estimation_engine_field = (
@@ -46,3 +51,11 @@ class Command(BaseCommand):
                         person_year.save(
                             update_fields=(preferred_estimation_engine_field,)
                         )
+
+    def handle(self, *args, **options):
+        if options.get("profile", False):
+            profiler = Profile()
+            profiler.runcall(self._handle, *args, **options)
+            profiler.print_stats()
+        else:
+            self._handle(*args, **options)
