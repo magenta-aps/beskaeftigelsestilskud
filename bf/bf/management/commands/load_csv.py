@@ -250,7 +250,8 @@ class Command(BaseCommand):
             f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
         )
 
+        print("Person PKs with two years:")
         for person in Person.objects.annotate(years=Count("personyear")).filter(
             years__gte=2
         ):
-            print(person.pk)
+            print(f"    {person.pk}")
