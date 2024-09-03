@@ -1,0 +1,21 @@
+version = 1
+SPDX-PackageName = "Beskæftigelsestilskud"
+SPDX-PackageSupplier = "Magenta ApS <info@magenta.dk>"
+
+[[annotations]]
+path = ["REUSE.toml", "bf/**/migrations/**", "bf/eskat/fixtures/**", "log/**", "dev-environment/**", "README.md", "dev-idp/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 Magenta ApS <info@magenta.dk>"
+SPDX-License-Identifier = "MPL-2.0"
+
+[[annotations]]
+path = "bf/bf/static/jquery/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 OpenJS Foundation and jQuery contributors"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["bf/bf/static/bootstrap/**.map", "bf/bf/static/bootstrap-icons/**.svg", "bf/bf/static/bootstrap-icons/font/fonts/**", "bf/bf/static/bootstrap-icons/font/bootstrap-icons.json"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2011-2021 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)"
+SPDX-License-Identifier = "MIT"
