@@ -88,7 +88,6 @@ class TestSimulationJSONEncoder(TestCase):
             year_end=2020,
             income_type=IncomeType.A,
         )
-        print(json.dumps(simulation, cls=SimulationJSONEncoder))
         self._assert_json_equal(
             simulation,
             {
@@ -98,10 +97,10 @@ class TestSimulationJSONEncoder(TestCase):
                         "income_series": [],
                         "title": "Månedlig indkomst",
                     },
+                    {"payout": [], "title": "Månedlig udbetaling"},
                     {
                         "income_sum": {"2020": 0.0},
                         "predictions": [],
-                        "payout": [],
                         "title": "TwelveMonthsSummationEngine",
                     },
                 ],

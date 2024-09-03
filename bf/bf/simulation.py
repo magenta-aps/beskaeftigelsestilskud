@@ -43,6 +43,7 @@ class PayoutItem:
     year: int
     month: int
     payout: Decimal
+    cumulative_payout: Decimal
     correct_payout: Decimal
 
 
@@ -57,12 +58,17 @@ class SimulationResultRow:
     income_sum: int
     predictions: list[Prediction]
     title: str
-    payout: list[PayoutItem]
 
 
 @dataclass(frozen=True, repr=False)
 class IncomeRow:
     income_series: list[IncomeItem]
+    title: str
+
+
+@dataclass(frozen=True, repr=False)
+class PayoutRow:
+    payout: list[PayoutItem]
     title: str
 
 
@@ -95,7 +101,9 @@ class Simulation:
             year__year__gte=year_start, year__year__lte=year_end
         )
         self.result = SimulationResult(
-            rows=[self.income()] + [self.prediction(engine) for engine in self.engines],
+            rows=[self.income()]
+            + [self.payout()]
+            + [self.prediction(engine) for engine in self.engines],
             year_start=year_start,
             year_end=year_end,
         )
@@ -144,6 +152,24 @@ class Simulation:
             title="Månedlig indkomst",
             income_series=income_series,
         )
+
+    def payout(self):
+        payout_items = []
+        for person_year in self.person_years:
+            cumulative_payout = Decimal(0)
+            for person_month in person_year.personmonth_set.order_by("month"):
+                payout = person_month.benefit_paid or Decimal(0)
+                cumulative_payout += payout
+                payout_items.append(
+                    PayoutItem(
+                        year=person_year.year.year,
+                        month=person_month.month,
+                        payout=payout,
+                        cumulative_payout=cumulative_payout,
+                        correct_payout=person_month.actual_year_benefit,
+                    )
+                )
+        return PayoutRow(title="Månedlig udbetaling", payout=payout_items)
 
     def prediction(self, engine: EstimationEngine):
 
@@ -218,25 +244,6 @@ class Simulation:
                         )
                     )
 
-            payout_items = []
-            payout = 0
-            for month in range(1, 13):
-                try:
-                    person_month = person_year.personmonth_set.get(month=month)
-                except PersonMonth.DoesNotExist:
-                    continue
-
-                if person_month.benefit_paid:
-                    payout += person_month.benefit_paid
-
-                payout_items.append(
-                    PayoutItem(
-                        year=year,
-                        month=month,
-                        payout=payout,
-                        correct_payout=person_month.actual_year_benefit,
-                    )
-                )
         if prediction_items:
             estimates.append(Prediction(engine=engine, items=prediction_items))
 
@@ -244,5 +251,4 @@ class Simulation:
             title=engine.__class__.__name__,
             income_sum=actual_year_sums,  # TODO: brug rigtigt i js
             predictions=estimates,
-            payout=payout_items,
         )
