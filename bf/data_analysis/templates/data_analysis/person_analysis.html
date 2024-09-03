@@ -41,6 +41,7 @@
         <div class="input-group">
             <div class="input-group-text">{{ form.year_start.label }}</div>
             {{ form.year_start }}
+                <div class="input-group-text">-</div>
             {{ form.year_end }}
         </div>
     </div>
@@ -51,7 +52,7 @@
         </div>
     </div>
     <div class="col-12">
-        <button class="btn btn-primary" type="button">{% translate 'Opdatér' %}</button>
+        <button class="btn btn-primary" type="submit">{% translate 'Opdatér' %}</button>
     </div>
     {{ form.errors }}
 </form>
@@ -223,7 +224,19 @@ $(function () {
         const row = doc.rows[rowId];
 
         // Insert DOM element for chart
-        const card = $('<div class="card m-2"><div class="card-header">'+row.title+'</div><div class="card-body"></div></div>');
+        const cardId = "chart_"+rowId;
+        const card = $(`
+            <div class="card m-2">
+                <a class="card-link" data-bs-toggle="collapse" href="#${cardId}">
+                    <div class="card-header">
+                        ${row.title}
+                    </div>
+                </a>
+                <div id="${cardId}" class="collapse show">
+                    <div class="card-body"></div>
+                </div>
+            </div>
+            `);
         $("body").append(card);
 
         const chartElem = card.find(".card-body");
@@ -243,12 +256,12 @@ $(function () {
 $(function () {
     const year_urls = JSON.parse($("#year_urls").text());
     const form = $("#graph-options");
-    form.find("button").on("click", function(evt) {
+    /*form.find("button").on("click", function(evt) {
         const yearField = form.find("[name=year]");
         form.attr("action", year_urls[yearField.val()]);
         yearField.attr("disabled", "disabled");
         form.submit();
-    });
+    });*/
 });
 </script>
 {% endblock %}

@@ -21,7 +21,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
-from django.urls import reverse
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
 from project.util import params_no_none, strtobool
@@ -114,13 +113,6 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
         return super().get_context_data(
             **{
                 **kwargs,
-                "year_urls": {
-                    py.year.year: reverse(
-                        "data_analysis:person_analysis",
-                        kwargs={"year": py.year.year, "pk": self.object.pk},
-                    )
-                    for py in self.object.personyear_set.all()
-                },
                 "chart_data": chart_data,
                 "person_years": person_years,
             }
