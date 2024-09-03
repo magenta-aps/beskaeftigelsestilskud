@@ -140,7 +140,14 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
 
 
 class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
-    year = DynamicField(
+    year_start = DynamicField(
+        forms.ChoiceField,
+        choices=lambda form: [(year, year) for year in form.years],
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("År"),
+    )
+    year_end = DynamicField(
         forms.ChoiceField,
         choices=lambda form: [(year, year) for year in form.years],
         required=False,

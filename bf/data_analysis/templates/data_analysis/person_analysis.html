@@ -19,22 +19,29 @@
                 <th>Adresse:</th>
                 <td>{{ person.full_address|default_if_none:"-" }}</td>
             </tr>
+        </table>
+    </div>
+    <div class="col-6">
+        <table class="table">
             <tr>
-                <th>Estimeringsmotor for A-indkomst:</th>
-                <td>{{ person_year.preferred_estimation_engine_a }}</td>
+                <td>Foretrukken estimeringsmotor</td><th>A-indkomst</th><th>B-indkomst</th>
             </tr>
+            {% for person_year in person_years %}
             <tr>
-                <th>Estimeringsmotor for B-indkomst:</th>
+                <th>{{ person_year.year.year }}</th>
+                <td>{{ person_year.preferred_estimation_engine_a }}</td>
                 <td>{{ person_year.preferred_estimation_engine_b }}</td>
             </tr>
+            {% endfor %}
         </table>
     </div>
 </div>
 <form id="graph-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
     <div class="col-12">
         <div class="input-group">
-            <div class="input-group-text">{{ form.year.label }}</div>
-            {{ form.year }}
+            <div class="input-group-text">{{ form.year_start.label }}</div>
+            {{ form.year_start }}
+            {{ form.year_end }}
         </div>
     </div>
     <div class="col-12">

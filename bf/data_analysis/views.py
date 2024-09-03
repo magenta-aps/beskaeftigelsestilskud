@@ -5,6 +5,7 @@ import copy
 import dataclasses
 import json
 from collections import Counter, defaultdict
+from datetime import date
 from decimal import Decimal
 from typing import List
 from urllib.parse import urlencode
@@ -70,7 +71,6 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.year = self.kwargs["year"]
         self.income_type = None
         form = self.get_form()
         if form.is_valid():
@@ -82,6 +82,14 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
         income_type_raw = form.cleaned_data["income_type"]
         if income_type_raw:
             self.income_type = IncomeType(income_type_raw)
+
+        year1 = int(
+            form.cleaned_data["year_end"]
+            or min(self.object.last_year.year.year, date.today().year)
+        )
+        year2 = int(form.cleaned_data["year_start"] or self.object.first_year.year.year)
+        self.year_start = min(year1, year2)
+        self.year_end = max(year1, year2)
         return self.render_to_response(
             self.get_context_data(object=self.object, form=form)
         )
@@ -91,8 +99,8 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
             simulation = Simulation(
                 EstimationEngine.instances(),
                 self.get_object(),
-                year_start=max(self.object.first_year.year.year, self.year - 5),
-                year_end=self.year,
+                year_start=self.year_start,
+                year_end=self.year_end,
                 income_type=self.income_type,
             )
             chart_data = json.dumps(simulation, cls=SimulationJSONEncoder)
@@ -109,16 +117,18 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
                     for py in self.object.personyear_set.all()
                 },
                 "chart_data": chart_data,
-                "person_year": PersonYear.objects.get(
-                    person=self.object, year=self.year
-                ),
+                "person_years": PersonYear.objects.filter(
+                    person=self.object,
+                    year__year__gte=self.year_start,
+                    year__year__lte=self.year_end,
+                ).order_by("year__year"),
             }
         )
 
     def get_form_kwargs(self):
         return {
             **super().get_form_kwargs(),
-            "data": {**self.request.GET.dict(), "year": self.year},
+            "data": self.request.GET.dict(),
             "instance": self.object,
         }
 
