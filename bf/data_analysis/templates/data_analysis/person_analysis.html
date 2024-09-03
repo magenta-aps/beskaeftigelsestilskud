@@ -9,11 +9,11 @@
 {% block content %}
 <h1>{{ person.name }}</h1>
 <div class="row">
-    <div class="col-4">
+    <div class="col-6">
         <table class="table">
             <tr>
-                <th>CPR-nummer:</th>
-                <td>{{ person.cpr }}</td>
+                <th class="col-4">CPR-nummer:</th>
+                <td class="col-8">{{ person.cpr }}</td>
             </tr>
             <tr>
                 <th>Adresse:</th>
@@ -24,7 +24,9 @@
     <div class="col-6">
         <table class="table">
             <tr>
-                <td>Foretrukken estimeringsmotor</td><th>A-indkomst</th><th>B-indkomst</th>
+                <td class="col-4">Foretrukken estimeringsmotor</td>
+                <th class="col-4">A-indkomst</th>
+                <th class="col-4">B-indkomst</th>
             </tr>
             {% for person_year in person_years %}
             <tr>

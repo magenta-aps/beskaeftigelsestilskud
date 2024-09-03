@@ -5,7 +5,6 @@ import copy
 import dataclasses
 import json
 from collections import Counter, defaultdict
-from datetime import date
 from decimal import Decimal
 from typing import List
 from urllib.parse import urlencode
@@ -71,6 +70,10 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.income_type = None
+        year1 = self.object.first_year.year.year
+        year2 = self.object.last_year.year.year
+        self.year_start = min(year1, year2)
+        self.year_end = max(year1, year2)
         form = self.get_form()
         if form.is_valid():
             return self.form_valid(form)
@@ -82,11 +85,8 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
         if income_type_raw:
             self.income_type = IncomeType(income_type_raw)
 
-        year1 = int(
-            form.cleaned_data["year_end"]
-            or min(self.object.last_year.year.year, date.today().year)
-        )
-        year2 = int(form.cleaned_data["year_start"] or self.object.first_year.year.year)
+        year1 = int(form.cleaned_data["year_start"] or self.object.first_year.year.year)
+        year2 = int(form.cleaned_data["year_end"] or self.object.last_year.year.year)
         self.year_start = min(year1, year2)
         self.year_end = max(year1, year2)
         return self.render_to_response(
@@ -119,9 +119,14 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
         )
 
     def get_form_kwargs(self):
+        data = {
+            "year_start": self.year_start,
+            "year_end": self.year_end,
+        }
+        data.update(self.request.GET.dict())
         return {
             **super().get_form_kwargs(),
-            "data": self.request.GET.dict(),
+            "data": data,
             "instance": self.object,
         }
 

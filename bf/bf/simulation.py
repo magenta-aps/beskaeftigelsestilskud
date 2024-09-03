@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from django.db.models import QuerySet
 
@@ -16,6 +16,7 @@ from bf.models import (
     IncomeType,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -33,9 +34,9 @@ class IncomeItem:
 class PredictionItem:
     year: int
     month: int
-    predicted_value: int
+    predicted_value: Decimal
     prediction_difference: Decimal
-    prediction_difference_pct: Decimal
+    prediction_difference_pct: Decimal | None
 
 
 @dataclass(frozen=True)
@@ -55,7 +56,7 @@ class Prediction:
 
 @dataclass(frozen=True, repr=False)
 class SimulationResultRow:
-    income_sum: int
+    income_sum: Dict[int, Decimal]
     predictions: list[Prediction]
     title: str
 
@@ -173,7 +174,7 @@ class Simulation:
 
     def prediction(self, engine: EstimationEngine):
 
-        income = []
+        income: List[MonthlyIncomeReport] = []
         if self.income_type in (IncomeType.A, None):
             income += list(
                 MonthlyAIncomeReport.objects.filter(
@@ -191,7 +192,9 @@ class Simulation:
                 )
             )
 
-        income_series_build = defaultdict(lambda: Decimal(0))
+        income_series_build: Dict[Tuple[int, int], Decimal] = defaultdict(
+            lambda: Decimal(0)
+        )
         for item in income:
             income_series_build[(item.year, item.month)] += item.amount
         income_series = [
@@ -227,7 +230,8 @@ class Simulation:
                     )
 
                 if estimate_qs.exists():
-                    estimated_year_result = sum(
+                    # Add Decimal(0) to shut MyPy up
+                    estimated_year_result = Decimal(0) + sum(
                         [estimate.estimated_year_result for estimate in estimate_qs]
                     )
                     offset = IncomeEstimate.qs_offset(estimate_qs)
@@ -249,6 +253,6 @@ class Simulation:
 
         return SimulationResultRow(
             title=engine.__class__.__name__,
-            income_sum=actual_year_sums,  # TODO: brug rigtigt i js
+            income_sum=actual_year_sums,
             predictions=estimates,
         )
