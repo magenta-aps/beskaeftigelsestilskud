@@ -104,8 +104,13 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
                 income_type=self.income_type,
             )
             chart_data = json.dumps(simulation, cls=SimulationJSONEncoder)
+            person_years = self.object.personyear_set.filter(
+                year__year__gte=self.year_start,
+                year__year__lte=self.year_end,
+            ).order_by("year__year")
         else:
             chart_data = "{}"
+            person_years = self.object.personyear_set.all()
         return super().get_context_data(
             **{
                 **kwargs,
@@ -117,11 +122,7 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
                     for py in self.object.personyear_set.all()
                 },
                 "chart_data": chart_data,
-                "person_years": PersonYear.objects.filter(
-                    person=self.object,
-                    year__year__gte=self.year_start,
-                    year__year__lte=self.year_end,
-                ).order_by("year__year"),
+                "person_years": person_years,
             }
         )
 

@@ -84,9 +84,11 @@ class TestSimulationJSONEncoder(TestCase):
         simulation = Simulation(
             [TwelveMonthsSummationEngine()],
             self.person,
-            year=2020,
+            year_start=2020,
+            year_end=2020,
             income_type=IncomeType.A,
         )
+        print(json.dumps(simulation, cls=SimulationJSONEncoder))
         self._assert_json_equal(
             simulation,
             {
@@ -94,12 +96,17 @@ class TestSimulationJSONEncoder(TestCase):
                 "rows": [
                     {
                         "income_series": [],
-                        "income_sum": 0.0,
+                        "title": "Månedlig indkomst",
+                    },
+                    {
+                        "income_sum": {"2020": 0.0},
                         "predictions": [],
                         "payout": [],
-                    }
+                        "title": "TwelveMonthsSummationEngine",
+                    },
                 ],
-                "year": 2020,
+                "year_start": 2020,
+                "year_end": 2020,
             },
         )
 
@@ -135,17 +142,17 @@ class TestPersonAnalysisView(TestCase):
 
     def test_setup(self):
         request = self.request_factory.get("")
-        self.view.setup(request, pk=self.person.pk, year=2020)
+        self.view.setup(request, pk=self.person.pk)
         response = self.view.get(request)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertEqual(self.view.year, 2020)
+        self.assertEqual(self.view.year_start, 2020)
+        self.assertEqual(self.view.year_end, 2020)
 
     def test_get_form_kwargs(self):
         request = self.request_factory.get("")
         self.view.setup(request, pk=self.person.pk, year=2020)
         self.view.get(request)
         form_kwargs = self.view.get_form_kwargs()
-        self.assertEqual(form_kwargs["data"]["year"], 2020)
         self.assertEqual(form_kwargs["instance"], self.person)
 
     def test_invalid(self):

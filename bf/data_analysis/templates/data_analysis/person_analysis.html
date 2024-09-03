@@ -95,8 +95,6 @@ const chartOptions = {
     }    
 };
 
-
-
 // Build chart data based on each "row" in dataset
 const getChartData = function (doc, row, rowId, options) {
     const series = [];
@@ -214,122 +212,43 @@ const getChartData = function (doc, row, rowId, options) {
         return chartData;
     }
     return null;
-}
+};
 
+$(function () {
+    // Fetch dataset from server and render each row of dataset as separate charts.
+    // There is currently one row per employer.
+    const doc = JSON.parse($("#chart_data").text());
 
-const getChart2Data = function (doc, row, rowId, options) {
-    const series = [];
+    for (const rowId in doc.rows) {
+        const row = doc.rows[rowId];
 
-    // Add "payout" data series
-    const payout = [];
-    for (const item of row.payout) {
-        payout.push({
-            x: new Date(item.year, item.month - 1, 1),
-            y: item.payout,
-        });
-    }
-    series.push({
-        data: payout,
-        // Det totale udbetalte beløb som er på borgerens konto i denne måned
-        name: "Totale udbetaling for året",
-        type: "column",
-    });
+        // Insert DOM element for chart
+        const card = $('<div class="card m-2"><div class="card-header">'+row.title+'</div><div class="card-body"></div></div>');
+        $("body").append(card);
 
+        const chartElem = card.find(".card-body");
 
-    // Add "correct_payout" data series
-    const correct_payout = [];
-    for (const item of row.payout) {
-        correct_payout.push({
-            x: new Date(item.year, item.month - 1, 1),
-            y: item.correct_payout,
-        });
-    }
-    series.push({
-        data: correct_payout,        
-        // Beløbet som skal være på kontoen når året er slut.
-        // Prognosen opdateres hver måned.
-        // Den op-justeres når borgeren begynder at tjene penge over minimunsgrænsen.
-        // Den ned-justeres hvis borgeren begynder at tjene over maksimumsgrænsen
-        name: "Totale udbetaling for året (prognose)", 
-        type: "column",
-    });
-
-
-    // Construct chart data by combining series and options
-    const chartData = structuredClone(options);
-    chartData.chart.id = rowId;
-    chartData.series = series;
-    chartData.xaxis={
-        categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    }
-    
-    chartData.tooltip.y=[{
-        formatter : function(val) {    
-            return val + " (Det totale beløb som er udbetalt til borgeren i indeværende år)"
-            }
-        },{   
-        formatter : function(val) {
-            return val + " (Det totale beløb som skal være udbetalt til borgeren, når året er omme)"
-            }
-        },
-    ]
-    
-    return chartData;
-}
-
-
-$(document).ready(
-    function () {
-        // Fetch dataset from server and render each row of dataset as separate charts.
-        // There is currently one row per employer.
-        const doc = JSON.parse($("#chart_data").text());
-
-        for (const rowId in doc.rows) {
-            const row = doc.rows[rowId];
-
-            // Insert DOM element for chart
-            const card = $('<div class="card m-2"><div class="card-header">'+row.title+'</div><div class="card-body"></div></div>');
-            $("body").append(card);
-
-            const chartElem = card.find(".card-body");
-
-            // Get chart data
-            const chartData = getChartData(doc, row, rowId, chartOptions);
-            if (chartData === null) {
-                chartElem.append($('<div class="d-flex justify-content-center">Ingen estimater</div>'));
-            } else {
-                // Render chart into DOM element
-                const chart = new ApexCharts(chartElem.get(0), chartData);
-                chart.render();
-            }
-            {#chart.hideSeries('Ekstrapolation af beløb baseret udelukkende på den foregående måned')#}
-
-            {#// Insert DOM element for chart#}
-            {#const chartElem2 = document.createElement("div");#}
-            {#document.querySelector("body").appendChild(chartElem2);#}
-            {##}
-            {#// Get chart data#}
-            {#const chartData2 = getChart2Data(doc, row, rowId, chartOptions);#}
-            {##}
-            {#// Render chart into DOM element#}
-            {#const chart2 = new ApexCharts(chartElem2, chartData2);#}
-            {#chart2.render();#}
-
+        // Get chart data
+        const chartData = getChartData(doc, row, rowId, chartOptions);
+        if (chartData === null) {
+            chartElem.append($('<div class="d-flex justify-content-center">Ingen estimater</div>'));
+        } else {
+            // Render chart into DOM element
+            const chart = new ApexCharts(chartElem.get(0), chartData);
+            chart.render();
         }
     }
-)
+});
 
-$(document).ready(
-    function () {
-        const year_urls = JSON.parse($("#year_urls").text());
-        const form = $("#graph-options");
-        form.find("button").on("click", function(evt) {
-            const yearField = form.find("[name=year]");
-            form.attr("action", year_urls[yearField.val()]);
-            yearField.attr("disabled", "disabled");
-            form.submit();
-        });
-    }
-)
+$(function () {
+    const year_urls = JSON.parse($("#year_urls").text());
+    const form = $("#graph-options");
+    form.find("button").on("click", function(evt) {
+        const yearField = form.find("[name=year]");
+        form.attr("action", year_urls[yearField.val()]);
+        yearField.attr("disabled", "disabled");
+        form.submit();
+    });
+});
 </script>
 {% endblock %}
