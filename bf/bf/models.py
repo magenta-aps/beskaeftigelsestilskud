@@ -156,6 +156,14 @@ class Person(models.Model):
     def __str__(self):
         return str(self.name or self.cpr)
 
+    @property
+    def first_year(self) -> PersonYear:
+        return self.personyear_set.order_by("year")[0]
+
+    @property
+    def last_year(self) -> PersonYear:
+        return self.personyear_set.order_by("-year")[0]
+
 
 class PersonYear(models.Model):
     person = models.ForeignKey(

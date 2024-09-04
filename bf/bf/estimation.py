@@ -11,6 +11,7 @@ from bf.models import IncomeEstimate, IncomeType
 
 
 class EstimationEngine:
+
     @classmethod
     def estimate(
         cls,

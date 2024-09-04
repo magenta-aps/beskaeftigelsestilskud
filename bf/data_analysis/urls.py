@@ -16,7 +16,7 @@ app_name = "data_analysis"
 
 urlpatterns: list[URLResolver | URLPattern] = [
     path(
-        "<int:year>/person/<int:pk>/",
+        "person/<int:pk>/",
         PersonAnalysisView.as_view(),
         name="person_analysis",
     ),

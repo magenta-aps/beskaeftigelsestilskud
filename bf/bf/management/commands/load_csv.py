@@ -11,6 +11,7 @@ from typing import List
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import Count
 
 from bf.models import (
     Employer,
@@ -114,11 +115,16 @@ class Command(BaseCommand):
         parser.add_argument("--count", type=int)
         parser.add_argument("--delimiter", type=str, default=",")
         parser.add_argument("--dry", action="store_true")
+        parser.add_argument("--show-multiyear-pks", type=int)
 
     def handle(self, *args, **kwargs):
         with open(kwargs["file"]) as input_stream:
             self._year = kwargs.get("year") or date.today().year
             self._delimiter = kwargs["delimiter"]
+            self._show_multiyear_pks = kwargs["show_multiyear_pks"]
+            if self._show_multiyear_pks < 2:
+                print("show-multiyear-pks skal være over 1")
+                return
             dry = kwargs["dry"]
             rows = self._read_csv(input_stream, kwargs["count"])
             if dry:
@@ -248,3 +254,10 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
         )
+
+        if self._show_multiyear_pks:
+            print("Person PKs with two years:")
+            for person in Person.objects.annotate(years=Count("personyear")).filter(
+                years__gte=self._show_multiyear_pks
+            ):
+                print(f"    {person.pk}")
