@@ -4,6 +4,7 @@
 import datetime
 import math
 import time
+from cProfile import Profile
 from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
@@ -45,9 +46,10 @@ class Command(BaseCommand):
         parser.add_argument("--count", type=int)
         parser.add_argument("--dry", action="store_true")
         parser.add_argument("--person", type=int)
+        parser.add_argument("--profile", action="store_true", default=False)
 
     @transaction.atomic
-    def handle(self, *args, **kwargs):
+    def _handle(self, *args, **kwargs):
         start = time.time()
 
         self._year = kwargs["year"]
@@ -256,3 +258,11 @@ class Command(BaseCommand):
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
             self.stdout.write(msg, **kwargs)
+
+    def handle(self, *args, **options):
+        if options.get("profile", False):
+            profiler = Profile()
+            profiler.runcall(self._handle, *args, **options)
+            profiler.print_stats(sort="tottime")
+        else:
+            self._handle(*args, **options)

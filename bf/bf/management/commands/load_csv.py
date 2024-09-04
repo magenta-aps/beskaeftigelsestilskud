@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import csv
+from cProfile import Profile
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -115,9 +116,10 @@ class Command(BaseCommand):
         parser.add_argument("--count", type=int)
         parser.add_argument("--delimiter", type=str, default=",")
         parser.add_argument("--dry", action="store_true")
+        parser.add_argument("--profile", action="store_true", default=False)
         parser.add_argument("--show-multiyear-pks", type=int)
 
-    def handle(self, *args, **kwargs):
+    def _handle(self, *args, **kwargs):
         with open(kwargs["file"]) as input_stream:
             self._year = kwargs.get("year") or date.today().year
             self._delimiter = kwargs["delimiter"]
@@ -261,3 +263,11 @@ class Command(BaseCommand):
                 years__gte=self._show_multiyear_pks
             ):
                 print(f"    {person.pk}")
+
+    def handle(self, *args, **options):
+        if options.get("profile", False):
+            profiler = Profile()
+            profiler.runcall(self._handle, *args, **options)
+            profiler.print_stats(sort="tottime")
+        else:
+            self._handle(*args, **options)
