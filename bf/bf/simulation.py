@@ -6,6 +6,9 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from typing import Dict, List, Tuple
+
+from django.db.models import QuerySet
 
 from bf.estimation import EstimationEngine
 from bf.models import (
@@ -13,6 +16,7 @@ from bf.models import (
     IncomeType,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -30,9 +34,9 @@ class IncomeItem:
 class PredictionItem:
     year: int
     month: int
-    predicted_value: int
+    predicted_value: Decimal
     prediction_difference: Decimal
-    prediction_difference_pct: Decimal
+    prediction_difference_pct: Decimal | None
 
 
 @dataclass(frozen=True)
@@ -40,6 +44,7 @@ class PayoutItem:
     year: int
     month: int
     payout: Decimal
+    cumulative_payout: Decimal
     correct_payout: Decimal
 
 
@@ -51,15 +56,28 @@ class Prediction:
 
 @dataclass(frozen=True, repr=False)
 class SimulationResultRow:
-    income_series: list[IncomeItem]
-    income_sum: int
+    income_sum: Dict[int, Decimal]
     predictions: list[Prediction]
+    title: str
+
+
+@dataclass(frozen=True, repr=False)
+class IncomeRow:
+    income_series: list[IncomeItem]
+    title: str
+
+
+@dataclass(frozen=True, repr=False)
+class PayoutRow:
     payout: list[PayoutItem]
+    title: str
 
 
 @dataclass(frozen=True)
 class SimulationResult:
-    rows: list[SimulationResultRow]
+    rows: list[SimulationResultRow | IncomeRow]
+    year_start: int
+    year_end: int
 
 
 class Simulation:
@@ -67,33 +85,54 @@ class Simulation:
         self,
         engines: list[EstimationEngine],
         person: Person,
-        year: int | None,
+        year_start: int | None,
+        year_end: int | None,
         income_type: IncomeType | None,
     ):
-        if year is None:
-            year = date.today().year
+        if year_end is None:
+            year_end = date.today().year
+        if year_start is None:
+            year_start = year_end
         self.engines = engines
         self.person = person
-        self.year = year
+        self.year_start = year_start
+        self.year_end = year_end
         self.income_type = income_type
-        self.person_year: PersonYear = person.personyear_set.get(year__year=year)
-        self.result = SimulationResult(rows=[self._run()])
+        self.person_years: QuerySet[PersonYear] = person.personyear_set.filter(
+            year__year__gte=year_start, year__year__lte=year_end
+        )
+        self.result = SimulationResult(
+            rows=[self.income()]
+            + [self.payout()]
+            + [self.prediction(engine) for engine in self.engines],
+            year_start=year_start,
+            year_end=year_end,
+        )
 
-    def _run(self):
-        actual_year_sum = self.person_year.amount_sum_by_type(self.income_type)
+    def actual_year_sum(self) -> Dict[int, Decimal]:
+        year_sum = {}
+        for person_year in self.person_years:
+            year_sum[person_year.year.year] = person_year.amount_sum_by_type(
+                self.income_type
+            )
+        return year_sum
+
+    def income(self):
         income = []
         if self.income_type in (IncomeType.A, None):
             income += list(
                 MonthlyAIncomeReport.objects.filter(
                     person=self.person,
-                    person_month__person_year__year=self.year,
+                    person_month__person_year__year__gte=self.year_start,
+                    person_month__person_year__year__lte=self.year_end,
                 )
             )
         if self.income_type in (IncomeType.B, None):
             income += list(
                 MonthlyBIncomeReport.objects.filter(
                     person=self.person,
-                    person_month__person_year__year=self.year,
+                    person_month__person_year__year__gte=self.year_start,
+                    person_month__person_year__year__lte=self.year_end,
                 )
             )
 
@@ -110,16 +149,77 @@ class Simulation:
                 item.month,
             )
         )
+        return IncomeRow(
+            title="Månedlig indkomst",
+            income_series=income_series,
+        )
+
+    def payout(self):
+        payout_items = []
+        for person_year in self.person_years:
+            cumulative_payout = Decimal(0)
+            for person_month in person_year.personmonth_set.order_by("month"):
+                payout = person_month.benefit_paid or Decimal(0)
+                cumulative_payout += payout
+                payout_items.append(
+                    PayoutItem(
+                        year=person_year.year.year,
+                        month=person_month.month,
+                        payout=payout,
+                        cumulative_payout=cumulative_payout,
+                        correct_payout=person_month.actual_year_benefit,
+                    )
+                )
+        return PayoutRow(title="Månedlig udbetaling", payout=payout_items)
+
+    def prediction(self, engine: EstimationEngine):
+
+        income: List[MonthlyIncomeReport] = []
+        if self.income_type in (IncomeType.A, None):
+            income += list(
+                MonthlyAIncomeReport.objects.filter(
+                    person=self.person,
+                    person_month__person_year__year__gte=self.year_start,
+                    person_month__person_year__year__lte=self.year_end,
+                )
+            )
+        if self.income_type in (IncomeType.B, None):
+            income += list(
+                MonthlyBIncomeReport.objects.filter(
+                    person=self.person,
+                    person_month__person_year__year__gte=self.year_start,
+                    person_month__person_year__year__lte=self.year_end,
+                )
+            )
+
+        income_series_build: Dict[Tuple[int, int], Decimal] = defaultdict(
+            lambda: Decimal(0)
+        )
+        for item in income:
+            income_series_build[(item.year, item.month)] += item.amount
+        income_series = [
+            IncomeItem(year=year, month=month, value=amount)
+            for (year, month), amount in income_series_build.items()
+        ]
+        income_series.sort(
+            key=lambda item: (
+                item.year,
+                item.month,
+            )
+        )
 
         estimates = []
-        for engine in self.engines:
-            prediction_items = []
+        prediction_items = []
+        actual_year_sums = self.actual_year_sum()
+        engine_name = engine.__class__.__name__
+        for year in range(self.year_start, self.year_end + 1):
+            person_year = self.person_years.get(year=year)
+            actual_year_sum = actual_year_sums[year]
             for month in range(1, 13):
                 try:
-                    person_month = self.person_year.personmonth_set.get(month=month)
+                    person_month = person_year.personmonth_set.get(month=month)
                 except PersonMonth.DoesNotExist:
                     continue
-                engine_name = engine.__class__.__name__
                 estimate_qs = IncomeEstimate.objects.filter(
                     person_month=person_month,
                     engine=engine_name,
@@ -130,13 +230,14 @@ class Simulation:
                     )
 
                 if estimate_qs.exists():
-                    estimated_year_result = sum(
+                    # Add Decimal(0) to shut MyPy up
+                    estimated_year_result = Decimal(0) + sum(
                         [estimate.estimated_year_result for estimate in estimate_qs]
                     )
                     offset = IncomeEstimate.qs_offset(estimate_qs)
                     prediction_items.append(
                         PredictionItem(
-                            year=self.year,
+                            year=year,
                             month=month,
                             predicted_value=estimated_year_result,
                             prediction_difference=estimated_year_result
@@ -147,32 +248,11 @@ class Simulation:
                         )
                     )
 
-            if prediction_items:
-                estimates.append(Prediction(engine=engine, items=prediction_items))
-
-        payout_items = []
-        payout = 0
-        for month in range(1, 13):
-            try:
-                person_month = self.person_year.personmonth_set.get(month=month)
-            except PersonMonth.DoesNotExist:
-                continue
-
-            if person_month.benefit_paid:
-                payout += person_month.benefit_paid
-
-            payout_items.append(
-                PayoutItem(
-                    year=self.year,
-                    month=month,
-                    payout=payout,
-                    correct_payout=person_month.actual_year_benefit,
-                )
-            )
+        if prediction_items:
+            estimates.append(Prediction(engine=engine, items=prediction_items))
 
         return SimulationResultRow(
-            income_series=income_series,
-            income_sum=actual_year_sum,
+            title=engine.__class__.__name__,
+            income_sum=actual_year_sums,
             predictions=estimates,
-            payout=payout_items,
         )

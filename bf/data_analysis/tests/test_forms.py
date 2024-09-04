@@ -42,7 +42,14 @@ class TestPersonAnalysisOptionsForm(DataSetupMixin, TestCase):
     def test_renders_year_choices(self):
         form = PersonAnalysisOptionsForm(instance=self.person, data={"year": 2020})
         self.assertListEqual(
-            form.fields["year"].choices,
+            form.fields["year_start"].choices,
+            [
+                (2020, 2020),
+                (2021, 2021),
+            ],
+        )
+        self.assertListEqual(
+            form.fields["year_end"].choices,
             [
                 (2020, 2020),
                 (2021, 2021),

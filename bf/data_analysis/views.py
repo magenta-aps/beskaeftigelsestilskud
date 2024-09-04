@@ -20,7 +20,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
-from django.urls import reverse
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
 from project.util import params_no_none, strtobool
@@ -54,7 +53,8 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
         if isinstance(obj, Simulation):
             return {
                 "person": obj.person,
-                "year": obj.year,
+                "year_start": obj.year_start,
+                "year_end": obj.year_end,
                 "rows": obj.result.rows,
             }
 
@@ -69,8 +69,11 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.year = self.kwargs["year"]
         self.income_type = None
+        year1 = self.object.first_year.year.year
+        year2 = self.object.last_year.year.year
+        self.year_start = min(year1, year2)
+        self.year_end = max(year1, year2)
         form = self.get_form()
         if form.is_valid():
             return self.form_valid(form)
@@ -81,6 +84,11 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
         income_type_raw = form.cleaned_data["income_type"]
         if income_type_raw:
             self.income_type = IncomeType(income_type_raw)
+
+        year1 = int(form.cleaned_data["year_start"] or self.object.first_year.year.year)
+        year2 = int(form.cleaned_data["year_end"] or self.object.last_year.year.year)
+        self.year_start = min(year1, year2)
+        self.year_end = max(year1, year2)
         return self.render_to_response(
             self.get_context_data(object=self.object, form=form)
         )
@@ -90,33 +98,35 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
             simulation = Simulation(
                 EstimationEngine.instances(),
                 self.get_object(),
-                year=self.year,
+                year_start=self.year_start,
+                year_end=self.year_end,
                 income_type=self.income_type,
             )
             chart_data = json.dumps(simulation, cls=SimulationJSONEncoder)
+            person_years = self.object.personyear_set.filter(
+                year__year__gte=self.year_start,
+                year__year__lte=self.year_end,
+            ).order_by("year__year")
         else:
             chart_data = "{}"
+            person_years = self.object.personyear_set.all()
         return super().get_context_data(
             **{
                 **kwargs,
-                "year_urls": {
-                    py.year.year: reverse(
-                        "data_analysis:person_analysis",
-                        kwargs={"year": py.year.year, "pk": self.object.pk},
-                    )
-                    for py in self.object.personyear_set.all()
-                },
                 "chart_data": chart_data,
-                "person_year": PersonYear.objects.get(
-                    person=self.object, year=self.year
-                ),
+                "person_years": person_years,
             }
         )
 
     def get_form_kwargs(self):
+        data = {
+            "year_start": self.year_start,
+            "year_end": self.year_end,
+        }
+        data.update(self.request.GET.dict())
         return {
             **super().get_form_kwargs(),
-            "data": {**self.request.GET.dict(), "year": self.year},
+            "data": data,
             "instance": self.object,
         }
 

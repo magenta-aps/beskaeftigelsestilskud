@@ -9,32 +9,42 @@
 {% block content %}
 <h1>{{ person.name }}</h1>
 <div class="row">
-    <div class="col-4">
+    <div class="col-6">
         <table class="table">
             <tr>
-                <th>CPR-nummer:</th>
-                <td>{{ person.cpr }}</td>
+                <th class="col-4">CPR-nummer:</th>
+                <td class="col-8">{{ person.cpr }}</td>
             </tr>
             <tr>
                 <th>Adresse:</th>
                 <td>{{ person.full_address|default_if_none:"-" }}</td>
             </tr>
+        </table>
+    </div>
+    <div class="col-6">
+        <table class="table">
             <tr>
-                <th>Estimeringsmotor for A-indkomst:</th>
-                <td>{{ person_year.preferred_estimation_engine_a }}</td>
+                <td class="col-4">Foretrukken estimeringsmotor</td>
+                <th class="col-4">A-indkomst</th>
+                <th class="col-4">B-indkomst</th>
             </tr>
+            {% for person_year in person_years %}
             <tr>
-                <th>Estimeringsmotor for B-indkomst:</th>
+                <th>{{ person_year.year.year }}</th>
+                <td>{{ person_year.preferred_estimation_engine_a }}</td>
                 <td>{{ person_year.preferred_estimation_engine_b }}</td>
             </tr>
+            {% endfor %}
         </table>
     </div>
 </div>
 <form id="graph-options" method="get" action="." class="row row-cols-lg-auto g-3 align-items-center p-2">
     <div class="col-12">
         <div class="input-group">
-            <div class="input-group-text">{{ form.year.label }}</div>
-            {{ form.year }}
+            <div class="input-group-text">{{ form.year_start.label }}</div>
+            {{ form.year_start }}
+                <div class="input-group-text">-</div>
+            {{ form.year_end }}
         </div>
     </div>
     <div class="col-12">
@@ -44,7 +54,7 @@
         </div>
     </div>
     <div class="col-12">
-        <button class="btn btn-primary" type="button">{% translate 'Opdatér' %}</button>
+        <button class="btn btn-primary" type="submit">{% translate 'Opdatér' %}</button>
     </div>
     {{ form.errors }}
 </form>
@@ -71,10 +81,10 @@ const chartOptions = {
         }
     },
     xaxis: {
-        type: "datetime",
+        type: "numeric",
     },
-    dataLabels: {
-        enabled: true
+    stroke: {
+        curve: "stepline",
     },
     legend: {
         show: true,
@@ -91,168 +101,211 @@ const chartOptions = {
 // Build chart data based on each "row" in dataset
 const getChartData = function (doc, row, rowId, options) {
     const series = [];
+    let hasData = false;
+    const labelledSeries = [];
 
-    // Add "income" data series
-    const income = [];
-    for (const item of row.income_series) {
-        income.push({
-            x: new Date(item.year, item.month - 1, 1),
-            y: item.value,
-        });
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const category = function(year, month) {
+        return monthNames[month-1] + " " + year;
     }
-    series.push({
-        data: income,
-        name: "Income",
-        type: "column",
-    });
 
-    // Add data series for each prediction engine's output
-    for (const prediction of row.predictions) {
-        const predictionData = [];
-        for (const item of prediction.items) {
-            predictionData.push({
-                x: new Date(item.year, item.month - 1, 1),
-                y: item.predicted_value,
-                difference: item.prediction_difference,
-                differencePct: item.prediction_difference_pct,
-            });
+    const bucketize = function(items) {
+        const data = {};
+        for (const item of items) {
+            if (!(item.year in data)) {
+                data[item.year] = {};
+            }
+            data[item.year][item.month] = item;
+        }
+        return data;
+    }
+
+    const chartData = structuredClone(options);
+    chartData.chart.id = rowId;
+    const xLabels = [];
+    for (let year=doc.year_start; year<=doc.year_end; year++) {
+        for (let month of monthNames) {
+            xLabels.push(month+" "+year);
+        }
+    }
+    chartData.xaxis = {
+        categories: xLabels,
+        type: "category"
+    };
+    chartData.dataLabels = {
+        enabled: true,
+        enabledOnSeries: labelledSeries,
+    };
+
+    if (row.income_series) {
+        const incomeData = []
+        const data = bucketize(row.income_series);
+        for (let year = doc.year_start; year <= doc.year_end; year++) {
+            for (let month = 1; month <= 12; month++) {
+                const item = data[year] && data[year][month];
+                incomeData.push({
+                    x: category(year, month),
+                    y: item ? item.value : null,
+                });
+            }
         }
         series.push({
-            data: predictionData,
-            name: prediction.engine.description,
+            data: incomeData,
+            name: "Indkomst",
             type: "column",
         });
+        labelledSeries.push(series.length-1);
+        hasData = true;
     }
 
-    // Add line graph for "income_sum"
-    series.push({
-        data: [
+    if (row.payout) {
+        const payoutData = []
+        const cumulativeData = []
+        const data = bucketize(row.payout);
+        for (let year = doc.year_start; year <= doc.year_end; year++) {
+            for (let month = 1; month <= 12; month++) {
+                const item = data[year] && data[year][month];
+                payoutData.push({
+                    x: category(year, month),
+                    y: item ? item.payout : null,
+                });
+                cumulativeData.push({
+                    x: category(year, month),
+                    y: item ? item.cumulative_payout : null,
+                });
+            }
+        }
+        series.push({
+            data: payoutData,
+            name: "Månedlig udbetaling",
+            type: "column",
+        },{
+            data: cumulativeData,
+            name: "Summeret udbetaling",
+            type: "line",
+        });
+        labelledSeries.push(series.length-2);
+        hasData = true;
+        chartData.yaxis = [
             {
-                x: new Date(doc.year, 0, 1),
-                y: row.income_sum,
+                title: {
+                    text: 'Månedlig udbetaling',
+                }
             },
             {
-                x: new Date(doc.year, 11, 1),
-                y: row.income_sum,
-            },
-        ],
-        name: "Income sum",
-        type: "line",
-    });
-
-    // Construct chart data by combining series and options
-    const chartData = structuredClone(options);
-    chartData.chart.id = rowId;
-    chartData.series = series;
-    return chartData;
-}
-
-
-const getChart2Data = function (doc, row, rowId, options) {
-    const series = [];
-
-    // Add "payout" data series
-    const payout = [];
-    for (const item of row.payout) {
-        payout.push({
-            x: new Date(item.year, item.month - 1, 1),
-            y: item.payout,
-        });
-    }
-    series.push({
-        data: payout,
-        // Det totale udbetalte beløb som er på borgerens konto i denne måned
-        name: "Totale udbetaling for året",
-        type: "column",
-    });
-
-
-    // Add "correct_payout" data series
-    const correct_payout = [];
-    for (const item of row.payout) {
-        correct_payout.push({
-            x: new Date(item.year, item.month - 1, 1),
-            y: item.correct_payout,
-        });
-    }
-    series.push({
-        data: correct_payout,        
-        // Beløbet som skal være på kontoen når året er slut.
-        // Prognosen opdateres hver måned.
-        // Den op-justeres når borgeren begynder at tjene penge over minimunsgrænsen.
-        // Den ned-justeres hvis borgeren begynder at tjene over maksimumsgrænsen
-        name: "Totale udbetaling for året (prognose)", 
-        type: "column",
-    });
-
-
-    // Construct chart data by combining series and options
-    const chartData = structuredClone(options);
-    chartData.chart.id = rowId;
-    chartData.series = series;
-    
-    chartData.tooltip.y=[{
-        formatter : function(val) {    
-            return val + " (Det totale beløb som er udbetalt til borgeren i indeværende år)"
+                opposite: true,
+                title: {
+                    text: 'Summeret udbetaling'
+                }
             }
-        },{   
-        formatter : function(val) {
-            return val + " (Det totale beløb som skal være udbetalt til borgeren, når året er omme)"
+        ]
+    }
+
+    if (row.predictions) {
+        // Add data series for each prediction engine's output
+        for (const prediction of row.predictions) {
+            const predictionData = [];
+            const data = bucketize(prediction.items);
+            for (let year = doc.year_start; year <= doc.year_end; year++) {
+                for (let month = 1; month <= 12; month++) {
+                    const item = data[year] && data[year][month];
+                    const y = item ? item.value : null;
+                    predictionData.push({
+                        x: category(year, month),
+                        y: item ? item.predicted_value : null,
+                        difference: item ? item.prediction_difference : null,
+                        differencePct: item ? item.prediction_difference_pct : null,
+                    });
+                }
             }
-        },
-    ]
-    
-    return chartData;
-}
 
-
-$(document).ready(
-    async function () {
-        // Fetch dataset from server and render each row of dataset as separate charts.
-        // There is currently one row per employer.
-        const doc = JSON.parse($("#chart_data").text());
-
-        for (const rowId in doc.rows) {
-            const row = doc.rows[rowId];
-
-            // Insert DOM element for chart
-            const chartElem = document.createElement("div");
-            document.querySelector("body").appendChild(chartElem);
-
-            // Get chart data
-            const chartData = getChartData(doc, row, rowId, chartOptions);
-
-            // Render chart into DOM element
-            const chart = new ApexCharts(chartElem, chartData);
-            chart.render();
-            chart.hideSeries('Ekstrapolation af beløb baseret udelukkende på den foregående måned')
-
-            // Insert DOM element for chart
-            const chartElem2 = document.createElement("div");
-            document.querySelector("body").appendChild(chartElem2);
-
-            // Get chart data
-            const chartData2 = getChart2Data(doc, row, rowId, chartOptions);
-
-            // Render chart into DOM element
-            const chart2 = new ApexCharts(chartElem2, chartData2);
-            chart2.render();
-
+            if (predictionData) {
+                hasData = true;
+            }
+            series.push({
+                data: predictionData,
+                name: "Estimat af årsindkomst",
+                type: "column",
+            });
+            labelledSeries.push(series.length-1);
         }
     }
-)
 
-$(document).ready(
-    function () {
-        const year_urls = JSON.parse($("#year_urls").text());
-        const form = $("#graph-options");
-        form.find("button").on("click", function(evt) {
-            const yearField = form.find("[name=year]");
-            form.attr("action", year_urls[yearField.val()]);
-            yearField.attr("disabled", "disabled");
-            form.submit();
+
+    if (row.income_sum) {
+        const actualData = [];
+        for (let year = doc.year_start; year <= doc.year_end; year++) {
+            const sum = row.income_sum[year];
+            for (let month = 1; month <= 12; month++) {
+                actualData.push({
+                    x: category(year, month),
+                    y: sum,
+                });
+            }
+        }
+        // Add line graph for "income_sum"
+        series.push({
+            data: actualData,
+            name: "Faktisk årsindkomst",
+            type: "line",
         });
     }
-)
+
+    if (hasData) {
+        // Construct chart data by combining series and options
+        chartData.series = series;
+        return chartData;
+    }
+    return null;
+};
+
+$(function () {
+    // Fetch dataset from server and render each row of dataset as separate charts.
+    // There is currently one row per employer.
+    const doc = JSON.parse($("#chart_data").text());
+
+    for (const rowId in doc.rows) {
+        const row = doc.rows[rowId];
+
+        // Insert DOM element for chart
+        const cardId = "chart_"+rowId;
+        const card = $(`
+            <div class="card m-2">
+                <a class="card-link" data-bs-toggle="collapse" href="#${cardId}">
+                    <div class="card-header">
+                        ${row.title}
+                    </div>
+                </a>
+                <div id="${cardId}" class="collapse show">
+                    <div class="card-body"></div>
+                </div>
+            </div>
+            `);
+        $("body").append(card);
+
+        const chartElem = card.find(".card-body");
+
+        // Get chart data
+        const chartData = getChartData(doc, row, rowId, chartOptions);
+        if (chartData === null) {
+            chartElem.append($('<div class="d-flex justify-content-center">Ingen estimater</div>'));
+        } else {
+            // Render chart into DOM element
+            const chart = new ApexCharts(chartElem.get(0), chartData);
+            chart.render();
+        }
+    }
+});
+
+$(function () {
+    const year_urls = JSON.parse($("#year_urls").text());
+    const form = $("#graph-options");
+    /*form.find("button").on("click", function(evt) {
+        const yearField = form.find("[name=year]");
+        form.attr("action", year_urls[yearField.val()]);
+        yearField.attr("disabled", "disabled");
+        form.submit();
+    });*/
+});
 </script>
 {% endblock %}
