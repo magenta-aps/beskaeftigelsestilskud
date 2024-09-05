@@ -124,7 +124,7 @@ class Command(BaseCommand):
             self._year = kwargs.get("year") or date.today().year
             self._delimiter = kwargs["delimiter"]
             self._show_multiyear_pks = kwargs["show_multiyear_pks"]
-            if self._show_multiyear_pks < 2:
+            if self._show_multiyear_pks is not None and self._show_multiyear_pks < 2:
                 print("show-multiyear-pks skal være over 1")
                 return
             dry = kwargs["dry"]
