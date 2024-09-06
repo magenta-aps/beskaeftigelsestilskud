@@ -44,10 +44,9 @@ fi
 docker exec bf bash -c "python manage.py estimate_income 2022 --verbosity=2 $profile_flag"
 docker exec bf bash -c "python manage.py estimate_income 2023 --verbosity=2 $profile_flag"
 
-
-if [ "$calculate_benefit" == "true" ] ; then
-    docker exec bf bash -c "python manage.py autoselect_estimation_engine $profile_flag"
-    
+if [ "$calculate_benefit" == "true" ] ; then   
     docker exec bf bash -c "python manage.py calculate_benefit 2022 --verbosity=2 $profile_flag"
+    docker exec bf bash -c "python manage.py autoselect_estimation_engine 2023 --verbosity=2 $profile_flag"
+       
     docker exec bf bash -c "python manage.py calculate_benefit 2023 --verbosity=2 $profile_flag"
 fi

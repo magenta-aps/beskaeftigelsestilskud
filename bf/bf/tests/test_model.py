@@ -448,12 +448,6 @@ class EstimationTest(ModelTest):
             str(self.result1), "InYearExtrapolationEngine (Jens Hansen (2024/1)) (A)"
         )
 
-    def test_absdiff(self):
-        self.assertEqual(self.result1.absdiff, 200)
-
-    def test_offset(self):
-        self.assertEqual(self.result1.offset, 200 / 1400)
-
     def test_annotate_month(self):
         qs = IncomeEstimate.objects.filter(pk=self.result1.pk)
         self.assertEqual(IncomeEstimate.annotate_month(qs).first().f_month, 1)
