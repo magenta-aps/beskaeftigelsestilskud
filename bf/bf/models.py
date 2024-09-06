@@ -18,6 +18,7 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
+from more_itertools import one
 from simple_history.models import HistoricalRecords
 
 from bf.data import engine_choices
@@ -360,37 +361,47 @@ class PersonMonth(models.Model):
         return f"{self.person} ({self.year}/{self.month})"
 
     def calculate_benefit(self) -> Decimal:
-        if (
-            not self.person_year.preferred_estimation_engine_a
-            and not self.person_year.preferred_estimation_engine_b
-        ):
+
+        engine_a = self.person_year.preferred_estimation_engine_a
+        engine_b = self.person_year.preferred_estimation_engine_b
+
+        if not engine_a and not engine_b:
             raise EstimationEngineUnset(self.person)
 
         estimated_year_income = Decimal(0)
         actual_year_income = Decimal(0)
-        if self.person_year.preferred_estimation_engine_a:
-            try:
-                income_estimate = self.incomeestimate_set.get(
-                    engine=self.person_year.preferred_estimation_engine_a,
-                    income_type=IncomeType.A,
-                )
-                estimated_year_income += income_estimate.estimated_year_result
-                if income_estimate.actual_year_result is not None:
-                    actual_year_income += income_estimate.actual_year_result
-            except IncomeEstimate.DoesNotExist:  # pragma: nocover
-                pass
 
-        if self.person_year.preferred_estimation_engine_b:
-            try:
-                income_estimate = self.incomeestimate_set.get(
-                    engine=self.person_year.preferred_estimation_engine_b,
-                    income_type=IncomeType.B,
-                )
-                estimated_year_income += income_estimate.estimated_year_result
-                if income_estimate.actual_year_result is not None:
-                    actual_year_income += income_estimate.actual_year_result
-            except IncomeEstimate.DoesNotExist:  # pragma: nocover
-                pass
+        income_estimates = self.incomeestimate_set.all()
+
+        a_estimates = list(
+            filter(
+                lambda estimate: engine_a
+                and estimate.engine == engine_a
+                and estimate.income_type == IncomeType.A,
+                income_estimates,
+            )
+        )
+
+        b_estimates = list(
+            filter(
+                lambda estimate: engine_b
+                and estimate.engine == engine_b
+                and estimate.income_type == IncomeType.B,
+                income_estimates,
+            )
+        )
+
+        if a_estimates:
+            estimate_a = one(a_estimates)
+            estimated_year_income += estimate_a.estimated_year_result
+            if estimate_a.actual_year_result is not None:
+                actual_year_income += estimate_a.actual_year_result
+
+        if b_estimates:
+            estimate_b = one(b_estimates)
+            estimated_year_income += estimate_b.estimated_year_result
+            if estimate_b.actual_year_result is not None:
+                actual_year_income += estimate_b.actual_year_result
 
         # Foretag en beregning af beskæftigelsestilskud for hele året
         self.estimated_year_benefit = self.person_year.calculate_benefit(
