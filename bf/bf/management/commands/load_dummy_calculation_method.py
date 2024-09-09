@@ -22,7 +22,7 @@ class Command(BaseCommand):
                 "scaledown_ceiling": Decimal("250000.00"),
             },
         )
-        for year in range(date.today().year - 3, date.today().year + 1):
+        for year in range(date.today().year - 4, date.today().year + 1):
             Year.objects.update_or_create(
                 year=year,
                 defaults={

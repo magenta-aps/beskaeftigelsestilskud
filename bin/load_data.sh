@@ -16,9 +16,9 @@ while [ $# -gt 0 ]; do
       echo ""
       echo "Notes"
       echo "---------------"
-      echo "- Requires 2022_a.csv and 2023_a.csv files to be present in /bf. "
-      echo "- The files are attached to https://redmine.magenta.dk/issues/61082"
-      echo "- Sorted files are here: https://redmine.magenta.dk/issues/61082#note-29"
+      echo "- Requires a_og_b_202[0,1,2,3].csv files to be present in /bf. "
+      echo "- The files are attached to https://redmine.magenta.dk/issues/61921"
+      echo "- These files are sorted by CPR number."
       exit 0
       ;;
     -c | --calculate_benefit)
@@ -34,20 +34,28 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$count" == "" ]; then
-  docker exec bf bash -c "python manage.py load_csv /app/2022_a.csv 2022 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv /app/2023_a.csv 2023 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2020.csv 2020 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2021.csv 2021 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2022.csv 2022 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2023.csv 2023 $profile_flag"
 else
-  docker exec bf bash -c "python manage.py load_csv --count=$count /app/2022_a.csv 2022 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv --count=$count /app/2023_a.csv 2023 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2020.csv 2020 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2021.csv 2021 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2022.csv 2022 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2023.csv 2023 $profile_flag"
 fi
 
+docker exec bf bash -c "python manage.py estimate_income 2020 --verbosity=2 $profile_flag"
+docker exec bf bash -c "python manage.py estimate_income 2021 --verbosity=2 $profile_flag"
 docker exec bf bash -c "python manage.py estimate_income 2022 --verbosity=2 $profile_flag"
 docker exec bf bash -c "python manage.py estimate_income 2023 --verbosity=2 $profile_flag"
 
-
-if [ "$calculate_benefit" == "true" ] ; then
-    docker exec bf bash -c "python manage.py autoselect_estimation_engine $profile_flag"
-    
+if [ "$calculate_benefit" == "true" ] ; then   
+    docker exec bf bash -c "python manage.py calculate_benefit 2020 --verbosity=2 $profile_flag"
+    docker exec bf bash -c "python manage.py autoselect_estimation_engine 2021 --verbosity=2 $profile_flag"
+    docker exec bf bash -c "python manage.py calculate_benefit 2021 --verbosity=2 $profile_flag"
+    docker exec bf bash -c "python manage.py autoselect_estimation_engine 2022 --verbosity=2 $profile_flag"
     docker exec bf bash -c "python manage.py calculate_benefit 2022 --verbosity=2 $profile_flag"
+    docker exec bf bash -c "python manage.py autoselect_estimation_engine 2023 --verbosity=2 $profile_flag"
     docker exec bf bash -c "python manage.py calculate_benefit 2023 --verbosity=2 $profile_flag"
 fi

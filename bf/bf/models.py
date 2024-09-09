@@ -360,10 +360,10 @@ class PersonMonth(models.Model):
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
 
-    def calculate_benefit(self) -> Decimal:
+    def calculate_benefit(self, engine_a=None, engine_b=None) -> Decimal:
 
-        engine_a = self.person_year.preferred_estimation_engine_a
-        engine_b = self.person_year.preferred_estimation_engine_b
+        engine_a = engine_a or self.person_year.preferred_estimation_engine_a
+        engine_b = engine_b or self.person_year.preferred_estimation_engine_b
 
         if not engine_a and not engine_b:
             raise EstimationEngineUnset(self.person)
@@ -689,22 +689,6 @@ class IncomeEstimate(models.Model):
         null=True,
         blank=True,
     )
-
-    @property
-    def diff(self):
-        # If we under-estimate diff is negative
-        # If we over-estimate diff is positive
-        return self.estimated_year_result - self.actual_year_result
-
-    @property
-    def absdiff(self):
-        return abs(self.diff)
-
-    @property
-    def offset(self):
-        return (
-            (self.absdiff / self.actual_year_result) if self.actual_year_result else 0
-        )
 
     @staticmethod
     def annotate_month(
