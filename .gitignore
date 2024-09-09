@@ -20,3 +20,15 @@ data/er/*
 bf/2022_a.csv
 bf/2023_a.csv
 /bf/.coverage**
+/bf/a_og_b_2020.csv
+/bf/a_og_b_2021.csv
+/bf/a_og_b_2022.csv
+/bf/a_og_b_2023.csv
+/bf/forskud_2020.csv
+/bf/forskud_2021.csv
+/bf/forskud_2022.csv
+/bf/forskud_2023.csv
+/bf/ligning_2020.csv
+/bf/ligning_2021.csv
+/bf/ligning_2022.csv
+/bf/ligning_2023.csv
