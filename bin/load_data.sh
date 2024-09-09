@@ -16,7 +16,8 @@ while [ $# -gt 0 ]; do
       echo ""
       echo "Notes"
       echo "---------------"
-      echo "- Requires a_og_b_202[0,1,2,3].csv files to be present in /bf. "
+      echo "- Requires a_og_b_202[0,1,2,3].csv files to be present in /app/data/ in the container."
+      echo "- Requires forskud_202[0,1,2,3].csv files to be present in /app/data/ in the container."
       echo "- The files are attached to https://redmine.magenta.dk/issues/61921"
       echo "- These files are sorted by CPR number."
       exit 0
@@ -34,15 +35,25 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$count" == "" ]; then
-  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2020.csv 2020 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2021.csv 2021 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2022.csv 2022 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv /app/a_og_b_2023.csv 2023 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/data/a_og_b_2020.csv income 2020 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/data/a_og_b_2021.csv income 2021 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/data/a_og_b_2022.csv income 2022 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/data/a_og_b_2023.csv income 2023 $profile_flag"
+
+  docker exec bf bash -c "python manage.py load_csv /app/data/forskud_2020.csv assessment 2020 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/data/forskud_2021.csv assessment 2021 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/data/forskud_2022.csv assessment 2022 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv /app/data/forskud_2023.csv assessment 2023 $profile_flag"
 else
-  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2020.csv 2020 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2021.csv 2021 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2022.csv 2022 $profile_flag"
-  docker exec bf bash -c "python manage.py load_csv --count=$count /app/a_og_b_2023.csv 2023 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/a_og_b_2020.csv income 2020 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/a_og_b_2021.csv income 2021 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/a_og_b_2022.csv income 2022 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/a_og_b_2023.csv income 2023 $profile_flag"
+
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/forskud_2020.csv assessment 2020 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/forskud_2021.csv assessment 2021 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/forskud_2022.csv assessment 2022 $profile_flag"
+  docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/forskud_2023.csv assessment 2023 $profile_flag"
 fi
 
 docker exec bf bash -c "python manage.py estimate_income 2020 --verbosity=2 $profile_flag"
