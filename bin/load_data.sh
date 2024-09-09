@@ -18,7 +18,7 @@ while [ $# -gt 0 ]; do
       echo "---------------"
       echo "- Requires a_og_b_202[0,1,2,3].csv files to be present in /bf. "
       echo "- The files are attached to https://redmine.magenta.dk/issues/61921"
-      echo "- These files are sorted by CPR number.
+      echo "- These files are sorted by CPR number."
       exit 0
       ;;
     -c | --calculate_benefit)
