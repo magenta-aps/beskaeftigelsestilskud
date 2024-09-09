@@ -749,3 +749,40 @@ class PersonYearEstimateSummary(models.Model):
     rmse_percent = models.DecimalField(
         max_digits=10, decimal_places=2, default=None, null=True
     )
+
+
+class PersonYearAssessment(models.Model):
+    # En forskudsopgørelse
+
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+
+    renteindtægter = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    uddannelsesstøtte = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    honorarer = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    underholdsbidrag = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    andre_b = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    brutto_b_før_erhvervsvirk_indhandling = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    erhvervsindtægter_sum = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    e2_indhandling = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    brutto_b_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
