@@ -101,7 +101,8 @@ class TestSimulationJSONEncoder(TestCase):
                     {
                         "income_sum": {"2020": 0.0},
                         "predictions": [],
-                        "title": "TwelveMonthsSummationEngine",
+                        "title": "TwelveMonthsSummationEngine"
+                        " - Summation af beløb for de seneste 12 måneder",
                     },
                 ],
                 "year_start": 2020,
@@ -121,10 +122,12 @@ class TestSimulationJSONEncoder(TestCase):
             mock_super_default.assert_called_once_with(42)
 
     def _assert_json_equal(self, obj, expected_data):
-        self.assertJSONEqual(
-            json.dumps(obj, cls=SimulationJSONEncoder),
-            expected_data,
-        )
+        actual = json.dumps(obj, cls=SimulationJSONEncoder)
+        try:
+            self.assertJSONEqual(actual, expected_data)
+        except AssertionError:
+            print(actual)
+            raise
 
 
 class TestPersonAnalysisView(TestCase):

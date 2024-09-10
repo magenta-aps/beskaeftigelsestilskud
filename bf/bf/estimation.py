@@ -24,6 +24,8 @@ class EstimationEngine:
     ) -> IncomeEstimate | None:
         raise NotImplementedError
 
+    description = "Tom superklasse"
+
     @classmethod
     def subset_sum(
         cls,
@@ -39,7 +41,7 @@ class EstimationEngine:
             return Decimal(0) + sum([row.b_amount for row in relevant])
 
     @staticmethod
-    def classes() -> List[type]:
+    def classes() -> List[type[EstimationEngine]]:
         return EstimationEngine.__subclasses__()
 
     @staticmethod
@@ -57,10 +59,10 @@ class EstimationEngine:
             cls.estimate(person_month, subset, IncomeType.B),
         )
 
-    valid_income_types = (
+    valid_income_types: List[IncomeType] = [
         IncomeType.A,
         IncomeType.B,
-    )
+    ]
 
     @staticmethod
     def valid_engines_for_incometype(income_type: IncomeType):
@@ -203,7 +205,7 @@ class SameAsLastMonthEngine(EstimationEngine):
 class SelfReportedEngine(EstimationEngine):
     description = "Estimering udfra forskudsopgørelsen. Kun B-indkomst."
 
-    valid_income_types = (IncomeType.B,)
+    valid_income_types: List[IncomeType] = [IncomeType.B]
 
     @classmethod
     def estimate(
@@ -219,5 +221,7 @@ class SelfReportedEngine(EstimationEngine):
             return IncomeEstimate(
                 estimated_year_result=assessment.erhvervsindtægter_sum,
                 engine=cls.__name__,
+                person_month=person_month,
                 income_type=income_type,
             )
+        return None
