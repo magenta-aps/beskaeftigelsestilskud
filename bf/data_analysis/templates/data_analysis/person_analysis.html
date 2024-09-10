@@ -24,13 +24,17 @@
     <div class="col-6">
         <table class="table">
             <tr>
-                <td class="col-4">Foretrukken estimeringsmotor</td>
-                <th class="col-4">A-indkomst</th>
-                <th class="col-4">B-indkomst</th>
+                <td class="col-4"></td>
+                <th class="col-4">Stabilitets-score (A)</th>
+                <th class="col-4">Stabilitets-score (B)</th>
+                <th class="col-4">Estimeringsmotor (A)</th>
+                <th class="col-4">Estimeringsmotor (B)</th>
             </tr>
             {% for person_year in person_years %}
             <tr>
                 <th>{{ person_year.year.year }}</th>
+                <td>{{ person_year.stability_score_a|default_if_none:"-" }}</td>
+                <td>{{ person_year.stability_score_b|default_if_none:"-" }}</td>
                 <td>{{ person_year.preferred_estimation_engine_a }}</td>
                 <td>{{ person_year.preferred_estimation_engine_b }}</td>
             </tr>
