@@ -20,7 +20,6 @@ from bf.data import MonthlyIncomeData
 from bf.estimation import EstimationEngine
 from bf.models import (
     IncomeEstimate,
-    IncomeType,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     PersonMonth,
@@ -86,9 +85,7 @@ class Command(BaseCommand):
 
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
-                for income_type in IncomeType:
-                    if income_type not in engine.valid_income_types:
-                        continue
+                for income_type in engine.valid_income_types:
                     engine_results = []
                     for month in range(first_income_month, 13):
                         person_month = self._get_person_month_for_row(
