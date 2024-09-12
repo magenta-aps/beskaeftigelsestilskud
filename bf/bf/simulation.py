@@ -213,7 +213,10 @@ class Simulation:
         actual_year_sums = self.actual_year_sum()
         engine_name = engine.__class__.__name__
         for year in range(self.year_start, self.year_end + 1):
-            person_year = self.person_years.get(year=year)
+            try:
+                person_year = self.person_years.get(year=year)
+            except PersonYear.DoesNotExist:
+                continue
             actual_year_sum = actual_year_sums[year]
             for month in range(1, 13):
                 try:
