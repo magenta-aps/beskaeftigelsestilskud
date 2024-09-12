@@ -10,4 +10,7 @@
 <a class="btn btn-primary mx-1 my-2" href="{% url 'data_analysis:histogram' year=2023 %}">
     {% translate 'Histogram over estimeringernes afvigelse' %}
 </a>
+<a class="btn btn-primary mx-1 my-2" href="{% url 'data_analysis:scatter_plots' year=2023 %}">
+    {% translate 'x-y plots over estimeringernes afvigelse' %}
+</a>
 {% endblock %}

@@ -94,6 +94,25 @@ class PersonYearListOptionsForm(forms.Form):
     )
 
 
+class ScatterPlotOptionsForm(PersonYearListOptionsForm):
+    year = forms.ChoiceField(
+        choices=[],  # populated in `__init__`
+        required=False,
+        widget=forms.widgets.Select(attrs={"class": "form-control"}),
+        label=_("År"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["year"].choices = [
+            (self.get_year_url(year), year.year)
+            for year in Year.objects.order_by("year")
+        ]
+
+    def get_year_url(self, year):
+        return reverse("data_analysis:scatter_plots", kwargs={"year": year.year})
+
+
 class HistogramOptionsForm(PersonYearListOptionsForm):
     year = forms.ChoiceField(
         choices=[],  # populated in `__init__`

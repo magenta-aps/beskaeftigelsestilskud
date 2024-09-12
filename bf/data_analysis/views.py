@@ -14,6 +14,7 @@ from data_analysis.forms import (
     HistogramOptionsForm,
     PersonAnalysisOptionsForm,
     PersonYearListOptionsForm,
+    ScatterPlotOptionsForm,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
@@ -271,6 +272,50 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
         context["columns"] = columns
 
         return context
+
+
+class ScatterPlotView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
+    template_name = "data_analysis/scatter_plots.html"
+    form_class = ScatterPlotOptionsForm
+
+    def get_data(self):
+
+        person_years = self.get_queryset()
+
+        data = []
+        for person_year in person_years:
+            if (
+                person_year.prev
+                and person_year.prev.stability_score_a
+                and person_year.payout_offset
+            ):
+                data.append(
+                    [
+                        float(person_year.prev.stability_score_a),
+                        float(person_year.payout_offset),
+                    ]
+                )
+
+        return {"data": {"stability_score_vs_payout_offset": data}}
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get("format") == "json":
+            return HttpResponse(
+                json.dumps(self.get_data(), cls=DjangoJSONEncoder),
+                content_type="application/json",
+            )
+        return super().get(request, *args, **kwargs)  # pragma: no cover
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Make `data` a mutable dict, as we need to update it below
+        kwargs["data"] = copy.copy(self.request.GET)
+        # Set resolution to 10% if not provided by GET parameters
+        year = Year.objects.get(year=self.kwargs["year"])
+        year_url = self.form_class().get_year_url(year)
+        kwargs["data"]["year"] = year_url
+        kwargs["data"]["year_val"] = year
+        return kwargs
 
 
 class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
