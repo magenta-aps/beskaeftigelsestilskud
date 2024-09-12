@@ -9,4 +9,10 @@ docker exec bf bash -c 'coverage run manage.py test --parallel 4 ; coverage comb
 To run tests only in a specific file run
 ```
 docker exec bf bash -c 'coverage run manage.py test data_analysis.tests.test_views'
-``
+```
+
+To run type checks run:
+
+```
+docker exec bf mypy --config ../mypy.ini bf/
+```

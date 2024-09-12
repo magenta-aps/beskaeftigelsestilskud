@@ -203,6 +203,18 @@
             </a>
         </th>
         <th class="col-1">
+            <a href="?{{ sort_params.stability_score_a }}" class="link-dark">
+                Stabilitets-score (A)
+                {% include "data_analysis/sort_icon.html" with field="stability_score_a" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.stability_score_b }}" class="link-dark">
+                Stabilitets-score (B)
+                {% include "data_analysis/sort_icon.html" with field="stability_score_b" %}
+            </a>
+        </th>
+        <th class="col-1">
             <a href="?{{ sort_params.preferred_estimation_engine_a }}" class="link-dark">
                 Estimeringsmotor (A)
                 {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine_a" %}
@@ -313,6 +325,8 @@
         <td>{{ object.payout|default_if_none:"" }}</td>
         <td>{{ object.correct_payout|default_if_none:"" }}</td>
         <td>{{ object.payout_offset|default_if_none:"" }}</td>
+        <td>{{ object.stability_score_a|default_if_none:"-" }}</td>
+        <td>{{ object.stability_score_b|default_if_none:"-" }}</td>
         <td>{{ object.preferred_estimation_engine_a|default_if_none:"" }}</td>
         <td>{{ object.preferred_estimation_engine_b|default_if_none:"" }}</td>
     </tr>

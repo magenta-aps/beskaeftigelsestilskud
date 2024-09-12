@@ -8,6 +8,7 @@ from decimal import Decimal
 from functools import cached_property
 from typing import Sequence
 
+import numpy as np
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -191,6 +192,12 @@ class PersonYear(models.Model):
         null=True,
         default="InYearExtrapolationEngine",
     )
+    stability_score_a = models.DecimalField(
+        decimal_places=1, default=None, null=True, max_digits=2
+    )
+    stability_score_b = models.DecimalField(
+        decimal_places=1, default=None, null=True, max_digits=2
+    )
 
     class Meta:
         unique_together = (("person", "year"),)
@@ -225,6 +232,38 @@ class PersonYear(models.Model):
                 f"calculation method not set for year {self.year}"
             )
         return self.year.calculation_method.calculate(estimated_year_income)
+
+    def calculate_stability_score(
+        self, income_type: IncomeType, s=0.2, k=1.5
+    ) -> Decimal | None:
+        """
+        Calculate stability score (1 is very stable and 0 is very unstable)
+        """
+
+        income_qs: QuerySet["MonthlyIncomeReport"]
+
+        if income_type == IncomeType.A:
+            income_qs = MonthlyAIncomeReport.objects.filter(
+                person_month__person_year=self
+            )
+        elif income_type == IncomeType.B:
+            income_qs = MonthlyBIncomeReport.objects.filter(
+                person_month__person_year=self
+            )
+
+        incomes = [float(obj.amount) or 0 for obj in income_qs]
+        if len(incomes) < 2:
+            return None
+        mean_income = np.mean(incomes)
+        std = np.std([float(i / mean_income) for i in incomes])
+
+        stability_score = Decimal(np.exp(-(std**k) / s**k))
+
+        if income_type == IncomeType.A:
+            self.stability_score_a = stability_score
+        elif income_type == IncomeType.B:
+            self.stability_score_b = stability_score
+        return stability_score
 
     @cached_property
     def prev(self):
