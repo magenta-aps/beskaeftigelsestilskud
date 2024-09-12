@@ -47,6 +47,8 @@ class PersonYearListOptionsForm(forms.Form):
                     "payout",
                     "correct_payout",
                     "payout_offset",
+                    "stability_score_a",
+                    "stability_score_b",
                     "preferred_estimation_engine_a",
                     "preferred_estimation_engine_b",
                 )

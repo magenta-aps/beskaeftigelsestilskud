@@ -466,3 +466,58 @@ class EstimationTest(ModelTest):
     def test_qs_offset(self):
         qs = IncomeEstimate.objects.filter(pk__in=[self.result1.pk, self.result2.pk])
         self.assertEqual(IncomeEstimate.qs_offset(qs), Decimal(250 / 1600))
+
+
+class StabilityScoreTest(ModelTest):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.year = Year.objects.create(year=1991)
+        cls.person_year = PersonYear.objects.create(
+            person=cls.person,
+            year=cls.year,
+        )
+
+        # A income is very stable
+        A_income = [10000] * 12
+
+        # B income is very unstable
+        B_income = [10000, 0, 0, 0, 200, 2000, 0, 0, 0, 0, 100, 1]
+
+        for month in range(1, 13):
+            person_month = PersonMonth.objects.create(
+                person_year=cls.person_year, month=month, import_date=date.today()
+            )
+            MonthlyAIncomeReport.objects.create(
+                employer=cls.employer1,
+                person_month=person_month,
+                amount=Decimal(A_income[month - 1]),
+                month=month,
+                year=cls.year.year,
+                person=cls.person,
+            )
+            MonthlyBIncomeReport.objects.create(
+                trader=cls.employer2,
+                person_month=person_month,
+                amount=Decimal(B_income[month - 1]),
+                month=month,
+                year=cls.year.year,
+                person=cls.person,
+            )
+
+    def test_stability_score(self):
+        ss1_a = self.person_year.calculate_stability_score(IncomeType.A)
+        ss1_b = self.person_year.calculate_stability_score(IncomeType.B)
+        ss2_a = self.person_year2.calculate_stability_score(IncomeType.A)
+        ss2_b = self.person_year2.calculate_stability_score(IncomeType.B)
+
+        # A income for person_year is very stable (thus a score close to 1)
+        self.assertGreaterEqual(ss1_a, 0.8)
+
+        # A income for person_year is very unstable (thus a score close to 0)
+        self.assertLessEqual(ss1_b, 0.2)
+
+        # There is not enough income data for person_year2 to calculate a score
+        self.assertEqual(ss2_a, None)
+        self.assertEqual(ss2_b, None)
