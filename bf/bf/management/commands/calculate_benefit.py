@@ -23,14 +23,12 @@ class Command(BaseCommand):
 
         self._write_verbose(f"Calculating benefit for {kwargs['year']}")
 
+        months = PersonMonth.objects.filter(
+            person_year__year__year=kwargs["year"],
+        )
         if kwargs["cpr"]:
-            months = PersonMonth.objects.filter(
-                person_year__year__year=kwargs["year"],
+            months = months.filter(
                 person_year__person__cpr=kwargs["cpr"],
-            )
-        else:
-            months = PersonMonth.objects.filter(
-                person_year__year__year=kwargs["year"],
             )
         months = months.filter(incomeestimate__isnull=False)
 
@@ -41,15 +39,24 @@ class Command(BaseCommand):
         months = (
             months.select_related("person_year")
             .prefetch_related("incomeestimate_set")
-            .order_by("person_year__person", "month")
+            .distinct()
+            .order_by("month")
         )
         for person_month in months:
             try:
                 person_month.calculate_benefit()
-                person_month.save()
             except EstimationEngineUnset as e:
                 self._write_verbose(str(e))
-
+        PersonMonth.objects.bulk_update(
+            months,
+            fields=[
+                "benefit_paid",
+                "prior_benefit_paid",
+                "actual_year_benefit",
+                "estimated_year_benefit",
+            ],
+            batch_size=1000,
+        )
         self._write_verbose("Done")
 
     def _write_verbose(self, msg, **kwargs):
