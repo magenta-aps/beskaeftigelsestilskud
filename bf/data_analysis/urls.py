@@ -8,6 +8,7 @@ from data_analysis.views import (
     PersonAnalysisView,
     PersonListView,
     UpdateEngineViewPreferences,
+    ScatterPlotView
 )
 from django.urls import URLPattern, URLResolver, path
 
@@ -22,6 +23,7 @@ urlpatterns: list[URLResolver | URLPattern] = [
     ),
     path("<int:year>/person/", PersonListView.as_view(), name="person_years"),
     path("<int:year>/histogram/", HistogramView.as_view(), name="histogram"),
+    path("<int:year>/scatter_plots/", ScatterPlotView.as_view(), name="scatter_plots"),
     path(
         "user/<int:pk>/preferences/update",
         UpdateEngineViewPreferences.as_view(),
