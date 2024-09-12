@@ -219,7 +219,7 @@ class SelfReportedEngine(EstimationEngine):
         assessment = person_month.person_year.assessments.order_by("-created").first()
         if assessment is not None:
             return IncomeEstimate(
-                estimated_year_result=assessment.erhvervsindtægter_sum,
+                estimated_year_result=assessment.brutto_b_indkomst,
                 engine=cls.__name__,
                 person_month=person_month,
                 income_type=income_type,
