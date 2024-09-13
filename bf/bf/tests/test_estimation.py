@@ -62,4 +62,4 @@ class TestSelfReportedEngine(TestCase):
         self.assertEqual(income_estimate.engine, "SelfReportedEngine")
         self.assertEqual(income_estimate.income_type, IncomeType.B)
         self.assertEqual(income_estimate.person_month, self.person_month)
-        self.assertEqual(income_estimate.estimated_year_result, Decimal(50000))
+        self.assertEqual(income_estimate.estimated_year_result, Decimal(70000))

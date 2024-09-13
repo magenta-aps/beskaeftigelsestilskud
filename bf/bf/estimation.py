@@ -218,8 +218,12 @@ class SelfReportedEngine(EstimationEngine):
             raise IncomeTypeUnhandledByEngine(income_type, cls)
         assessment = person_month.person_year.assessments.order_by("-created").first()
         if assessment is not None:
+            b_for_sales_and_business = (
+                assessment.brutto_b_indkomst
+                - assessment.brutto_b_før_erhvervsvirk_indhandling
+            )
             return IncomeEstimate(
-                estimated_year_result=assessment.brutto_b_indkomst,
+                estimated_year_result=b_for_sales_and_business,
                 engine=cls.__name__,
                 person_month=person_month,
                 income_type=income_type,
