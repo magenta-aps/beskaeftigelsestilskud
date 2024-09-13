@@ -45,9 +45,17 @@ class Command(BaseCommand):
 
             best_engine_dict = {}
 
+            # 62065: SameAsLastMonthEngine tends to miss the end-of-year mark,
+            # meaning the estimated and actual sum in december don't match
+            engines = [
+                engine_name
+                for engine_name in engine_keys
+                if engine_name != "SameAsLastMonthEngine"
+            ]
+
             # Test all combinations of A and B engines
-            for engine_a in engine_keys:
-                for engine_b in engine_keys:
+            for engine_a in engines:
+                for engine_b in engines:
                     benefit = sum(
                         [
                             m.calculate_benefit(engine_a=engine_a, engine_b=engine_b)
