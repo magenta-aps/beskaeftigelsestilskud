@@ -109,11 +109,11 @@ class Simulation:
             year_end=year_end,
         )
 
-    def actual_year_sum(self) -> Dict[int, Decimal]:
+    def actual_year_sum(self, income_type) -> Dict[int, Decimal]:
         year_sum = {}
         for person_year in self.person_years:
             year_sum[person_year.year.year] = person_year.amount_sum_by_type(
-                self.income_type
+                income_type
             )
         return year_sum
 
@@ -175,7 +175,15 @@ class Simulation:
     def prediction(self, engine: EstimationEngine):
 
         income: List[MonthlyIncomeReport] = []
-        if self.income_type in (IncomeType.A, None):
+        income_type = self.income_type
+
+        if income_type is None:  # None means to show both in view
+            if IncomeType.A not in engine.valid_income_types:
+                income_type = IncomeType.B
+            elif IncomeType.B not in engine.valid_income_types:
+                income_type = IncomeType.A
+
+        if income_type in (IncomeType.A, None):
             income += list(
                 MonthlyAIncomeReport.objects.filter(
                     person=self.person,
@@ -183,7 +191,7 @@ class Simulation:
                     person_month__person_year__year__lte=self.year_end,
                 )
             )
-        if self.income_type in (IncomeType.B, None):
+        if income_type in (IncomeType.B, None):
             income += list(
                 MonthlyBIncomeReport.objects.filter(
                     person=self.person,
@@ -210,7 +218,7 @@ class Simulation:
 
         estimates = []
         prediction_items = []
-        actual_year_sums = self.actual_year_sum()
+        actual_year_sums = self.actual_year_sum(income_type)
         engine_name = engine.__class__.__name__
         for year in range(self.year_start, self.year_end + 1):
             try:
@@ -227,9 +235,9 @@ class Simulation:
                     person_month=person_month,
                     engine=engine_name,
                 )
-                if self.income_type is not None:
+                if income_type is not None:
                     estimate_qs = estimate_qs.filter(
-                        income_type=self.income_type,
+                        income_type=income_type,
                     )
 
                 if estimate_qs.exists():
@@ -255,7 +263,7 @@ class Simulation:
             estimates.append(Prediction(engine=engine, items=prediction_items))
 
         return SimulationResultRow(
-            title=engine.__class__.__name__,
+            title=engine.__class__.__name__ + " - " + engine.description,
             income_sum=actual_year_sums,
             predictions=estimates,
         )

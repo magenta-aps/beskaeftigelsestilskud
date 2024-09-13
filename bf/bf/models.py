@@ -794,8 +794,11 @@ class PersonYearAssessment(models.Model):
     # En forskudsopgørelse
 
     person_year = models.ForeignKey(
-        PersonYear,
-        on_delete=models.CASCADE,
+        PersonYear, on_delete=models.CASCADE, related_name="assessments"
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
     )
 
     renteindtægter = models.DecimalField(
