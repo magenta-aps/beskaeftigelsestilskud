@@ -155,21 +155,22 @@ class PersonYearEstimationMixin:
                 else:
                     qs = qs.filter(b_count=0)
 
-        for engine in engine_keys:
-            for income_type in IncomeType:
+        for engine_class in EstimationEngine.classes():
+            engine_name = engine_class.__name__
+            for income_type in engine_class.valid_income_types:
                 qs = qs.annotate(
                     **{
-                        f"{engine}_mean_error_{income_type}": Subquery(
+                        f"{engine_name}_mean_error_{income_type}": Subquery(
                             PersonYearEstimateSummary.objects.filter(
                                 person_year=OuterRef("pk"),
-                                estimation_engine=engine,
+                                estimation_engine=engine_name,
                                 income_type=income_type,
                             ).values("mean_error_percent")
                         ),
-                        f"{engine}_rmse_{income_type}": Subquery(
+                        f"{engine_name}_rmse_{income_type}": Subquery(
                             PersonYearEstimateSummary.objects.filter(
                                 person_year=OuterRef("pk"),
-                                estimation_engine=engine,
+                                estimation_engine=engine_name,
                                 income_type=income_type,
                             ).values("rmse_percent")
                         ),

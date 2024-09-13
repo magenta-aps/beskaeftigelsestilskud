@@ -17,15 +17,9 @@ from django.db.models.functions import Coalesce
 from tabulate import tabulate
 
 from bf.data import MonthlyIncomeData
-from bf.estimation import (
-    EstimationEngine,
-    InYearExtrapolationEngine,
-    SameAsLastMonthEngine,
-    TwelveMonthsSummationEngine,
-)
+from bf.estimation import EstimationEngine
 from bf.models import (
     IncomeEstimate,
-    IncomeType,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     PersonMonth,
@@ -35,11 +29,7 @@ from bf.models import (
 
 
 class Command(BaseCommand):
-    engines: List[EstimationEngine] = [
-        InYearExtrapolationEngine(),
-        TwelveMonthsSummationEngine(),
-        SameAsLastMonthEngine(),
-    ]
+    engines: List[EstimationEngine] = EstimationEngine.instances()
 
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
@@ -95,7 +85,7 @@ class Command(BaseCommand):
 
             person_year = person_year_qs.get(person_id=person_pk)
             for engine in self.engines:
-                for income_type in IncomeType:
+                for income_type in engine.valid_income_types:
                     engine_results = []
                     for month in range(first_income_month, 13):
                         person_month = self._get_person_month_for_row(
@@ -109,7 +99,7 @@ class Command(BaseCommand):
                         )
                         if person_month is not None:
                             result: IncomeEstimate = engine.estimate(
-                                subset, self._year, month, income_type
+                                person_month, subset, income_type
                             )
                             if result is not None:
                                 result.person_month = person_month

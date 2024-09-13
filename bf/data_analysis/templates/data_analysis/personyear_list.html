@@ -88,13 +88,16 @@
         <th class="col-1">
         </th>
         <th colspan="4" class="col-2">
-        InYearExtrapolationEngine
+            InYearExtrapolationEngine
         </th>
         <th colspan="4" class="col-2">
-        TwelveMonthsSummationEngine
+            TwelveMonthsSummationEngine
         </th>
         <th colspan="4" class="col-2">
-        SameAsLastMonthEngine
+            SameAsLastMonthEngine
+        </th>
+        <th colspan="2" class="col-2">
+            SelfReportedEngine
         </th>
         <th colspan="6" class="col-5">
         </th>
@@ -178,6 +181,20 @@
                 {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_rmse_B" %}
             </a>
         </th>
+
+        <th class="col-1">
+            <a href="?{{ sort_params.SelfReportedEngine_mean_error_B }}" class="link-dark">
+                ME (B)
+                {% include "data_analysis/sort_icon.html" with field="SelfReportedEngine_mean_error_B" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.SelfReportedEngine_rmse_B }}" class="link-dark">
+                RMSE (B)
+                {% include "data_analysis/sort_icon.html" with field="SelfReportedEngine_rmse_B" %}
+            </a>
+        </th>
+
         <th class="col-2">
             <a href="?{{ sort_params.actual_sum }}" class="link-dark">
                 Actual year sum
@@ -237,6 +254,7 @@
                 {{ object.person.cpr }}
             </a>
         </td>
+
         <td>
             {% if object.InYearExtrapolationEngine_mean_error_A is not None %}
                 {{ object.InYearExtrapolationEngine_mean_error_A|floatformat:2 }} %
@@ -265,6 +283,7 @@
                 No estimate
             {% endif %}
         </td>
+
         <td>
             {% if object.TwelveMonthsSummationEngine_mean_error_A is not None %}
                 {{ object.TwelveMonthsSummationEngine_mean_error_A|floatformat:2 }} %
@@ -293,6 +312,7 @@
                 No estimate
             {% endif %}
         </td>
+
         <td>
             {% if object.SameAsLastMonthEngine_mean_error_A is not None %}
                 {{ object.SameAsLastMonthEngine_mean_error_A|floatformat:2 }} %
@@ -321,6 +341,22 @@
                 No estimate
             {% endif %}
         </td>
+
+        <td>
+            {% if object.SelfReportedEngine_mean_error_B is not None %}
+                {{ object.SelfReportedEngine_mean_error_B|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+        <td>
+            {% if object.SelfReportedEngine_rmse_B is not None %}
+                {{ object.SelfReportedEngine_rmse_B|floatformat:2 }} %
+            {% else %}
+                No estimate
+            {% endif %}
+        </td>
+
         <td>{{ object.actual_sum }}</td>
         <td>{{ object.payout|default_if_none:"" }}</td>
         <td>{{ object.correct_payout|default_if_none:"" }}</td>
@@ -369,7 +405,8 @@ function get_cols_to_hide(item_name){
     var cols_to_hide = [(header_col-2)*4+2,
                         (header_col-2)*4+3,
                         (header_col-2)*4+4,
-                        (header_col-2)*4+5];
+                        (header_col-2)*4+5,
+                        (header_col-2)*2+5];
       
     col_string = ""
     col_string += `tr:first th:nth-child(${header_col})`;

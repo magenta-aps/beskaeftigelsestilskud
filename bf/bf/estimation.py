@@ -1,13 +1,16 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from __future__ import annotations
+
 from decimal import Decimal
-from typing import Iterable, Sequence, Tuple
+from typing import Iterable, List, Sequence, Tuple
 
 from project.util import trim_list_first
 
 from bf.data import MonthlyIncomeData
-from bf.models import IncomeEstimate, IncomeType
+from bf.exceptions import IncomeTypeUnhandledByEngine
+from bf.models import IncomeEstimate, IncomeType, PersonMonth
 
 
 class EstimationEngine:
@@ -15,12 +18,13 @@ class EstimationEngine:
     @classmethod
     def estimate(
         cls,
+        person_month: PersonMonth,
         subset: Sequence[MonthlyIncomeData],
-        year: int,
-        month: int,
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
         raise NotImplementedError
+
+    description = "Tom superklasse"
 
     @classmethod
     def subset_sum(
@@ -37,24 +41,36 @@ class EstimationEngine:
             return Decimal(0) + sum([row.b_amount for row in relevant])
 
     @staticmethod
-    def classes():
+    def classes() -> List[type[EstimationEngine]]:
         return EstimationEngine.__subclasses__()
 
     @staticmethod
-    def instances():
+    def instances() -> List["EstimationEngine"]:
         return [cls() for cls in EstimationEngine.classes()]
 
     @classmethod
     def estimate_ab(
         cls,
+        person_month: PersonMonth,
         subset: Sequence[MonthlyIncomeData],
-        year: int,
-        month: int,
     ) -> Tuple[IncomeEstimate | None, IncomeEstimate | None]:
         return (
-            cls.estimate(subset, year, month, IncomeType.A),
-            cls.estimate(subset, year, month, IncomeType.B),
+            cls.estimate(person_month, subset, IncomeType.A),
+            cls.estimate(person_month, subset, IncomeType.B),
         )
+
+    valid_income_types: List[IncomeType] = [
+        IncomeType.A,
+        IncomeType.B,
+    ]
+
+    @staticmethod
+    def valid_engines_for_incometype(income_type: IncomeType):
+        return [
+            cls
+            for cls in EstimationEngine.classes()
+            if income_type in cls.valid_income_types
+        ]
 
 
 """
@@ -72,18 +88,19 @@ class InYearExtrapolationEngine(EstimationEngine):
     @classmethod
     def estimate(
         cls,
+        person_month: PersonMonth,
         subset: Sequence[MonthlyIncomeData],
-        year: int,
-        month: int,
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
-        relevant_items = cls.relevant(subset, year, month)
+        relevant_items = cls.relevant(subset, person_month.year, person_month.month)
         relevant_count = len(relevant_items)
         if relevant_count > 0:
-            amount_sum = cls.subset_sum(relevant_items, year, month, income_type)
-            omitted_count = month - relevant_count
+            amount_sum = cls.subset_sum(
+                relevant_items, person_month.year, person_month.month, income_type
+            )
+            omitted_count = person_month.month - relevant_count
             year_estimate = (12 - omitted_count) * amount_sum / relevant_count
             return IncomeEstimate(
                 estimated_year_result=year_estimate,
@@ -110,22 +127,27 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     @classmethod
     def estimate(
         cls,
+        person_month: PersonMonth,
         subset: Sequence[MonthlyIncomeData],
-        year: int,
-        month: int,
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
 
         # Do not estimate if there is no data one year back
-        if not [x for x in subset if x.month == month and x.year == year - 1]:
+        if not [
+            x
+            for x in subset
+            if x.month == person_month.month and x.year == person_month.year - 1
+        ]:
             # TODO: How can we decide this better?
             # * of the last 12 months, less than x months contain data?
             # * the month 12 months ago doesn't contain data,
             #   and the month before/after it doesn't either?
             return None
 
-        relevant_items = cls.relevant(subset, year, month)
-        year_estimate = cls.subset_sum(relevant_items, year, month, income_type)
+        relevant_items = cls.relevant(subset, person_month.year, person_month.month)
+        year_estimate = cls.subset_sum(
+            relevant_items, person_month.year, person_month.month, income_type
+        )
 
         return IncomeEstimate(
             estimated_year_result=year_estimate,
@@ -153,13 +175,14 @@ class SameAsLastMonthEngine(EstimationEngine):
     @classmethod
     def estimate(
         cls,
+        person_month: PersonMonth,
         subset: Sequence[MonthlyIncomeData],
-        year: int,
-        month: int,
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
-        relevant_items = cls.relevant(subset, year, month)
-        amount_sum = cls.subset_sum(relevant_items, year, month, income_type)
+        relevant_items = cls.relevant(subset, person_month.year, person_month.month)
+        amount_sum = cls.subset_sum(
+            relevant_items, person_month.year, person_month.month, income_type
+        )
         year_estimate = int(12 * amount_sum)
         return IncomeEstimate(
             estimated_year_result=year_estimate,
@@ -177,3 +200,32 @@ class SameAsLastMonthEngine(EstimationEngine):
                 subset,
             )
         )
+
+
+class SelfReportedEngine(EstimationEngine):
+    description = "Estimering udfra forskudsopgørelsen. Kun B-indkomst."
+
+    valid_income_types: List[IncomeType] = [IncomeType.B]
+
+    @classmethod
+    def estimate(
+        cls,
+        person_month: PersonMonth,
+        subset: Sequence[MonthlyIncomeData],
+        income_type: IncomeType,
+    ) -> IncomeEstimate | None:
+        if income_type != IncomeType.B:
+            raise IncomeTypeUnhandledByEngine(income_type, cls)
+        assessment = person_month.person_year.assessments.order_by("-created").first()
+        if assessment is not None:
+            b_for_sales_and_business = (
+                assessment.brutto_b_indkomst
+                - assessment.brutto_b_før_erhvervsvirk_indhandling
+            )
+            return IncomeEstimate(
+                estimated_year_result=b_for_sales_and_business,
+                engine=cls.__name__,
+                person_month=person_month,
+                income_type=income_type,
+            )
+        return None
