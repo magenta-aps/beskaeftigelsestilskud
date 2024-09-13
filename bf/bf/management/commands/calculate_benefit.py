@@ -23,33 +23,44 @@ class Command(BaseCommand):
 
         self._write_verbose(f"Calculating benefit for {kwargs['year']}")
 
+        months = PersonMonth.objects.filter(
+            person_year__year__year=kwargs["year"],
+        )
         if kwargs["cpr"]:
-            months = PersonMonth.objects.filter(
-                person_year__year__year=kwargs["year"],
+            months = months.filter(
                 person_year__person__cpr=kwargs["cpr"],
-            )
-        else:
-            months = PersonMonth.objects.filter(
-                person_year__year__year=kwargs["year"],
             )
         months = months.filter(incomeestimate__isnull=False)
 
         month = kwargs["month"]
         if month and month >= 1 and month <= 12:
             months = months.filter(month=month)
+            month_range = [month]
+        else:
+            month_range = range(1, 13)
 
-        months = (
-            months.select_related("person_year")
-            .prefetch_related("incomeestimate_set")
-            .order_by("person_year__person", "month")
-        )
-        for person_month in months:
-            try:
-                person_month.calculate_benefit()
-                person_month.save()
-            except EstimationEngineUnset as e:
-                self._write_verbose(str(e))
-
+        for month_number in month_range:
+            month_qs = (
+                months.filter(month=month_number)
+                .select_related("person_year")
+                .prefetch_related("incomeestimate_set")
+                .distinct()
+            )
+            for person_month in month_qs:
+                try:
+                    person_month.calculate_benefit()
+                except EstimationEngineUnset as e:
+                    self._write_verbose(str(e))
+            PersonMonth.objects.bulk_update(
+                month_qs,
+                fields=[
+                    "benefit_paid",
+                    "prior_benefit_paid",
+                    "actual_year_benefit",
+                    "estimated_year_benefit",
+                ],
+                batch_size=1000,
+            )
         self._write_verbose("Done")
 
     def _write_verbose(self, msg, **kwargs):
