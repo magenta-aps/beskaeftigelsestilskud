@@ -58,13 +58,13 @@ class AutoSelectEngineTests(TestCase):
         )
 
         # But in 2022 TwelveMonthsSummationEngine was better (for A income)
-        # And for B income the SameAsLastMonthEngine was best
+        # And for B income the InYearExtrapolationEngine was best
         #
         # We simulate this by making all OTHER engines return zero-results.
         def mess_other_engines_up(*args, **kwargs):
             if kwargs["engine_a"] != "TwelveMonthsSummationEngine":
                 return 0
-            elif kwargs["engine_b"] != "SameAsLastMonthEngine":
+            elif kwargs["engine_b"] != "InYearExtrapolationEngine":
                 return 0
             else:
                 return 100
@@ -81,5 +81,6 @@ class AutoSelectEngineTests(TestCase):
             "TwelveMonthsSummationEngine",
         )
         self.assertEqual(
-            self.person_year_2023.preferred_estimation_engine_b, "SameAsLastMonthEngine"
+            self.person_year_2023.preferred_estimation_engine_b,
+            "InYearExtrapolationEngine",
         )

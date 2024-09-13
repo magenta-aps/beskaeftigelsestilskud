@@ -50,7 +50,7 @@ class Command(BaseCommand):
             engines = [
                 engine_name
                 for engine_name in engine_keys
-                # if engine_name != "SameAsLastMonthEngine"
+                if engine_name != "SameAsLastMonthEngine"
             ]
 
             # Test all combinations of A and B engines
