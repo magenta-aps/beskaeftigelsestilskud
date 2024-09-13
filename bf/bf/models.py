@@ -35,7 +35,7 @@ class WorkingTaxCreditCalculationMethod(models.Model):
     class Meta:
         abstract = True
 
-    def calculate(self, amount: Decimal) -> Decimal:
+    def calculate(self, year_income: Decimal) -> Decimal:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -88,12 +88,12 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         blank=False,
     )
 
-    def calculate(self, amount: Decimal) -> Decimal:
+    def calculate(self, year_income: Decimal) -> Decimal:
         zero = Decimal(0)
         rateable_amount = max(
-            amount - self.personal_allowance - self.standard_allowance, zero
+            year_income - self.personal_allowance - self.standard_allowance, zero
         )
-        scaledown_amount = max(amount - self.scaledown_ceiling, zero)
+        scaledown_amount = max(year_income - self.scaledown_ceiling, zero)
         return round(
             max(
                 min(self.benefit_rate * rateable_amount, self.max_benefit)
@@ -472,7 +472,7 @@ class PersonMonth(models.Model):
         if benefit_this_month < 0:
             benefit_this_month = Decimal(0)
 
-        if self.prev is not None:
+        if self.prev is not None and self.month < 12:
             benefit_last_month = self.prev.benefit_paid
             threshold: Decimal = settings.CALCULATION_STICKY_THRESHOLD  # type: ignore
             if (
