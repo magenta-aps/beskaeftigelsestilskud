@@ -6,11 +6,12 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Iterable, List, Sequence, Tuple
 
+from django.db.models import Sum
 from project.util import trim_list_first
 
 from bf.data import MonthlyIncomeData
 from bf.exceptions import IncomeTypeUnhandledByEngine
-from bf.models import IncomeEstimate, IncomeType, PersonMonth
+from bf.models import IncomeEstimate, IncomeType, MonthlyBIncomeReport, PersonMonth
 
 
 class EstimationEngine:
@@ -218,12 +219,18 @@ class SelfReportedEngine(EstimationEngine):
             raise IncomeTypeUnhandledByEngine(income_type, cls)
         assessment = person_month.person_year.assessments.order_by("-created").first()
         if assessment is not None:
-            b_for_sales_and_business = (
-                assessment.brutto_b_indkomst
-                - assessment.brutto_b_før_erhvervsvirk_indhandling
-            )
+            if person_month.month == 12:
+                estimated_year_result = MonthlyBIncomeReport.objects.filter(
+                    year=person_month.year,
+                    person=person_month.person,
+                ).aggregate(sum=Sum("amount"))["sum"] or Decimal(0)
+            else:
+                estimated_year_result = (
+                    assessment.brutto_b_indkomst
+                    - assessment.brutto_b_før_erhvervsvirk_indhandling
+                )
             return IncomeEstimate(
-                estimated_year_result=b_for_sales_and_business,
+                estimated_year_result=estimated_year_result,
                 engine=cls.__name__,
                 person_month=person_month,
                 income_type=income_type,
