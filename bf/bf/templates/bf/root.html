@@ -2,7 +2,33 @@
 {# SPDX-License-Identifier: MPL-2.0 #}
 
 {% extends 'common/base.html' %}
+{% load i18n %}
+{% load bootstrap_icons %}
 
 {% block content %}
-    You are now logged in
+<div class="row mt-1 mb-5 mx-1">
+    <h1>{% translate "Velkommen" %}</h1>
+    <p>{% translate "Til beskæftigelsestilskud portalen." %}</p>
+</div>
+<div class="card mx-3" style="display:inline-block;">
+  <h5 class="card-header">{% translate "Genveje" %}</h5>
+    <ul class="mx-4 my-2" style="list-style-position: inside; padding: 0">
+        <li style="display:inline-block;">
+            <a href="{% url 'data_analysis:person_years' year=this_year %}" class="btn btn-outline-dark">
+                {% bs_icon "clipboard-data" size="5em" %}
+                <br>
+                <br>
+                {% translate "Estimeringsoverblik" %} {{ this_year }}
+            </a>
+        </li>
+        <li style="display:inline-block;">
+            <a href="{% url 'data_analysis:person_years' year=last_year %}" class="btn btn-outline-dark">
+                {% bs_icon "clipboard-data" size="5em" %}
+                <br>
+                <br>
+                {% translate "Estimeringsoverblik" %} {{ last_year }}
+            </a>
+        </li>
+    </ul>
+</div>
 {% endblock %}

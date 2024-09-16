@@ -7,14 +7,12 @@
 {% load csp %}
 
 {% block content %}
-<form id="histogram-options" method="get" action="." class="g-3 p-2">
+<div class="row my-1 mx-1">
+    <h1>{% translate "Histogrammer for" %} {{ form.data.year_val }} </h1>
+</div>
+<div class="row my-1 mx-1">
+<form id="histogram-options" method="get" action=".">
     <div class="row justify-content-start">
-        <div class="col-3">
-            <div class="input-group">
-                <div class="input-group-text">{{ form.year.label }}</div>
-                {{ form.year }}
-            </div>
-        </div>
         <div class="col-3">
             <div class="input-group">
                 <div class="input-group-text">{{ form.resolution.label }}</div>
@@ -59,6 +57,7 @@
         <span class="visually-hidden">{% translate 'Building histograms ...' %}</span>
     </div>
     <p>{% translate 'Building histograms ...' %}</p>
+</div>
 </div>
 {% endblock %}
 
@@ -163,12 +162,13 @@ const getChartData = function (histo, key, percentileSize, unit, options) {
                 search_params += "&selected_model=" + metric ;
             } else {
                 search_params += "&selected_model=" + chartContext.opts.chart.id + "_" + metric ;
+                search_params += "_{{form.data.income_type}}";
             }
-            search_params += "&has_a={{form.data.has_a}}"; 
+            search_params += "&has_a={{form.data.has_a}}";
             search_params += "&has_b={{form.data.has_b}}"; 
                       
             url = '{% url "data_analysis:person_years" year=form.data.year_val %}' + search_params;
-            window.open(url);
+            window.open(url,"_top");
         }
     }
     
@@ -256,25 +256,6 @@ $(document).ready(
     }
 )
 
-$(document).ready(
-    function () {
-        const url = new URL(window.location);
-        const params = new URLSearchParams();
-        const form = $("#histogram-options");
 
-        form.submit(function (evt) {
-            evt.preventDefault();
-            for (const param of form.serializeArray()) {
-                if (param.name !== "year") {
-                    params.set(param.name, param.value);
-                }
-            }
-            const newHref = $("#id_year", form).val();
-            url.href = url.origin + newHref;
-            url.search = params;
-            window.location.replace(url);
-        });
-    }
-)
 </script>
 {% endblock %}
