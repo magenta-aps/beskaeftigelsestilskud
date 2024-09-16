@@ -6,3 +6,7 @@ SPDX-License-Identifier: MPL-2.0
     color: var(--bs-body-color);
     text-decoration: none;
 }
+
+.dropdown {
+  z-index: 10000;
+}
