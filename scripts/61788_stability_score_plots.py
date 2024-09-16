@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import os
+
 import functions
 import matplotlib
 import pandas as pd
@@ -14,7 +16,7 @@ plt.close("all")
 
 functions.pltdefaults()
 
-output_folder = "/home/nick/Pictures/plots/61788_stability_score"
+output_folder = os.environ["HOME"] + "/Pictures/plots/61788_stability_score_v2"
 functions.makedir(output_folder)
 functions.makedir(output_folder + "/stable_incomes")
 functions.makedir(output_folder + "/mixed_incomes")
@@ -77,10 +79,10 @@ for cpr in list(df.index):
     max_score = df_ss_a.loc[cpr, :].max()
     min_score = df_ss_a.loc[cpr, :].min()
     if max_score <= 0.5:
-        plt.savefig(output_folder + f"/stable_incomes/{cpr}")
+        plt.savefig(output_folder + f"/unstable_incomes/{cpr}")
     elif max_score > 0.5 and min_score <= 0.5:
         plt.savefig(output_folder + f"/mixed_incomes/{cpr}")
     else:
-        plt.savefig(output_folder + f"/unstable_incomes/{cpr}")
+        plt.savefig(output_folder + f"/stable_incomes/{cpr}")
 
     plt.close()

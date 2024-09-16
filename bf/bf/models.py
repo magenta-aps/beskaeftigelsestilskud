@@ -234,7 +234,7 @@ class PersonYear(models.Model):
         return self.year.calculation_method.calculate(estimated_year_income)
 
     def calculate_stability_score(
-        self, income_type: IncomeType, s=0.2, k=1.5
+        self, income_type: IncomeType, s=0.4, k=2.5
     ) -> Decimal | None:
         """
         Calculate stability score (1 is very stable and 0 is very unstable)
