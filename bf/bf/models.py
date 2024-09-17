@@ -805,3 +805,45 @@ class PersonYearAssessment(models.Model):
     brutto_b_indkomst = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal(0), null=False
     )
+
+
+class PrismeBatch(models.Model):
+    class Status(models.TextChoices):
+        Sending = "sending", _("Sending")
+        Sent = "sent", _("Sent")
+        Failed = "failed", _("Failed")
+
+    status = models.CharField(
+        choices=Status.choices,
+        default=Status.Sending,
+        db_index=True,
+    )
+
+    failed_message = models.TextField()
+
+    export_date = models.DateField(
+        db_index=True,
+    )
+
+    prefix = models.IntegerField(
+        db_index=True,
+    )
+
+
+class PrismeBatchItem(models.Model):
+    class Meta:
+        unique_together = ("prisme_batch", "person_month")
+
+    prisme_batch = models.ForeignKey(
+        PrismeBatch,
+        on_delete=models.CASCADE,
+    )
+
+    person_month = models.OneToOneField(
+        PersonMonth,
+        on_delete=models.CASCADE,
+    )
+
+    g68_content = models.TextField()
+
+    g69_content = models.TextField()
