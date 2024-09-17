@@ -59,3 +59,4 @@ whitenoise==6.0.0
 xmlschema==2.5.1
 xmltodict==0.13.0
 tblib==3.0.0
+tenQ @ git+https://github.com/magenta-aps/10Q.git@0.3.0
