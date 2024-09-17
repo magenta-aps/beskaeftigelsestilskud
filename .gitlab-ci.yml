@@ -139,7 +139,7 @@ Lint REUSE compliance:
 # Build stage
 #############
 
-Build image:
+Build:
   stage: build
   needs: ["Lint Python", "Lint Dockerfiles", "Lint REUSE compliance"]
   dependencies: []
@@ -161,7 +161,7 @@ Build image:
 .test-default: &test-default
   stage: test
   dependencies: []
-  needs: [ "Build image" ]
+  needs: [ "Build" ]
   services:
     - name: postgres:16
       alias: bf-db
