@@ -294,6 +294,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         kwargs["data"].setdefault("resolution", "10")
         # Set metric to ME if not provided by GET parameters
         kwargs["data"].setdefault("metric", "mean_error")
+        kwargs["data"].setdefault("income_type", "A")
         # Get the initial value (URL) for the `year` form field.
         # Since this form is bound, we need to pass the initial value via
         # the `data` form kwarg.

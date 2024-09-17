@@ -13,14 +13,17 @@
 {% endblock %}
 
 {% block content %}
-    <form id="list-options" method="get" action="." class="g-3 p-2">
+<div class="row my-1 mx-1">
+    <h1>{% translate "Estimeringsoverblik for" %} {{ year }} </h1>
+</div>
+<div class="row my-1 mx-1">
+    <form id="list-options" method="get" action=".">
         <div class="row justify-content-start my-1">
             <div class="col-3">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.has_a.label }}</div>
                     {{ form.has_a }}
                 </div>
-
             </div>
             <div class="col-3">
                 <div class="input-group">
@@ -31,6 +34,7 @@
             <div class="col-3">
                 <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
             </div>
+        </div>
         <div class="row justify-content-start my-1">
             <div class="col-2">
                 <div class="input-group">
@@ -389,7 +393,7 @@
         {% endif %}
     </span>
     </div>
-
+</div>
 <script nonce="{{ request.csp_nonce }}">
 function invalidateMinMax() {
     const noValue = !$("#id_selected_model").val();

@@ -3,7 +3,9 @@
 
 {% load static %}
 {% load i18n %}
+{% load bootstrap_icons %}
 {% load csp %}
+{% load cache %}
 <!doctype html>
 <html lang="da">
 <head>
@@ -27,8 +29,33 @@
         </nav>
     {% endif %}
     <nav class="nav flex-column flex-sm-row p-1 bg-dark" data-bs-theme="dark">
-        {% block nav_items %}
-        {% endblock %}
+        {% if user.is_authenticated %}
+        {% cache 500 navbar %}
+        <a class="btn btn-primary mx-1 my-2" href="{% url 'bf:root' %}">
+            {% bs_icon "house" size="1em" %}
+        </a>
+        <div class="dropdown p-2">
+            <a class="btn btn-primary dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {% translate "Estimeringsoverblik for hver person" %}
+            </a>
+            <ul class="dropdown-menu">
+                {% for year in years %}
+                <li><a class="dropdown-item" href="{% url 'data_analysis:person_years' year=year %}">{{ year }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="dropdown p-2">
+            <a class="btn btn-primary dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {% translate "Histogrammer over estimeringernes afvigelse" %}
+            </a>
+            <ul class="dropdown-menu">
+                {% for year in years %}
+                <li><a class="dropdown-item" href="{% url 'data_analysis:histogram' year=year %}">{{ year }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endcache %}
+        {% endif %}
 
         <span class="m-2 pt-2 ms-auto">
             {{user.first_name}} {{user.last_name}}
