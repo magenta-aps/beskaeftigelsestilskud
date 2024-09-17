@@ -399,7 +399,7 @@ class PersonMonth(models.Model):
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
 
-    def calculate_benefit(self, engine_a=None, engine_b=None) -> Decimal:
+    def calculate_benefit(self, engine_a: str = None, engine_b: str = None) -> Decimal:
 
         engine_a = engine_a or self.person_year.preferred_estimation_engine_a
         engine_b = engine_b or self.person_year.preferred_estimation_engine_b
