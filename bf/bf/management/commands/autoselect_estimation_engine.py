@@ -5,8 +5,8 @@ from cProfile import Profile
 
 from django.core.management.base import BaseCommand
 
-from bf.data import engine_keys
-from bf.models import PersonMonth, PersonYear
+from bf.estimation import EstimationEngine, SameAsLastMonthEngine
+from bf.models import IncomeType, PersonMonth, PersonYear
 
 
 class Command(BaseCommand):
@@ -47,18 +47,25 @@ class Command(BaseCommand):
 
             # 62065: SameAsLastMonthEngine tends to miss the end-of-year mark,
             # meaning the estimated and actual sum in december don't match
-            engines = [
-                engine_name
-                for engine_name in engine_keys
-                if engine_name != "SameAsLastMonthEngine"
-            ]
+            engines = {
+                engine_class
+                for engine_class in EstimationEngine.classes()
+                if engine_class != SameAsLastMonthEngine
+            }
 
             # Test all combinations of A and B engines
             for engine_a in engines:
+                if IncomeType.A not in engine_a.valid_income_types:
+                    continue
                 for engine_b in engines:
+                    if IncomeType.B not in engine_b.valid_income_types:
+                        continue
                     benefit = sum(
                         [
-                            m.calculate_benefit(engine_a=engine_a, engine_b=engine_b)
+                            m.calculate_benefit(
+                                engine_a=engine_a.__name__,
+                                engine_b=engine_b.__name__,
+                            )
                             for m in person_months
                         ]
                     )
@@ -66,7 +73,7 @@ class Command(BaseCommand):
                     # Store the difference between the amount that was paid out
                     # and the amount that should have been paid out for each engine
                     # combination
-                    best_engine_dict[(engine_a, engine_b)] = abs(
+                    best_engine_dict[(engine_a.__name__, engine_b.__name__)] = abs(
                         benefit - actual_year_benefit
                     )
 
