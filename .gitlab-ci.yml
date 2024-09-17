@@ -136,6 +136,25 @@ Lint REUSE compliance:
   script:
     - reuse lint
 
+# Build stage
+#############
+
+Build image:
+  stage: build
+  needs: ["Lint Python", "Lint Dockerfiles", "Lint REUSE compliance"]
+  dependencies: []
+  image:
+    name: gcr.io/kaniko-project/executor:debug-v0.16.0
+    entrypoint: [""]
+  script:
+    # Login to GitLab registry
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --cache
+      --context=$CI_PROJECT_DIR
+      --dockerfile=$CI_PROJECT_DIR/docker/Dockerfile
+      --destination=${IMAGE_SHA}
+      --build-arg=COMMIT_TAG=${CI_COMMIT_TAG}
 
 # Test stage
 ############
