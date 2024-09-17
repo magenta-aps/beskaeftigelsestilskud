@@ -80,7 +80,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
         #   (== `self._line_no`),
         # the G68 "posteringsdato" as the "posteringsdato".
         g69_transaction_serialized = self._g69_transaction_writer.serialize_transaction(
-            udbet_henv_nr=int(g69_udbetalingshenvisning),
+            udbet_henv_nr=int(g69_udbetalingshenvisning),  # type: ignore[arg-type]
             eks_løbenr=self._line_no,
             maskinnr=self.machine_id.val,
             kontonr=123456789,  # TODO: get account number(s)
@@ -140,9 +140,11 @@ class Command(BaseCommand):
         # matching `PersonMonth` objects for each `prefix` (== first two digits of CPR.)
         current_batch: PrismeBatch | None = None
         for person_month in qs:
-            if (current_batch is None) or (person_month.prefix != current_batch.prefix):
+            if (current_batch is None) or (
+                person_month.prefix != current_batch.prefix  # type: ignore
+            ):
                 current_batch = PrismeBatch(
-                    prefix=person_month.prefix,
+                    prefix=person_month.prefix,  # type: ignore[attr-defined]
                     export_date=date.today(),
                 )
                 yield current_batch, qs.filter(prefix=current_batch.prefix)
@@ -156,8 +158,8 @@ class Command(BaseCommand):
         transaction_pair: G68G69TransactionPair = writer.serialize_transaction_pair(
             TransaktionstypeEnum.AndenDestinationTilladt,
             UdbetalingsberettigetIdentKodeEnum.CPR,  # TODO: support CVR?
-            person_month.identifier,
-            person_month.benefit_paid,
+            person_month.identifier,  # type: ignore[attr-defined]
+            person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),
             date.today(),
             "Some descriptive text",
@@ -183,14 +185,15 @@ class Command(BaseCommand):
             buf.write(b"\r\n")
         buf.seek(0)
 
-        destination_folder = settings.PRISME["dirs"]["development"]
+        prisme_settings: dict = settings.PRISME  # type: ignore[misc]
+        destination_folder = prisme_settings["dirs"]["development"]
         filename = (
             f"RES_G68_export_{prisme_batch.prefix}_"
             f"{prisme_batch.export_date.strftime('%Y-%m-%d')}.g68"
         )
 
         put_file_in_prisme_folder(
-            settings.PRISME,
+            prisme_settings,
             buf,
             destination_folder,
             filename,
