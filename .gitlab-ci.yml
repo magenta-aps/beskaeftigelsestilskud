@@ -161,7 +161,7 @@ Build image:
 .test-default: &test-default
   stage: test
   dependencies: []
-  needs: [ "Build" ]
+  needs: [ "Build image" ]
   services:
     - name: postgres:16
       alias: bf-db
