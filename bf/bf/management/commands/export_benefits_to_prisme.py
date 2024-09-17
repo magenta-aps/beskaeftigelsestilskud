@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -23,6 +24,8 @@ from tenQ.writer.g68 import (
 from tenQ.writer.g69 import G69TransactionWriter
 
 from bf.models import PersonMonth, PrismeBatch, PrismeBatchItem
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -192,12 +195,27 @@ class Command(BaseCommand):
             f"{prisme_batch.export_date.strftime('%Y-%m-%d')}.g68"
         )
 
-        put_file_in_prisme_folder(
-            prisme_settings,
-            buf,
-            destination_folder,
-            filename,
-        )
+        try:
+            put_file_in_prisme_folder(
+                prisme_settings,
+                buf,
+                destination_folder,
+                filename,
+            )
+        except ClientException as e:
+            prisme_batch.status = PrismeBatch.Status.Failed
+            prisme_batch.failed_message = str(e)
+            logger.exception(
+                "failed to upload to Prisme "
+                "(destination_folder=%r, destination_filename=%r)",
+                destination_folder,
+                filename,
+            )
+        else:
+            prisme_batch.status = PrismeBatch.Status.Sent
+            prisme_batch.failed_message = ""
+        finally:
+            prisme_batch.save()
 
     @transaction.atomic
     def export_batches(self, year: int, month: int):
@@ -224,13 +242,4 @@ class Command(BaseCommand):
             PrismeBatchItem.objects.bulk_create(prisme_batch_items)
 
             # Export this batch to Prisme
-            try:
-                self.upload_batch(prisme_batch, prisme_batch_items)
-            except ClientException as e:
-                prisme_batch.status = PrismeBatch.Status.Failed
-                prisme_batch.failed_message = str(e)
-                prisme_batch.save()
-            else:
-                prisme_batch.status = PrismeBatch.Status.Sent
-                prisme_batch.failed_message = ""
-                prisme_batch.save()
+            self.upload_batch(prisme_batch, prisme_batch_items)
