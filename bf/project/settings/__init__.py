@@ -16,4 +16,5 @@ include(
     "logging.py",
     "csp.py",
     "cache.py",
+    "prisme.py",
 )
