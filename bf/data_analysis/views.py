@@ -187,6 +187,17 @@ class PersonYearEstimationMixin:
         qs = qs.annotate(
             actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
         )
+        # qs = qs.annotate(
+        #     actual_sum=Subquery(
+        #         PersonMonth.objects.filter(person_year=OuterRef("pk"))
+        #         .annotate(
+        #             actual_sum=Coalesce(
+        #                 Func("amount_sum", function="Sum"),
+        #                 Decimal(0)
+        #             )
+        #         ).values("actual_sum")
+        #     )
+        # )
 
         qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
 

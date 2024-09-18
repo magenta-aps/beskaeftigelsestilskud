@@ -187,6 +187,7 @@ class TestPersonAnalysisView(TestCase):
 class PersonYearEstimationSetupMixin:
     @classmethod
     def setUpTestData(cls):
+        print("setUpTestData")
         super().setUpTestData()
         cls.person, _ = Person.objects.get_or_create(cpr="0101012222")
         cls.employer, _ = Employer.objects.get_or_create(cvr="1212122222")
@@ -356,6 +357,17 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
 
     def test_filter_a(self):
         request = self.format_request("?has_a=True&has_b=False")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 1)
+        self.assertEqual(object_list[0].person, self.person)
+        self.assertEqual(object_list[0].actual_sum, Decimal(42))
+
+    def test_filter_no_income(self):
+        request = self.format_request("?has_nonzero_income=True")
         self._view.setup(request, year=2020)
         response = self._view.get(request, year=2020)
         self.assertIsInstance(response, TemplateResponse)
