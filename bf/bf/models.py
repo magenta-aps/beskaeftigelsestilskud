@@ -14,7 +14,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index, QuerySet, Sum, TextChoices
+from django.db.models import F, Index, Max, Min, QuerySet, Sum, TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -234,7 +234,7 @@ class PersonYear(models.Model):
         return self.year.calculation_method.calculate(estimated_year_income)
 
     def calculate_stability_score(
-        self, income_type: IncomeType, s=0.2, k=1.5
+        self, income_type: IncomeType, s=0.4, k=2.5
     ) -> Decimal | None:
         """
         Calculate stability score (1 is very stable and 0 is very unstable)
@@ -250,11 +250,28 @@ class PersonYear(models.Model):
             income_qs = MonthlyBIncomeReport.objects.filter(
                 person_month__person_year=self
             )
+        if not income_qs:
+            return None
 
-        incomes = [float(obj.amount) or 0 for obj in income_qs]
+        max_month = income_qs.aggregate(Max("person_month__month"))[
+            "person_month__month__max"
+        ]
+        min_month = income_qs.aggregate(Min("person_month__month"))[
+            "person_month__month__min"
+        ]
+
+        incomes = [
+            float(
+                income_qs.filter(month=m).aggregate(Sum("amount"))["amount__sum"] or 0
+            )
+            for m in range(min_month, max_month + 1)
+        ]
         if len(incomes) < 2:
             return None
         mean_income = np.mean(incomes)
+        if mean_income == 0:
+            # No income == stable income
+            return Decimal(1)
         std = np.std([float(i / mean_income) for i in incomes])
 
         stability_score = Decimal(np.exp(-(std**k) / s**k))
