@@ -187,7 +187,6 @@ class TestPersonAnalysisView(TestCase):
 class PersonYearEstimationSetupMixin:
     @classmethod
     def setUpTestData(cls):
-        print("setUpTestData")
         super().setUpTestData()
         cls.person, _ = Person.objects.get_or_create(cpr="0101012222")
         cls.employer, _ = Employer.objects.get_or_create(cvr="1212122222")
