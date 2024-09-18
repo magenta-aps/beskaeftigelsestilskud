@@ -386,6 +386,16 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person.cpr, "0101012222")
 
+        request = self.format_request("?has_nonzero_income=")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 2)
+        self.assertEqual(object_list[0].person.cpr, "0101012222")
+        self.assertEqual(object_list[1].person.cpr, "0101012223")
+
     def test_filter_min_max_offset(self):
 
         params = f"?min_offset={self.summary1.mean_error_percent-1}"
