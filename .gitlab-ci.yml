@@ -41,7 +41,7 @@ include:
     file:
       - '/gitlab-ci-templates/common/rules.v1.yml'
       - '/gitlab-ci-templates/common/saltbert.v1.yml'
-      - '/gitlab-ci-templates/common/docker-build.v1.yml'
+      - '/gitlab-ci-templates/common/docker-build-meta.v2.yml'
       - '/gitlab-ci-templates/common/docker-release-meta.v1.yml'
       - '/gitlab-ci-templates/common/config-updater-meta.v1.yml'
       - "/gitlab-ci-templates/common/conventional-commits-meta.v1.yml"
@@ -136,6 +136,25 @@ Lint REUSE compliance:
   script:
     - reuse lint
 
+# Build stage
+#############
+
+Build:
+  stage: build
+  needs: ["Lint Python", "Lint Dockerfiles", "Lint REUSE compliance"]
+  dependencies: []
+  image:
+    name: gcr.io/kaniko-project/executor:debug-v0.16.0
+    entrypoint: [""]
+  script:
+    # Login to GitLab registry
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --cache
+      --context=$CI_PROJECT_DIR
+      --dockerfile=$CI_PROJECT_DIR/docker/Dockerfile
+      --destination=${IMAGE_SHA}
+      --build-arg=COMMIT_TAG=${CI_COMMIT_TAG}
 
 # Test stage
 ############
@@ -254,3 +273,63 @@ Docs Export changelog:
     - .docs:export-changelog
   variables:
     CHANGELOG_EXTRA_FLAGS: "--merge-prerelease"
+
+
+# Configure stage
+#################
+
+Configure Test:
+  stage: configure
+  extends:
+    - .rules:semver-all
+    - .config:endpoint-with-tag
+  needs: ["Release image"]
+  variables:
+    ENDPOINT: beskaeftigelsesfradrag/salt/update-test
+
+Configure Production:
+  stage: configure
+  extends:
+    - .rules:semver-core
+    - .config:endpoint-with-tag
+  needs: ["Release image"]
+  variables:
+    ENDPOINT: beskaeftigelsesfradrag/salt/update-production
+
+# Deploy stage
+##############
+
+Deploy to Test:
+  stage: deploy
+  extends:
+    - .rules:semver-all
+    - .saltbert
+  needs: [ "Configure Test" ]
+  variables:
+    SALTBERT_ORCHESTRATION: groenland.beskaeftigelsesfradrag.service-test
+    SALTBERT_URL: https://saltmaster.groenland.magentahosted.dk
+  rules:
+    # Matches <version core> from SemVer 2.0.0 BNF grammar. Ex. 2.3.4, but not 2.3.4-rc
+    - if: $CI_COMMIT_TAG =~ /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+      when: manual  # Deploy only prod versions manually
+    # Matches all of SemVer 2.0.0
+    - if: $CI_COMMIT_TAG =~ /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+      # Deploy rc-versions automatically
+# Not sure if this is actually needed
+#  environment:
+#    name: test
+#    url: "https://test.bf.aka.gl"
+
+Deploy to Production:
+  stage: deploy
+  extends:
+    - .rules:semver-core
+    - .saltbert
+  needs: [ "Configure Production" ]
+  variables:
+    SALTBERT_ORCHESTRATION: groenland.beskaeftigelsesfradrag.service-prod
+    SALTBERT_URL: https://saltmaster.groenland.magentahosted.dk
+  when: manual
+  environment:
+    name: production
+    url: "https://bf.aka.gl"
