@@ -243,6 +243,9 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
             cpr = form.cleaned_data.get("cpr", None)
             if cpr:
                 qs = qs.filter(person__cpr__icontains=cpr)
+            has_nonzero_income = form.cleaned_data["has_nonzero_income"]
+            if has_nonzero_income:
+                qs = qs.filter(actual_sum__gt=0)
 
         qs = qs.order_by(*self.get_ordering())
         return qs

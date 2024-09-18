@@ -19,20 +19,23 @@
 <div class="row my-1 mx-1">
     <form id="list-options" method="get" action=".">
         <div class="row justify-content-start my-1">
-            <div class="col-3">
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.has_nonzero_income.label }}</div>
+                    {{ form.has_nonzero_income }}
+                </div>
+            </div>
+            <div class="col-2">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.has_a.label }}</div>
                     {{ form.has_a }}
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col-2">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.has_b.label }}</div>
                     {{ form.has_b }}
                 </div>
-            </div>
-            <div class="col-3">
-                <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
             </div>
         </div>
         <div class="row justify-content-start my-1">
@@ -62,9 +65,12 @@
                     {{ form.cpr }}
                 </div>
             </div>
+            <div class="col-3">
+                <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
+            </div>
         </div>
     </form>    
-    <div class="dropdown float-end">
+    <div class="dropdown float-end" id="filter_dropdown">
         <a class="btn btn-primary dropdown-toggle" role="button" id="dropdownMenuButton"
         data-bs-toggle="dropdown" aria-expanded="false">
         {% bs_icon "funnel" size="1em" %}
@@ -448,7 +454,7 @@ function checkboxHandler(){
         data: data,
     });
 }
-$('input[type=checkbox]').each(checkboxHandler);
-$('input[type=checkbox][id$=Toggle]').change(checkboxHandler);
+$('#filter_dropdown input[type=checkbox]').each(checkboxHandler);
+$('#filter_dropdown input[type=checkbox][id$=Toggle]').change(checkboxHandler);
 </script>
 {% endblock %}
