@@ -521,3 +521,11 @@ class StabilityScoreTest(ModelTest):
         # There is not enough income data for person_year2 to calculate a score
         self.assertEqual(ss2_a, None)
         self.assertEqual(ss2_b, None)
+
+    def test_stability_score_without_income(self):
+        # A person without income has a stable stability-score
+        for obj in MonthlyAIncomeReport.objects.all():
+            obj.amount = 0
+            obj.save()
+
+        self.assertEqual(self.person_year.calculate_stability_score(IncomeType.A), 1)

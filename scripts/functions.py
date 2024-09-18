@@ -82,11 +82,12 @@ def load_data():
 
     import pandas as pd
 
+    file_path = os.path.dirname(os.path.realpath(__file__))
     dfs = [pd.DataFrame(), pd.DataFrame()]
 
     for year in [2020, 2021, 2022, 2023]:
         file = f"a_og_b_{year}.csv"
-        df = pd.read_csv(os.path.join("../bf", file), sep=",")
+        df = pd.read_csv(os.path.join(file_path, "../bf/data", file), sep=",")
         df = df.groupby(df.CPR).sum()
         df.columns = [c + f" ({year})" for c in df.columns]
 
@@ -114,10 +115,10 @@ def plot_income(cpr, df_a, df_b):
     plt.legend()
 
 
-def map_between_zero_and_one(std, s=0.2, k=1.5):
+def map_between_zero_and_one(std, s=0.4, k=2.5):
     import numpy as np
 
-    return 1 - np.exp(-(std**k) / s**k)
+    return np.exp(-(std**k) / s**k)
 
 
 def calculate_stability_score(values):
@@ -143,3 +144,28 @@ def makedir(Path):
 
     if not os.path.exists(Path):
         os.makedirs(Path)
+
+
+def calculate(
+    amount,
+    benefit_rate_percent=17.5,
+    personal_allowance=58000,
+    standard_allowance=10000,
+    max_benefit=15750,
+    scaledown_rate_percent=6.3,
+    scaledown_ceiling=250000,
+):
+
+    zero = 0
+    benefit_rate = benefit_rate_percent * 0.01
+    scaledown_rate = scaledown_rate_percent * 0.01
+    rateable_amount = max(amount - personal_allowance - standard_allowance, zero)
+    scaledown_amount = max(amount - scaledown_ceiling, zero)
+    return round(
+        max(
+            min(benefit_rate * rateable_amount, max_benefit)
+            - scaledown_rate * scaledown_amount,
+            zero,
+        ),
+        2,
+    )

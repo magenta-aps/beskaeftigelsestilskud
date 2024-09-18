@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import os
+
 import functions
 import matplotlib
 import pandas as pd
@@ -15,7 +17,7 @@ plt.close("all")
 
 functions.pltdefaults()
 
-output_folder = "/home/nick/Pictures/plots/61788_income_plots"
+output_folder = os.environ["HOME"] + "/Pictures/plots/61788_income_plots"
 functions.makedir(output_folder)
 
 # Load data
