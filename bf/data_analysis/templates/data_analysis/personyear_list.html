@@ -411,18 +411,22 @@ invalidateMinMax()
 
 <script nonce="{{ request.csp_nonce }}">
 function get_cols_to_hide(item_name){
-    var header_col = $(`table tr th:contains('${item_name}')`).index() + 1;
-    var cols_to_hide = [(header_col-2)*4+2,
-                        (header_col-2)*4+3,
-                        (header_col-2)*4+4,
-                        (header_col-2)*4+5,
-                        (header_col-2)*2+5];
-      
-    col_string = ""
-    col_string += `tr:first th:nth-child(${header_col})`;
-    for (col_to_hide of cols_to_hide) {
+    const header_col = $(`table tr th:contains('${item_name}')`);
+    const header_col_index = header_col.index();  // There is one column before the first we are interested in, so we'll get 1,2,3,4 of a zero-indexed list
+    const num_cols = header_col.attr("colspan") || 1;
+    const cols_to_hide = [];
+
+    let prior_colspans = 0;
+    header_col.prevUntil().each(function () {
+        prior_colspans += parseInt($(this).attr("colspan") || "1");
+    });
+    for (let i=0; i<num_cols; i++) {
+        cols_to_hide.push(prior_colspans + 1 + i);
+    }
+    let col_string = `tr:first th:nth-child(${header_col_index+1})`;
+    for (let col_to_hide of cols_to_hide) {
         col_string += `, tr:not(:first) th:nth-child(${col_to_hide}), td:nth-child(${col_to_hide})`;   
-    }      
+    }
     return col_string
 }
 function hideItem(item_name){   

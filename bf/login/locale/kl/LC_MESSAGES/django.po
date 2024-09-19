@@ -38,7 +38,7 @@ msgstr ""
 
 #: login/templates/login/logged_out.html
 msgid ""
-"Du er nu logget ud. Vi anbefaler at du lukker dette tab for at fjerne "
+"Du er nu logget ud. Vi anbefaler at du lukker denne tab for at fjerne "
 "tilbageværende cookie data"
 msgstr ""
 
