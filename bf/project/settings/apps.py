@@ -18,4 +18,8 @@ INSTALLED_APPS = [
     "data_analysis",
     "debug_toolbar",
     "django_bootstrap_icons",
+    "django_otp",
+    "django_otp.plugins.otp_static",
+    "django_otp.plugins.otp_totp",
+    "two_factor",
 ]

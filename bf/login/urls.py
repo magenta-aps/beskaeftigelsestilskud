@@ -7,7 +7,7 @@ from typing import List
 from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import TemplateView
 from django_mitid_auth.saml.views import AccessDeniedView
-from login.views import LoginView, LogoutView
+from login.views import BeskLoginView, LogoutView, TwoFactorSetup
 
 app_name = "login"
 
@@ -16,7 +16,7 @@ urlpatterns: List[URLResolver | URLPattern] = [
     path("mitid/", include("django_mitid_auth.urls", namespace="mitid")),
     path(
         "login",
-        LoginView.as_view(),
+        BeskLoginView.as_view(),
         name="login",
     ),
     path(
@@ -49,4 +49,5 @@ urlpatterns: List[URLResolver | URLPattern] = [
         TemplateView.as_view(template_name="login/logged_out.html"),
         name="logged_out",
     ),
+    path("two_factor/setup", TwoFactorSetup.as_view(), name="two_factor_setup"),
 ]

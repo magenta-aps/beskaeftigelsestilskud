@@ -1,0 +1,34 @@
+<!--
+SPDX-FileCopyrightText: 2023 Magenta ApS <info@magenta.dk>
+
+SPDX-License-Identifier: MPL-2.0
+-->
+{% extends "common/card.html" %}
+{% load i18n %}
+{% load two_factor_tags %}
+
+{% block title %}
+{% translate "Log in" %}
+{% endblock %}
+
+{% block card_title %}
+{% translate "Log in" %}
+{% endblock %}
+
+{% block card_content %}
+  {% if wizard.steps.current == 'token' %}
+    <p>Indtast venligst koden, der er genereret af din token-generator.</p>
+  {% endif %}
+
+  <form action="" method="post">
+    {% block main_form_content %}
+    {% csrf_token %}
+    {% include "two_factor/_wizard_forms.html" %}
+
+    {# hidden submit button to enable [enter] key #}
+    <input type="submit" value="" hidden />
+    {% include "two_factor/_wizard_actions.html" %}
+    <a href="{% url 'login:mitid:login' %}{% if back %}?back={{back|urlencode}}{% endif %}">{% translate "Log in using MitID" %}</a>
+    {% endblock %}
+  </form>
+{% endblock %}

@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
+from login.view_mixins import LoginRequiredMixin
 
 
 class RootView(LoginRequiredMixin, TemplateView):

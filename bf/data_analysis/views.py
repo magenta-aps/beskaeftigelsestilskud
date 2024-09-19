@@ -15,13 +15,13 @@ from data_analysis.forms import (
     PersonAnalysisOptionsForm,
     PersonYearListOptionsForm,
 )
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
+from login.view_mixins import LoginRequiredMixin
 from project.util import params_no_none, strtobool
 
 from bf.data import engine_keys

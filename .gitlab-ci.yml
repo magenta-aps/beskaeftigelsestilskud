@@ -195,6 +195,7 @@ Build:
     ESKAT_DB: eskat_db
     ESKAT_HOST: eskat_host
     ESKAT_PORT: 1234
+    BYPASS_2FA: 'True'
 
   image: ${IMAGE_SHA}
   before_script:
