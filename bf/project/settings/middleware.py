@@ -15,4 +15,5 @@ MIDDLEWARE = [
     "csp.middleware.CSPMiddleware",
     "django_session_timeout.middleware.SessionTimeoutMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "django_otp.middleware.OTPMiddleware",
 ]

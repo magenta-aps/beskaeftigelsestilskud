@@ -4,8 +4,21 @@
 {% extends 'common/base.html' %}
 {% load i18n %}
 {% load bootstrap_icons %}
+{% load static %}
+
+{% block extra_headers %}
+    <script src="{% static 'jquery/besk.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock %}
 
 {% block content %}
+
+<nav class="bg-warning" id="two_factor_confirmation" style="display:none">
+    <p class="text-center fw-bold my-0">
+        {% bs_icon "shield-check" size="2em" extra_classes="my-1" %}
+        {% translate "To-faktor-godkendelse er nu aktiv" %}
+    </p>
+</nav>
+
 <div class="row mt-1 mb-5 mx-1">
     <h1>{% translate "Velkommen" %}</h1>
     <p>{% translate "Til beskæftigelsestilskud portalen." %}</p>
@@ -31,4 +44,11 @@
         </li>
     </ul>
 </div>
+
+<script nonce="{{ request.csp_nonce }}">
+var two_factor_success = getUrlParameter("two_factor_success");
+if (two_factor_success=="1"){
+    $("#two_factor_confirmation").show();
+    }
+</script>
 {% endblock %}

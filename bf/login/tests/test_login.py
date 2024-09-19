@@ -2,14 +2,27 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from binascii import unhexlify
+from http import HTTPStatus
+
 from bs4 import BeautifulSoup
 from common.models import User
 from django.conf import settings
 from django.contrib.auth import BACKEND_SESSION_KEY
+from django.shortcuts import resolve_url
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
+from django_otp.oath import totp
+from django_otp.util import random_hex
+from two_factor.utils import totp_digits
 
 
+def totp_str(key):
+    return str(totp(key)).zfill(totp_digits())
+
+
+@override_settings(BYPASS_2FA=False)
 class LoginTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -21,7 +34,12 @@ class LoginTest(TestCase):
     def test_django_login_form(self):
         self.client.get(reverse("login:login") + "?back=/foobar")
         response = self.client.post(
-            reverse("login:login"), {"username": "test", "password": "test"}
+            reverse("login:login"),
+            {
+                "auth-username": "test",
+                "auth-password": "test",
+                "besk_login_view-current_step": "auth",
+            },
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], settings.LOGIN_REDIRECT_URL)
@@ -50,12 +68,17 @@ class LoginTest(TestCase):
         self.client.get(reverse("login:login"))
         response = self.client.post(
             reverse("login:login"),
-            {"username": "test", "password": "incorrect"},
+            {
+                "auth-username": "test",
+                "auth-password": "incorrect",
+                "besk_login_view-current_step": "auth",
+            },
         )
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, "html.parser")
-        alert = soup.find(class_="alert")
+        alert = soup.find(class_="errorlist")
         self.assertIsNotNone(alert)
+        self.assertIn("Indtast venligst korrekt brugernavn og adgangskode", str(alert))
 
     def test_saml_logout_redirect(self):
         self.client.login(username="test", password="test")
@@ -78,7 +101,12 @@ class LoginTest(TestCase):
     def test_django_login_back(self):
         self.client.cookies["back"] = "/foobar"
         self.client.post(
-            reverse("login:login"), {"username": "test", "password": "test"}
+            reverse("login:login"),
+            {
+                "auth-username": "test",
+                "auth-password": "test",
+                "besk_login_view-current_step": "auth",
+            },
         )
         response = self.client.get(reverse("login:login"))
         self.assertEqual(response.status_code, 302)
@@ -104,3 +132,98 @@ class LoginTest(TestCase):
         response = self.client.get(reverse("login:login"))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], "/foobar")
+
+    def test_token_step(self):
+        device = self.user.totpdevice_set.create(name="default", key=random_hex())
+        data = {
+            "auth-username": "test",
+            "auth-password": "test",
+            "besk_login_view-current_step": "auth",
+        }
+        response = self.client.post(reverse("login:login"), data)
+        self.assertContains(response, "Kode:")
+
+        data = {
+            "token-otp_token": "123456",
+            "besk_login_view-current_step": "token",
+        }
+        response = self.client.post(reverse("login:login"), data)
+        self.assertEqual(
+            response.context_data["wizard"]["form"].errors,
+            {
+                "__all__": [
+                    "Invalid token. Please make sure you have entered it correctly."
+                ]
+            },
+        )
+
+        data = {
+            "token-otp_token": totp_str(device.bin_key),
+            "besk_login_view-current_step": "token",
+        }
+        device.throttle_reset()
+
+        response = self.client.post(reverse("login:login"), data, follow=True)
+        self.assertRedirects(response, resolve_url(settings.LOGIN_REDIRECT_URL))
+
+    @override_settings(BYPASS_2FA=True)
+    def test_bypass_token_step(self):
+        self.user.totpdevice_set.create(name="default", key=random_hex())
+
+        data = {
+            "auth-username": "test",
+            "auth-password": "test",
+            "besk_login_view-current_step": "auth",
+        }
+        response = self.client.post(reverse("login:login"), data)
+
+        self.assertRedirects(response, resolve_url(settings.LOGIN_REDIRECT_URL))
+
+    def test_two_factor_setup(self):
+        self.client.login(username="test", password="test")
+
+        response = self.client.post(
+            reverse("login:two_factor_setup"),
+            data={"two_factor_setup-current_step": "generator"},
+        )
+
+        self.assertEqual(
+            response.context_data["wizard"]["form"].errors,
+            {"token": ["Dette felt er påkrævet."]},
+        )
+
+        response = self.client.post(
+            reverse("login:two_factor_setup"),
+            data={
+                "two_factor_setup-current_step": "generator",
+                "generator-token": "123456",
+            },
+        )
+        self.assertEqual(
+            response.context_data["wizard"]["form"].errors,
+            {"token": ["Den indtastet kode er ikke gyldig."]},
+        )
+
+        key = response.context_data["keys"].get("generator")
+        bin_key = unhexlify(key.encode())
+        response = self.client.post(
+            reverse("login:two_factor_setup"),
+            data={
+                "two_factor_setup-current_step": "generator",
+                "generator-token": totp(bin_key),
+            },
+        )
+
+        success_url = reverse("bf:root") + "?two_factor_success=1"
+
+        self.assertEqual(1, self.user.totpdevice_set.count())
+        self.assertRedirects(response, success_url)
+
+    def test_2fa_required(self):
+        self.client.login(username="test", password="test")
+        self.assertEqual(0, self.user.totpdevice_set.count())
+
+        response = self.client.get(reverse("bf:root"))
+
+        self.assertTemplateUsed(response, "two_factor/core/otp_required.html")
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)

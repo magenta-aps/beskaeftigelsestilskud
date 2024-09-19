@@ -22,6 +22,7 @@ Including another URLconf
 from debug_toolbar.toolbar import debug_toolbar_urls
 from django.contrib import admin
 from django.urls import include, path
+from two_factor.urls import urlpatterns as tf_urls
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -47,4 +48,5 @@ urlpatterns = [
             namespace="data_analysis",
         ),
     ),
+    path("", include(tf_urls)),
 ] + debug_toolbar_urls()
