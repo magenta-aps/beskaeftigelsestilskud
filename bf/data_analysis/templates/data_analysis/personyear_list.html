@@ -427,7 +427,7 @@ function get_cols_to_hide(item_name){
     for (let col_to_hide of cols_to_hide) {
         col_string += `, tr:not(:first) th:nth-child(${col_to_hide}), td:nth-child(${col_to_hide})`;   
     }
-    return col_string
+    return col_string;
 }
 function hideItem(item_name){   
     const col_string = get_cols_to_hide(item_name);      
