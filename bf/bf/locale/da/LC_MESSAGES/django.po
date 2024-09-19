@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-27 13:25-0100\n"
+"POT-Creation-Date: 2024-09-18 06:49-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,4 +30,20 @@ msgstr ""
 
 #: bf/models.py
 msgid "Indhandler"
+msgstr ""
+
+#: bf/templates/bf/root.html
+msgid "Velkommen"
+msgstr ""
+
+#: bf/templates/bf/root.html
+msgid "Til beskæftigelsestilskud portalen."
+msgstr ""
+
+#: bf/templates/bf/root.html
+msgid "Genveje"
+msgstr ""
+
+#: bf/templates/bf/root.html
+msgid "Estimeringsoverblik"
 msgstr ""

@@ -19,20 +19,23 @@
 <div class="row my-1 mx-1">
     <form id="list-options" method="get" action=".">
         <div class="row justify-content-start my-1">
-            <div class="col-3">
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.has_nonzero_income.label }}</div>
+                    {{ form.has_nonzero_income }}
+                </div>
+            </div>
+            <div class="col-2">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.has_a.label }}</div>
                     {{ form.has_a }}
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col-2">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.has_b.label }}</div>
                     {{ form.has_b }}
                 </div>
-            </div>
-            <div class="col-3">
-                <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
             </div>
         </div>
         <div class="row justify-content-start my-1">
@@ -62,9 +65,12 @@
                     {{ form.cpr }}
                 </div>
             </div>
+            <div class="col-3">
+                <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
+            </div>
         </div>
     </form>    
-    <div class="dropdown float-end">
+    <div class="dropdown float-end" id="filter_dropdown">
         <a class="btn btn-primary dropdown-toggle" role="button" id="dropdownMenuButton"
         data-bs-toggle="dropdown" aria-expanded="false">
         {% bs_icon "funnel" size="1em" %}
@@ -405,19 +411,23 @@ invalidateMinMax()
 
 <script nonce="{{ request.csp_nonce }}">
 function get_cols_to_hide(item_name){
-    var header_col = $(`table tr th:contains('${item_name}')`).index() + 1;
-    var cols_to_hide = [(header_col-2)*4+2,
-                        (header_col-2)*4+3,
-                        (header_col-2)*4+4,
-                        (header_col-2)*4+5,
-                        (header_col-2)*2+5];
-      
-    col_string = ""
-    col_string += `tr:first th:nth-child(${header_col})`;
-    for (col_to_hide of cols_to_hide) {
-        col_string += `, tr:not(:first) th:nth-child(${col_to_hide}), td:nth-child(${col_to_hide})`;   
-    }      
-    return col_string
+    const header_col = $(`table tr th:contains('${item_name}')`);
+    const header_col_index = header_col.index();  // There is one column before the first we are interested in, so we'll get 1,2,3,4 of a zero-indexed list
+    const num_cols = header_col.attr("colspan") || 1;
+    const cols_to_hide = [];
+    let prior_colspans = 0;
+    header_col.prevUntil().each(function () {
+        prior_colspans += parseInt($(this).attr("colspan") || "1");
+    });
+    for (let i=0; i<num_cols; i++) {
+        cols_to_hide.push(prior_colspans + 1 + i);
+    }
+    let col_string = [`tr:first th:nth-child(${header_col_index+1})`];
+    for (let col_to_hide of cols_to_hide) {
+        col_string.push(`tr:not(:first) th:nth-child(${col_to_hide})`);
+        col_string.push(`td:nth-child(${col_to_hide})`);
+    }
+    return col_string.join(", ");
 }
 function hideItem(item_name){   
     const col_string = get_cols_to_hide(item_name);      
@@ -448,7 +458,7 @@ function checkboxHandler(){
         data: data,
     });
 }
-$('input[type=checkbox]').each(checkboxHandler);
-$('input[type=checkbox][id$=Toggle]').change(checkboxHandler);
+$('#filter_dropdown input[type=checkbox]').each(checkboxHandler);
+$('#filter_dropdown input[type=checkbox][id$=Toggle]').change(checkboxHandler);
 </script>
 {% endblock %}

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-27 13:25-0100\n"
+"POT-Creation-Date: 2024-09-18 06:49-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,12 +37,8 @@ msgstr ""
 msgid "Indkomsttype"
 msgstr ""
 
-#: data_analysis/templates/data_analysis/base.html
-msgid "Estimeringer af årsindtægt for hver person"
-msgstr ""
-
-#: data_analysis/templates/data_analysis/base.html
-msgid "Histogram over estimeringernes afvigelse"
+#: data_analysis/templates/data_analysis/histogram.html
+msgid "Histogrammer for"
 msgstr ""
 
 #: data_analysis/templates/data_analysis/histogram.html
@@ -53,4 +49,8 @@ msgstr ""
 
 #: data_analysis/templates/data_analysis/histogram.html
 msgid "Building histograms ..."
+msgstr ""
+
+#: data_analysis/templates/data_analysis/personyear_list.html
+msgid "Estimeringsoverblik for"
 msgstr ""
