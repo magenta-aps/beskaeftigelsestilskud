@@ -187,6 +187,17 @@ class PersonYearEstimationMixin:
         qs = qs.annotate(
             actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
         )
+        # qs = qs.annotate(
+        #     actual_sum=Subquery(
+        #         PersonMonth.objects.filter(person_year=OuterRef("pk"))
+        #         .annotate(
+        #             actual_sum=Coalesce(
+        #                 Func("amount_sum", function="Sum"),
+        #                 Decimal(0)
+        #             )
+        #         ).values("actual_sum")
+        #     )
+        # )
 
         qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
 
@@ -243,6 +254,9 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
             cpr = form.cleaned_data.get("cpr", None)
             if cpr:
                 qs = qs.filter(person__cpr__icontains=cpr)
+            has_nonzero_income = form.cleaned_data["has_nonzero_income"]
+            if has_nonzero_income:
+                qs = qs.filter(actual_sum__gt=0)
 
         qs = qs.order_by(*self.get_ordering())
         return qs

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-05-29 08:27-0100\n"
+"POT-Creation-Date: 2024-09-18 06:49-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,8 +38,8 @@ msgstr ""
 
 #: login/templates/login/logged_out.html
 msgid ""
-"You are now logged out. We recommend that you close this browser tab to "
-"remove remaining cookie data"
+"Du er nu logget ud. Vi anbefaler at du lukker denne tab for at fjerne "
+"tilbageværende cookie data"
 msgstr ""
 
 #: login/templates/login/logged_out.html login/templates/login/login.html

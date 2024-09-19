@@ -593,6 +593,7 @@ class MonthlyIncomeReport(models.Model):
     ):
         if update_fields is None or "amount" in update_fields:
             instance.person_month.update_amount_sum()
+            instance.person_month.save(update_fields=["amount_sum"])
 
 
 class MonthlyAIncomeReport(MonthlyIncomeReport):

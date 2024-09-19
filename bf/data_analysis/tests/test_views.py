@@ -362,6 +362,39 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
+        self.assertEqual(object_list[0].person, self.person)
+        self.assertEqual(object_list[0].actual_sum, Decimal(42))
+
+    def test_filter_no_income(self):
+        person2, _ = Person.objects.get_or_create(cpr="0101012223")
+        person_year2, _ = PersonYear.objects.get_or_create(
+            person=person2, year=self.year
+        )
+        person_month2, _ = PersonMonth.objects.get_or_create(
+            person_year=person_year2,
+            month=1,
+            import_date=date(2020, 1, 1),
+            actual_year_benefit=0,
+            benefit_paid=0,
+        )
+        request = self.format_request("?has_nonzero_income=True")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 1)
+        self.assertEqual(object_list[0].person.cpr, "0101012222")
+
+        request = self.format_request("?has_nonzero_income=")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 2)
+        self.assertEqual(object_list[0].person.cpr, "0101012222")
+        self.assertEqual(object_list[1].person.cpr, "0101012223")
 
     def test_filter_min_max_offset(self):
 
