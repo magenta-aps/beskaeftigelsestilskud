@@ -22,7 +22,6 @@ services:
       - ./mypy.ini:/mypy.ini:ro
     environment:
       - MAKE_MIGRATIONS=true
-      - MIGRATE=true
       - LOAD_FIXTURES=true
       - PULL_IDP_METADATA=true
       - TEST=false
@@ -61,6 +60,7 @@ services:
       - MAKEMESSAGES=false
       - PULL_IDP_METADATA=false
       - CREATE_DUMMY_ADMIN=false
+      - COLLECT_STATIC=false
       - TEST=false
       - HOME=/tmp/
     network_mode: "host"
