@@ -20,6 +20,7 @@ from bf.data import MonthlyIncomeData
 from bf.estimation import EstimationEngine
 from bf.models import (
     IncomeEstimate,
+    IncomeType,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     PersonMonth,
@@ -84,6 +85,19 @@ class Command(BaseCommand):
                     break
 
             person_year = person_year_qs.get(person_id=person_pk)
+
+            actual_year_sums = {
+                income_type: {
+                    month: sum(
+                        row.a_amount if income_type == "A" else row.b_amount
+                        for row in subset
+                        if row.year == self._year and row.month <= month
+                    )
+                    for month in range(first_income_month, 13)
+                }
+                for income_type in IncomeType
+            }
+
             for engine in self.engines:
                 for income_type in engine.valid_income_types:
                     engine_results = []
@@ -92,11 +106,8 @@ class Command(BaseCommand):
                             subset, self._year, month
                         )
 
-                        actual_year_sum = sum(
-                            row.a_amount if income_type == "A" else row.b_amount
-                            for row in subset
-                            if row.year == self._year and row.month <= month
-                        )
+                        actual_year_sum = actual_year_sums[income_type][month]
+
                         if person_month is not None:
                             result: IncomeEstimate = engine.estimate(
                                 person_month, subset, income_type
