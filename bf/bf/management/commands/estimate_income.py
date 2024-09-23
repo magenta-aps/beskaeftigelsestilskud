@@ -158,6 +158,8 @@ class Command(BaseCommand):
                             )
                         )
 
+                        # Note that if year sum is 0 we cannot
+                        # calculate an error percentage
                         mean_error_percent = 100 * mean_error / actual_year_sum
                         rmse_percent = 100 * rmse / actual_year_sum
                     else:
