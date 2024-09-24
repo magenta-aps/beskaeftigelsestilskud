@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-18 06:49-0100\n"
+"POT-Creation-Date: 2024-09-23 09:34-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,6 +22,11 @@ msgstr ""
 
 #: login/forms.py
 msgid "Password"
+msgstr ""
+
+#: login/forms.py
+#, python-brace-format
+msgid "Husk mig på denne maskine i {days} dage"
 msgstr ""
 
 #: login/templates/login/error.html
@@ -42,12 +47,9 @@ msgid ""
 "tilbageværende cookie data"
 msgstr ""
 
-#: login/templates/login/logged_out.html login/templates/login/login.html
+#: login/templates/login/logged_out.html
+#: login/templates/two_factor/core/login.html
 msgid "Log in"
-msgstr ""
-
-#: login/templates/login/login.html
-msgid "Log in using MitID"
 msgstr ""
 
 #: login/templates/login/login_failed.html
@@ -71,4 +73,43 @@ msgstr ""
 
 #: login/templates/login/login_timeout.html
 msgid "Det anvendte login er timet ud. Prøv at logge ind igen."
+msgstr ""
+
+#: login/templates/two_factor/_wizard_actions.html
+msgid "Fortsæt"
+msgstr ""
+
+#: login/templates/two_factor/_wizard_actions.html
+msgid "Login"
+msgstr ""
+
+#: login/templates/two_factor/core/login.html
+msgid "Log in using MitID"
+msgstr ""
+
+#: login/templates/two_factor/core/otp_required.html
+msgid "Ingen adgang"
+msgstr ""
+
+#: login/templates/two_factor/core/otp_required.html
+msgid "Du skal logge ind med to-faktor-godkendelse for at kunne se denne side"
+msgstr ""
+
+#: login/templates/two_factor/core/otp_required.html
+msgid "Aktivér to-faktor-godkendelse"
+msgstr ""
+
+#: login/templates/two_factor/core/setup.html
+msgid "Aktivér To-faktor-godkendelse"
+msgstr ""
+
+#: login/templates/two_factor/core/setup.html
+msgid ""
+"For at begynde at bruge en token-generator skal du bruge din smartphone til "
+"at scanne QR-koden nedenfor. Brug for eksempel Authy eller Google "
+"Authenticator."
+msgstr ""
+
+#: login/templates/two_factor/core/setup.html
+msgid "Indtast derefter koden, der er genereret af appen."
 msgstr ""

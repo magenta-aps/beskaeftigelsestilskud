@@ -108,7 +108,11 @@ class InYearExtrapolationEngine(EstimationEngine):
                 engine=cls.__name__,
                 income_type=income_type,
             )
-        return None
+        return IncomeEstimate(
+            estimated_year_result=Decimal(0),
+            engine=cls.__name__,
+            income_type=income_type,
+        )
 
     @classmethod
     def relevant(
@@ -143,7 +147,11 @@ class TwelveMonthsSummationEngine(EstimationEngine):
             # * of the last 12 months, less than x months contain data?
             # * the month 12 months ago doesn't contain data,
             #   and the month before/after it doesn't either?
-            return None
+            return IncomeEstimate(
+                estimated_year_result=Decimal(0),
+                engine=cls.__name__,
+                income_type=income_type,
+            )
 
         relevant_items = cls.relevant(subset, person_month.year, person_month.month)
         year_estimate = cls.subset_sum(
@@ -229,10 +237,11 @@ class SelfReportedEngine(EstimationEngine):
                     assessment.brutto_b_indkomst
                     - assessment.brutto_b_før_erhvervsvirk_indhandling
                 )
-            return IncomeEstimate(
-                estimated_year_result=estimated_year_result,
-                engine=cls.__name__,
-                person_month=person_month,
-                income_type=income_type,
-            )
-        return None
+        else:
+            estimated_year_result = Decimal(0)
+        return IncomeEstimate(
+            estimated_year_result=estimated_year_result,
+            engine=cls.__name__,
+            person_month=person_month,
+            income_type=income_type,
+        )
