@@ -16,7 +16,6 @@ omit =
     */migrations/*
     */tests/*
     */mitid_test/*
-    */bf/estimation.py
     */bf/simulation.py
     */management/commands/*.py
 parallel = true

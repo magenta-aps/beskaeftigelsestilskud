@@ -60,17 +60,6 @@ class EstimationEngine:
     def instances() -> List["EstimationEngine"]:
         return [cls() for cls in EstimationEngine.classes()]
 
-    @classmethod
-    def estimate_ab(
-        cls,
-        person_month: PersonMonth,
-        subset: Sequence[MonthlyIncomeData],
-    ) -> Tuple[IncomeEstimate | None, IncomeEstimate | None]:
-        return (
-            cls.estimate(person_month, subset, IncomeType.A),
-            cls.estimate(person_month, subset, IncomeType.B),
-        )
-
     valid_income_types: List[IncomeType] = [
         IncomeType.A,
         IncomeType.B,
@@ -240,9 +229,10 @@ class EstimationEngine:
                     summaries.append(summary)
 
         if not dry_run:
-            output_stream.write(
-                f"Writing {len(results)} `IncomeEstimate` objects ...\n"
-            )
+            if output_stream is not None:
+                output_stream.write(
+                    f"Writing {len(results)} `IncomeEstimate` objects ...\n"
+                )
             IncomeEstimate.objects.bulk_create(results, batch_size=1000)
             PersonYearEstimateSummary.objects.bulk_create(summaries, batch_size=1000)
         return results, summaries
