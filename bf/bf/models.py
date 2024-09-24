@@ -8,7 +8,6 @@ from decimal import Decimal
 from functools import cached_property
 from typing import Sequence
 
-from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -18,11 +17,9 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
-from more_itertools import one
 from simple_history.models import HistoricalRecords
 
 from bf.data import engine_choices
-from bf.exceptions import EstimationEngineUnset
 
 
 class IncomeType(TextChoices):
@@ -101,6 +98,10 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
             ),
             2,
         )
+
+    # Identical to "calculate" but takes a float as an input
+    def calculate_float(self, year_income: float) -> float:
+        return float(self.calculate(Decimal(year_income)))
 
 
 class Year(models.Model):
@@ -225,14 +226,6 @@ class PersonYear(models.Model):
                 MonthlyBIncomeReport.objects.filter(person_month__person_year=self)
             )
         return sum
-
-    def calculate_benefit(self, estimated_year_income: Decimal) -> Decimal:
-        if self.year.calculation_method is None:
-            raise ReferenceError(
-                f"Cannot calculate benefit; "
-                f"calculation method not set for year {self.year}"
-            )
-        return self.year.calculation_method.calculate(estimated_year_income)
 
     @cached_property
     def prev(self):
@@ -367,102 +360,6 @@ class PersonMonth(models.Model):
 
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
-
-    def calculate_benefit(
-        self, engine_a: str | None = None, engine_b: str | None = None
-    ) -> Decimal:
-
-        engine_a = engine_a or self.person_year.preferred_estimation_engine_a
-        engine_b = engine_b or self.person_year.preferred_estimation_engine_b
-
-        if not engine_a and not engine_b:
-            raise EstimationEngineUnset(self.person)
-
-        estimated_year_income = Decimal(0)
-        actual_year_income = Decimal(0)
-
-        income_estimates = self.incomeestimate_set.all()
-
-        a_estimates = list(
-            filter(
-                lambda estimate: engine_a
-                and estimate.engine == engine_a
-                and estimate.income_type == IncomeType.A,
-                income_estimates,
-            )
-        )
-
-        b_estimates = list(
-            filter(
-                lambda estimate: engine_b
-                and estimate.engine == engine_b
-                and estimate.income_type == IncomeType.B,
-                income_estimates,
-            )
-        )
-
-        if a_estimates:
-            estimate_a = one(a_estimates)
-            estimated_year_income += estimate_a.estimated_year_result
-            if estimate_a.actual_year_result is not None:
-                actual_year_income += estimate_a.actual_year_result
-
-        if b_estimates:
-            estimate_b = one(b_estimates)
-            estimated_year_income += estimate_b.estimated_year_result
-            if estimate_b.actual_year_result is not None:
-                actual_year_income += estimate_b.actual_year_result
-
-        # Foretag en beregning af beskæftigelsestilskud for hele året
-        self.estimated_year_benefit = self.person_year.calculate_benefit(
-            estimated_year_income
-        )
-        if actual_year_income:
-            self.actual_year_benefit = self.person_year.calculate_benefit(
-                actual_year_income
-            )
-
-        # Tidligere måneder i året for denne person
-        prior_months = self.person_year.personmonth_set.filter(month__lt=self.month)
-        # Totalt beløb der allerede er udbetalt tidligere på året
-        self.prior_benefit_paid = (
-            prior_months.aggregate(sum=Sum("benefit_paid"))["sum"] or 0
-        )
-        assert self.prior_benefit_paid is not None  # To shut MyPy up
-
-        # Denne måneds udbetaling =
-        # manglende udbetaling for resten af året (inkl. denne måned)
-        # divideret med antal måneder vi udbetaler dette beløb over (inkl. denne måned)
-        benefit_this_month = round(
-            (self.estimated_year_benefit - self.prior_benefit_paid) / (13 - self.month),
-            2,
-        )
-
-        # Hvis vi har udbetalt for meget før, og denne måned er negativ,
-        # lad være med at udbetale noget
-        if benefit_this_month < 0:
-            benefit_this_month = Decimal(0)
-
-        # Hvis beløb er under bagatelgrænsen lad være med at udbetale noget
-        trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
-        if self.month < 12 and benefit_this_month < trivial_limit:
-            benefit_this_month = Decimal(0)
-
-        if self.prev is not None and self.month < 12:
-            benefit_last_month = self.prev.benefit_paid
-            threshold: Decimal = settings.CALCULATION_STICKY_THRESHOLD  # type: ignore
-            if (
-                benefit_last_month is not None
-                and not benefit_this_month.is_zero()
-                and not benefit_last_month.is_zero()
-                and abs(benefit_last_month - benefit_this_month) / benefit_last_month
-                < threshold
-            ):
-                benefit_this_month = benefit_last_month
-
-        self.benefit_paid = benefit_this_month
-
-        return benefit_this_month
 
 
 class Employer(models.Model):

@@ -5,13 +5,14 @@
 from io import StringIO
 from unittest import mock
 
+import pandas as pd
 from django.core.management import call_command
 from django.test import TestCase
 
 from bf.models import Person, PersonMonth, PersonYear, Year
 
 
-@mock.patch("bf.models.PersonMonth.calculate_benefit")
+@mock.patch("common.utils.calculate_benefit")
 class AutoSelectEngineTests(TestCase):
 
     @classmethod
@@ -62,12 +63,23 @@ class AutoSelectEngineTests(TestCase):
         #
         # We simulate this by making all OTHER engines return zero-results.
         def mess_other_engines_up(*args, **kwargs):
+
+            df = pd.DataFrame(index=[self.person.cpr])
+
             if kwargs["engine_a"] != "TwelveMonthsSummationEngine":
-                return 0
+                df["estimated_year_benefit"] = 0
+                df["actual_year_benefit"] = 1200
+                df["benefit_paid"] = 0
             elif kwargs["engine_b"] != "InYearExtrapolationEngine":
-                return 0
+                df["estimated_year_benefit"] = 0
+                df["actual_year_benefit"] = 1200
+                df["benefit_paid"] = 0
             else:
-                return 100
+                df["estimated_year_benefit"] = 1200
+                df["actual_year_benefit"] = 1200
+                df["benefit_paid"] = 100
+
+            return df
 
         calculate_benefit.side_effect = mess_other_engines_up
 

@@ -5,13 +5,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-    from bf.models import IncomeType, Person
-
-
-class EstimationEngineUnset(Exception):
-    def __init__(self, person: "Person"):
-        self.person = person
-        super().__init__(f"Preferred estimation engine is not set for person {person}")
+    from bf.models import IncomeType
 
 
 class IncomeTypeUnhandledByEngine(Exception):
