@@ -196,7 +196,7 @@ class EstimationEngine:
                         actual_year_sum = actual_year_sums[income_type][month]
 
                         if person_month is not None:
-                            result: IncomeEstimate = engine.estimate(
+                            result: IncomeEstimate | None = engine.estimate(
                                 person_month, subset, income_type
                             )
                             if result is not None:
@@ -211,9 +211,9 @@ class EstimationEngine:
                     if (
                         engine_results
                         and actual_year_sum
+                        and engine_results[-1].person_month is not None
                         and engine_results[-1].person_month.month == 12
                     ):
-                        actual_year_result = engine_results[-1].actual_year_result
                         months_without_income = 12 - len(engine_results)
 
                         monthly_estimates = [Decimal(0)] * months_without_income + [
@@ -221,8 +221,8 @@ class EstimationEngine:
                             for resultat in engine_results
                         ]
 
-                        me = mean_error(actual_year_result, monthly_estimates)
-                        rmse = root_mean_sq_error(actual_year_result, monthly_estimates)
+                        me = mean_error(actual_year_sum, monthly_estimates)
+                        rmse = root_mean_sq_error(actual_year_sum, monthly_estimates)
 
                         mean_error_percent = 100 * me / actual_year_sum
                         rmse_percent = 100 * rmse / actual_year_sum
