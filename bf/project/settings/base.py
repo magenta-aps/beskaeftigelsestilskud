@@ -53,3 +53,12 @@ INTERNAL_IPS = [
 TWO_FACTOR_LOGIN_TIMEOUT = 0  # Never timeout
 TWO_FACTOR_REMEMBER_COOKIE_AGE = 30 * 24 * 60 * 60  # Re-authenticate once per month
 BYPASS_2FA = bool(strtobool(os.environ.get("BYPASS_2FA", "False")))
+
+PITU = {
+    "certificate": os.environ.get("PITU_CLIENT_CERT"),
+    "private_key": os.environ.get("PITU_CLIENT_CERT_KEY"),
+    "root_ca": os.environ.get("PITU_SERVER_CERT"),
+    "client_header": os.environ.get("PITU_UXP_CLIENT"),
+    "base_url": os.environ.get("PITU_URL"),
+    "service": os.environ.get("PITU_SERVICE"),
+}
