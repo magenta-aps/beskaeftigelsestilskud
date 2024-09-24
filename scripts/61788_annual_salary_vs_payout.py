@@ -20,7 +20,7 @@ functions.makedir(output_folder)
 
 x = np.linspace(0, 800000, 300)
 
-y = [functions.calculate(salary) for salary in x]
+y = [functions.calculate_benefit(salary) for salary in x]
 
 plt.figure(figsize=(18, 6))
 plt.plot(x, y, lw=3)
