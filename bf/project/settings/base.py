@@ -35,6 +35,7 @@ AUTH_USER_MODEL = "common.User"
 # When a calculated benefit differs from last month's benefit by less
 # than this amount, reuse prior benefit
 CALCULATION_STICKY_THRESHOLD = Decimal("0.05")
+CALCULATION_TRIVIAL_LIMIT = Decimal(os.environ.get("CALCULATION_TRIVIAL_LIMIT", "150"))
 
 
 class XMLFilter(logging.Filter):
