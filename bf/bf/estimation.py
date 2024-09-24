@@ -4,14 +4,25 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from itertools import groupby
+from operator import attrgetter
 from typing import Iterable, List, Sequence, Tuple
 
-from django.db.models import Sum
-from project.util import trim_list_first
+from django.db.models import F, Func, OuterRef, QuerySet, Subquery, Sum
+from django.db.models.functions import Coalesce
+from project.util import mean_error, root_mean_sq_error, trim_list_first
 
 from bf.data import MonthlyIncomeData
 from bf.exceptions import IncomeTypeUnhandledByEngine
-from bf.models import IncomeEstimate, IncomeType, MonthlyBIncomeReport, PersonMonth
+from bf.models import (
+    IncomeEstimate,
+    IncomeType,
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    PersonMonth,
+    PersonYear,
+    PersonYearEstimateSummary,
+)
 
 
 class EstimationEngine:
@@ -72,6 +83,169 @@ class EstimationEngine:
             for cls in EstimationEngine.classes()
             if income_type in cls.valid_income_types
         ]
+
+    @staticmethod
+    def estimate_all(
+        person_year_qs: QuerySet[PersonYear],
+        year: int,
+        dry_run: bool = True,
+        output_stream=None,
+    ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
+        if not dry_run:
+            if output_stream is not None:
+                output_stream.write("Removing current `IncomeEstimate` objects ...\n")
+            IncomeEstimate.objects.filter(
+                person_month__person_year__in=person_year_qs
+            ).delete()
+            if output_stream is not None:
+                output_stream.write(
+                    "Removing current `PersonYearEstimateSummary` objects ...\n"
+                )
+            PersonYearEstimateSummary.objects.filter(
+                person_year__in=person_year_qs
+            ).delete()
+
+        if output_stream is not None:
+            output_stream.write("Fetching income data ...\n")
+
+        # Create queryset with one row for each `PersonMonth`.
+        # Each row contains PKs for person, person month, and values for year and month.
+        # Each row also contains summed values for monthly reported A and B income, as
+        # each person month can have one or more A or B incomes reported.
+
+        def sum_amount(incomereport_class):
+            return Subquery(
+                incomereport_class.objects.filter(
+                    month=OuterRef("month"),
+                    year=OuterRef("year"),
+                    person=OuterRef("person_pk"),
+                )
+                .annotate(
+                    sum_amount=Coalesce(Func("amount", function="Sum"), Decimal(0))
+                )
+                .values("sum_amount")
+            )
+
+        qs = (
+            PersonMonth.objects.filter(
+                person_year__person__in=person_year_qs.values("person")
+            )
+            .values(
+                "month",
+                person_pk=F("person_year__person__pk"),
+                person_month_pk=F("pk"),
+                year=F("person_year__year__year"),
+            )
+            .annotate(
+                a_amount=sum_amount(MonthlyAIncomeReport),
+                b_amount=sum_amount(MonthlyBIncomeReport),
+            )
+            .order_by(
+                "person_pk",
+                "year",
+                "month",
+            )
+        )
+        data_qs = [MonthlyIncomeData(**value) for value in qs]
+
+        person_month_map = {pm.pk: pm for pm in PersonMonth.objects.all()}
+
+        if output_stream is not None:
+            output_stream.write("Computing estimates ...\n")
+        results = []
+        summaries = []
+
+        for idx, (key, items) in enumerate(
+            groupby(data_qs, key=attrgetter("person_pk"))
+        ):
+            subset = list(items)
+            if output_stream is not None:
+                output_stream.write(str(idx), ending="\r")
+            person_pk = subset[0].person_pk
+            first_income_month = 1
+            for month_data in subset:
+                if not month_data.amount.is_zero():
+                    first_income_month = month_data.month
+                    break
+
+            person_year = person_year_qs.get(person_id=person_pk)
+
+            actual_year_sums = {
+                income_type: {
+                    month: sum(
+                        row.a_amount if income_type == "A" else row.b_amount
+                        for row in subset
+                        if row.year == year and row.month <= month
+                    )
+                    for month in range(first_income_month, 13)
+                }
+                for income_type in IncomeType
+            }
+
+            for engine in EstimationEngine.instances():
+                for income_type in engine.valid_income_types:
+                    engine_results = []
+                    for month in range(first_income_month, 13):
+
+                        person_month = None
+                        for item in subset:
+                            if item.year == year and item.month == month:
+                                person_month = person_month_map[item.person_month_pk]
+                                break
+
+                        actual_year_sum = actual_year_sums[income_type][month]
+
+                        if person_month is not None:
+                            result: IncomeEstimate = engine.estimate(
+                                person_month, subset, income_type
+                            )
+                            if result is not None:
+                                result.person_month = person_month
+                                result.actual_year_result = actual_year_sum
+                                engine_results.append(result)
+                                results.append(result)
+
+                    # If we do not have month 12 in the dataset we do not know
+                    # what the real income is and can therefore
+                    # not evaluate our estimations
+                    if (
+                        engine_results
+                        and actual_year_sum
+                        and engine_results[-1].person_month.month == 12
+                    ):
+                        actual_year_result = engine_results[-1].actual_year_result
+                        months_without_income = 12 - len(engine_results)
+
+                        monthly_estimates = [Decimal(0)] * months_without_income + [
+                            resultat.estimated_year_result
+                            for resultat in engine_results
+                        ]
+
+                        me = mean_error(actual_year_result, monthly_estimates)
+                        rmse = root_mean_sq_error(actual_year_result, monthly_estimates)
+
+                        mean_error_percent = 100 * me / actual_year_sum
+                        rmse_percent = 100 * rmse / actual_year_sum
+                    else:
+                        mean_error_percent = None
+                        rmse_percent = None
+
+                    summary = PersonYearEstimateSummary(
+                        person_year=person_year,
+                        estimation_engine=engine.__class__.__name__,
+                        income_type=income_type,
+                        mean_error_percent=mean_error_percent,
+                        rmse_percent=rmse_percent,
+                    )
+                    summaries.append(summary)
+
+        if not dry_run:
+            output_stream.write(
+                f"Writing {len(results)} `IncomeEstimate` objects ...\n"
+            )
+            IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+            PersonYearEstimateSummary.objects.bulk_create(summaries, batch_size=1000)
+        return results, summaries
 
 
 """
