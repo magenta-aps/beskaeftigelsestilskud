@@ -180,7 +180,7 @@ class Command(BaseCommand):
     ) -> PrismeBatchItem:
         transaction_pair: G68G69TransactionPair = writer.serialize_transaction_pair(
             TransaktionstypeEnum.AndenDestinationTilladt,
-            UdbetalingsberettigetIdentKodeEnum.CPR,  # TODO: support CVR?
+            UdbetalingsberettigetIdentKodeEnum.CPR,
             person_month.identifier,  # type: ignore[attr-defined]
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),
