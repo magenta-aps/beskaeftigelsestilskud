@@ -106,10 +106,23 @@ class Command(BaseCommand):
         super().__init__(*args, **kwargs)
         self._prisme_settings: dict = settings.PRISME  # type: ignore[misc]
 
+    def add_arguments(self, parser):
+        today = date.today()
+        parser.add_argument(
+            "--year",
+            type=int,
+            nargs="?",
+            default=today.year,
+        )
+        parser.add_argument(
+            "--month",
+            type=int,
+            nargs="?",
+            default=today.month,
+        )
+
     def handle(self, *args, **options):
-        year: int = date.today().year
-        month: int = date.today().month
-        self.export_batches(year, month)
+        self.export_batches(options["year"], options["month"])
 
     def get_person_month_queryset(
         self,
@@ -235,6 +248,10 @@ class Command(BaseCommand):
         person_month_queryset: QuerySet[PersonMonth] = self.get_person_month_queryset(
             year, month
         )
+        self.stdout.write(
+            f"Found {person_month_queryset.count()} person months to export ..."
+        )
+
         prisme_batch: PrismeBatch
         person_months: QuerySet[PersonMonth]
         for prisme_batch, person_months in self.get_batches(person_month_queryset):
@@ -252,7 +269,13 @@ class Command(BaseCommand):
                 )
                 prisme_batch_items.append(prisme_batch_item)
 
+                self.stdout.write(prisme_batch_item.g68_content)
+                self.stdout.write(prisme_batch_item.g69_content)
+                self.stdout.write("")
+
             PrismeBatchItem.objects.bulk_create(prisme_batch_items)
 
             # Export this batch to Prisme
             self.upload_batch(prisme_batch, prisme_batch_items)
+
+            self.stdout.write(f"Uploaded {prisme_batch} (year={year}, month={month})")
