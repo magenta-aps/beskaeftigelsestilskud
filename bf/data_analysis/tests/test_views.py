@@ -53,6 +53,8 @@ class TestSimulationJSONEncoder(TestCase):
             "full_address": None,
             "id": cls.person.pk,
             "name": None,
+            "civil_state": None,
+            "location_code": None,
         }
 
     def test_can_serialize_dataclass(self):

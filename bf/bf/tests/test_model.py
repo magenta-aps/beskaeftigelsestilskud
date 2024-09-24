@@ -4,7 +4,7 @@
 
 from datetime import date
 from decimal import Decimal
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
@@ -220,6 +220,13 @@ class TestStandardWorkBenefitCalculationMethod(ModelTest):
         self.assertEqual(self.calc.calculate(Decimal("500000")), Decimal(0))
         self.assertEqual(self.calc.calculate(Decimal("750000")), Decimal(0))
         self.assertEqual(self.calc.calculate(Decimal("1000000")), Decimal(0))
+
+
+pitu_client_mock = MagicMock()
+pitu_client_mock.get_person_info.return_value = {"civilstand": "G", "stedkode": "001"}
+
+PituClient_mock = MagicMock()
+PituClient_mock.from_settings.return_value = pitu_client_mock
 
 
 class TestPerson(ModelTest):

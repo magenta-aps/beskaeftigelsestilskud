@@ -140,6 +140,8 @@ class Person(models.Model):
     address_line_4 = models.TextField(blank=True, null=True)
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
+    civil_state = models.TextField(blank=True, null=True)
+    location_code = models.TextField(blank=True, null=True)
 
     @classmethod
     def from_eskat_mandtal(cls, eskat_mandtal: ESkatMandtal) -> "Person":
