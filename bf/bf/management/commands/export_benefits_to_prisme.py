@@ -39,13 +39,16 @@ class G68G69TransactionWriter(G68TransactionWriter):
         self,
         registreringssted: int,
         organisationsenhed: int,
-        maskinnumer: int | None = None,
+        maskinnummer: int | None = None,
     ):
         super().__init__(
-            registreringssted, organisationsenhed, maskinnummer=maskinnumer
+            registreringssted,
+            organisationsenhed,
+            maskinnummer=maskinnummer,
         )
         self._g69_transaction_writer = G69TransactionWriter(
-            registreringssted, organisationsenhed
+            registreringssted,
+            organisationsenhed,
         )
 
     def serialize_transaction_pair(
@@ -99,6 +102,10 @@ class G68G69TransactionWriter(G68TransactionWriter):
 
 
 class Command(BaseCommand):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._prisme_settings: dict = settings.PRISME  # type: ignore[misc]
+
     def handle(self, *args, **options):
         year: int = date.today().year
         month: int = date.today().month
@@ -188,8 +195,7 @@ class Command(BaseCommand):
             buf.write(b"\r\n")
         buf.seek(0)
 
-        prisme_settings: dict = settings.PRISME  # type: ignore[misc]
-        destination_folder = prisme_settings["dirs"]["development"]
+        destination_folder = self._prisme_settings["dirs"]["development"]
         filename = (
             f"RES_G68_export_{prisme_batch.prefix}_"
             f"{prisme_batch.export_date.strftime('%Y-%m-%d')}.g68"
@@ -197,7 +203,7 @@ class Command(BaseCommand):
 
         try:
             put_file_in_prisme_folder(
-                prisme_settings,
+                self._prisme_settings,
                 buf,
                 destination_folder,
                 filename,
@@ -217,6 +223,13 @@ class Command(BaseCommand):
         finally:
             prisme_batch.save()
 
+    def get_g68_g69_transaction_writer(self):
+        return G68G69TransactionWriter(
+            0,
+            self._prisme_settings["user_number"],
+            self._prisme_settings["machine_id"],
+        )
+
     @transaction.atomic
     def export_batches(self, year: int, month: int):
         person_month_queryset: QuerySet[PersonMonth] = self.get_person_month_queryset(
@@ -226,7 +239,7 @@ class Command(BaseCommand):
         person_months: QuerySet[PersonMonth]
         for prisme_batch, person_months in self.get_batches(person_month_queryset):
             # Instantiate a new writer for each Prisme batch
-            writer: G68G69TransactionWriter = G68G69TransactionWriter(0, 0)
+            writer: G68G69TransactionWriter = self.get_g68_g69_transaction_writer()
 
             # Build all items for this batch
             prisme_batch.save()

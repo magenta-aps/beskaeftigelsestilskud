@@ -22,4 +22,6 @@ PRISME = {
         # Our staging server can only use dev on the Prisme server
         "staging": ["development"],
     },
+    "user_number": int(os.environ.get("PRISME_USER_NUMBER", "0900")),
+    "machine_id": int(os.environ["PRISME_MACHINE_ID"]),
 }
