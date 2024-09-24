@@ -61,13 +61,18 @@ class BatchExport:
         # matching `PersonMonth` objects for each `prefix` (== first two digits of CPR.)
         current_batch: PrismeBatch | None = None
         for person_month in qs:
-            person_month_prefix: int = int(person_month.prefix)
+            person_month_prefix: int = int(
+                person_month.prefix  # type: ignore[attr-defined]
+            )
             if (current_batch is None) or (person_month_prefix != current_batch.prefix):
                 current_batch = PrismeBatch(
                     prefix=person_month_prefix,
                     export_date=date.today(),
                 )
-                yield current_batch, qs.filter(prefix=person_month.prefix)
+                yield (
+                    current_batch,
+                    qs.filter(prefix=person_month.prefix),  # type: ignore[attr-defined]
+                )
 
     def get_prisme_batch_item(
         self,
