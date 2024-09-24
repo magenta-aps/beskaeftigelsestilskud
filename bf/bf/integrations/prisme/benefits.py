@@ -14,7 +14,7 @@ from django.db.models.functions import Cast, LPad, Substr
 from tenQ.client import ClientException, put_file_in_prisme_folder
 from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
-from bf.exports.prisme.g68g69 import G68G69TransactionPair, G68G69TransactionWriter
+from bf.integrations.prisme.g68g69 import G68G69TransactionPair, G68G69TransactionWriter
 from bf.models import PersonMonth, PrismeBatch, PrismeBatchItem
 
 logger = logging.getLogger(__name__)

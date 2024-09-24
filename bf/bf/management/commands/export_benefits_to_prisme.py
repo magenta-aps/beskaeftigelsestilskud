@@ -5,7 +5,7 @@ from datetime import date
 
 from django.core.management.base import BaseCommand
 
-from bf.exports.prisme.benefits import BatchExport
+from bf.integrations.prisme.benefits import BatchExport
 
 
 class Command(BaseCommand):

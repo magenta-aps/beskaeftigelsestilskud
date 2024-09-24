@@ -10,7 +10,7 @@ from django.db.models import QuerySet
 from django.test import TestCase
 from tenQ.client import ClientException
 
-from bf.exports.prisme.benefits import BatchExport
+from bf.integrations.prisme.benefits import BatchExport
 from bf.models import (
     Person,
     PersonMonth,
@@ -119,7 +119,7 @@ class TestBatchExport(TestCase):
                     export, prisme_batch
                 )
                 with patch(
-                    "bf.exports.prisme.benefits.put_file_in_prisme_folder",
+                    "bf.integrations.prisme.benefits.put_file_in_prisme_folder",
                     side_effect=(
                         ClientException("Uh-oh") if test_upload_exception else None
                     ),
@@ -146,7 +146,7 @@ class TestBatchExport(TestCase):
         self._add_person_month(3112700000, Decimal("1000"))
         export = self._get_instance()
         stdout = Mock()
-        with patch("bf.exports.prisme.benefits.put_file_in_prisme_folder"):
+        with patch("bf.integrations.prisme.benefits.put_file_in_prisme_folder"):
             # Act
             export.export_batches(stdout)
             # Assert: `PrismeBatch` object(s) exist with the expected status
