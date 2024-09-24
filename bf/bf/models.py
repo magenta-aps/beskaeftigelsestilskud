@@ -8,13 +8,12 @@ from decimal import Decimal
 from functools import cached_property
 from typing import Sequence
 
-import numpy as np
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index, Max, Min, QuerySet, Sum, TextChoices
+from django.db.models import F, Index, QuerySet, Sum, TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -232,55 +231,6 @@ class PersonYear(models.Model):
                 f"calculation method not set for year {self.year}"
             )
         return self.year.calculation_method.calculate(estimated_year_income)
-
-    def calculate_stability_score(
-        self, income_type: IncomeType, s=0.4, k=2.5
-    ) -> Decimal | None:
-        """
-        Calculate stability score (1 is very stable and 0 is very unstable)
-        """
-
-        income_qs: QuerySet["MonthlyIncomeReport"]
-
-        if income_type == IncomeType.A:
-            income_qs = MonthlyAIncomeReport.objects.filter(
-                person_month__person_year=self
-            )
-        elif income_type == IncomeType.B:
-            income_qs = MonthlyBIncomeReport.objects.filter(
-                person_month__person_year=self
-            )
-        if not income_qs:
-            return None
-
-        max_month = income_qs.aggregate(Max("person_month__month"))[
-            "person_month__month__max"
-        ]
-        min_month = income_qs.aggregate(Min("person_month__month"))[
-            "person_month__month__min"
-        ]
-
-        incomes = [
-            float(
-                income_qs.filter(month=m).aggregate(Sum("amount"))["amount__sum"] or 0
-            )
-            for m in range(min_month, max_month + 1)
-        ]
-        if len(incomes) < 2:
-            return None
-        mean_income = np.mean(incomes)
-        if mean_income == 0:
-            # No income == stable income
-            return Decimal(1)
-        std = np.std([float(i / mean_income) for i in incomes])
-
-        stability_score = Decimal(np.exp(-(std**k) / s**k))
-
-        if income_type == IncomeType.A:
-            self.stability_score_a = stability_score
-        elif income_type == IncomeType.B:
-            self.stability_score_b = stability_score
-        return stability_score
 
     @cached_property
     def prev(self):

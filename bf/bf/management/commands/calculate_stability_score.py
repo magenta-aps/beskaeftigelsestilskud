@@ -4,9 +4,11 @@
 
 from cProfile import Profile
 
+import numpy as np
+from common.utils import calculate_stability_score_for_entire_year
 from django.core.management.base import BaseCommand
 
-from bf.models import IncomeType, PersonYear
+from bf.models import PersonYear
 
 
 class Command(BaseCommand):
@@ -20,20 +22,26 @@ class Command(BaseCommand):
         self._verbose = kwargs["verbosity"] > 1
         self._write_verbose(f"Calculating stability score for {kwargs['year']}")
 
-        if kwargs["cpr"]:
-            years = PersonYear.objects.filter(
-                year__year=kwargs["year"],
-                person__cpr=kwargs["cpr"],
-            )
-        else:
-            years = PersonYear.objects.filter(
-                year__year=kwargs["year"],
-            )
-        for person_year in years:
-            for income_type in IncomeType:
-                person_year.calculate_stability_score(income_type)
-            person_year.save()
+        df_stability_score = calculate_stability_score_for_entire_year(kwargs["year"])
+        person_years = PersonYear.objects.filter(year__year=kwargs["year"])
 
+        person_year_objects_to_update = []
+        for person_year in person_years:
+            if person_year.person.cpr in df_stability_score.index:
+
+                stability_score_a = df_stability_score.loc[person_year.person.cpr, "A"]
+                stability_score_b = df_stability_score.loc[person_year.person.cpr, "B"]
+
+                if not np.isnan(stability_score_a):
+                    person_year.stability_score_a = stability_score_a
+                if not np.isnan(stability_score_b):
+                    person_year.stability_score_b = stability_score_b
+
+                person_year_objects_to_update.append(person_year)
+
+        PersonYear.objects.bulk_update(
+            person_year_objects_to_update, ["stability_score_a", "stability_score_b"]
+        )
         self._write_verbose("Done")
 
     def _write_verbose(self, msg, **kwargs):
