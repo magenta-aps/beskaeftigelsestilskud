@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-23 09:34-0100\n"
+"POT-Creation-Date: 2024-09-24 13:31-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,6 +30,18 @@ msgstr ""
 
 #: bf/models.py
 msgid "Indhandler"
+msgstr ""
+
+#: bf/models.py
+msgid "Sending"
+msgstr ""
+
+#: bf/models.py
+msgid "Sent"
+msgstr ""
+
+#: bf/models.py
+msgid "Failed"
 msgstr ""
 
 #: bf/templates/bf/root.html
