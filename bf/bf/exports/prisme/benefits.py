@@ -26,19 +26,15 @@ class BatchExport:
         self._month = month
         self._prisme_settings: dict = settings.PRISME  # type: ignore[misc]
 
-    def get_person_month_queryset(
-        self,
-        year: int,
-        month: int,
-    ) -> QuerySet[PersonMonth]:
+    def get_person_month_queryset(self) -> QuerySet[PersonMonth]:
         # Find all person months for this year/month which:
         # - have not yet been exported,
         # - and have a non-zero calculated benefit
         qs: QuerySet[PersonMonth] = (
             PersonMonth.objects.select_related("person_year__person", "prismebatchitem")
             .filter(
-                person_year__year=year,
-                month=month,
+                person_year__year=self._year,
+                month=self._month,
                 prismebatchitem__isnull=True,
                 benefit_paid__isnull=False,
             )
@@ -65,14 +61,13 @@ class BatchExport:
         # matching `PersonMonth` objects for each `prefix` (== first two digits of CPR.)
         current_batch: PrismeBatch | None = None
         for person_month in qs:
-            if (current_batch is None) or (
-                person_month.prefix != current_batch.prefix  # type: ignore
-            ):
+            person_month_prefix: int = int(person_month.prefix)
+            if (current_batch is None) or (person_month_prefix != current_batch.prefix):
                 current_batch = PrismeBatch(
-                    prefix=person_month.prefix,  # type: ignore[attr-defined]
+                    prefix=person_month_prefix,
                     export_date=date.today(),
                 )
-                yield current_batch, qs.filter(prefix=current_batch.prefix)
+                yield current_batch, qs.filter(prefix=person_month.prefix)
 
     def get_prisme_batch_item(
         self,
@@ -147,9 +142,8 @@ class BatchExport:
 
     @transaction.atomic
     def export_batches(self, stdout):
-        person_month_queryset: QuerySet[PersonMonth] = self.get_person_month_queryset(
-            self._year, self._month
-        )
+        person_month_queryset: QuerySet[PersonMonth] = self.get_person_month_queryset()
+
         stdout.write(
             f"Found {person_month_queryset.count()} person months to export ..."
         )
