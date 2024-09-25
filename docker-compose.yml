@@ -61,6 +61,7 @@ services:
       - PULL_IDP_METADATA=false
       - CREATE_DUMMY_ADMIN=false
       - COLLECT_STATIC=false
+      - LOAD_CALCULATION_METHOD=false
       - TEST=false
       - HOME=/tmp/
     network_mode: "host"
