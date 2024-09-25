@@ -160,7 +160,7 @@ class EstimationEngine:
             subset = list(items)
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
-            person_year_pk = subset[0].person_year_pk
+            person_year_pk = subset[-1].person_year_pk
             first_income_month = 1
             for month_data in subset:
                 if not month_data.amount.is_zero():
