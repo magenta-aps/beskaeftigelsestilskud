@@ -132,6 +132,7 @@ class EstimationEngine:
                 "month",
                 person_pk=F("person_year__person__pk"),
                 person_month_pk=F("pk"),
+                person_year_pk=F("person_year__pk"),
                 year=F("person_year__year__year"),
             )
             .annotate(
@@ -159,14 +160,14 @@ class EstimationEngine:
             subset = list(items)
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
-            person_pk = subset[0].person_pk
+            person_year_pk = subset[0].person_year_pk
             first_income_month = 1
             for month_data in subset:
                 if not month_data.amount.is_zero():
                     first_income_month = month_data.month
                     break
 
-            person_year = person_year_qs.get(person_id=person_pk)
+            person_year = PersonYear.objects.get(pk=person_year_pk)
 
             actual_year_sums = {
                 income_type: {

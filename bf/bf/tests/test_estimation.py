@@ -117,7 +117,7 @@ class TestEstimationEngine(TestCase):
         EstimationEngine.estimate_all(
             self.year.year,
             self.person_year.pk,
-            None,
+            1,
             False,
             output_stream,
         )
@@ -212,6 +212,7 @@ class TestInYearExtrapolationEngine(TestCase):
                 year=report.person_month.year,
                 a_amount=report.amount,
                 person_pk=self.person.pk,
+                person_year_pk=self.person_year.pk,
                 person_month_pk=report.person_month.pk,
                 b_amount=Decimal(0),
             )
@@ -301,6 +302,7 @@ class TwelveMonthsSummationEngineTest(TestCase):
                 year=report.person_month.year,
                 a_amount=report.amount,
                 person_pk=self.person.pk,
+                person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
                 b_amount=Decimal(0),
             )
