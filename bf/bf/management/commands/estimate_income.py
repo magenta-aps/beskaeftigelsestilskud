@@ -10,13 +10,14 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from bf.estimation import EstimationEngine
+from bf.models import Year
 
 
 class Command(BaseCommand):
     engines: List[EstimationEngine] = EstimationEngine.instances()
 
     def add_arguments(self, parser):
-        parser.add_argument("year", type=int)
+        parser.add_argument("--year", type=int)
         parser.add_argument("--count", type=int)
         parser.add_argument("--dry", action="store_true")
         parser.add_argument("--person", type=int)
@@ -34,7 +35,13 @@ class Command(BaseCommand):
 
         output_stream = self.stdout if verbose else None
 
-        EstimationEngine.estimate_all(year, person, count, dry, output_stream)
+        if year is None:
+            years = Year.objects.all().order_by("year").values_list("year", flat=True)
+        else:
+            years = [year]
+
+        for year in years:
+            EstimationEngine.estimate_all(year, person, count, dry, output_stream)
 
         if verbose:
             duration = datetime.datetime.utcfromtimestamp(time.time() - start)

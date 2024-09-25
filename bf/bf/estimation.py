@@ -160,14 +160,15 @@ class EstimationEngine:
             subset = list(items)
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
-            person_year_pk = subset[-1].person_year_pk
+            person_pk = subset[0].person_pk
+
             first_income_month = 1
             for month_data in subset:
                 if not month_data.amount.is_zero():
                     first_income_month = month_data.month
                     break
 
-            person_year = PersonYear.objects.get(pk=person_year_pk)
+            person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
 
             actual_year_sums = {
                 income_type: {
@@ -244,6 +245,11 @@ class EstimationEngine:
                     f"Writing {len(results)} `IncomeEstimate` objects ...\n"
                 )
             IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+            if output_stream is not None:
+                output_stream.write(
+                    f"Writing {len(summaries)} "
+                    f"`PersonYearEstimateSummary` objects ...\n"
+                )
             PersonYearEstimateSummary.objects.bulk_create(summaries, batch_size=1000)
         return results, summaries
 

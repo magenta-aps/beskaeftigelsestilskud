@@ -56,10 +56,7 @@ else
   docker exec bf bash -c "python manage.py load_csv --count=$count /app/data/forskud_2023.csv assessment 2023 $profile_flag"
 fi
 
-docker exec bf bash -c "python manage.py estimate_income 2020 --verbosity=2 $profile_flag"
-docker exec bf bash -c "python manage.py estimate_income 2021 --verbosity=2 $profile_flag"
-docker exec bf bash -c "python manage.py estimate_income 2022 --verbosity=2 $profile_flag"
-docker exec bf bash -c "python manage.py estimate_income 2023 --verbosity=2 $profile_flag"
+docker exec bf bash -c "python manage.py estimate_income --verbosity=2 $profile_flag"
 
 if [ "$calculate_benefit" == "true" ] ; then   
     docker exec bf bash -c "python manage.py calculate_stability_score 2020 --verbosity=2 $profile_flag"
