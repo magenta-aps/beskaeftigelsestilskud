@@ -57,5 +57,5 @@ def mean_error(correct: Decimal, estimates: Iterable[Decimal]) -> Decimal:
 def root_mean_sq_error(correct: Decimal, estimates: Iterable[Decimal]) -> Decimal:
     # Root-mean-squared-error
     return Decimal(
-        math.sqrt(sum([(estimate - correct) ** 2 for estimate in estimates]) / 12)
+        math.sqrt(sum([(estimate - correct) ** 2 for estimate in estimates]) / len(estimates))
     )
