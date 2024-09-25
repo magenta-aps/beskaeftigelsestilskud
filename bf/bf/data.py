@@ -13,6 +13,7 @@ class MonthlyIncomeData:
     b_amount: Decimal
     person_pk: int
     person_month_pk: int
+    person_year_pk: int
 
     @property
     def amount(self):

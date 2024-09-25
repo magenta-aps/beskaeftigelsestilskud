@@ -43,7 +43,7 @@ if [ "${PULL_IDP_METADATA,,}" = true ]; then
 fi
 
 if [ "${LOAD_CALCULATION_METHOD}" = true ]; then
-  echo "Loading caclulation method"
+  echo "Loading calculation method"
   python manage.py load_dummy_calculation_method
 fi
 

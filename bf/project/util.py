@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import math
 from collections import defaultdict
+from decimal import Decimal
 from typing import Callable, Dict, Iterable, List, TypeVar
 
 from django.db.models import QuerySet
@@ -46,3 +48,18 @@ def trim_list_first(items: Iterable[T], filter: Callable[[T], bool]) -> List[T]:
 
 def params_no_none(items: Dict[str, int | str | None]) -> Dict[str, int | str]:
     return {key: (value if value is not None else "") for key, value in items.items()}
+
+
+def mean_error(correct: Decimal, estimates: Iterable[Decimal]) -> Decimal:
+    return Decimal(sum([estimate - correct for estimate in estimates]) / 12)
+
+
+def root_mean_sq_error(correct: Decimal, estimates: Iterable[Decimal]) -> Decimal:
+    # Root-mean-squared-error
+    estimates_list = list(estimates)
+    return Decimal(
+        math.sqrt(
+            sum([(estimate - correct) ** 2 for estimate in estimates_list])
+            / len(estimates_list)
+        )
+    )
