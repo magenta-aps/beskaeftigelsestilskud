@@ -422,6 +422,7 @@ class TestIncomeReport(ModelTest):
             b_amount=Decimal(5000),
             person_pk=1,
             person_month_pk=1,
+            person_year_pk=1,
         )
         self.assertEqual(data.amount, Decimal(20000))
 
