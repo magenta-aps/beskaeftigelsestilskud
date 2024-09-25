@@ -10,7 +10,6 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from bf.estimation import EstimationEngine
-from bf.models import PersonYear
 
 
 class Command(BaseCommand):
@@ -33,16 +32,9 @@ class Command(BaseCommand):
         person = kwargs["person"]
         count = kwargs["count"]
 
-        person_year_qs = PersonYear.objects.filter(year__year=year).select_related(
-            "person"
-        )
-        if person:
-            person_year_qs = person_year_qs.filter(person=person)
-        if count:
-            person_year_qs = person_year_qs[:count]
         output_stream = self.stdout if verbose else None
 
-        EstimationEngine.estimate_all(person_year_qs, year, dry, output_stream)
+        EstimationEngine.estimate_all(year, person, count, dry, output_stream)
 
         if verbose:
             duration = datetime.datetime.utcfromtimestamp(time.time() - start)

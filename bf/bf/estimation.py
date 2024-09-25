@@ -75,11 +75,20 @@ class EstimationEngine:
 
     @staticmethod
     def estimate_all(
-        person_year_qs: QuerySet[PersonYear],
         year: int,
+        person: int | None,
+        count: int | None,
         dry_run: bool = True,
         output_stream=None,
     ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
+        person_year_qs: QuerySet[PersonYear] = PersonYear.objects.filter(
+            year__year=year
+        ).select_related("person")
+        if person:
+            person_year_qs = person_year_qs.filter(person=person)
+        if count:
+            person_year_qs = person_year_qs[:count]
+
         if not dry_run:
             if output_stream is not None:
                 output_stream.write("Removing current `IncomeEstimate` objects ...\n")
