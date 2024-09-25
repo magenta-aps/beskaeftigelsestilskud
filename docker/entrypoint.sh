@@ -13,6 +13,7 @@ COMPILEMESSAGES=${COMPILEMESSAGES:=true}
 PULL_IDP_METADATA=${PULL_IDP_METADATA:=false}
 CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
 COLLECT_STATIC=${COLLECT_STATIC:=true}
+LOAD_CALCULATION_METHOD=${LOAD_CALCULATION_METHOD:=true}
 
 python manage.py wait_for_db
 
@@ -41,8 +42,10 @@ if [ "${PULL_IDP_METADATA,,}" = true ]; then
   python manage.py update_mitid_idp_metadata
 fi
 
-python manage.py load_dummy_calculation_method
-
+if [ "${LOAD_CALCULATION_METHOD}" = true ]; then
+  echo "Loading caclulation method"
+  python manage.py load_dummy_calculation_method
+fi
 
 if [ "${MAKEMESSAGES,,}" = true ]; then
   echo 'making messages'
