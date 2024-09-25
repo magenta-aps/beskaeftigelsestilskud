@@ -115,8 +115,9 @@ class TestEstimationEngine(TestCase):
     def test_estimate_all(self):
         output_stream = self.OutputWrapper(sys.stdout, ending="\n")
         EstimationEngine.estimate_all(
-            PersonYear.objects.filter(pk=self.person_year.pk),
             self.year.year,
+            self.person_year.pk,
+            None,
             False,
             output_stream,
         )
