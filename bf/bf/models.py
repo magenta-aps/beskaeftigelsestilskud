@@ -438,8 +438,14 @@ class PersonMonth(models.Model):
             2,
         )
 
+        # Hvis vi har udbetalt for meget før, og denne måned er negativ,
+        # lad være med at udbetale noget
+        if benefit_this_month < 0:
+            benefit_this_month = Decimal(0)
+
         # Hvis beløb er under bagatelgrænsen lad være med at udbetale noget
-        if benefit_this_month < settings.CALCULATION_TRIVIAL_LIMIT:  # type: ignore
+        trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
+        if self.month < 12 and benefit_this_month < trivial_limit:
             benefit_this_month = Decimal(0)
 
         if self.prev is not None and self.month < 12:
