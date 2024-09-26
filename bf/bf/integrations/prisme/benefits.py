@@ -8,6 +8,7 @@ from io import BytesIO
 from typing import Generator
 
 from django.conf import settings
+from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import CharField, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
@@ -150,21 +151,28 @@ class BatchExport:
         )
 
     @transaction.atomic
-    def export_batches(self, stdout):
+    def export_batches(self, stdout: OutputWrapper, verbosity: int):
         person_month_queryset: QuerySet[PersonMonth] = self.get_person_month_queryset()
 
+        num_person_months: int = person_month_queryset.count()
+        num_batches: int = 0
+
         stdout.write(
-            f"Found {person_month_queryset.count()} person months to export ..."
+            f"Found {num_person_months} person month(s) to export for "
+            f"year={self._year}, month={self._month} ...",
         )
 
         prisme_batch: PrismeBatch
         person_months: QuerySet[PersonMonth]
         for prisme_batch, person_months in self.get_batches(person_month_queryset):
-            # Instantiate a new writer for each Prisme batch
+            # Instantiate a new writer for each Prisme batch, ensuring that the line
+            # numbers start from 0, etc.
             writer: G68G69TransactionWriter = self.get_g68_g69_transaction_writer()
 
-            # Build all items for this batch
+            # Ensure the current Prisme batch is saved (so it has a PK)
             prisme_batch.save()
+
+            # Build all items for this batch
             prisme_batch_items: list[PrismeBatchItem] = []
             for person_month in person_months:
                 prisme_batch_item: PrismeBatchItem = self.get_prisme_batch_item(
@@ -174,15 +182,24 @@ class BatchExport:
                 )
                 prisme_batch_items.append(prisme_batch_item)
 
-                stdout.write(prisme_batch_item.g68_content)
-                stdout.write(prisme_batch_item.g69_content)
-                stdout.write("")
+                if verbosity >= 2:
+                    stdout.write(f"{person_month}")
+                    stdout.write(prisme_batch_item.g68_content)
+                    stdout.write(prisme_batch_item.g69_content)
+                    stdout.write()
 
+            # Save all Prisme batch items belonging to the current batch
             PrismeBatchItem.objects.bulk_create(prisme_batch_items)
 
-            # Export this batch to Prisme
+            # Export the current batch to Prisme
             self.upload_batch(prisme_batch, prisme_batch_items)
 
-            stdout.write(
-                f"Uploaded {prisme_batch.pk} (year={self._year}, month={self._month})"
-            )
+            if verbosity >= 2:
+                stdout.write(f"Uploaded batch with pk={prisme_batch.pk}")
+
+            num_batches += 1
+
+        stdout.write(
+            f"Exported {num_batches} batch(es) ({num_person_months} person month(s)) "
+            f"for year={self._year}, month={self._month}."
+        )

@@ -26,4 +26,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         batch_export: BatchExport = BatchExport(options["year"], options["month"])
-        batch_export.export_batches(self.stdout)
+        batch_export.export_batches(self.stdout, verbosity=options["verbosity"])

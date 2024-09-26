@@ -164,7 +164,7 @@ class TestBatchExport(TestCase):
         stdout = Mock()
         with patch("bf.integrations.prisme.benefits.put_file_in_prisme_folder"):
             # Act
-            export.export_batches(stdout)
+            export.export_batches(stdout, verbosity=2)
             # Assert: `PrismeBatch` object(s) exist with the expected status
             self.assertQuerysetEqual(
                 PrismeBatch.objects.all(),
