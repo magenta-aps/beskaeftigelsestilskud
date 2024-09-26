@@ -52,6 +52,22 @@ class TestBatchExport(TestCase):
             transform=lambda obj: (obj.identifier, obj.prefix, obj.benefit_paid),
         )
 
+    def test_get_person_year_queryset_excludes_person_months_without_benefit(self):
+        """Given one or more `PersonMonth` objects, the method should skip objects that
+        have a `benefit_paid` which is 0 or None.
+        """
+        # Arrange: add two person months which should be skipped
+        self._add_person_month(3112710000, benefit_paid=None)
+        self._add_person_month(3112720000, benefit_paid=Decimal("0"))
+        # Arrange: add one person month which should be included
+        self._add_person_month(3112730000, benefit_paid=Decimal("1000"))
+        # Arrange
+        export = self._get_instance()
+        # Act
+        queryset = export.get_person_month_queryset()
+        # Assert
+        self.assertEqual(queryset.count(), 1)
+
     def test_get_batches(self):
         """Given a `PersonMonth` queryset from the `get_person_month_queryset` method,
         the method should return a generator that yields one `PrismeBatch` and its
@@ -195,7 +211,7 @@ class TestBatchExport(TestCase):
     def _add_person_month(
         self,
         cpr: int,
-        benefit_paid: Decimal,
+        benefit_paid: Decimal | None,
         year: int = 2024,
         month: int = 1,
     ) -> PersonMonth:
