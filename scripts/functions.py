@@ -620,7 +620,9 @@ def calculate_payout(df_estimates, df_annual, treshold=0.05, truncate_amount=0):
             )
             actual_benefit_this_month = actual_year_benefit / 12
 
-            benefit_this_month[benefit_this_month < truncate_amount] = 0
+            if month_index != 11:
+                benefit_this_month[benefit_this_month < truncate_amount] = 0
+            benefit_this_month[benefit_this_month < 0] = 0
 
             if last_month:
                 benefit_last_month = df_payout.loc[:, last_month]
