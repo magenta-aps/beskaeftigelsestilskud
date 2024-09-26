@@ -25,7 +25,6 @@ class BatchExport:
     def __init__(self, year: int, month: int):
         self._year = year
         self._month = month
-        self._prisme_settings: dict = settings.PRISME  # type: ignore[misc]
 
     def get_person_month_queryset(self) -> QuerySet[PersonMonth]:
         # Find all person months for this year/month which:
@@ -113,7 +112,8 @@ class BatchExport:
         buf.seek(0)
 
         # TODO: use production or development folder depending on settings (or CLI args)
-        destination_folder = self._prisme_settings["dirs"]["development"]
+        prisme: dict = settings.PRISME  # type: ignore[misc]
+        destination_folder = prisme["dirs"]["development"]
 
         # TODO: revise filename based on customer input
         filename = (
@@ -123,7 +123,7 @@ class BatchExport:
 
         try:
             put_file_in_prisme_folder(
-                self._prisme_settings,
+                settings.PRISME,  # type: ignore[misc]
                 buf,
                 destination_folder,
                 filename,
@@ -146,8 +146,8 @@ class BatchExport:
     def get_g68_g69_transaction_writer(self):
         return G68G69TransactionWriter(
             0,
-            self._prisme_settings["user_number"],
-            self._prisme_settings["machine_id"],
+            settings.PRISME["user_number"],
+            settings.PRISME["machine_id"],
         )
 
     @transaction.atomic

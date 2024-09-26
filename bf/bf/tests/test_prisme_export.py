@@ -26,7 +26,6 @@ class TestBatchExport(TestCase):
         export = self._get_instance()
         self.assertEqual(export._year, 2024)
         self.assertEqual(export._month, 1)
-        self.assertEqual(export._prisme_settings, settings.PRISME)
 
     def test_get_person_month_queryset(self):
         """Given one or more `PersonMonth` objects, the method should return a queryset
