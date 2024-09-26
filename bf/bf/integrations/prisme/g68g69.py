@@ -70,7 +70,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
         # - the G68 "maskinnummer" as the "maskinnummer",
         # - the G68 "linjeløbenummer" as the "ekspeditionsløbenummer"
         #   (== `self._line_no`),
-        # the G68 "posteringsdato" as the "posteringsdato".
+        # - the G68 "posteringsdato" as the "posteringsdato".
         g69_transaction_serialized = self._g69_transaction_writer.serialize_transaction(
             udbet_henv_nr=int(g69_udbetalingshenvisning),  # type: ignore[arg-type]
             eks_løbenr=self._line_no,

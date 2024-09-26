@@ -67,6 +67,7 @@ class BatchExport:
             if (current_batch is None) or (person_month_prefix != current_batch.prefix):
                 current_batch = PrismeBatch(
                     prefix=person_month_prefix,
+                    # TODO: should this be passed in from the management command?
                     export_date=date.today(),
                 )
                 yield (
@@ -85,9 +86,9 @@ class BatchExport:
             UdbetalingsberettigetIdentKodeEnum.CPR,
             person_month.identifier,  # type: ignore[attr-defined]
             person_month.benefit_paid,  # type: ignore[arg-type]
-            date.today(),
-            date.today(),
-            "Some descriptive text",
+            date.today(),  # TODO: use calculated date
+            date.today(),  # TODO: use calculated date
+            "Some descriptive text",  # TODO: generate proper text
         )
         return PrismeBatchItem(
             prisme_batch=prisme_batch,
@@ -110,7 +111,10 @@ class BatchExport:
             buf.write(b"\r\n")
         buf.seek(0)
 
+        # TODO: use production or development folder depending on settings (or CLI args)
         destination_folder = self._prisme_settings["dirs"]["development"]
+
+        # TODO: revise filename based on customer input
         filename = (
             f"RES_G68_export_{prisme_batch.prefix}_"
             f"{prisme_batch.export_date.strftime('%Y-%m-%d')}.g68"
