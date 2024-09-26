@@ -175,6 +175,14 @@ Lint REUSE compliance:
     ESKAT_DB: eskat_db
     ESKAT_HOST: eskat_host
     ESKAT_PORT: 1234
+    PRISME_HOST: localhost
+    PRISME_PORT: 22
+    PRISME_USER: besk
+    PRISME_PASSWORD: verysecret
+    PRISME_PROD_PATH: prod
+    PRISME_TEST_PATH: test
+    PRISME_USER_NUMBER: 0900
+    PRISME_MACHINE_ID: 4321
     BYPASS_2FA: 'True'
 
   image: ${IMAGE_SHA}
