@@ -93,6 +93,14 @@ services:
       - ./dev-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
       - ./dev-idp/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php:ro
 
+  bf-sftp:
+    image: atmoz/sftp
+    container_name: "bf-sftp"
+    network_mode: "host"
+    volumes:
+      - ./dev-environment/sftp_users.conf:/etc/sftp/users.conf
+      - ./data/sftp_uploads/:/home/besk/test/:rw
+
 volumes:
   postgres-data:
   file-data:
