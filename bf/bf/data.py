@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 
@@ -16,8 +17,12 @@ class MonthlyIncomeData:
     person_year_pk: int
 
     @property
-    def amount(self):
+    def amount(self) -> Decimal:
         return self.a_amount + self.b_amount
+
+    @property
+    def year_month(self) -> date:
+        return date(self.year, self.month, 1)
 
 
 engine_choices = (
@@ -33,6 +38,10 @@ engine_choices = (
     (
         "TwelveMonthsSummationEngine",
         "Summation af beløb for de seneste 12 måneder",
+    ),
+    (
+        "TwoYearSummationEngine",
+        "Summation af beløb for de seneste 24 måneder",
     ),
     (
         "SameAsLastMonthEngine",
