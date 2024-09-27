@@ -43,16 +43,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='PrismeBatch',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('sending', 'Sending'), ('sent', 'Sent'), ('failed', 'Failed')], db_index=True, default='sending')),
-                ('failed_message', models.TextField()),
-                ('export_date', models.DateField(db_index=True)),
-                ('prefix', models.IntegerField(db_index=True)),
-            ],
-        ),
-        migrations.CreateModel(
             name='StandardWorkBenefitCalculationMethod',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -162,16 +152,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='PrismeBatchItem',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('g68_content', models.TextField()),
-                ('g69_content', models.TextField()),
-                ('person_month', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='bf.personmonth')),
-                ('prisme_batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='bf.prismebatch')),
-            ],
-        ),
-        migrations.CreateModel(
             name='SelfAssessedYearlyBIncome',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -252,10 +232,6 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(
             name='personyearestimatesummary',
             unique_together={('person_year', 'estimation_engine', 'income_type')},
-        ),
-        migrations.AlterUniqueTogether(
-            name='prismebatchitem',
-            unique_together={('prisme_batch', 'person_month')},
         ),
         migrations.AddIndex(
             model_name='personyear',
