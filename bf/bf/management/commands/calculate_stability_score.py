@@ -40,8 +40,11 @@ class Command(BaseCommand):
                 person_year_objects_to_update.append(person_year)
 
         PersonYear.objects.bulk_update(
-            person_year_objects_to_update, ["stability_score_a", "stability_score_b"]
+            person_year_objects_to_update,
+            ["stability_score_a", "stability_score_b"],
+            batch_size=1000,
         )
+
         self._write_verbose("Done")
 
     def _write_verbose(self, msg, **kwargs):
