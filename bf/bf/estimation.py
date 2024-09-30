@@ -60,6 +60,10 @@ class EstimationEngine:
     def instances() -> List["EstimationEngine"]:
         return [cls() for cls in EstimationEngine.classes()]
 
+    @classmethod
+    def name(cls):
+        return cls.__name__
+
     valid_income_types: List[IncomeType] = [
         IncomeType.A,
         IncomeType.B,

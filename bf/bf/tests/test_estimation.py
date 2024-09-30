@@ -205,6 +205,9 @@ class TestInYearExtrapolationEngine(TestCase):
                 )
             )
 
+    def test_name(self):
+        self.assertEqual(InYearExtrapolationEngine.name(), "InYearExtrapolationEngine")
+
     def test_estimate(self):
         data = [
             MonthlyIncomeData(
@@ -294,6 +297,11 @@ class TwelveMonthsSummationEngineTest(TestCase):
                         amount=Decimal(income),
                     )
                 )
+
+    def test_name(self):
+        self.assertEqual(
+            TwelveMonthsSummationEngine.name(), "TwelveMonthsSummationEngine"
+        )
 
     def test_estimate(self):
         data = [
@@ -415,6 +423,9 @@ class TestSelfReportedEngine(TestCase):
             e2_indhandling=Decimal(20000),
             brutto_b_indkomst=Decimal(70000),
         )
+
+    def test_name(self):
+        self.assertEqual(SelfReportedEngine.name(), "SelfReportedEngine")
 
     def test_cannot_calculate_a(self):
         for person_month in self.person_months:

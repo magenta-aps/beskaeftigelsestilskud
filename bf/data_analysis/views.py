@@ -276,6 +276,7 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
             sort_params[value] = urlencode({**params, "order_by": order_by})
         context["sort_params"] = sort_params
         context["order_current"] = current_order_by
+        context["engines"] = EstimationEngine.classes()
 
         preferences, _ = EngineViewPreferences.objects.get_or_create(
             user=self.request.user

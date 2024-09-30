@@ -97,18 +97,11 @@
     <tr class="shadow p-3 mb-5 bg-body rounded" >
         <th class="col-1">
         </th>
-        <th colspan="4" class="col-2">
-            InYearExtrapolationEngine
+        {% for engine in engines %}
+        <th colspan="{{ engine.valid_income_types|length|multiply:2 }}" class="col-2">
+            {{ engine.name }}
         </th>
-        <th colspan="4" class="col-2">
-            TwelveMonthsSummationEngine
-        </th>
-        <th colspan="4" class="col-2">
-            SameAsLastMonthEngine
-        </th>
-        <th colspan="2" class="col-2">
-            SelfReportedEngine
-        </th>
+        {% endfor %}
         <th colspan="12" class="col-5">
         </th>
     </tr>
@@ -119,91 +112,29 @@
                 {% include "data_analysis/sort_icon.html" with field="person__cpr" %}
             </a>
         </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.InYearExtrapolationEngine_mean_error_A }}" class="link-dark">
-                ME (A)
-                {% include "data_analysis/sort_icon.html" with field="InYearExtrapolationEngine_mean_error_A" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.InYearExtrapolationEngine_mean_error_B }}" class="link-dark">
-                ME (B)
-                {% include "data_analysis/sort_icon.html" with field="InYearExtrapolationEngine_mean_error_B" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.InYearExtrapolationEngine_rmse_A }}" class="link-dark">
-                RMSE (A)
-                {% include "data_analysis/sort_icon.html" with field="InYearExtrapolationEngine_rmse_A" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.InYearExtrapolationEngine_rmse_B }}" class="link-dark">
-                RMSE (B)
-                {% include "data_analysis/sort_icon.html" with field="InYearExtrapolationEngine_rmse_B" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.TwelveMonthsSummationEngine_mean_error_A }}" class="link-dark">
-                ME (A)
-                {% include "data_analysis/sort_icon.html" with field="TwelveMonthsSummationEngine_mean_error_A" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.TwelveMonthsSummationEngine_mean_error_B }}" class="link-dark">
-                ME (B)
-                {% include "data_analysis/sort_icon.html" with field="TwelveMonthsSummationEngine_mean_error_B" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.TwelveMonthsSummationEngine_rmse_A }}" class="link-dark">
-                RMSE (A)
-                {% include "data_analysis/sort_icon.html" with field="TwelveMonthsSummationEngine_rmse_A" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.TwelveMonthsSummationEngine_rmse_B }}" class="link-dark">
-                RMSE (B)
-                {% include "data_analysis/sort_icon.html" with field="TwelveMonthsSummationEngine_rmse_B" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_mean_error_A }}" class="link-dark">
-                ME (A)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_mean_error_A" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_mean_error_B }}" class="link-dark">
-                ME (B)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_mean_error_B" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_rmse_A }}" class="link-dark">
-                RMSE (A)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_rmse_A" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.SameAsLastMonthEngine_rmse_B }}" class="link-dark">
-                RMSE (B)
-                {% include "data_analysis/sort_icon.html" with field="SameAsLastMonthEngine_rmse_B" %}
-            </a>
-        </th>
+        {% for engine in engines %}
+            {% for income_type in engine.valid_income_types %}
+            {% with me_name=engine.name|concat:"_mean_error_"|concat:income_type %}
+            <th class="col-1">
+                <a href="?{{ sort_params|get:me_name }}" class="link-dark">
+                    ME ({{ income_type }})
+                    {% include "data_analysis/sort_icon.html" with field=me_name %}
+                </a>
+            </th>
+            {% endwith %}
+            {% endfor %}
 
-        <th class="col-1">
-            <a href="?{{ sort_params.SelfReportedEngine_mean_error_B }}" class="link-dark">
-                ME (B)
-                {% include "data_analysis/sort_icon.html" with field="SelfReportedEngine_mean_error_B" %}
-            </a>
-        </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.SelfReportedEngine_rmse_B }}" class="link-dark">
-                RMSE (B)
-                {% include "data_analysis/sort_icon.html" with field="SelfReportedEngine_rmse_B" %}
-            </a>
-        </th>
+            {% for income_type in engine.valid_income_types %}
+            {% with rmse_name=engine.name|concat:"_rmse_"|concat:income_type %}
+            <th class="col-1">
+                <a href="?{{ sort_params|get:rmse_name }}" class="link-dark">
+                    RMSE ({{ income_type }})
+                    {% include "data_analysis/sort_icon.html" with field=rmse_name %}
+                </a>
+            </th>
+            {% endwith %}
+            {% endfor %}
+        {% endfor %}
 
         <th class="col-2">
             <a href="?{{ sort_params.actual_sum }}" class="link-dark">
@@ -265,107 +196,31 @@
             </a>
         </td>
 
-        <td>
-            {% if object.InYearExtrapolationEngine_mean_error_A is not None %}
-                {{ object.InYearExtrapolationEngine_mean_error_A|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.InYearExtrapolationEngine_mean_error_B is not None %}
-                {{ object.InYearExtrapolationEngine_mean_error_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.InYearExtrapolationEngine_rmse_A is not None %}
-                {{ object.InYearExtrapolationEngine_rmse_A|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.InYearExtrapolationEngine_rmse_B is not None %}
-                {{ object.InYearExtrapolationEngine_rmse_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
+        {% for engine in engines %}
+            {% for income_type in engine.valid_income_types %}
+                {% with me_name=engine.name|concat:"_mean_error_"|concat:income_type %}
+                <td>
+                    {% if object|get:me_name is not None %}
+                        {{ object|get:me_name|floatformat:2 }} %
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                {% endwith %}
+            {% endfor %}
+            {% for income_type in engine.valid_income_types %}
+                {% with rmse_name=engine.name|concat:"_rmse_"|concat:income_type %}
+                <td>
+                    {% if object|get:rmse_name is not None %}
+                        {{ object|get:rmse_name|floatformat:2 }} %
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                {% endwith %}
+            {% endfor %}
 
-        <td>
-            {% if object.TwelveMonthsSummationEngine_mean_error_A is not None %}
-                {{ object.TwelveMonthsSummationEngine_mean_error_A|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.TwelveMonthsSummationEngine_mean_error_B is not None %}
-                {{ object.TwelveMonthsSummationEngine_mean_error_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.TwelveMonthsSummationEngine_rmse_A is not None %}
-                {{ object.TwelveMonthsSummationEngine_rmse_A|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.TwelveMonthsSummationEngine_rmse_B is not None %}
-                {{ object.TwelveMonthsSummationEngine_rmse_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-
-        <td>
-            {% if object.SameAsLastMonthEngine_mean_error_A is not None %}
-                {{ object.SameAsLastMonthEngine_mean_error_A|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.SameAsLastMonthEngine_mean_error_B is not None %}
-                {{ object.SameAsLastMonthEngine_mean_error_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.SameAsLastMonthEngine_rmse_A is not None %}
-                {{ object.SameAsLastMonthEngine_rmse_A|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.SameAsLastMonthEngine_rmse_B is not None %}
-                {{ object.SameAsLastMonthEngine_rmse_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-
-        <td>
-            {% if object.SelfReportedEngine_mean_error_B is not None %}
-                {{ object.SelfReportedEngine_mean_error_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if object.SelfReportedEngine_rmse_B is not None %}
-                {{ object.SelfReportedEngine_rmse_B|floatformat:2 }} %
-            {% else %}
-                -
-            {% endif %}
-        </td>
+        {% endfor %}
 
         <td>{{ object.actual_sum }}</td>
         <td>{{ object.payout|default_if_none:"" }}</td>
