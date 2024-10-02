@@ -4,9 +4,9 @@
 
 from cProfile import Profile
 
+from common.utils import calculate_benefit
 from django.core.management.base import BaseCommand
 
-from bf.exceptions import EstimationEngineUnset
 from bf.models import PersonMonth
 
 
@@ -20,40 +20,39 @@ class Command(BaseCommand):
 
     def _handle(self, *args, **kwargs):
         self._verbose = kwargs["verbosity"] > 1
-
         self._write_verbose(f"Calculating benefit for {kwargs['year']}")
 
-        months = PersonMonth.objects.filter(
-            person_year__year__year=kwargs["year"],
-        )
-        if kwargs["cpr"]:
-            months = months.filter(
-                person_year__person__cpr=kwargs["cpr"],
-            )
-        months = months.filter(incomeestimate__isnull=False)
-
         month = kwargs["month"]
+        year = kwargs["year"]
+
+        cols_to_update = [
+            "benefit_paid",
+            "prior_benefit_paid",
+            "estimated_year_benefit",
+            "actual_year_benefit",
+        ]
+
         if month and month >= 1 and month <= 12:
-            months = months.filter(month=month)
             month_range = [month]
         else:
             month_range = range(1, 13)
 
         for month_number in month_range:
-            month_qs = (
-                months.filter(month=month_number)
-                .select_related("person_year")
-                .prefetch_related("incomeestimate_set")
-                .distinct()
-            )
-            for person_month in month_qs:
-                try:
-                    person_month.calculate_benefit()
-                except EstimationEngineUnset as e:
-                    self._write_verbose(str(e))
+            benefit = calculate_benefit(month_number, year, kwargs["cpr"])
+
+            person_months_to_update = []
+            for person_month in PersonMonth.objects.filter(
+                person_year__year__year=kwargs["year"], month=month_number
+            ).select_related("person_year__person"):
+                cpr = person_month.person_year.person.cpr
+                if cpr in benefit.index:
+                    for col in cols_to_update:
+                        setattr(person_month, col, benefit.loc[cpr, col])
+                    person_months_to_update.append(person_month)
+
             PersonMonth.objects.bulk_update(
-                month_qs,
-                fields=[
+                person_months_to_update,
+                [
                     "benefit_paid",
                     "prior_benefit_paid",
                     "actual_year_benefit",
@@ -61,6 +60,7 @@ class Command(BaseCommand):
                 ],
                 batch_size=1000,
             )
+
         self._write_verbose("Done")
 
     def _write_verbose(self, msg, **kwargs):
