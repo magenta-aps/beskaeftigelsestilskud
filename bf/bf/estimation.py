@@ -172,8 +172,6 @@ class EstimationEngine:
                     first_income_month = month_data.month
                     break
 
-            person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
-
             actual_year_sums = {
                 income_type: {
                     month: sum(
@@ -234,6 +232,9 @@ class EstimationEngine:
                         mean_error_percent = None
                         rmse_percent = None
 
+                    person_year = PersonYear.objects.get(
+                        person_id=person_pk, year__year=year
+                    )
                     summary = PersonYearEstimateSummary(
                         person_year=person_year,
                         estimation_engine=engine.__class__.__name__,
