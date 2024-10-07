@@ -63,8 +63,15 @@ def calculate_stability_score(values: list, s=0.4, k=2.5) -> float:
     values: list
         List of monthly income values in [kr]
     """
+    # Calculate average income
+    mean = np.nanmean(values)
+
+    # No income is a stable income
+    if mean == 0:
+        return 1
+
     # Normalize data
-    values_norm = values / np.nanmean(values)
+    values_norm = values / mean
 
     # Calculate variance
     std = np.nanstd(values_norm)
