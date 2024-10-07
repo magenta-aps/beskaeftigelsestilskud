@@ -167,7 +167,7 @@ class EstimationEngine:
             person_pk = subset[0].person_pk
 
             first_income_month = 1
-            for month_data in subset:
+            for month_data in [s for s in subset if s.year == year]:
                 if not month_data.amount.is_zero():
                     first_income_month = month_data.month
                     break
