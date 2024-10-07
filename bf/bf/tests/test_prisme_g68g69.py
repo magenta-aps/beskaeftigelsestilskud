@@ -80,10 +80,9 @@ class TestG68G69TransactionWriter(SimpleTestCase):
         for field in fields:
             if isinstance(field, Posteringshenvisning):
                 # Find "Udbetalingshenvisning" (field 117, 18 digits) in G69
-                match = re.match(r".*&117(?P<val>\d{18}).*", pair.g69)
-                if match is not None:
+                udbetalingshenvisning = self._get_g69_floating_field(pair.g69, 117, 18)
+                if udbetalingshenvisning is not None:
                     posteringshenvisning = field.val
-                    udbetalingshenvisning = match.group("val")
                     self.assertEqual(posteringshenvisning, udbetalingshenvisning)
                     break
         else:  # loop fell through without finding a match
@@ -91,3 +90,19 @@ class TestG68G69TransactionWriter(SimpleTestCase):
                 f"G68 `Posteringshenvisning` {posteringshenvisning} does not match "
                 f"G69 `Udbetalingshenvisning` {udbetalingshenvisning}"
             )
+
+        # Assert that G69 is a debit with positive sign
+        # Find "Debit/kredit" (field 113, 1 character) in G69
+        debit_or_credit = self._get_g69_floating_field(pair.g69, 113, 1)
+        self.assertEqual(debit_or_credit, "D")
+        # Find "Beløb" (field 112, 13 digits) in G69
+        amount = self._get_g69_floating_field(pair.g69, 112, 13)
+        self.assertGreaterEqual(int(amount), 0)
+
+    def _get_g69_floating_field(
+        self, g69: str, field_id: int, length: int
+    ) -> str | None:
+        # Find floating field with number `field_id` and length `length` in G69
+        match = re.match(rf".*&{field_id}(?P<val>.{{{length}}}).*", g69)
+        if match is not None:
+            return match.group("val")

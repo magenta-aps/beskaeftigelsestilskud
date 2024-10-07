@@ -76,7 +76,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
             eks_løbenr=self._line_no,
             maskinnr=self.machine_id.val,
             kontonr=123456789,  # TODO: get account number(s)
-            deb_kred="K",
+            deb_kred="D",
             beløb=amount,
             post_dato=posting_date,
         )
