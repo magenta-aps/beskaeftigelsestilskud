@@ -12,6 +12,7 @@ from common.utils import (
     get_income_as_dataframe,
     get_income_estimates_df,
     get_payout_df,
+    get_people_in_quarantaine,
     map_between_zero_and_one,
     to_dataframe,
 )
@@ -129,7 +130,7 @@ class TestStabilityScoreUtils(TestCase):
         self.assertLess(df.loc[self.person.cpr, "B"], 0.2)
 
 
-class CalculateBenefitTest(TestCase):
+class BaseTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
@@ -180,6 +181,8 @@ class CalculateBenefitTest(TestCase):
                     month=month_number,
                     import_date=date.today(),
                     benefit_paid=1050,
+                    prior_benefit_paid=1050 * (month_number - 1),
+                    actual_year_benefit=1050 * 12,
                 )
                 a_income = MonthlyAIncomeReport.objects.create(
                     employer=cls.employer,
@@ -230,6 +233,9 @@ class CalculateBenefitTest(TestCase):
                     engine="TwelveMonthsSummationEngine",
                     income_type=IncomeType.B,
                 )
+
+
+class CalculateBenefitTest(BaseTestCase):
 
     def test_get_income_estimates_df(self):
         df = get_income_estimates_df(12, self.year.year)
@@ -324,3 +330,33 @@ class CalculateBenefitTest(TestCase):
         for month in range(1, 13):
             df = calculate_benefit(month, self.year.year)
             self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
+
+
+class QuarantaineTest(BaseTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        person_month = PersonMonth.objects.get(
+            person_year__year__year=cls.last_year.year,
+            person_year__person__cpr=cls.person1.cpr,
+            month=12,
+        )
+
+        # Simulate that person1 should only have gotten 2kr.
+        # Thus the payout that he actually got is too high
+        person_month.actual_year_benefit = 2
+        person_month.save()
+
+    def test_get_people_in_quarantaine(self):
+        df = get_people_in_quarantaine(
+            self.year.year, [self.person1.cpr, self.person2.cpr]
+        )
+        self.assertTrue(df[self.person1.cpr])
+        self.assertFalse(df[self.person2.cpr])
+
+    def test_in_quarantaine_property(self):
+        person_year_1 = PersonYear.objects.get(year=self.year, person=self.person1)
+        person_year_2 = PersonYear.objects.get(year=self.year, person=self.person2)
+        self.assertTrue(person_year_1.in_quarantaine)
+        self.assertFalse(person_year_2.in_quarantaine)

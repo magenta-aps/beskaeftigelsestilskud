@@ -36,6 +36,9 @@ AUTH_USER_MODEL = "common.User"
 # than this amount, reuse prior benefit
 CALCULATION_STICKY_THRESHOLD = Decimal("0.05")
 CALCULATION_TRIVIAL_LIMIT = Decimal(os.environ.get("CALCULATION_TRIVIAL_LIMIT", "150"))
+CALCULATION_QUARANTAINE_LIMIT = Decimal(
+    os.environ.get("CALCULATION_QUARANTAINE_LIMIT", "100")
+)
 
 
 class XMLFilter(logging.Filter):
