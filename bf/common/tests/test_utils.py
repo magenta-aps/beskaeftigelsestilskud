@@ -93,6 +93,7 @@ class TestStabilityScoreUtils(TestCase):
             calculate_stability_score(self.reasonably_stable_income), 0.2
         )
         self.assertLess(calculate_stability_score(self.reasonably_stable_income), 0.8)
+        self.assertEqual(calculate_stability_score([0, 0, 0, 0]), 1)
 
     def test_to_dataframe(self):
         qs = MonthlyAIncomeReport.objects.all()
