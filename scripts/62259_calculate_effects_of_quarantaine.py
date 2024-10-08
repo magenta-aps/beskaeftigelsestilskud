@@ -16,7 +16,7 @@ plt.close("all")
 functions.pltdefaults()
 
 output_folder = (
-    os.environ["HOME"] + "/Pictures/plots/62259_payout_error_with_quarantaine"
+    os.environ["HOME"] + "/Pictures/plots/62259_payout_error_with_quarantine"
 )
 functions.makedir(output_folder)
 
@@ -80,7 +80,7 @@ plt.savefig(output_folder + "/estimated_vs_real_salary")
 
 # %% Calculate payout month-for-month
 years = df_annual.columns
-for quarantaine_amount in [0, 100, 500]:
+for quarantine_amount in [0, 100, 500]:
     df_payout, df_correct_payout = functions.calculate_payout(
         df_estimates,
         df_annual,
@@ -94,22 +94,20 @@ for quarantaine_amount in [0, 100, 500]:
         cols = [c for c in df_errors.columns if year in c]
         df_errors_annual[year] = df_errors.loc[:, cols].mean(axis=1)
 
-    number_of_people_in_quarantaine = 0
+    number_of_people_in_quarantine = 0
 
-    if quarantaine_amount:
+    if quarantine_amount:
         for year in years:
             if year > years[0]:
-                I_quarantaine = (
-                    df_errors_annual[str(int(year) - 1)] > quarantaine_amount
-                )
+                I_quarantine = df_errors_annual[str(int(year) - 1)] > quarantine_amount
 
-                # When a citizen is in quarantaine we always pay out correctly
+                # When a citizen is in quarantine we always pay out correctly
                 # Because the payout does not come before december
-                df_errors_annual.loc[I_quarantaine, year] = 0
-                number_of_people_in_quarantaine += sum(I_quarantaine)
+                df_errors_annual.loc[I_quarantine, year] = 0
+                number_of_people_in_quarantine += sum(I_quarantine)
 
-    number_of_people_in_quarantaine_p = (
-        number_of_people_in_quarantaine / (len(years) - 1) / len(df) * 100
+    number_of_people_in_quarantine_p = (
+        number_of_people_in_quarantine / (len(years) - 1) / len(df) * 100
     )
 
     plt.figure()
@@ -118,14 +116,14 @@ for quarantaine_amount in [0, 100, 500]:
     plt.xlabel("Mean payout error [kr]")
     plt.ylabel("Amount of people")
     plt.title(
-        "quarantaine_amount = %dkr\nNumber of people in quarantaine: %d (%.1f%%)"
+        "quarantine_amount = %dkr\nNumber of people in quarantine: %d (%.1f%%)"
         % (
-            quarantaine_amount,
-            number_of_people_in_quarantaine,
-            number_of_people_in_quarantaine_p,
+            quarantine_amount,
+            number_of_people_in_quarantine,
+            number_of_people_in_quarantine_p,
         )
     )
-    plt.savefig(output_folder + f"/error_hist_quarantaine_{quarantaine_amount}_kr")
+    plt.savefig(output_folder + f"/error_hist_quarantine_{quarantine_amount}_kr")
 
     tolerances = list(np.arange(0, 1000, 1))
     total_people = [
@@ -140,7 +138,7 @@ for quarantaine_amount in [0, 100, 500]:
 
     plt.figure()
     plt.plot(
-        tolerances, total_people, label="quarantaine_amount = %d" % quarantaine_amount
+        tolerances, total_people, label="quarantine_amount = %d" % quarantine_amount
     )
     plt.ylabel("Amount of people\nfor whom we payout correctly")
     plt.xlabel("Tolerance [kr]")
@@ -167,9 +165,7 @@ for quarantaine_amount in [0, 100, 500]:
     plt.xlim(0, max(tolerances))
     plt.ylim(40, max(total_people) * 1.2)
     plt.legend()
-    plt.savefig(
-        output_folder + f"/error_percentage_quarantaine_{quarantaine_amount}_kr"
-    )
+    plt.savefig(output_folder + f"/error_percentage_quarantine_{quarantine_amount}_kr")
 
 # %% Conclusion
 # We get 3.72% better at paying out if we put people in quaraintaine when we overpay
@@ -178,8 +174,8 @@ for quarantaine_amount in [0, 100, 500]:
 # That also means that 3.72% of the population will need to wait for their payout until
 # December
 #
-# When we quarantaine people when overpaying by 500kr we only affect 0.27% of the
+# When we quarantine people when overpaying by 500kr we only affect 0.27% of the
 # population, but we also only get 0.27% better at paying out...
 #
-# With a 100kr-quarantaine rule about 10% of the population is in quaraintaine.
-# With a 500kr-quarantaine rule about 0.6% of the population is in quaraintaine.
+# With a 100kr-quarantine rule about 10% of the population is in quaraintaine.
+# With a 500kr-quarantine rule about 0.6% of the population is in quaraintaine.

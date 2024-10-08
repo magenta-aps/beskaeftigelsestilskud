@@ -212,10 +212,10 @@ class PersonYear(models.Model):
         return f"{self.person} ({self.year})"
 
     @property
-    def in_quarantaine(self) -> bool:
-        from common.utils import get_people_in_quarantaine
+    def in_quarantine(self) -> bool:
+        from common.utils import get_people_in_quarantine
 
-        df = get_people_in_quarantaine(self.year.year, [self.person.cpr])
+        df = get_people_in_quarantine(self.year.year, [self.person.cpr])
         return df[self.person.cpr]
 
     @property
