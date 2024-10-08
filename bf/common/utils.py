@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from django.conf import settings
 from django.db.models import QuerySet
+from django.utils.translation import gettext_lazy as _
 from more_itertools import one
 
 from bf.estimation import EstimationEngine, SameAsLastMonthEngine
@@ -105,7 +106,7 @@ def to_dataframe(qs: QuerySet, index: str, dtypes: dict) -> pd.DataFrame:
     return df.rename({c: c.split("__")[-1] for c in columns}, axis=1)
 
 
-def get_income_as_dataframe(year: int) -> pd.DataFrame:
+def get_income_as_dataframe(year: int, cpr_numbers: list = []) -> dict:
     """
     Loads income for an entire year
 
@@ -122,6 +123,10 @@ def get_income_as_dataframe(year: int) -> pd.DataFrame:
     """
     a_income_qs = MonthlyAIncomeReport.objects.filter(year=year)
     b_income_qs = MonthlyBIncomeReport.objects.filter(year=year)
+
+    if cpr_numbers:
+        a_income_qs = a_income_qs.filter(person__cpr__in=cpr_numbers)
+        b_income_qs = b_income_qs.filter(person__cpr__in=cpr_numbers)
 
     output_dict = {}
     for qs, income_type in zip([a_income_qs, b_income_qs], IncomeType):
@@ -299,6 +304,70 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
     )
 
 
+def get_calculate_benefit_func(year):
+    try:
+        calculation_method = Year.objects.get(year=year).calculation_method
+        return calculation_method.calculate_float  # type: ignore
+    except Year.DoesNotExist:
+        return None
+
+
+def get_people_who_might_earn_too_much_or_little(
+    year: int, cpr_numbers: list = []
+) -> pd.DataFrame:
+    """
+    Return people who are on the edge of earning too much or too little
+
+    Parameters
+    --------------
+    year : int
+        Year to return people for
+    cpr_numbers : list
+        CPR numbers of people to return
+
+    Returns
+    -----------
+    Dataframe indexed by cpr-number with the following columns:
+        - earns_too_little: True if the person earns too little. False otherwise
+        - earns_too_much: True if the person earns too much. False otherwise
+
+
+    Notes
+    ------------
+    - A person earns too much if he earns so much that he is not eligible for payout
+    - A person earns too little if he earns so little that he is not eligible for payout
+    """
+    year_dict = {y.year: y for y in Year.objects.all()}
+    year_key = min(year_dict.keys(), key=lambda x: abs(x - year))
+    calculation_method = year_dict[year_key].calculation_method
+
+    calculate_benefit_func = calculation_method.calculate_float
+
+    max_annual_income = calculation_method.max_annual_income
+    min_annual_income = calculation_method.min_annual_income
+
+    income = get_income_as_dataframe(year, cpr_numbers=list(cpr_numbers))
+    a_income = income[IncomeType.A]
+    b_income = income[IncomeType.B]
+    df_income = a_income.add(b_income, fill_value=0)
+
+    df = pd.DataFrame()
+
+    df["std_val"] = df_income.std(axis=1).fillna(0)
+    df["annual_income"] = df_income.sum(axis=1)
+    df["upper"] = df.annual_income + df.std_val
+    df["lower"] = df.annual_income - df.std_val
+
+    df["earns_too_little"] = df.lower.map(calculate_benefit_func) == 0 & (
+        df.lower <= min_annual_income
+    )
+    df["earns_too_much"] = (df.upper.map(calculate_benefit_func) == 0) & (
+        df.upper >= max_annual_income
+    )
+
+    return df
+
+
 def get_people_in_quarantine(year: int, cpr_numbers: Iterable) -> pd.DataFrame:
     """
     Return people who are in quarantine
@@ -339,9 +408,30 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable) -> pd.DataFrame:
 
     df["total_benefit_paid"] = df.prior_benefit_paid + df.benefit_paid
     df["error"] = df.total_benefit_paid - df.actual_year_benefit
-    df["in_quarantine"] = df.error.fillna(0) > quarantine_limit
+    df["wrong_payout"] = df.error.fillna(0) > quarantine_limit
 
-    return df.reindex(cpr_numbers, fill_value=False).in_quarantine
+    df_p = get_people_who_might_earn_too_much_or_little(year - 1, list(cpr_numbers))
+    df_p = df_p.reindex(df.index)
+
+    df["in_quarantine"] = df.wrong_payout | df_p.earns_too_little | df_p.earns_too_much
+
+    df["quarantine_reason"] = "-"
+    df.loc[df.wrong_payout, "quarantine_reason"] = str(
+        _("Modtog for meget tilskud i {year}".format(year=year - 1))
+    )
+
+    df.loc[df_p.earns_too_little, "quarantine_reason"] = str(
+        _("Tjente for tæt på bundgrænsen i {year}".format(year=year - 1))
+    )
+    df.loc[df_p.earns_too_much, "quarantine_reason"] = str(
+        _("Tjente for tæt på øverste grænse i {year}".format(year=year - 1))
+    )
+
+    df = df.reindex(cpr_numbers)
+    df["quarantine_reason"] = df.quarantine_reason.fillna("-")
+    df["in_quarantine"] = df.in_quarantine.astype(bool).fillna(False)
+
+    return df
 
 
 def calculate_benefit(
@@ -379,8 +469,7 @@ def calculate_benefit(
     trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
     treshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
     enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
-    calculation_method = Year.objects.get(year=year).calculation_method
-    calculate_benefit_func = calculation_method.calculate_float  # type: ignore
+    calculate_benefit_func = get_calculate_benefit_func(year)
     benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]
 
     # Get income estimates for THIS month
@@ -429,7 +518,8 @@ def calculate_benefit(
 
         # If you are in quarantaine you get nothing (unless it's December)
         if enforce_quarantine:
-            df.loc[get_people_in_quarantine(year, df.index), "benefit_this_month"] = 0
+            in_quarantine = get_people_in_quarantine(year, df.index).in_quarantine
+            df.loc[in_quarantine, "benefit_this_month"] = 0
 
     df["benefit_paid"] = df.benefit_this_month
     return df

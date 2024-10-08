@@ -220,6 +220,12 @@ class TestStandardWorkBenefitCalculationMethod(ModelTest):
         self.assertEqual(self.calc.calculate(Decimal("750000")), Decimal(0))
         self.assertEqual(self.calc.calculate(Decimal("1000000")), Decimal(0))
 
+    def test_max_annual_income(self):
+        self.assertEqual(self.calc.max_annual_income, 500_000)
+
+    def test_min_annual_income(self):
+        self.assertEqual(self.calc.min_annual_income, 68_000)
+
 
 pitu_client_mock = MagicMock()
 pitu_client_mock.get_person_info.return_value = {"civilstand": "G", "stedkode": "001"}

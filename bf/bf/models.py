@@ -77,6 +77,14 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
     def scaledown_rate(self) -> Decimal:
         return self.scaledown_rate_percent * Decimal("0.01")
 
+    @cached_property
+    def max_annual_income(self) -> Decimal:
+        return self.max_benefit / self.scaledown_rate + self.scaledown_ceiling
+
+    @cached_property
+    def min_annual_income(self) -> Decimal:
+        return self.personal_allowance + self.standard_allowance
+
     scaledown_ceiling = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -211,12 +219,19 @@ class PersonYear(models.Model):
     def __str__(self):
         return f"{self.person} ({self.year})"
 
-    @property
-    def in_quarantine(self) -> bool:
+    @cached_property
+    def quarantine_df(self):
         from common.utils import get_people_in_quarantine
 
-        df = get_people_in_quarantine(self.year.year, [self.person.cpr])
-        return df[self.person.cpr]
+        return get_people_in_quarantine(self.year.year, [self.person.cpr])
+
+    @property
+    def in_quarantine(self) -> bool:
+        return self.quarantine_df.loc[self.person.cpr, "in_quarantine"]
+
+    @property
+    def quarantine_reason(self) -> bool:
+        return self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
 
     @property
     def amount_sum(self) -> Decimal:
