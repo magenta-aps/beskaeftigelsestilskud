@@ -7,11 +7,10 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import date
 from decimal import Decimal
-from io import TextIOWrapper
-from typing import List
+from io import StringIO, TextIOWrapper
+from typing import Dict, List, TextIO, Type
 
 from django.core.exceptions import ValidationError
-from django.core.management.base import OutputWrapper
 from django.db import transaction
 
 from bf.models import (
@@ -45,10 +44,10 @@ class IndkomstCSVFileLine:
     sum: int
 
     @classmethod
-    def from_csv_row(cls, row):
+    def from_csv_row(cls, row: List[str]):
         if len(row) > 3:
             return cls(
-                cpr=int(list_get(row, 0)),
+                cpr=list_get(row, 0),
                 arbejdsgiver=list_get(row, 1),
                 cvr=int(list_get(row, 2)),
                 a_amounts=cls._get_columns(row, 3, 3 + 12),
@@ -111,7 +110,7 @@ class IndkomstCSVFileLine:
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["IndkomstCSVFileLine"], out
+        cls, year: int, rows: List["IndkomstCSVFileLine"], out: TextIO
     ):
         with transaction.atomic():
             # Create or update Year object
@@ -248,10 +247,10 @@ class AssessmentCVRFileLine:
                 raise ValidationError(f"Expected '{label}' in header at position {i}")
 
     @classmethod
-    def from_csv_row(cls, row):
+    def from_csv_row(cls, row: List[str]):
         if len(row) > 3:
             return cls(
-                cpr=int(list_get(row, 0)),
+                cpr=list_get(row, 0),
                 renteindtægter=list_get(row, 1),
                 uddannelsesstøtte=list_get(row, 2),
                 honorarer=list_get(row, 3),
@@ -265,7 +264,7 @@ class AssessmentCVRFileLine:
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["AssessmentCVRFileLine"], out: OutputWrapper
+        cls, year: int, rows: List["AssessmentCVRFileLine"], out: TextIO
     ):
         with transaction.atomic():
             year_obj, _ = Year.objects.get_or_create(year=year)
@@ -309,22 +308,22 @@ class AssessmentCVRFileLine:
             out.write(f"Created {len(assessments)} PersonYearAssessment objects")
 
 
-type_map = {
+type_map: Dict[str, Type[IndkomstCSVFileLine | AssessmentCVRFileLine]] = {
     "income": IndkomstCSVFileLine,
     "assessment": AssessmentCVRFileLine,
 }
 
 
 def load_csv(
-    input: TextIOWrapper,
+    input: TextIOWrapper | StringIO,
     year: int,
     data_type: str,
     count: int,
     delimiter: str = ",",
     dry: bool = True,
-    stdout: TextIOWrapper | None = None,
+    stdout: TextIO | None = None,
 ):
-    data_class = type_map[data_type]
+    data_class: Type[IndkomstCSVFileLine | AssessmentCVRFileLine] = type_map[data_type]
     if stdout is None:
         stdout = sys.stdout
 
@@ -342,6 +341,7 @@ def load_csv(
 
     if dry:
         for row in rows:
-            print(row)
+            stdout.write(str(row))
+            stdout.write("\n")
     else:
         data_class.create_or_update_objects(year, rows, stdout)
