@@ -12,7 +12,7 @@ from common.utils import (
     get_income_as_dataframe,
     get_income_estimates_df,
     get_payout_df,
-    get_people_in_quarantaine,
+    get_people_in_quarantine,
     map_between_zero_and_one,
     to_dataframe,
 )
@@ -332,7 +332,7 @@ class CalculateBenefitTest(BaseTestCase):
             self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
 
 
-class QuarantaineTest(BaseTestCase):
+class QuarantineTest(BaseTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -348,15 +348,15 @@ class QuarantaineTest(BaseTestCase):
         person_month.actual_year_benefit = 2
         person_month.save()
 
-    def test_get_people_in_quarantaine(self):
-        df = get_people_in_quarantaine(
+    def test_get_people_in_quarantine(self):
+        df = get_people_in_quarantine(
             self.year.year, [self.person1.cpr, self.person2.cpr]
         )
         self.assertTrue(df[self.person1.cpr])
         self.assertFalse(df[self.person2.cpr])
 
-    def test_in_quarantaine_property(self):
+    def test_in_quarantine_property(self):
         person_year_1 = PersonYear.objects.get(year=self.year, person=self.person1)
         person_year_2 = PersonYear.objects.get(year=self.year, person=self.person2)
-        self.assertTrue(person_year_1.in_quarantaine)
-        self.assertFalse(person_year_2.in_quarantaine)
+        self.assertTrue(person_year_1.in_quarantine)
+        self.assertFalse(person_year_2.in_quarantine)

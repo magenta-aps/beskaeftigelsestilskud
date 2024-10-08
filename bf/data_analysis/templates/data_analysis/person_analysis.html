@@ -34,7 +34,7 @@
             {% for person_year in person_years %}
             <tr>
                 <th>{{ person_year.year.year }}</th>
-                <td>{{ person_year.in_quarantaine|yesno }}</td>
+                <td>{{ person_year.in_quarantine|yesno }}</td>
                 <td>{{ person_year.stability_score_a|default_if_none:"-" }}</td>
                 <td>{{ person_year.stability_score_b|default_if_none:"-" }}</td>
                 <td>{{ person_year.preferred_estimation_engine_a }}</td>
