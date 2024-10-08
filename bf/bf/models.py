@@ -212,6 +212,13 @@ class PersonYear(models.Model):
         return f"{self.person} ({self.year})"
 
     @property
+    def in_quarantaine(self) -> bool:
+        from common.utils import get_people_in_quarantaine
+
+        df = get_people_in_quarantaine(self.year.year, [self.person.cpr])
+        return df[self.person.cpr]
+
+    @property
     def amount_sum(self) -> Decimal:
         return self.amount_sum_by_type(None)
 

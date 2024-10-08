@@ -5,6 +5,8 @@ from typing import Any
 from urllib.parse import urlencode
 
 from django.template.defaultfilters import register
+from django.utils.translation import gettext_lazy as _
+from django_stubs_ext import StrPromise
 from project.util import params_no_none
 
 
@@ -43,3 +45,8 @@ def get(item: Any, attribute: str | int):
             return item[attribute]
         except (KeyError, TypeError, IndexError):
             pass
+
+
+@register.filter
+def yesno(boolean: bool) -> StrPromise:
+    return _("Ja") if boolean else _("Nej")

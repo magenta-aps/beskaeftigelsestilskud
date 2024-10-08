@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from typing import Iterable
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import numpy as np
@@ -298,6 +299,51 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
     )
 
 
+def get_people_in_quarantaine(year: int, cpr_numbers: Iterable) -> pd.DataFrame:
+    """
+    Return people who are in quarantaine
+
+    Parameters
+    ------------
+    year : int
+        Year to return people who are inquarantaine for
+    cpr_numbers : list
+        CPR numbers to get quarantaine status for
+
+    Returns
+    ----------
+    df : DataFrame
+        Dataframe with one column: "in_quarantaine" which is True/False. Indexed by
+        CPR number
+
+    Notes
+    -------
+    People who are in quarantaine get all their money paid out in December. They
+    get nothing in Jan-Nov.
+    """
+    quarantaine_limit = settings.CALCULATION_QUARANTAINE_LIMIT  # type: ignore
+    qs = PersonMonth.objects.filter(
+        month=12,
+        person_year__year__year=year - 1,
+        person_year__person__cpr__in=cpr_numbers,
+    )
+    df = to_dataframe(
+        qs,
+        index="person_year__person__cpr",
+        dtypes={
+            "actual_year_benefit": float,
+            "prior_benefit_paid": float,
+            "benefit_paid": float,
+        },
+    )
+
+    df["total_benefit_paid"] = df.prior_benefit_paid + df.benefit_paid
+    df["error"] = df.total_benefit_paid - df.actual_year_benefit
+    df["in_quarantaine"] = df.error.fillna(0) > quarantaine_limit
+
+    return df.reindex(cpr_numbers, fill_value=False).in_quarantaine
+
+
 def calculate_benefit(
     month: int,
     year: int,
@@ -379,6 +425,9 @@ def calculate_benefit(
         df.loc[small_diffs, "benefit_this_month"] = df.loc[
             small_diffs, "benefit_last_month"
         ]
+
+        # If you are in quarantaine you get nothing (unless it's December)
+        df.loc[get_people_in_quarantaine(year, df.index), "benefit_this_month"] = 0
 
     df["benefit_paid"] = df.benefit_this_month
     return df
