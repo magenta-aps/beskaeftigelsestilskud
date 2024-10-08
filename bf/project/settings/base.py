@@ -40,6 +40,10 @@ CALCULATION_QUARANTINE_LIMIT = Decimal(
     os.environ.get("CALCULATION_QUARANTINE_LIMIT", "100")
 )
 
+# If True, allow putting people in quarantine so they get their money in December
+# rather than throughout the year
+ENFORCE_QUARANTINE = bool(strtobool(os.environ.get("ENFORCE_QUARANTINE", "True")))
+
 
 class XMLFilter(logging.Filter):
     def filter(self, record):

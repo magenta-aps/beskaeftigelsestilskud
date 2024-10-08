@@ -378,6 +378,7 @@ def calculate_benefit(
     """
     trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
     treshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
+    enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
     calculation_method = Year.objects.get(year=year).calculation_method
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
     benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]
@@ -426,8 +427,9 @@ def calculate_benefit(
             small_diffs, "benefit_last_month"
         ]
 
-        # If you are in quarantine you get nothing (unless it's December)
-        df.loc[get_people_in_quarantine(year, df.index), "benefit_this_month"] = 0
+        # If you are in quarantaine you get nothing (unless it's December)
+        if enforce_quarantine:
+            df.loc[get_people_in_quarantine(year, df.index), "benefit_this_month"] = 0
 
     df["benefit_paid"] = df.benefit_this_month
     return df
