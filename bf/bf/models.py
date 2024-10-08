@@ -211,12 +211,19 @@ class PersonYear(models.Model):
     def __str__(self):
         return f"{self.person} ({self.year})"
 
-    @property
-    def in_quarantine(self) -> bool:
+    @cached_property
+    def quarantine_df(self):
         from common.utils import get_people_in_quarantine
 
-        df = get_people_in_quarantine(self.year.year, [self.person.cpr])
-        return df[self.person.cpr]
+        return get_people_in_quarantine(self.year.year, [self.person.cpr])
+
+    @property
+    def in_quarantine(self) -> bool:
+        return self.quarantine_df.loc[self.person.cpr, "in_quarantine"]
+
+    @property
+    def quarantine_reason(self) -> bool:
+        return self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
 
     @property
     def amount_sum(self) -> Decimal:
