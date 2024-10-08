@@ -17,9 +17,10 @@ RUN mkdir /app && \
     useradd -u 75180 --no-log-init -r -g bf -G certificate_exporter bf && \
     chown -R bf:bf /static && \
     chown -R bf:bf /var/cache/bf && \
-    chmod a+w /var/cache/bf && \
-    # supercronic
-    curl -fsSLO "$SUPERCRONIC_URL" && \
+    chmod a+w /var/cache/bf
+
+# supercronic
+RUN curl -fsSLO "$SUPERCRONIC_URL" && \
     echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - && \
     chmod +x "$SUPERCRONIC" && \
     mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" && \
@@ -38,10 +39,22 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 ARG COMMIT_TAG
 ENV COMMIT_TAG=${COMMIT_TAG:-HEAD}
 
-USER bf
 COPY ./docker/entrypoint.sh /entrypoint.sh
 COPY --chown=bf:bf ./bf /app
+RUN chown bf:bf /app
+USER bf
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /app
+RUN django-admin compilemessages
+
+# temporary use of dev env to make manage.py work
+COPY --chown=bf:bf ./dev-environment/bf.env bf.env
+# hadolint ignore=SC1091
+RUN set -a && \
+    source bf.env && \
+    set +a && \
+    python manage.py collectstatic --no-input --clear && \
+    rm bf.env
+
 CMD ["gunicorn","-b","0.0.0.0:8000","project.wsgi:application","-w","4","--timeout","120","--error-logfile","-","--capture-output"]
