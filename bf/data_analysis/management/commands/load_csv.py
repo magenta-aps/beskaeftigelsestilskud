@@ -5,9 +5,8 @@
 from cProfile import Profile
 from datetime import date
 
+from data_analysis.load import load_csv, type_map
 from django.core.management.base import BaseCommand
-
-from bf.load import load_csv, type_map
 
 
 class Command(BaseCommand):

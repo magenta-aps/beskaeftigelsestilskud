@@ -6,10 +6,15 @@ from copy import copy
 from decimal import Decimal
 from io import StringIO
 
+from data_analysis.load import (
+    AssessmentCVRFileLine,
+    IndkomstCSVFileLine,
+    list_get,
+    load_csv,
+)
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from bf.load import AssessmentCVRFileLine, IndkomstCSVFileLine, list_get, load_csv
 from bf.models import (
     Employer,
     MonthlyAIncomeReport,
