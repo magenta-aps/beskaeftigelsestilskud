@@ -9,10 +9,8 @@ MAKE_MIGRATIONS=${MAKE_MIGRATIONS:=false}
 MIGRATE=${MIGRATE:=true}
 TEST=${TEST:=false}
 MAKEMESSAGES=${MAKEMESSAGES:=false}
-COMPILEMESSAGES=${COMPILEMESSAGES:=true}
 PULL_IDP_METADATA=${PULL_IDP_METADATA:=false}
 CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
-COLLECT_STATIC=${COLLECT_STATIC:=true}
 LOAD_CALCULATION_METHOD=${LOAD_CALCULATION_METHOD:=true}
 
 python manage.py wait_for_db
@@ -31,11 +29,6 @@ if [ "${CREATE_DUMMY_ADMIN}" = true ]; then
   python manage.py create_user admin admin -S
 fi
 
-if [ "${COLLECT_STATIC}" = true ]; then
-  echo 'collecting static files'
-  python manage.py collectstatic --no-input --clear
-fi
-
 python manage.py createcachetable
 if [ "${PULL_IDP_METADATA,,}" = true ]; then
   echo "Updating metadata"
@@ -51,11 +44,6 @@ if [ "${MAKEMESSAGES,,}" = true ]; then
   echo 'making messages'
   python manage.py makemessages --locale=kl --no-obsolete --add-location file
   python manage.py makemessages --locale=da --no-obsolete --add-location file
-fi
-if [ "${COMPILEMESSAGES,,}" = true ]; then
-  echo 'compiling messages'
-  python manage.py compilemessages --locale=kl
-  python manage.py compilemessages --locale=da
 fi
 if [ "${TEST,,}" = true ]; then
     echo 'running tests'
