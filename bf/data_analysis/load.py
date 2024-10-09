@@ -3,16 +3,15 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import csv
-from cProfile import Profile
+import sys
 from dataclasses import asdict, dataclass
 from datetime import date
 from decimal import Decimal
-from typing import List
+from io import StringIO, TextIOWrapper
+from typing import Dict, List, TextIO, Type
 
 from django.core.exceptions import ValidationError
-from django.core.management.base import BaseCommand, OutputWrapper
 from django.db import transaction
-from django.db.models import Count
 
 from bf.models import (
     Employer,
@@ -45,10 +44,10 @@ class IndkomstCSVFileLine:
     sum: int
 
     @classmethod
-    def from_csv_row(cls, row):
+    def from_csv_row(cls, row: List[str]):
         if len(row) > 3:
             return cls(
-                cpr=int(list_get(row, 0)),
+                cpr=list_get(row, 0),
                 arbejdsgiver=list_get(row, 1),
                 cvr=int(list_get(row, 2)),
                 a_amounts=cls._get_columns(row, 3, 3 + 12),
@@ -111,7 +110,7 @@ class IndkomstCSVFileLine:
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["IndkomstCSVFileLine"], out
+        cls, year: int, rows: List["IndkomstCSVFileLine"], out: TextIO
     ):
         with transaction.atomic():
             # Create or update Year object
@@ -248,10 +247,10 @@ class AssessmentCVRFileLine:
                 raise ValidationError(f"Expected '{label}' in header at position {i}")
 
     @classmethod
-    def from_csv_row(cls, row):
+    def from_csv_row(cls, row: List[str]):
         if len(row) > 3:
             return cls(
-                cpr=int(list_get(row, 0)),
+                cpr=list_get(row, 0),
                 renteindtægter=list_get(row, 1),
                 uddannelsesstøtte=list_get(row, 2),
                 honorarer=list_get(row, 3),
@@ -265,7 +264,7 @@ class AssessmentCVRFileLine:
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["AssessmentCVRFileLine"], out: OutputWrapper
+        cls, year: int, rows: List["AssessmentCVRFileLine"], out: TextIO
     ):
         with transaction.atomic():
             year_obj, _ = Year.objects.get_or_create(year=year)
@@ -309,68 +308,40 @@ class AssessmentCVRFileLine:
             out.write(f"Created {len(assessments)} PersonYearAssessment objects")
 
 
-type_map = {
+type_map: Dict[str, Type[IndkomstCSVFileLine | AssessmentCVRFileLine]] = {
     "income": IndkomstCSVFileLine,
     "assessment": AssessmentCVRFileLine,
 }
 
 
-class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument("file", type=str)
-        parser.add_argument("type", type=str)
-        parser.add_argument("year", type=int)
-        parser.add_argument("--count", type=int)
-        parser.add_argument("--delimiter", type=str, default=",")
-        parser.add_argument("--dry", action="store_true")
-        parser.add_argument("--profile", action="store_true", default=False)
-        parser.add_argument("--show-multiyear-pks", type=int)
+def load_csv(
+    input: TextIOWrapper | StringIO,
+    year: int,
+    data_type: str,
+    count: int,
+    delimiter: str = ",",
+    dry: bool = True,
+    stdout: TextIO | None = None,
+):
+    data_class: Type[IndkomstCSVFileLine | AssessmentCVRFileLine] = type_map[data_type]
+    if stdout is None:
+        stdout = sys.stdout
 
-    def _handle(self, *args, **kwargs):
-        with open(kwargs["file"]) as input_stream:
-            self.year = kwargs.get("year") or date.today().year
-            self.data_type = kwargs.get("type") or "income"
-            keys = list(type_map.keys())
-            if self.data_type not in keys:
-                print(f"type skal være enten {', '.join(keys[:-1])} eller {keys[-1]}")
-                return
-            self.data_class = type_map[self.data_type]
-            self.delimiter = kwargs["delimiter"]
-            self.show_multiyear_pks = kwargs["show_multiyear_pks"]
-            if self.show_multiyear_pks is not None and self.show_multiyear_pks < 2:
-                print("show-multiyear-pks skal være over 1")
-                return
-            dry = kwargs["dry"]
-            rows = list(self.read_csv(input_stream, kwargs["count"]))
-            if dry:
-                for row in rows:
-                    print(row)
-            else:
-                self.data_class.create_or_update_objects(self.year, rows, self.stdout)
+    reader = csv.reader(input, delimiter=delimiter)
+    data_class.validate_header_labels(next(reader))
 
-    def read_csv(self, input_stream, count=None):
-        reader = csv.reader(input_stream, delimiter=self.delimiter)
-        self.data_class.validate_header_labels(next(reader))
+    rows = []
+    for i, row in enumerate(reader):
+        if count is not None and i >= count:
+            break
+        # We are not yet at last line in file. Parse it as a regular item
+        line = data_class.from_csv_row(row)
+        if line:
+            rows.append(line)
 
-        for i, row in enumerate(reader):
-            if count is not None and i >= count:
-                break
-            # We are not yet at last line in file. Parse it as a regular item
-            line = self.data_class.from_csv_row(row)
-            if line:
-                yield line
-
-        if self.show_multiyear_pks:
-            print("Person PKs with two years:")
-            for person in Person.objects.annotate(years=Count("personyear")).filter(
-                years__gte=self.show_multiyear_pks
-            ):
-                print(f"    {person.pk}")
-
-    def handle(self, *args, **options):
-        if options.get("profile", False):
-            profiler = Profile()
-            profiler.runcall(self._handle, *args, **options)
-            profiler.print_stats(sort="tottime")
-        else:
-            self._handle(*args, **options)
+    if dry:
+        for row in rows:
+            stdout.write(str(row))
+            stdout.write("\n")
+    else:
+        data_class.create_or_update_objects(year, rows, stdout)
