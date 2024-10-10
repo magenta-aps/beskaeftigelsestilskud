@@ -368,6 +368,10 @@ class PersonMonth(models.Model):
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
 
+    @property
+    def year_month(self) -> date:
+        return date(self.year, self.month, 1)
+
 
 class Employer(models.Model):
     cvr = models.PositiveIntegerField(

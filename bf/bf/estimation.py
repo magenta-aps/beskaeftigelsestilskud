@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
 from typing import Iterable, List, Sequence, Tuple
 
+from dateutil.relativedelta import relativedelta
 from django.db.models import F, Func, OuterRef, QuerySet, Subquery, Sum
 from django.db.models.functions import Coalesce
 from project.util import mean_error, root_mean_sq_error, trim_list_first
@@ -42,8 +44,6 @@ class EstimationEngine:
     def subset_sum(
         cls,
         relevant: Iterable[MonthlyIncomeData],
-        year: int,
-        month: int,
         income_type: IncomeType,
     ) -> Decimal:
         # Add Decimal(0) to shut MyPy up
@@ -52,9 +52,13 @@ class EstimationEngine:
         if income_type == IncomeType.B:
             return Decimal(0) + sum([row.b_amount for row in relevant])
 
-    @staticmethod
-    def classes() -> List[type[EstimationEngine]]:
-        return EstimationEngine.__subclasses__()
+    @classmethod
+    def classes(cls) -> List[type[EstimationEngine]]:
+        all_subclasses = []
+        for subclass in cls.__subclasses__():
+            all_subclasses.append(subclass)
+            all_subclasses.extend(subclass.classes())
+        return all_subclasses
 
     @staticmethod
     def instances() -> List["EstimationEngine"]:
@@ -179,7 +183,7 @@ class EstimationEngine:
                     month: sum(
                         row.a_amount if income_type == "A" else row.b_amount
                         for row in subset
-                        if row.year == year and row.month <= month
+                        if row.year == year and row.year_month <= date(year, month, 1)
                     )
                     for month in range(first_income_month, 13)
                 }
@@ -190,10 +194,11 @@ class EstimationEngine:
                 for income_type in engine.valid_income_types:
                     engine_results = []
                     for month in range(first_income_month, 13):
+                        year_month = date(year, month, 1)
 
                         person_month = None
                         for item in subset:
-                            if item.year == year and item.month == month:
+                            if item.year_month == year_month:
                                 person_month = person_month_map[item.person_month_pk]
                                 break
 
@@ -279,12 +284,10 @@ class InYearExtrapolationEngine(EstimationEngine):
     ) -> IncomeEstimate | None:
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
-        relevant_items = cls.relevant(subset, person_month.year, person_month.month)
+        relevant_items = cls.relevant(subset, person_month.year_month)
         relevant_count = len(relevant_items)
         if relevant_count > 0:
-            amount_sum = cls.subset_sum(
-                relevant_items, person_month.year, person_month.month, income_type
-            )
+            amount_sum = cls.subset_sum(relevant_items, income_type)
             omitted_count = person_month.month - relevant_count
             year_estimate = (12 - omitted_count) * amount_sum / relevant_count
             return IncomeEstimate(
@@ -300,9 +303,13 @@ class InYearExtrapolationEngine(EstimationEngine):
 
     @classmethod
     def relevant(
-        cls, subset: Sequence[MonthlyIncomeData], year: int, month: int
+        cls, subset: Sequence[MonthlyIncomeData], year_month: date
     ) -> Sequence[MonthlyIncomeData]:
-        items = [item for item in subset if item.year == year and item.month <= month]
+        items = [
+            item
+            for item in subset
+            if item.year == year_month.year and item.year_month <= year_month
+        ]
         # Trim off items with no income from the beginning of the list
         items = trim_list_first(items, lambda item: not item.amount.is_zero())
         return items
@@ -312,6 +319,7 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     description = "Summation af beløb for de seneste 12 måneder"
     # Styrker: Stabile indkomster, indkomster der har samme mønster hert år
     # Svagheder: Outliers (store indkomster i enkelte måneder)
+    months = 12
 
     @classmethod
     def estimate(
@@ -320,46 +328,42 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         subset: Sequence[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
-
-        # Do not estimate if there is no data one year back
-        if not [
-            x
-            for x in subset
-            if x.month == person_month.month and x.year == person_month.year - 1
-        ]:
-            # TODO: How can we decide this better?
-            # * of the last 12 months, less than x months contain data?
-            # * the month 12 months ago doesn't contain data,
-            #   and the month before/after it doesn't either?
+        relevant_items = cls.relevant(subset, person_month.year_month)
+        if len(relevant_items) < cls.months:
             return IncomeEstimate(
                 estimated_year_result=Decimal(0),
+                person_month=person_month,
                 engine=cls.__name__,
                 income_type=income_type,
             )
 
-        relevant_items = cls.relevant(subset, person_month.year, person_month.month)
-        year_estimate = cls.subset_sum(
-            relevant_items, person_month.year, person_month.month, income_type
+        year_estimate = cls.subset_sum(relevant_items, income_type) * (
+            12 / Decimal(cls.months)
         )
 
         return IncomeEstimate(
             estimated_year_result=year_estimate,
-            # person_month=person_month,
+            person_month=person_month,
             engine=cls.__name__,
             income_type=income_type,
         )
 
     @classmethod
     def relevant(
-        cls, subset: Sequence[MonthlyIncomeData], year: int, month: int
+        cls, subset: Sequence[MonthlyIncomeData], year_month: date
     ) -> Sequence[MonthlyIncomeData]:
+        min_year_month = year_month - relativedelta(months=cls.months - 1)
         return list(
             filter(
-                lambda item: (item.year == year and item.month <= month)
-                or (item.year == (year - 1) and item.month > month),
+                lambda item: year_month >= item.year_month >= min_year_month,
                 subset,
             )
         )
+
+
+class TwoYearSummationEngine(TwelveMonthsSummationEngine):
+    months = 24
+    description = "Summation af beløb for de seneste 24 måneder"
 
 
 class SameAsLastMonthEngine(EstimationEngine):
@@ -372,10 +376,8 @@ class SameAsLastMonthEngine(EstimationEngine):
         subset: Sequence[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
-        relevant_items = cls.relevant(subset, person_month.year, person_month.month)
-        amount_sum = cls.subset_sum(
-            relevant_items, person_month.year, person_month.month, income_type
-        )
+        relevant_items = cls.relevant(subset, person_month.year_month)
+        amount_sum = cls.subset_sum(relevant_items, income_type)
         year_estimate = int(12 * amount_sum)
         return IncomeEstimate(
             estimated_year_result=year_estimate,
@@ -385,11 +387,13 @@ class SameAsLastMonthEngine(EstimationEngine):
 
     @classmethod
     def relevant(
-        cls, subset: Sequence[MonthlyIncomeData], year: int, month: int
+        cls,
+        subset: Sequence[MonthlyIncomeData],
+        year_month: date,
     ) -> Sequence[MonthlyIncomeData]:
         return list(
             filter(
-                lambda item: (item.year == year and item.month == month),
+                lambda item: item.year_month == year_month,
                 subset,
             )
         )

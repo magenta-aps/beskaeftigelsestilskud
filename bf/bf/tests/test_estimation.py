@@ -15,6 +15,7 @@ from bf.estimation import (
     SameAsLastMonthEngine,
     SelfReportedEngine,
     TwelveMonthsSummationEngine,
+    TwoYearSummationEngine,
 )
 from bf.exceptions import IncomeTypeUnhandledByEngine
 from bf.models import (
@@ -99,6 +100,7 @@ class TestEstimationEngine(TestCase):
             [
                 InYearExtrapolationEngine,
                 TwelveMonthsSummationEngine,
+                TwoYearSummationEngine,
                 SameAsLastMonthEngine,
             ],
         )
@@ -107,6 +109,7 @@ class TestEstimationEngine(TestCase):
             [
                 InYearExtrapolationEngine,
                 TwelveMonthsSummationEngine,
+                TwoYearSummationEngine,
                 SameAsLastMonthEngine,
                 SelfReportedEngine,
             ],
@@ -164,7 +167,7 @@ class TestEstimationEngine(TestCase):
                 Decimal("0.00"),
                 Decimal("0.00"),
                 Decimal("0.00"),
-                Decimal("0.00"),
+                Decimal("10000.00"),
             ],
         )
 
@@ -330,7 +333,7 @@ class TwelveMonthsSummationEngineTest(TestCase):
                 Decimal("0.00"),
                 Decimal("0.00"),
                 Decimal("0.00"),
-                Decimal("0.00"),
+                Decimal("10000.00"),
             ],
             start=1,
         ):
