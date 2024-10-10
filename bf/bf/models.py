@@ -8,7 +8,6 @@ from decimal import Decimal
 from functools import cached_property
 from typing import Sequence
 
-from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -18,11 +17,9 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
-from more_itertools import one
 from simple_history.models import HistoricalRecords
 
 from bf.data import engine_choices
-from bf.exceptions import EstimationEngineUnset
 
 
 class IncomeType(TextChoices):
@@ -101,6 +98,10 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
             ),
             2,
         )
+
+    # Identical to "calculate" but takes a float as an input
+    def calculate_float(self, year_income: float) -> float:
+        return float(self.calculate(Decimal(year_income)))
 
 
 class Year(models.Model):
@@ -366,6 +367,7 @@ class PersonMonth(models.Model):
 
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
+
     @property
     def year_month(self) -> date:
         return date(self.year, self.month, 1)

@@ -183,7 +183,7 @@ class EstimationEngine:
                     month: sum(
                         row.a_amount if income_type == "A" else row.b_amount
                         for row in subset
-                        if row.year_month <= date(year, month, 1)
+                        if row.year == year and row.year_month <= date(year, month, 1)
                     )
                     for month in range(first_income_month, 13)
                 }
