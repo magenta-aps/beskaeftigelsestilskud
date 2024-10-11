@@ -5,7 +5,6 @@
 from copy import copy
 from decimal import Decimal
 from io import StringIO
-from sys import stdout
 
 from data_analysis.load import (
     AssessmentCSVFileLine,
@@ -452,7 +451,7 @@ class LoadFinalSettlementTest(TestCase):
             count=1,
             delimiter=",",
             dry=False,
-            stdout=stdout,
+            stdout=None,
         )
         self.assertEqual(Year.objects.count(), 1)
         year = Year.objects.first()
