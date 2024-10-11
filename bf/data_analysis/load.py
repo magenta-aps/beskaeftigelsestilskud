@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, fields
 from datetime import date
 from decimal import Decimal
 from io import StringIO, TextIOWrapper
-from typing import Dict, List, TextIO, Type
+from typing import Dict, Iterable, List, TextIO, Type
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -33,8 +33,57 @@ def list_get(list, index):
         return None
 
 
+def get_row_value(list, index):
+    value = list_get(list, index)
+    if value == "":
+        return None
+    return value
+
+
+class FileLine:
+
+    @classmethod
+    def create_person_years(
+        cls, year: int, rows: Iterable["FileLine"], out: TextIO
+    ) -> Dict[str, PersonYear] | None:
+
+        # Create or get Year objects
+        if hasattr(cls, "year"):
+            years = {getattr(row, "year") for row in rows}
+            if len(years) > 1 or years.pop() != year:
+                print("Found mismatching year in file")
+                return
+        year_obj, _ = Year.objects.get_or_create(year=year)
+
+        # Create or update Person objects
+        persons = {
+            cpr: Person(cpr=cpr, name=cpr) for cpr in set(row.cpr for row in rows)
+        }
+        Person.objects.bulk_create(
+            persons.values(),
+            update_conflicts=True,
+            update_fields=("cpr", "name"),
+            unique_fields=("cpr",),
+        )
+        out.write(f"Processed {len(persons)} Person objects")
+
+        # Create or update PersonYear objects
+        person_years = {
+            person.cpr: PersonYear(person=person, year=year_obj)
+            for person in persons.values()
+        }
+        PersonYear.objects.bulk_create(
+            person_years.values(),
+            update_conflicts=True,
+            update_fields=("person", "year"),
+            unique_fields=("person", "year"),
+        )
+        out.write(f"Processed {len(person_years)} PersonYear objects")
+        return person_years
+
+
 @dataclass
-class IndkomstCSVFileLine:
+class IndkomstCSVFileLine(FileLine):
     cpr: str
     arbejdsgiver: str
     cvr: int
@@ -115,109 +164,91 @@ class IndkomstCSVFileLine:
     ):
         with transaction.atomic():
             # Create or update Year object
-            year_obj, _ = Year.objects.get_or_create(year=year)
+            person_years = cls.create_person_years(year, rows, out)
+            if person_years:
+                # Create or update Employer objects
+                employers = {
+                    cvr: Employer(cvr=cvr) for cvr in set(row.cvr for row in rows)
+                }
+                Employer.objects.bulk_create(
+                    employers.values(),
+                    update_conflicts=True,
+                    update_fields=("cvr",),
+                    unique_fields=("cvr",),
+                )
+                out.write(f"Processed {len(employers)} Employer objects")
 
-            # Create or update Person objects
-            persons = {
-                cpr: Person(cpr=cpr, name=cpr) for cpr in set(row.cpr for row in rows)
-            }
-            Person.objects.bulk_create(
-                persons.values(),
-                update_conflicts=True,
-                update_fields=("cpr", "name"),
-                unique_fields=("cpr",),
-            )
-            out.write(f"Processed {len(persons)} Person objects")
-
-            # Create or update Employer objects
-            employers = {cvr: Employer(cvr=cvr) for cvr in set(row.cvr for row in rows)}
-            Employer.objects.bulk_create(
-                employers.values(),
-                update_conflicts=True,
-                update_fields=("cvr",),
-                unique_fields=("cvr",),
-            )
-            out.write(f"Processed {len(employers)} Employer objects")
-
-            # Create or update PersonYear objects
-            person_years = [
-                PersonYear(person=person, year=year_obj) for person in persons.values()
-            ]
-            PersonYear.objects.bulk_create(
-                person_years,
-                update_conflicts=True,
-                update_fields=("person", "year"),
-                unique_fields=("person", "year"),
-            )
-            out.write(f"Processed {len(person_years)} PersonYear objects")
-
-            # Create or update PersonMonth objects
-            person_months = {}
-            for person_year in person_years:
-                for month in range(1, 13):
-                    person_month = PersonMonth(
-                        person_year=person_year,
-                        month=month,
-                        import_date=date.today(),
-                        amount_sum=Decimal(0),
-                    )
-                    key = (person_year.person.cpr, month)
-                    person_months[key] = person_month
-            PersonMonth.objects.bulk_create(
-                person_months.values(),
-                update_conflicts=True,
-                update_fields=("import_date",),
-                unique_fields=("person_year", "month"),
-            )
-            out.write(f"Processed {len(person_months)} PersonMonth objects")
-
-            # Create MonthlyAIncomeReport objects
-            # (existing objects for this year will be deleted!)
-            a_income_reports = []
-            for row in rows:
-                for index, amount in enumerate(row.a_amounts):
-                    if amount != 0:
-                        person_month = person_months[(row.cpr, (index % 12) + 1)]
-                        a_income_reports.append(
-                            MonthlyAIncomeReport(
-                                person_month=person_month,
-                                employer=employers[row.cvr],
-                                amount=amount,
-                            )
+                # Create or update PersonMonth objects
+                person_months = {}
+                for person_year in person_years.values():
+                    for month in range(1, 13):
+                        person_month = PersonMonth(
+                            person_year=person_year,
+                            month=month,
+                            import_date=date.today(),
+                            amount_sum=Decimal(0),
                         )
-                        person_month.amount_sum += amount
-                        person_month.save(update_fields=("amount_sum",))
-            MonthlyAIncomeReport.objects.filter(
-                person_month__person_year__year=year
-            ).delete()
-            MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
-            out.write(f"Created {len(a_income_reports)} MonthlyAIncomeReport objects")
+                        key = (person_year.person.cpr, month)
+                        person_months[key] = person_month
+                PersonMonth.objects.bulk_create(
+                    person_months.values(),
+                    update_conflicts=True,
+                    update_fields=("import_date",),
+                    unique_fields=("person_year", "month"),
+                )
+                out.write(f"Processed {len(person_months)} PersonMonth objects")
 
-            # Create MonthlyBIncomeReport objects
-            # (existing objects for this year will be deleted!)
-            b_income_reports = []
-            for row in rows:
-                for index, amount in enumerate(row.b_amounts):
-                    if amount != 0:
-                        person_month = person_months[(row.cpr, (index % 12) + 1)]
-                        b_income_reports.append(
-                            MonthlyBIncomeReport(
-                                person_month=person_month,
-                                trader=employers[row.cvr],
-                                amount=amount,
+                # Create MonthlyAIncomeReport objects
+                # (existing objects for this year will be deleted!)
+                a_income_reports = []
+                for row in rows:
+                    for index, amount in enumerate(row.a_amounts):
+                        if amount != 0:
+                            person_month = person_months[(row.cpr, (index % 12) + 1)]
+                            a_income_reports.append(
+                                MonthlyAIncomeReport(
+                                    person_month=person_month,
+                                    employer=employers[row.cvr],
+                                    amount=amount,
+                                )
                             )
-                        )
-                        person_month.amount_sum += amount
-                        person_month.save(update_fields=("amount_sum",))
-            MonthlyBIncomeReport.objects.filter(
-                person_month__person_year__year=year
-            ).delete()
-            MonthlyBIncomeReport.objects.bulk_create(b_income_reports)
-            out.write(f"Created {len(b_income_reports)} MonthlyBIncomeReport objects")
+                            person_month.amount_sum += amount
+                            person_month.save(update_fields=("amount_sum",))
+                MonthlyAIncomeReport.objects.filter(
+                    person_month__person_year__year=year
+                ).delete()
+                MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
+                out.write(
+                    f"Created {len(a_income_reports)} MonthlyAIncomeReport objects"
+                )
+
+                # Create MonthlyBIncomeReport objects
+                # (existing objects for this year will be deleted!)
+                b_income_reports = []
+                for row in rows:
+                    for index, amount in enumerate(row.b_amounts):
+                        if amount != 0:
+                            person_month = person_months[(row.cpr, (index % 12) + 1)]
+                            b_income_reports.append(
+                                MonthlyBIncomeReport(
+                                    person_month=person_month,
+                                    trader=employers[row.cvr],
+                                    amount=amount,
+                                )
+                            )
+                            person_month.amount_sum += amount
+                            person_month.save(update_fields=("amount_sum",))
+                MonthlyBIncomeReport.objects.filter(
+                    person_month__person_year__year=year
+                ).delete()
+                MonthlyBIncomeReport.objects.bulk_create(b_income_reports)
+                out.write(
+                    f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
+                )
 
 
 @dataclass
-class AssessmentCSVFileLine:
+class AssessmentCSVFileLine(FileLine):
     cpr: str
     renteindtægter: int
     uddannelsesstøtte: int
@@ -262,104 +293,77 @@ class AssessmentCSVFileLine:
         cls, year: int, rows: List["AssessmentCSVFileLine"], out: TextIO
     ):
         with transaction.atomic():
-            year_obj, _ = Year.objects.get_or_create(year=year)
-
-            # Create or update Person objects
-            persons = {
-                cpr: Person(cpr=cpr, name=cpr) for cpr in set(row.cpr for row in rows)
-            }
-            Person.objects.bulk_create(
-                persons.values(),
-                update_conflicts=True,
-                update_fields=("cpr", "name"),
-                unique_fields=("cpr",),
-            )
-            out.write(f"Processed {len(persons)} Person objects")
-
-            # Create or update PersonYear objects
-            person_years = [
-                PersonYear(person=person, year=year_obj) for person in persons.values()
-            ]
-            person_years_by_cpr = {
-                person_year.person.cpr: person_year for person_year in person_years
-            }
-            PersonYear.objects.bulk_create(
-                person_years,
-                update_conflicts=True,
-                update_fields=("person", "year"),
-                unique_fields=("person", "year"),
-            )
-            out.write(f"Processed {len(person_years)} PersonYear objects")
-
-            assessments = []
-            for item in rows:
-                person_year = person_years_by_cpr[item.cpr]
-                model_data = asdict(item)
-                del model_data["cpr"]
-                assessments.append(
-                    PersonYearAssessment(person_year=person_year, **model_data)
-                )
-            PersonYearAssessment.objects.bulk_create(assessments)
-            out.write(f"Created {len(assessments)} PersonYearAssessment objects")
+            person_years = cls.create_person_years(year, rows, out)
+            if person_years:
+                assessments = []
+                for item in rows:
+                    person_year = person_years[item.cpr]
+                    model_data = asdict(item)
+                    del model_data["cpr"]
+                    assessments.append(
+                        PersonYearAssessment(person_year=person_year, **model_data)
+                    )
+                PersonYearAssessment.objects.bulk_create(assessments)
+                out.write(f"Created {len(assessments)} PersonYearAssessment objects")
 
 
 @dataclass
-class FinalCSVFileLine:
+class FinalCSVFileLine(FileLine):
     cpr: str
     skatteår: int
-    lønindkomst: int
-    offentlig_hjælp: int
-    tjenestemandspension: int
-    alderspension: int
-    førtidspension: int
-    arbejdsmarkedsydelse: int
-    udenlandsk_pensionsbidrag: int
-    tilskud_til_udenlandsk_pension: int
-    dis_gis: int
-    anden_indkomst: int
-    renteindtægter_bank: int
-    renteindtægter_obl: int
-    andet_renteindtægt: int
-    uddannelsesstøtte: int
-    plejevederlag: int
-    underholdsbidrag: int
-    udbytte_udenlandske: int
-    udenlandsk_indkomst: int
-    frirejser: int
-    gruppeliv: int
-    lejeindtægter_ved_udlejning: int
-    b_indkomst_andet: int
-    fri_kost: int
-    fri_logi: int
-    fri_bolig: int
-    fri_telefon: int
-    fri_bil: int
-    fri_internet: int
-    fri_båd: int
-    fri_andet: int
-    renteudgift_realkredit: int
-    renteudgift_bank: int
-    renteudgift_esu: int
-    renteudgift_bsu: int
-    renteudgift_andet: int
-    pensionsindbetaling: int
-    omsætning_salg_på_brættet: int
-    indhandling: int
-    ekstraordinære_indtægter: int
-    virksomhedsrenter: int
-    virksomhedsrenter_indtægter: int
-    virksomhedsrenter_udgifter: int
-    skattemæssigt_resultat: int
-    ejerandel_pct: int
-    ejerandel_beløb: int
-    a_indkomst: int
-    b_indkomst: int
-    skattefri_b_indkomst: int
-    netto_b_indkomst: int
-    standard_fradrag: int
-    ligningsmæssig_fradrag: int
-    anvendt_fradrag: int
-    skattepligtig_indkomst: int
+    lønindkomst: int | None
+    offentlig_hjælp: int | None
+    tjenestemandspension: int | None
+    alderspension: int | None
+    førtidspension: int | None
+    arbejdsmarkedsydelse: int | None
+    udenlandsk_pensionsbidrag: int | None
+    tilskud_til_udenlandsk_pension: int | None
+    dis_gis: int | None
+    anden_indkomst: int | None
+    renteindtægter_bank: int | None
+    renteindtægter_obl: int | None
+    andet_renteindtægt: int | None
+    uddannelsesstøtte: int | None
+    plejevederlag: int | None
+    underholdsbidrag: int | None
+    udbytte_udenlandske: int | None
+    udenlandsk_indkomst: int | None
+    frirejser: int | None
+    gruppeliv: int | None
+    lejeindtægter_ved_udlejning: int | None
+    b_indkomst_andet: int | None
+    fri_kost: int | None
+    fri_logi: int | None
+    fri_bolig: int | None
+    fri_telefon: int | None
+    fri_bil: int | None
+    fri_internet: int | None
+    fri_båd: int | None
+    fri_andet: int | None
+    renteudgift_realkredit: int | None
+    renteudgift_bank: int | None
+    renteudgift_esu: int | None
+    renteudgift_bsu: int | None
+    renteudgift_andet: int | None
+    pensionsindbetaling: int | None
+    omsætning_salg_på_brættet: int | None
+    indhandling: int | None
+    ekstraordinære_indtægter: int | None
+    virksomhedsrenter: int | None
+    virksomhedsrenter_indtægter: int | None
+    virksomhedsrenter_udgifter: int | None
+    skattemæssigt_resultat: int | None
+    ejerandel_pct: int | None
+    ejerandel_beløb: int | None
+    a_indkomst: int | None
+    b_indkomst: int | None
+    skattefri_b_indkomst: int | None
+    netto_b_indkomst: int | None
+    standard_fradrag: int | None
+    ligningsmæssig_fradrag: int | None
+    anvendt_fradrag: int | None
+    skattepligtig_indkomst: int | None
 
     @classmethod
     def validate_header_labels(cls, labels: List[str]):
@@ -429,7 +433,7 @@ class FinalCSVFileLine:
         if len(row) > 3:
             return cls(
                 **{
-                    field.name: list_get(row, index)
+                    field.name: get_row_value(row, index)
                     for (index, field) in enumerate(fields(cls))
                 }
             )
@@ -438,53 +442,24 @@ class FinalCSVFileLine:
     def create_or_update_objects(
         cls, year: int, rows: List["FinalCSVFileLine"], out: TextIO
     ):
-        years = set(row.cpr for row in rows)
-        if len(years) > 1 or years.pop() != year:
-            print("Found mismatching year in file")
-            return
-        year_obj, _ = Year.objects.get_or_create(year=year)
-
-        # Create or update Person objects
-        persons = {
-            cpr: Person(cpr=cpr, name=cpr) for cpr in set(row.cpr for row in rows)
-        }
-        Person.objects.bulk_create(
-            persons.values(),
-            update_conflicts=True,
-            update_fields=("cpr", "name"),
-            unique_fields=("cpr",),
-        )
-        out.write(f"Processed {len(persons)} Person objects")
-
-        # Create or update PersonYear objects
-        person_years = [
-            PersonYear(person=person, year=year_obj) for person in persons.values()
-        ]
-        person_years_by_cpr = {
-            person_year.person.cpr: person_year for person_year in person_years
-        }
-        PersonYear.objects.bulk_create(
-            person_years,
-            update_conflicts=True,
-            update_fields=("person", "year"),
-            unique_fields=("person", "year"),
-        )
-        out.write(f"Processed {len(person_years)} PersonYear objects")
-
-        final_statements = []
-        for item in rows:
-            person_year = person_years_by_cpr[item.cpr]
-            model_data = asdict(item)
-            del model_data["cpr"]
-            del model_data["skatteår"]
-            final_statements.append(
-                FinalStatement(person_year=person_year, **model_data)
-            )
-        PersonYearAssessment.objects.bulk_create(final_statements)
-        out.write(f"Created {len(final_statements)} FinalStatement objects")
+        person_years = cls.create_person_years(year, rows, out)
+        if person_years:
+            final_statements = []
+            for item in rows:
+                person_year = person_years[item.cpr]
+                model_data = asdict(item)
+                del model_data["cpr"]
+                del model_data["skatteår"]
+                final_statements.append(
+                    FinalStatement(person_year=person_year, **model_data)
+                )
+            FinalStatement.objects.bulk_create(final_statements)
+            out.write(f"Created {len(final_statements)} FinalStatement objects")
 
 
-type_map: Dict[str, Type[IndkomstCSVFileLine | AssessmentCSVFileLine]] = {
+type_map: Dict[
+    str, Type[IndkomstCSVFileLine | AssessmentCSVFileLine | FinalCSVFileLine]
+] = {
     "income": IndkomstCSVFileLine,
     "assessment": AssessmentCSVFileLine,
     "final_settlement": FinalCSVFileLine,
