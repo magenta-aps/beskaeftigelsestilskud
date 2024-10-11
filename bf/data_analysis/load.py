@@ -15,7 +15,7 @@ from django.db import transaction
 
 from bf.models import (
     Employer,
-    FinalStatement,
+    FinalSettlement,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
@@ -26,21 +26,21 @@ from bf.models import (
 )
 
 
-def list_get(list, index):
-    try:
-        return list[index]
-    except IndexError:
-        return None
-
-
-def get_row_value(list, index):
-    value = list_get(list, index)
-    if value == "":
-        return None
-    return value
-
-
 class FileLine:
+
+    @classmethod
+    def list_get(cls, list, index):
+        try:
+            return list[index]
+        except IndexError:
+            return None
+
+    @classmethod
+    def get_value_or_none(cls, list, index):
+        value = cls.list_get(list, index)
+        if value == "":
+            return None
+        return value
 
     @classmethod
     def create_person_years(
@@ -48,10 +48,10 @@ class FileLine:
     ) -> Dict[str, PersonYear] | None:
 
         # Create or get Year objects
-        if hasattr(cls, "year"):
-            years = {getattr(row, "year") for row in rows}
-            if len(years) > 1 or years.pop() != year:
-                print("Found mismatching year in file")
+        if len(rows) > 0 and "skatteår" in {f.name for f in fields(cls)}:
+            years = {getattr(row, "skatteår") for row in rows}
+            if len(years) > 1 or years.pop() != str(year):
+                out.write("Found mismatching year in file")
                 return
         year_obj, _ = Year.objects.get_or_create(year=year)
 
@@ -97,14 +97,14 @@ class IndkomstCSVFileLine(FileLine):
     def from_csv_row(cls, row: List[str]):
         if len(row) > 3:
             return cls(
-                cpr=list_get(row, 0),
-                arbejdsgiver=list_get(row, 1),
-                cvr=int(list_get(row, 2)),
+                cpr=cls.list_get(row, 0),
+                arbejdsgiver=cls.list_get(row, 1),
+                cvr=int(cls.list_get(row, 2)),
                 a_amounts=cls._get_columns(row, 3, 3 + 12),
                 b_amounts=cls._get_columns(row, 3 + 12, 3 + 24),
-                low=list_get(row, 3 + 24),
-                high=list_get(row, 3 + 24 + 1),
-                sum=list_get(row, 3 + 24 + 2),
+                low=cls.list_get(row, 3 + 24),
+                high=cls.list_get(row, 3 + 24 + 1),
+                sum=cls.list_get(row, 3 + 24 + 2),
             )
 
     @staticmethod
@@ -283,7 +283,7 @@ class AssessmentCSVFileLine(FileLine):
         if len(row) > 3:
             return cls(
                 **{
-                    field.name: list_get(row, index)
+                    field.name: cls.list_get(row, index)
                     for (index, field) in enumerate(fields(cls))
                 }
             )
@@ -433,7 +433,7 @@ class FinalCSVFileLine(FileLine):
         if len(row) > 3:
             return cls(
                 **{
-                    field.name: get_row_value(row, index)
+                    field.name: cls.get_value_or_none(row, index)
                     for (index, field) in enumerate(fields(cls))
                 }
             )
@@ -451,9 +451,9 @@ class FinalCSVFileLine(FileLine):
                 del model_data["cpr"]
                 del model_data["skatteår"]
                 final_statements.append(
-                    FinalStatement(person_year=person_year, **model_data)
+                    FinalSettlement(person_year=person_year, **model_data)
                 )
-            FinalStatement.objects.bulk_create(final_statements)
+            FinalSettlement.objects.bulk_create(final_statements)
             out.write(f"Created {len(final_statements)} FinalStatement objects")
 
 

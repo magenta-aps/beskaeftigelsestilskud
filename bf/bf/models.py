@@ -722,7 +722,7 @@ class PersonYearAssessment(models.Model):
     )
 
 
-class FinalStatement(models.Model):
+class FinalSettlement(models.Model):
 
     person_year = models.ForeignKey(
         PersonYear, on_delete=models.CASCADE, related_name="final_statements"
