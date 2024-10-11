@@ -4,11 +4,12 @@
 
 import csv
 import sys
+from collections.abc import Collection
 from dataclasses import asdict, dataclass, fields
 from datetime import date
 from decimal import Decimal
 from io import StringIO, TextIOWrapper
-from typing import Dict, Iterable, List, TextIO, Type
+from typing import Dict, List, TextIO, Type
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -26,7 +27,10 @@ from bf.models import (
 )
 
 
+@dataclass
 class FileLine:
+
+    cpr: str
 
     @classmethod
     def list_get(cls, list, index):
@@ -44,7 +48,7 @@ class FileLine:
 
     @classmethod
     def create_person_years(
-        cls, year: int, rows: Iterable["FileLine"], out: TextIO
+        cls, year: int, rows: Collection["FileLine"], out: TextIO
     ) -> Dict[str, PersonYear] | None:
 
         # Create or get Year objects
@@ -52,7 +56,7 @@ class FileLine:
             years = {getattr(row, "skatteår") for row in rows}
             if len(years) > 1 or years.pop() != str(year):
                 out.write("Found mismatching year in file")
-                return
+                return None
         year_obj, _ = Year.objects.get_or_create(year=year)
 
         # Create or update Person objects
@@ -84,7 +88,6 @@ class FileLine:
 
 @dataclass
 class IndkomstCSVFileLine(FileLine):
-    cpr: str
     arbejdsgiver: str
     cvr: int
     a_amounts: List[int]
@@ -249,7 +252,6 @@ class IndkomstCSVFileLine(FileLine):
 
 @dataclass
 class AssessmentCSVFileLine(FileLine):
-    cpr: str
     renteindtægter: int
     uddannelsesstøtte: int
     honorarer: int
@@ -309,7 +311,6 @@ class AssessmentCSVFileLine(FileLine):
 
 @dataclass
 class FinalCSVFileLine(FileLine):
-    cpr: str
     skatteår: int
     lønindkomst: int | None
     offentlig_hjælp: int | None
