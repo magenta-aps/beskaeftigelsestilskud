@@ -4,7 +4,7 @@
 
 import csv
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from datetime import date
 from decimal import Decimal
 from io import StringIO, TextIOWrapper
@@ -15,6 +15,7 @@ from django.db import transaction
 
 from bf.models import (
     Employer,
+    FinalStatement,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
@@ -216,7 +217,7 @@ class IndkomstCSVFileLine:
 
 
 @dataclass
-class AssessmentCVRFileLine:
+class AssessmentCSVFileLine:
     cpr: str
     renteindtægter: int
     uddannelsesstøtte: int
@@ -250,21 +251,15 @@ class AssessmentCVRFileLine:
     def from_csv_row(cls, row: List[str]):
         if len(row) > 3:
             return cls(
-                cpr=list_get(row, 0),
-                renteindtægter=list_get(row, 1),
-                uddannelsesstøtte=list_get(row, 2),
-                honorarer=list_get(row, 3),
-                underholdsbidrag=list_get(row, 4),
-                andre_b=list_get(row, 5),
-                brutto_b_før_erhvervsvirk_indhandling=list_get(row, 6),
-                erhvervsindtægter_sum=list_get(row, 7),
-                e2_indhandling=list_get(row, 8),
-                brutto_b_indkomst=list_get(row, 9),
+                **{
+                    field.name: list_get(row, index)
+                    for (index, field) in enumerate(fields(cls))
+                }
             )
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["AssessmentCVRFileLine"], out: TextIO
+        cls, year: int, rows: List["AssessmentCSVFileLine"], out: TextIO
     ):
         with transaction.atomic():
             year_obj, _ = Year.objects.get_or_create(year=year)
@@ -308,9 +303,191 @@ class AssessmentCVRFileLine:
             out.write(f"Created {len(assessments)} PersonYearAssessment objects")
 
 
-type_map: Dict[str, Type[IndkomstCSVFileLine | AssessmentCVRFileLine]] = {
+@dataclass
+class FinalCSVFileLine:
+    cpr: str
+    skatteår: int
+    lønindkomst: int
+    offentlig_hjælp: int
+    tjenestemandspension: int
+    alderspension: int
+    førtidspension: int
+    arbejdsmarkedsydelse: int
+    udenlandsk_pensionsbidrag: int
+    tilskud_til_udenlandsk_pension: int
+    dis_gis: int
+    anden_indkomst: int
+    renteindtægter_bank: int
+    renteindtægter_obl: int
+    andet_renteindtægt: int
+    uddannelsesstøtte: int
+    plejevederlag: int
+    underholdsbidrag: int
+    udbytte_udenlandske: int
+    udenlandsk_indkomst: int
+    frirejser: int
+    gruppeliv: int
+    lejeindtægter_ved_udlejning: int
+    b_indkomst_andet: int
+    fri_kost: int
+    fri_logi: int
+    fri_bolig: int
+    fri_telefon: int
+    fri_bil: int
+    fri_internet: int
+    fri_båd: int
+    fri_andet: int
+    renteudgift_realkredit: int
+    renteudgift_bank: int
+    renteudgift_esu: int
+    renteudgift_bsu: int
+    renteudgift_andet: int
+    pensionsindbetaling: int
+    omsætning_salg_på_brættet: int
+    indhandling: int
+    ekstraordinære_indtægter: int
+    virksomhedsrenter: int
+    virksomhedsrenter_indtægter: int
+    virksomhedsrenter_udgifter: int
+    skattemæssigt_resultat: int
+    ejerandel_pct: int
+    ejerandel_beløb: int
+    a_indkomst: int
+    b_indkomst: int
+    skattefri_b_indkomst: int
+    netto_b_indkomst: int
+    standard_fradrag: int
+    ligningsmæssig_fradrag: int
+    anvendt_fradrag: int
+    skattepligtig_indkomst: int
+
+    @classmethod
+    def validate_header_labels(cls, labels: List[str]):
+        expected = (
+            "CPR",
+            "Skatteår",
+            "Lønindkomst",
+            "Offentlig hjælp",
+            "Tjenestemandspension",
+            "Alderspension",
+            "Førtidspension",
+            "Arbejdsmarkedsydelse",
+            "Udenlandsk pensionsbidrag",
+            "Tilskud til udenlandsk pension",
+            "DIS/GIS",
+            "Anden indkomst",
+            "Renteindtægter Bank",
+            "Renteindtægter Obl.",
+            "Andet renteindtægt",
+            "Uddannelsesstøtte",
+            "Plejevederlag",
+            "Underholdsbidrag",
+            "Udbytte udenlandske",
+            "Udenlandsk indkomst",
+            "Frirejser",
+            "Gruppeliv",
+            "Lejeindtægter ved udlejning",
+            "B-indkomst andet",
+            "Fri kost",
+            "Fri logi",
+            "Fri bolig",
+            "Fri telefon",
+            "Fri bil",
+            "Fri internet",
+            "Fri båd",
+            "Fri andet",
+            "Renteudgift realkredit",
+            "Renteudgift  Bank",
+            "Renteudgift ESU",
+            "Renteudgift BSU",
+            "Renteudgift andet",
+            "Pensionsindbetaling",
+            "Omsætning/salg på brættet",
+            "Indhandling",
+            "Ekstraordinære - indtægter",
+            "Virksomhedsrenter",
+            "Virksomhedsrenter - indtægter",
+            "Virksomhedsrenter - udgifter",
+            "Skattemæssigt resultat",
+            "Ejerandel i %",
+            "Ejerandel beløb",
+            "A-indkomst",
+            "B-indkomst",
+            "Skattefri B-indkomst",
+            "Netto B-indkomst",
+            "Standard fradrag",
+            "Ligningsmæssig fradrag",
+            "Anvendt fradrag",
+            "Skattepligtig indkomst",
+        )
+        for i, label in enumerate(expected):
+            if i >= len(labels) or label != labels[i].strip():
+                raise ValidationError(f"Expected '{label}' in header at position {i}")
+
+    @classmethod
+    def from_csv_row(cls, row: List[str]):
+        if len(row) > 3:
+            return cls(
+                **{
+                    field.name: list_get(row, index)
+                    for (index, field) in enumerate(fields(cls))
+                }
+            )
+
+    @classmethod
+    def create_or_update_objects(
+        cls, year: int, rows: List["FinalCSVFileLine"], out: TextIO
+    ):
+        years = set(row.cpr for row in rows)
+        if len(years) > 1 or years.pop() != year:
+            print("Found mismatching year in file")
+            return
+        year_obj, _ = Year.objects.get_or_create(year=year)
+
+        # Create or update Person objects
+        persons = {
+            cpr: Person(cpr=cpr, name=cpr) for cpr in set(row.cpr for row in rows)
+        }
+        Person.objects.bulk_create(
+            persons.values(),
+            update_conflicts=True,
+            update_fields=("cpr", "name"),
+            unique_fields=("cpr",),
+        )
+        out.write(f"Processed {len(persons)} Person objects")
+
+        # Create or update PersonYear objects
+        person_years = [
+            PersonYear(person=person, year=year_obj) for person in persons.values()
+        ]
+        person_years_by_cpr = {
+            person_year.person.cpr: person_year for person_year in person_years
+        }
+        PersonYear.objects.bulk_create(
+            person_years,
+            update_conflicts=True,
+            update_fields=("person", "year"),
+            unique_fields=("person", "year"),
+        )
+        out.write(f"Processed {len(person_years)} PersonYear objects")
+
+        final_statements = []
+        for item in rows:
+            person_year = person_years_by_cpr[item.cpr]
+            model_data = asdict(item)
+            del model_data["cpr"]
+            del model_data["skatteår"]
+            final_statements.append(
+                FinalStatement(person_year=person_year, **model_data)
+            )
+        PersonYearAssessment.objects.bulk_create(final_statements)
+        out.write(f"Created {len(final_statements)} FinalStatement objects")
+
+
+type_map: Dict[str, Type[IndkomstCSVFileLine | AssessmentCSVFileLine]] = {
     "income": IndkomstCSVFileLine,
-    "assessment": AssessmentCVRFileLine,
+    "assessment": AssessmentCSVFileLine,
+    "final_settlement": FinalCSVFileLine,
 }
 
 
@@ -323,7 +500,9 @@ def load_csv(
     dry: bool = True,
     stdout: TextIO | None = None,
 ):
-    data_class: Type[IndkomstCSVFileLine | AssessmentCVRFileLine] = type_map[data_type]
+    data_class: Type[IndkomstCSVFileLine | AssessmentCSVFileLine | FinalCSVFileLine] = (
+        type_map[data_type]
+    )
     if stdout is None:
         stdout = sys.stdout
 

@@ -722,6 +722,177 @@ class PersonYearAssessment(models.Model):
     )
 
 
+class FinalStatement(models.Model):
+
+    person_year = models.ForeignKey(
+        PersonYear, on_delete=models.CASCADE, related_name="final_statements"
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    lønindkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    offentlig_hjælp = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    tjenestemandspension = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    alderspension = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    førtidspension = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    arbejdsmarkedsydelse = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    udenlandsk_pensionsbidrag = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    tilskud_til_udenlandsk_pension = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    dis_gis = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    anden_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    renteindtægter_bank = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    renteindtægter_obl = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    andet_renteindtægt = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    uddannelsesstøtte = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    plejevederlag = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    underholdsbidrag = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    udbytte_udenlandske = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    udenlandsk_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    frirejser = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    gruppeliv = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    lejeindtægter_ved_udlejning = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    b_indkomst_andet = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_kost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_logi = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_bolig = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_telefon = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_bil = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_internet = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_båd = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    fri_andet = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    renteudgift_realkredit = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    renteudgift_bank = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    renteudgift_esu = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    renteudgift_bsu = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    renteudgift_andet = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    pensionsindbetaling = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    omsætning_salg_på_brættet = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    indhandling = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    ekstraordinære_indtægter = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    virksomhedsrenter = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    virksomhedsrenter_indtægter = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    virksomhedsrenter_udgifter = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    skattemæssigt_resultat = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    ejerandel_pct = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    ejerandel_beløb = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    a_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    b_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    skattefri_b_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    netto_b_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    standard_fradrag = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    ligningsmæssig_fradrag = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    anvendt_fradrag = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+    skattepligtig_indkomst = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal(0), null=False
+    )
+
+
 class PrismeBatch(models.Model):
     class Status(models.TextChoices):
         Sending = "sending", _("Sending")

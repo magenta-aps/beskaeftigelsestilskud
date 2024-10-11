@@ -7,7 +7,7 @@ from decimal import Decimal
 from io import StringIO
 
 from data_analysis.load import (
-    AssessmentCVRFileLine,
+    AssessmentCSVFileLine,
     IndkomstCSVFileLine,
     list_get,
     load_csv,
@@ -222,12 +222,12 @@ class LoadAssessmentTest(TestCase):
             "E2 Indhandling",
             "Brutto B-indkomst",
         ]
-        AssessmentCVRFileLine.validate_header_labels(correct_labels)
+        AssessmentCSVFileLine.validate_header_labels(correct_labels)
         for i in range(len(correct_labels)):
             incorrect_labels = copy(correct_labels)
             incorrect_labels[i] = "foo"
             with self.assertRaises(ValidationError):
-                AssessmentCVRFileLine.validate_header_labels(incorrect_labels)
+                AssessmentCSVFileLine.validate_header_labels(incorrect_labels)
 
     def test_dry(self):
         with StringIO() as buffer:
@@ -243,7 +243,7 @@ class LoadAssessmentTest(TestCase):
             buffer.seek(0)
             self.assertEqual(
                 buffer.read(),
-                "AssessmentCVRFileLine(cpr='0', renteindtægter='1000', "
+                "AssessmentCSVFileLine(cpr='0', renteindtægter='1000', "
                 "uddannelsesstøtte='2000', honorarer='3000', underholdsbidrag='4000', "
                 "andre_b='5000', brutto_b_før_erhvervsvirk_indhandling='6000', "
                 "erhvervsindtægter_sum='7000', e2_indhandling='8000', "
