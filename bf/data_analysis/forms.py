@@ -36,6 +36,7 @@ class PersonYearListOptionsForm(forms.Form):
     has_nonzero_income = forms.BooleanField(
         label="Har indkomst",
         required=False,
+        initial=True,
         widget=forms.widgets.Select(
             attrs={"class": "form-control"},
             choices=(

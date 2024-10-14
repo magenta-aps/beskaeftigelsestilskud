@@ -168,7 +168,7 @@ class TestPersonAnalysisView(TestCase):
 
     def test_income_type(self):
         request = self.request_factory.get("?income_type=A")
-        self.view.setup(request, pk=self.person.pk, year=2020)
+        self.view.setup(request, pk=self.person.pk, year=2022)
         response = self.view.get(request)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(self.view.income_type, IncomeType.A)

@@ -72,6 +72,8 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
         self.income_type = None
         year1 = self.object.first_year.year.year
         year2 = self.object.last_year.year.year
+        if year2 > year1 + 1:  # By default, only show the last two years
+            year1 = year2 - 1
         self.year_start = min(year1, year2)
         self.year_end = max(year1, year2)
         form = self.get_form()
