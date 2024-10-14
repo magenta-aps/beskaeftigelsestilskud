@@ -9,6 +9,7 @@ from decimal import Decimal
 from typing import Dict, List, Tuple
 
 from django.db.models import QuerySet
+from project.util import int_divide_end
 
 from bf.estimation import EstimationEngine
 from bf.models import (
@@ -23,7 +24,7 @@ from bf.models import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass
 class IncomeItem:
     year: int
     month: int
@@ -139,16 +140,39 @@ class Simulation:
         income_series_build = defaultdict(lambda: Decimal(0))
         for item in income:
             income_series_build[(item.year, item.month)] += item.amount
-        income_series = [
-            IncomeItem(year=year, month=month, value=amount)
+        income_series = {
+            (year, month): IncomeItem(year=year, month=month, value=amount)
             for (year, month), amount in income_series_build.items()
-        ]
+        }
+
+        # Add any income from final settlement
+        if self.income_type in (IncomeType.B, None):
+            for person_year in self.person_years:
+                year = person_year.year.year
+                b_income = person_year.b_income
+                if b_income:
+                    # Divide by 12. Spread the remainder over the last months
+                    monthly_income = int_divide_end(int(b_income), 12)
+                    for month in range(1, 13):
+                        income_item = income_series.get((year, month))
+                        if income_item is None:
+                            income_item = IncomeItem(
+                                year=year,
+                                month=month,
+                                value=Decimal(monthly_income[month - 1]),
+                            )
+                            income_series[(year, month)] = income_item
+                        else:
+                            income_item.value += monthly_income[month - 1]
+
+        income_series = list(income_series.values())
         income_series.sort(
             key=lambda item: (
                 item.year,
                 item.month,
             )
         )
+        print(income_series)
         return IncomeRow(
             title="Månedlig indkomst",
             income_series=income_series,

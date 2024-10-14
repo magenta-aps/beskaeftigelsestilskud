@@ -63,3 +63,9 @@ def root_mean_sq_error(correct: Decimal, estimates: Iterable[Decimal]) -> Decima
             / len(estimates_list)
         )
     )
+
+
+def int_divide_end(numerator: int, denominator: int) -> List[int]:
+    remainder = numerator % denominator
+    whole = numerator // denominator
+    return [whole] * (denominator - remainder) + [whole + 1] * remainder
