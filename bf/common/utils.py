@@ -1,13 +1,13 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from typing import Iterable
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import numpy as np
 import pandas as pd
 from django.conf import settings
 from django.db.models import QuerySet
+from django.utils.translation import gettext_lazy as _
 from more_itertools import one
 
 from bf.estimation import EstimationEngine, SameAsLastMonthEngine
@@ -20,6 +20,8 @@ from bf.models import (
     PersonYear,
     Year,
 )
+
+pd.set_option("future.no_silent_downcasting", True)
 
 
 def add_parameters_to_url(url: str, keys_to_add: dict) -> str:
@@ -105,7 +107,7 @@ def to_dataframe(qs: QuerySet, index: str, dtypes: dict) -> pd.DataFrame:
     return df.rename({c: c.split("__")[-1] for c in columns}, axis=1)
 
 
-def get_income_as_dataframe(year: int) -> pd.DataFrame:
+def get_income_as_dataframe(year: int, cpr_numbers: list = []) -> dict:
     """
     Loads income for an entire year
 
@@ -122,6 +124,10 @@ def get_income_as_dataframe(year: int) -> pd.DataFrame:
     """
     a_income_qs = MonthlyAIncomeReport.objects.filter(year=year)
     b_income_qs = MonthlyBIncomeReport.objects.filter(year=year)
+
+    if cpr_numbers:
+        a_income_qs = a_income_qs.filter(person__cpr__in=cpr_numbers)
+        b_income_qs = b_income_qs.filter(person__cpr__in=cpr_numbers)
 
     output_dict = {}
     for qs, income_type in zip([a_income_qs, b_income_qs], IncomeType):
@@ -299,7 +305,62 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
     )
 
 
-def get_people_in_quarantine(year: int, cpr_numbers: Iterable) -> pd.DataFrame:
+def get_people_who_might_earn_too_much_or_little(
+    year: int, cpr_numbers: list
+) -> pd.DataFrame:
+    """
+    Return people who are on the edge of earning too much or too little
+
+    Parameters
+    --------------
+    year : int
+        Year to return people for
+    cpr_numbers : list
+        CPR numbers of people to return
+
+    Returns
+    -----------
+    Dataframe indexed by cpr-number with the following columns:
+        - earns_too_little: True if the person earns too little. False otherwise
+        - earns_too_much: True if the person earns too much. False otherwise
+
+
+    Notes
+    ------------
+    - A person earns too much if he earns so much that he is not eligible for payout
+    - A person earns too little if he earns so little that he is not eligible for payout
+    """
+
+    # Use the calculation method that is the closest to the given year.
+    # For example: If year=2020 and the only calculations methods in the system are from
+    # 2022, 2023 and 2024 we use the one from 2022.
+    year_dict = {y.year: y for y in Year.objects.all()}
+    year_key = min(year_dict.keys(), key=lambda x: abs(x - year))
+    calculation_method = year_dict[year_key].calculation_method
+    calculate_benefit_func = calculation_method.calculate_float  # type: ignore
+
+    income = get_income_as_dataframe(year, cpr_numbers=cpr_numbers)
+    a_income = income[IncomeType.A]
+    b_income = income[IncomeType.B]
+    df_income = a_income.add(b_income, fill_value=0)
+
+    df = pd.DataFrame()
+
+    df["std_val"] = df_income.std(axis=1).fillna(0)
+    df["annual_income"] = df_income.sum(axis=1)
+    df["upper"] = df.annual_income + df.std_val
+    df["lower"] = df.annual_income - df.std_val
+
+    df["earns_too_little"] = (df.lower.map(calculate_benefit_func) == 0) & (
+        df.annual_income.map(calculate_benefit_func) != 0
+    )
+    df["earns_too_much"] = (df.upper.map(calculate_benefit_func) == 0) & (
+        df.annual_income.map(calculate_benefit_func) != 0
+    )
+    return df
+
+
+def get_people_in_quarantine(year: int, cpr_numbers: list) -> pd.DataFrame:
     """
     Return people who are in quarantine
 
@@ -313,8 +374,9 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable) -> pd.DataFrame:
     Returns
     ----------
     df : DataFrame
-        Dataframe with one column: "in_quarantine" which is True/False. Indexed by
-        CPR number
+        Dataframe Indexed by CPR number with two relevant columns:
+            - "in_quarantine" which is True/False.
+            - "quarantine_reason" which is a string
 
     Notes
     -------
@@ -336,12 +398,32 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable) -> pd.DataFrame:
             "benefit_paid": float,
         },
     )
+    df_2 = get_people_who_might_earn_too_much_or_little(year - 1, cpr_numbers)
 
     df["total_benefit_paid"] = df.prior_benefit_paid + df.benefit_paid
     df["error"] = df.total_benefit_paid - df.actual_year_benefit
-    df["in_quarantine"] = df.error.fillna(0) > quarantine_limit
+    df["wrong_payout"] = df.error.fillna(0) > quarantine_limit
+    df["earns_too_little"] = df_2.earns_too_little.reindex(df.index, fill_value=False)
+    df["earns_too_much"] = df_2.earns_too_much.reindex(df.index, fill_value=False)
 
-    return df.reindex(cpr_numbers, fill_value=False).in_quarantine
+    df["in_quarantine"] = df.wrong_payout | df.earns_too_little | df.earns_too_much
+
+    df["quarantine_reason"] = "-"
+    df.loc[df.wrong_payout, "quarantine_reason"] = str(
+        _("Modtog for meget tilskud i {year}").format(year=year - 1)
+    )
+
+    df.loc[df.earns_too_little, "quarantine_reason"] = str(
+        _("Tjente for tæt på bundgrænsen i {year}").format(year=year - 1)
+    )
+    df.loc[df.earns_too_much, "quarantine_reason"] = str(
+        _("Tjente for tæt på øverste grænse i {year}").format(year=year - 1)
+    )
+    df = df.reindex(cpr_numbers)
+    df["quarantine_reason"] = df.quarantine_reason.fillna("-")
+    df["in_quarantine"] = df.in_quarantine.fillna(False)
+
+    return df
 
 
 def calculate_benefit(
@@ -429,7 +511,8 @@ def calculate_benefit(
 
         # If you are in quarantaine you get nothing (unless it's December)
         if enforce_quarantine:
-            df.loc[get_people_in_quarantine(year, df.index), "benefit_this_month"] = 0
+            df_quarantine = get_people_in_quarantine(year, df.index.to_list())
+            df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = 0
 
     df["benefit_paid"] = df.benefit_this_month
     return df

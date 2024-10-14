@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
 from decimal import Decimal
+from itertools import cycle
 
 from common.utils import (
     add_parameters_to_url,
@@ -348,15 +349,84 @@ class QuarantineTest(BaseTestCase):
         person_month.actual_year_benefit = 2
         person_month.save()
 
+        # Person who is close to earning too little
+        cls.person3 = Person.objects.create(
+            name="Jens Gransen",
+            cpr="3234567890",
+        )
+
+        # Person who is close to earning too much
+        cls.person4 = Person.objects.create(
+            name="Jens Fransen",
+            cpr="2234567890",
+        )
+
+        for year in [cls.year, cls.last_year]:
+            cls.person_year3 = PersonYear.objects.create(
+                person=cls.person3,
+                year=year,
+                preferred_estimation_engine_a="InYearExtrapolationEngine",
+                preferred_estimation_engine_b="InYearExtrapolationEngine",
+            )
+
+            cls.person_year4 = PersonYear.objects.create(
+                person=cls.person4,
+                year=year,
+                preferred_estimation_engine_a="TwelveMonthsSummationEngine",
+                preferred_estimation_engine_b="TwelveMonthsSummationEngine",
+            )
+
+        offset_gen = cycle([0.6, 1.4])
+        salary = {cls.person3: 5_700, cls.person4: 41_000}
+        for month_number in range(1, 13):
+            offset = next(offset_gen)
+            for person_year in [cls.person_year3, cls.person_year4]:
+                month = PersonMonth.objects.create(
+                    person_year=person_year,
+                    month=month_number,
+                    import_date=date.today(),
+                    benefit_paid=1050,
+                    prior_benefit_paid=1050 * (month_number - 1),
+                    actual_year_benefit=1050 * 12,
+                )
+
+                MonthlyAIncomeReport.objects.create(
+                    employer=cls.employer,
+                    person_month=month,
+                    amount=Decimal(salary[person_year.person] * offset),
+                    month=month.month,
+                    year=cls.last_year.year,
+                    person=person_year.person,
+                )
+
     def test_get_people_in_quarantine(self):
         df = get_people_in_quarantine(
             self.year.year, [self.person1.cpr, self.person2.cpr]
         )
-        self.assertTrue(df[self.person1.cpr])
-        self.assertFalse(df[self.person2.cpr])
+        self.assertTrue(df.in_quarantine[self.person1.cpr])
+        self.assertFalse(df.in_quarantine[self.person2.cpr])
 
     def test_in_quarantine_property(self):
         person_year_1 = PersonYear.objects.get(year=self.year, person=self.person1)
         person_year_2 = PersonYear.objects.get(year=self.year, person=self.person2)
+        person_year_3 = PersonYear.objects.get(year=self.year, person=self.person3)
+        person_year_4 = PersonYear.objects.get(year=self.year, person=self.person4)
+
         self.assertTrue(person_year_1.in_quarantine)
         self.assertFalse(person_year_2.in_quarantine)
+        self.assertTrue(person_year_3.in_quarantine)
+        self.assertTrue(person_year_4.in_quarantine)
+
+        self.assertIn("Modtog for meget", person_year_1.quarantine_reason)
+        self.assertEqual("-", person_year_2.quarantine_reason)
+        self.assertIn("for tæt på bundgrænsen", person_year_3.quarantine_reason)
+        self.assertIn("for tæt på øverste grænse", person_year_4.quarantine_reason)
+
+    def test_get_people_who_might_earn_too_much_or_little(self):
+        df = get_people_in_quarantine(
+            self.year.year, [self.person3.cpr, self.person4.cpr]
+        )
+        self.assertTrue(df.loc[self.person3.cpr, "earns_too_little"])
+        self.assertTrue(df.loc[self.person4.cpr, "earns_too_much"])
+        self.assertFalse(df.loc[self.person3.cpr, "earns_too_much"])
+        self.assertFalse(df.loc[self.person4.cpr, "earns_too_little"])
