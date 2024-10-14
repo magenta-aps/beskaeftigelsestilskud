@@ -138,8 +138,16 @@ class TestPersonAnalysisView(TestCase):
         super().setUpTestData()
         cls.person, _ = Person.objects.get_or_create(cpr="0101012222")
         cls.year, _ = Year.objects.get_or_create(year=2020)
+        cls.middle_year, _ = Year.objects.get_or_create(year=2021)
+        cls.other_year, _ = Year.objects.get_or_create(year=2022)
         cls.person_year, _ = PersonYear.objects.get_or_create(
             person=cls.person, year=cls.year
+        )
+        cls.middle_person_year, _ = PersonYear.objects.get_or_create(
+            person=cls.person, year=cls.middle_year
+        )
+        cls.other_person_year, _ = PersonYear.objects.get_or_create(
+            person=cls.person, year=cls.other_year
         )
         cls.request_factory = RequestFactory()
         cls.view = PersonAnalysisView()
@@ -149,8 +157,8 @@ class TestPersonAnalysisView(TestCase):
         self.view.setup(request, pk=self.person.pk)
         response = self.view.get(request)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertEqual(self.view.year_start, 2020)
-        self.assertEqual(self.view.year_end, 2020)
+        self.assertEqual(self.view.year_start, 2021)
+        self.assertEqual(self.view.year_end, 2022)
 
     def test_get_form_kwargs(self):
         request = self.request_factory.get("")
@@ -168,7 +176,7 @@ class TestPersonAnalysisView(TestCase):
 
     def test_income_type(self):
         request = self.request_factory.get("?income_type=A")
-        self.view.setup(request, pk=self.person.pk, year=2022)
+        self.view.setup(request, pk=self.person.pk, year=2020)
         response = self.view.get(request)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(self.view.income_type, IncomeType.A)
