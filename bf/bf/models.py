@@ -17,6 +17,7 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
+from project.util import int_divide_end
 from simple_history.models import HistoricalRecords
 
 from bf.data import engine_choices
@@ -408,6 +409,13 @@ class PersonMonth(models.Model):
     @property
     def year_month(self) -> date:
         return date(self.year, self.month, 1)
+
+    @property
+    def b_income_from_year(self) -> int | None:
+        b_income = self.person_year.b_income
+        if b_income is not None:
+            return int_divide_end(int(b_income), 12)[self.month - 1]
+        return None
 
 
 class Employer(models.Model):
