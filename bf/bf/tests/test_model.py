@@ -11,6 +11,7 @@ from django.test import TestCase
 from bf.data import MonthlyIncomeData
 from bf.models import (
     Employer,
+    FinalSettlement,
     IncomeEstimate,
     IncomeType,
     MonthlyAIncomeReport,
@@ -189,6 +190,11 @@ class ModelTest(TestCase):
         )
         # No IncomeEstimate
 
+        cls.final_settlement = FinalSettlement.objects.create(
+            person_year=cls.person_year,
+            skattemæssigt_resultat=Decimal(13000),
+        )
+
 
 class TestStandardWorkBenefitCalculationMethod(ModelTest):
 
@@ -246,6 +252,10 @@ class TestPersonYear(ModelTest):
     def test_prev(self):
         self.assertEqual(self.person_year2.prev, self.person_year)
         self.assertIsNone(self.person_year.prev)
+
+    def test_b_income(self):
+        self.assertEqual(self.person_year.b_income, Decimal(13000))
+        self.assertIsNone(self.person_year2.b_income)
 
 
 class TestPersonMonth(ModelTest):

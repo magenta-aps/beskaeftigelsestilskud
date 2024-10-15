@@ -255,6 +255,15 @@ class PersonYear(models.Model):
         except PersonYear.DoesNotExist:
             return None
 
+    @property
+    def b_income(self) -> Decimal | None:
+        final_settlement: FinalSettlement | None = self.final_settlements.order_by(
+            "-created"
+        ).first()
+        if final_settlement is not None:
+            return final_settlement.skattemæssigt_resultat
+        return None
+
 
 class PersonMonth(models.Model):
 
@@ -725,7 +734,7 @@ class PersonYearAssessment(models.Model):
 class FinalSettlement(models.Model):
 
     person_year = models.ForeignKey(
-        PersonYear, on_delete=models.CASCADE, related_name="final_statements"
+        PersonYear, on_delete=models.CASCADE, related_name="final_settlements"
     )
 
     created = models.DateTimeField(

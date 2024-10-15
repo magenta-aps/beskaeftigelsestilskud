@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 ('ligningsmæssig_fradrag', models.DecimalField(decimal_places=2, default=None, max_digits=10, null=True)),
                 ('anvendt_fradrag', models.DecimalField(decimal_places=2, default=None, max_digits=10, null=True)),
                 ('skattepligtig_indkomst', models.DecimalField(decimal_places=2, default=None, max_digits=10, null=True)),
-                ('person_year', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='final_statements', to='bf.personyear')),
+                ('person_year', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='final_settlements', to='bf.personyear')),
             ],
         ),
     ]
