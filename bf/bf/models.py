@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import List, Sequence, Tuple
+from typing import Sequence, Tuple
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -34,7 +34,8 @@ class WorkingTaxCreditCalculationMethod(models.Model):
     def calculate(self, year_income: Decimal) -> Decimal:
         raise NotImplementedError  # pragma: no cover
 
-    def graph_points(self) -> List[Tuple[Decimal, Decimal]]:
+    @cached_property
+    def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -107,7 +108,7 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         return float(self.calculate(Decimal(year_income)))
 
     @cached_property
-    def graph_points(self) -> List[Tuple[Decimal, Decimal]]:
+    def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
         allowance = self.personal_allowance + self.standard_allowance
         return [
             (Decimal(0), Decimal(0)),

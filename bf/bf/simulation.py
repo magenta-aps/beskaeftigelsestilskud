@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 from django.db.models import QuerySet
 from project.util import int_divide_end
@@ -73,7 +73,7 @@ class IncomeRow:
 
 @dataclass(frozen=True, repr=False)
 class SingleDatasetRow:
-    points: List[Tuple[int | Decimal, int | Decimal]]
+    points: Sequence[Tuple[int | Decimal, int | Decimal]]
 
 
 @dataclass(frozen=True, repr=False)
