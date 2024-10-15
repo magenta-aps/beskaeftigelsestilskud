@@ -157,7 +157,7 @@ class TestPersonAnalysisView(TestCase):
         self.view.setup(request, pk=self.person.pk)
         response = self.view.get(request)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertEqual(self.view.year_start, 2021)
+        self.assertEqual(self.view.year_start, 2022)
         self.assertEqual(self.view.year_end, 2022)
 
     def test_get_form_kwargs(self):
@@ -387,7 +387,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
             actual_year_benefit=0,
             benefit_paid=0,
         )
-        request = self.format_request("?has_nonzero_income=True")
+        request = self.format_request("?has_zero_income=False")
         self._view.setup(request, year=2020)
         response = self._view.get(request, year=2020)
         self.assertIsInstance(response, TemplateResponse)
@@ -396,7 +396,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person.cpr, "0101012222")
 
-        request = self.format_request("?has_nonzero_income=")
+        request = self.format_request("?has_zero_income=True")
         self._view.setup(request, year=2020)
         response = self._view.get(request, year=2020)
         self.assertIsInstance(response, TemplateResponse)

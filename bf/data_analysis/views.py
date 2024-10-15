@@ -70,10 +70,9 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.income_type = None
-        year1 = self.object.first_year.year.year
+        # By default, only show last year.
+        year1 = self.object.last_year.year.year
         year2 = self.object.last_year.year.year
-        if year2 > year1 + 1:  # By default, only show the last two years
-            year1 = year2 - 1
         self.year_start = min(year1, year2)
         self.year_end = max(year1, year2)
         form = self.get_form()
@@ -87,7 +86,7 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
         if income_type_raw:
             self.income_type = IncomeType(income_type_raw)
 
-        year1 = int(form.cleaned_data["year_start"] or self.object.first_year.year.year)
+        year1 = int(form.cleaned_data["year_start"] or self.object.last_year.year.year)
         year2 = int(form.cleaned_data["year_end"] or self.object.last_year.year.year)
         self.year_start = min(year1, year2)
         self.year_end = max(year1, year2)
@@ -242,7 +241,10 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
         self.object_list = None
 
     def get_form_kwargs(self):
-        return {**super().get_form_kwargs(), "data": self.request.GET}
+        return {
+            **super().get_form_kwargs(),
+            "data": self.request.GET,
+        }
 
     def get_ordering(self) -> List[str]:
         ordering = self.request.GET.get("order_by") or self.default_ordering
@@ -256,8 +258,8 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
             cpr = form.cleaned_data.get("cpr", None)
             if cpr:
                 qs = qs.filter(person__cpr__icontains=cpr)
-            has_nonzero_income = form.cleaned_data["has_nonzero_income"]
-            if has_nonzero_income:
+            has_zero_income = form.cleaned_data["has_zero_income"]
+            if not has_zero_income:
                 qs = qs.filter(actual_sum__gt=0)
 
         qs = qs.order_by(*self.get_ordering())

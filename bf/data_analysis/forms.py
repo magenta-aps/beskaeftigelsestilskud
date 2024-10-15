@@ -33,15 +33,14 @@ class PersonYearListOptionsForm(forms.Form):
         widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
-    has_nonzero_income = forms.BooleanField(
+    has_zero_income = forms.BooleanField(
         label="Har indkomst",
         required=False,
-        initial=True,
         widget=forms.widgets.Select(
             attrs={"class": "form-control"},
             choices=(
-                (False, "Alle"),
-                (True, "Kun dem der har indkomst"),
+                (False, "Kun dem der har indkomst"),
+                (True, "Alle"),
             ),
         ),
     )
