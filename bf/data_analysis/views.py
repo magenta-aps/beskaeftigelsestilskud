@@ -194,9 +194,9 @@ class PersonYearEstimationMixin:
         qs = qs.annotate(
             b_income_value=Coalesce(
                 Subquery(
-                FinalSettlement.objects.filter(person_year=OuterRef("pk"))
-                .order_by("-created")
-                .values("skattemæssigt_resultat")[0:]
+                    FinalSettlement.objects.filter(person_year=OuterRef("pk"))
+                    .order_by("-created")
+                    .values("skattemæssigt_resultat")[0:]
                 ),
                 Decimal(0),
             )
@@ -277,7 +277,7 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
                 qs = qs.filter(person__cpr__icontains=cpr)
             has_zero_income = form.cleaned_data["has_zero_income"]
             if not has_zero_income:
-                qs = qs.filter(actual_sum__gt=0)
+                qs = qs.filter(actual_sum__gt=Decimal(0))
 
         qs = qs.order_by(*self.get_ordering())
         return qs
