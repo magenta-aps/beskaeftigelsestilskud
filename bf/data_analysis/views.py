@@ -27,6 +27,7 @@ from project.util import params_no_none, strtobool
 from bf.data import engine_keys
 from bf.estimation import EstimationEngine
 from bf.models import (
+    FinalSettlement,
     IncomeType,
     Person,
     PersonMonth,
@@ -191,7 +192,15 @@ class PersonYearEstimationMixin:
         # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
         # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
+            b_income_value=Subquery(
+                FinalSettlement.objects.filter(person_year=OuterRef("pk"))
+                .order_by("-created")
+                .values("skattemæssigt_resultat")[0:]
+            )
+        )
+        qs = qs.annotate(
             actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
+            + F("b_income_value")
         )
         # qs = qs.annotate(
         #     actual_sum=Subquery(
