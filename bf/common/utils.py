@@ -618,3 +618,7 @@ def get_best_engine(year):
     df["B"] = best_engine.map(lambda t: t[1])
 
     return df
+
+
+def isnan(input: np.float64) -> bool:
+    return np.isnan(input)

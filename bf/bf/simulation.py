@@ -122,6 +122,7 @@ class Simulation:
             {
                 key: SingleDatasetRow(points=calculation_method.graph_points)
                 for key, calculation_method in calculation_methods.items()
+                if calculation_method
             }
             if calculation_methods
             else None

@@ -88,6 +88,11 @@
                 </table>
                 <div id="modal_graph_container"></div>
             </div>
+            <div class="modal-footer">
+                <p>
+                Det røde punkt angiver sammenhængen mellem den estimerede årsindkomst og det beregnede tilskud
+                </p>
+            </div>
         </div>
     </div>
 </div>
@@ -382,6 +387,7 @@ const openPayoutGraph = function (index) {
             // result is greater than our current max point in the graph
             data = [...method.points, [payout_obj.estimated_year_result, 0]];  // Clone array
         }
+        console.log(payout_obj)
 
         const chart = new ApexCharts(element.get(0), {
             "chart": {
@@ -404,16 +410,18 @@ const openPayoutGraph = function (index) {
             },
             "annotations": {
                 "xaxis": [{
-                    "x": payout_obj.estimated_year_result,
+                    "x": payout_obj.estimated_year_result || 0,
                     "borderColor": '#FF4560',
+                    "strokeDashArray": 0
                 }],
                 "yaxis": [{
-                    "y": payout_obj.estimated_year_benefit,
+                    "y": payout_obj.estimated_year_benefit || 0,
                     "borderColor": '#FF4560',
+                    "strokeDashArray": 0
                 }],
                 "points": [{
-                    "x": payout_obj.estimated_year_result,
-                    "y": payout_obj.estimated_year_benefit,
+                    "x": payout_obj.estimated_year_result || 0,
+                    "y": payout_obj.estimated_year_benefit || 0,
                     "marker": {
                         "size": 4,
                         "fillColor": "#FF4560",
