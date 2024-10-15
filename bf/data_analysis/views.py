@@ -192,16 +192,19 @@ class PersonYearEstimationMixin:
         # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
         # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
-            b_income_value=Subquery(
+            b_income_value=Coalesce(
+                Subquery(
                 FinalSettlement.objects.filter(person_year=OuterRef("pk"))
                 .order_by("-created")
                 .values("skattemæssigt_resultat")[0:]
+                ),
+                Decimal(0),
             )
         )
         qs = qs.annotate(
-            actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
-            + F("b_income_value")
+            month_income_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
         )
+        qs = qs.annotate(actual_sum=F("month_income_sum") + F("b_income_value"))
         # qs = qs.annotate(
         #     actual_sum=Subquery(
         #         PersonMonth.objects.filter(person_year=OuterRef("pk"))
