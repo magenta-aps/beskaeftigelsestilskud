@@ -21,6 +21,7 @@ from bf.models import (
     Person,
     PersonMonth,
     PersonYear,
+    WorkingTaxCreditCalculationMethod,
 )
 
 
@@ -47,6 +48,8 @@ class PayoutItem:
     payout: Decimal
     cumulative_payout: Decimal
     correct_payout: Decimal
+    estimated_year_result: Decimal
+    estimated_year_benefit: Decimal
 
 
 @dataclass(frozen=True)
@@ -66,6 +69,11 @@ class SimulationResultRow:
 class IncomeRow:
     income_series: list[IncomeItem]
     title: str
+
+
+@dataclass(frozen=True, repr=False)
+class SingleDatasetRow:
+    points: List[Tuple[int | Decimal, int | Decimal]]
 
 
 @dataclass(frozen=True, repr=False)
@@ -89,6 +97,7 @@ class Simulation:
         year_start: int | None,
         year_end: int | None,
         income_type: IncomeType | None,
+        calculation_methods: Dict[int, WorkingTaxCreditCalculationMethod] | None = None,
     ):
         if year_end is None:
             year_end = date.today().year
@@ -108,6 +117,14 @@ class Simulation:
             + [self.prediction(engine) for engine in self.engines],
             year_start=year_start,
             year_end=year_end,
+        )
+        self.calculation_methods = (
+            {
+                key: SingleDatasetRow(points=calculation_method.graph_points)
+                for key, calculation_method in calculation_methods.items()
+            }
+            if calculation_methods
+            else None
         )
 
     def actual_year_sum(self, income_type) -> Dict[int, Decimal]:
@@ -192,6 +209,8 @@ class Simulation:
                         payout=payout,
                         cumulative_payout=cumulative_payout,
                         correct_payout=person_month.actual_year_benefit,
+                        estimated_year_result=person_month.estimated_year_result,
+                        estimated_year_benefit=person_month.estimated_year_benefit,
                     )
                 )
         return PayoutRow(title="Månedlig udbetaling", payout=payout_items)

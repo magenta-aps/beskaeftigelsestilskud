@@ -451,7 +451,7 @@ def calculate_benefit(
     Returns
     -----------
     df : DataFrame
-        Dataframe indexed by cpr-number. Contains the following relevent columns:
+        Dataframe indexed by cpr-number. Contains the following relevant columns:
             * benefit_paid
             * prior_benefit_paid
             * estimated_year_benefit

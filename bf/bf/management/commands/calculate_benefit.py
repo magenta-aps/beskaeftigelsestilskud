@@ -30,6 +30,7 @@ class Command(BaseCommand):
             "prior_benefit_paid",
             "estimated_year_benefit",
             "actual_year_benefit",
+            "estimated_year_result",
         ]
 
         if month and month >= 1 and month <= 12:
@@ -52,12 +53,7 @@ class Command(BaseCommand):
 
             PersonMonth.objects.bulk_update(
                 person_months_to_update,
-                [
-                    "benefit_paid",
-                    "prior_benefit_paid",
-                    "actual_year_benefit",
-                    "estimated_year_benefit",
-                ],
+                cols_to_update,
                 batch_size=1000,
             )
 
