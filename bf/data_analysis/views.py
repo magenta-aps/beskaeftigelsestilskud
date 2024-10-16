@@ -356,7 +356,7 @@ class HistogramView(LoginRequiredMixin, PersonYearEstimationMixin, FormView):
         metric = self.get_metric()
         income_type = self.get_income_type()
         observations: defaultdict = defaultdict(Counter)
-        person_years = self.get_queryset()
+        person_years = self.get_queryset().filter(actual_sum__gt=0)
         half_resolution = Decimal(resolution / 2)
 
         keys = (metric,) if metric == "payout_offset" else engine_keys
