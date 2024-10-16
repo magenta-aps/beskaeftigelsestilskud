@@ -411,11 +411,11 @@ class PersonMonth(models.Model):
         return date(self.year, self.month, 1)
 
     @property
-    def b_income_from_year(self) -> int | None:
+    def b_income_from_year(self) -> int:
         b_income = self.person_year.b_income
         if b_income is not None:
             return int_divide_end(int(b_income), 12)[self.month - 1]
-        return None
+        return 0
 
 
 class Employer(models.Model):

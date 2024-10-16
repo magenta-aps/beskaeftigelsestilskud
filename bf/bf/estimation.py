@@ -57,7 +57,7 @@ class EstimationEngine:
         cls, person_month: PersonMonth, income_type: IncomeType
     ) -> Decimal:
         return Decimal(
-            (person_month.b_income_from_year or 0) if income_type == IncomeType.B else 0
+            person_month.b_income_from_year if income_type == IncomeType.B else 0
         )
 
     @classmethod
