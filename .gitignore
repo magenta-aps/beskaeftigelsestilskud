@@ -36,3 +36,5 @@ bf/2023_a.csv
 /bf/certs/dafo_lookup_tls+pitu.crt
 /bf/certs/dafo_lookup_tls+pitu.key
 *.g68
+bf/data/
+*.swp

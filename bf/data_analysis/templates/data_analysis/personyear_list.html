@@ -21,8 +21,8 @@
         <div class="row justify-content-start my-1">
             <div class="col-2">
                 <div class="input-group">
-                    <div class="input-group-text">{{ form.has_nonzero_income.label }}</div>
-                    {{ form.has_nonzero_income }}
+                    <div class="input-group-text">{{ form.has_zero_income.label }}</div>
+                    {{ form.has_zero_income }}
                 </div>
             </div>
             <div class="col-2">
@@ -191,7 +191,7 @@
 
     <tr>
         <td>
-            <a href="{% url 'data_analysis:person_analysis' pk=object.person.pk %}">
+            <a href="{% url 'data_analysis:person_analysis' pk=object.person.pk %}?year_start={{ year }}&year_end={{ year }}">
                 {{ object.person.cpr }}
             </a>
         </td>
