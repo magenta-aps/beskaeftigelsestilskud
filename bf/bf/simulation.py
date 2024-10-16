@@ -190,7 +190,6 @@ class Simulation:
                 item.month,
             )
         )
-        print(income_series)
         return IncomeRow(
             title="Månedlig indkomst",
             income_series=income_series,

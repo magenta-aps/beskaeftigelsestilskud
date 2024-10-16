@@ -253,6 +253,7 @@ class PersonYear(models.Model):
             sum += MonthlyIncomeReport.sum_queryset(
                 MonthlyBIncomeReport.objects.filter(person_month__person_year=self)
             )
+            sum += self.b_income or 0
         return sum
 
     @cached_property

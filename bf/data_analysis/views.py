@@ -198,11 +198,11 @@ class PersonYearEstimationMixin:
                     .order_by("-created")
                     .values("skattemæssigt_resultat")[0:]
                 ),
-                Decimal(0),
+                Decimal("0.00"),
             )
         )
         qs = qs.annotate(
-            month_income_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
+            month_income_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal("0.00"))
         )
         qs = qs.annotate(actual_sum=F("month_income_sum") + F("b_income_value"))
         # qs = qs.annotate(
