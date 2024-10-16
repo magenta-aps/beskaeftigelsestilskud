@@ -226,6 +226,18 @@ class TestStandardWorkBenefitCalculationMethod(ModelTest):
         self.assertEqual(self.calc.calculate(Decimal("750000")), Decimal(0))
         self.assertEqual(self.calc.calculate(Decimal("1000000")), Decimal(0))
 
+    def test_graph_points(self):
+        self.assertEqual(
+            self.calc.graph_points,
+            [
+                (Decimal("0"), Decimal("0")),
+                (Decimal("68000.00"), Decimal("0")),
+                (Decimal("158000.00"), Decimal("15750.00")),
+                (Decimal("250000.00"), Decimal("15750.00")),
+                (Decimal("500000.00"), Decimal("0")),
+            ],
+        )
+
 
 pitu_client_mock = MagicMock()
 pitu_client_mock.get_person_info.return_value = {"civilstand": "G", "stedkode": "001"}

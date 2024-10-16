@@ -4,7 +4,7 @@
 
 from cProfile import Profile
 
-from common.utils import calculate_benefit
+from common.utils import calculate_benefit, isnan
 from django.core.management.base import BaseCommand
 
 from bf.models import PersonMonth
@@ -30,6 +30,7 @@ class Command(BaseCommand):
             "prior_benefit_paid",
             "estimated_year_benefit",
             "actual_year_benefit",
+            "estimated_year_result",
         ]
 
         if month and month >= 1 and month <= 12:
@@ -47,17 +48,15 @@ class Command(BaseCommand):
                 cpr = person_month.person_year.person.cpr
                 if cpr in benefit.index:
                     for col in cols_to_update:
-                        setattr(person_month, col, benefit.loc[cpr, col])
+                        value = benefit.loc[cpr, col]
+                        if isnan(value):
+                            value = None
+                        setattr(person_month, col, value)
                     person_months_to_update.append(person_month)
 
             PersonMonth.objects.bulk_update(
                 person_months_to_update,
-                [
-                    "benefit_paid",
-                    "prior_benefit_paid",
-                    "actual_year_benefit",
-                    "estimated_year_benefit",
-                ],
+                cols_to_update,
                 batch_size=1000,
             )
 

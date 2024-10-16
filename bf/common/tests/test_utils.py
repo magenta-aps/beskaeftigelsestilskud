@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from itertools import cycle
 
+import numpy as np
 from common.utils import (
     add_parameters_to_url,
     calculate_benefit,
@@ -14,6 +15,7 @@ from common.utils import (
     get_income_estimates_df,
     get_payout_df,
     get_people_in_quarantine,
+    isnan,
     map_between_zero_and_one,
     to_dataframe,
 )
@@ -331,6 +333,10 @@ class CalculateBenefitTest(BaseTestCase):
         for month in range(1, 13):
             df = calculate_benefit(month, self.year.year)
             self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
+
+    def test_isnan(self):
+        self.assertTrue(isnan(np.float64(None)))
+        self.assertFalse(isnan(np.float64(42)))
 
 
 class QuarantineTest(BaseTestCase):

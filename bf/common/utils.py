@@ -451,7 +451,7 @@ def calculate_benefit(
     Returns
     -----------
     df : DataFrame
-        Dataframe indexed by cpr-number. Contains the following relevent columns:
+        Dataframe indexed by cpr-number. Contains the following relevant columns:
             * benefit_paid
             * prior_benefit_paid
             * estimated_year_benefit
@@ -618,3 +618,7 @@ def get_best_engine(year):
     df["B"] = best_engine.map(lambda t: t[1])
 
     return df
+
+
+def isnan(input: np.float64) -> bool:
+    return np.isnan(input)

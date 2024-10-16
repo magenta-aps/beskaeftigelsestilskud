@@ -109,6 +109,7 @@ class TestSimulationJSONEncoder(TestCase):
                 ],
                 "year_start": 2020,
                 "year_end": 2020,
+                "calculation_methods": None,
             },
         )
 
