@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import Sequence
+from typing import Sequence, Tuple
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -32,6 +32,10 @@ class WorkingTaxCreditCalculationMethod(models.Model):
         abstract = True
 
     def calculate(self, year_income: Decimal) -> Decimal:
+        raise NotImplementedError  # pragma: no cover
+
+    @cached_property
+    def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -102,6 +106,20 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
     # Identical to "calculate" but takes a float as an input
     def calculate_float(self, year_income: float) -> float:
         return float(self.calculate(Decimal(year_income)))
+
+    @cached_property
+    def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
+        allowance = self.personal_allowance + self.standard_allowance
+        return [
+            (Decimal(0), Decimal(0)),
+            (allowance, Decimal(0)),
+            ((allowance + self.max_benefit / self.benefit_rate), self.max_benefit),
+            (self.scaledown_ceiling, self.max_benefit),
+            (
+                self.max_benefit / self.scaledown_rate + self.scaledown_ceiling,
+                Decimal(0),
+            ),
+        ]
 
 
 class Year(models.Model):
@@ -312,6 +330,12 @@ class PersonMonth(models.Model):
         blank=True,
     )
     prior_benefit_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    estimated_year_result = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,

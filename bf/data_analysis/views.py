@@ -56,6 +56,7 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
                 "year_start": obj.year_start,
                 "year_end": obj.year_end,
                 "rows": obj.result.rows,
+                "calculation_methods": obj.calculation_methods,
             }
 
         return super().default(obj)
@@ -102,6 +103,10 @@ class PersonAnalysisView(LoginRequiredMixin, DetailView, FormView):
                 year_start=self.year_start,
                 year_end=self.year_end,
                 income_type=self.income_type,
+                calculation_methods={
+                    year: Year.objects.get(year=year).calculation_method
+                    for year in range(self.year_start, self.year_end + 1)
+                },
             )
             chart_data = json.dumps(simulation, cls=SimulationJSONEncoder)
             person_years = self.object.personyear_set.filter(

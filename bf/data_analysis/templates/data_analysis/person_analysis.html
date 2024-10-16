@@ -66,6 +66,37 @@
     </div>
     {{ form.errors }}
 </form>
+
+<div id="modal-graph" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Beregning af tilskud</h5></div>
+            <div class="modal-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Måned</th>
+                        <td id="modal_month"></td>
+                    </tr>
+                    <tr>
+                        <th>Estimeret årsindkomst</th>
+                        <td id="modal_estimated_year_result"></td>
+                    </tr>
+                    <tr>
+                        <th>Estimeret beskæftigelsestilskud for hele året</th>
+                        <td id="modal_estimated_year_benefit"></td>
+                    </tr>
+                </table>
+                <div id="modal_graph_container"></div>
+            </div>
+            <div class="modal-footer">
+                <p>
+                Det røde punkt angiver sammenhængen mellem den estimerede årsindkomst og det beregnede tilskud
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_headers %}
@@ -74,6 +105,7 @@
 {{year_urls|json_script:"year_urls"}}
 <script id="chart_data" type="application/json">{{chart_data|safe}}</script>
 <script nonce="{{ request.csp_nonce }}">
+$(function () {
 // Basic chart configuration
 const chartOptions = {
     chart: {
@@ -106,6 +138,18 @@ const chartOptions = {
     }    
 };
 
+
+const bucketize = function(items) {
+    const data = {};
+    for (const item of items) {
+        if (!(item.year in data)) {
+            data[item.year] = {};
+        }
+        data[item.year][item.month] = item;
+    }
+    return data;
+}
+
 // Build chart data based on each "row" in dataset
 const getChartData = function (doc, row, rowId, options) {
     const series = [];
@@ -116,18 +160,6 @@ const getChartData = function (doc, row, rowId, options) {
     const category = function(year, month) {
         return monthNames[month-1] + " " + year;
     }
-
-    const bucketize = function(items) {
-        const data = {};
-        for (const item of items) {
-            if (!(item.year in data)) {
-                data[item.year] = {};
-            }
-            data[item.year][item.month] = item;
-        }
-        return data;
-    }
-
     const chartData = structuredClone(options);
     chartData.chart.id = rowId;
     const xLabels = [];
@@ -206,7 +238,12 @@ const getChartData = function (doc, row, rowId, options) {
                     text: 'Summeret udbetaling'
                 }
             }
-        ]
+        ];
+        chartData.chart.events = {
+            markerClick: function (event, chartContext, opts) {
+                openPayoutGraph(opts.dataPointIndex);
+            }
+        };
     }
 
     if (row.predictions) {
@@ -239,7 +276,6 @@ const getChartData = function (doc, row, rowId, options) {
         }
     }
 
-
     if (row.income_sum) {
         const actualData = [];
         for (let year = doc.year_start; year <= doc.year_end; year++) {
@@ -270,21 +306,13 @@ const getChartData = function (doc, row, rowId, options) {
     return null;
 };
 
-$(function () {
-    // Fetch dataset from server and render each row of dataset as separate charts.
-    // There is currently one row per employer.
-    const doc = JSON.parse($("#chart_data").text());
-
-    for (const rowId in doc.rows) {
-        const row = doc.rows[rowId];
-
-        // Insert DOM element for chart
-        const cardId = "chart_"+rowId;
-        const card = $(`
+const createCard = function(id, title) {
+    const cardId = "chart_"+id;
+    const card = $(`
             <div class="card m-2">
                 <a class="card-link" data-bs-toggle="collapse" href="#${cardId}">
                     <div class="card-header">
-                        ${row.title}
+                        ${title}
                     </div>
                 </a>
                 <div id="${cardId}" class="collapse show">
@@ -292,20 +320,124 @@ $(function () {
                 </div>
             </div>
             `);
-        $("body").append(card);
+    $("body").append(card);
+    return card;
+}
 
-        const chartElem = card.find(".card-body");
 
-        // Get chart data
-        const chartData = getChartData(doc, row, rowId, chartOptions);
-        if (chartData === null) {
-            chartElem.append($('<div class="d-flex justify-content-center">Ingen estimater</div>'));
-        } else {
-            // Render chart into DOM element
-            const chart = new ApexCharts(chartElem.get(0), chartData);
-            chart.render();
-        }
+// Fetch dataset from server and render each row of dataset as separate charts.
+// There is currently one row per employer.
+const doc = JSON.parse($("#chart_data").text());
+
+const years = [];
+for (let year = doc.year_start; year <= doc.year_end; year++) {
+    years.push(year);
+}
+let payouts;
+
+for (const rowId in doc.rows) {
+    const row = doc.rows[rowId];
+
+    if (row.payout) {
+        payouts = bucketize(row.payout);
     }
+
+    // Insert DOM element for chart
+    const card = createCard(rowId, row.title)
+    const cardBody = card.find(".card-body");
+
+    if (row.payout) {
+        cardBody.append($("<div>Klik på grafen for at se detaljer</div>"));
+    }
+
+    const chartElem = $("<div></div>");
+    cardBody.append(chartElem);
+
+    // Get chart data
+    const chartData = getChartData(doc, row, rowId, chartOptions);
+    if (chartData === null) {
+        chartElem.append($('<div class="d-flex justify-content-center">Ingen estimater</div>'));
+    } else {
+        // Render chart into DOM element
+        const chart = new ApexCharts(chartElem.get(0), chartData);
+        chart.render();
+    }
+}
+const year_calculation_methods = doc.calculation_methods;
+
+const monthNames = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+const graphModal = new bootstrap.Modal('#modal-graph', {keyboard: false});
+const graphModalBody = $("#modal_graph_container");
+const openPayoutGraph = function (index) {
+    const year = years[~~(index / 12)];  // Integer division
+    const month = (index % 12) + 1;
+
+    if (year in payouts && month in payouts[year]) {
+        let payout_obj = payouts[year][month];
+        $("#modal_month").text(`${monthNames[month - 1]} ${year}`);
+        $("#modal_estimated_year_result").text(payout_obj.estimated_year_result);
+        $("#modal_estimated_year_benefit").text(payout_obj.estimated_year_benefit);
+
+        const element = $(`<div></div>`);
+        graphModalBody.empty();
+        graphModalBody.append(element);
+        const method = year_calculation_methods[year];
+        let data = method.points
+        if (payout_obj.estimated_year_result > data[data.length - 1][0]) {
+            // result is greater than our current max point in the graph
+            data = [...method.points, [payout_obj.estimated_year_result, 0]];  // Clone array
+        }
+        console.log(payout_obj)
+
+        const chart = new ApexCharts(element.get(0), {
+            "chart": {
+                "type": "line"
+            },
+            "series": [{
+                "name": "Beskæftigelsestilskud",
+                "data": data,
+            }],
+            "xaxis": {
+                "type": "numeric",
+                "title": {
+                    "text": "Estimeret årsindkomst"
+                }
+            },
+            "yaxis": {
+                "title": {
+                    "text": "Beregnet beskæftigelsestilskud for hele året"
+                }
+            },
+            "annotations": {
+                "xaxis": [{
+                    "x": payout_obj.estimated_year_result || 0,
+                    "borderColor": '#FF4560',
+                    "strokeDashArray": 0
+                }],
+                "yaxis": [{
+                    "y": payout_obj.estimated_year_benefit || 0,
+                    "borderColor": '#FF4560',
+                    "strokeDashArray": 0
+                }],
+                "points": [{
+                    "x": payout_obj.estimated_year_result || 0,
+                    "y": payout_obj.estimated_year_benefit || 0,
+                    "marker": {
+                        "size": 4,
+                        "fillColor": "#FF4560",
+                        "strokeColor": "#fff"
+                    },
+                    "label": {
+                        "borderColor": '#FF4560',
+                    }
+                }]
+            }
+        });
+        chart.render();
+        graphModal.show();
+    }
+};
+
 });
 
 $(function () {
