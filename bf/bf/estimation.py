@@ -123,7 +123,7 @@ class EstimationEngine:
             return Subquery(
                 incomereport_class.objects.filter(
                     month=OuterRef("month"),
-                    year=OuterRef("year"),
+                    year=OuterRef("_year"),
                     person=OuterRef("person_pk"),
                 )
                 .annotate(
@@ -136,12 +136,13 @@ class EstimationEngine:
             PersonMonth.objects.filter(
                 person_year__person__in=person_year_qs.values("person")
             )
-            .values(
-                "month",
+            .select_related("person_year")
+            .annotate(
                 person_pk=F("person_year__person__pk"),
-                person_month_pk=F("pk"),
                 person_year_pk=F("person_year__pk"),
-                year=F("person_year__year__year"),
+                _year=F(  # underscore to avoid collision with class property
+                    "person_year__year_id"
+                ),
             )
             .annotate(
                 a_amount=sum_amount(MonthlyAIncomeReport),
@@ -149,13 +150,26 @@ class EstimationEngine:
             )
             .order_by(
                 "person_pk",
-                "year",
+                "_year",
                 "month",
             )
         )
-        data_qs = [MonthlyIncomeData(**value) for value in qs]
+        data_qs = [
+            MonthlyIncomeData(
+                month=person_month.month,
+                person_pk=person_month.person_pk,
+                person_month_pk=person_month.pk,
+                person_year_pk=person_month.person_year_pk,
+                year=person_month.year,
+                a_amount=person_month.a_amount,
+                b_amount=person_month.b_amount + person_month.b_income_from_year,
+            )
+            for person_month in qs
+        ]
 
-        person_month_map = {pm.pk: pm for pm in PersonMonth.objects.all()}
+        person_month_map = {
+            pm.pk: pm for pm in PersonMonth.objects.all().select_related("person_year")
+        }
 
         if output_stream is not None:
             output_stream.write("Computing estimates ...\n")
@@ -285,9 +299,19 @@ class InYearExtrapolationEngine(EstimationEngine):
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
         relevant_items = cls.relevant(subset, person_month.year_month)
+
+        # Trim off items with no income from the beginning of the list
+        relevant_items = trim_list_first(
+            relevant_items,
+            lambda item: not (
+                item.a_amount if income_type == IncomeType.A else item.b_amount
+            ).is_zero(),
+        )
+
         relevant_count = len(relevant_items)
         if relevant_count > 0:
             amount_sum = cls.subset_sum(relevant_items, income_type)
+
             omitted_count = person_month.month - relevant_count
             year_estimate = (12 - omitted_count) * amount_sum / relevant_count
             return IncomeEstimate(
@@ -310,8 +334,6 @@ class InYearExtrapolationEngine(EstimationEngine):
             for item in subset
             if item.year == year_month.year and item.year_month <= year_month
         ]
-        # Trim off items with no income from the beginning of the list
-        items = trim_list_first(items, lambda item: not item.amount.is_zero())
         return items
 
 
