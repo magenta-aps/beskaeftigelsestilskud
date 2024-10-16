@@ -99,7 +99,7 @@ class TestEstimationEngine(TestCase):
         )
 
         for month, income in enumerate(
-            [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
+            [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000], start=1
         ):
             person_month = PersonMonth.objects.create(
                 person_year=cls.person_year2, month=month, import_date=date.today()
@@ -144,7 +144,7 @@ class TestEstimationEngine(TestCase):
         output_stream = self.OutputWrapper(sys.stdout, ending="\n")
         EstimationEngine.estimate_all(
             self.year.year,
-            self.person_year.pk,
+            self.person.pk,
             1,
             False,
             output_stream,
@@ -208,6 +208,14 @@ class TestEstimationEngine(TestCase):
         self.assertEqual(summary.mean_error_percent, Decimal("-91.67"))
         self.assertEqual(summary.rmse_percent, Decimal("95.74"))
 
+        EstimationEngine.estimate_all(
+            self.year2.year,
+            self.person.pk,
+            1,
+            False,
+            output_stream,
+        )
+
         self.assertEqual(
             list(
                 IncomeEstimate.objects.filter(
@@ -219,8 +227,6 @@ class TestEstimationEngine(TestCase):
                 .values_list("person_month__month", "estimated_year_result")
             ),
             [
-                (1, Decimal("0.00")),
-                (2, Decimal("0.00")),
                 (3, Decimal("10000.00")),
                 (4, Decimal("10000.00")),
                 (5, Decimal("10000.00")),
@@ -230,9 +236,16 @@ class TestEstimationEngine(TestCase):
                 (9, Decimal("10000.00")),
                 (10, Decimal("10000.00")),
                 (11, Decimal("10000.00")),
-                (12, Decimal("10000.00")),
             ],
         )
+
+        summary = PersonYearEstimateSummary.objects.get(
+            person_year=self.person_year2,
+            estimation_engine="TwelveMonthsSummationEngine",
+            income_type=IncomeType.A,
+        )
+        self.assertIsNone(summary.mean_error_percent)
+        self.assertIsNone(summary.rmse_percent)
 
     def test_b_income_from_year(self):
         for month in PersonMonth.objects.filter(person_year=self.person_year):
