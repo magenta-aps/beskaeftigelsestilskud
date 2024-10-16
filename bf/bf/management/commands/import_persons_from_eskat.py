@@ -16,7 +16,7 @@ from bf.models import Person, PersonMonth
 CPR: TypeAlias = str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MandtalResult:
     mandtal_by_cpr: dict[CPR, ESkatMandtal]
     new_mandtal_objects: list[ESkatMandtal]

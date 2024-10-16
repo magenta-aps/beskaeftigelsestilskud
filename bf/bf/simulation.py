@@ -25,14 +25,14 @@ from bf.models import (
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class IncomeItem:
     year: int
     month: int
     value: Decimal
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PredictionItem:
     year: int
     month: int
@@ -41,7 +41,7 @@ class PredictionItem:
     prediction_difference_pct: Decimal | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PayoutItem:
     year: int
     month: int
@@ -52,37 +52,37 @@ class PayoutItem:
     estimated_year_benefit: Decimal
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Prediction:
     engine: EstimationEngine
     items: list[PredictionItem]
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(frozen=True, repr=False, slots=True)
 class SimulationResultRow:
     income_sum: Dict[int, Decimal]
     predictions: list[Prediction]
     title: str
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(frozen=True, repr=False, slots=True)
 class IncomeRow:
     income_series: list[IncomeItem]
     title: str
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(frozen=True, repr=False, slots=True)
 class SingleDatasetRow:
     points: Sequence[Tuple[int | Decimal, int | Decimal]]
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(frozen=True, repr=False, slots=True)
 class PayoutRow:
     payout: list[PayoutItem]
     title: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SimulationResult:
     rows: list[SimulationResultRow | IncomeRow]
     year_start: int

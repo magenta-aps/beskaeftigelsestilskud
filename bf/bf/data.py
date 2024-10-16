@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 
 
-@dataclass
+@dataclass(slots=True)
 class MonthlyIncomeData:
     month: int
     year: int
