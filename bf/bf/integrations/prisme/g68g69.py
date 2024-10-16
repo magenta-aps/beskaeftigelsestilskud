@@ -14,7 +14,7 @@ from tenQ.writer.g68 import (
 from tenQ.writer.g69 import G69TransactionWriter
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class G68G69TransactionPair:
     g68: str
     g69: str

@@ -27,7 +27,7 @@ from bf.models import (
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class FileLine:
 
     cpr: str
@@ -86,7 +86,7 @@ class FileLine:
         return person_years
 
 
-@dataclass
+@dataclass(slots=True)
 class IndkomstCSVFileLine(FileLine):
     arbejdsgiver: str
     cvr: int
@@ -250,7 +250,7 @@ class IndkomstCSVFileLine(FileLine):
                 )
 
 
-@dataclass
+@dataclass(slots=True)
 class AssessmentCSVFileLine(FileLine):
     renteindtægter: int
     uddannelsesstøtte: int
@@ -309,7 +309,7 @@ class AssessmentCSVFileLine(FileLine):
                 out.write(f"Created {len(assessments)} PersonYearAssessment objects")
 
 
-@dataclass
+@dataclass(slots=True)
 class FinalCSVFileLine(FileLine):
     skatteår: int
     lønindkomst: int | None
