@@ -53,14 +53,6 @@ class EstimationEngine:
             return Decimal(0) + sum([row.b_amount for row in relevant])
 
     @classmethod
-    def b_income_from_year(
-        cls, person_month: PersonMonth, income_type: IncomeType
-    ) -> Decimal:
-        return Decimal(
-            person_month.b_income_from_year if income_type == IncomeType.B else 0
-        )
-
-    @classmethod
     def classes(cls) -> List[type[EstimationEngine]]:
         all_subclasses = []
         for subclass in cls.__subclasses__():
@@ -307,6 +299,15 @@ class InYearExtrapolationEngine(EstimationEngine):
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
         relevant_items = cls.relevant(subset, person_month.year_month)
+
+        # Trim off items with no income from the beginning of the list
+        relevant_items = trim_list_first(
+            relevant_items,
+            lambda item: not (
+                item.a_amount if income_type == IncomeType.A else item.b_amount
+            ).is_zero(),
+        )
+
         relevant_count = len(relevant_items)
         if relevant_count > 0:
             amount_sum = cls.subset_sum(relevant_items, income_type)
@@ -333,8 +334,6 @@ class InYearExtrapolationEngine(EstimationEngine):
             for item in subset
             if item.year == year_month.year and item.year_month <= year_month
         ]
-        # Trim off items with no income from the beginning of the list
-        items = trim_list_first(items, lambda item: not item.amount.is_zero())
         return items
 
 

@@ -20,6 +20,7 @@ from bf.estimation import (
 from bf.exceptions import IncomeTypeUnhandledByEngine
 from bf.models import (
     Employer,
+    FinalSettlement,
     IncomeEstimate,
     IncomeType,
     MonthlyAIncomeReport,
@@ -28,6 +29,7 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
+    PersonYearEstimateSummary,
     Year,
 )
 
@@ -59,6 +61,7 @@ class TestEstimationEngine(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.year = Year.objects.create(year=2024)
+        cls.year2 = Year.objects.create(year=2025)
         cls.person = Person.objects.create(
             name="Jens Hansen",
             cpr="1234567890",
@@ -66,6 +69,12 @@ class TestEstimationEngine(TestCase):
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+            preferred_estimation_engine_b="SelfReportedEngine",
+        )
+        cls.person_year2 = PersonYear.objects.create(
+            person=cls.person,
+            year=cls.year2,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
             preferred_estimation_engine_b="SelfReportedEngine",
         )
@@ -78,6 +87,22 @@ class TestEstimationEngine(TestCase):
         ):
             person_month = PersonMonth.objects.create(
                 person_year=cls.person_year, month=month, import_date=date.today()
+            )
+            MonthlyAIncomeReport.objects.create(
+                person_month=person_month,
+                employer=cls.employer,
+                amount=Decimal(income),
+            )
+        FinalSettlement.objects.create(
+            person_year=cls.person_year,
+            skattemæssigt_resultat=1200,
+        )
+
+        for month, income in enumerate(
+            [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
+        ):
+            person_month = PersonMonth.objects.create(
+                person_year=cls.person_year2, month=month, import_date=date.today()
             )
             MonthlyAIncomeReport.objects.create(
                 person_month=person_month,
@@ -133,19 +158,21 @@ class TestEstimationEngine(TestCase):
                     income_type=IncomeType.A,
                 )
                 .order_by("person_month__month")
-                .values_list("estimated_year_result", flat=True)
+                .values_list("person_month__month", "estimated_year_result")
             ),
             [
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("9750.00"),
-                Decimal("10000.00"),
-                Decimal("9666.67"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
+                (1, Decimal("0.00")),
+                (2, Decimal("0.00")),
+                (3, Decimal("10000.00")),
+                (4, Decimal("10000.00")),
+                (5, Decimal("10000.00")),
+                (6, Decimal("9750.00")),
+                (7, Decimal("10000.00")),
+                (8, Decimal("9666.67")),
+                (9, Decimal("10000.00")),
+                (10, Decimal("10000.00")),
+                (11, Decimal("10000.00")),
+                (12, Decimal("10000.00")),
             ],
         )
 
@@ -155,21 +182,61 @@ class TestEstimationEngine(TestCase):
                     person_month__person_year=self.person_year,
                     engine="TwelveMonthsSummationEngine",
                     income_type=IncomeType.A,
-                ).values_list("estimated_year_result", flat=True)
+                ).values_list("person_month__month", "estimated_year_result")
             ),
             [
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("10000.00"),
+                (1, Decimal("0.00")),
+                (2, Decimal("0.00")),
+                (3, Decimal("0.00")),
+                (4, Decimal("0.00")),
+                (5, Decimal("0.00")),
+                (6, Decimal("0.00")),
+                (7, Decimal("0.00")),
+                (8, Decimal("0.00")),
+                (9, Decimal("0.00")),
+                (10, Decimal("0.00")),
+                (11, Decimal("0.00")),
+                (12, Decimal("10000.00")),
             ],
         )
+
+        summary = PersonYearEstimateSummary.objects.get(
+            person_year=self.person_year,
+            estimation_engine="TwelveMonthsSummationEngine",
+            income_type=IncomeType.A,
+        )
+        self.assertEqual(summary.mean_error_percent, Decimal("-91.67"))
+        self.assertEqual(summary.rmse_percent, Decimal("95.74"))
+
+        self.assertEqual(
+            list(
+                IncomeEstimate.objects.filter(
+                    person_month__person_year=self.person_year2,
+                    engine="InYearExtrapolationEngine",
+                    income_type=IncomeType.A,
+                )
+                .order_by("person_month__month")
+                .values_list("person_month__month", "estimated_year_result")
+            ),
+            [
+                (1, Decimal("0.00")),
+                (2, Decimal("0.00")),
+                (3, Decimal("10000.00")),
+                (4, Decimal("10000.00")),
+                (5, Decimal("10000.00")),
+                (6, Decimal("9750.00")),
+                (7, Decimal("10000.00")),
+                (8, Decimal("9666.67")),
+                (9, Decimal("10000.00")),
+                (10, Decimal("10000.00")),
+                (11, Decimal("10000.00")),
+                (12, Decimal("10000.00")),
+            ],
+        )
+
+    def test_b_income_from_year(self):
+        for month in PersonMonth.objects.filter(person_year=self.person_year):
+            self.assertEqual(month.b_income_from_year, 100)
 
 
 class TestInYearExtrapolationEngine(TestCase):
