@@ -27,6 +27,7 @@ from project.util import params_no_none, strtobool
 from bf.data import engine_keys
 from bf.estimation import EstimationEngine
 from bf.models import (
+    FinalSettlement,
     IncomeType,
     Person,
     PersonMonth,
@@ -191,8 +192,19 @@ class PersonYearEstimationMixin:
         # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
         # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
-            actual_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal(0))
+            b_income_value=Coalesce(
+                Subquery(
+                    FinalSettlement.objects.filter(person_year=OuterRef("pk"))
+                    .order_by("-created")
+                    .values("skattemæssigt_resultat")[0:]
+                ),
+                Decimal("0.00"),
+            )
         )
+        qs = qs.annotate(
+            month_income_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal("0.00"))
+        )
+        qs = qs.annotate(actual_sum=F("month_income_sum") + F("b_income_value"))
         # qs = qs.annotate(
         #     actual_sum=Subquery(
         #         PersonMonth.objects.filter(person_year=OuterRef("pk"))
@@ -265,7 +277,7 @@ class PersonListView(PersonYearEstimationMixin, LoginRequiredMixin, ListView, Fo
                 qs = qs.filter(person__cpr__icontains=cpr)
             has_zero_income = form.cleaned_data["has_zero_income"]
             if not has_zero_income:
-                qs = qs.filter(actual_sum__gt=0)
+                qs = qs.filter(actual_sum__gt=Decimal(0))
 
         qs = qs.order_by(*self.get_ordering())
         return qs
