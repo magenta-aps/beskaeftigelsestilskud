@@ -63,25 +63,31 @@ class BeskLoginView(LoginView):
 
     def get(self, request, *args, **kwargs):
         if not self.request.user.is_authenticated:
+            print("1")
             user = authenticate(
                 request=self.request, saml_data=self.request.session.get("saml")
             )
             if user and user.is_authenticated:
+                print("2")
                 login(
                     request=self.request,
                     user=user,
                     backend="django_mitid_auth.saml.backend.Saml2Backend",
                 )
             if not self.request.user.is_authenticated:
+                print("3")
                 response = super().get(request, *args, **kwargs)
                 if self.back:
                     response.set_cookie(
                         "back", self.back, secure=True, httponly=True, samesite="None"
                     )
+                print("4")
+                print(response.status_code)
                 return response
         backpage = self.request.COOKIES.get("back")
         if backpage:
             return redirect(backpage)
+        print("5")
         return redirect("bf:root")
 
     def get_context_data(self, **context):

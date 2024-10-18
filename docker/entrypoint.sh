@@ -29,6 +29,8 @@ if [ "${CREATE_DUMMY_ADMIN}" = true ]; then
   python manage.py create_user admin admin -S
 fi
 
+
+
 python manage.py createcachetable
 if [ "${PULL_IDP_METADATA,,}" = true ]; then
   echo "Updating metadata"
