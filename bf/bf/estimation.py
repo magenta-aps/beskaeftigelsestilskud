@@ -350,18 +350,14 @@ class TwelveMonthsSummationEngine(EstimationEngine):
         subset: Sequence[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
-        relevant_items = cls.relevant(subset, person_month.year_month)
-        if len(relevant_items) < cls.months:
-            return IncomeEstimate(
-                estimated_year_result=Decimal(0),
-                person_month=person_month,
-                engine=cls.__name__,
-                income_type=income_type,
-            )
-
-        year_estimate = cls.subset_sum(relevant_items, income_type) * (
-            12 / Decimal(cls.months)
-        )
+        months = 12 if person_month.month == 12 else cls.months
+        relevant_items = cls.relevant(subset, person_month.year_month, months)
+        if len(relevant_items) < months:
+            year_estimate = Decimal(0)
+        else:
+            year_estimate = cls.subset_sum(relevant_items, income_type)
+            if months != 12:
+                year_estimate *= 12 / Decimal(months)
 
         return IncomeEstimate(
             estimated_year_result=year_estimate,
@@ -372,9 +368,9 @@ class TwelveMonthsSummationEngine(EstimationEngine):
 
     @classmethod
     def relevant(
-        cls, subset: Sequence[MonthlyIncomeData], year_month: date
+        cls, subset: Sequence[MonthlyIncomeData], year_month: date, months: int
     ) -> Sequence[MonthlyIncomeData]:
-        min_year_month = year_month - relativedelta(months=cls.months - 1)
+        min_year_month = year_month - relativedelta(months=months - 1)
         return list(
             filter(
                 lambda item: year_month >= item.year_month >= min_year_month,
