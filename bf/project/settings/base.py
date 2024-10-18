@@ -21,6 +21,7 @@ TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
 DEBUG = bool(strtobool(os.environ.get("DJANGO_DEBUG", "False")))
 HOST_DOMAIN = os.environ.get("HOST_DOMAIN", "http://bf.aka.gl")
 ALLOWED_HOSTS: List[str] = json.loads(os.environ.get("ALLOWED_HOSTS", "[]"))
+CSRF_TRUSTED_ORIGINS = [HOST_DOMAIN]
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
