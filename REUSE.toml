@@ -3,7 +3,7 @@ SPDX-PackageName = "Beskæftigelsestilskud"
 SPDX-PackageSupplier = "Magenta ApS <info@magenta.dk>"
 
 [[annotations]]
-path = ["REUSE.toml", "bf/**/migrations/**", "bf/eskat/fixtures/**", "log/**", "dev-environment/**", "**README.md", "dev-idp/**"]
+path = ["REUSE.toml", "bf/**/migrations/**", "bf/eskat/fixtures/**", "log/**", "dev-environment/**", "**README.md", "dev-idp/**", "rfc/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2024 Magenta ApS <info@magenta.dk>"
 SPDX-License-Identifier = "MPL-2.0"
