@@ -1,0 +1,26 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/base.html" %}
+{% load i18n %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'bf:person_search' %}">{% translate "Personer" %}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ person }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mx-1 mt-3">
+    <div class="col-6">
+        <h1>{{ person.name }} ({{ person.cpr }})</h1>
+        <dl class="row">
+            <dt class="col-3">{% translate "Adresse" %}</dt>
+            <dd class="col-9">{{ person.full_address }}</dd>
+            <dt class="col-3">{% translate "Civilstand" %}</dt>
+            <dd class="col-9">{{ person.civil_state }}</dd>
+            <dt class="col-3">{% translate "Stedkode" %}</dt>
+            <dd class="col-9">{{ person.location_code }}</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}

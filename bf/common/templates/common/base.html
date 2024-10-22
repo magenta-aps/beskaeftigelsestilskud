@@ -31,8 +31,8 @@
     <nav class="nav flex-column flex-sm-row p-1 bg-dark" data-bs-theme="dark">
         {% if user.is_authenticated %}
         {% cache 500 navbar %}
-        <a class="btn btn-primary mx-1 my-2" href="{% url 'bf:root' %}">
-            {% bs_icon "house" size="1em" %}
+        <a class="btn btn-primary mx-1 my-2" href="{% url 'bf:person_search' %}">
+            {% translate "Personer" %}
         </a>
         <div class="dropdown p-2">
             <a class="btn btn-primary dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -89,6 +89,15 @@
     <hr class="p-0 m-0"/>
 </header>
 
+<div class="row px-3 pt-1 bg-body-secondary">
+    <nav style="--bs-breadcrumb-divider: '&raquo;';" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
+            {% block breadcrumb %}
+            {% endblock %}
+        </ol>
+    </nav>
+</div>
 {% block content %}
 {% endblock %}
 {% block footer %}
