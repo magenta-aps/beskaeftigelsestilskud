@@ -18,4 +18,6 @@ include(
     "cache.py",
     "prisme.py",
     "eskat.py",
+    "tables2.py",
+    "bootstrap5.py",
 )
