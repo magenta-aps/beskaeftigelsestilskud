@@ -17,4 +17,6 @@ include(
     "csp.py",
     "cache.py",
     "prisme.py",
+    "tables2.py",
+    "bootstrap5.py",
 )
