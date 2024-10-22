@@ -301,6 +301,35 @@ const getChartData = function (doc, row, rowId, options) {
     if (hasData) {
         // Construct chart data by combining series and options
         chartData.series = series;
+
+        const annotations = [];
+        for (let year = doc.year_start; year <= doc.year_end; year++) {
+
+            // Make sure the last color is always white
+            if ((year - doc.year_end) % 2 == 0){
+                fillColor = '#ffffff';
+            } else {
+                fillColor = '#D3D3D3';
+            }
+            annotations.push({
+              x: "Jan " + year,
+              x2: "Jan " + (year + 1),
+              borderColor: '#775DD0',
+              fillColor: fillColor,
+              strokeDashArray: 8,
+              opacity: 0.1,
+              label: {
+                style: {
+                  color: '#808080',
+                },
+                text : year
+              }
+            });
+        }
+        chartData.annotations = {
+          xaxis: annotations
+        };
+
         return chartData;
     }
     return null;
