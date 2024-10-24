@@ -38,16 +38,6 @@ class BaseTestCase(TestCase):
             self._out = out
             self.ending = ending
 
-        def __getattr__(self, name):
-            return getattr(self._out, name)
-
-        def flush(self):
-            if hasattr(self._out, "flush"):
-                self._out.flush()
-
-        def isatty(self):
-            return hasattr(self._out, "isatty") and self._out.isatty()
-
         def write(self, msg="", style_func=None, ending=None):
             pass
 

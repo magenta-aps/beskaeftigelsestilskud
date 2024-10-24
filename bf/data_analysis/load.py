@@ -474,13 +474,11 @@ def load_csv(
     count: int,
     delimiter: str = ",",
     dry: bool = True,
-    stdout: TextIO | None = None,
+    stdout: TextIO = sys.stdout,
 ):
     data_class: Type[IndkomstCSVFileLine | AssessmentCSVFileLine | FinalCSVFileLine] = (
         type_map[data_type]
     )
-    if stdout is None:
-        stdout = sys.stdout
 
     reader = csv.reader(input, delimiter=delimiter)
     data_class.validate_header_labels(next(reader))
