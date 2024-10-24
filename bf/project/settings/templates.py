@@ -22,6 +22,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "bf.context_processors.date_context",
+                "bf.context_processors.version_context",
             ],
             "loaders": default_loaders if DEBUG else cached_loaders,
             "libraries": {
