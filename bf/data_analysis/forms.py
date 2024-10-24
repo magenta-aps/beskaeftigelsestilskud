@@ -180,5 +180,5 @@ class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
     def __init__(self, *args, **kwargs):
         instance = kwargs.pop("instance", None)
         person_years = instance.personyear_set.all().select_related("year")
-        self.years = [person_year.year.year for person_year in person_years]
+        self.years = sorted([person_year.year.year for person_year in person_years])
         super().__init__(*args, **kwargs)
