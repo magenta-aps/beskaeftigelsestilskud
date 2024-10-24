@@ -15,6 +15,7 @@ from bf.integrations.eskat.client import EskatClient
     ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
     ESKAT_USERNAME="testuser",
     ESKAT_PASSWORD="testpass",
+    ESKAT_VERIFY=False,
 )
 class EskatTest(TestCase):
 
@@ -35,21 +36,22 @@ class EskatTest(TestCase):
 
     def test_get(self):
         client = EskatClient.from_settings()
-        with patch(
-            "requests.get",
+        with patch.object(
+            client.session,
+            "get",
             return_value=self._response(200, {"data": "foobar"}),
         ) as mock_get:
             response = client.get("/api/test")
             mock_get.assert_called_with(
                 "https://eskattest/eTaxCommonDataApi/api/test",
-                auth=("testuser", "testpass"),
             )
             self.assertEqual(response, {"data": "foobar"})
 
     def test_get_401(self):
         client = EskatClient.from_settings()
-        with patch(
-            "requests.get",
+        with patch.object(
+            client.session,
+            "get",
             return_value=self._response(401, "You shall not pass"),
         ):
             with self.assertRaises(HTTPError) as error:
