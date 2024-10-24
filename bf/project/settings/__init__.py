@@ -17,4 +17,5 @@ include(
     "csp.py",
     "cache.py",
     "prisme.py",
+    "eskat.py",
 )
