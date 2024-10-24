@@ -70,8 +70,3 @@ PITU = {
     "base_url": os.environ.get("PITU_URL"),
     "service": os.environ.get("PITU_SERVICE"),
 }
-
-if TESTING:
-    import logging
-
-    logging.disable(logging.CRITICAL)

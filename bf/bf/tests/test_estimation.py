@@ -53,7 +53,10 @@ class TestEstimationEngine(TestCase):
             return hasattr(self._out, "isatty") and self._out.isatty()
 
         def write(self, msg="", style_func=None, ending=None):
-            pass
+            ending = self.ending if ending is None else ending
+            if ending and not msg.endswith(ending):
+                msg += ending
+            self._out.write(msg)
 
     @classmethod
     def setUpTestData(cls):
