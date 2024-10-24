@@ -1,0 +1,1088 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "v1",
+    "title": "WebApi"
+  },
+  "host": "eskattest",
+  "basePath": "/eTaxCommonDataApi",
+  "schemes": [
+    "https"
+  ],
+  "paths": {
+    "/api/AnnualIncome": {
+      "get": {
+        "tags": [
+          "AnnualIncome"
+        ],
+        "summary": "Retrieves an array of strings with values \"value1\" and \"value2\".",
+        "operationId": "AnnualIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/api/expectedincome/get/{cpr}/{year}": {
+      "get": {
+        "tags": [
+          "ExpectedIncome"
+        ],
+        "summary": "Retrieves the expected income for a given CPR (personal identification number) and year.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "ExpectedIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "The CPR of the individual for whom the expected income is being retrieved.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which the expected income is being retrieved.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[ExpectedIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/expectedincome/get/{cpr}": {
+      "get": {
+        "tags": [
+          "ExpectedIncome"
+        ],
+        "summary": "Retrieves expected income data for a given CPR number.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "ExpectedIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "The CPR number to retrieve expected income data for.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[ExpectedIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/expectedincome/get/all/{year}": {
+      "get": {
+        "tags": [
+          "ExpectedIncome"
+        ],
+        "summary": "Retrieves the expected income data for a specific year.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "ExpectedIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which the expected income data is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[ExpectedIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/expectedincome/get/chunks/all/{year}": {
+      "get": {
+        "tags": [
+          "ExpectedIncome"
+        ],
+        "summary": "Retrieves expected income data in chunks for a specific year.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "ExpectedIncome_GetAllInChunks",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which the expected income data is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunk",
+            "in": "query",
+            "description": "The chunk number to retrieve.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunkSize",
+            "in": "query",
+            "description": "The size of each chunk.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[ExpectedIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/{cpr}/{year}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves the monthly income data for a specific CPR (personal identification number) and year.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "The CPR (personal identification number) of the individual.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which the income data is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/{cpr}/{year}/{month}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves the monthly income for a specific CPR (personal identification number) for a given year and month.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "The CPR (personal identification number) of the individual",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which the income is requested",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "description": "The month for which the income is requested",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/all/{year}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves all monthly income data for a specific year.",
+        "description": "Calling this action will possibly cause excessive response times. Consider using the chunkified version.\r\nIf the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which to retrieve the monthly income data",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/all/{year}/{month}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves all monthly income data for a specific year and month.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which to retrieve the income data",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "description": "The month for which to retrieve the income data",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/all/{year}/{frommonth}/{tomonth}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves monthly income data for a specified year and range of months.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which to retrieve income data.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "frommonth",
+            "in": "path",
+            "description": "The starting month of the range.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "tomonth",
+            "in": "path",
+            "description": "The ending month of the range.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/chunks/all/{year}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves all monthly income data in chunks for a specific year.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_GetAllInChunks",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which to retrieve the income data.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunk",
+            "in": "query",
+            "description": "The index of the chunk to retrieve.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunkSize",
+            "in": "query",
+            "description": "The size of each chunk.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/chunks/all/{year}/{month}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves all monthly income data in chunks based on the provided year, month, chunk index, and chunk size.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_GetAllInChunks",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which the income data is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "description": "The month for which the income data is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunk",
+            "in": "query",
+            "description": "The index of the chunk to retrieve.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunkSize",
+            "in": "query",
+            "description": "The size of each chunk.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/monthlyincome/get/chunks/all/{year}/{frommonth}/{tomonth}": {
+      "get": {
+        "tags": [
+          "MonthlyIncome"
+        ],
+        "summary": "Retrieves monthly income data in chunks for a specified year and range of months.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "MonthlyIncome_GetAllInChunks",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which to retrieve income data.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "frommonth",
+            "in": "path",
+            "description": "The starting month of the range.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "tomonth",
+            "in": "path",
+            "description": "The ending month of the range.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunk",
+            "in": "query",
+            "description": "The chunk index to retrieve.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunkSize",
+            "in": "query",
+            "description": "The size of each chunk.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[MonthlyIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/taxinformation/get/{cpr}/{year}": {
+      "get": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "summary": "Retrieves tax information for a specific CPR (personal identification number) and year.",
+        "description": "Tax information for a person can contain several census relating to different periode and municipalities in the tax year in question.\r\nIf the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "TaxInformation_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "The CPR (personal identification number) of the individual.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which tax information is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[TaxInformation]"
+            }
+          }
+        }
+      }
+    },
+    "/api/taxinformation/get/{cpr}": {
+      "get": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "summary": "Retrieves tax information for a given CPR number.",
+        "description": "Tax information for a person can contain several census relating to different periode and municipalities in the tax year in question.\r\nIf the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "TaxInformation_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "The CPR number to retrieve tax information for.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[TaxInformation]"
+            }
+          }
+        }
+      }
+    },
+    "/api/taxinformation/get/all/{year}": {
+      "get": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "summary": "Retrieves tax information for a specific year.",
+        "description": "Tax information for a person can contain several census relating to different periode and municipalities in the tax year in question.\r\nIf the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "TaxInformation_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which tax information is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[TaxInformation]"
+            }
+          }
+        }
+      }
+    },
+    "/api/taxinformation/get/chunks/all/{year}": {
+      "get": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "summary": "Retrieves tax information in chunks for a specific year, chunk index, and chunk size.",
+        "description": "Tax information for a person can contain several census relating to different periode and municipalities in the tax year in question.\r\nIf the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "TaxInformation_GetAllInChunks",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The year for which tax information is requested.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunk",
+            "in": "query",
+            "description": "The chunk number to retrieve.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunkSize",
+            "in": "query",
+            "description": "The size of each chunk.",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[TaxInformation]"
+            }
+          }
+        }
+      }
+    },
+    "/api/taxinformation/get/taxscopes": {
+      "get": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "summary": "Retrieves all possible tax scopes.",
+        "description": "Tax scopes are practically static data.\r\nIf the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "TaxInformation_GetTaxScopes",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[String]"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ServiceListResponse[ExpectedIncome]": {
+      "description": "Represents a generic class for a service list response containing items of type T.\r\nFor a singular response data object use ServiceResponse.",
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "Gets or sets the list of data of type T.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExpectedIncome"
+          }
+        },
+        "message": {
+          "description": "Gets or sets the message string with an initial value of an empty string.",
+          "type": "string"
+        },
+        "chunk": {
+          "format": "int32",
+          "description": "Gets or sets the chunk value, with a default value of 1.",
+          "type": "integer"
+        },
+        "chunkSize": {
+          "format": "int32",
+          "description": "Gets or sets the size of the chunk.",
+          "type": "integer"
+        },
+        "totalChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of chunks.\r\nDefault value is 1.",
+          "type": "integer"
+        },
+        "totalRecordsInChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of records in chunks.",
+          "type": "integer"
+        }
+      }
+    },
+    "ExpectedIncome": {
+      "type": "object",
+      "properties": {
+        "cpr": {
+          "type": "string"
+        },
+        "year": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "validFrom": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "doExpectAIncome": {
+          "type": "boolean"
+        },
+        "capitalIncome": {
+          "format": "double",
+          "description": "B1 Renteindtægter pengeinstitut mm.",
+          "type": "number"
+        },
+        "educationSupportIncome": {
+          "format": "double",
+          "description": "B2 Uddannelsestøtte",
+          "type": "number"
+        },
+        "careFeeIncome": {
+          "format": "double",
+          "description": "B3 Honorarer, plejevederlag mv.",
+          "type": "number"
+        },
+        "alimonyIncome": {
+          "format": "double",
+          "description": "B4 Underholdsbidrag (hustrubidrag mv.)",
+          "type": "number"
+        },
+        "benefitsIncome": {
+          "format": "double",
+          "description": "B5 Frie goder i ansættelsesforhold",
+          "type": "number"
+        },
+        "otherBIncome": {
+          "format": "double",
+          "description": "B6 Andre B-indkomster",
+          "type": "number"
+        },
+        "grossBusinessIncome": {
+          "format": "double",
+          "description": "Erhvervsindtægter i alt",
+          "type": "number"
+        },
+        "catchSaleFactoryIncome": {
+          "format": "double",
+          "description": "E2 Indhandling",
+          "type": "number"
+        },
+        "catchSaleMarketIncome": {
+          "format": "double",
+          "description": "E3 Salg på brættet / husflid",
+          "type": "number"
+        }
+      }
+    },
+    "ServiceListResponse[MonthlyIncome]": {
+      "description": "Represents a generic class for a service list response containing items of type T.\r\nFor a singular response data object use ServiceResponse.",
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "Gets or sets the list of data of type T.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MonthlyIncome"
+          }
+        },
+        "message": {
+          "description": "Gets or sets the message string with an initial value of an empty string.",
+          "type": "string"
+        },
+        "chunk": {
+          "format": "int32",
+          "description": "Gets or sets the chunk value, with a default value of 1.",
+          "type": "integer"
+        },
+        "chunkSize": {
+          "format": "int32",
+          "description": "Gets or sets the size of the chunk.",
+          "type": "integer"
+        },
+        "totalChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of chunks.\r\nDefault value is 1.",
+          "type": "integer"
+        },
+        "totalRecordsInChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of records in chunks.",
+          "type": "integer"
+        }
+      }
+    },
+    "MonthlyIncome": {
+      "description": "Specifies that the type is a data contract and can be serialized and deserialized by the DataContractSerializer.",
+      "type": "object",
+      "properties": {
+        "cpr": {
+          "description": "Data member attribute indicating that the property should be included in serialization and deserialization processes. (felt: 3)\r\nRepresents a CPR (Central Person Register) number as a string.",
+          "type": "string"
+        },
+        "year": {
+          "format": "int32",
+          "description": "Year of the data",
+          "type": "integer"
+        },
+        "month": {
+          "format": "int32",
+          "description": "Month of the data",
+          "type": "integer"
+        },
+        "salaryIncome": {
+          "format": "double",
+          "description": "Gets or sets the sallery income for a person. (felt: 5)",
+          "type": "number"
+        },
+        "catchsaleIncome": {
+          "format": "double",
+          "description": "Gets or sets the catch sale income for a person. (felt: 17)",
+          "type": "number"
+        },
+        "publicAssistanceIncome": {
+          "format": "double",
+          "description": "Gets or sets the public assistance income for a person. (felt: 6)",
+          "type": "number"
+        },
+        "alimonyIncome": {
+          "format": "double",
+          "description": "Gets or sets the alimony income for a person. (felt: 7)",
+          "type": "number"
+        },
+        "disGisIncome": {
+          "format": "double",
+          "description": "Gets or sets the dis/gis income for a person. (felt: 8)",
+          "type": "number"
+        },
+        "retirementPensionIncome": {
+          "format": "double",
+          "description": "Gets or sets the alimony income for a person. (felt: 9)",
+          "type": "number"
+        },
+        "disabilityPensionIncome": {
+          "format": "double",
+          "description": "Gets or sets the Disability Pension Income for a person. (felt: 10)",
+          "type": "number"
+        },
+        "ignoredBenefitsIncome": {
+          "format": "double",
+          "description": "Gets or sets the ignored benefits for a person.",
+          "type": "number"
+        },
+        "employerPaidGLPensionIncome": {
+          "format": "double",
+          "description": "Gets or sets the employer paid Grenlandic Pension Income for a person. (felt: 13)",
+          "type": "number"
+        },
+        "foreignPensionIncome": {
+          "format": "double",
+          "description": "Gets or sets the (foreign) pension income for a person. (felt: 11)",
+          "type": "number"
+        },
+        "civilServantPensionIncome": {
+          "format": "double",
+          "description": "Gets or sets the employer paid Grenlandic Pension Income for a person. (felt: 13)",
+          "type": "number"
+        },
+        "otherPensionIncome": {
+          "format": "double",
+          "description": "Gets or sets the employer paid Grenlandic Pension Income for a person. (felt: 13)",
+          "type": "number"
+        }
+      }
+    },
+    "ServiceListResponse[TaxInformation]": {
+      "description": "Represents a generic class for a service list response containing items of type T.\r\nFor a singular response data object use ServiceResponse.",
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "Gets or sets the list of data of type T.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TaxInformation"
+          }
+        },
+        "message": {
+          "description": "Gets or sets the message string with an initial value of an empty string.",
+          "type": "string"
+        },
+        "chunk": {
+          "format": "int32",
+          "description": "Gets or sets the chunk value, with a default value of 1.",
+          "type": "integer"
+        },
+        "chunkSize": {
+          "format": "int32",
+          "description": "Gets or sets the size of the chunk.",
+          "type": "integer"
+        },
+        "totalChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of chunks.\r\nDefault value is 1.",
+          "type": "integer"
+        },
+        "totalRecordsInChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of records in chunks.",
+          "type": "integer"
+        }
+      }
+    },
+    "TaxInformation": {
+      "type": "object",
+      "properties": {
+        "cpr": {
+          "type": "string"
+        },
+        "year": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "taxScope": {
+          "type": "string"
+        },
+        "startDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "endDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "taxMunicipalityNumber": {
+          "type": "string"
+        },
+        "cprMunicipalityCode": {
+          "type": "string"
+        },
+        "cprMunicipalityName": {
+          "type": "string"
+        },
+        "regionNumber": {
+          "type": "string"
+        },
+        "regionName": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "paidBTax": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
+    "ServiceListResponse[String]": {
+      "description": "Represents a generic class for a service list response containing items of type T.\r\nFor a singular response data object use ServiceResponse.",
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "Gets or sets the list of data of type T.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "description": "Gets or sets the message string with an initial value of an empty string.",
+          "type": "string"
+        },
+        "chunk": {
+          "format": "int32",
+          "description": "Gets or sets the chunk value, with a default value of 1.",
+          "type": "integer"
+        },
+        "chunkSize": {
+          "format": "int32",
+          "description": "Gets or sets the size of the chunk.",
+          "type": "integer"
+        },
+        "totalChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of chunks.\r\nDefault value is 1.",
+          "type": "integer"
+        },
+        "totalRecordsInChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of records in chunks.",
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
