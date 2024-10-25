@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from bf.estimation import EstimationEngine
-from bf.models import Year
+from bf.models import Person, Year
 
 
 class Command(BaseCommand):
@@ -20,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument("--year", type=int)
         parser.add_argument("--count", type=int)
         parser.add_argument("--dry", action="store_true")
-        parser.add_argument("--person", type=int)
+        parser.add_argument("--cpr", type=int)
         parser.add_argument("--profile", action="store_true", default=False)
 
     @transaction.atomic
@@ -30,9 +30,10 @@ class Command(BaseCommand):
         verbose = kwargs["verbosity"] > 1
         dry = kwargs["dry"]
         year = kwargs["year"]
-        person = kwargs["person"]
+        cpr = kwargs["cpr"]
         count = kwargs["count"]
 
+        person = Person.objects.get(cpr=cpr).pk if cpr else None
         output_stream = self.stdout if verbose else None
 
         if year is None:
