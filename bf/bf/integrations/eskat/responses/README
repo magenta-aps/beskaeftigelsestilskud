@@ -19,26 +19,8 @@ For your convenience, the OpenAPI 3.0 spec is checked in to the repo as `openapi
 
 3) Generate `data_models.py`
 
-In a virtualenv built from this project's `requirements.txt`, run:
+$ docker compose exec bf bash -c "/app/bf/integrations/eskat/responses/build_data_models.sh"
 
-$ cd ./bf/bf/integrations/eskat/responses
-$ datamodel-codegen \
-    --input ./openapi_spec.yaml \
-    --input-file-type openapi \
-    --output ./data_models.py \
-    --output-model-type dataclasses.dataclass \
-    --base-class "" \
-    --target-python-version=3.12 \
-    --snake-case-field \
-    --wrap-string-literal \
-    --use-double-quotes \
-    --use-schema-description \
-    --use-standard-collections \
-    --use-union-operator \
-    --disable-appending-item-suffix \
-    --collapse-root-models \
-    --reuse-model \
-    --allow-population-by-field-name \
-    --strict-nullable
+This should build a new `data_models.py` in the `./bf/bf/integrations/eskat/responses/` directory.
 
-This should build a new `data_models.py`.
+For your convenience, a pre-built `data_models.py` is checked in to the repo.
