@@ -170,11 +170,6 @@ Lint REUSE compliance:
     SAML_CONTACT_SUPPORT_NAME: Tester
     SAML_CONTACT_SUPPORT_EMAIL: test@example.com
     SESSION_EXPIRE_SECONDS: 3600
-    ESKAT_USER: eskat_user
-    ESKAT_PASSWORD: eskat_password
-    ESKAT_DB: eskat_db
-    ESKAT_HOST: eskat_host
-    ESKAT_PORT: 1234
     PRISME_HOST: localhost
     PRISME_PORT: 22
     PRISME_USER: besk
