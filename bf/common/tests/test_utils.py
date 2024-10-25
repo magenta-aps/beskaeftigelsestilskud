@@ -19,7 +19,9 @@ from common.utils import (
     map_between_zero_and_one,
     to_dataframe,
 )
+from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from bf.models import (
     Employer,
@@ -326,6 +328,7 @@ class CalculateBenefitTest(BaseTestCase):
                 df_person1[col].values[0],
             )
 
+    @override_settings(CALCULATION_SAFETY_FACTOR=1)
     def test_calculate_benefit(self):
         yearly_salary = 10000 * 12 + 15000 * 12
         correct_benefit = self.year.calculation_method.calculate(yearly_salary) / 12
@@ -333,6 +336,21 @@ class CalculateBenefitTest(BaseTestCase):
         for month in range(1, 13):
             df = calculate_benefit(month, self.year.year)
             self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
+
+    def test_calculate_benefit_with_safety_factor(self):
+        safety_factor = settings.CALCULATION_SAFETY_FACTOR  # type: ignore
+        yearly_salary = 10000 * 12 + 15000 * 12
+        correct_benefit = self.year.calculation_method.calculate(yearly_salary) / 12
+
+        # The safety factor is applied in January
+        df = calculate_benefit(1, self.year.year)
+        self.assertEqual(
+            df.loc[self.person1.cpr, "benefit_paid"], correct_benefit * safety_factor
+        )
+
+        # But not in December
+        df = calculate_benefit(12, self.year.year)
+        self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
 
     def test_isnan(self):
         self.assertTrue(isnan(np.float64(None)))

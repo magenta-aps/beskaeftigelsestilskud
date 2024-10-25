@@ -461,6 +461,10 @@ def calculate_benefit(
     trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
     treshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
     enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
+    if month == 12:
+        safety_factor = 1
+    else:
+        safety_factor = float(settings.CALCULATION_SAFETY_FACTOR)  # type: ignore
     calculation_method = Year.objects.get(year=year).calculation_method
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
     benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]
@@ -477,8 +481,8 @@ def calculate_benefit(
     df = pd.concat([estimates_df, payouts_df], axis=1)
 
     # Calculate benefit
-    df["estimated_year_benefit"] = df.estimated_year_result.fillna(0).map(
-        calculate_benefit_func
+    df["estimated_year_benefit"] = (
+        df.estimated_year_result.fillna(0).map(calculate_benefit_func) * safety_factor
     )
     df["actual_year_benefit"] = df.actual_year_result.fillna(0).map(
         calculate_benefit_func
