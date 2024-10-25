@@ -40,6 +40,31 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
+#: bf/templates/bf/person_detail.html bf/templates/bf/person_search.html
+msgid "Personer"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html bf/views.py
+msgid "Adresse"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html bf/views.py
+msgid "Civilstand"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html bf/views.py
+msgid "Stedkode"
+msgstr ""
+
+#: bf/templates/bf/person_search.html
+msgid "Søg"
+msgstr ""
+
+#: bf/templates/bf/person_search.html
+#, python-format
+msgid "%(count)s resultater"
+msgstr ""
+
 #: bf/templates/bf/root.html
 msgid "To-faktor-godkendelse er nu aktiv"
 msgstr ""
@@ -58,4 +83,12 @@ msgstr ""
 
 #: bf/templates/bf/root.html
 msgid "Estimeringsoverblik"
+msgstr ""
+
+#: bf/views.py
+msgid "CPR-nummer"
+msgstr ""
+
+#: bf/views.py
+msgid "Navn"
 msgstr ""
