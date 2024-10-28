@@ -3,12 +3,14 @@
 # SPDX-License-Identifier: MPL-2.0
 from typing import Callable
 
-from django.db.models import Count, Field
+from django.db.models import CharField, Count, Field, Value
+from django.db.models.functions import Cast, LPad
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView
 from django_filters import CharFilter, ChoiceFilter, FilterSet
 from django_filters.views import FilterView
-from django_tables2 import LinkColumn, SingleTableMixin, Table
+from django_tables2 import Column, SingleTableMixin, Table
+from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
@@ -19,12 +21,20 @@ class RootView(LoginRequiredMixin, TemplateView):
     template_name = "bf/root.html"
 
 
-class PersonTable(Table):
-    class Meta:
-        model = Person
-        fields = ("cpr", "name", "full_address", "civil_state", "location_code")
+class CPRColumn(BaseLinkColumn):
+    def __init__(self, *args, **kwargs):
+        linkify = dict(viewname="bf:person_detail", args=[Accessor("pk")])
+        kwargs.setdefault("verbose_name", _("CPR-nummer"))
+        kwargs.setdefault("linkify", linkify)
+        super().__init__(*args, **kwargs)
 
-    cpr = LinkColumn("bf:person_detail", args=[Accessor("pk")])
+
+class PersonTable(Table):
+    cpr = CPRColumn(accessor=Accessor("_cpr"), order_by=Accessor("_cpr"))
+    name = Column(verbose_name=_("Navn"))
+    full_address = Column(verbose_name=_("Adresse"))
+    civil_state = Column(verbose_name=_("Civilstand"))
+    location_code = Column(verbose_name=_("Stedkode"))
 
 
 class CategoryChoiceFilter(ChoiceFilter):
@@ -55,7 +65,7 @@ class CategoryChoiceFilter(ChoiceFilter):
 
 
 class PersonFilterSet(FilterSet):
-    cpr = CharFilter("cpr", label=_("CPR-nummer"))
+    cpr = CharFilter("_cpr", label=_("CPR-nummer"))
     name = CharFilter("name", lookup_expr="icontains", label=_("Navn"))
     full_address = CharFilter(
         "full_address", lookup_expr="icontains", label=_("Adresse")
@@ -67,10 +77,14 @@ class PersonFilterSet(FilterSet):
 
 
 class PersonSearchView(LoginRequiredMixin, SingleTableMixin, FilterView):
-    model = Person
     table_class = PersonTable
     filterset_class = PersonFilterSet
     template_name = "bf/person_search.html"
+
+    def get_queryset(self):
+        return Person.objects.annotate(
+            _cpr=LPad(Cast("cpr", CharField()), 10, Value("0"))
+        ).order_by("_cpr")
 
 
 class PersonDetailView(LoginRequiredMixin, DetailView):

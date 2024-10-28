@@ -5,20 +5,25 @@ from django.test import TestCase
 from django.utils.translation import gettext_lazy as _
 
 from bf.models import Person
-from bf.views import CategoryChoiceFilter
+from bf.views import CategoryChoiceFilter, PersonSearchView
 
 
-class TestCategoryChoiceFilter(TestCase):
+class PersonEnv(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.person1 = Person.objects.update_or_create(cpr=1, location_code=1)
+        cls.person2 = Person.objects.update_or_create(cpr=2, location_code=1)
+        cls.person3 = Person.objects.update_or_create(cpr=3, location_code=None)
 
+
+class TestCategoryChoiceFilter(PersonEnv):
     def setUp(self):
         super().setUp()
         self.instance = CategoryChoiceFilter(
             field_name="location_code",
             field=Person.location_code,
         )
-        self.person1 = Person.objects.update_or_create(cpr=1, location_code=1)
-        self.person2 = Person.objects.update_or_create(cpr=2, location_code=1)
-        self.person3 = Person.objects.update_or_create(cpr=3, location_code=None)
 
     def test_choices(self):
         self.assertListEqual(
@@ -39,4 +44,14 @@ class TestCategoryChoiceFilter(TestCase):
         self.assertQuerySetEqual(
             filtered_qs,
             Person.objects.filter(location_code__isnull=True),
+        )
+
+
+class TestPersonSearchView(PersonEnv):
+    def test_get_queryset_includes_padded_cpr(self):
+        view = PersonSearchView()
+        self.assertQuerySetEqual(
+            view.get_queryset(),
+            [person.cpr.zfill(10) for person in Person.objects.all()],
+            transform=lambda obj: obj._cpr,
         )
