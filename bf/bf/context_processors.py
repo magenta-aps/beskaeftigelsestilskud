@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 
+from django.conf import settings
+
 from bf.models import Year
 
 
@@ -14,3 +16,7 @@ def date_context(request):
         "this_year": datetime.datetime.now().year,
         "last_year": datetime.datetime.now().year - 1,
     }
+
+
+def version_context(request):
+    return {"version": settings.VERSION}
