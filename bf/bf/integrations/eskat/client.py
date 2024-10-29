@@ -5,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Any, Dict, Iterable, List
 
 import requests
-from common.utils import camelcase_to_snakecase
 from django.conf import settings
 from requests import Response
 from requests_ntlm import HttpNtlmAuth
@@ -99,7 +98,4 @@ class EskatClient:
                     )
                 ]
             responses = self.get_many(urls)
-        return [
-            MonthlyIncome(**camelcase_to_snakecase(item))
-            for item in self.unpack(responses)
-        ]
+        return [MonthlyIncome.from_api_dict(item) for item in self.unpack(responses)]
