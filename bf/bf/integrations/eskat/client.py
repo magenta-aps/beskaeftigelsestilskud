@@ -51,7 +51,7 @@ class EskatClient:
         return responses
 
     @staticmethod
-    def unpack(responses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def unpack(responses: List[Dict[str, Any]]) -> Iterable[Dict[str, Any]]:
         for response in responses:
             for item in response["data"]:
                 yield item
