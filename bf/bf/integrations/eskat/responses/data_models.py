@@ -5,9 +5,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict
-
-from common.utils import camelcase_to_snakecase
 
 
 @dataclass
@@ -49,10 +46,6 @@ class MonthlyIncome:
     foreign_pension_income: float | None = None
     civil_servant_pension_income: float | None = None
     other_pension_income: float | None = None
-
-    @staticmethod
-    def from_api_dict(data: Dict[str, str | int | bool | float]) -> MonthlyIncome:
-        return MonthlyIncome(**camelcase_to_snakecase(data))
 
 
 @dataclass

@@ -4,7 +4,9 @@
 
 import json
 import re
+from decimal import Decimal
 from math import ceil
+from sys import stdout
 from unittest.mock import patch
 from urllib.parse import parse_qs
 
@@ -12,6 +14,9 @@ from django.test import TestCase, override_settings
 from requests import HTTPError, Response
 
 from bf.integrations.eskat.client import EskatClient
+from bf.integrations.eskat.data import MonthlyIncomeHandler
+from bf.integrations.eskat.responses.data_models import MonthlyIncome
+from bf.models import MonthlyAIncomeReport, MonthlyBIncomeReport, PersonMonth
 
 
 @override_settings(
@@ -224,3 +229,37 @@ class EskatTest(TestCase):
             for m in range(0, 6):
                 self.assertEqual(data[m].month, m + 1)
                 self.assertEqual(data[m].cpr, "1234")
+
+
+class LoadHandler(TestCase):
+    def test_monthly_income_load(self):
+        MonthlyIncomeHandler.create_or_update_objects(
+            2024,
+            [
+                MonthlyIncome(
+                    "1234",
+                    2024,
+                    1,
+                    salary_income=25000.00,
+                    foreign_pension_income=1000.00,
+                )
+            ],
+            stdout,
+        )
+        self.assertEqual(
+            PersonMonth.objects.filter(person_year__year__year=2024, month=1).count(), 1
+        )
+        self.assertEqual(
+            MonthlyAIncomeReport.objects.filter(year=2024, month=1).count(), 1
+        )
+        self.assertEqual(
+            MonthlyBIncomeReport.objects.filter(year=2024, month=1).count(), 1
+        )
+        self.assertEqual(
+            MonthlyAIncomeReport.objects.filter(year=2024, month=1).first().amount,
+            Decimal(25000.00),
+        )
+        self.assertEqual(
+            MonthlyBIncomeReport.objects.filter(year=2024, month=1).first().amount,
+            Decimal(1000.00),
+        )

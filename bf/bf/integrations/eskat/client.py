@@ -9,6 +9,7 @@ from django.conf import settings
 from requests import Response
 from requests_ntlm import HttpNtlmAuth
 
+from bf.integrations.eskat.data import MonthlyIncomeHandler
 from bf.integrations.eskat.responses.data_models import MonthlyIncome
 
 
@@ -98,4 +99,6 @@ class EskatClient:
                     )
                 ]
             responses = self.get_many(urls)
-        return [MonthlyIncome.from_api_dict(item) for item in self.unpack(responses)]
+        return [
+            MonthlyIncomeHandler.from_api_dict(item) for item in self.unpack(responses)
+        ]
