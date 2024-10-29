@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import sys
 from copy import copy
 from decimal import Decimal
-from io import StringIO
+from io import StringIO, TextIOBase
 
 from data_analysis.load import (
     AssessmentCSVFileLine,
@@ -29,7 +30,19 @@ from bf.models import (
 )
 
 
-class LoadIncomeTest(TestCase):
+class BaseTestCase(TestCase):
+
+    class OutputWrapper(TextIOBase):
+
+        def __init__(self, out, ending="\n"):
+            self._out = out
+            self.ending = ending
+
+        def write(self, msg="", style_func=None, ending=None):
+            pass
+
+
+class LoadIncomeTest(BaseTestCase):
 
     @property
     def data(self):
@@ -127,7 +140,7 @@ class LoadIncomeTest(TestCase):
             count=1,
             delimiter=",",
             dry=False,
-            stdout=None,
+            stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
         self.assertEqual(Year.objects.count(), 1)
         year = Year.objects.first()
@@ -189,7 +202,7 @@ class LoadIncomeTest(TestCase):
             count=0,
             delimiter=",",
             dry=False,
-            stdout=None,
+            stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
         self.assertEqual(Year.objects.count(), 1)
         self.assertEqual(Person.objects.count(), 0)
@@ -199,7 +212,7 @@ class LoadIncomeTest(TestCase):
         self.assertEqual(MonthlyAIncomeReport.objects.count(), 0)
 
 
-class LoadAssessmentTest(TestCase):
+class LoadAssessmentTest(BaseTestCase):
 
     @property
     def data(self):
@@ -264,7 +277,7 @@ class LoadAssessmentTest(TestCase):
             count=1,
             delimiter=",",
             dry=False,
-            stdout=None,
+            stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
         self.assertEqual(Year.objects.count(), 1)
         year = Year.objects.first()
@@ -303,7 +316,7 @@ class LoadAssessmentTest(TestCase):
             count=0,
             delimiter=",",
             dry=False,
-            stdout=None,
+            stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
         self.assertEqual(Year.objects.count(), 1)
         self.assertEqual(Person.objects.count(), 0)
@@ -311,7 +324,7 @@ class LoadAssessmentTest(TestCase):
         self.assertEqual(PersonYearAssessment.objects.count(), 0)
 
 
-class LoadFinalSettlementTest(TestCase):
+class LoadFinalSettlementTest(BaseTestCase):
 
     @property
     def data(self):
@@ -451,7 +464,7 @@ class LoadFinalSettlementTest(TestCase):
             count=1,
             delimiter=",",
             dry=False,
-            stdout=None,
+            stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
         self.assertEqual(Year.objects.count(), 1)
         year = Year.objects.first()
@@ -533,7 +546,7 @@ class LoadFinalSettlementTest(TestCase):
             count=0,
             delimiter=",",
             dry=False,
-            stdout=None,
+            stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
         self.assertEqual(Year.objects.count(), 1)
         self.assertEqual(Person.objects.count(), 0)
