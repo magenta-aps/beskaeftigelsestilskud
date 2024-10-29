@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import datetime
 from dataclasses import dataclass
-from datetime import date
 from typing import TypeAlias
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 from eskat.models import ESkatMandtal
 from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
@@ -21,7 +22,7 @@ class MandtalResult:
     mandtal_by_cpr: dict[CPR, ESkatMandtal]
     new_mandtal_objects: list[ESkatMandtal]
     year: int  # The year that was queried from the database
-    import_date: date  # The date we got data from the database
+    import_date: datetime.datetime  # The date we got data from the database
 
     @property
     def month(self) -> int:
@@ -82,7 +83,7 @@ class Command(BaseCommand):
             mandtal_by_cpr=mandtal_by_cpr,
             new_mandtal_objects=new_mandtal_objects,
             year=year,
-            import_date=date.today(),
+            import_date=timezone.now(),
         )
 
     def _create_persons(
