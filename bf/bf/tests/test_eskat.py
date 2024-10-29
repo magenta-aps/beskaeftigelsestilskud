@@ -14,7 +14,7 @@ from django.test import TestCase, override_settings
 from requests import HTTPError, Response
 
 from bf.integrations.eskat.client import EskatClient
-from bf.integrations.eskat.data import MonthlyIncomeHandler
+from bf.integrations.eskat.load import MonthlyIncomeHandler
 from bf.integrations.eskat.responses.data_models import MonthlyIncome
 from bf.models import MonthlyAIncomeReport, MonthlyBIncomeReport, PersonMonth
 

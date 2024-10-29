@@ -6,7 +6,7 @@ from cProfile import Profile
 from django.core.management.base import BaseCommand
 
 from bf.integrations.eskat.client import EskatClient
-from bf.integrations.eskat.data import MonthlyIncomeHandler
+from bf.integrations.eskat.load import MonthlyIncomeHandler
 
 
 class Command(BaseCommand):
