@@ -107,16 +107,15 @@ class MonthlyIncomeHandler(Handler):
                         [item.salary_income, item.alimony_income]
                     ):
                         if amount is not None:
-                            amount = Decimal(amount)
                             person_month = person_months[(item.cpr, (index % 12) + 1)]
                             a_income_reports.append(
                                 MonthlyAIncomeReport(
                                     person_month=person_month,
                                     employer=employer,
-                                    amount=amount,
+                                    amount=Decimal(amount),
                                 )
                             )
-                            person_month.amount_sum += amount
+                            person_month.amount_sum += Decimal(amount)
                             person_month.save(update_fields=("amount_sum",))
                 MonthlyAIncomeReport.objects.filter(
                     person_month__person_year__year=year
@@ -135,16 +134,15 @@ class MonthlyIncomeHandler(Handler):
                         [item.foreign_pension_income, item.other_pension_income]
                     ):
                         if amount is not None:
-                            amount = Decimal(amount)
                             person_month = person_months[(item.cpr, (index % 12) + 1)]
                             b_income_reports.append(
                                 MonthlyBIncomeReport(
                                     person_month=person_month,
                                     trader=employer,
-                                    amount=amount,
+                                    amount=Decimal(amount),
                                 )
                             )
-                            person_month.amount_sum += amount
+                            person_month.amount_sum += Decimal(amount)
                             person_month.save(update_fields=("amount_sum",))
                 MonthlyBIncomeReport.objects.filter(
                     person_month__person_year__year=year
