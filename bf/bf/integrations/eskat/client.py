@@ -1,13 +1,16 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
-from typing import Any, Dict
+from concurrent.futures import ThreadPoolExecutor, wait
+from typing import Any, Dict, Iterable, List
 
 import requests
+from common.utils import camelcase_to_snakecase
 from django.conf import settings
 from requests import Response
 from requests_ntlm import HttpNtlmAuth
+
+from bf.integrations.eskat.responses.data_models import MonthlyIncome
 
 
 class EskatClient:
@@ -29,6 +32,31 @@ class EskatClient:
         response.raise_for_status()
         return response.json()
 
+    def get_many(self, paths: Iterable[str], threads: int = 8) -> List[Dict[str, Any]]:
+        executor = ThreadPoolExecutor(max_workers=threads)
+        futures = [executor.submit(self.get, path) for path in paths]
+        wait(futures)
+        return [future.result() for future in futures]
+
+    def get_chunked(self, path: str, chunk_size: int = 10) -> List[Dict[str, Any]]:
+        chunk: int = 0
+        first_response = self.get(path + f"?chunk={chunk}&chunkSize={chunk_size}")
+        total_chunks = first_response["totalChunks"]
+        responses = [first_response]
+        if total_chunks > 1:
+            remaining_paths = [
+                path + f"?chunk={chunk}&chunkSize={chunk_size}"
+                for chunk in range(1, total_chunks)
+            ]
+            responses += self.get_many(remaining_paths)
+        return responses
+
+    @staticmethod
+    def unpack(responses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        for response in responses:
+            for item in response["data"]:
+                yield item
+
     @staticmethod
     def from_settings() -> "EskatClient":
         return EskatClient(
@@ -37,3 +65,41 @@ class EskatClient:
             settings.ESKAT_PASSWORD,  # type: ignore[misc]
             settings.ESKAT_VERIFY,  # type: ignore[misc]
         )
+
+    def get_monthly_income(
+        self,
+        year: int,
+        month_from: int | None = None,
+        month_to: int | None = None,
+        cpr: str | None = None,
+    ) -> List[MonthlyIncome]:
+        if month_from == month_to:
+            month_to = None
+        if cpr is None:
+            if month_from is None:
+                url = f"/api/monthlyincome/get/chunks/all/{year}"
+            elif month_to is None:
+                url = f"/api/monthlyincome/get/chunks/all/{year}/{month_from}"
+            else:
+                url = (
+                    f"/api/monthlyincome/get/chunks/all/{year}/"
+                    f"{min(month_from, month_to)}/{max(month_from, month_to)}"
+                )
+            responses = self.get_chunked(url)
+        else:
+            if month_from is None:
+                urls = [f"/api/monthlyincome/get/{cpr}/{year}"]
+            elif month_to is None:
+                urls = [f"/api/monthlyincome/get/{cpr}/{year}/{month_from}"]
+            else:
+                urls = [
+                    f"/api/monthlyincome/get/{cpr}/{year}/{month}"
+                    for month in range(
+                        min(month_from, month_to), max(month_from, month_to) + 1
+                    )
+                ]
+            responses = self.get_many(urls)
+        return [
+            MonthlyIncome(**camelcase_to_snakecase(item))
+            for item in self.unpack(responses)
+        ]
