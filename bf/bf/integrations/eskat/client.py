@@ -43,13 +43,11 @@ class EskatClient:
         first_response = self.get(path + f"?chunk={chunk}&chunkSize={chunk_size}")
         total_chunks = first_response["totalChunks"]
         responses = [first_response]
-        print(first_response)
         if total_chunks > 1:
             remaining_paths = [
                 path + f"?chunk={chunk}&chunkSize={chunk_size}"
                 for chunk in range(2, total_chunks + 1)
             ]
-            print(remaining_paths)
             responses += self.get_many(remaining_paths)
         return responses
 
