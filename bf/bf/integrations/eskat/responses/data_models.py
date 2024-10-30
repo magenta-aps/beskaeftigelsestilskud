@@ -31,7 +31,7 @@ class MonthlyIncome:
     the DataContractSerializer.
     """
 
-    cpr: str | None = None
+    cpr: str
     year: int | None = None
     month: int | None = None
     salary_income: float | None = None

@@ -11,6 +11,7 @@ from common.utils import (
     calculate_benefit,
     calculate_stability_score,
     calculate_stability_score_for_entire_year,
+    camelcase_to_snakecase,
     get_income_as_dataframe,
     get_income_estimates_df,
     get_payout_df,
@@ -42,6 +43,14 @@ class TestUtils(TestCase):
 
         url_with_parameters = add_parameters_to_url(url, parameters_to_add)
         self.assertEqual(url_with_parameters, "http://foo.com?mucki=1&bar=test")
+
+    def test_camelcase_to_snakecase(self):
+        self.assertEqual(camelcase_to_snakecase("hepHey"), "hep_hey")
+        self.assertEqual(camelcase_to_snakecase("hepHeyGL"), "hep_hey_gl")
+        self.assertEqual(camelcase_to_snakecase("hepHeyGLFoobar"), "hep_hey_gl_foobar")
+        self.assertEqual(
+            camelcase_to_snakecase("hepHeyGLFoobar42"), "hep_hey_gl_foobar42"
+        )
 
 
 class TestStabilityScoreUtils(TestCase):
