@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import re
+from typing import TypeVar
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import numpy as np
@@ -622,3 +624,16 @@ def get_best_engine(year):
 
 def isnan(input: np.float64) -> bool:
     return np.isnan(input)
+
+
+camelcase_re = re.compile(r"((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))")
+
+
+S = TypeVar("S", str, dict)
+
+
+def camelcase_to_snakecase(input: S) -> S:
+    if isinstance(input, dict):
+        return {camelcase_to_snakecase(key): value for key, value in input.items()}
+    else:
+        return camelcase_re.sub("_\\1", input).lower()
