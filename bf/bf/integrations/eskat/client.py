@@ -39,15 +39,17 @@ class EskatClient:
         return [future.result() for future in futures]
 
     def get_chunked(self, path: str, chunk_size: int = 10) -> List[Dict[str, Any]]:
-        chunk: int = 0
+        chunk: int = 1
         first_response = self.get(path + f"?chunk={chunk}&chunkSize={chunk_size}")
         total_chunks = first_response["totalChunks"]
         responses = [first_response]
+        print(first_response)
         if total_chunks > 1:
             remaining_paths = [
                 path + f"?chunk={chunk}&chunkSize={chunk_size}"
-                for chunk in range(1, total_chunks)
+                for chunk in range(2, total_chunks + 1)
             ]
+            print(remaining_paths)
             responses += self.get_many(remaining_paths)
         return responses
 

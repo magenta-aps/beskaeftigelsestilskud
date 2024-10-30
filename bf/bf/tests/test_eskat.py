@@ -126,7 +126,7 @@ class EskatTest(TestCase):
         month1 = self.cast_int(match.group("month1"))
         month2 = self.cast_int(match.group("month2"))
         params = parse_qs(match.group("params")) if match.group("params") else {}
-        chunk = int(params.get("chunk", [0])[0])
+        chunk = int(params.get("chunk", [1])[0])
         chunk_size = int(params.get("chunkSize", [20])[0])
         items = []
         if t in ("all", "chunks/all"):
@@ -144,7 +144,7 @@ class EskatTest(TestCase):
         items = list(items)
         total_items = len(items)
         if t == "chunks/all":
-            items = items[chunk * chunk_size : (chunk + 1) * chunk_size]
+            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
 
         return self._response(
             200,
