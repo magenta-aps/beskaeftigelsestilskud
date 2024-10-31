@@ -10,13 +10,19 @@ from sys import stdout
 from unittest.mock import patch
 from urllib.parse import parse_qs
 
+import requests
 from django.test import TestCase, override_settings
 from requests import HTTPError, Response
 
 from bf.integrations.eskat.client import EskatClient
-from bf.integrations.eskat.load import MonthlyIncomeHandler
-from bf.integrations.eskat.responses.data_models import MonthlyIncome
-from bf.models import MonthlyAIncomeReport, MonthlyBIncomeReport, PersonMonth
+from bf.integrations.eskat.load import ExpectedIncomeHandler, MonthlyIncomeHandler
+from bf.integrations.eskat.responses.data_models import ExpectedIncome, MonthlyIncome
+from bf.models import (
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    PersonMonth,
+    PersonYearAssessment,
+)
 
 
 @override_settings(
@@ -45,7 +51,7 @@ class EskatTest(TestCase):
     def test_get(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session,
+            requests.sessions.Session,
             "get",
             return_value=self._response(200, {"data": "foobar"}),
         ) as mock_get:
@@ -58,7 +64,7 @@ class EskatTest(TestCase):
     def test_get_401(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session,
+            requests.sessions.Session,
             "get",
             return_value=self._response(401, "You shall not pass"),
         ):
@@ -66,7 +72,119 @@ class EskatTest(TestCase):
                 client.get("/api/test")
                 self.assertEqual(error.exception.response.status_code, 401)
 
-    data = [
+    expected_data = [
+        {
+            "cpr": "1234",
+            "year": 2024,
+            "valid_from": "20240201",
+            "do_expect_a_income": True,
+            "capital_income": 123.45,
+            "education_support_income": 0,
+            "care_fee_income": 0.0,
+            "alimony_income": 0.0,
+            "benefits_income": 0.0,
+            "other_b_income": 0.0,
+            "gross_business_income": 0.0,
+            "catch_sale_factory_income": 0.0,
+            "catch_sale_market_income": 0.0,
+        },
+        {
+            "cpr": "5678",
+            "year": 2024,
+            "valid_from": "20240201",
+            "do_expect_a_income": True,
+            "capital_income": 123.45,
+            "education_support_income": 0.0,
+            "care_fee_income": 0.0,
+            "alimony_income": 0.0,
+            "benefits_income": 0.0,
+            "other_b_income": 0.0,
+            "gross_business_income": 0.0,
+            "catch_sale_factory_income": 0.0,
+            "catch_sale_market_income": 0.0,
+        },
+    ]
+
+    def expected_income_testdata(self, url):
+        match = re.match(
+            r"https://eskattest/eTaxCommonDataApi/api/expectedincome/get"
+            r"/(?P<type>chunks/all|all|\d+)"
+            r"(?:/(?P<year>\d+))?"
+            r"(?:\?(?P<params>.*))?",
+            url,
+        )
+        print(url)
+        t = match.group("type")
+        year = self.cast_int(match.group("year"))
+        params = parse_qs(match.group("params")) if match.group("params") else {}
+        chunk = int(params.get("chunk", [1])[0])
+        chunk_size = int(params.get("chunkSize", [20])[0])
+        items = []
+        if t in ("all", "chunks/all"):
+            items = filter(lambda item: item["year"] == year, self.expected_data)
+        elif t.isdigit():
+            if year is None:
+                items = filter(lambda item: item["cpr"] == t, self.expected_data)
+            else:
+                items = filter(
+                    lambda item: item["year"] == year and item["cpr"] == t,
+                    self.expected_data,
+                )
+        items = list(items)
+        total_items = len(items)
+        if t == "chunks/all":
+            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+
+        # Eskat sometimes does this, and we need to check the code that compensates
+        if len(items) == 1:
+            items = items[0]
+
+        return self._response(
+            200,
+            {
+                "data": items,
+                "message": "string",
+                "chunk": chunk,
+                "chunkSize": chunk_size,
+                "totalChunks": ceil(total_items / chunk_size),
+                "totalRecordsInChunks": total_items,
+            },
+        )
+
+    def test_get_expected_income_by_none(self):
+        client = EskatClient.from_settings()
+        with self.assertRaises(ValueError):
+            client.get_expected_income(None, None)
+
+    def test_get_expected_income_by_year(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.expected_income_testdata
+        ):
+            data = client.get_expected_income(year=2024)
+            self.assertEqual(len(data), 2)
+            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[1].cpr, "5678")
+
+    def test_get_expected_income_by_cpr(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.expected_income_testdata
+        ):
+            data = client.get_expected_income(cpr="1234")
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0].cpr, "1234")
+
+    def test_get_expected_income_by_cpr_year(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.expected_income_testdata
+        ):
+            data = client.get_expected_income(year=2024, cpr="1234")
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0].cpr, "1234")
+
+    monthly_data = [
         {
             "cpr": "1234",
             "year": 2024,
@@ -130,14 +248,15 @@ class EskatTest(TestCase):
         chunk_size = int(params.get("chunkSize", [20])[0])
         items = []
         if t in ("all", "chunks/all"):
-            items = filter(lambda item: item["year"] == year, self.data)
+            items = filter(lambda item: item["year"] == year, self.monthly_data)
             if month1 and month2:
                 items = filter(lambda item: month1 <= item["month"] <= month2, items)
             elif month1:
                 items = filter(lambda item: month1 == item["month"], items)
         elif t.isdigit():
             items = filter(
-                lambda item: item["year"] == year and item["cpr"] == t, self.data
+                lambda item: item["year"] == year and item["cpr"] == t,
+                self.monthly_data,
             )
             if month1:
                 items = filter(lambda item: month1 == item["month"], items)
@@ -145,6 +264,10 @@ class EskatTest(TestCase):
         total_items = len(items)
         if t == "chunks/all":
             items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+
+        # Eskat sometimes does this, and we need to check the code that compensates
+        if len(items) == 1:
+            items = items[0]
 
         return self._response(
             200,
@@ -161,7 +284,7 @@ class EskatTest(TestCase):
     def test_get_monthly_income_by_year(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session, "get", side_effect=self.monthly_income_testdata
+            requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
             data = client.get_monthly_income(2024)
             self.assertEqual(len(data), 24)
@@ -175,7 +298,7 @@ class EskatTest(TestCase):
     def test_get_monthly_income_by_year_month(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session, "get", side_effect=self.monthly_income_testdata
+            requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
             data = client.get_monthly_income(2024, 1)
             self.assertEqual(len(data), 2)
@@ -187,7 +310,7 @@ class EskatTest(TestCase):
     def test_get_monthly_income_by_year_monthrange(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session, "get", side_effect=self.monthly_income_testdata
+            requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
             data = client.get_monthly_income(2024, 1, 6)
             self.assertEqual(len(data), 12)
@@ -201,7 +324,7 @@ class EskatTest(TestCase):
     def test_get_monthly_income_by_cpr_year(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session, "get", side_effect=self.monthly_income_testdata
+            requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
             data = client.get_monthly_income(2024, cpr="1234")
             self.assertEqual(len(data), 12)
@@ -212,7 +335,7 @@ class EskatTest(TestCase):
     def test_get_monthly_income_by_cpr_year_month(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session, "get", side_effect=self.monthly_income_testdata
+            requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
             data = client.get_monthly_income(2024, 1, cpr="1234")
             self.assertEqual(len(data), 1)
@@ -222,7 +345,7 @@ class EskatTest(TestCase):
     def test_get_monthly_income_by_cpr_year_month_range(self):
         client = EskatClient.from_settings()
         with patch.object(
-            client.session, "get", side_effect=self.monthly_income_testdata
+            requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
             data = client.get_monthly_income(2024, 1, 6, cpr="1234")
             self.assertEqual(len(data), 6)
@@ -232,6 +355,29 @@ class EskatTest(TestCase):
 
 
 class LoadHandler(TestCase):
+
+    def test_expected_income_load(self):
+        ExpectedIncomeHandler.create_or_update_objects(
+            2024,
+            [
+                ExpectedIncome(
+                    "1234",
+                    2024,
+                    other_b_income=2000.00,
+                )
+            ],
+            stdout,
+        )
+        self.assertEqual(
+            PersonYearAssessment.objects.filter(person_year__year__year=2024).count(), 1
+        )
+        self.assertEqual(
+            PersonYearAssessment.objects.filter(person_year__year__year=2024)
+            .first()
+            .andre_b,
+            Decimal(2000.00),
+        )
+
     def test_monthly_income_load(self):
         MonthlyIncomeHandler.create_or_update_objects(
             2024,
