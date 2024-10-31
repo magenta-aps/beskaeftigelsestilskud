@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List
 
 import requests
 from django.conf import settings
-from requests import Response
+from requests import Response, Session
 from requests_ntlm import HttpNtlmAuth
 
 from bf.integrations.eskat.load import ExpectedIncomeHandler, MonthlyIncomeHandler
@@ -22,7 +22,7 @@ class EskatClient:
         self.username = username
         self.password = password
         self.verify = verify
-        self.sessions = {}
+        self.sessions: Dict[str, Session] = {}
 
     def get_session(self):
         thread_name = current_thread().name

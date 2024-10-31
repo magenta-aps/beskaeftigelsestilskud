@@ -68,7 +68,7 @@ class ExpectedIncomeHandler(Handler):
     ):
         with transaction.atomic():
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items], out
+                year, [item.cpr for item in items if item.cpr], out
             )
             if person_years:
                 assessments = [
@@ -98,6 +98,7 @@ class ExpectedIncomeHandler(Handler):
                         ),
                     )
                     for item in items
+                    if item.cpr
                 ]
                 PersonYearAssessment.objects.bulk_create(assessments)
                 out.write(f"Created {len(assessments)} PersonYearAssessment objects")
