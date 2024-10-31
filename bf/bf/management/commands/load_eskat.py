@@ -31,7 +31,9 @@ class Command(BaseCommand):
         client = EskatClient.from_settings()
         if typ == "expectedincome":
             if month is not None:
-                print("--month is not relevant when fetching expected income")
+                self.stdout.write(
+                    "--month is not relevant when fetching expected income"
+                )
             ExpectedIncomeHandler.create_or_update_objects(
                 year, client.get_expected_income(year, cpr), self.stdout
             )
