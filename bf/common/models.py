@@ -40,3 +40,4 @@ class EngineViewPreferences(models.Model):
     show_TwoYearSummationEngine = models.BooleanField(default=True)
     show_SameAsLastMonthEngine = models.BooleanField(default=False)
     show_SelfReportedEngine = models.BooleanField(default=False)
+    show_DeepLearningEngine = models.BooleanField(default=False)

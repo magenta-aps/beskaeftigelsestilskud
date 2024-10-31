@@ -638,3 +638,85 @@ def calculate_payout(df_estimates, df_annual, treshold=0.05, truncate_amount=0):
             df_payout.loc[:, this_month] = benefit_this_month
             df_correct_payout.loc[:, this_month] = actual_benefit_this_month
     return df_payout, df_correct_payout
+
+
+def plot_results(history, smooth=True, smooth_factor=0.3, title="", plot_loss=False):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    def smooth_curve(points, factor=smooth_factor):
+        smoothed_points = []
+
+        for point in points:
+            if smoothed_points:
+                previous = smoothed_points[-1]
+                smoothed_points.append(previous * factor + point * (1 - factor))
+            else:
+                smoothed_points.append(point)
+        return smoothed_points
+
+    try:
+        history_dict = history.history
+    except:  # noqa: E722
+        history_dict = history
+
+    epochs = np.arange(len(history_dict["loss"]))
+    plt.figure()
+    plt.plot(epochs, history_dict["loss"], ".", label="training loss")
+    plt.plot(epochs, history_dict["val_loss"], ".", label="validation loss")
+
+    if smooth:
+        plt.plot(
+            epochs,
+            smooth_curve(history_dict["loss"]),
+            "-",
+            label="training loss (Smoothed)",
+        )
+        plt.plot(
+            epochs,
+            smooth_curve(history_dict["val_loss"]),
+            "-",
+            label="validation loss (Smoothed)",
+        )
+
+    plt.legend()
+    plt.xlabel("epoch")
+    plt.title(title)
+
+    metrics = []
+    for key in history_dict.keys():
+        if "val_" in key:
+            if "loss" not in key:
+                metric = "_".join(key.split("_")[1:])
+                metrics.extend([metric])
+
+    if len(metrics) > 0:
+        fig, axes = plt.subplots(1, len(metrics), sharex=True, sharey=True)
+        if type(axes) is not np.ndarray:
+            axes = [axes]
+        for metric, ax in zip(metrics, axes):
+            ax.plot(epochs, history_dict[metric], ".", label="training %s" % metric)
+            ax.plot(
+                epochs,
+                history_dict["val_%s" % metric],
+                ".",
+                label="validation %s" % metric,
+            )
+
+            if smooth:
+                ax.plot(
+                    epochs,
+                    smooth_curve(history_dict[metric]),
+                    "-",
+                    label="training %s" % metric,
+                )
+                ax.plot(
+                    epochs,
+                    smooth_curve(history_dict["val_%s" % metric]),
+                    "-",
+                    label="validation %s" % metric,
+                )
+
+            ax.legend()
+            ax.set_xlabel("epoch")
+            ax.set_title(title)

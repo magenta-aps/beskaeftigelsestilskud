@@ -51,6 +51,10 @@ engine_choices = (
         "SelfReportedEngine",
         "Estimering udfra forskudsopgørelsen",
     ),
+    (
+        "DeepLearningEngine",
+        "Estimering ud fra en machine-learning model",
+    ),
 )
 
 engine_keys = tuple([key for key, desc in engine_choices])

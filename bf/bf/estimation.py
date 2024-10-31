@@ -9,9 +9,11 @@ from itertools import groupby
 from operator import attrgetter
 from typing import Iterable, List, Sequence, Tuple
 
+import numpy as np
 from dateutil.relativedelta import relativedelta
 from django.db.models import F, Func, OuterRef, QuerySet, Subquery, Sum
 from django.db.models.functions import Coalesce
+from keras import models
 from project.util import mean_error, root_mean_sq_error, trim_list_first
 
 from bf.data import MonthlyIncomeData
@@ -445,6 +447,85 @@ class SelfReportedEngine(EstimationEngine):
                 )
         else:
             estimated_year_result = Decimal(0)
+        return IncomeEstimate(
+            estimated_year_result=estimated_year_result,
+            engine=cls.__name__,
+            person_month=person_month,
+            income_type=income_type,
+        )
+
+
+class DeepLearningEngine(EstimationEngine):
+    description = "Estimering ud fra machine-learning model"
+
+    @classmethod
+    def relevant(
+        cls, subset: Sequence[MonthlyIncomeData], year_month: date, months: int
+    ) -> Sequence[MonthlyIncomeData]:
+        min_year_month = year_month - relativedelta(months=months - 1)
+        return list(
+            filter(
+                lambda item: year_month >= item.year_month >= min_year_month,
+                subset,
+            )
+        )
+
+    @classmethod
+    def get_this_months_item(cls, relevant_items, month):
+        for item in relevant_items:
+            if item.month == month:
+                return item
+
+    @classmethod
+    def estimate(
+        cls,
+        person_month: PersonMonth,
+        subset: Sequence[MonthlyIncomeData],
+        income_type: IncomeType,
+    ) -> IncomeEstimate | None:
+        if income_type == IncomeType.A:
+            model = models.load_model("/app/keras_models/annual_salary_model_a.keras")
+        else:
+            model = models.load_model("/app/keras_models/annual_salary_model_b.keras")
+
+        # Get last 12 months of income
+        relevant_items = cls.relevant(subset, person_month.year_month, 12)
+        if len(relevant_items) != 12:
+            return None
+
+        this_months_item = cls.get_this_months_item(relevant_items, person_month.month)
+
+        if income_type == IncomeType.A:
+            monthly_salary = [item.a_amount for item in relevant_items]
+            this_months_salary = this_months_item.a_amount
+        else:
+            monthly_salary = [item.b_amount for item in relevant_items]
+            this_months_salary = this_months_item.b_amount
+
+        # Construct metrics
+        if person_month.month != 12:
+            data = np.array(
+                [
+                    [
+                        np.median(monthly_salary),
+                        np.mean(monthly_salary),
+                        np.min(monthly_salary),
+                        np.max(monthly_salary),
+                        this_months_salary,
+                        person_month.month,
+                    ]
+                ]
+            )
+
+            # Feed into model
+            estimated_salary = model(data)
+            estimated_year_result = Decimal(float(estimated_salary.numpy()[0][0]))
+        else:
+            estimated_year_result = Decimal(float(np.sum(monthly_salary)))
+            if income_type == IncomeType.B:
+                estimated_year_result += person_month.person_year.b_income or 0
+
+        # Return output
         return IncomeEstimate(
             estimated_year_result=estimated_year_result,
             engine=cls.__name__,
