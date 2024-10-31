@@ -4,6 +4,7 @@
 from typing import Self
 
 from django.db.models import F, OuterRef, QuerySet, Subquery, Sum
+from django.db.models.expressions import CombinedExpression
 
 from bf.models import IncomeEstimate, IncomeType, Person, PersonMonth, PersonYear
 
@@ -21,11 +22,14 @@ class PersonKeyFigureQuerySet(QuerySet):
             query=queryset.query,
             using=queryset.db,
         )
-        qs._year = year
-        qs._month = month
+        qs._year = year  # type: ignore[attr-defined]
+        qs._month = month  # type: ignore[attr-defined]
         return qs._with_key_figures()
 
     def _with_key_figures(self):
+        assert self._year is not None  # type: ignore[attr-defined]
+        assert self._month is not None  # type: ignore[attr-defined]
+
         # Add "private" annotations - used internally by the "public" annotations
         qs = self.annotate(
             _preferred_estimation_engine_a=self._get_preferred_engine_subquery(
@@ -51,6 +55,7 @@ class PersonKeyFigureQuerySet(QuerySet):
                 IncomeType.B, "actual_year_result"
             ),
         )
+
         # Add "public" annotations
         qs = qs.annotate(
             _benefit_paid=self._get_benefit_paid_to_date(),
@@ -59,15 +64,16 @@ class PersonKeyFigureQuerySet(QuerySet):
             # Needs `_actual_year_result_a` and `_actual_year_result_b`
             _total_actual_year_result=self._get_total("actual_year_result"),
         )
+
         return qs
 
     def _get_benefit_paid_to_date(self) -> Subquery:
         return Subquery(
             PersonMonth.objects.filter(
                 person_year__person=OuterRef("pk"),
-                person_year__year__year=self._year,
+                person_year__year__year=self._year,  # type: ignore[attr-defined]
                 month__gte=1,
-                month__lte=self._month,
+                month__lte=self._month,  # type: ignore[attr-defined]
             )
             .order_by()
             .values("person_year__person")  # dummy "group by"
@@ -80,7 +86,7 @@ class PersonKeyFigureQuerySet(QuerySet):
         return Subquery(
             PersonYear.objects.filter(
                 person=OuterRef("pk"),
-                year__year=self._year,
+                year__year=self._year,  # type: ignore[attr-defined]
             ).values(field)[:1]
         )
 
@@ -92,8 +98,8 @@ class PersonKeyFigureQuerySet(QuerySet):
         return Subquery(
             IncomeEstimate.objects.filter(
                 person_month__person_year__person=OuterRef("pk"),
-                person_month__person_year__year__year=self._year,
-                person_month__month=self._month,
+                person_month__person_year__year__year=self._year,  # type: ignore
+                person_month__month=self._month,  # type: ignore[attr-defined]
                 income_type=income_type,
                 engine=OuterRef(
                     f"_preferred_estimation_engine_{income_type.value.lower()}"
@@ -101,5 +107,5 @@ class PersonKeyFigureQuerySet(QuerySet):
             ).values(field)[:1]
         )
 
-    def _get_total(self, field: str) -> F:
+    def _get_total(self, field: str) -> CombinedExpression:
         return F(f"_{field}_a") + F(f"_{field}_b")
