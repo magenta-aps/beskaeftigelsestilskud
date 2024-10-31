@@ -94,3 +94,15 @@ msgstr ""
 #: bf/views.py
 msgid "Navn"
 msgstr ""
+
+#: bf/views.py
+msgid "Forventet samlet indtægt i indeværende år"
+msgstr ""
+
+#: bf/views.py
+msgid "Faktisk samlet indtægt i indeværende år"
+msgstr ""
+
+#: bf/views.py
+msgid "Beskæftigelsesfradrag til dato i indeværende år"
+msgstr ""
