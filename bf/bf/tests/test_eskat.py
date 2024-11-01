@@ -15,14 +15,38 @@ from django.test import TestCase, override_settings
 from requests import HTTPError, Response
 
 from bf.integrations.eskat.client import EskatClient
-from bf.integrations.eskat.load import ExpectedIncomeHandler, MonthlyIncomeHandler
-from bf.integrations.eskat.responses.data_models import ExpectedIncome, MonthlyIncome
+from bf.integrations.eskat.load import (
+    ExpectedIncomeHandler,
+    MonthlyIncomeHandler,
+    TaxInformationHandler,
+)
+from bf.integrations.eskat.responses.data_models import (
+    ExpectedIncome,
+    MonthlyIncome,
+    TaxInformation,
+)
 from bf.models import (
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     PersonMonth,
+    PersonYear,
     PersonYearAssessment,
 )
+
+
+def make_response(status_code: int, content: str | dict):
+    if isinstance(content, dict):
+        content = json.dumps(content)
+    response = Response()
+    response.status_code = status_code
+    response._content = content.encode("utf-8")
+    return response
+
+
+def cast_int(i):
+    if i is None:
+        return None
+    return int(i)
 
 
 @override_settings(
@@ -32,15 +56,6 @@ from bf.models import (
     ESKAT_VERIFY=False,
 )
 class EskatTest(TestCase):
-
-    @staticmethod
-    def _response(status_code: int, content: str | dict):
-        if isinstance(content, dict):
-            content = json.dumps(content)
-        response = Response()
-        response.status_code = status_code
-        response._content = content.encode("utf-8")
-        return response
 
     def test_from_settings(self):
         client = EskatClient.from_settings()
@@ -53,7 +68,7 @@ class EskatTest(TestCase):
         with patch.object(
             requests.sessions.Session,
             "get",
-            return_value=self._response(200, {"data": "foobar"}),
+            return_value=make_response(200, {"data": "foobar"}),
         ) as mock_get:
             response = client.get("/api/test")
             mock_get.assert_called_with(
@@ -66,11 +81,20 @@ class EskatTest(TestCase):
         with patch.object(
             requests.sessions.Session,
             "get",
-            return_value=self._response(401, "You shall not pass"),
+            return_value=make_response(401, "You shall not pass"),
         ):
             with self.assertRaises(HTTPError) as error:
                 client.get("/api/test")
                 self.assertEqual(error.exception.response.status_code, 401)
+
+
+@override_settings(
+    ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
+    ESKAT_USERNAME="testuser",
+    ESKAT_PASSWORD="testpass",
+    ESKAT_VERIFY=False,
+)
+class TestExpectedIncome(TestCase):
 
     expected_data = [
         {
@@ -115,7 +139,7 @@ class EskatTest(TestCase):
         )
         print(url)
         t = match.group("type")
-        year = self.cast_int(match.group("year"))
+        year = cast_int(match.group("year"))
         params = parse_qs(match.group("params")) if match.group("params") else {}
         chunk = int(params.get("chunk", [1])[0])
         chunk_size = int(params.get("chunkSize", [20])[0])
@@ -139,7 +163,7 @@ class EskatTest(TestCase):
         if len(items) == 1:
             items = items[0]
 
-        return self._response(
+        return make_response(
             200,
             {
                 "data": items,
@@ -184,6 +208,37 @@ class EskatTest(TestCase):
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].cpr, "1234")
 
+    def test_expected_income_load(self):
+        ExpectedIncomeHandler.create_or_update_objects(
+            2024,
+            [
+                ExpectedIncome(
+                    "1234",
+                    2024,
+                    other_b_income=2000.00,
+                )
+            ],
+            stdout,
+        )
+        self.assertEqual(
+            PersonYearAssessment.objects.filter(person_year__year__year=2024).count(), 1
+        )
+        self.assertEqual(
+            PersonYearAssessment.objects.filter(person_year__year__year=2024)
+            .first()
+            .andre_b,
+            Decimal(2000.00),
+        )
+
+
+@override_settings(
+    ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
+    ESKAT_USERNAME="testuser",
+    ESKAT_PASSWORD="testpass",
+    ESKAT_VERIFY=False,
+)
+class TestMonthlyIncome(TestCase):
+
     monthly_data = [
         {
             "cpr": "1234",
@@ -224,12 +279,6 @@ class EskatTest(TestCase):
         for m in range(1, 13)
     ]
 
-    @staticmethod
-    def cast_int(i):
-        if i is None:
-            return None
-        return int(i)
-
     def monthly_income_testdata(self, url):
         match = re.match(
             r"https://eskattest/eTaxCommonDataApi/api/monthlyincome/get"
@@ -240,9 +289,9 @@ class EskatTest(TestCase):
             url,
         )
         t = match.group("type")
-        year = self.cast_int(match.group("year"))
-        month1 = self.cast_int(match.group("month1"))
-        month2 = self.cast_int(match.group("month2"))
+        year = cast_int(match.group("year"))
+        month1 = cast_int(match.group("month1"))
+        month2 = cast_int(match.group("month2"))
         params = parse_qs(match.group("params")) if match.group("params") else {}
         chunk = int(params.get("chunk", [1])[0])
         chunk_size = int(params.get("chunkSize", [20])[0])
@@ -269,7 +318,7 @@ class EskatTest(TestCase):
         if len(items) == 1:
             items = items[0]
 
-        return self._response(
+        return make_response(
             200,
             {
                 "data": items,
@@ -353,31 +402,6 @@ class EskatTest(TestCase):
                 self.assertEqual(data[m].month, m + 1)
                 self.assertEqual(data[m].cpr, "1234")
 
-
-class LoadHandler(TestCase):
-
-    def test_expected_income_load(self):
-        ExpectedIncomeHandler.create_or_update_objects(
-            2024,
-            [
-                ExpectedIncome(
-                    "1234",
-                    2024,
-                    other_b_income=2000.00,
-                )
-            ],
-            stdout,
-        )
-        self.assertEqual(
-            PersonYearAssessment.objects.filter(person_year__year__year=2024).count(), 1
-        )
-        self.assertEqual(
-            PersonYearAssessment.objects.filter(person_year__year__year=2024)
-            .first()
-            .andre_b,
-            Decimal(2000.00),
-        )
-
     def test_monthly_income_load(self):
         MonthlyIncomeHandler.create_or_update_objects(
             2024,
@@ -409,3 +433,160 @@ class LoadHandler(TestCase):
             MonthlyBIncomeReport.objects.filter(year=2024, month=1).first().amount,
             Decimal(1000.00),
         )
+
+
+@override_settings(
+    ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
+    ESKAT_USERNAME="testuser",
+    ESKAT_PASSWORD="testpass",
+    ESKAT_VERIFY=False,
+)
+class TestTaxInformation(TestCase):
+
+    taxinfo_data = [
+        {
+            "cpr": "1234",
+            "year": 2023,
+            "tax_scope": "FULL",
+            "start_date": "2024-11-01T12:39:16.986Z",
+            "end_date": "2024-11-01T12:39:16.986Z",
+            "tax_municipality_number": "956",
+            "cpr_municipality_code": "956",
+            "cpr_municipality_name": "Sermersooq",
+            "region_number": "",
+            "region_name": "",
+            "district_name": "",
+            "paid_b_tax": 0,
+        },
+        {
+            "cpr": "5678",
+            "year": 2023,
+            "tax_scope": "FULL",
+            "start_date": "2024-11-01T12:39:16.986Z",
+            "end_date": "2024-11-01T12:39:16.986Z",
+            "tax_municipality_number": "956",
+            "cpr_municipality_code": "956",
+            "cpr_municipality_name": "Sermersooq",
+            "region_number": "",
+            "region_name": "",
+            "district_name": "",
+            "paid_b_tax": 0,
+        },
+        {
+            "cpr": "1234",
+            "year": 2024,
+            "tax_scope": "FULL",
+            "start_date": "2024-11-01T12:39:16.986Z",
+            "end_date": "2024-11-01T12:39:16.986Z",
+            "tax_municipality_number": "956",
+            "cpr_municipality_code": "956",
+            "cpr_municipality_name": "Sermersooq",
+            "region_number": "",
+            "regionName": "",
+            "district_name": "",
+            "paid_b_tax": 0,
+        },
+        {
+            "cpr": "5678",
+            "year": 2024,
+            "tax_scope": "FULL",
+            "start_date": "2024-11-01T12:39:16.986Z",
+            "end_date": "2024-11-01T12:39:16.986Z",
+            "tax_municipality_number": "956",
+            "cpr_municipality_code": "956",
+            "cpr_municipality_name": "Sermersooq",
+            "region_number": "",
+            "regionName": "",
+            "district_name": "",
+            "paid_b_tax": 0,
+        },
+    ]
+
+    def taxinfo_testdata(self, url):
+        match = re.match(
+            r"https://eskattest/eTaxCommonDataApi/api/taxinformation/get"
+            r"/(?P<type>chunks/all|all|\d+)"
+            r"(?:/(?P<year>\d+))?"
+            r"(?:\?(?P<params>.*))?",
+            url,
+        )
+        t = match.group("type")
+        year = cast_int(match.group("year"))
+        params = parse_qs(match.group("params")) if match.group("params") else {}
+        chunk = int(params.get("chunk", [1])[0])
+        chunk_size = int(params.get("chunkSize", [20])[0])
+        items = self.taxinfo_data
+        if year:
+            items = filter(lambda item: item["year"] == year, items)
+        if t.isdigit():
+            items = filter(lambda item: item["cpr"] == t, items)
+        items = list(items)
+        total_items = len(items)
+        if t == "chunks/all":
+            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+
+        # Eskat sometimes does this, and we need to check the code that compensates
+        if len(items) == 1:
+            items = items[0]
+
+        return make_response(
+            200,
+            {
+                "data": items,
+                "message": "string",
+                "chunk": chunk,
+                "chunkSize": chunk_size,
+                "totalChunks": ceil(total_items / chunk_size),
+                "totalRecordsInChunks": total_items,
+            },
+        )
+
+    def test_get_tax_information_by_none(self):
+        client = EskatClient.from_settings()
+        with self.assertRaises(ValueError):
+            client.get_tax_information(None, None)
+
+    def test_get_tax_information_by_year(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
+        ):
+            data = client.get_tax_information(year=2024)
+            self.assertEqual(len(data), 2)
+            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[1].cpr, "5678")
+
+    def test_get_tax_information_by_cpr(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
+        ):
+            data = client.get_tax_information(cpr="1234")
+            self.assertEqual(len(data), 2)
+            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].year, 2023)
+            self.assertEqual(data[1].cpr, "1234")
+            self.assertEqual(data[1].year, 2024)
+
+    def test_get_tax_information_by_cpr_year(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
+        ):
+            data = client.get_tax_information(year=2024, cpr="1234")
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0].cpr, "1234")
+
+    def test_tax_information_load(self):
+        TaxInformationHandler.create_or_update_objects(
+            2024,
+            [
+                TaxInformation(
+                    "1234",
+                    2024,
+                    tax_scope="FULL",
+                )
+            ],
+            stdout,
+        )
+        self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
