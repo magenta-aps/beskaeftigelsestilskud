@@ -215,5 +215,7 @@ class TaxInformationHandler(Handler):
     @classmethod
     def create_or_update_objects(cls, year, items: List["TaxInformation"], out: TextIO):
         with transaction.atomic():
-            cls.create_person_years(year, [item.cpr for item in items], out)
+            cls.create_person_years(
+                year, [item.cpr for item in items if item.cpr is not None], out
+            )
             # TODO: Brug data i items til at populere databasen
