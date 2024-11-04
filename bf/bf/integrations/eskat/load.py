@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from dataclasses import fields
 from datetime import date
 from decimal import Decimal
 from typing import Dict, List, TextIO
@@ -150,28 +151,24 @@ class MonthlyIncomeHandler(Handler):
                 # (existing objects for this year will be deleted!)
                 a_income_reports = []
                 for item in items:
-                    for index, amount in enumerate(
-                        [
-                            item.salary_income,
-                            item.employer_paid_gl_pension_income
-                            + item.catchsale_income,
-                        ]
-                    ):
-                        if amount is not None:
-                            person_month = person_months[(item.cpr, (index % 12) + 1)]
-                            a_income_reports.append(
-                                MonthlyAIncomeReport(
-                                    person_month=person_month,
-                                    employer=employer,
-                                    amount=Decimal(amount),
-                                )
-                            )
-                            person_month.amount_sum += Decimal(amount)
-                            person_month.save(update_fields=("amount_sum",))
+                    person_month = person_months[(item.cpr, item.month)]
+                    report = MonthlyAIncomeReport(
+                        person_month=person_month,
+                        employer=employer,
+                        **{
+                            f.name: Decimal(getattr(item, f.name) or 0)
+                            for f in fields(item)
+                            if f.name not in {"cpr", "month"}
+                        },
+                    )
+                    report.update_amount()
+                    a_income_reports.append(report)
                 MonthlyAIncomeReport.objects.filter(
                     person_month__person_year__year=year
                 ).delete()
                 MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
+                for person_month in person_months.values():
+                    person_month.update_amount_sum()
                 out.write(
                     f"Created {len(a_income_reports)} MonthlyAIncomeReport objects"
                 )

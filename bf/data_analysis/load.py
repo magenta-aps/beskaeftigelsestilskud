@@ -208,14 +208,15 @@ class IndkomstCSVFileLine(FileLine):
                     for index, amount in enumerate(row.a_amounts):
                         if amount != 0:
                             person_month = person_months[(row.cpr, (index % 12) + 1)]
-                            a_income_reports.append(
-                                MonthlyAIncomeReport(
-                                    person_month=person_month,
-                                    employer=employers[row.cvr],
-                                    amount=amount,
-                                )
+                            report = MonthlyAIncomeReport(
+                                person_month=person_month,
+                                employer=employers[row.cvr],
+                                salary_income=amount,
+                                amount=amount,
                             )
-                            person_month.amount_sum += amount
+                            report.update_amount()
+                            a_income_reports.append(report)
+                            person_month.update_amount_sum()
                             person_month.save(update_fields=("amount_sum",))
                 MonthlyAIncomeReport.objects.filter(
                     person_month__person_year__year=year

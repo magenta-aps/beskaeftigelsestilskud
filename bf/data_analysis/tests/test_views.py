@@ -216,7 +216,7 @@ class PersonYearEstimationSetupMixin:
         cls.a_income_report, _ = MonthlyAIncomeReport.objects.get_or_create(
             person_month=cls.person_month,
             employer=cls.employer,
-            amount=42,
+            salary_income=42,
             month=cls.person_month.month,
             year=cls.year.year,
             person=cls.person,
