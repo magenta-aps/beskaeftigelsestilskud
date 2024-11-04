@@ -6,7 +6,7 @@ from cProfile import Profile
 from django.core.management.base import BaseCommand
 
 from bf.integrations.eskat.client import EskatClient
-from bf.integrations.eskat.load import MonthlyIncomeHandler
+from bf.integrations.eskat.load import ExpectedIncomeHandler, MonthlyIncomeHandler
 
 
 class Command(BaseCommand):
@@ -29,6 +29,14 @@ class Command(BaseCommand):
         cpr: str | None = kwargs["cpr"]
         typ: str = kwargs["type"].lower()
         client = EskatClient.from_settings()
+        if typ == "expectedincome":
+            if month is not None:
+                self.stdout.write(
+                    "--month is not relevant when fetching expected income"
+                )
+            ExpectedIncomeHandler.create_or_update_objects(
+                year, client.get_expected_income(year, cpr), self.stdout
+            )
         if typ == "monthlyincome":
             MonthlyIncomeHandler.create_or_update_objects(
                 year,
