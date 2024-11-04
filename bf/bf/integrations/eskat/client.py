@@ -162,3 +162,6 @@ class EskatClient:
         return [
             TaxInformationHandler.from_api_dict(item) for item in self.unpack(responses)
         ]
+
+    def get_tax_scopes(self) -> List[str]:
+        return self.get("/api/taxinformation/get/taxscopes")["data"]

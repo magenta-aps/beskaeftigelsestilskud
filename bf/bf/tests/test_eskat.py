@@ -505,7 +505,7 @@ class TestTaxInformation(TestCase):
     def taxinfo_testdata(self, url):
         match = re.match(
             r"https://eskattest/eTaxCommonDataApi/api/taxinformation/get"
-            r"/(?P<type>chunks/all|all|\d+)"
+            r"/(?P<type>chunks/all|all|taxscopes|\d+)"
             r"(?:/(?P<year>\d+))?"
             r"(?:\?(?P<params>.*))?",
             url,
@@ -515,11 +515,14 @@ class TestTaxInformation(TestCase):
         params = parse_qs(match.group("params")) if match.group("params") else {}
         chunk = int(params.get("chunk", [1])[0])
         chunk_size = int(params.get("chunkSize", [20])[0])
-        items = self.taxinfo_data
-        if year:
-            items = filter(lambda item: item["year"] == year, items)
-        if t.isdigit():
-            items = filter(lambda item: item["cpr"] == t, items)
+        if t == "taxscopes":
+            items = ["FULL", "LIM"]
+        else:
+            items = self.taxinfo_data
+            if year:
+                items = filter(lambda item: item["year"] == year, items)
+            if t.isdigit():
+                items = filter(lambda item: item["cpr"] == t, items)
         items = list(items)
         total_items = len(items)
         if t == "chunks/all":
@@ -590,3 +593,12 @@ class TestTaxInformation(TestCase):
             stdout,
         )
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
+
+    def test_get_taxscopes(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
+        ):
+            data = client.get_tax_scopes()
+            self.assertEqual(len(data), 2)
+            self.assertEqual(data, ["FULL", "LIM"])
