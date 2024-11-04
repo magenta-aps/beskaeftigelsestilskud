@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from datetime import date
 from decimal import Decimal
 from typing import Dict, List, TextIO
@@ -9,7 +8,7 @@ from typing import Dict, List, TextIO
 from common.utils import camelcase_to_snakecase
 from django.db import transaction
 
-from bf.integrations.eskat.responses.data_models import MonthlyIncome
+from bf.integrations.eskat.responses.data_models import ExpectedIncome, MonthlyIncome
 from bf.models import (
     Employer,
     MonthlyAIncomeReport,
@@ -17,6 +16,7 @@ from bf.models import (
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearAssessment,
     Year,
 )
 
@@ -54,6 +54,54 @@ class Handler:
         )
         out.write(f"Processed {len(person_years)} PersonYear objects")
         return person_years
+
+
+class ExpectedIncomeHandler(Handler):
+
+    @staticmethod
+    def from_api_dict(data: Dict[str, str | int | bool | float]) -> ExpectedIncome:
+        return ExpectedIncome(**camelcase_to_snakecase(data))
+
+    @classmethod
+    def create_or_update_objects(
+        cls, year: int, items: List["ExpectedIncome"], out: TextIO
+    ):
+        with transaction.atomic():
+            person_years = cls.create_person_years(
+                year, [item.cpr for item in items if item.cpr], out
+            )
+            if person_years:
+                assessments = [
+                    PersonYearAssessment(
+                        person_year=person_years[item.cpr],
+                        renteindtægter=item.capital_income or Decimal(0),
+                        uddannelsesstøtte=item.education_support_income or Decimal(0),
+                        honorarer=item.care_fee_income or Decimal(0),
+                        underholdsbidrag=item.alimony_income or Decimal(0),
+                        andre_b=item.other_b_income or Decimal(0),
+                        brutto_b_før_erhvervsvirk_indhandling=item.gross_business_income
+                        or Decimal(0),
+                        # TODO: Tilret dette ud fra hvad Torben
+                        #  svarer når han vender tilbage
+                        brutto_b_indkomst=sum(
+                            filter(
+                                None,
+                                [
+                                    item.capital_income,
+                                    item.education_support_income,
+                                    item.care_fee_income,
+                                    item.alimony_income,
+                                    item.other_b_income,
+                                    item.gross_business_income,
+                                ],
+                            )
+                        ),
+                    )
+                    for item in items
+                    if item.cpr
+                ]
+                PersonYearAssessment.objects.bulk_create(assessments)
+                out.write(f"Created {len(assessments)} PersonYearAssessment objects")
 
 
 class MonthlyIncomeHandler(Handler):
