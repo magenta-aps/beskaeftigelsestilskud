@@ -151,18 +151,19 @@ class MonthlyIncomeHandler(Handler):
                 # (existing objects for this year will be deleted!)
                 a_income_reports = []
                 for item in items:
-                    person_month = person_months[(item.cpr, item.month)]
-                    report = MonthlyAIncomeReport(
-                        person_month=person_month,
-                        employer=employer,
-                        **{
-                            f.name: Decimal(getattr(item, f.name) or 0)
-                            for f in fields(item)
-                            if f.name not in {"cpr", "month"}
-                        },
-                    )
-                    report.update_amount()
-                    a_income_reports.append(report)
+                    if item.cpr is not None and item.month is not None:
+                        person_month = person_months[(item.cpr, item.month)]
+                        report = MonthlyAIncomeReport(
+                            person_month=person_month,
+                            employer=employer,
+                            **{
+                                f.name: Decimal(getattr(item, f.name) or 0)
+                                for f in fields(item)
+                                if f.name not in {"cpr", "month"}
+                            },
+                        )
+                        report.update_amount()
+                        a_income_reports.append(report)
                 MonthlyAIncomeReport.objects.filter(
                     person_month__person_year__year=year
                 ).delete()
