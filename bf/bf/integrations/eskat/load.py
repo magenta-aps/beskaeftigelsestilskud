@@ -150,9 +150,12 @@ class MonthlyIncomeHandler(Handler):
                 # (existing objects for this year will be deleted!)
                 a_income_reports = []
                 for item in items:
-                    # TODO: Hvilke felter tæller som A-indkomst?
                     for index, amount in enumerate(
-                        [item.salary_income, item.alimony_income]
+                        [
+                            item.salary_income,
+                            item.employer_paid_gl_pension_income
+                            + item.catchsale_income,
+                        ]
                     ):
                         if amount is not None:
                             person_month = person_months[(item.cpr, (index % 12) + 1)]
