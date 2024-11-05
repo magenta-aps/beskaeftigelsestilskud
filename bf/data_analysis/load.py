@@ -216,12 +216,11 @@ class IndkomstCSVFileLine(FileLine):
                             )
                             report.update_amount()
                             a_income_reports.append(report)
-                            person_month.update_amount_sum()
-                            person_month.save(update_fields=("amount_sum",))
                 MonthlyAIncomeReport.objects.filter(
                     person_month__person_year__year=year
                 ).delete()
                 MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
+
                 out.write(
                     f"Created {len(a_income_reports)} MonthlyAIncomeReport objects"
                 )
@@ -240,8 +239,6 @@ class IndkomstCSVFileLine(FileLine):
                                     amount=amount,
                                 )
                             )
-                            person_month.amount_sum += amount
-                            person_month.save(update_fields=("amount_sum",))
                 MonthlyBIncomeReport.objects.filter(
                     person_month__person_year__year=year
                 ).delete()
@@ -249,6 +246,10 @@ class IndkomstCSVFileLine(FileLine):
                 out.write(
                     f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
                 )
+
+                for person_month in person_months.values():
+                    person_month.update_amount_sum()
+                    person_month.save(update_fields=("amount_sum",))
 
 
 @dataclass(slots=True)
