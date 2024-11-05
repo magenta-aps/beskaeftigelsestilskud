@@ -14,7 +14,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from django.db import models
 from django.db.models import F, Index, QuerySet, Sum, TextChoices
 from django.db.models.functions import Coalesce
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.utils.translation import gettext_lazy as _
 from eskat.models import ESkatMandtal
 from project.util import int_divide_end
@@ -463,6 +463,98 @@ class MonthlyIncomeReport(models.Model):
         blank=False,
     )
 
+    salary_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    catchsale_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    public_assistance_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    alimony_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    dis_gis_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    retirement_pension_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    disability_pension_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    ignored_benefits_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    employer_paid_gl_pension_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    foreign_pension_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    civil_servant_pension_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+    other_pension_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+
+    def update_amount(self):
+        self.amount = (
+            self.salary_income
+            + self.employer_paid_gl_pension_income
+            + self.catchsale_income
+        )
+
     @staticmethod
     def annotate_month(
         qs: QuerySet["MonthlyIncomeReport"],
@@ -492,7 +584,11 @@ class MonthlyIncomeReport(models.Model):
         return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
 
     @staticmethod
-    def on_update_income_report(
+    def pre_save(sender, instance: MonthlyIncomeReport, *args, **kwargs):
+        instance.update_amount()
+
+    @staticmethod
+    def post_save(
         sender,
         instance: MonthlyIncomeReport,
         created: bool,
@@ -544,10 +640,16 @@ class MonthlyAIncomeReport(MonthlyIncomeReport):
         return f"{self.person_month} | {self.employer}"
 
 
-post_save.connect(
-    MonthlyIncomeReport.on_update_income_report,
+pre_save.connect(
+    MonthlyIncomeReport.pre_save,
     MonthlyAIncomeReport,
-    dispatch_uid="MonthlyAIncomeReport_save",
+    dispatch_uid="MonthlyAIncomeReport_pre_save",
+)
+
+post_save.connect(
+    MonthlyIncomeReport.post_save,
+    MonthlyAIncomeReport,
+    dispatch_uid="MonthlyAIncomeReport_post_save",
 )
 
 
@@ -590,7 +692,7 @@ class MonthlyBIncomeReport(MonthlyIncomeReport):
 
 
 post_save.connect(
-    MonthlyIncomeReport.on_update_income_report,
+    MonthlyIncomeReport.post_save,
     MonthlyBIncomeReport,
     dispatch_uid="MonthlyBIncomeReport_save",
 )

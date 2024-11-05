@@ -88,7 +88,7 @@ class TestEstimationEngine(TestCase):
             MonthlyAIncomeReport.objects.create(
                 person_month=person_month,
                 employer=cls.employer,
-                amount=Decimal(income),
+                salary_income=Decimal(income),
             )
         FinalSettlement.objects.create(
             person_year=cls.person_year,
@@ -104,7 +104,7 @@ class TestEstimationEngine(TestCase):
             MonthlyAIncomeReport.objects.create(
                 person_month=person_month,
                 employer=cls.employer,
-                amount=Decimal(income),
+                salary_income=Decimal(income),
             )
 
     def test_estimate(self):
@@ -281,7 +281,7 @@ class TestInYearExtrapolationEngine(TestCase):
                 MonthlyAIncomeReport.objects.create(
                     person_month=person_month,
                     employer=cls.employer,
-                    amount=Decimal(income),
+                    salary_income=Decimal(income),
                 )
             )
 
@@ -374,7 +374,7 @@ class TwelveMonthsSummationEngineTest(TestCase):
                     MonthlyAIncomeReport.objects.create(
                         person_month=person_month,
                         employer=cls.employer,
-                        amount=Decimal(income),
+                        salary_income=Decimal(income),
                     )
                 )
 
@@ -518,7 +518,7 @@ class TwoYearSummationEngineTest(TestCase):
                     MonthlyAIncomeReport.objects.create(
                         person_month=person_month,
                         employer=cls.employer,
-                        amount=Decimal(income),
+                        salary_income=Decimal(income),
                     )
                 )
 

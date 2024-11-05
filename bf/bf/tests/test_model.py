@@ -82,7 +82,7 @@ class ModelTest(TestCase):
         cls.report1 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month1,
-            amount=Decimal(10000),
+            salary_income=Decimal(10000),
             month=cls.month1.month,
             year=cls.year.year,
             person=cls.person,
@@ -90,7 +90,7 @@ class ModelTest(TestCase):
         cls.report2 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month2,
-            amount=Decimal(11000),
+            salary_income=Decimal(11000),
             month=cls.month2.month,
             year=cls.year.year,
             person=cls.person,
@@ -98,7 +98,7 @@ class ModelTest(TestCase):
         cls.report3 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month3,
-            amount=Decimal(12000),
+            salary_income=Decimal(12000),
             month=cls.month3.month,
             year=cls.year.year,
             person=cls.person,
@@ -106,7 +106,7 @@ class ModelTest(TestCase):
         cls.report4 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer1,
             person_month=cls.month4,
-            amount=Decimal(13000),
+            salary_income=Decimal(13000),
             month=cls.month4.month,
             year=cls.year.year,
             person=cls.person,
@@ -136,7 +136,7 @@ class ModelTest(TestCase):
         cls.report6 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month2,
-            amount=Decimal(12000),
+            salary_income=Decimal(12000),
             month=cls.month2.month,
             year=cls.year.year,
             person=cls.person,
@@ -151,7 +151,7 @@ class ModelTest(TestCase):
         cls.report7 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month3,
-            amount=Decimal(10000),
+            salary_income=Decimal(10000),
             month=cls.month3.month,
             year=cls.year.year,
             person=cls.person,
@@ -167,7 +167,7 @@ class ModelTest(TestCase):
         cls.report8 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.month4,
-            amount=Decimal(8000),
+            salary_income=Decimal(8000),
             month=cls.month4.month,
             year=cls.year.year,
             person=cls.person,
@@ -183,7 +183,7 @@ class ModelTest(TestCase):
         cls.report9 = MonthlyAIncomeReport.objects.create(
             employer=cls.employer2,
             person_month=cls.year2month1,
-            amount=Decimal(8000),
+            salary_income=Decimal(8000),
             month=cls.year2month1.month,
             year=cls.year2.year,
             person=cls.person,

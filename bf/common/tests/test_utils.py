@@ -87,7 +87,7 @@ class TestStabilityScoreUtils(TestCase):
             )
         for counter, amount in enumerate(cls.reasonably_stable_income):
             MonthlyAIncomeReport.objects.create(
-                amount=amount,
+                salary_income=amount,
                 employer=cls.employer,
                 person_month=cls.person_months[counter],
             )
@@ -199,7 +199,7 @@ class BaseTestCase(TestCase):
                 a_income = MonthlyAIncomeReport.objects.create(
                     employer=cls.employer,
                     person_month=month,
-                    amount=Decimal(10000),
+                    salary_income=Decimal(10000),
                     month=month.month,
                     year=cls.year.year,
                     person=person_year.person,
@@ -408,7 +408,7 @@ class QuarantineTest(BaseTestCase):
                 MonthlyAIncomeReport.objects.create(
                     employer=cls.employer,
                     person_month=month,
-                    amount=Decimal(salary[person_year.person] * offset),
+                    salary_income=Decimal(salary[person_year.person] * offset),
                     month=month.month,
                     year=cls.last_year.year,
                     person=person_year.person,
