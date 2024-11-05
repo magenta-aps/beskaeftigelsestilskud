@@ -16,7 +16,6 @@ from django.db.models import F, Index, QuerySet, Sum, TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.utils.translation import gettext_lazy as _
-from eskat.models import ESkatMandtal
 from project.util import int_divide_end
 from simple_history.models import HistoricalRecords
 
@@ -162,19 +161,6 @@ class Person(models.Model):
     full_address = models.TextField(blank=True, null=True)
     civil_state = models.TextField(blank=True, null=True)
     location_code = models.TextField(blank=True, null=True)
-
-    @classmethod
-    def from_eskat_mandtal(cls, eskat_mandtal: ESkatMandtal) -> "Person":
-        return Person(
-            cpr=eskat_mandtal.cpr,
-            name=eskat_mandtal.navn,
-            address_line_1=eskat_mandtal.adresselinje1,
-            address_line_2=eskat_mandtal.adresselinje2,
-            address_line_3=eskat_mandtal.adresselinje3,
-            address_line_4=eskat_mandtal.adresselinje4,
-            address_line_5=eskat_mandtal.adresselinje5,
-            full_address=eskat_mandtal.fuld_adresse,
-        )
 
     def __str__(self):
         return str(self.name or self.cpr)
@@ -377,26 +363,6 @@ class PersonMonth(models.Model):
         except PersonMonth.DoesNotExist:
             pass
         return None
-
-    @classmethod
-    def from_eskat_mandtal(
-        cls,
-        eskat_mandtal: ESkatMandtal,
-        person: Person,
-        import_date: date,
-        year: int,
-        month: int,
-    ) -> "PersonMonth":
-        year_obj, _ = Year.objects.get_or_create(year=year)
-        person_year, _ = PersonYear.objects.get_or_create(person=person, year=year_obj)
-        return PersonMonth(
-            person_year=person_year,
-            month=month,
-            import_date=import_date,
-            municipality_code=eskat_mandtal.kommune_no,
-            municipality_name=eskat_mandtal.kommune,
-            fully_tax_liable=eskat_mandtal.fully_tax_liable,
-        )
 
     def update_amount_sum(self):
         self.amount_sum = MonthlyIncomeReport.sum_queryset(
