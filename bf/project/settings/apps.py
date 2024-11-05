@@ -11,7 +11,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_bootstrap5",
     "common",
-    "eskat",
     "bf",
     "login",
     "django_mitid_auth",
