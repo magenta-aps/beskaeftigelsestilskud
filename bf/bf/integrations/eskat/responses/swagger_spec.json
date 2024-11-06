@@ -10,23 +10,155 @@
     "https"
   ],
   "paths": {
-    "/api/AnnualIncome": {
+    "/api/annualincome/get/all/{year}": {
       "get": {
         "tags": [
           "AnnualIncome"
         ],
-        "summary": "Retrieves an array of strings with values \"value1\" and \"value2\".",
+        "summary": "Retrieves annual income data for a specific year.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
         "operationId": "AnnualIncome_Get",
         "consumes": [],
         "produces": [
           "application/json",
           "text/json"
         ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "type": "object"
+              "$ref": "#/definitions/ServiceListResponse[AnnualIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/annualincome/get/{cpr}": {
+      "get": {
+        "tags": [
+          "AnnualIncome"
+        ],
+        "summary": "Retrieves annual income data for a specific CPR number.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "AnnualIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[AnnualIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/annualincome/get/{cpr}/{year}": {
+      "get": {
+        "tags": [
+          "AnnualIncome"
+        ],
+        "summary": "Retrieves annual income data for a specific year and CPR number.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "AnnualIncome_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "cpr",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[AnnualIncome]"
+            }
+          }
+        }
+      }
+    },
+    "/api/annualincome/get/chunks/all/{year}": {
+      "get": {
+        "tags": [
+          "AnnualIncome"
+        ],
+        "summary": "Retrieves annual income data in chunks for a specific year.",
+        "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
+        "operationId": "AnnualIncome_GetAllInChunks",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunk",
+            "in": "query",
+            "description": "",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "chunkSize",
+            "in": "query",
+            "description": "",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse[AnnualIncome]"
             }
           }
         }
@@ -37,7 +169,7 @@
         "tags": [
           "ExpectedIncome"
         ],
-        "summary": "Retrieves the expected income for a given CPR (personal identification number) and year.",
+        "summary": "Retrieves the expected income for a given CPR number and year.",
         "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
         "operationId": "ExpectedIncome_Get",
         "consumes": [],
@@ -191,7 +323,7 @@
         "tags": [
           "MonthlyIncome"
         ],
-        "summary": "Retrieves the monthly income data for a specific CPR (personal identification number) and year.",
+        "summary": "Retrieves the monthly income data for a specific CPR number and year.",
         "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
         "operationId": "MonthlyIncome_Get",
         "consumes": [],
@@ -203,7 +335,7 @@
           {
             "name": "cpr",
             "in": "path",
-            "description": "The CPR (personal identification number) of the individual.",
+            "description": "The CPR number of the individual.",
             "required": true,
             "type": "string"
           },
@@ -231,7 +363,7 @@
         "tags": [
           "MonthlyIncome"
         ],
-        "summary": "Retrieves the monthly income for a specific CPR (personal identification number) for a given year and month.",
+        "summary": "Retrieves the monthly income for a specific CPR number for a given year and month.",
         "description": "If the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
         "operationId": "MonthlyIncome_Get",
         "consumes": [],
@@ -243,7 +375,7 @@
           {
             "name": "cpr",
             "in": "path",
-            "description": "The CPR (personal identification number) of the individual",
+            "description": "The CPR number of the individual",
             "required": true,
             "type": "string"
           },
@@ -573,7 +705,7 @@
         "tags": [
           "TaxInformation"
         ],
-        "summary": "Retrieves tax information for a specific CPR (personal identification number) and year.",
+        "summary": "Retrieves tax information for a specific CPR number and year.",
         "description": "Tax information for a person can contain several census relating to different periode and municipalities in the tax year in question.\r\nIf the data is available in the cache, it returns the cached response; otherwise, it fetches the data from the service and caches it.",
         "operationId": "TaxInformation_Get",
         "consumes": [],
@@ -585,7 +717,7 @@
           {
             "name": "cpr",
             "in": "path",
-            "description": "The CPR (personal identification number) of the individual.",
+            "description": "The CPR number of the individual.",
             "required": true,
             "type": "string"
           },
@@ -747,6 +879,223 @@
     }
   },
   "definitions": {
+    "ServiceListResponse[AnnualIncome]": {
+      "description": "Represents a generic class for a service list response containing items of type T.\r\nFor a singular response data object use ServiceResponse.",
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "Gets or sets the list of data of type T.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AnnualIncome"
+          }
+        },
+        "message": {
+          "description": "Gets or sets the message string with an initial value of an empty string.",
+          "type": "string"
+        },
+        "chunk": {
+          "format": "int32",
+          "description": "Gets or sets the chunk value, with a default value of 1.",
+          "type": "integer"
+        },
+        "chunkSize": {
+          "format": "int32",
+          "description": "Gets or sets the size of the chunk.",
+          "type": "integer"
+        },
+        "totalChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of chunks.\r\nDefault value is 1.",
+          "type": "integer"
+        },
+        "totalRecordsInChunks": {
+          "format": "int32",
+          "description": "Gets or sets the total number of records in chunks.",
+          "type": "integer"
+        }
+      }
+    },
+    "AnnualIncome": {
+      "type": "object",
+      "properties": {
+        "cpr": {
+          "type": "string"
+        },
+        "year": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "salary": {
+          "format": "double",
+          "type": "number"
+        },
+        "socialBenefitIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "retirementPensionIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "disabilityPensionIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "ignoredBenefits": {
+          "format": "double",
+          "type": "number"
+        },
+        "occupationalBenefit": {
+          "format": "double",
+          "type": "number"
+        },
+        "foreignPensionIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "subsidyForeignPensionIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "disGisIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "otherAIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "depositInterestIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "bondInterestIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "otherInterestIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "educationSupportIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "careFeeIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "alimonyIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "foreignDividendIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "foreignIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeJourneyIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "groupLifeIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "rentalIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "otherBIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeBoardIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeLodgingIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeHousingIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freePhoneIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeCarIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeInternetIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeBoatIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "freeOtherIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "otherDebtInterestIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "pensionPaymentIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "catchSaleMarketIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "catchSaleFactoryIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "accountExtraordEntriesIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "accountBusinessInterest": {
+          "format": "double",
+          "type": "number"
+        },
+        "accountBusinessInterestIncome": {
+          "format": "double",
+          "type": "number"
+        },
+        "accountBusinessInterestDeduct": {
+          "format": "double",
+          "type": "number"
+        },
+        "accountTaxResult": {
+          "format": "double",
+          "type": "number"
+        },
+        "accountShareBusinessPercentage": {
+          "format": "double",
+          "type": "number"
+        },
+        "accountShareBusinessAmount": {
+          "format": "double",
+          "type": "number"
+        },
+        "shareholderDividendIncome": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
     "ServiceListResponse[ExpectedIncome]": {
       "description": "Represents a generic class for a service list response containing items of type T.\r\nFor a singular response data object use ServiceResponse.",
       "type": "object",
@@ -845,6 +1194,16 @@
           "format": "double",
           "description": "E3 Salg på brættet / husflid",
           "type": "number"
+        },
+        "bussinessInterestIncome": {
+          "format": "double",
+          "description": "E8 Erhvervsmæssige renteindtægter",
+          "type": "number"
+        },
+        "extraordinaryBussinessIncome": {
+          "format": "double",
+          "description": "E9 Ekstraordinære indtægter",
+          "type": "number"
         }
       }
     },
@@ -905,7 +1264,7 @@
         },
         "salaryIncome": {
           "format": "double",
-          "description": "Gets or sets the sallery income for a person. (felt: 5)",
+          "description": "Gets or sets the salary income for a person. (felt: 5)",
           "type": "number"
         },
         "catchsaleIncome": {
@@ -1040,10 +1399,6 @@
         },
         "districtName": {
           "type": "string"
-        },
-        "paidBTax": {
-          "format": "double",
-          "type": "number"
         }
       }
     },

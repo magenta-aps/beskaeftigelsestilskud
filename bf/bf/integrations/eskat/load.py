@@ -123,7 +123,7 @@ class MonthlyIncomeHandler(Handler):
 
             # Create or update Year object
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items], out
+                year, [item.cpr for item in items if item.cpr is not None], out
             )
             if person_years:
 
@@ -182,7 +182,7 @@ class MonthlyIncomeHandler(Handler):
                     for index, amount in enumerate(
                         [item.foreign_pension_income, item.other_pension_income]
                     ):
-                        if amount is not None:
+                        if amount is not None and item.cpr is not None:
                             person_month = person_months[(item.cpr, (index % 12) + 1)]
                             b_income_reports.append(
                                 MonthlyBIncomeReport(
