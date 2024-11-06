@@ -10,12 +10,14 @@ from common.utils import camelcase_to_snakecase
 from django.db import transaction
 
 from bf.integrations.eskat.responses.data_models import (
+    AnnualIncome,
     ExpectedIncome,
     MonthlyIncome,
     TaxInformation,
 )
 from bf.models import (
     Employer,
+    FinalBIncomeReport,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
@@ -59,6 +61,36 @@ class Handler:
         )
         out.write(f"Processed {len(person_years)} PersonYear objects")
         return person_years
+
+
+class AnnualIncomeHandler(Handler):
+
+    @staticmethod
+    def from_api_dict(data: Dict[str, str | int | bool | float]) -> AnnualIncome:
+        return AnnualIncome(**camelcase_to_snakecase(data))
+
+    @classmethod
+    def create_or_update_objects(
+        cls,
+        year: int,
+        items: List[AnnualIncome],
+        out: TextIO,
+    ):
+        with transaction.atomic():
+            person_years = cls.create_person_years(
+                year, [item.cpr for item in items if item.cpr], out
+            )
+            if person_years:
+                b_income_reports = [
+                    FinalBIncomeReport(
+                        person_year=person_years[item.cpr],
+                        amount=item.other_b_income,  # TODO: find korrekte felter
+                    )
+                    for item in items
+                ]
+                FinalBIncomeReport.objects.bulk_create(
+                    b_income_reports,
+                )
 
 
 class ExpectedIncomeHandler(Handler):
