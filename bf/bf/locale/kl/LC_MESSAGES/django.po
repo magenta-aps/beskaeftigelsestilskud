@@ -58,6 +58,50 @@ msgstr ""
 msgid "Stedkode"
 msgstr ""
 
+#: bf/templates/bf/person_detail.html
+msgid "Nøgletal"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html bf/views.py
+msgid "Forventet samlet indtægt i indeværende år"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html bf/views.py
+msgid "Faktisk samlet indtægt i indeværende år"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html bf/views.py
+msgid "Beskæftigelsesfradrag til dato i indeværende år"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+msgid "Arbejdsgivere"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+msgid "Vis på graf"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+msgid "Arbejdsgiver"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+msgid "Indkomst til dato"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+msgid "Udbetalinger i indeværende år"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+msgid "Måned"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+msgid "Beløb"
+msgstr ""
+
 #: bf/templates/bf/person_search.html
 msgid "Søg"
 msgstr ""
@@ -96,13 +140,23 @@ msgid "Navn"
 msgstr ""
 
 #: bf/views.py
-msgid "Forventet samlet indtægt i indeværende år"
+msgid "Beregnet beskæftigelsesfradrag"
 msgstr ""
 
 #: bf/views.py
-msgid "Faktisk samlet indtægt i indeværende år"
+msgid "Estimeret total årsindkomst"
 msgstr ""
 
 #: bf/views.py
-msgid "Beskæftigelsesfradrag til dato i indeværende år"
+msgid "Estimeret samlet lønindkomst"
+msgstr ""
+
+#: bf/views.py
+#, python-format
+msgid "A-indkomst hos: %(name)s"
+msgstr ""
+
+#: bf/views.py
+#, python-format
+msgid "B-indkomst hos: %(name)s"
 msgstr ""
