@@ -110,7 +110,7 @@ class PersonKeyFigureViewMixin:
     def get_key_figure_queryset(self) -> PersonKeyFigureQuerySet:
         # Get "key figure" queryset for current year and month
         qs = PersonKeyFigureQuerySet.from_queryset(
-            super().get_queryset(),  # type: ignore[attr-defined]
+            super().get_queryset(),  # type: ignore[misc]
             year=self.year,
             month=self.month,
         )
@@ -119,7 +119,7 @@ class PersonKeyFigureViewMixin:
     @property
     def year(self) -> int:
         try:
-            return int(self.request.GET.get("year"))
+            return int(self.request.GET.get("year"))  # type: ignore[attr-defined]
         except (TypeError, ValueError):
             return timezone.now().year
 
@@ -129,7 +129,7 @@ class PersonKeyFigureViewMixin:
             return 12  # For past years, always use last month of year
         else:
             try:
-                return int(self.request.GET.get("month"))
+                return int(self.request.GET.get("month"))  # type: ignore[attr-defined]
             except (TypeError, ValueError):
                 return timezone.now().month
 
@@ -198,9 +198,16 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
                 person_month__person_year__person=self.object,
                 person_month__person_year__year__year=self.year,
             )
+
+            # Alias `trader` as `employer`
             if model is MonthlyBIncomeReport:
                 qs = qs.annotate(employer=F("trader"))
-            qs = qs.values("employer").annotate(total_amount=Sum("amount"))
+
+            # Group by `employer` and aggregate sum of `amount` per `employer`
+            qs = qs.values("employer").annotate(  # type: ignore
+                total_amount=Sum("amount")
+            )
+
             return qs
 
         def get_all_rows():

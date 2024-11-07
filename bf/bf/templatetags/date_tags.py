@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 @register.filter
-def month_name(month: int) -> str:
+def month_name(month: int) -> str | None:
     # Return localized month name abbreviation (0 -> "Jan", 5 -> "Maj", etc.)
     try:
         return dates.MONTHS[month].capitalize()
@@ -18,3 +18,4 @@ def month_name(month: int) -> str:
         logger.error("could not return month name for month=%r", month)
     except Exception:
         logger.exception("unexpected error")
+    return None
