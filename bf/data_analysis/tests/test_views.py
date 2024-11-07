@@ -4,7 +4,7 @@
 import json
 from datetime import date
 from decimal import Decimal
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from common.models import EngineViewPreferences, User
 from data_analysis.forms import PersonYearListOptionsForm
@@ -294,6 +294,32 @@ class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
             result[0].TwelveMonthsSummationEngine_mean_error_A, Decimal("0")
         )
 
+    def test_get_queryset_invalid_form(self):
+
+        form_mock = MagicMock()
+        form_mock.is_valid.return_value = False
+        self._instance.get_form = MagicMock()
+        self._instance.get_form.return_value = form_mock
+
+        qs = self._instance.get_queryset()
+        self.assertNotIn("a_count", dir(qs[0]))
+        self.assertNotIn("b_count", dir(qs[0]))
+
+    def test_get_queryset_no_min_max_offset(self):
+        qs1 = self._instance.get_queryset()
+
+        self._form = PersonYearListOptionsForm(
+            data={
+                "selected_model": "InYearExtrapolationEngine_mean_error_A",
+                "min_offset": None,
+                "max_offset": None,
+            }
+        )
+        self._instance.get_form = lambda: self._form
+        qs2 = self._instance.get_queryset()
+
+        self.assertEqual(list(qs1), list(qs2))
+
 
 class ViewTestCase(TestCase):
     view_class = None
@@ -460,6 +486,18 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
             self.assertEqual(response.context_data["year"], 2020)
             object_list = response.context_data["object_list"]
             self.assertEqual(object_list.count(), expected_items)
+
+    def test_get_queryset_invalid_form(self):
+        form_mock = MagicMock()
+        form_mock.is_valid.return_value = False
+        self._view.get_form = MagicMock()
+        self._view.get_form.return_value = form_mock
+
+        self._view.kwargs = {"year": 2020}
+        self._view.get_ordering = MagicMock()
+        self._view.get_ordering.return_value = ["person_id"]
+        self._view.get_queryset()
+        form_mock.cleaned_data.get.assert_not_called()
 
 
 class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):

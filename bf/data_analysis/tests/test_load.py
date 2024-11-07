@@ -6,6 +6,7 @@ import sys
 from copy import copy
 from decimal import Decimal
 from io import StringIO, TextIOBase
+from unittest import mock
 
 from data_analysis.load import (
     AssessmentCSVFileLine,
@@ -57,7 +58,7 @@ class LoadIncomeTest(BaseTestCase):
             "Dec indh.-indkomst,Laveste indkomst beløb,Højeste indkomst beløb,"
             "A-indkomst for året\n"
             "0,TestFirma,123,10000,10000,11000,12000,13000,12000,10000,11000,"
-            "10000,11000,15000,12000,,,,,,,5000,0,0,0,0,0,10000,15000,137000\n"
+            "10000,11000,15000,0,,,,,,,5000,0,0,0,0,0,10000,15000,137000\n"
         )
 
     def test_list_get(self):
@@ -121,7 +122,7 @@ class LoadIncomeTest(BaseTestCase):
                 buffer.read(),
                 "IndkomstCSVFileLine(cpr='0', arbejdsgiver='TestFirma', "
                 "cvr=123, a_amounts=[10000, 10000, 11000, 12000, 13000, 12000, "
-                "10000, 11000, 10000, 11000, 15000, 12000], b_amounts=[0, 0, 0, "
+                "10000, 11000, 10000, 11000, 15000, 0], b_amounts=[0, 0, 0, "
                 "0, 0, 0, 5000, 0, 0, 0, 0, 0], low='10000', high='15000', "
                 "sum='137000')\n",
             )
@@ -166,7 +167,7 @@ class LoadIncomeTest(BaseTestCase):
             self.assertEqual(person_month.person, person)
             self.assertEqual(person_month.month, month)
 
-        self.assertEqual(MonthlyAIncomeReport.objects.count(), 12)
+        self.assertEqual(MonthlyAIncomeReport.objects.count(), 11)
         a_incomes = [
             report.amount
             for report in MonthlyAIncomeReport.objects.all().order_by("month")
@@ -185,7 +186,6 @@ class LoadIncomeTest(BaseTestCase):
                 Decimal("10000.00"),
                 Decimal("11000.00"),
                 Decimal("15000.00"),
-                Decimal("12000.00"),
             ],
         )
 
@@ -211,6 +211,9 @@ class LoadIncomeTest(BaseTestCase):
         self.assertEqual(PersonMonth.objects.count(), 0)
         self.assertEqual(MonthlyAIncomeReport.objects.count(), 0)
 
+    def test_from_csv_row_invalid_row(self):
+        self.assertIsNone(IndkomstCSVFileLine.from_csv_row(["foo"]))
+
 
 class LoadAssessmentTest(BaseTestCase):
 
@@ -223,6 +226,9 @@ class LoadAssessmentTest(BaseTestCase):
             "Erhvervsindtægter i alt,E2 Indhandling,Brutto B-indkomst\n"
             "0,1000,2000,3000,4000,5000,6000,7000,8000,9000\n"
         )
+
+    def test_from_csv_row_invalid_row(self):
+        self.assertIsNone(AssessmentCSVFileLine.from_csv_row(["foo"]))
 
     def test_validate_header_labels(self):
         correct_labels = [
@@ -348,6 +354,9 @@ class LoadFinalSettlementTest(BaseTestCase):
             "0,2024,50000,0,,,,,,,0,,0,0,0,0,0,0,,0,0,,,0,0,0,0,0,0,0,,0,0,0,0,"
             "0,,,,0,,0,,,0,0,0,50000,0,0,0,0,0,0,50000\n"
         )
+
+    def test_from_csv_row_invalid_row(self):
+        self.assertIsNone(FinalCSVFileLine.from_csv_row(["foo"]))
 
     def test_validate_header_labels(self):
         correct_labels = [
@@ -548,6 +557,25 @@ class LoadFinalSettlementTest(BaseTestCase):
             dry=False,
             stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
+        self.assertEqual(Year.objects.count(), 1)
+        self.assertEqual(Person.objects.count(), 0)
+        self.assertEqual(PersonYear.objects.count(), 0)
+        self.assertEqual(PersonYearAssessment.objects.count(), 0)
+
+    @mock.patch("data_analysis.load.FinalCSVFileLine.from_csv_row")
+    def test_load_invalid_lines(self, from_csv_row):
+        from_csv_row.return_value = None
+
+        load_csv(
+            input=self.data,
+            year=2024,
+            data_type="final_settlement",
+            count=1,
+            delimiter=",",
+            dry=False,
+            stdout=self.OutputWrapper(sys.stdout, ending="\n"),
+        )
+
         self.assertEqual(Year.objects.count(), 1)
         self.assertEqual(Person.objects.count(), 0)
         self.assertEqual(PersonYear.objects.count(), 0)

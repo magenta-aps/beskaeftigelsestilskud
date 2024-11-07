@@ -49,7 +49,7 @@ class EstimationEngine:
         # Add Decimal(0) to shut MyPy up
         if income_type == IncomeType.A:
             return Decimal(0) + sum([row.a_amount for row in relevant])
-        if income_type == IncomeType.B:
+        if income_type == IncomeType.B:  # pragma: no branch
             return Decimal(0) + sum([row.b_amount for row in relevant])
 
     @classmethod
@@ -185,7 +185,9 @@ class EstimationEngine:
             person_pk = subset[0].person_pk
 
             first_income_month = 1
-            for month_data in [s for s in subset if s.year == year]:
+            for month_data in [  # pragma: no branch
+                s for s in subset if s.year == year
+            ]:
                 if not month_data.amount.is_zero():
                     first_income_month = month_data.month
                     break

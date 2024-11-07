@@ -5,6 +5,8 @@ import sys
 from datetime import date
 from decimal import Decimal
 from io import TextIOBase
+from unittest import mock
+from unittest.mock import MagicMock
 
 from django.test import TestCase
 
@@ -243,6 +245,53 @@ class TestEstimationEngine(TestCase):
         )
         self.assertIsNone(summary.mean_error_percent)
         self.assertIsNone(summary.rmse_percent)
+
+    def test_estimate_all_None_inputs(self):
+        results, summaries = EstimationEngine.estimate_all(self.year.year, None, None)
+
+        # When person=None and count = None the PersonYear queryset contains
+        # all personYears
+        all_person_years = PersonYear.objects.filter(year=self.year.year)
+        result_person_years = [r.person_month.person_year for r in results]
+        for person_year in all_person_years:
+            self.assertIn(person_year, result_person_years)
+
+    def test_estimate_all_dry_run(self):
+
+        IncomeEstimate.objects.create(
+            person_month=PersonMonth.objects.all()[0],
+            estimated_year_result=12341122,
+            income_type=IncomeType.A,
+            engine="InYearExtrapolationEngine",
+        )
+
+        dry_results, dry_summaries = EstimationEngine.estimate_all(
+            self.year.year, None, None, dry_run=True
+        )
+
+        self.assertEqual(
+            len(IncomeEstimate.objects.filter(estimated_year_result=12341122)), 1
+        )
+
+        results, summaries = EstimationEngine.estimate_all(
+            self.year.year, None, None, dry_run=False
+        )
+
+        self.assertEqual(
+            len(IncomeEstimate.objects.filter(estimated_year_result=12341122)), 0
+        )
+
+    @mock.patch("bf.estimation.EstimationEngine.instances")
+    def test_estimate_all_invalid_estimate(self, instances):
+
+        MockEngine = MagicMock()
+        MockEngine.estimate.return_value = None
+        MockEngine.valid_income_types = [IncomeType.A]
+
+        instances.return_value = [MockEngine]
+
+        results, summaries = EstimationEngine.estimate_all(self.year.year, None, None)
+        self.assertEqual(len(results), 0)
 
     def test_b_income_from_year(self):
         for month in PersonMonth.objects.filter(person_year=self.person_year):
