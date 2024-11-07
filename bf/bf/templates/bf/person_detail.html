@@ -3,6 +3,8 @@
 
 {% extends "common/base.html" %}
 {% load i18n %}
+{% load static %}
+{% load date_tags %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'bf:person_search' %}">{% translate "Personer" %}</a></li>
@@ -10,6 +12,7 @@
 {% endblock %}
 
 {% block content %}
+{% with month_name=month|month_name %}
 <div class="row mx-1 mt-3">
     <div class="col-6">
         <h1>{{ person.name }} ({{ person.cpr }})</h1>
@@ -22,5 +25,112 @@
             <dd class="col-9">{{ person.location_code }}</dd>
         </dl>
     </div>
+    <div class="col-6">
+        <h1>{% translate "Nøgletal" %}</h1>
+        <p>{{ month_name }} {{ year }}</p>
+        <dl class="row">
+            <dt class="col-6">{% translate "Forventet samlet indtægt i indeværende år" %}</dt>
+            <dd class="col-6">{{ total_estimated_year_result }}</dd>
+            <dt class="col-6">{% translate "Faktisk samlet indtægt i indeværende år" %}</dt>
+            <dd class="col-6">{{ total_actual_year_result }}</dd>
+            <dt class="col-6">{% translate "Beskæftigelsesfradrag til dato i indeværende år" %}</dt>
+            <dd class="col-6">{{ benefit_paid }}</dd>
+        </dl>
+    </div>
 </div>
+<div class="row mx-1 mt-3">
+    <div class="col-6">
+        <h2>
+            {% blocktrans trimmed with year=year %}
+                Arbejdsgivere i {{ year }}
+            {% endblocktrans %}
+        </h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{% translate "Arbejdsgiver" %}</th>
+                    <th>{% translate "Indkomst til dato" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in income_per_employer_and_type %}
+                <tr>
+                    <td>{{ row.source }}</td>
+                    <td>{{ row.total_amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="#incomeChart">{% translate "Vis på graf" %}</a>
+    </div>
+    <div class="col-6">
+        <h2>
+            {% blocktrans trimmed with year=year %}
+                Udbetalinger i {{ year }}
+            {% endblocktrans %}
+        </h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{% translate "Måned" %}</th>
+                    <th>{% translate "Beløb" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in benefits_per_month %}
+                <tr>
+                    <td>{{ row.month|month_name }}</td>
+                    <td>{{ row.benefit_paid }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="#benefitChart">{% translate "Vis på graf" %}</a>
+    </div>
+</div>
+<div class="row mx-1 mt-3">
+    <div class="col-12">
+        <h2>
+            {% blocktrans trimmed with year=year %}
+                Indkomst, fordelt på arbejdsgivere og type ({{ year }})
+            {% endblocktrans %}
+        </h2>
+        <div class="chart" id="incomeChart"></div>
+    </div>
+    <div class="col-12">
+        <h2>
+            {% blocktrans trimmed with year=year %}
+                Beregnede beskæftigelsesfradrag pr. måned ({{ year }})
+            {% endblocktrans %}
+        </h2>
+        <div class="chart" id="benefitChart"></div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block extra_headers %}
+<link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+<script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script id="incomeData" type="application/json">{{ income_chart|safe }}</script>
+<script id="benefitData" type="application/json">{{ benefit_chart|safe }}</script>
+<script nonce="{{ request.csp_nonce }}">
+$(function () {
+    const renderChart = async function (elemName, dataElemName) {
+        const chartElem = $(elemName);
+        const chartData = JSON.parse($(dataElemName).text());
+        try {
+            const chart = new ApexCharts(chartElem.get(0), chartData);
+            await chart.render();
+        } catch (exc) {
+            console.error(exc, chartData);
+        } finally {
+            console.log(chartData);
+        }
+    }
+
+    renderChart("#incomeChart", "#incomeData");
+    renderChart("#benefitChart", "#benefitData");
+});
+</script>
 {% endblock %}

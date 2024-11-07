@@ -1,11 +1,14 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date
+import json
+from functools import cache
 from typing import Callable
 
-from django.db.models import CharField, Count, Field, Value
-from django.db.models.functions import Cast, LPad
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import CharField, Count, F, Field, Q, Sum, Value
+from django.db.models.functions import Cast, JSONObject, LPad
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView
@@ -16,8 +19,17 @@ from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
-from bf.models import Person
+from bf.models import (
+    Employer,
+    IncomeEstimate,
+    IncomeType,
+    MonthlyAIncomeReport,
+    MonthlyBIncomeReport,
+    Person,
+    PersonMonth,
+)
 from bf.querysets import PersonKeyFigureQuerySet
+from bf.templatetags.date_tags import month_name
 
 
 class RootView(LoginRequiredMixin, TemplateView):
@@ -94,21 +106,44 @@ class PersonFilterSet(FilterSet):
     )
 
 
-class PersonSearchView(LoginRequiredMixin, SingleTableMixin, FilterView):
+class PersonKeyFigureViewMixin:
+    def get_key_figure_queryset(self) -> PersonKeyFigureQuerySet:
+        # Get "key figure" queryset for current year and month
+        qs = PersonKeyFigureQuerySet.from_queryset(
+            super().get_queryset(),  # type: ignore[attr-defined]
+            year=self.year,
+            month=self.month,
+        )
+        return qs
+
+    @property
+    def year(self) -> int:
+        try:
+            return int(self.request.GET.get("year"))
+        except (TypeError, ValueError):
+            return timezone.now().year
+
+    @property
+    def month(self) -> int:
+        if self.year < timezone.now().year:
+            return 12  # For past years, always use last month of year
+        else:
+            try:
+                return int(self.request.GET.get("month"))
+            except (TypeError, ValueError):
+                return timezone.now().month
+
+
+class PersonSearchView(
+    LoginRequiredMixin, PersonKeyFigureViewMixin, SingleTableMixin, FilterView
+):
     model = Person
     table_class = PersonTable
     filterset_class = PersonFilterSet
     template_name = "bf/person_search.html"
 
     def get_queryset(self):
-        # Get "key figure" queryset for current year and month
-        today: date = timezone.now().date()
-        today = date(2020, 12, 1)  # no commit
-        qs = PersonKeyFigureQuerySet.from_queryset(
-            super().get_queryset(),
-            year=today.year,
-            month=today.month,
-        )
+        qs = self.get_key_figure_queryset()
         # Add zero-padded text version of CPR to ensure proper display and sorting
         qs = qs.annotate(_cpr=LPad(Cast("cpr", CharField()), 10, Value("0")))
         # Set initial sorting (can be overridden by user)
@@ -116,7 +151,253 @@ class PersonSearchView(LoginRequiredMixin, SingleTableMixin, FilterView):
         return qs
 
 
-class PersonDetailView(LoginRequiredMixin, DetailView):
+class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView):
     model = Person
     context_object_name = "person"
     template_name = "bf/person_detail.html"
+
+    def get_queryset(self):
+        return self.get_key_figure_queryset()
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        # Add displayed year and month
+        context_data["year"] = self.year
+        context_data["month"] = self.month
+
+        # Add key figures as separate context variables
+        for annotation in (
+            "_total_estimated_year_result",
+            "_total_actual_year_result",
+            "_benefit_paid",
+        ):
+            # Strip leading underscore, which is not allowed in Django templates
+            context_data[annotation[1:]] = getattr(self.object, annotation)
+
+        # Add table data: total income per employer and type (A and B)
+        context_data["income_per_employer_and_type"] = (
+            self.get_income_per_employer_and_type()
+        )
+        # Add table data: benefits per month
+        context_data["benefits_per_month"] = self.get_benefits_per_month()
+
+        # Add chart data: income chart
+        context_data["income_chart"] = self.to_json(self.get_income_chart())
+        # Add chart data: benefit chart
+        context_data["benefit_chart"] = self.to_json(self.get_benefit_chart())
+
+        return context_data
+
+    def to_json(self, obj: dict) -> str:
+        return json.dumps(obj, cls=DjangoJSONEncoder)
+
+    def get_income_per_employer_and_type(self) -> list[dict]:
+        def get_qs(model: type[MonthlyAIncomeReport] | type[MonthlyBIncomeReport]):
+            qs = model.objects.filter(
+                person_month__person_year__person=self.object,
+                person_month__person_year__year__year=self.year,
+            )
+            if model is MonthlyBIncomeReport:
+                qs = qs.annotate(employer=F("trader"))
+            qs = qs.values("employer").annotate(total_amount=Sum("amount"))
+            return qs
+
+        def get_all_rows():
+            for model in (MonthlyAIncomeReport, MonthlyBIncomeReport):
+                for row in get_qs(model):
+                    yield model, row
+
+        return [
+            {
+                "source": self.get_source_name(model, row["employer"]),
+                "total_amount": row["total_amount"],
+            }
+            for model, row in get_all_rows()
+        ]
+
+    def get_income_chart(self) -> dict:
+        return {
+            "chart": {
+                "type": "bar",
+                "stacked": True,
+                "height": 600,
+                "animations": {"enabled": False},
+            },
+            "series": self.get_income_chart_series(),
+            "xaxis": {
+                "type": "category",
+                "categories": self.get_month_names(),
+            },
+            "yaxis": [
+                {
+                    "group": "income",
+                    "seriesName": [
+                        series["name"] for series in self.get_income_chart_series()
+                    ],
+                    "type": "numeric",
+                },
+            ],
+            "plotOptions": {
+                # Show totals for each month
+                "bar": {"dataLabels": {"total": {"enabled": True}}}
+            },
+            "dataLabels": {"enabled": True},
+            "legend": {"show": True, "position": "left"},
+        }
+
+    def get_benefit_chart(self) -> dict:
+        return {
+            "chart": {
+                "type": "line",
+                "height": 600,
+                "animations": {"enabled": False},
+            },
+            "series": self.get_benefit_chart_series(),
+            "xaxis": {
+                "type": "category",
+                "categories": self.get_month_names(),
+            },
+            "yaxis": [
+                {
+                    "group": "benefit",
+                    "seriesName": _("Beregnet beskæftigelsesfradrag"),
+                    "type": "numeric",
+                    "min": 0,
+                    "axisBorder": {"show": True, "color": "#00E396"},
+                    "labels": {"style": {"colors": "#00E396"}},
+                },
+                {
+                    "group": "estimated_total_income",
+                    "seriesName": _("Estimeret total årsindkomst"),
+                    "type": "numeric",
+                    "opposite": True,
+                    "axisBorder": {"show": True, "color": "#008FFB"},
+                    "labels": {"style": {"colors": "#008FFB"}},
+                },
+            ],
+            "dataLabels": {"enabled": True},
+            "legend": {"show": True, "position": "left"},
+        }
+
+    def get_month_names(self) -> list[str]:
+        return [month_name(month) for month in range(1, 13)]
+
+    def get_income_chart_series(self) -> list[dict]:
+        result: list[dict] = []
+
+        # All income data (A and B, separate series for each employer/trader)
+        for model, source_field in (
+            (MonthlyAIncomeReport, "employer"),
+            (MonthlyBIncomeReport, "trader"),
+        ):
+            for source, data in self.get_income_by_source(model, source_field):
+                result.append(
+                    {
+                        "data": data,
+                        "name": self.get_source_name(model, source),
+                        "group": "income",
+                        "type": "column",
+                    }
+                )
+
+        return result
+
+    def get_benefit_chart_series(self) -> list[dict]:
+        result: list[dict] = []
+
+        benefits = self.get_benefits_per_month()
+        result.append(
+            {
+                "data": [
+                    float(val) if val is not None else 0
+                    for val in benefits.values_list("benefit_paid", flat=True)
+                ],
+                "name": _("Beregnet beskæftigelsesfradrag"),
+                "group": "benefit",
+            }
+        )
+
+        # Estimated total yearly income for each month
+        estimates = (
+            IncomeEstimate.objects.filter(
+                Q(
+                    Q(
+                        engine=F(
+                            "person_month__person_year__preferred_estimation_engine_a"
+                        ),
+                        income_type=IncomeType.A,
+                    )
+                    | Q(
+                        engine=F(
+                            "person_month__person_year__preferred_estimation_engine_b"
+                        ),
+                        income_type=IncomeType.B,
+                    )
+                ),
+                person_month__person_year__person=self.object,
+                person_month__person_year__year__year=self.year,
+            )
+            .order_by("person_month__month")
+            .values("person_month__month")
+            .annotate(
+                _total_estimated_year_result=Sum("estimated_year_result"),
+            )
+        )
+        result.append(
+            {
+                "data": [
+                    float(val) if val is not None else 0
+                    for val in estimates.values_list(
+                        "_total_estimated_year_result", flat=True
+                    )
+                ],
+                "name": _("Estimeret samlet lønindkomst"),
+                "group": "estimated_total_income",
+                "type": "column",
+            }
+        )
+
+        return result
+
+    def get_income_by_source(self, model, source_field: str):
+        def zero_pad(income) -> list[int]:
+            by_month = {item["month"]: item["amount"] for item in income}
+            return [by_month.get(month, 0) for month in range(1, 13)]
+
+        by_source = (
+            model.objects.filter(person=self.object, year=self.year)
+            .order_by()
+            .values(source_field)
+            .annotate(
+                income=ArrayAgg(
+                    JSONObject(
+                        month=F("month"),
+                        amount=F("amount"),
+                    )
+                ),
+            )
+            .order_by(f"{source_field}__name")
+        )
+        for row in by_source:
+            yield row[source_field], zero_pad(row["income"])
+
+    @cache
+    def get_source_name(
+        self,
+        model: type[MonthlyAIncomeReport] | type[MonthlyBIncomeReport],
+        source: int,
+    ) -> str:
+        labels = {
+            MonthlyAIncomeReport: _("A-indkomst hos: %(name)s"),
+            MonthlyBIncomeReport: _("B-indkomst hos: %(name)s"),
+        }
+        employers = {employer.pk: employer for employer in Employer.objects.all()}
+        return labels[model] % dict(name=f"{employers[source].cvr}")
+
+    def get_benefits_per_month(self):
+        # Calculated benefit (based on monthly A and B income sums)
+        return PersonMonth.objects.filter(
+            person_year__person=self.object,
+            person_year__year__year=self.year,
+        ).order_by("month")
