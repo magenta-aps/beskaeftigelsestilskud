@@ -6,7 +6,11 @@ from cProfile import Profile
 from django.core.management.base import BaseCommand
 
 from bf.integrations.eskat.client import EskatClient
-from bf.integrations.eskat.load import ExpectedIncomeHandler, MonthlyIncomeHandler
+from bf.integrations.eskat.load import (
+    ExpectedIncomeHandler,
+    MonthlyIncomeHandler,
+    TaxInformationHandler,
+)
 
 
 class Command(BaseCommand):
@@ -41,6 +45,12 @@ class Command(BaseCommand):
             MonthlyIncomeHandler.create_or_update_objects(
                 year,
                 client.get_monthly_income(year, month_from=month, cpr=cpr),
+                self.stdout,
+            )
+        if typ == "taxinformation":
+            TaxInformationHandler.create_or_update_objects(
+                year,
+                client.get_tax_information(year, cpr=cpr),
                 self.stdout,
             )
 
