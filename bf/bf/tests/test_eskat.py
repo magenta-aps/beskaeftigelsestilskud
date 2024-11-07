@@ -456,7 +456,6 @@ class TestTaxInformation(TestCase):
             "region_number": "",
             "region_name": "",
             "district_name": "",
-            "paid_b_tax": 0,
         },
         {
             "cpr": "5678",
@@ -470,7 +469,6 @@ class TestTaxInformation(TestCase):
             "region_number": "",
             "region_name": "",
             "district_name": "",
-            "paid_b_tax": 0,
         },
         {
             "cpr": "1234",
@@ -484,7 +482,6 @@ class TestTaxInformation(TestCase):
             "region_number": "",
             "regionName": "",
             "district_name": "",
-            "paid_b_tax": 0,
         },
         {
             "cpr": "5678",
@@ -498,7 +495,6 @@ class TestTaxInformation(TestCase):
             "region_number": "",
             "regionName": "",
             "district_name": "",
-            "paid_b_tax": 0,
         },
     ]
 
