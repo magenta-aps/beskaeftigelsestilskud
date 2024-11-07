@@ -41,6 +41,11 @@ CALCULATION_QUARANTINE_LIMIT = Decimal(
     os.environ.get("CALCULATION_QUARANTINE_LIMIT", "100")
 )
 
+# Payout 80% of what we THINK we should pay out
+# The remainder is paid out in December
+CALCULATION_SAFETY_FACTOR = Decimal(os.environ.get("CALCULATION_SAFETY_FACTOR", "0.8"))
+
+
 # If True, allow putting people in quarantine so they get their money in December
 # rather than throughout the year
 ENFORCE_QUARANTINE = bool(strtobool(os.environ.get("ENFORCE_QUARANTINE", "True")))
