@@ -25,3 +25,12 @@ form.filter-form .is-valid:focus {
     /* Use default Bootstrap blue focus border rather than a green focus border */
     box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
 }
+
+/* Highlight charts when navigated to via an anchor */
+@keyframes fade-out {
+    0% { background: #eee }
+    100% { background: transparent }
+}
+div.chart:target {
+    animation: fade-out 2s 1;
+}
