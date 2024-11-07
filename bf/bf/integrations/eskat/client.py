@@ -10,8 +10,16 @@ from django.conf import settings
 from requests import Response, Session
 from requests_ntlm import HttpNtlmAuth
 
-from bf.integrations.eskat.load import ExpectedIncomeHandler, MonthlyIncomeHandler
-from bf.integrations.eskat.responses.data_models import ExpectedIncome, MonthlyIncome
+from bf.integrations.eskat.load import (
+    ExpectedIncomeHandler,
+    MonthlyIncomeHandler,
+    TaxInformationHandler,
+)
+from bf.integrations.eskat.responses.data_models import (
+    ExpectedIncome,
+    MonthlyIncome,
+    TaxInformation,
+)
 
 
 class EskatClient:
@@ -136,3 +144,24 @@ class EskatClient:
         return [
             MonthlyIncomeHandler.from_api_dict(item) for item in self.unpack(responses)
         ]
+
+    def get_tax_information(
+        self, year: int | None = None, cpr: str | None = None
+    ) -> List[TaxInformation]:
+        if year is None:
+            if cpr is None:
+                raise ValueError("Must specify either year or cpr (or both)")
+            responses = [self.get(f"/api/taxinformation/get/{cpr}")]
+        else:
+            if cpr is None:
+                responses = self.get_chunked(
+                    f"/api/taxinformation/get/chunks/all/{year}"
+                )
+            else:
+                responses = [self.get(f"/api/taxinformation/get/{cpr}/{year}")]
+        return [
+            TaxInformationHandler.from_api_dict(item) for item in self.unpack(responses)
+        ]
+
+    def get_tax_scopes(self) -> List[str]:
+        return self.get("/api/taxinformation/get/taxscopes")["data"]

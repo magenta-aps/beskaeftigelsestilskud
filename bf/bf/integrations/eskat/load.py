@@ -9,7 +9,11 @@ from typing import Dict, List, TextIO
 from common.utils import camelcase_to_snakecase
 from django.db import transaction
 
-from bf.integrations.eskat.responses.data_models import ExpectedIncome, MonthlyIncome
+from bf.integrations.eskat.responses.data_models import (
+    ExpectedIncome,
+    MonthlyIncome,
+    TaxInformation,
+)
 from bf.models import (
     Employer,
     MonthlyAIncomeReport,
@@ -200,3 +204,18 @@ class MonthlyIncomeHandler(Handler):
                 out.write(
                     f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
                 )
+
+
+class TaxInformationHandler(Handler):
+
+    @staticmethod
+    def from_api_dict(data: Dict[str, str | int | bool | float]) -> TaxInformation:
+        return TaxInformation(**camelcase_to_snakecase(data))
+
+    @classmethod
+    def create_or_update_objects(cls, year, items: List["TaxInformation"], out: TextIO):
+        with transaction.atomic():
+            cls.create_person_years(
+                year, [item.cpr for item in items if item.cpr is not None], out
+            )
+            # TODO: Brug data i items til at populere databasen
