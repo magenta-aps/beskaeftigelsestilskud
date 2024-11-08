@@ -42,6 +42,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
         transaction_type: TransaktionstypeEnum,
         recipient_type: UdbetalingsberettigetIdentKodeEnum,
         recipient: str,
+        account: int,
         amount: int,
         payment_date: date,
         posting_date: date,
@@ -75,7 +76,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
             udbet_henv_nr=int(g69_udbetalingshenvisning),  # type: ignore[arg-type]
             eks_løbenr=self._line_no,
             maskinnr=self.machine_id.val,
-            kontonr=123456789,  # TODO: get account number(s)
+            kontonr=account,
             deb_kred="D",
             beløb=amount,
             post_dato=posting_date,
