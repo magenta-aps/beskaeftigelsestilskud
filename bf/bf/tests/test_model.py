@@ -71,6 +71,9 @@ class ModelTest(TestCase):
         cls.year2month1 = PersonMonth.objects.create(
             person_year=cls.person_year2, month=1, import_date=date.today()
         )
+        cls.year2month12 = PersonMonth.objects.create(
+            person_year=cls.person_year2, month=12, import_date=date.today()
+        )
         cls.employer1 = Employer.objects.create(
             name="Fredes Fisk",
             cvr=12345678,
@@ -288,6 +291,7 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(self.month1.next, self.month2)
         self.assertEqual(self.month12.next, self.year2month1)
         self.assertIsNone(self.year2month1.next)
+        self.assertIsNone(self.year2month12.next)
 
     def test_prev(self):
         self.assertEqual(self.month2.prev, self.month1)
@@ -352,6 +356,24 @@ class TestIncomeReport(ModelTest):
         )
         self.assertEqual(data.amount, Decimal(20000))
 
+    def test_post_save(self):
+        report = self.report5
+        old_amount = report.amount
+        new_amount = 200
+        old_amount_sum = report.person_month.amount_sum
+        report.amount = new_amount
+        report.save(update_fields=("amount",))
+        self.assertEqual(
+            report.person_month.amount_sum, old_amount_sum - old_amount + new_amount
+        )
+
+        # post_save is not triggered when the amount is not updated
+        report.amount = 1122
+        report.save(update_fields=("catchsale_income",))
+        self.assertEqual(
+            report.person_month.amount_sum, old_amount_sum - old_amount + new_amount
+        )
+
 
 class EstimationTest(ModelTest):
 
@@ -400,3 +422,11 @@ class EstimationTest(ModelTest):
     def test_qs_offset(self):
         qs = IncomeEstimate.objects.filter(pk__in=[self.result1.pk, self.result2.pk])
         self.assertEqual(IncomeEstimate.qs_offset(qs), Decimal(250 / 1600))
+
+    def test_qs_offset_actual_year_result_is_zero(self):
+        self.result1.actual_year_result = None
+        self.result1.save()
+        self.result1.refresh_from_db()
+
+        qs = IncomeEstimate.objects.filter(pk__in=[self.result1.pk, self.result2.pk])
+        self.assertEqual(IncomeEstimate.qs_offset(qs), Decimal(1150 / 200))

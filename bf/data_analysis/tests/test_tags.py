@@ -42,6 +42,7 @@ class TagsTest(TestCase):
         self.assertEqual(get((123, 456), 0), 123)
         self.assertEqual(get((123, 456), 1), 456)
         self.assertIsNone(get((123, 456), 2))
+        self.assertIsNone(get(None, "foo"))
 
         class Foo(object):
             def __init__(self, bar):

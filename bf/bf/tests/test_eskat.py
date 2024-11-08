@@ -5,8 +5,10 @@
 import json
 import re
 from decimal import Decimal
+from io import TextIOBase
 from math import ceil
 from sys import stdout
+from threading import current_thread
 from unittest.mock import patch
 from urllib.parse import parse_qs
 
@@ -63,6 +65,43 @@ class EskatTest(TestCase):
         self.assertEqual(client.username, "testuser")
         self.assertEqual(client.password, "testpass")
 
+    def test_get_session(self):
+        client = EskatClient.from_settings()
+
+        thread_name = current_thread().name
+
+        self.assertNotIn(thread_name, client.sessions)
+        client.get_session()
+        self.assertIn(thread_name, client.sessions)
+
+        # Validate that the sessions dict is unchanged when calling the function a
+        # second time
+        ID = id(client.sessions)
+        sessions = client.sessions
+        client.get_session()
+        self.assertEqual(ID, id(client.sessions))
+        self.assertEqual(sessions, client.sessions)
+
+    def test_unpack(self):
+        client = EskatClient.from_settings()
+
+        responses = [
+            None,
+            {"data": None},
+            {"data": [1, 2]},
+            {"data": {"item1": 3, "item2": 4}},
+            {"data": (5, 6)},
+        ]
+
+        unpacked_responses = list(client.unpack(responses))
+
+        self.assertIn(1, unpacked_responses)
+        self.assertIn(2, unpacked_responses)
+        self.assertIn(3, unpacked_responses[2].values())
+        self.assertIn(4, unpacked_responses[2].values())
+        self.assertNotIn(5, unpacked_responses)
+        self.assertNotIn(6, unpacked_responses)
+
     def test_get(self):
         client = EskatClient.from_settings()
         with patch.object(
@@ -88,13 +127,24 @@ class EskatTest(TestCase):
                 self.assertEqual(error.exception.response.status_code, 401)
 
 
+class BaseTestCase(TestCase):
+    class OutputWrapper(TextIOBase):
+
+        def __init__(self, out, ending="\n"):
+            self._out = out
+            self.ending = ending
+
+        def write(self, msg="", style_func=None, ending=None):
+            pass
+
+
 @override_settings(
     ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
     ESKAT_USERNAME="testuser",
     ESKAT_PASSWORD="testpass",
     ESKAT_VERIFY=False,
 )
-class TestExpectedIncome(TestCase):
+class TestExpectedIncome(BaseTestCase):
 
     expected_data = [
         {
@@ -137,7 +187,6 @@ class TestExpectedIncome(TestCase):
             r"(?:\?(?P<params>.*))?",
             url,
         )
-        print(url)
         t = match.group("type")
         year = cast_int(match.group("year"))
         params = parse_qs(match.group("params")) if match.group("params") else {}
@@ -218,7 +267,7 @@ class TestExpectedIncome(TestCase):
                     other_b_income=2000.00,
                 )
             ],
-            stdout,
+            self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(
             PersonYearAssessment.objects.filter(person_year__year__year=2024).count(), 1
@@ -230,6 +279,17 @@ class TestExpectedIncome(TestCase):
             Decimal(2000.00),
         )
 
+    def test_expected_income_load_no_items(self):
+
+        objects_before = len(PersonYearAssessment.objects.all())
+        ExpectedIncomeHandler.create_or_update_objects(
+            2024,
+            [],
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        objects_after = len(PersonYearAssessment.objects.all())
+        self.assertEqual(objects_before, objects_after)
+
 
 @override_settings(
     ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
@@ -237,7 +297,7 @@ class TestExpectedIncome(TestCase):
     ESKAT_PASSWORD="testpass",
     ESKAT_VERIFY=False,
 )
-class TestMonthlyIncome(TestCase):
+class TestMonthlyIncome(BaseTestCase):
 
     monthly_data = [
         {
@@ -414,7 +474,7 @@ class TestMonthlyIncome(TestCase):
                     foreign_pension_income=1000.00,
                 )
             ],
-            stdout,
+            self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(
             PersonMonth.objects.filter(person_year__year__year=2024, month=1).count(), 1
@@ -434,6 +494,34 @@ class TestMonthlyIncome(TestCase):
             Decimal(1000.00),
         )
 
+    def test_monthly_income_load_no_items(self):
+        objects_before = len(MonthlyAIncomeReport.objects.all())
+        MonthlyIncomeHandler.create_or_update_objects(
+            2024,
+            [],
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        objects_after = len(MonthlyAIncomeReport.objects.all())
+        self.assertEqual(objects_before, objects_after)
+
+    def test_monthly_income_load_no_month(self):
+        objects_before = len(MonthlyAIncomeReport.objects.all())
+        MonthlyIncomeHandler.create_or_update_objects(
+            2024,
+            [
+                MonthlyIncome(
+                    "1234",
+                    2024,
+                    None,  # Month = None
+                    salary_income=25000.00,
+                    foreign_pension_income=1000.00,
+                )
+            ],
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        objects_after = len(MonthlyAIncomeReport.objects.all())
+        self.assertEqual(objects_before, objects_after)
+
 
 @override_settings(
     ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
@@ -441,7 +529,7 @@ class TestMonthlyIncome(TestCase):
     ESKAT_PASSWORD="testpass",
     ESKAT_VERIFY=False,
 )
-class TestTaxInformation(TestCase):
+class TestTaxInformation(BaseTestCase):
 
     taxinfo_data = [
         {
@@ -586,7 +674,7 @@ class TestTaxInformation(TestCase):
                     tax_scope="FULL",
                 )
             ],
-            stdout,
+            self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
 

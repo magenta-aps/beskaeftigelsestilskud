@@ -4,8 +4,10 @@
 from datetime import date
 from decimal import Decimal
 from itertools import cycle
+from unittest import mock
 
 import numpy as np
+import pandas as pd
 from common.utils import (
     add_parameters_to_url,
     calculate_benefit,
@@ -337,7 +339,12 @@ class CalculateBenefitTest(BaseTestCase):
                 df_person1[col].values[0],
             )
 
+    def test_get_empty_payout_df(self):
+        df = get_payout_df(1, 1991)
+        self.assertTrue(df.empty)
+
     @override_settings(CALCULATION_SAFETY_FACTOR=1)
+    @override_settings(ENFORCE_QUARANTINE=False)
     def test_calculate_benefit(self):
         yearly_salary = 10000 * 12 + 15000 * 12
         correct_benefit = self.year.calculation_method.calculate(yearly_salary) / 12
@@ -360,6 +367,34 @@ class CalculateBenefitTest(BaseTestCase):
         # But not in December
         df = calculate_benefit(12, self.year.year)
         self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
+
+    @mock.patch("common.utils.get_people_in_quarantine")
+    def test_calculate_benefit_quarantine(self, get_people_in_quarantine):
+
+        get_people_in_quarantine.return_value = pd.DataFrame(
+            [[True, "foo"], [False, "bar"]],
+            index=[self.person1.cpr, self.person2.cpr],
+            columns=["in_quarantine", "quarantine_reason"],
+        )
+        yearly_salary = 10000 * 12 + 15000 * 12
+
+        for month in range(1, 13):
+
+            if month == 12:
+                correct_benefit = self.year.calculation_method.calculate(yearly_salary)
+            else:
+                correct_benefit = 0
+
+            df = calculate_benefit(month, self.year.year)
+            self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
+
+            person_month = PersonMonth.objects.get(
+                person_year__person__cpr=self.person1.cpr,
+                month=month,
+                person_year__year__year=self.year.year,
+            )
+            person_month.benefit_paid = correct_benefit
+            person_month.save()
 
     def test_isnan(self):
         self.assertTrue(isnan(np.float64(None)))

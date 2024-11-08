@@ -3,7 +3,7 @@
 # Testing
 To run the tests run
 ```
-docker exec bf bash -c 'coverage run manage.py test --parallel 4 ; coverage combine ; coverage report --show-missing'
+docker exec bf bash -c 'coverage run manage.py test ; coverage combine ; coverage report --show-missing'
 ```
 
 To run tests only in a specific file run

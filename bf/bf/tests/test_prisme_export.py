@@ -152,6 +152,28 @@ class TestBatchExport(TestCase):
                         self.assertEqual(prisme_batch.status, PrismeBatch.Status.Sent)
                         self.assertEqual(prisme_batch.failed_message, "")
 
+    def test_export_batches_verbosity_1(self):
+        # Arrange
+        self._add_person_month(3112700000, Decimal("1000"))
+        export = self._get_instance()
+        stdout = Mock()
+        with patch("bf.integrations.prisme.benefits.put_file_in_prisme_folder"):
+            # Act
+            export.export_batches(stdout, verbosity=1)
+
+        self.assertEqual(stdout.write.call_count, 2)
+
+    def test_export_batches_verbosity_2(self):
+        # Arrange
+        self._add_person_month(3112700000, Decimal("1000"))
+        export = self._get_instance()
+        stdout = Mock()
+        with patch("bf.integrations.prisme.benefits.put_file_in_prisme_folder"):
+            # Act
+            export.export_batches(stdout, verbosity=2)
+
+        self.assertEqual(stdout.write.call_count, 7)
+
     def test_export_batches(self):
         """Given non-exported `PersonMonth` objects for this year and month, this method
         should export those `PersonMonth` objects as serialized G68/G69 transaction
