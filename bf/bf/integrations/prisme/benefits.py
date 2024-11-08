@@ -86,12 +86,16 @@ class BatchExport:
             tax_municipality_location_code=str(person_month.municipality_code),
             tax_year=person_month.person_year.year.year,
         )
+        # Zero-padded CPR (as string)
+        cpr = person_month.identifier  # type: ignore[attr-defined]
+        # Concatenate account alias and CPR to get the complete account alias
+        account_alias_cpr = account_alias.alias + cpr
         # Build G68/G69 transaction pair
         transaction_pair: G68G69TransactionPair = writer.serialize_transaction_pair(
             TransaktionstypeEnum.AndenDestinationTilladt,
             UdbetalingsberettigetIdentKodeEnum.CPR,
-            person_month.identifier,  # type: ignore[attr-defined]
-            int(account_alias.alias),
+            cpr,
+            int(account_alias_cpr),
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),  # TODO: use calculated date
             date.today(),  # TODO: use calculated date

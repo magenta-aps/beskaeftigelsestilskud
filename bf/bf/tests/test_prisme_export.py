@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import re
 from datetime import date
 from decimal import Decimal
 from unittest.mock import ANY, Mock, patch
@@ -103,7 +104,7 @@ class TestBatchExport(TestCase):
         `PrismeBatchItem`.
         """
         # Arrange
-        self._add_person_month(311270000, Decimal("1000"))
+        self._add_person_month(3112700000, Decimal("1000"))
         prisme_batch = PrismeBatch()
         export = self._get_instance()
         # Act
@@ -115,6 +116,14 @@ class TestBatchExport(TestCase):
         self.assertEqual(prisme_batch_item.person_month, person_month)
         self.assertIsInstance(prisme_batch_item.g68_content, str)
         self.assertIsInstance(prisme_batch_item.g69_content, str)
+        # Assert: the complete account alias (including CPR) is found in the G69
+        # transaction.
+        account_alias = self._get_floating_field(prisme_batch_item.g69_content, 111)
+        self.assertEqual(
+            account_alias,
+            # Root, tax municipality code, tax year, and recipient CPR
+            "1000452406140101010000242040195" + "010400" + "2025" + "3112700000",
+        )
 
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
@@ -125,7 +134,7 @@ class TestBatchExport(TestCase):
         for test_upload_exception in (False, True):
             with self.subTest(test_upload_exception=test_upload_exception):
                 # Arrange
-                self._add_person_month(311270000, Decimal("1000"))
+                self._add_person_month(3112700000, Decimal("1000"))
                 prisme_batch, _ = PrismeBatch.objects.get_or_create(
                     prefix=31, export_date=date.today()
                 )
@@ -248,3 +257,9 @@ class TestBatchExport(TestCase):
             municipality_code=municipality_code,
         )
         return person_month
+
+    def _get_floating_field(self, transaction: str, field: int, length: int = 3) -> str:
+        field: str = str(field).zfill(length)
+        match: re.Match = re.match(rf".*&{field}(?P<val>\w+)&.*", transaction)
+        self.assertIsNotNone(match)
+        return match.groupdict()["val"]
