@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import unittest
 from datetime import date
 from decimal import Decimal
 from unittest.mock import ANY, Mock, patch
@@ -98,7 +97,6 @@ class TestBatchExport(TestCase):
         self.assertEqual(batch_31_prisme_batch.prefix, 31)
         self.assertQuerySetEqual(batch_31_person_months, queryset.filter(prefix="31"))
 
-    @unittest.expectedFailure
     def test_get_prisme_batch_item(self):
         """Given a `PrismeBatch` object, a `PersonMonth object, and a
         `G68G69TransactionWriter` instance, the method should return a suitable
@@ -118,7 +116,6 @@ class TestBatchExport(TestCase):
         self.assertIsInstance(prisme_batch_item.g68_content, str)
         self.assertIsInstance(prisme_batch_item.g69_content, str)
 
-    @unittest.expectedFailure
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
         should upload the serialized G68/G69 transaction pairs using the
@@ -177,7 +174,6 @@ class TestBatchExport(TestCase):
 
         self.assertEqual(stdout.write.call_count, 7)
 
-    @unittest.expectedFailure
     def test_export_batches(self):
         """Given non-exported `PersonMonth` objects for this year and month, this method
         should export those `PersonMonth` objects as serialized G68/G69 transaction
