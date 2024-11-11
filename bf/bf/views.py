@@ -175,17 +175,19 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
             # Strip leading underscore, which is not allowed in Django templates
             context_data[annotation[1:]] = getattr(self.object, annotation)
 
-        # Add table data: total income per employer and type (A and B)
+        # Add table data: benefits per month
+        context_data["benefit_data"] = self.get_benefit_data()
+        # Add chart data: benefit chart
+        context_data["benefit_chart"] = self.to_json(self.get_benefit_chart())
+
+        # Add table data: *total* income per employer and type (A and B)
         context_data["income_per_employer_and_type"] = (
             self.get_income_per_employer_and_type()
         )
-        # Add table data: benefits per month
-        context_data["benefits_per_month"] = self.get_benefits_per_month()
-
-        # Add chart data: income chart
+        # Add table data: income per employer and type
+        context_data["income_data"] = self.get_income_chart_series()
+        # Add chart data: income chart (same data as "income per employer and type")
         context_data["income_chart"] = self.to_json(self.get_income_chart())
-        # Add chart data: benefit chart
-        context_data["benefit_chart"] = self.to_json(self.get_benefit_chart())
 
         return context_data
 
@@ -260,7 +262,7 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
                 "height": 600,
                 "animations": {"enabled": False},
             },
-            "series": self.get_benefit_chart_series(),
+            "series": self.get_all_benefit_chart_series(),
             "xaxis": {
                 "type": "category",
                 "categories": self.get_month_names(),
@@ -310,21 +312,38 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
 
         return result
 
-    def get_benefit_chart_series(self) -> list[dict]:
-        result: list[dict] = []
+    def get_all_benefit_chart_series(self) -> list[dict]:
+        return [self.get_benefit_series(), self.get_estimated_yearly_income_series()]
 
-        benefits = self.get_benefits_per_month()
-        result.append(
+    def get_benefit_data(self):
+        benefit_series = self.get_benefit_series()
+        estimate_series = self.get_estimated_yearly_income_series()
+        return [
             {
-                "data": [
-                    float(val) if val is not None else 0
-                    for val in benefits.values_list("benefit_paid", flat=True)
-                ],
-                "name": _("Beregnet beskæftigelsesfradrag"),
-                "group": "benefit",
+                "benefit": benefit,
+                "estimate": estimate,
             }
-        )
+            for benefit, estimate in zip(
+                benefit_series["data"], estimate_series["data"]
+            )
+        ]
 
+    def get_benefit_series(self) -> dict:
+        # Calculated benefit (based on monthly A and B income sums)
+        benefits = PersonMonth.objects.filter(
+            person_year__person=self.object,
+            person_year__year__year=self.year,
+        ).order_by("month")
+        return {
+            "data": [
+                float(val) if val is not None else 0
+                for val in benefits.values_list("benefit_paid", flat=True)
+            ],
+            "name": _("Beregnet beskæftigelsesfradrag"),
+            "group": "benefit",
+        }
+
+    def get_estimated_yearly_income_series(self) -> dict:
         # Estimated total yearly income for each month
         estimates = (
             IncomeEstimate.objects.filter(
@@ -351,21 +370,17 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
                 _total_estimated_year_result=Sum("estimated_year_result"),
             )
         )
-        result.append(
-            {
-                "data": [
-                    float(val) if val is not None else 0
-                    for val in estimates.values_list(
-                        "_total_estimated_year_result", flat=True
-                    )
-                ],
-                "name": _("Estimeret samlet lønindkomst"),
-                "group": "estimated_total_income",
-                "type": "column",
-            }
-        )
-
-        return result
+        return {
+            "data": [
+                float(val) if val is not None else 0
+                for val in estimates.values_list(
+                    "_total_estimated_year_result", flat=True
+                )
+            ],
+            "name": _("Estimeret samlet lønindkomst"),
+            "group": "estimated_total_income",
+            "type": "column",
+        }
 
     def get_income_by_source(self, model, source_field: str):
         def zero_pad(income) -> list[int]:
@@ -401,10 +416,3 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
         }
         employers = {employer.pk: employer for employer in Employer.objects.all()}
         return labels[model] % dict(name=f"{employers[source].cvr}")
-
-    def get_benefits_per_month(self):
-        # Calculated benefit (based on monthly A and B income sums)
-        return PersonMonth.objects.filter(
-            person_year__person=self.object,
-            person_year__year__year=self.year,
-        ).order_by("month")

@@ -211,17 +211,17 @@ class TestPersonDetailView(PersonEnv):
             ],
         )
 
-    def test_context_includes_benefits_per_month(self):
-        """The context data must include the `benefits_per_month` table"""
+    def test_context_includes_benefit_data(self):
+        """The context data must include the `benefit_data` table"""
         # Act
         context = self._get_context_data()
         # Assert: the context key is present
-        self.assertIn("benefits_per_month", context)
+        self.assertIn("benefit_data", context)
         # Assert: the table data is correct (one figure for each month)
         self.assertQuerysetEqual(
-            context["benefits_per_month"],
-            zip(range(1, 13), range(1, 13)),  # 12 pairs of (month, benefit_paid)
-            transform=lambda obj: (obj.month, obj.benefit_paid),
+            context["benefit_data"],
+            range(1, 13),
+            transform=lambda obj: obj["benefit"],
             ordered=True,
         )
 
@@ -271,7 +271,7 @@ class TestPersonDetailView(PersonEnv):
         """
         # Act
         with self._time_context():
-            benefit_chart_series = self.view.get_benefit_chart_series()
+            benefit_chart_series = self.view.get_all_benefit_chart_series()
         # Assert: verify the `benefit` series
         self.assertDictEqual(
             benefit_chart_series[0],

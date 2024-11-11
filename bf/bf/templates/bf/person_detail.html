@@ -14,7 +14,15 @@
 {% block content %}
 {% with month_name=month|month_name %}
 <div class="row mx-1 mt-3">
-    <div class="col-6">
+    <div class="col-2">
+        <nav class="nav navbar-nav navbar-light flex-column sticky-top secondary-nav">
+            <a href="#keyfigures" class="nav-item nav-link">{% translate "Nøgletal" %}</a>
+            <a href="#benefits" class="nav-item nav-link">{% translate "Udbetalinger" %}</a>
+            <a href="#income" class="nav-item nav-link">{% translate "Indkomst" %}</a>
+        </nav>
+    </div>
+
+    <div class="person-details col-10">
         <h1>{{ person.name }} ({{ person.cpr }})</h1>
         <dl class="row">
             <dt class="col-3">{% translate "Adresse" %}</dt>
@@ -24,32 +32,74 @@
             <dt class="col-3">{% translate "Stedkode" %}</dt>
             <dd class="col-9">{{ person.location_code }}</dd>
         </dl>
-    </div>
-    <div class="col-6">
-        <h1>{% translate "Nøgletal" %}</h1>
+
+        {# Key figures #}
+        <h2 id="keyfigures">{% translate "Nøgletal" %}</h2>
         <p>{{ month_name }} {{ year }}</p>
         <dl class="row">
-            <dt class="col-6">{% translate "Forventet samlet indtægt i indeværende år" %}</dt>
-            <dd class="col-6">{{ total_estimated_year_result }}</dd>
-            <dt class="col-6">{% translate "Faktisk samlet indtægt i indeværende år" %}</dt>
-            <dd class="col-6">{{ total_actual_year_result }}</dd>
-            <dt class="col-6">{% translate "Beskæftigelsesfradrag til dato i indeværende år" %}</dt>
-            <dd class="col-6">{{ benefit_paid }}</dd>
+            <dt class="col-3">{% translate "Forventet samlet indtægt i indeværende år" %}</dt>
+            <dd class="col-9">{{ total_estimated_year_result }}</dd>
+            <dt class="col-3">{% translate "Faktisk samlet indtægt i indeværende år" %}</dt>
+            <dd class="col-9">{{ total_actual_year_result }}</dd>
+            <dt class="col-3">{% translate "Beskæftigelsesfradrag til dato i indeværende år" %}</dt>
+            <dd class="col-9">{{ benefit_paid }}</dd>
         </dl>
-    </div>
-</div>
-<div class="row mx-1 mt-3">
-    <div class="col-6">
-        <h2>
+
+        {# Benefits #}
+        <h1 id="benefits">
             {% blocktrans trimmed with year=year %}
-                Arbejdsgivere i {{ year }}
+                Udbetalinger i {{ year }}
             {% endblocktrans %}
-        </h2>
+        </h1>
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="benefit-table-tab" data-bs-toggle="tab" data-bs-target="#benefit-table" type="button" role="tab" aria-controls="benefit-table" aria-selected="true">
+                    {% translate "Tabel" %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="benefit-graph-tab" data-bs-toggle="tab" data-bs-target="#benefit-graph" type="button" role="tab" aria-controls="benefit-graph" aria-selected="false">
+                    {% translate "Graf" %}
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="benefit-table" role="tabpanel" aria-labelledby="benefit-table-tab">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="col-6">{% translate "Måned" %}</th>
+                            <th class="col-3">{% translate "Beløb" %}</th>
+                            <th class="col-3">{% translate "Estimeret samlet årsindkomst" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in benefit_data %}
+                        <tr>
+                            <td>{{ forloop.counter|month_name }}</td>
+                            <td>{{ row.benefit }}</td>
+                            <td>{{ row.estimate }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="tab-pane fade" id="benefit-graph" role="tabpanel" aria-labelledby="benefit-graph-tab">
+                <div class="chart" id="benefitChart"></div>
+            </div>
+        </div>
+
+        {# Income #}
+        <h1 id="income">
+            {% blocktrans trimmed with year=year %}
+                Indkomst i {{ year }}
+            {% endblocktrans %}
+        </h1>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>{% translate "Arbejdsgiver" %}</th>
-                    <th>{% translate "Indkomst til dato" %}</th>
+                    <th class="col-6">{% translate "Arbejdsgiver" %}</th>
+                    <th class="col-6">{% translate "Indkomst til dato" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,49 +111,49 @@
                 {% endfor %}
             </tbody>
         </table>
-        <a href="#incomeChart">{% translate "Vis på graf" %}</a>
-    </div>
-    <div class="col-6">
         <h2>
-            {% blocktrans trimmed with year=year %}
-                Udbetalinger i {{ year }}
+            {% blocktrans trimmed %}
+                Fordelt på arbejdsgivere og type
             {% endblocktrans %}
         </h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>{% translate "Måned" %}</th>
-                    <th>{% translate "Beløb" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in benefits_per_month %}
-                <tr>
-                    <td>{{ row.month|month_name }}</td>
-                    <td>{{ row.benefit_paid }}</td>
-                </tr>
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="income-table-tab" data-bs-toggle="tab" data-bs-target="#income-table" type="button" role="tab" aria-controls="income-table" aria-selected="true">
+                    {% translate "Tabel" %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="income-graph-tab" data-bs-toggle="tab" data-bs-target="#income-graph" type="button" role="tab" aria-controls="income-graph" aria-selected="false">
+                    {% translate "Graf" %}
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="income-table" role="tabpanel" aria-labelledby="income-table-tab">
+                {% for series in income_data %}
+                <h3>{{ series.name }}</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="col-6">{% translate "Måned" %}</th>
+                            <th class="col-6">{% translate "Indkomst" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for datum in series.data %}
+                        <tr>
+                            <td>{{ forloop.counter|month_name }}</td>
+                            <td>{{ datum }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
                 {% endfor %}
-            </tbody>
-        </table>
-        <a href="#benefitChart">{% translate "Vis på graf" %}</a>
-    </div>
-</div>
-<div class="row mx-1 mt-3">
-    <div class="col-12">
-        <h2>
-            {% blocktrans trimmed with year=year %}
-                Indkomst, fordelt på arbejdsgivere og type ({{ year }})
-            {% endblocktrans %}
-        </h2>
-        <div class="chart" id="incomeChart"></div>
-    </div>
-    <div class="col-12">
-        <h2>
-            {% blocktrans trimmed with year=year %}
-                Beregnede beskæftigelsesfradrag pr. måned ({{ year }})
-            {% endblocktrans %}
-        </h2>
-        <div class="chart" id="benefitChart"></div>
+            </div>
+            <div class="tab-pane fade" id="income-graph" role="tabpanel" aria-labelledby="income-graph-tab">
+                <div class="chart" id="incomeChart"></div>
+            </div>
+        </div>
     </div>
 </div>
 {% endwith %}
@@ -116,6 +166,17 @@
 <script id="benefitData" type="application/json">{{ benefit_chart|safe }}</script>
 <script nonce="{{ request.csp_nonce }}">
 $(function () {
+    // Highlight secondary nav item on click
+    $(".secondary-nav .nav-link").click(function (e) {
+        $(this).siblings().removeClass("active");
+        $(this).addClass("active");
+    });
+
+    // Highlight secondary nav item on page load
+    $(".secondary-nav .nav-link").removeClass("active");
+    $(".secondary-nav .nav-link[href='" + document.location.hash + "']").addClass("active");
+
+    // Render chart from inline JSON doc
     const renderChart = async function (elemName, dataElemName) {
         const chartElem = $(elemName);
         const chartData = JSON.parse($(dataElemName).text());
@@ -124,8 +185,6 @@ $(function () {
             await chart.render();
         } catch (exc) {
             console.error(exc, chartData);
-        } finally {
-            console.log(chartData);
         }
     }
 
