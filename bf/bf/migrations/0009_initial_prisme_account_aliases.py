@@ -27,7 +27,7 @@ def load_initial_prisme_account_aliases(apps, schema_editor):
     PrismeAccountAlias = apps.get_model("bf", "PrismeAccountAlias")
     objects: list[PrismeAccountAlias] = [
         PrismeAccountAlias(
-            alias=f"{AFDELING}{FINANSLOV}{FORMAAL}{ART}{municipality_code[0]}{tax_year}",
+            alias=f"{AFDELING}{FINANSLOV}{FORMAAL}{ART}{municipality_code[0]}{tax_year - 2000}",
             tax_municipality_location_code=municipality_code[1],
             tax_year=tax_year,
         )

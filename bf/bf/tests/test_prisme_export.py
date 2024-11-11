@@ -122,7 +122,7 @@ class TestBatchExport(TestCase):
         self.assertEqual(
             account_alias,
             # Root, tax municipality code, tax year, and recipient CPR
-            "1000452406140101010000242040195" + "010400" + "2025" + "3112700000",
+            "1000452406140101010000242040195" + "010400" + "25" + "3112700000",
         )
 
     def test_upload_batch(self):
