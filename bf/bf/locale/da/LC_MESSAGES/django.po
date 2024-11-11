@@ -75,11 +75,8 @@ msgid "Beskæftigelsesfradrag til dato i indeværende år"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html
-msgid "Arbejdsgivere"
-msgstr ""
-
-#: bf/templates/bf/person_detail.html
-msgid "Vis på graf"
+#, python-format
+msgid "Arbejdsgivere i %(year)s"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html
@@ -91,7 +88,12 @@ msgid "Indkomst til dato"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html
-msgid "Udbetalinger i indeværende år"
+msgid "Vis på graf"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+#, python-format
+msgid "Udbetalinger i %(year)s"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html
@@ -100,6 +102,16 @@ msgstr ""
 
 #: bf/templates/bf/person_detail.html
 msgid "Beløb"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+#, python-format
+msgid "Indkomst, fordelt på arbejdsgivere og type (%(year)s)"
+msgstr ""
+
+#: bf/templates/bf/person_detail.html
+#, python-format
+msgid "Beregnede beskæftigelsesfradrag pr. måned (%(year)s)"
 msgstr ""
 
 #: bf/templates/bf/person_search.html
@@ -131,6 +143,30 @@ msgstr ""
 msgid "Estimeringsoverblik"
 msgstr ""
 
+#: bf/tests/test_views.py
+msgid "A-indkomst hos: 1"
+msgstr ""
+
+#: bf/tests/test_views.py
+msgid "A-indkomst hos: 2"
+msgstr ""
+
+#: bf/tests/test_views.py
+msgid "B-indkomst hos: 1"
+msgstr ""
+
+#: bf/tests/test_views.py
+msgid "B-indkomst hos: 2"
+msgstr ""
+
+#: bf/tests/test_views.py bf/views.py
+msgid "Beregnet beskæftigelsesfradrag"
+msgstr ""
+
+#: bf/tests/test_views.py bf/views.py
+msgid "Estimeret samlet lønindkomst"
+msgstr ""
+
 #: bf/views.py
 msgid "CPR-nummer"
 msgstr ""
@@ -140,15 +176,7 @@ msgid "Navn"
 msgstr ""
 
 #: bf/views.py
-msgid "Beregnet beskæftigelsesfradrag"
-msgstr ""
-
-#: bf/views.py
 msgid "Estimeret total årsindkomst"
-msgstr ""
-
-#: bf/views.py
-msgid "Estimeret samlet lønindkomst"
 msgstr ""
 
 #: bf/views.py
