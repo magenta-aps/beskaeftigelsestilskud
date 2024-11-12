@@ -9,7 +9,7 @@ from io import TextIOBase
 from math import ceil
 from sys import stdout
 from threading import current_thread
-from typing import List
+from typing import Any, List
 from unittest.mock import patch
 from urllib.parse import parse_qs
 
@@ -141,12 +141,20 @@ class BaseTestCase(TestCase):
         def write(self, msg="", style_func=None, ending=None):
             pass
 
-    def filter_data(self, items: List[dict], year: int | None, typ: str) -> List[dict]:
+    @staticmethod
+    def filter_data(items: List[dict], year: int | None, typ: str) -> List[dict]:
         if typ.isdigit():
             items = filter(lambda item: item["cpr"] == typ, items)
         if year is not None:
             items = filter(lambda item: item["year"] == year, items)
         return list(items)
+
+    @staticmethod
+    def slice_data(
+        items: List[Any], typ: str, chunk: int, chunk_size: int
+    ) -> List[Any]:
+        if typ == "chunks/all":
+            return items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
 
 
 @override_settings(
@@ -268,8 +276,7 @@ class TestAnnualIncome(BaseTestCase):
         chunk_size = int(params.get("chunkSize", [20])[0])
         items = self.filter_data(self.annual_data, year, t)
         total_items = len(items)
-        if t == "chunks/all":
-            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+        items = self.slice_data(items, t, chunk, chunk_size)
 
         # Eskat sometimes does this, and we need to check the code that compensates
         if len(items) == 1:
@@ -406,8 +413,7 @@ class TestExpectedIncome(BaseTestCase):
         chunk_size = int(params.get("chunkSize", [20])[0])
         items = self.filter_data(self.expected_data, year, t)
         total_items = len(items)
-        if t == "chunks/all":
-            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+        items = self.slice_data(items, t, chunk, chunk_size)
 
         # Eskat sometimes does this, and we need to check the code that compensates
         if len(items) == 1:
@@ -564,8 +570,7 @@ class TestMonthlyIncome(BaseTestCase):
             items = filter(lambda item: month1 == item["month"], items)
         items = list(items)
         total_items = len(items)
-        if t == "chunks/all":
-            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+        items = self.slice_data(items, t, chunk, chunk_size)
 
         # Eskat sometimes does this, and we need to check the code that compensates
         if len(items) == 1:
@@ -795,15 +800,10 @@ class TestTaxInformation(BaseTestCase):
         if t == "taxscopes":
             items = ["FULL", "LIM"]
         else:
-            items = self.taxinfo_data
-            if year:
-                items = filter(lambda item: item["year"] == year, items)
-            if t.isdigit():
-                items = filter(lambda item: item["cpr"] == t, items)
+            items = self.filter_data(self.taxinfo_data, year, t)
         items = list(items)
         total_items = len(items)
-        if t == "chunks/all":
-            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+        items = self.slice_data(items, t, chunk, chunk_size)
 
         # Eskat sometimes does this, and we need to check the code that compensates
         if len(items) == 1:
