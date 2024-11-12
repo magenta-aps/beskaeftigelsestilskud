@@ -19,6 +19,7 @@ from bf.models import (
     Person,
     PersonMonth,
     PersonYear,
+    PrismeAccountAlias,
     StandardWorkBenefitCalculationMethod,
     Year,
 )
@@ -430,3 +431,20 @@ class EstimationTest(ModelTest):
 
         qs = IncomeEstimate.objects.filter(pk__in=[self.result1.pk, self.result2.pk])
         self.assertEqual(IncomeEstimate.qs_offset(qs), Decimal(1150 / 200))
+
+
+class TestPrismeAccountAlias(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.instance = PrismeAccountAlias.objects.create(
+            alias="0123456789",
+            tax_municipality_location_code="956",
+            tax_year=2020,
+        )
+
+    def test_str(self):
+        self.assertEqual(str(self.instance), self.instance.alias)
+
+    def test_tax_municipality_six_digit_code_property(self):
+        self.assertEqual(self.instance.tax_municipality_six_digit_code, "012345")

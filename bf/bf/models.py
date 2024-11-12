@@ -999,6 +999,27 @@ class FinalSettlement(models.Model):
     )
 
 
+class PrismeAccountAlias(models.Model):
+    class Meta:
+        unique_together = [("tax_municipality_location_code", "tax_year")]
+
+    alias = models.TextField(unique=True)
+    """The account alias itself"""
+
+    tax_municipality_location_code = models.TextField()
+    """The 'stedkode' of the municipality issuing the benefit"""
+
+    tax_year = models.PositiveSmallIntegerField()
+    """The 'skatteår' in which the Prisme postings should be made"""
+
+    def __str__(self):
+        return f"{self.alias}"
+
+    @property
+    def tax_municipality_six_digit_code(self) -> str:
+        return self.alias[-10:-4]
+
+
 class PrismeBatch(models.Model):
     class Status(models.TextChoices):
         Sending = "sending", _("Sending")
