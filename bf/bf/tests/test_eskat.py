@@ -155,6 +155,7 @@ class BaseTestCase(TestCase):
     ) -> List[Any]:
         if typ == "chunks/all":
             return items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+        return items
 
 
 @override_settings(
