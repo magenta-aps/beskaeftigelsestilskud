@@ -1060,3 +1060,136 @@ class PrismeBatchItem(models.Model):
     g68_content = models.TextField()
 
     g69_content = models.TextField()
+
+
+class AnnualIncome(models.Model):
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+    salary = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    social_benefit_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    retirement_pension_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    disability_pension_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    ignored_benefits = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    occupational_benefit = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    foreign_pension_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    subsidy_foreign_pension_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    dis_gis_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    other_a_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    deposit_interest_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    bond_interest_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    other_interest_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    education_support_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    care_fee_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    alimony_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    foreign_dividend_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    foreign_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_journey_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    group_life_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    rental_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    other_b_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_board_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_lodging_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_housing_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_phone_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_car_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_internet_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_boat_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    free_other_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    other_debt_interest_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    pension_payment_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    catch_sale_market_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    catch_sale_factory_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    account_extraord_entries_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    account_business_interest = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    account_business_interest_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    account_business_interest_deduct = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    account_tax_result = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    account_share_business_percentage = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    account_share_business_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )
+    shareholder_dividend_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=None, null=True
+    )

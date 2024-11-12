@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from dataclasses import fields
+from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
 from typing import Dict, List, TextIO
 
-from common.utils import camelcase_to_snakecase
+from common.utils import camelcase_to_snakecase, omit
 from django.db import transaction
 
 from bf.integrations.eskat.responses.data_models import (
@@ -15,9 +15,9 @@ from bf.integrations.eskat.responses.data_models import (
     MonthlyIncome,
     TaxInformation,
 )
+from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
     Employer,
-    FinalBIncomeReport,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
@@ -81,16 +81,15 @@ class AnnualIncomeHandler(Handler):
                 year, [item.cpr for item in items if item.cpr], out
             )
             if person_years:
-                b_income_reports = [
-                    FinalBIncomeReport(
+                annual_incomes = [
+                    AnnualIncomeModel(
                         person_year=person_years[item.cpr],
-                        amount=item.other_b_income,  # TODO: find korrekte felter
+                        **omit(asdict(item), "cpr", "year"),
                     )
                     for item in items
                 ]
-                FinalBIncomeReport.objects.bulk_create(
-                    b_income_reports,
-                )
+                AnnualIncomeModel.objects.bulk_create(annual_incomes)
+                out.write(f"Created {len(annual_incomes)} AnnualIncome objects")
 
 
 class ExpectedIncomeHandler(Handler):
