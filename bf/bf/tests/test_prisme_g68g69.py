@@ -21,7 +21,7 @@ class TestG68G69TransactionWriter(SimpleTestCase):
     registreringssted: int = 0
     organisationsenhed: int = 9000
     maskinnummer: int = 99999
-
+    account: int = 12345678
     posting_date: date = date(2024, 1, 27)
     payment_date: date = date(2024, 2, 1)
 
@@ -62,8 +62,9 @@ class TestG68G69TransactionWriter(SimpleTestCase):
         pair: G68G69TransactionPair = self._instance.serialize_transaction_pair(
             TransaktionstypeEnum.AndenDestinationTilladt,
             UdbetalingsberettigetIdentKodeEnum.CPR,
-            "3112700000",
-            1000,
+            "3112700000",  # CPR
+            self.account,
+            1000,  # amount
             self.payment_date,
             self.posting_date,
             "Some descriptive text",
@@ -98,6 +99,11 @@ class TestG68G69TransactionWriter(SimpleTestCase):
         # Find "Beløb" (field 112, 13 digits) in G69
         amount = self._get_g69_floating_field(pair.g69, 112, 13)
         self.assertGreaterEqual(int(amount), 0)
+
+        # Assert the G69 uses the provided account ("Registreringskontonummer", field
+        # 111.)
+        registreringskontonummer = self._get_g69_floating_field(pair.g69, 111, 15)
+        self.assertEqual(int(registreringskontonummer), self.account)
 
     def _get_g69_floating_field(
         self, g69: str, field_id: int, length: int

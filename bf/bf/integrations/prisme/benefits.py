@@ -16,7 +16,7 @@ from tenQ.client import ClientException, put_file_in_prisme_folder
 from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
 from bf.integrations.prisme.g68g69 import G68G69TransactionPair, G68G69TransactionWriter
-from bf.models import PersonMonth, PrismeBatch, PrismeBatchItem
+from bf.models import PersonMonth, PrismeAccountAlias, PrismeBatch, PrismeBatchItem
 
 logger = logging.getLogger(__name__)
 
@@ -81,10 +81,21 @@ class BatchExport:
         person_month: PersonMonth,
         writer: G68G69TransactionWriter,
     ) -> PrismeBatchItem:
+        # Find Prisme account alias for this municipality and tax year
+        account_alias = PrismeAccountAlias.objects.get(
+            tax_municipality_location_code=str(person_month.municipality_code),
+            tax_year=person_month.person_year.year.year,
+        )
+        # Zero-padded CPR (as string)
+        cpr = person_month.identifier  # type: ignore[attr-defined]
+        # Concatenate account alias and CPR to get the complete account alias
+        account_alias_cpr = account_alias.alias + cpr
+        # Build G68/G69 transaction pair
         transaction_pair: G68G69TransactionPair = writer.serialize_transaction_pair(
             TransaktionstypeEnum.AndenDestinationTilladt,
             UdbetalingsberettigetIdentKodeEnum.CPR,
-            person_month.identifier,  # type: ignore[attr-defined]
+            cpr,
+            int(account_alias_cpr),
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),  # TODO: use calculated date
             date.today(),  # TODO: use calculated date

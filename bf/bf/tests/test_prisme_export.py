@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import re
 from datetime import date
 from decimal import Decimal
 from unittest.mock import ANY, Mock, patch
@@ -24,7 +25,7 @@ from bf.models import (
 class TestBatchExport(TestCase):
     def test_init(self):
         export = self._get_instance()
-        self.assertEqual(export._year, 2024)
+        self.assertEqual(export._year, 2025)
         self.assertEqual(export._month, 1)
 
     def test_get_person_month_queryset(self):
@@ -90,12 +91,12 @@ class TestBatchExport(TestCase):
         batch_01_prisme_batch: PrismeBatch = batches[0][0]
         batch_01_person_months: QuerySet[PersonMonth] = batches[0][1]
         self.assertEqual(batch_01_prisme_batch.prefix, 1)
-        self.assertQuerysetEqual(batch_01_person_months, queryset.filter(prefix="01"))
+        self.assertQuerySetEqual(batch_01_person_months, queryset.filter(prefix="01"))
         # Assert: second batch is for prefix 31 and contains two `PersonMonth` objects
         batch_31_prisme_batch: PrismeBatch = batches[1][0]
         batch_31_person_months: QuerySet[PersonMonth] = batches[1][1]
         self.assertEqual(batch_31_prisme_batch.prefix, 31)
-        self.assertQuerysetEqual(batch_31_person_months, queryset.filter(prefix="31"))
+        self.assertQuerySetEqual(batch_31_person_months, queryset.filter(prefix="31"))
 
     def test_get_prisme_batch_item(self):
         """Given a `PrismeBatch` object, a `PersonMonth object, and a
@@ -103,7 +104,7 @@ class TestBatchExport(TestCase):
         `PrismeBatchItem`.
         """
         # Arrange
-        self._add_person_month(311270000, Decimal("1000"))
+        self._add_person_month(3112700000, Decimal("1000"))
         prisme_batch = PrismeBatch()
         export = self._get_instance()
         # Act
@@ -115,6 +116,14 @@ class TestBatchExport(TestCase):
         self.assertEqual(prisme_batch_item.person_month, person_month)
         self.assertIsInstance(prisme_batch_item.g68_content, str)
         self.assertIsInstance(prisme_batch_item.g69_content, str)
+        # Assert: the complete account alias (including CPR) is found in the G69
+        # transaction.
+        account_alias = self._get_floating_field(prisme_batch_item.g69_content, 111)
+        self.assertEqual(
+            account_alias,
+            # Root, tax municipality code, tax year, and recipient CPR
+            "1000452406140101010000242040195" + "010400" + "25" + "3112700000",
+        )
 
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
@@ -125,7 +134,7 @@ class TestBatchExport(TestCase):
         for test_upload_exception in (False, True):
             with self.subTest(test_upload_exception=test_upload_exception):
                 # Arrange
-                self._add_person_month(311270000, Decimal("1000"))
+                self._add_person_month(3112700000, Decimal("1000"))
                 prisme_batch, _ = PrismeBatch.objects.get_or_create(
                     prefix=31, export_date=date.today()
                 )
@@ -211,7 +220,7 @@ class TestBatchExport(TestCase):
             # Assert: CLI output is written to `stdout`
             stdout.write.assert_called()
 
-    def _get_instance(self, year: int = 2024, month: int = 1) -> BatchExport:
+    def _get_instance(self, year: int = 2025, month: int = 1) -> BatchExport:
         return BatchExport(year, month)
 
     def _get_prisme_batch_item(
@@ -233,8 +242,9 @@ class TestBatchExport(TestCase):
         self,
         cpr: int,
         benefit_paid: Decimal | None,
-        year: int = 2024,
+        year: int = 2025,
         month: int = 1,
+        municipality_code: int = 956,
     ) -> PersonMonth:
         year, _ = Year.objects.get_or_create(year=year)
         person, _ = Person.objects.get_or_create(cpr=cpr)
@@ -244,5 +254,12 @@ class TestBatchExport(TestCase):
             month=month,
             benefit_paid=benefit_paid,
             import_date=date.today(),
+            municipality_code=municipality_code,
         )
         return person_month
+
+    def _get_floating_field(self, transaction: str, field: int, length: int = 3) -> str:
+        field: str = str(field).zfill(length)
+        match: re.Match = re.match(rf".*&{field}(?P<val>\w+)&.*", transaction)
+        self.assertIsNotNone(match)
+        return match.groupdict()["val"]
