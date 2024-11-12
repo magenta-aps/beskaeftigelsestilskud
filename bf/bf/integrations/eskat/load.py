@@ -87,6 +87,7 @@ class AnnualIncomeHandler(Handler):
                         **omit(asdict(item), "cpr", "year"),
                     )
                     for item in items
+                    if item.cpr is not None
                 ]
                 AnnualIncomeModel.objects.bulk_create(annual_incomes)
                 out.write(f"Created {len(annual_incomes)} AnnualIncome objects")

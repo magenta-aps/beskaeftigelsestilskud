@@ -9,6 +9,7 @@ from io import TextIOBase
 from math import ceil
 from sys import stdout
 from threading import current_thread
+from typing import List
 from unittest.mock import patch
 from urllib.parse import parse_qs
 
@@ -18,15 +19,18 @@ from requests import HTTPError, Response
 
 from bf.integrations.eskat.client import EskatClient
 from bf.integrations.eskat.load import (
+    AnnualIncomeHandler,
     ExpectedIncomeHandler,
     MonthlyIncomeHandler,
     TaxInformationHandler,
 )
 from bf.integrations.eskat.responses.data_models import (
+    AnnualIncome,
     ExpectedIncome,
     MonthlyIncome,
     TaxInformation,
 )
+from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
@@ -137,6 +141,214 @@ class BaseTestCase(TestCase):
         def write(self, msg="", style_func=None, ending=None):
             pass
 
+    def filter_data(self, items: List[dict], year: int | None, typ: str) -> List[dict]:
+        if typ.isdigit():
+            items = filter(lambda item: item["cpr"] == typ, items)
+        if year is not None:
+            items = filter(lambda item: item["year"] == year, items)
+        return list(items)
+
+
+@override_settings(
+    ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
+    ESKAT_USERNAME="testuser",
+    ESKAT_PASSWORD="testpass",
+    ESKAT_VERIFY=False,
+)
+class TestAnnualIncome(BaseTestCase):
+
+    annual_data = [
+        {
+            "cpr": "1234",
+            "year": 2024,
+            "salary": None,
+            "social_benefit_income": None,
+            "retirement_pension_income": None,
+            "disability_pension_income": None,
+            "ignored_benefits": None,
+            "occupational_benefit": None,
+            "foreign_pension_income": None,
+            "subsidy_foreign_pension_income": None,
+            "dis_gis_income": None,
+            "other_a_income": None,
+            "deposit_interest_income": None,
+            "bond_interest_income": None,
+            "other_interest_income": None,
+            "education_support_income": None,
+            "care_fee_income": None,
+            "alimony_income": None,
+            "foreign_dividend_income": None,
+            "foreign_income": None,
+            "free_journey_income": None,
+            "group_life_income": None,
+            "rental_income": None,
+            "other_b_income": None,
+            "free_board_income": None,
+            "free_lodging_income": None,
+            "free_housing_income": None,
+            "free_phone_income": None,
+            "free_car_income": None,
+            "free_internet_income": None,
+            "free_boat_income": None,
+            "free_other_income": None,
+            "other_debt_interest_income": None,
+            "pension_payment_income": None,
+            "catch_sale_market_income": None,
+            "catch_sale_factory_income": None,
+            "account_extraord_entries_income": None,
+            "account_business_interest": None,
+            "account_business_interest_income": None,
+            "account_business_interest_deduct": None,
+            "account_tax_result": None,
+            "account_share_business_percentage": None,
+            "account_share_business_amount": None,
+            "shareholder_dividend_income": None,
+        }
+    ] + [
+        {
+            "cpr": "5678",
+            "year": 2024,
+            "salary": None,
+            "social_benefit_income": None,
+            "retirement_pension_income": None,
+            "disability_pension_income": None,
+            "ignored_benefits": None,
+            "occupational_benefit": None,
+            "foreign_pension_income": None,
+            "subsidy_foreign_pension_income": None,
+            "dis_gis_income": None,
+            "other_a_income": None,
+            "deposit_interest_income": None,
+            "bond_interest_income": None,
+            "other_interest_income": None,
+            "education_support_income": None,
+            "care_fee_income": None,
+            "alimony_income": None,
+            "foreign_dividend_income": None,
+            "foreign_income": None,
+            "free_journey_income": None,
+            "group_life_income": None,
+            "rental_income": None,
+            "other_b_income": None,
+            "free_board_income": None,
+            "free_lodging_income": None,
+            "free_housing_income": None,
+            "free_phone_income": None,
+            "free_car_income": None,
+            "free_internet_income": None,
+            "free_boat_income": None,
+            "free_other_income": None,
+            "other_debt_interest_income": None,
+            "pension_payment_income": None,
+            "catch_sale_market_income": None,
+            "catch_sale_factory_income": None,
+            "account_extraord_entries_income": None,
+            "account_business_interest": None,
+            "account_business_interest_income": None,
+            "account_business_interest_deduct": None,
+            "account_tax_result": None,
+            "account_share_business_percentage": None,
+            "account_share_business_amount": None,
+            "shareholder_dividend_income": None,
+        }
+    ]
+
+    def annual_income_testdata(self, url):
+        match = re.match(
+            r"https://eskattest/eTaxCommonDataApi/api/annualincome/get"
+            r"/(?P<type>chunks/all|all|\d+)"
+            r"(?:/(?P<year>\d+))?"
+            r"(?:\?(?P<params>.*))?",
+            url,
+        )
+        t = match.group("type")
+        year = cast_int(match.group("year"))
+        params = parse_qs(match.group("params")) if match.group("params") else {}
+        chunk = int(params.get("chunk", [1])[0])
+        chunk_size = int(params.get("chunkSize", [20])[0])
+        items = self.filter_data(self.annual_data, year, t)
+        total_items = len(items)
+        if t == "chunks/all":
+            items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
+
+        # Eskat sometimes does this, and we need to check the code that compensates
+        if len(items) == 1:
+            items = items[0]
+
+        return make_response(
+            200,
+            {
+                "data": items,
+                "message": "string",
+                "chunk": chunk,
+                "chunkSize": chunk_size,
+                "totalChunks": ceil(total_items / chunk_size),
+                "totalRecordsInChunks": total_items,
+            },
+        )
+
+    def test_get_annual_income_by_none(self):
+        client = EskatClient.from_settings()
+        with self.assertRaises(ValueError):
+            client.get_annual_income(None, None)
+
+    def test_get_annual_income_by_year(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.annual_income_testdata
+        ):
+            data = client.get_annual_income(2024)
+            self.assertEqual(len(data), 2)
+            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].year, 2024)
+            self.assertEqual(data[1].cpr, "5678")
+            self.assertEqual(data[1].year, 2024)
+
+    def test_get_annual_income_by_cpr(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.annual_income_testdata
+        ):
+            data = client.get_annual_income(year=None, cpr="1234")
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0].cpr, "1234")
+
+    def test_get_annual_income_by_cpr_year(self):
+        client = EskatClient.from_settings()
+        with patch.object(
+            requests.sessions.Session, "get", side_effect=self.annual_income_testdata
+        ):
+            data = client.get_annual_income(2024, cpr="1234")
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].year, 2024)
+
+    def test_annual_income_load(self):
+        AnnualIncomeHandler.create_or_update_objects(
+            2024,
+            [
+                AnnualIncome(
+                    "1234",
+                    2024,
+                    salary=1234.56,
+                )
+            ],
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        self.assertEqual(
+            AnnualIncomeModel.objects.filter(person_year__year__year=2024).count(), 1
+        )
+
+    def test_monthly_income_load_no_items(self):
+        objects_before = len(AnnualIncomeModel.objects.all())
+        AnnualIncomeHandler.create_or_update_objects(
+            2024,
+            [],
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        objects_after = len(AnnualIncomeModel.objects.all())
+        self.assertEqual(objects_before, objects_after)
+
 
 @override_settings(
     ESKAT_BASE_URL="https://eskattest/eTaxCommonDataApi",
@@ -192,18 +404,7 @@ class TestExpectedIncome(BaseTestCase):
         params = parse_qs(match.group("params")) if match.group("params") else {}
         chunk = int(params.get("chunk", [1])[0])
         chunk_size = int(params.get("chunkSize", [20])[0])
-        items = []
-        if t in ("all", "chunks/all"):
-            items = filter(lambda item: item["year"] == year, self.expected_data)
-        elif t.isdigit():
-            if year is None:
-                items = filter(lambda item: item["cpr"] == t, self.expected_data)
-            else:
-                items = filter(
-                    lambda item: item["year"] == year and item["cpr"] == t,
-                    self.expected_data,
-                )
-        items = list(items)
+        items = self.filter_data(self.expected_data, year, t)
         total_items = len(items)
         if t == "chunks/all":
             items = items[(chunk - 1) * chunk_size : (chunk) * chunk_size]
@@ -355,20 +556,12 @@ class TestMonthlyIncome(BaseTestCase):
         params = parse_qs(match.group("params")) if match.group("params") else {}
         chunk = int(params.get("chunk", [1])[0])
         chunk_size = int(params.get("chunkSize", [20])[0])
-        items = []
-        if t in ("all", "chunks/all"):
-            items = filter(lambda item: item["year"] == year, self.monthly_data)
-            if month1 and month2:
-                items = filter(lambda item: month1 <= item["month"] <= month2, items)
-            elif month1:
-                items = filter(lambda item: month1 == item["month"], items)
-        elif t.isdigit():
-            items = filter(
-                lambda item: item["year"] == year and item["cpr"] == t,
-                self.monthly_data,
-            )
-            if month1:
-                items = filter(lambda item: month1 == item["month"], items)
+        items = self.filter_data(self.monthly_data, year, t)
+
+        if t in ("all", "chunks/all") and month1 and month2:
+            items = filter(lambda item: month1 <= item["month"] <= month2, items)
+        elif month1:
+            items = filter(lambda item: month1 == item["month"], items)
         items = list(items)
         total_items = len(items)
         if t == "chunks/all":
