@@ -44,7 +44,6 @@ class EskatClient:
         return self.sessions[thread_name]
 
     def get(self, path: str) -> Dict[str, Any]:
-        print(f"GET {self.base_url + path}")
         response: Response = self.get_session().get(self.base_url + path)
         response.raise_for_status()
         return response.json()
