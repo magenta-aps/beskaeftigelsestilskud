@@ -1,19 +1,21 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from dataclasses import fields
+from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
 from typing import Dict, List, TextIO
 
-from common.utils import camelcase_to_snakecase
+from common.utils import camelcase_to_snakecase, omit
 from django.db import transaction
 
 from bf.integrations.eskat.responses.data_models import (
+    AnnualIncome,
     ExpectedIncome,
     MonthlyIncome,
     TaxInformation,
 )
+from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
     Employer,
     MonthlyAIncomeReport,
@@ -59,6 +61,36 @@ class Handler:
         )
         out.write(f"Processed {len(person_years)} PersonYear objects")
         return person_years
+
+
+class AnnualIncomeHandler(Handler):
+
+    @staticmethod
+    def from_api_dict(data: Dict[str, str | int | bool | float]) -> AnnualIncome:
+        return AnnualIncome(**camelcase_to_snakecase(data))
+
+    @classmethod
+    def create_or_update_objects(
+        cls,
+        year: int,
+        items: List[AnnualIncome],
+        out: TextIO,
+    ):
+        with transaction.atomic():
+            person_years = cls.create_person_years(
+                year, [item.cpr for item in items if item.cpr], out
+            )
+            if person_years:
+                annual_incomes = [
+                    AnnualIncomeModel(
+                        person_year=person_years[item.cpr],
+                        **omit(asdict(item), "cpr", "year"),
+                    )
+                    for item in items
+                    if item.cpr is not None
+                ]
+                AnnualIncomeModel.objects.bulk_create(annual_incomes)
+                out.write(f"Created {len(annual_incomes)} AnnualIncome objects")
 
 
 class ExpectedIncomeHandler(Handler):

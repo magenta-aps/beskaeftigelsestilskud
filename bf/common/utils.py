@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import re
-from typing import TypeVar
+from typing import Any, Collection, Dict, TypeVar
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import numpy as np
@@ -641,3 +641,8 @@ def camelcase_to_snakecase(input: S) -> S:
         return {camelcase_to_snakecase(key): value for key, value in input.items()}
     else:
         return camelcase_re.sub("_\\1", input).lower()
+
+
+def omit(items: Dict[str, Any], *keys: Collection[str]) -> Dict[str, Any]:
+    k = set(keys)
+    return {key: value for key, value in items.items() if key not in k}
