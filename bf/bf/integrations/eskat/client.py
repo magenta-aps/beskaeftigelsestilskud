@@ -11,11 +11,13 @@ from requests import Response, Session
 from requests_ntlm import HttpNtlmAuth
 
 from bf.integrations.eskat.load import (
+    AnnualIncomeHandler,
     ExpectedIncomeHandler,
     MonthlyIncomeHandler,
     TaxInformationHandler,
 )
 from bf.integrations.eskat.responses.data_models import (
+    AnnualIncome,
     ExpectedIncome,
     MonthlyIncome,
     TaxInformation,
@@ -87,6 +89,24 @@ class EskatClient:
             settings.ESKAT_PASSWORD,  # type: ignore[misc]
             settings.ESKAT_VERIFY,  # type: ignore[misc]
         )
+
+    def get_annual_income(
+        self,
+        year: int | None = None,
+        cpr: str | None = None,
+    ) -> List[AnnualIncome]:
+        if year is None:
+            if cpr is None:
+                raise ValueError("Must specify either year or cpr (or both)")
+            responses = [self.get(f"/api/annualincome/get/{cpr}")]
+        else:
+            if cpr is None:
+                responses = self.get_chunked(f"/api/annualincome/get/chunks/all/{year}")
+            else:
+                responses = [self.get(f"/api/annualincome/get/{cpr}/{year}")]
+        return [
+            AnnualIncomeHandler.from_api_dict(item) for item in self.unpack(responses)
+        ]
 
     def get_expected_income(
         self,
