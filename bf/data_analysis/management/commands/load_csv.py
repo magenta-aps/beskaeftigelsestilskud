@@ -29,6 +29,7 @@ class Command(BaseCommand):
         with open(kwargs["file"]) as input_stream:
             load_csv(
                 input_stream,
+                kwargs["file"],
                 kwargs.get("year") or date.today().year,
                 data_type,
                 kwargs.get("count"),

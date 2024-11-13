@@ -32,8 +32,10 @@ from bf.integrations.eskat.responses.data_models import (
 )
 from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
+    DataLoad,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
+    Person,
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
@@ -341,17 +343,23 @@ class TestAnnualIncome(BaseTestCase):
                     salary=1234.56,
                 )
             ],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(
             AnnualIncomeModel.objects.filter(person_year__year__year=2024).count(), 1
         )
 
+        self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.first().load.source, "test")
+        self.assertEqual(AnnualIncomeModel.objects.first().load.source, "test")
+
     def test_monthly_income_load_no_items(self):
         objects_before = len(AnnualIncomeModel.objects.all())
         AnnualIncomeHandler.create_or_update_objects(
             2024,
             [],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         objects_after = len(AnnualIncomeModel.objects.all())
@@ -475,6 +483,7 @@ class TestExpectedIncome(BaseTestCase):
                     other_b_income=2000.00,
                 )
             ],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(
@@ -486,6 +495,9 @@ class TestExpectedIncome(BaseTestCase):
             .andre_b,
             Decimal(2000.00),
         )
+        self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.first().load.source, "test")
+        self.assertEqual(PersonYearAssessment.objects.first().load.source, "test")
 
     def test_expected_income_load_no_items(self):
 
@@ -493,6 +505,7 @@ class TestExpectedIncome(BaseTestCase):
         ExpectedIncomeHandler.create_or_update_objects(
             2024,
             [],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         objects_after = len(PersonYearAssessment.objects.all())
@@ -673,6 +686,7 @@ class TestMonthlyIncome(BaseTestCase):
                     foreign_pension_income=1000.00,
                 )
             ],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(
@@ -692,12 +706,17 @@ class TestMonthlyIncome(BaseTestCase):
             MonthlyBIncomeReport.objects.filter(year=2024, month=1).first().amount,
             Decimal(1000.00),
         )
+        self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.first().load.source, "test")
+        self.assertEqual(MonthlyAIncomeReport.objects.first().load.source, "test")
+        self.assertEqual(MonthlyBIncomeReport.objects.first().load.source, "test")
 
     def test_monthly_income_load_no_items(self):
         objects_before = len(MonthlyAIncomeReport.objects.all())
         MonthlyIncomeHandler.create_or_update_objects(
             2024,
             [],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         objects_after = len(MonthlyAIncomeReport.objects.all())
@@ -716,6 +735,7 @@ class TestMonthlyIncome(BaseTestCase):
                     foreign_pension_income=1000.00,
                 )
             ],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         objects_after = len(MonthlyAIncomeReport.objects.all())
@@ -868,8 +888,11 @@ class TestTaxInformation(BaseTestCase):
                     tax_scope="FULL",
                 )
             ],
+            DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
+        self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
 
     def test_get_taxscopes(self):
