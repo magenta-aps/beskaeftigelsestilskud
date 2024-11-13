@@ -45,7 +45,11 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
         if isinstance(obj, Decimal):
             return float(obj)
         if isinstance(obj, Model):
-            return {k: v for k, v in obj.__dict__.items() if not k.startswith("_")}
+            return {
+                k: v
+                for k, v in obj.__dict__.items()
+                if not k.startswith("_") and k not in ("load_id",)
+            }
         if isinstance(obj, EstimationEngine):
             return {
                 "class": obj.__class__.__name__,

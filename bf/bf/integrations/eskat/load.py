@@ -17,6 +17,7 @@ from bf.integrations.eskat.responses.data_models import (
 )
 from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
+    DataLoad,
     Employer,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
@@ -32,14 +33,14 @@ class Handler:
 
     @classmethod
     def create_person_years(
-        cls, year: int, cprs: List[str], out: TextIO
+        cls, year: int, cprs: List[str], load: DataLoad, out: TextIO
     ) -> Dict[str, PersonYear] | None:
 
         # Create or get Year objects
         year_obj, _ = Year.objects.get_or_create(year=year)
 
         # Create or update Person objects
-        persons = {cpr: Person(cpr=cpr, name=cpr) for cpr in set(cprs)}
+        persons = {cpr: Person(cpr=cpr, name=cpr, load=load) for cpr in set(cprs)}
         Person.objects.bulk_create(
             persons.values(),
             update_conflicts=True,
@@ -50,7 +51,7 @@ class Handler:
 
         # Create or update PersonYear objects
         person_years = {
-            person.cpr: PersonYear(person=person, year=year_obj)
+            person.cpr: PersonYear(person=person, year=year_obj, load=load)
             for person in persons.values()
         }
         PersonYear.objects.bulk_create(
@@ -74,16 +75,18 @@ class AnnualIncomeHandler(Handler):
         cls,
         year: int,
         items: List[AnnualIncome],
+        load: DataLoad,
         out: TextIO,
     ):
         with transaction.atomic():
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr], out
+                year, [item.cpr for item in items if item.cpr], load, out
             )
             if person_years:
                 annual_incomes = [
                     AnnualIncomeModel(
                         person_year=person_years[item.cpr],
+                        load=load,
                         **omit(asdict(item), "cpr", "year"),
                     )
                     for item in items
@@ -101,16 +104,17 @@ class ExpectedIncomeHandler(Handler):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, items: List["ExpectedIncome"], out: TextIO
+        cls, year: int, items: List["ExpectedIncome"], load: DataLoad, out: TextIO
     ):
         with transaction.atomic():
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr], out
+                year, [item.cpr for item in items if item.cpr], load, out
             )
             if person_years:
                 assessments = [
                     PersonYearAssessment(
                         person_year=person_years[item.cpr],
+                        load=load,
                         renteindtægter=item.capital_income or Decimal(0),
                         uddannelsesstøtte=item.education_support_income or Decimal(0),
                         honorarer=item.care_fee_income or Decimal(0),
@@ -149,17 +153,19 @@ class MonthlyIncomeHandler(Handler):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, items: List["MonthlyIncome"], out: TextIO
+        cls, year: int, items: List["MonthlyIncome"], load: DataLoad, out: TextIO
     ):
         with transaction.atomic():
 
             # TODO: vi får ikke en cvr fra eskat,
             # så dette er en dummy indtil vi ved mere
-            employer, _ = Employer.objects.get_or_create(cvr="11111111")
+            employer, _ = Employer.objects.get_or_create(
+                cvr="11111111", defaults={"load": load}
+            )
 
             # Create or update Year object
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr is not None], out
+                year, [item.cpr for item in items if item.cpr is not None], load, out
             )
             if person_years:
 
@@ -169,6 +175,7 @@ class MonthlyIncomeHandler(Handler):
                     for month in range(1, 13):
                         person_month = PersonMonth(
                             person_year=person_year,
+                            load=load,
                             month=month,
                             import_date=date.today(),
                             amount_sum=Decimal(0),
@@ -191,6 +198,7 @@ class MonthlyIncomeHandler(Handler):
                         person_month = person_months[(item.cpr, item.month)]
                         report = MonthlyAIncomeReport(
                             person_month=person_month,
+                            load=load,
                             employer=employer,
                             **{
                                 f.name: Decimal(getattr(item, f.name) or 0)
@@ -223,6 +231,7 @@ class MonthlyIncomeHandler(Handler):
                             b_income_reports.append(
                                 MonthlyBIncomeReport(
                                     person_month=person_month,
+                                    load=load,
                                     trader=employer,
                                     amount=Decimal(amount),
                                 )
@@ -245,9 +254,11 @@ class TaxInformationHandler(Handler):
         return TaxInformation(**camelcase_to_snakecase(data))
 
     @classmethod
-    def create_or_update_objects(cls, year, items: List["TaxInformation"], out: TextIO):
+    def create_or_update_objects(
+        cls, year, items: List["TaxInformation"], load: DataLoad, out: TextIO
+    ):
         with transaction.atomic():
             cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr is not None], out
+                year, [item.cpr for item in items if item.cpr is not None], load, out
             )
             # TODO: Brug data i items til at populere databasen

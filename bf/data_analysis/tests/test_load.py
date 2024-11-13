@@ -110,6 +110,7 @@ class LoadIncomeTest(BaseTestCase):
         with StringIO() as buffer:
             load_csv(
                 input=self.data,
+                filename="testdata",
                 year=2024,
                 data_type="income",
                 count=1,
@@ -136,6 +137,7 @@ class LoadIncomeTest(BaseTestCase):
     def test_load(self):
         load_csv(
             input=self.data,
+            filename="testdata",
             year=2024,
             data_type="income",
             count=1,
@@ -151,21 +153,29 @@ class LoadIncomeTest(BaseTestCase):
         person = Person.objects.first()
         self.assertEqual(person.name, "0")
         self.assertEqual(person.cpr, "0")
+        self.assertEqual(person.load.source, "csv")
+        self.assertEqual(person.load.parameters["filename"], "testdata")
 
         self.assertEqual(Employer.objects.count(), 1)
         employer = Employer.objects.first()
         self.assertEqual(employer.cvr, 123)
+        self.assertEqual(employer.load.source, "csv")
+        self.assertEqual(employer.load.parameters["filename"], "testdata")
 
         self.assertEqual(PersonYear.objects.count(), 1)
         person_year = PersonYear.objects.first()
         self.assertEqual(person_year.person, person)
         self.assertEqual(person_year.year, year)
+        self.assertEqual(person_year.load.source, "csv")
+        self.assertEqual(person_year.load.parameters["filename"], "testdata")
 
         self.assertEqual(PersonMonth.objects.count(), 12)
         person_months = list(PersonMonth.objects.all().order_by("month"))
         for month, person_month in enumerate(person_months, 1):
             self.assertEqual(person_month.person, person)
             self.assertEqual(person_month.month, month)
+            self.assertEqual(person_month.load.source, "csv")
+            self.assertEqual(person_month.load.parameters["filename"], "testdata")
 
         self.assertEqual(MonthlyAIncomeReport.objects.count(), 11)
         a_incomes = [
@@ -188,15 +198,21 @@ class LoadIncomeTest(BaseTestCase):
                 Decimal("15000.00"),
             ],
         )
+        for report in MonthlyAIncomeReport.objects.all():
+            self.assertEqual(report.load.source, "csv")
+            self.assertEqual(report.load.parameters["filename"], "testdata")
 
         self.assertEqual(MonthlyBIncomeReport.objects.count(), 1)
         report = MonthlyBIncomeReport.objects.first()
         self.assertEqual(report.amount, Decimal("5000.00"))
         self.assertEqual(report.month, 7)
+        self.assertEqual(report.load.source, "csv")
+        self.assertEqual(report.load.parameters["filename"], "testdata")
 
     def test_load_zero(self):
         load_csv(
             input=self.data,
+            filename="testdata",
             year=2024,
             data_type="income",
             count=0,
@@ -254,6 +270,7 @@ class LoadAssessmentTest(BaseTestCase):
         with StringIO() as buffer:
             load_csv(
                 input=self.data,
+                filename="testdata",
                 year=2024,
                 data_type="assessment",
                 count=1,
@@ -278,6 +295,7 @@ class LoadAssessmentTest(BaseTestCase):
     def test_load(self):
         load_csv(
             input=self.data,
+            filename="testdata",
             year=2024,
             data_type="assessment",
             count=1,
@@ -313,10 +331,13 @@ class LoadAssessmentTest(BaseTestCase):
         self.assertEqual(assessment.erhvervsindtægter_sum, Decimal("7000.00"))
         self.assertEqual(assessment.e2_indhandling, Decimal("8000.00"))
         self.assertEqual(assessment.brutto_b_indkomst, Decimal("9000.00"))
+        self.assertEqual(assessment.load.source, "csv")
+        self.assertEqual(assessment.load.parameters["filename"], "testdata")
 
     def test_load_zero(self):
         load_csv(
             input=self.data,
+            filename="testdata",
             year=2024,
             data_type="assessment",
             count=0,
@@ -427,6 +448,7 @@ class LoadFinalSettlementTest(BaseTestCase):
         with StringIO() as buffer:
             load_csv(
                 input=self.data,
+                filename="testdata",
                 year=2024,
                 data_type="final_settlement",
                 count=1,
@@ -468,6 +490,7 @@ class LoadFinalSettlementTest(BaseTestCase):
     def test_load(self):
         load_csv(
             input=self.data,
+            filename="testdata",
             year=2024,
             data_type="final_settlement",
             count=1,
@@ -546,10 +569,13 @@ class LoadFinalSettlementTest(BaseTestCase):
         self.assertEqual(settlement.ligningsmæssig_fradrag, Decimal(0))
         self.assertEqual(settlement.anvendt_fradrag, Decimal(0))
         self.assertEqual(settlement.skattepligtig_indkomst, Decimal("50000.00"))
+        self.assertEqual(settlement.load.source, "csv")
+        self.assertEqual(settlement.load.parameters["filename"], "testdata")
 
     def test_load_zero(self):
         load_csv(
             input=self.data,
+            filename="testdata",
             year=2024,
             data_type="final_settlement",
             count=0,
@@ -568,6 +594,7 @@ class LoadFinalSettlementTest(BaseTestCase):
 
         load_csv(
             input=self.data,
+            filename="testdata",
             year=2024,
             data_type="final_settlement",
             count=1,
@@ -586,6 +613,7 @@ class LoadFinalSettlementTest(BaseTestCase):
         with StringIO() as buffer:
             load_csv(
                 input=self.data,
+                filename="testdata",
                 year=2023,
                 data_type="final_settlement",
                 count=1,

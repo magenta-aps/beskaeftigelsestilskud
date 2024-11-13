@@ -113,7 +113,7 @@ class TestStabilityScoreUtils(TestCase):
         self.assertEqual(calculate_stability_score([0, 0, 0, 0]), 1)
 
     def test_to_dataframe(self):
-        qs = MonthlyAIncomeReport.objects.all()
+        qs = MonthlyAIncomeReport.objects.all().order_by("month")
         df = to_dataframe(qs, "person__cpr", {"amount": float})
         self.assertIn(self.person.cpr, df.index)
         self.assertEqual(list(df["amount"].values), self.reasonably_stable_income)
