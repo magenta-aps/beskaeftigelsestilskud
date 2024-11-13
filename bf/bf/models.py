@@ -122,6 +122,12 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         ]
 
 
+class DataLoad(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    source = models.CharField(max_length=20)
+    parameters = models.JSONField(null=True)
+
+
 class Year(models.Model):
     year = models.PositiveSmallIntegerField(primary_key=True)
     calculation_method_content_type = models.ForeignKey(
@@ -140,6 +146,11 @@ class Person(models.Model):
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
         related_name="history_entries",
+    )
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
     )
 
     cpr = models.TextField(
@@ -171,6 +182,18 @@ class Person(models.Model):
 
 
 class PersonYear(models.Model):
+
+    class Meta:
+        unique_together = (("person", "year"),)
+        indexes = [
+            models.Index(fields=("person", "year"))
+            # index on "person" by itself is implicit because it's a ForeignKey
+        ]
+
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
     person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,
@@ -201,13 +224,11 @@ class PersonYear(models.Model):
     stability_score_b = models.DecimalField(
         decimal_places=1, default=None, null=True, max_digits=2
     )
-
-    class Meta:
-        unique_together = (("person", "year"),)
-        indexes = [
-            models.Index(fields=("person", "year"))
-            # index on "person" by itself is implicit because it's a ForeignKey
-        ]
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
 
     def __str__(self):
         return f"{self.person} ({self.year})"
@@ -275,6 +296,16 @@ class PersonMonth(models.Model):
             Index(fields=("municipality_code",)),
         ]
         unique_together = ("person_year", "month")
+
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
 
     person_year = models.ForeignKey(
         PersonYear,
@@ -400,6 +431,7 @@ class Employer(models.Model):
         null=True,
         blank=True,
     )
+    load = models.ForeignKey(DataLoad, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f"{self.name} ({self.cvr})"
@@ -415,6 +447,11 @@ class MonthlyIncomeReport(models.Model):
         self.year = self.person_month.year
         self.person = self.person_month.person
 
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
     month = models.PositiveSmallIntegerField()
     year = models.PositiveSmallIntegerField()
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
@@ -596,6 +633,11 @@ class MonthlyAIncomeReport(MonthlyIncomeReport):
             ),
         )
 
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
+
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE)
 
     @property
@@ -647,6 +689,11 @@ class MonthlyBIncomeReport(MonthlyIncomeReport):
             ),
         )
 
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
+
     trader = models.ForeignKey(
         Employer,
         verbose_name=_("Indhandler"),
@@ -665,6 +712,10 @@ post_save.connect(
 
 
 class SelfAssessedYearlyBIncome(models.Model):
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
     person_year = models.ForeignKey(
         PersonYear,
         on_delete=models.CASCADE,
@@ -681,6 +732,10 @@ class SelfAssessedYearlyBIncome(models.Model):
 
 
 class FinalBIncomeReport(models.Model):
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
     person_year = models.ForeignKey(
         PersonYear,
         on_delete=models.CASCADE,
@@ -790,13 +845,20 @@ class PersonYearEstimateSummary(models.Model):
 
 class PersonYearAssessment(models.Model):
     # En forskudsopgørelse
-
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
     person_year = models.ForeignKey(
         PersonYear, on_delete=models.CASCADE, related_name="assessments"
     )
-
     created = models.DateTimeField(
         auto_now_add=True,
+    )
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
     )
 
     renteindtægter = models.DecimalField(
@@ -829,13 +891,20 @@ class PersonYearAssessment(models.Model):
 
 
 class FinalSettlement(models.Model):
-
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
     person_year = models.ForeignKey(
         PersonYear, on_delete=models.CASCADE, related_name="final_settlements"
     )
-
     created = models.DateTimeField(
         auto_now_add=True,
+    )
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
     )
 
     lønindkomst = models.DecimalField(
@@ -1063,10 +1132,19 @@ class PrismeBatchItem(models.Model):
 
 
 class AnnualIncome(models.Model):
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+    )
     person_year = models.ForeignKey(
         PersonYear,
         on_delete=models.CASCADE,
     )
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
     salary = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )

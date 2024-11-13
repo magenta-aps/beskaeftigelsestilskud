@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from bf.models import (
+    DataLoad,
     Employer,
     FinalSettlement,
     MonthlyAIncomeReport,
@@ -48,7 +49,7 @@ class FileLine:
 
     @classmethod
     def create_person_years(
-        cls, year: int, rows: Collection["FileLine"], out: TextIO
+        cls, year: int, rows: Collection["FileLine"], load: DataLoad, out: TextIO
     ) -> Dict[str, PersonYear] | None:
 
         # Create or get Year objects
@@ -61,7 +62,8 @@ class FileLine:
 
         # Create or update Person objects
         persons = {
-            cpr: Person(cpr=cpr, name=cpr) for cpr in set(row.cpr for row in rows)
+            cpr: Person(cpr=cpr, name=cpr, load=load)
+            for cpr in set(row.cpr for row in rows)
         }
         Person.objects.bulk_create(
             persons.values(),
@@ -73,7 +75,7 @@ class FileLine:
 
         # Create or update PersonYear objects
         person_years = {
-            person.cpr: PersonYear(person=person, year=year_obj)
+            person.cpr: PersonYear(person=person, year=year_obj, load=load)
             for person in persons.values()
         }
         PersonYear.objects.bulk_create(
@@ -163,15 +165,16 @@ class IndkomstCSVFileLine(FileLine):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["IndkomstCSVFileLine"], out: TextIO
+        cls, year: int, rows: List["IndkomstCSVFileLine"], load: DataLoad, out: TextIO
     ):
         with transaction.atomic():
             # Create or update Year object
-            person_years = cls.create_person_years(year, rows, out)
+            person_years = cls.create_person_years(year, rows, load, out)
             if person_years:
                 # Create or update Employer objects
                 employers = {
-                    cvr: Employer(cvr=cvr) for cvr in set(row.cvr for row in rows)
+                    cvr: Employer(cvr=cvr, load=load)
+                    for cvr in set(row.cvr for row in rows)
                 }
                 Employer.objects.bulk_create(
                     employers.values(),
@@ -190,6 +193,7 @@ class IndkomstCSVFileLine(FileLine):
                             month=month,
                             import_date=date.today(),
                             amount_sum=Decimal(0),
+                            load=load,
                         )
                         key = (person_year.person.cpr, month)
                         person_months[key] = person_month
@@ -213,6 +217,7 @@ class IndkomstCSVFileLine(FileLine):
                                 employer=employers[row.cvr],
                                 salary_income=amount,
                                 amount=amount,
+                                load=load,
                             )
                             report.update_amount()
                             a_income_reports.append(report)
@@ -237,6 +242,7 @@ class IndkomstCSVFileLine(FileLine):
                                     person_month=person_month,
                                     trader=employers[row.cvr],
                                     amount=amount,
+                                    load=load,
                                 )
                             )
                 MonthlyBIncomeReport.objects.filter(
@@ -294,10 +300,10 @@ class AssessmentCSVFileLine(FileLine):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["AssessmentCSVFileLine"], out: TextIO
+        cls, year: int, rows: List["AssessmentCSVFileLine"], load: DataLoad, out: TextIO
     ):
         with transaction.atomic():
-            person_years = cls.create_person_years(year, rows, out)
+            person_years = cls.create_person_years(year, rows, load, out)
             if person_years:
                 assessments = []
                 for item in rows:
@@ -305,7 +311,9 @@ class AssessmentCSVFileLine(FileLine):
                     model_data = asdict(item)
                     del model_data["cpr"]
                     assessments.append(
-                        PersonYearAssessment(person_year=person_year, **model_data)
+                        PersonYearAssessment(
+                            person_year=person_year, load=load, **model_data
+                        )
                     )
                 PersonYearAssessment.objects.bulk_create(assessments)
                 out.write(f"Created {len(assessments)} PersonYearAssessment objects")
@@ -443,9 +451,9 @@ class FinalCSVFileLine(FileLine):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, rows: List["FinalCSVFileLine"], out: TextIO
+        cls, year: int, rows: List["FinalCSVFileLine"], load: DataLoad, out: TextIO
     ):
-        person_years = cls.create_person_years(year, rows, out)
+        person_years = cls.create_person_years(year, rows, load, out)
         if person_years:
             final_statements = []
             for item in rows:
@@ -454,7 +462,7 @@ class FinalCSVFileLine(FileLine):
                 del model_data["cpr"]
                 del model_data["skatteår"]
                 final_statements.append(
-                    FinalSettlement(person_year=person_year, **model_data)
+                    FinalSettlement(person_year=person_year, load=load, **model_data)
                 )
             FinalSettlement.objects.bulk_create(final_statements)
             out.write(f"Created {len(final_statements)} FinalStatement objects")
@@ -471,6 +479,7 @@ type_map: Dict[
 
 def load_csv(
     input: TextIOWrapper | StringIO,
+    filename: str,
     year: int,
     data_type: str,
     count: int,
@@ -484,6 +493,7 @@ def load_csv(
 
     reader = csv.reader(input, delimiter=delimiter)
     data_class.validate_header_labels(next(reader))
+    load = DataLoad.objects.create(source="csv", parameters={"filename": filename})
 
     rows = []
     for i, row in enumerate(reader):
@@ -499,4 +509,4 @@ def load_csv(
             stdout.write(str(row))
             stdout.write("\n")
     else:
-        data_class.create_or_update_objects(year, rows, stdout)
+        data_class.create_or_update_objects(year, rows, load, stdout)
