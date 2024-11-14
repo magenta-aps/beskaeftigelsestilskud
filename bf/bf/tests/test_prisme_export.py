@@ -40,7 +40,7 @@ class TestBatchExport(TestCase):
         # Act
         queryset = export.get_person_month_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset,
             [
                 (
@@ -196,13 +196,13 @@ class TestBatchExport(TestCase):
             # Act
             export.export_batches(stdout, verbosity=2)
             # Assert: `PrismeBatch` object(s) exist with the expected status
-            self.assertQuerysetEqual(
+            self.assertQuerySetEqual(
                 PrismeBatch.objects.all(),
                 [(31, PrismeBatch.Status.Sent.value)],
                 transform=lambda obj: (obj.prefix, obj.status),
             )
             # Assert: `PrismeBatchItem` object(s) exist
-            self.assertQuerysetEqual(
+            self.assertQuerySetEqual(
                 PrismeBatchItem.objects.all(),
                 [("3112700000", 31)],
                 transform=lambda obj: (
@@ -213,7 +213,7 @@ class TestBatchExport(TestCase):
             # Assert: all `PersonMonth` objects are now exported (= have a corresponding
             # `PrismeBatchItem` object.) Thus, the batch export will not "see" them
             # again.
-            self.assertQuerysetEqual(
+            self.assertQuerySetEqual(
                 export.get_person_month_queryset(),
                 PersonMonth.objects.none(),
             )
