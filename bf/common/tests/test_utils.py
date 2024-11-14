@@ -16,6 +16,7 @@ from common.utils import (
     camelcase_to_snakecase,
     get_income_as_dataframe,
     get_income_estimates_df,
+    get_payout_date,
     get_payout_df,
     get_people_in_quarantine,
     isnan,
@@ -498,3 +499,10 @@ class QuarantineTest(BaseTestCase):
         self.assertTrue(df.loc[self.person4.cpr, "earns_too_much"])
         self.assertFalse(df.loc[self.person3.cpr, "earns_too_much"])
         self.assertFalse(df.loc[self.person4.cpr, "earns_too_little"])
+
+    def test_get_payout_date(self):
+        payout_date = get_payout_date(2024, 11)
+
+        self.assertEqual(payout_date.day, 19)
+        self.assertEqual(payout_date.month, 11)
+        self.assertEqual(payout_date.year, 2024)
