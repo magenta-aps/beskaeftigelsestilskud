@@ -32,6 +32,7 @@ class Command(BaseCommand):
         year = options["year"] or today.year
         cpr = options["cpr"]
         ESKAT_BASE_URL = settings.ESKAT_BASE_URL  # type: ignore[misc]
+        PRISME_DELAY = settings.PRISME_DELAY
 
         # Get the date on which citizens expect their money to be on their accounts.
         payout_date = get_payout_date(year, month)
@@ -39,8 +40,8 @@ class Command(BaseCommand):
         # Allow for a week between calculation and payout
         calculation_date = payout_date - datetime.timedelta(days=7)
 
-        # We send data to prisme on the day before the payout date
-        prisme_date = payout_date - datetime.timedelta(days=1)
+        # We send data to prisme "x" days before the payout date
+        prisme_date = payout_date - datetime.timedelta(days=PRISME_DELAY)
 
         # Jobs to run once a year (Before the first benefit calculation)
         if month == 1 and day == 1:
