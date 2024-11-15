@@ -711,46 +711,6 @@ post_save.connect(
 )
 
 
-class SelfAssessedYearlyBIncome(models.Model):
-    history = HistoricalRecords(
-        history_change_reason_field=models.TextField(null=True),
-        related_name="history_entries",
-    )
-    person_year = models.ForeignKey(
-        PersonYear,
-        on_delete=models.CASCADE,
-    )
-    reported_date = models.DateTimeField(
-        auto_now_add=True,
-    )
-    amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=False,
-        blank=False,
-    )
-
-
-class FinalBIncomeReport(models.Model):
-    history = HistoricalRecords(
-        history_change_reason_field=models.TextField(null=True),
-        related_name="history_entries",
-    )
-    person_year = models.ForeignKey(
-        PersonYear,
-        on_delete=models.CASCADE,
-    )
-    reported_date = models.DateTimeField(
-        auto_now_add=True,
-    )
-    amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=False,
-        blank=False,
-    )
-
-
 class IncomeEstimate(models.Model):
 
     class Meta:
