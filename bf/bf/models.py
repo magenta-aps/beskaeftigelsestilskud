@@ -20,6 +20,7 @@ from project.util import int_divide_end
 from simple_history.models import HistoricalRecords
 
 from bf.data import engine_choices
+from bf.integrations.eskat.responses.data_models import TaxInformation
 
 
 class IncomeType(TextChoices):
@@ -181,6 +182,21 @@ class Person(models.Model):
         return self.personyear_set.order_by("-year")[0]
 
 
+class TaxScope(models.TextChoices):
+    FULDT_SKATTEPLIGTIG = "FULD"
+    DELVIST_SKATTEPLIGTIG = "DELVIS"
+    FORSVUNDET_FRA_MANDTAL = "INGEN_MANDTAL"
+
+    @classmethod
+    def from_taxinformation(cls, taxinformation: TaxInformation) -> "TaxScope":
+        tax_scope_str = taxinformation.tax_scope
+        if tax_scope_str == "FULL":
+            return TaxScope.FULDT_SKATTEPLIGTIG
+        if tax_scope_str == "LIM":
+            return TaxScope.DELVIST_SKATTEPLIGTIG
+        return None
+
+
 class PersonYear(models.Model):
 
     class Meta:
@@ -223,6 +239,11 @@ class PersonYear(models.Model):
     )
     stability_score_b = models.DecimalField(
         decimal_places=1, default=None, null=True, max_digits=2
+    )
+    tax_scope = models.CharField(
+        choices=TaxScope,
+        default=TaxScope.FULDT_SKATTEPLIGTIG,
+        max_length=20,
     )
     load = models.ForeignKey(
         DataLoad,
