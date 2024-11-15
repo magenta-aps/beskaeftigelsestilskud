@@ -23,6 +23,48 @@ class Command(BaseCommand):
         parser.add_argument("--cpr", type=str)
 
     def handle(self, *args, **options):
+        """
+        Job which runs all other relevant management jobs on the proper days.
+
+        if run daily the job will execute the following commands:
+            - Every year (on the first of January):
+                - Calculate stability score
+                - autoselect estimation engine
+            - Every day:
+                - Load data from eskat
+                - Estimate yearly income
+            - Every month (on the second tuesday):
+                - Calculate payout
+            - Every month (on day before the third tuesday):
+                - Send payouts to PRISME
+
+        Options
+        ---------
+        day : int
+            Day to run the job for. Defaults to today's day
+        month : int
+            Month to run the job for. Defaults to today's month
+        year : int
+            Year to run the job for. Defaults to today's year
+        cpr : str
+            Person to run the job for. Defaults to all persons.
+
+        Notes
+        ------------
+        This job is intended to be run on a daily cycle using the following management
+        command:
+
+        >>> python manage.py job_dispatcher
+
+        If required the day, month and year can be specified when running the job.
+        For example: When a job which was supposed to run on Jan 1st 2024 fails,
+        you can run it manually using:
+
+        >>> python manage.py job_dispatcher --year=2024 --month=1 --day=1
+
+        Even though you might not be running the job on the first of January, the job
+        will still execute all tasks which are supposed to run on the first of january.
+        """
         verbosity = options["verbosity"]
         self._verbose = verbosity > 1
         today = datetime.date.today()
