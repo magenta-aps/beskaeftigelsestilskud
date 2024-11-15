@@ -188,7 +188,7 @@ class TaxScope(models.TextChoices):
     FORSVUNDET_FRA_MANDTAL = "INGEN_MANDTAL"
 
     @classmethod
-    def from_taxinformation(cls, taxinformation: TaxInformation) -> "TaxScope":
+    def from_taxinformation(cls, taxinformation: TaxInformation) -> "TaxScope" | None:
         tax_scope_str = taxinformation.tax_scope
         if tax_scope_str == "FULL":
             return TaxScope.FULDT_SKATTEPLIGTIG

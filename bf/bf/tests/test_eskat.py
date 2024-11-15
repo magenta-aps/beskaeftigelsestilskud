@@ -953,7 +953,6 @@ class TestTaxInformation(BaseTestCase):
             PersonYear.objects.filter(year__year=2024).first().tax_scope,
             TaxScope.DELVIST_SKATTEPLIGTIG,
         )
-
         TaxInformationHandler.create_or_update_objects(
             2024,
             [],

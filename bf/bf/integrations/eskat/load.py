@@ -8,7 +8,6 @@ from typing import Dict, List, TextIO
 
 from common.utils import camelcase_to_snakecase, omit
 from django.db import transaction
-from django.db.models import F
 from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
 from bf.integrations.eskat.responses.data_models import (
@@ -64,15 +63,16 @@ class Handler:
 
         # Update existing items in DB that are in the input
         to_update = []
-        for item in PersonYear.objects.filter(
+        for person_year_1 in PersonYear.objects.filter(
             year=year, person__in=persons.values()
-        ).annotate(cpr=F("person__cpr")):
-            tax_scope = cpr_taxscopes[item.cpr]
+        ).select_related("person"):
+            cpr = person_year_1.person.cpr
+            tax_scope = cpr_taxscopes[cpr]
             if tax_scope is not None:  # only update if we have a taxscope to set
-                item.load = load
-                item.tax_scope = tax_scope
-                to_update.append(item)
-            person_years[item.cpr] = item
+                person_year_1.load = load
+                person_year_1.tax_scope = tax_scope
+                to_update.append(person_year_1)
+            person_years[cpr] = person_year_1
         if len(to_update) > 0:
             bulk_update_with_history(
                 to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
@@ -82,12 +82,12 @@ class Handler:
         to_create = []
         for cpr, person in persons.items():
             if cpr not in person_years:
-                item = PersonYear(person=person, year=year_obj, load=load)
+                person_year_2 = PersonYear(person=person, year=year_obj, load=load)
                 tax_scope = cpr_taxscopes[cpr]
                 if tax_scope is not None:
-                    item.tax_scope = tax_scope
-                to_create.append(item)
-                person_years[cpr] = item
+                    person_year_2.tax_scope = tax_scope
+                to_create.append(person_year_2)
+                person_years[cpr] = person_year_2
         created = bulk_create_with_history(to_create, PersonYear, batch_size=1000)
         person_years_count += len(created)
 
@@ -98,9 +98,9 @@ class Handler:
                     person__cpr__in=person_years.keys()
                 )
             )
-            for item in to_update:
-                item.load = load
-                item.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
+            for person_year_3 in to_update:
+                person_year_3.load = load
+                person_year_3.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
             bulk_update_with_history(
                 to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
             )
