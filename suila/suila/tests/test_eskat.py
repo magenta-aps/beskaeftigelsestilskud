@@ -42,6 +42,7 @@ from suila.models import (
     PersonYearAssessment,
     TaxScope,
 )
+from suila.tests.mixins import BaseEnvMixin
 
 
 def make_response(status_code: int, content: str | dict):
@@ -1059,3 +1060,50 @@ class TestLoadEskatCommand(TestCase):
                         ],
                         expected_args,
                     )
+
+
+class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
+    """Test that subsequent updates to the same monthly income report (same person and
+    month) are stored as updates to the same `MonthlyIncomeReport`, and that the
+    `PersonMonth` is updated as expected.
+    """
+
+    def test_subsequent_update(self):
+        # Arrange: create an initial value for month 1
+        load1 = self._create_or_update_objects(month=1, salary_income=1000)
+        # Act: add an updated value for month 1
+        load2 = self._create_or_update_objects(month=1, salary_income=2000)
+        # Assert: two separate loads are recorded
+        self.assertNotEqual(load1, load2)
+        # Assert: there is only one `MonthlyIncomeReport` (with the latest value)
+        monthly_income_reports = MonthlyIncomeReport.objects.filter(
+            person_month__person_year__person=self.person,
+            person_month__month=1,
+        )
+        self.assertQuerySetEqual(
+            monthly_income_reports.values_list("month", "salary_income"),
+            [(1, 2000)],
+        )
+        # Assert: both current and previous versions of the `MonthlyIncomeReport` are
+        # kept in history, so previous amount, etc. is available.
+        self.assertQuerySetEqual(
+            monthly_income_reports[0]
+            .history.order_by("history_date")
+            .values_list("salary_income", flat=True),
+            [Decimal(1000), Decimal(2000)],
+        )
+
+    def _create_or_update_objects(self, **kwargs) -> DataLoad:
+        monthly_income = MonthlyIncome(
+            cpr=self.person.cpr,
+            year=self.year.year,
+            **kwargs,
+        )
+        load = DataLoad.objects.create(source="testing")
+        MonthlyIncomeHandler.create_or_update_objects(
+            self.year.year,
+            [monthly_income],
+            load,
+            StringIO(),
+        )
+        return load

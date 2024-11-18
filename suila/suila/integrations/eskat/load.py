@@ -307,9 +307,60 @@ class MonthlyIncomeHandler(Handler):
                     person_month__in=person_months.values()
                 ).delete()
                 MonthlyIncomeReport.objects.bulk_create(income_reports)
+
                 for person_month in person_months.values():
+                    # FIXME: shouldn't the objects in `person_months` be written to DB?
+                    # And shouldn't `update_amount_sum` be called for B income reports?
                     person_month.update_amount_sum()
                 out.write(f"Created {len(income_reports)} MonthlyIncomeReport objects")
+
+    @classmethod
+    def _create_or_update_monthly_income_reports(
+        self,
+        model: type[MonthlyIncomeReport],
+        items: list[MonthlyIncome],
+        person_months: dict[tuple[str, int], PersonMonth],
+        employer: Employer,
+    ) -> list:
+        objs_to_create = []
+        objs_to_update = []
+
+        for item in items:
+            if item.cpr is not None and item.month is not None:
+                person_month = person_months[(item.cpr, item.month)]
+                field_values = {
+                    f.name: Decimal(getattr(item, f.name) or 0)
+                    for f in fields(item)
+                    if f.name not in {"cpr", "month"}
+                }
+                try:
+                    report = model.objects.get(
+                        person_month=person_month,
+                        employer=employer,
+                    )
+                except model.DoesNotExist:
+                    report = model(
+                        person_month=person_month,
+                        employer=employer,
+                        **field_values,
+                    )
+                    report.update_amount()
+                    objs_to_create.append(report)
+                else:
+                    for name, value in field_values.items():
+                        setattr(report, name, value)
+                    report.update_amount()
+                    objs_to_update.append(report)
+
+        bulk_update_with_history(
+            objs_to_update,
+            model,
+            [f.name for f in model._meta.fields if not f.primary_key],
+        )
+
+        bulk_create_with_history(objs_to_create, model)
+
+        return objs_to_create + objs_to_update
 
 
 class TaxInformationHandler(Handler):
