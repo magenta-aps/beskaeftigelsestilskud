@@ -13,6 +13,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from django.db.models import F, Func, OuterRef, QuerySet, Subquery, Sum
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 from project.util import mean_error, root_mean_sq_error, trim_list_first
 
 from bf.data import MonthlyIncomeData
@@ -90,6 +91,7 @@ class EstimationEngine:
         dry_run: bool = True,
         output_stream=None,
     ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
+        now = timezone.now()
         person_year_qs: QuerySet[PersonYear] = PersonYear.objects.filter(
             year__year=year
         ).select_related("person")
@@ -214,6 +216,7 @@ class EstimationEngine:
                             if result is not None:
                                 result.person_month = person_month
                                 result.actual_year_result = actual_year_sum
+                                result.timestamp = now
                                 engine_results.append(result)
                                 results.append(result)
 
@@ -248,6 +251,7 @@ class EstimationEngine:
                         income_type=income_type,
                         mean_error_percent=mean_error_percent,
                         rmse_percent=rmse_percent,
+                        timestamp=now,
                     )
                     summaries.append(summary)
 

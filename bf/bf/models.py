@@ -763,6 +763,11 @@ class IncomeEstimate(models.Model):
         blank=True,
     )
 
+    timestamp = models.DateTimeField(
+        null=True,
+        blank=False,
+    )
+
     @staticmethod
     def annotate_month(
         qs: QuerySet["IncomeEstimate"],
@@ -821,6 +826,10 @@ class PersonYearEstimateSummary(models.Model):
     )
     rmse_percent = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
+    )
+    timestamp = models.DateTimeField(
+        null=True,
+        blank=False,
     )
 
 
