@@ -39,6 +39,7 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
+    TaxScope,
 )
 
 
@@ -778,6 +779,19 @@ class TestTaxInformation(BaseTestCase):
             "district_name": "",
         },
         {
+            "cpr": "9012",
+            "year": 2023,
+            "tax_scope": "FULL",
+            "start_date": "2024-11-01T12:39:16.986Z",
+            "end_date": "2024-11-01T12:39:16.986Z",
+            "tax_municipality_number": "956",
+            "cpr_municipality_code": "956",
+            "cpr_municipality_name": "Sermersooq",
+            "region_number": "",
+            "region_name": "",
+            "district_name": "",
+        },
+        {
             "cpr": "1234",
             "year": 2024,
             "tax_scope": "FULL",
@@ -793,7 +807,7 @@ class TestTaxInformation(BaseTestCase):
         {
             "cpr": "5678",
             "year": 2024,
-            "tax_scope": "FULL",
+            "tax_scope": "LIM",
             "start_date": "2024-11-01T12:39:16.986Z",
             "end_date": "2024-11-01T12:39:16.986Z",
             "tax_municipality_number": "956",
@@ -852,6 +866,12 @@ class TestTaxInformation(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
         ):
+            data = client.get_tax_information(year=2023)
+            self.assertEqual(len(data), 3)
+            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[1].cpr, "5678")
+            self.assertEqual(data[2].cpr, "9012")
+
             data = client.get_tax_information(year=2024)
             self.assertEqual(len(data), 2)
             self.assertEqual(data[0].cpr, "1234")
@@ -894,6 +914,56 @@ class TestTaxInformation(BaseTestCase):
         self.assertEqual(Person.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
+
+        TaxInformationHandler.create_or_update_objects(
+            2024,
+            [
+                TaxInformation(
+                    "1234",
+                    2024,
+                    tax_scope="LIM",
+                )
+            ],
+            DataLoad.objects.create(source="test"),
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
+        self.assertEqual(
+            PersonYear.objects.filter(year__year=2024).first().tax_scope,
+            TaxScope.DELVIST_SKATTEPLIGTIG,
+        )
+
+        TaxInformationHandler.create_or_update_objects(
+            2024,
+            [
+                TaxInformation(
+                    "1234",
+                    2024,
+                )
+            ],
+            DataLoad.objects.create(source="test"),
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.first().load.source, "test")
+        self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
+        self.assertEqual(
+            PersonYear.objects.filter(year__year=2024).first().tax_scope,
+            TaxScope.DELVIST_SKATTEPLIGTIG,
+        )
+        TaxInformationHandler.create_or_update_objects(
+            2024,
+            [],
+            DataLoad.objects.create(source="test"),
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
+        self.assertEqual(
+            PersonYear.objects.filter(year__year=2024).first().tax_scope,
+            TaxScope.FORSVUNDET_FRA_MANDTAL,
+        )
 
     def test_get_taxscopes(self):
         client = EskatClient.from_settings()

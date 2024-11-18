@@ -8,6 +8,7 @@ from typing import Dict, List, TextIO
 
 from common.utils import camelcase_to_snakecase, omit
 from django.db import transaction
+from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
 from bf.integrations.eskat.responses.data_models import (
     AnnualIncome,
@@ -25,6 +26,7 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
+    TaxScope,
     Year,
 )
 
@@ -33,14 +35,21 @@ class Handler:
 
     @classmethod
     def create_person_years(
-        cls, year: int, cprs: List[str], load: DataLoad, out: TextIO
+        cls,
+        year: int,
+        cpr_taxscopes: Dict[str, TaxScope | None],
+        load: DataLoad,
+        out: TextIO,
+        set_taxscope_on_missing: bool = False,
     ) -> Dict[str, PersonYear] | None:
 
         # Create or get Year objects
         year_obj, _ = Year.objects.get_or_create(year=year)
 
         # Create or update Person objects
-        persons = {cpr: Person(cpr=cpr, name=cpr, load=load) for cpr in set(cprs)}
+        persons = {
+            cpr: Person(cpr=cpr, name=cpr, load=load) for cpr in cpr_taxscopes.keys()
+        }
         Person.objects.bulk_create(
             persons.values(),
             update_conflicts=True,
@@ -49,17 +58,53 @@ class Handler:
         )
         out.write(f"Processed {len(persons)} Person objects")
 
-        # Create or update PersonYear objects
-        person_years = {
-            person.cpr: PersonYear(person=person, year=year_obj, load=load)
-            for person in persons.values()
-        }
-        PersonYear.objects.bulk_create(
-            person_years.values(),
-            update_conflicts=True,
-            update_fields=("person", "year"),
-            unique_fields=("person", "year"),
-        )
+        person_years_count = 0
+        person_years = {}
+
+        # Update existing items in DB that are in the input
+        to_update = []
+        for person_year_1 in PersonYear.objects.filter(
+            year=year, person__in=persons.values()
+        ).select_related("person"):
+            cpr = person_year_1.person.cpr
+            tax_scope = cpr_taxscopes[cpr]
+            if tax_scope is not None:  # only update if we have a taxscope to set
+                person_year_1.load = load
+                person_year_1.tax_scope = tax_scope
+                to_update.append(person_year_1)
+            person_years[cpr] = person_year_1
+        if len(to_update) > 0:
+            bulk_update_with_history(
+                to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
+            )
+
+        # Create new items in DB for items in the input
+        to_create = []
+        for cpr, person in persons.items():
+            if cpr not in person_years:
+                person_year_2 = PersonYear(person=person, year=year_obj, load=load)
+                tax_scope = cpr_taxscopes[cpr]
+                if tax_scope is not None:
+                    person_year_2.tax_scope = tax_scope
+                to_create.append(person_year_2)
+                person_years[cpr] = person_year_2
+        created = bulk_create_with_history(to_create, PersonYear, batch_size=1000)
+        person_years_count += len(created)
+
+        # Update existing items in DB that are not in the input
+        if set_taxscope_on_missing:
+            to_update = list(
+                PersonYear.objects.filter(year=year_obj).exclude(
+                    person__cpr__in=person_years.keys()
+                )
+            )
+            for person_year_3 in to_update:
+                person_year_3.load = load
+                person_year_3.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
+            bulk_update_with_history(
+                to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
+            )
+
         out.write(f"Processed {len(person_years)} PersonYear objects")
         return person_years
 
@@ -80,7 +125,7 @@ class AnnualIncomeHandler(Handler):
     ):
         with transaction.atomic():
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr], load, out
+                year, {item.cpr: None for item in items if item.cpr}, load, out
             )
             if person_years:
                 annual_incomes = [
@@ -108,7 +153,7 @@ class ExpectedIncomeHandler(Handler):
     ):
         with transaction.atomic():
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr], load, out
+                year, {item.cpr: None for item in items if item.cpr}, load, out
             )
             if person_years:
                 assessments = [
@@ -165,7 +210,10 @@ class MonthlyIncomeHandler(Handler):
 
             # Create or update Year object
             person_years = cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr is not None], load, out
+                year,
+                {item.cpr: None for item in items if item.cpr is not None},
+                load,
+                out,
             )
             if person_years:
 
@@ -259,6 +307,14 @@ class TaxInformationHandler(Handler):
     ):
         with transaction.atomic():
             cls.create_person_years(
-                year, [item.cpr for item in items if item.cpr is not None], load, out
+                year,
+                {
+                    item.cpr: TaxScope.from_taxinformation(item)
+                    for item in items
+                    if item.cpr is not None
+                },
+                load,
+                out,
+                set_taxscope_on_missing=True,
             )
             # TODO: Brug data i items til at populere databasen
