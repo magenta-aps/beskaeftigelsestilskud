@@ -15,6 +15,7 @@ services:
 
 Hvor `<username>` og `<password>` er de samme som man bruger for at forbinde til
 Skattestyrelsens VPN. `knno_ca.cert` ligger i kas-test secrets i salt-repoet.
+Man bør også sætte `eskattest` til at pege på 10.240.79.31 i sin `/etc/hosts`.
 
 Man kan køre kommandoer med docker-compose. For eksempel:
 
