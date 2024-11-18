@@ -5,12 +5,12 @@
 import json
 import re
 from decimal import Decimal
-from io import TextIOBase
+from io import StringIO, TextIOBase
 from math import ceil
 from sys import stdout
 from threading import current_thread
 from typing import Any, List
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs
 
 import requests
@@ -30,6 +30,7 @@ from suila.integrations.eskat.responses.data_models import (
     MonthlyIncome,
     TaxInformation,
 )
+from suila.management.commands.load_eskat import Command as LoadEskatCommand
 from suila.models import AnnualIncome as AnnualIncomeModel
 from suila.models import (
     DataLoad,
@@ -1001,3 +1002,60 @@ class TestTaxInformation(BaseTestCase):
             data = client.get_tax_scopes()
             self.assertEqual(len(data), 2)
             self.assertEqual(data, ["FULL", "LIM"])
+
+
+class TestLoadEskatCommand(TestCase):
+    """Test the logic in `bf.management.commands.load_eskat.Command`"""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.command = LoadEskatCommand()
+        cls.command.stdout = StringIO()
+
+    def test_monthly_income_retrieval_from_previous_months(self):
+        """Fetching `monthlyincome` from eSkat in month N should fetch data for months
+        N-4, N-3, and N-2.
+        """
+        test_cases: list[tuple[int, int, list[dict]]] = [
+            # In January, fetch for September, October and November
+            (2020, 1, [{"year": 2019, "month_from": 9, "month_to": 11}]),
+            # In February, fetch for October, November and December
+            (2020, 2, [{"year": 2019, "month_from": 10, "month_to": 12}]),
+            # In March, fetch for November, December and January
+            (
+                2020,
+                3,
+                [
+                    {"year": 2019, "month_from": 11, "month_to": 12},
+                    {"year": 2020, "month_from": 1, "month_to": 1},
+                ],
+            ),
+        ]
+        for input_year, input_month, expected_args in test_cases:
+            with self.subTest(year=input_year, month=input_month):
+                # Arrange
+                mock_client = MagicMock()
+                with patch.object(
+                    EskatClient, "from_settings", return_value=mock_client
+                ):
+                    # Act
+                    self.command._handle(
+                        type="monthlyincome",
+                        year=input_year,
+                        month=input_month,
+                        cpr=None,
+                        verbosity=1,
+                    )
+                    # Assert
+                    self.assertListEqual(
+                        [
+                            {
+                                "year": call.args[0],
+                                "month_from": call.kwargs["month_from"],
+                                "month_to": call.kwargs["month_to"],
+                            }
+                            for call in mock_client.get_monthly_income.call_args_list
+                        ],
+                        expected_args,
+                    )
