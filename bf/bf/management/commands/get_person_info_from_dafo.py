@@ -11,7 +11,7 @@ from bf.models import Person
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument("--cpr", type=int)
+        parser.add_argument("--cpr", type=str)
 
     def handle(self, *args, **kwargs):
         """

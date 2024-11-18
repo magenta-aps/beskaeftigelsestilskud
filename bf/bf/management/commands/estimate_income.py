@@ -20,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument("--year", type=int)
         parser.add_argument("--count", type=int)
         parser.add_argument("--dry", action="store_true")
-        parser.add_argument("--cpr", type=int)
+        parser.add_argument("--cpr", type=str)
         parser.add_argument("--profile", action="store_true", default=False)
 
     @transaction.atomic

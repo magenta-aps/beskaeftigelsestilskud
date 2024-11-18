@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import datetime
 import re
 from typing import Any, Collection, Dict, TypeVar
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
@@ -646,3 +647,21 @@ def camelcase_to_snakecase(input: S) -> S:
 def omit(items: Dict[str, Any], *keys: Collection[str]) -> Dict[str, Any]:
     k = set(keys)
     return {key: value for key, value in items.items() if key not in k}
+
+
+def get_payout_date(year: int, month: int) -> datetime.date:
+    """
+    Returns the date of a given months third tuesday.
+    """
+
+    tuesday_count = 0
+
+    for day in range(1, 32):  # pragma: no branch
+        date = datetime.date(year, month, day)
+        if date.weekday() == 1:  # 0 is monday, 1 is tuesday, and so on.
+            tuesday_count += 1
+
+        if tuesday_count == 3:
+            payout_date = date
+            break
+    return payout_date
