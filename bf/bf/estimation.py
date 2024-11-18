@@ -10,6 +10,7 @@ from operator import attrgetter
 from typing import Iterable, List, Sequence, Tuple
 
 from dateutil.relativedelta import relativedelta
+from django.db import transaction
 from django.db.models import F, Func, OuterRef, QuerySet, Subquery, Sum
 from django.db.models.functions import Coalesce
 from project.util import mean_error, root_mean_sq_error, trim_list_first
@@ -96,20 +97,6 @@ class EstimationEngine:
             person_year_qs = person_year_qs.filter(person=person)
         if count:
             person_year_qs = person_year_qs[:count]
-
-        if not dry_run:
-            if output_stream is not None:
-                output_stream.write("Removing current `IncomeEstimate` objects ...\n")
-            IncomeEstimate.objects.filter(
-                person_month__person_year__in=person_year_qs
-            ).delete()
-            if output_stream is not None:
-                output_stream.write(
-                    "Removing current `PersonYearEstimateSummary` objects ...\n"
-                )
-            PersonYearEstimateSummary.objects.filter(
-                person_year__in=person_year_qs
-            ).delete()
 
         if output_stream is not None:
             output_stream.write("Fetching income data ...\n")
@@ -265,17 +252,35 @@ class EstimationEngine:
                     summaries.append(summary)
 
         if not dry_run:
-            if output_stream is not None:
-                output_stream.write(
-                    f"Writing {len(results)} `IncomeEstimate` objects ...\n"
+            with transaction.atomic():
+                if output_stream is not None:
+                    output_stream.write(
+                        "Removing current `IncomeEstimate` objects ...\n"
+                    )
+                IncomeEstimate.objects.filter(
+                    person_month__person_year__in=person_year_qs
+                ).delete()
+                if output_stream is not None:
+                    output_stream.write(
+                        "Removing current `PersonYearEstimateSummary` objects ...\n"
+                    )
+                PersonYearEstimateSummary.objects.filter(
+                    person_year__in=person_year_qs
+                ).delete()
+
+                if output_stream is not None:
+                    output_stream.write(
+                        f"Writing {len(results)} `IncomeEstimate` objects ...\n"
+                    )
+                IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+                if output_stream is not None:
+                    output_stream.write(
+                        f"Writing {len(summaries)} "
+                        f"`PersonYearEstimateSummary` objects ...\n"
+                    )
+                PersonYearEstimateSummary.objects.bulk_create(
+                    summaries, batch_size=1000
                 )
-            IncomeEstimate.objects.bulk_create(results, batch_size=1000)
-            if output_stream is not None:
-                output_stream.write(
-                    f"Writing {len(summaries)} "
-                    f"`PersonYearEstimateSummary` objects ...\n"
-                )
-            PersonYearEstimateSummary.objects.bulk_create(summaries, batch_size=1000)
         return results, summaries
 
 
