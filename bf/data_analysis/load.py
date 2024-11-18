@@ -24,6 +24,7 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
+    TaxScope,
     Year,
 )
 
@@ -75,7 +76,12 @@ class FileLine:
 
         # Create or update PersonYear objects
         person_years = {
-            person.cpr: PersonYear(person=person, year=year_obj, load=load)
+            person.cpr: PersonYear(
+                person=person,
+                year=year_obj,
+                load=load,
+                tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
+            )
             for person in persons.values()
         }
         PersonYear.objects.bulk_create(
