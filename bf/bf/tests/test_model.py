@@ -10,8 +10,8 @@ from django.test import TestCase
 
 from bf.data import MonthlyIncomeData
 from bf.models import (
+    AnnualIncome,
     Employer,
-    FinalSettlement,
     IncomeEstimate,
     IncomeType,
     MonthlyAIncomeReport,
@@ -194,9 +194,9 @@ class ModelTest(TestCase):
         )
         # No IncomeEstimate
 
-        cls.final_settlement = FinalSettlement.objects.create(
+        cls.final_settlement = AnnualIncome.objects.create(
             person_year=cls.person_year,
-            skattemæssigt_resultat=Decimal(13000),
+            account_tax_result=Decimal(13000),
         )
 
 

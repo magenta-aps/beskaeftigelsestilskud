@@ -27,7 +27,7 @@ from project.util import params_no_none, strtobool
 from bf.data import engine_keys
 from bf.estimation import EstimationEngine
 from bf.models import (
-    FinalSettlement,
+    AnnualIncome,
     IncomeType,
     Person,
     PersonMonth,
@@ -198,9 +198,9 @@ class PersonYearEstimationMixin:
         qs = qs.annotate(
             b_income_value=Coalesce(
                 Subquery(
-                    FinalSettlement.objects.filter(person_year=OuterRef("pk"))
+                    AnnualIncome.objects.filter(person_year=OuterRef("pk"))
                     .order_by("-created")
-                    .values("skattemæssigt_resultat")[0:]
+                    .values("account_tax_result")[0:]
                 ),
                 Decimal("0.00"),
             )

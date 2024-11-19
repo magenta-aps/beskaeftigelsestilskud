@@ -454,8 +454,7 @@ class SelfReportedEngine(EstimationEngine):
                 estimated_year_result += person_month.person_year.b_income or 0
             else:
                 estimated_year_result = (
-                    assessment.brutto_b_indkomst
-                    - assessment.brutto_b_før_erhvervsvirk_indhandling
+                    assessment.brutto_b_income - assessment.gross_business_income
                 )
         else:
             estimated_year_result = Decimal(0)

@@ -493,7 +493,7 @@ class TestExpectedIncome(BaseTestCase):
         self.assertEqual(
             PersonYearAssessment.objects.filter(person_year__year__year=2024)
             .first()
-            .andre_b,
+            .other_b_income,
             Decimal(2000.00),
         )
         self.assertEqual(Person.objects.first().load.source, "test")
