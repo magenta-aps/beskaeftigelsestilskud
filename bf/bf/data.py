@@ -10,15 +10,15 @@ from decimal import Decimal
 class MonthlyIncomeData:
     month: int
     year: int
-    a_amount: Decimal
-    b_amount: Decimal
+    a_income: Decimal
+    b_income: Decimal
     person_pk: int
     person_month_pk: int
     person_year_pk: int
 
     @property
     def amount(self) -> Decimal:
-        return self.a_amount + self.b_amount
+        return Decimal(self.a_income + self.b_income)
 
     @property
     def year_month(self) -> date:

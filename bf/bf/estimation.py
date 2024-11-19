@@ -11,8 +11,7 @@ from typing import Iterable, List, Sequence, Tuple
 
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
-from django.db.models import F, Func, OuterRef, QuerySet, Subquery, Sum
-from django.db.models.functions import Coalesce
+from django.db.models import F, QuerySet, Sum
 from django.utils import timezone
 from project.util import mean_error, root_mean_sq_error, trim_list_first
 
@@ -21,8 +20,7 @@ from bf.exceptions import IncomeTypeUnhandledByEngine
 from bf.models import (
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
@@ -50,9 +48,9 @@ class EstimationEngine:
     ) -> Decimal:
         # Add Decimal(0) to shut MyPy up
         if income_type == IncomeType.A:
-            return Decimal(0) + sum([row.a_amount for row in relevant])
+            return Decimal(0) + sum([row.a_income for row in relevant])
         if income_type == IncomeType.B:  # pragma: no branch
-            return Decimal(0) + sum([row.b_amount for row in relevant])
+            return Decimal(0) + sum([row.b_income for row in relevant])
 
     @classmethod
     def classes(cls) -> List[type[EstimationEngine]]:
@@ -107,20 +105,6 @@ class EstimationEngine:
         # Each row contains PKs for person, person month, and values for year and month.
         # Each row also contains summed values for monthly reported A and B income, as
         # each person month can have one or more A or B incomes reported.
-
-        def sum_amount(incomereport_class):
-            return Subquery(
-                incomereport_class.objects.filter(
-                    month=OuterRef("month"),
-                    year=OuterRef("_year"),
-                    person=OuterRef("person_pk"),
-                )
-                .annotate(
-                    sum_amount=Coalesce(Func("amount", function="Sum"), Decimal(0))
-                )
-                .values("sum_amount")
-            )
-
         qs = (
             PersonMonth.objects.filter(
                 person_year__person__in=person_year_qs.values("person")
@@ -134,8 +118,8 @@ class EstimationEngine:
                 ),
             )
             .annotate(
-                a_amount=sum_amount(MonthlyAIncomeReport),
-                b_amount=sum_amount(MonthlyBIncomeReport),
+                a_income=Sum("monthlyincomereport__a_income"),
+                b_income=Sum("monthlyincomereport__b_income"),
             )
             .order_by(
                 "person_pk",
@@ -150,8 +134,9 @@ class EstimationEngine:
                 person_month_pk=person_month.pk,
                 person_year_pk=person_month.person_year_pk,
                 year=person_month.year,
-                a_amount=person_month.a_amount,
-                b_amount=person_month.b_amount + person_month.b_income_from_year,
+                a_income=Decimal(person_month.a_income or 0),
+                b_income=Decimal(person_month.b_income or 0)
+                + Decimal(person_month.b_income_from_year or 0),
             )
             for person_month in qs
         ]
@@ -186,7 +171,7 @@ class EstimationEngine:
             actual_year_sums = {
                 income_type: {
                     month: sum(
-                        row.a_amount if income_type == "A" else row.b_amount
+                        row.a_income if income_type == "A" else row.b_income
                         for row in subset
                         if row.year == year and row.year_month <= date(year, month, 1)
                     )
@@ -315,7 +300,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         relevant_items = trim_list_first(
             relevant_items,
             lambda item: not (
-                item.a_amount if income_type == IncomeType.A else item.b_amount
+                item.a_income if income_type == IncomeType.A else item.b_income
             ).is_zero(),
         )
 
@@ -445,11 +430,10 @@ class SelfReportedEngine(EstimationEngine):
         assessment = person_month.person_year.assessments.order_by("-created").first()
         if assessment is not None:
             if person_month.month == 12:
-                estimated_year_result = MonthlyBIncomeReport.objects.filter(
+                estimated_year_result = MonthlyIncomeReport.objects.filter(
                     year=person_month.year,
                     person=person_month.person,
-                ).aggregate(sum=Sum("amount"))["sum"] or Decimal(0)
-
+                ).aggregate(sum=Sum("b_income"))["sum"] or Decimal(0)
                 # Add any income from final settlement
                 estimated_year_result += person_month.person_year.b_income or 0
             else:

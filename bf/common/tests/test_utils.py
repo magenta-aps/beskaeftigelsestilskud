@@ -31,8 +31,7 @@ from bf.models import (
     Employer,
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -84,16 +83,20 @@ class TestStabilityScoreUtils(TestCase):
             )
             cls.person_months.append(person_month)
 
-        for counter, amount in enumerate(cls.unstable_income):
-            MonthlyBIncomeReport.objects.create(
-                amount=amount,
-                trader=cls.employer,
-                person_month=cls.person_months[counter],
-            )
-        for counter, amount in enumerate(cls.reasonably_stable_income):
-            MonthlyAIncomeReport.objects.create(
-                salary_income=amount,
-                employer=cls.employer,
+        for counter in range(
+            0, max(len(cls.unstable_income), len(cls.reasonably_stable_income))
+        ):
+            MonthlyIncomeReport.objects.create(
+                salary_income=(
+                    cls.reasonably_stable_income[counter]
+                    if counter < len(cls.reasonably_stable_income)
+                    else 0
+                ),
+                capital_income=(
+                    cls.unstable_income[counter]
+                    if counter < len(cls.unstable_income)
+                    else 0
+                ),
                 person_month=cls.person_months[counter],
             )
 
@@ -114,10 +117,10 @@ class TestStabilityScoreUtils(TestCase):
         self.assertEqual(calculate_stability_score([0, 0, 0, 0]), 1)
 
     def test_to_dataframe(self):
-        qs = MonthlyAIncomeReport.objects.all().order_by("month")
-        df = to_dataframe(qs, "person__cpr", {"amount": float})
+        qs = MonthlyIncomeReport.objects.filter(a_income__gt=0).order_by("month")
+        df = to_dataframe(qs, "person__cpr", {"a_income": float})
         self.assertIn(self.person.cpr, df.index)
-        self.assertEqual(list(df["amount"].values), self.reasonably_stable_income)
+        self.assertEqual(list(df["a_income"].values), self.reasonably_stable_income)
 
     def test_get_income_as_dataframe(self):
         income_dict = get_income_as_dataframe(self.year.year)
@@ -201,18 +204,10 @@ class BaseTestCase(TestCase):
                     prior_benefit_paid=1050 * (month_number - 1),
                     actual_year_benefit=1050 * 12,
                 )
-                a_income = MonthlyAIncomeReport.objects.create(
-                    employer=cls.employer,
+                income = MonthlyIncomeReport.objects.create(
                     person_month=month,
                     salary_income=Decimal(10000),
-                    month=month.month,
-                    year=cls.year.year,
-                    person=person_year.person,
-                )
-                b_income = MonthlyBIncomeReport.objects.create(
-                    trader=cls.employer,
-                    person_month=month,
-                    amount=Decimal(15000),
+                    disability_pension_income=Decimal(15000),
                     month=month.month,
                     year=cls.year.year,
                     person=person_year.person,
@@ -221,15 +216,15 @@ class BaseTestCase(TestCase):
                 # The InYearExtrapolationEngine estimates correctly
                 IncomeEstimate.objects.create(
                     person_month=month,
-                    estimated_year_result=12 * a_income.amount,
-                    actual_year_result=month_number * a_income.amount,
+                    estimated_year_result=12 * income.a_income,
+                    actual_year_result=month_number * income.a_income,
                     engine="InYearExtrapolationEngine",
                     income_type=IncomeType.A,
                 )
                 IncomeEstimate.objects.create(
                     person_month=month,
-                    estimated_year_result=12 * b_income.amount,
-                    actual_year_result=month_number * b_income.amount,
+                    estimated_year_result=12 * income.b_income,
+                    actual_year_result=month_number * income.b_income,
                     engine="InYearExtrapolationEngine",
                     income_type=IncomeType.B,
                 )
@@ -239,14 +234,14 @@ class BaseTestCase(TestCase):
                 IncomeEstimate.objects.create(
                     person_month=month,
                     estimated_year_result=12 * 9911,
-                    actual_year_result=month_number * a_income.amount,
+                    actual_year_result=month_number * income.a_income,
                     engine="TwelveMonthsSummationEngine",
                     income_type=IncomeType.A,
                 )
                 IncomeEstimate.objects.create(
                     person_month=month,
                     estimated_year_result=12 * 5522,
-                    actual_year_result=month_number * b_income.amount,
+                    actual_year_result=month_number * income.b_income,
                     engine="TwelveMonthsSummationEngine",
                     income_type=IncomeType.B,
                 )
@@ -459,8 +454,7 @@ class QuarantineTest(BaseTestCase):
                     actual_year_benefit=1050 * 12,
                 )
 
-                MonthlyAIncomeReport.objects.create(
-                    employer=cls.employer,
+                MonthlyIncomeReport.objects.create(
                     person_month=month,
                     salary_income=Decimal(salary[person_year.person] * offset),
                     month=month.month,

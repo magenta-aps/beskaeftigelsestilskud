@@ -15,8 +15,6 @@ from bf.estimation import EstimationEngine
 from bf.models import (
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
     MonthlyIncomeReport,
     Person,
     PersonMonth,
@@ -140,24 +138,28 @@ class Simulation:
         income = []
         if self.income_type in (IncomeType.A, None):
             income += list(
-                MonthlyAIncomeReport.objects.filter(
+                MonthlyIncomeReport.objects.filter(
                     person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
+                    a_income__gt=0,
                 )
             )
         if self.income_type in (IncomeType.B, None):
             income += list(
-                MonthlyBIncomeReport.objects.filter(
+                MonthlyIncomeReport.objects.filter(
                     person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
+                    b_income__gt=0,
                 )
             )
 
         income_series_build = defaultdict(lambda: Decimal(0))
         for item in income:
-            income_series_build[(item.year, item.month)] += item.amount
+            income_series_build[(item.year, item.month)] += (
+                item.a_income + item.b_income
+            )
         income_series = {
             (year, month): IncomeItem(year=year, month=month, value=amount)
             for (year, month), amount in income_series_build.items()
@@ -228,18 +230,20 @@ class Simulation:
 
         if income_type in (IncomeType.A, None):
             income += list(
-                MonthlyAIncomeReport.objects.filter(
+                MonthlyIncomeReport.objects.filter(
                     person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
+                    a_income__gt=0,
                 )
             )
         if income_type in (IncomeType.B, None):
             income += list(
-                MonthlyBIncomeReport.objects.filter(
+                MonthlyIncomeReport.objects.filter(
                     person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
+                    b_income__gt=0,
                 )
             )
 
@@ -247,7 +251,9 @@ class Simulation:
             lambda: Decimal(0)
         )
         for item in income:
-            income_series_build[(item.year, item.month)] += item.amount
+            income_series_build[(item.year, item.month)] += (
+                item.a_income + item.b_income
+            )
         income_series = [
             IncomeItem(year=year, month=month, value=amount)
             for (year, month), amount in income_series_build.items()

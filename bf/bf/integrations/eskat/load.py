@@ -20,8 +20,7 @@ from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
     DataLoad,
     Employer,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -238,16 +237,15 @@ class MonthlyIncomeHandler(Handler):
                 )
                 out.write(f"Processed {len(person_months)} PersonMonth objects")
 
-                # Create MonthlyAIncomeReport objects
+                # Create MonthlyIncomeReport objects
                 # (existing objects for this year will be deleted!)
-                a_income_reports = []
+                income_reports = []
                 for item in items:
                     if item.cpr is not None and item.month is not None:
                         person_month = person_months[(item.cpr, item.month)]
-                        report = MonthlyAIncomeReport(
+                        report = MonthlyIncomeReport(
                             person_month=person_month,
                             load=load,
-                            employer=employer,
                             **{
                                 f.name: Decimal(getattr(item, f.name) or 0)
                                 for f in fields(item)
@@ -255,44 +253,14 @@ class MonthlyIncomeHandler(Handler):
                             },
                         )
                         report.update_amount()
-                        a_income_reports.append(report)
-                MonthlyAIncomeReport.objects.filter(
+                        income_reports.append(report)
+                MonthlyIncomeReport.objects.filter(
                     person_month__person_year__year=year
                 ).delete()
-                MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
+                MonthlyIncomeReport.objects.bulk_create(income_reports)
                 for person_month in person_months.values():
                     person_month.update_amount_sum()
-                out.write(
-                    f"Created {len(a_income_reports)} MonthlyAIncomeReport objects"
-                )
-
-                # Create MonthlyBIncomeReport objects
-                # (existing objects for this year will be deleted!)
-                b_income_reports = []
-                for item in items:
-                    # TODO: Hvilke felter tæller som B-indkomst?
-                    for index, amount in enumerate(
-                        [item.foreign_pension_income, item.other_pension_income]
-                    ):
-                        if amount is not None and item.cpr is not None:
-                            person_month = person_months[(item.cpr, (index % 12) + 1)]
-                            b_income_reports.append(
-                                MonthlyBIncomeReport(
-                                    person_month=person_month,
-                                    load=load,
-                                    trader=employer,
-                                    amount=Decimal(amount),
-                                )
-                            )
-                            person_month.amount_sum += Decimal(amount)
-                            person_month.save(update_fields=("amount_sum",))
-                MonthlyBIncomeReport.objects.filter(
-                    person_month__person_year__year=year
-                ).delete()
-                MonthlyBIncomeReport.objects.bulk_create(b_income_reports)
-                out.write(
-                    f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
-                )
+                out.write(f"Created {len(income_reports)} MonthlyIncomeReport objects")
 
 
 class TaxInformationHandler(Handler):
