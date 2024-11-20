@@ -21,8 +21,8 @@ from bf.estimation import (
 )
 from bf.exceptions import IncomeTypeUnhandledByEngine
 from bf.models import (
+    AnnualIncome,
     Employer,
-    FinalSettlement,
     IncomeEstimate,
     IncomeType,
     MonthlyAIncomeReport,
@@ -92,9 +92,9 @@ class TestEstimationEngine(TestCase):
                 employer=cls.employer,
                 salary_income=Decimal(income),
             )
-        FinalSettlement.objects.create(
+        AnnualIncome.objects.create(
             person_year=cls.person_year,
-            skattemæssigt_resultat=1200,
+            account_tax_result=1200,
         )
 
         for month, income in enumerate(
@@ -684,15 +684,13 @@ class TestSelfReportedEngine(TestCase):
             )
         cls.assessment = PersonYearAssessment.objects.create(
             person_year=cls.person_year,
-            renteindtægter=Decimal(0),
-            uddannelsesstøtte=Decimal(0),
-            honorarer=Decimal(0),
-            underholdsbidrag=Decimal(0),
-            andre_b=Decimal(0),
-            brutto_b_før_erhvervsvirk_indhandling=Decimal(0),
-            erhvervsindtægter_sum=Decimal(50000),
-            e2_indhandling=Decimal(20000),
-            brutto_b_indkomst=Decimal(70000),
+            capital_income=Decimal(0),
+            education_support_income=Decimal(0),
+            care_fee_income=Decimal(0),
+            alimony_income=Decimal(0),
+            other_b_income=Decimal(0),
+            gross_business_income=Decimal(0),
+            brutto_b_income=Decimal(70000),
         )
 
     def test_name(self):

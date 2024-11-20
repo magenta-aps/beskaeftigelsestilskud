@@ -5,7 +5,7 @@
 import csv
 import sys
 from collections.abc import Collection
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass, fields
 from datetime import date
 from decimal import Decimal
 from io import StringIO, TextIOWrapper
@@ -15,9 +15,9 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from bf.models import (
+    AnnualIncome,
     DataLoad,
     Employer,
-    FinalSettlement,
     MonthlyAIncomeReport,
     MonthlyBIncomeReport,
     Person,
@@ -27,6 +27,62 @@ from bf.models import (
     TaxScope,
     Year,
 )
+
+
+def asdict(item):
+
+    translation_dict = {
+        "lønindkomst": "salary",
+        "offentlig_hjælp": "social_benefit_income",
+        "alderspension": "retirement_pension_income",
+        "førtidspension": "disability_pension_income",
+        # "??": "ignored_benefits",
+        "arbejdsmarkedsydelse": "occupational_benefit",
+        "udenlandsk_pensionsbidrag": "foreign_pension_income",
+        "tilskud_til_udenlandsk_pension": "subsidy_foreign_pension_income",
+        "dis_gis": "dis_gis_income",
+        "anden_indkomst": "other_a_income",
+        "renteindtægter_bank": "deposit_interest_income",
+        "renteindtægter_obl": "bond_interest_income",
+        "andet_renteindtægt": "other_interest_income",
+        "uddannelsesstøtte": "education_support_income",
+        "plejevederlag": "care_fee_income",
+        "underholdsbidrag": "alimony_income",
+        "udbytte_udenlandske": "foreign_dividend_income",
+        "udenlandsk_indkomst": "foreign_income",
+        "frirejser": "free_journey_income",
+        "gruppeliv": "group_life_income",
+        "lejeindtægter_ved_udlejning": "rental_income",
+        "b_indkomst_andet": "other_b_income",
+        "fri_kost": "free_board_income",
+        "fri_logi": "free_lodging_income",
+        "fri_bolig": "free_housing_income",
+        "fri_telefon": "free_phone_income",
+        "fri_bil": "free_car_income",
+        "fri_internet": "free_internet_income",
+        "fri_båd": "free_boat_income",
+        "fri_andet": "free_other_income",
+        "renteudgift_andet": "other_debt_interest_income",
+        "pensionsindbetaling": "pension_payment_income",
+        "omsætning_salg_på_brættet": "catch_sale_market_income",
+        "indhandling": "catch_sale_factory_income",
+        "ekstraordinære_indtægter": "account_extraord_entries_income",
+        "virksomhedsrenter": "account_business_interest",
+        "virksomhedsrenter_indtægter": "account_business_interest_income",
+        "virksomhedsrenter_udgifter": "account_business_interest_deduct",
+        "skattemæssigt_resultat": "account_tax_result",
+        "ejerandel_pct": "account_share_business_percentage",
+        "ejerandel_beløb": "account_share_business_amount",
+        # "??": "shareholder_dividend_income",
+        "renteindtægter": "capital_income",
+        "honorarer": "care_fee_income",
+        "andre_b": "other_b_income",
+        "brutto_b_før_erhvervsvirk_indhandling": "gross_business_income",
+        "brutto_b_indkomst": "brutto_b_income",
+    }
+
+    cols = [c for c in dir(item) if c in translation_dict]
+    return {translation_dict.get(col): getattr(item, col) for col in cols}
 
 
 @dataclass(slots=True)
@@ -315,7 +371,6 @@ class AssessmentCSVFileLine(FileLine):
                 for item in rows:
                     person_year = person_years[item.cpr]
                     model_data = asdict(item)
-                    del model_data["cpr"]
                     assessments.append(
                         PersonYearAssessment(
                             person_year=person_year, load=load, **model_data
@@ -465,12 +520,10 @@ class FinalCSVFileLine(FileLine):
             for item in rows:
                 person_year = person_years[item.cpr]
                 model_data = asdict(item)
-                del model_data["cpr"]
-                del model_data["skatteår"]
                 final_statements.append(
-                    FinalSettlement(person_year=person_year, load=load, **model_data)
+                    AnnualIncome(person_year=person_year, load=load, **model_data)
                 )
-            FinalSettlement.objects.bulk_create(final_statements)
+            AnnualIncome.objects.bulk_create(final_statements)
             out.write(f"Created {len(final_statements)} FinalStatement objects")
 
 

@@ -160,16 +160,16 @@ class ExpectedIncomeHandler(Handler):
                     PersonYearAssessment(
                         person_year=person_years[item.cpr],
                         load=load,
-                        renteindtægter=item.capital_income or Decimal(0),
-                        uddannelsesstøtte=item.education_support_income or Decimal(0),
-                        honorarer=item.care_fee_income or Decimal(0),
-                        underholdsbidrag=item.alimony_income or Decimal(0),
-                        andre_b=item.other_b_income or Decimal(0),
-                        brutto_b_før_erhvervsvirk_indhandling=item.gross_business_income
+                        capital_income=item.capital_income or Decimal(0),
+                        education_support_income=item.education_support_income
                         or Decimal(0),
+                        care_fee_income=item.care_fee_income or Decimal(0),
+                        alimony_income=item.alimony_income or Decimal(0),
+                        other_b_income=item.other_b_income or Decimal(0),
+                        gross_business_income=item.gross_business_income or Decimal(0),
                         # TODO: Tilret dette ud fra hvad Torben
                         #  svarer når han vender tilbage
-                        brutto_b_indkomst=sum(
+                        brutto_b_income=sum(
                             filter(
                                 None,
                                 [
