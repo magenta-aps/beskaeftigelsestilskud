@@ -3,7 +3,6 @@
 
 {% load static %}
 {% load i18n %}
-{% load bootstrap_icons %}
 {% load csp %}
 {% load cache %}
 <!doctype html>
@@ -16,6 +15,7 @@
     <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <title>{% translate "Beskæftigelsesfradrag" %}</title>
+    <link rel="shortcut icon" type="image/png" href="{% static 'bf/favicon.ico' %}" >
     {% block extra_headers %}
     {% endblock %}
 </head>
@@ -29,11 +29,11 @@
         </nav>
     {% endif %}
     <nav class="nav flex-column flex-sm-row p-1 bg-dark" data-bs-theme="dark">
+        <a href="{% url 'bf:root' %}">
+            <input style="padding-bottom: 0px; padding-right: 20px; padding-top: 5px" type="image" src="{% static 'bf/logo_transparent.png' %}" height="50" />
+        </a>
         {% if user.is_authenticated %}
         {% cache 500 navbar %}
-        <a class="btn btn-primary mx-1 my-2" href="{% url 'bf:root' %}">
-            {% bs_icon "house" size="1em" %}
-        </a>
         <div class="dropdown p-2">
             <a class="btn btn-primary dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 {% translate "Estimeringsoverblik for hver person" %}
