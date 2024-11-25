@@ -109,13 +109,8 @@ class PersonFilterSet(FilterSet):
 class YearMonthMixin:
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        # Add displayed year and month
         context_data["year"] = self.year
         context_data["month"] = self.month
-        # Add available years for person
-        context_data["years"] = self.object.personyear_set.order_by(
-            "year__year"
-        ).values_list("year__year", flat=True)
         return context_data
 
     @property

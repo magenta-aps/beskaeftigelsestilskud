@@ -5,6 +5,7 @@
 {% load i18n %}
 {% load static %}
 {% load date_tags %}
+{% load nav_tags %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'bf:person_search' %}">{% translate "Personer" %}</a></li>
@@ -14,17 +15,17 @@
 {% block content %}
 {% with month_name=month|month_name %}
 <div class="row mx-1 mt-3">
-    <div class="col-2">
+    <div class="col-2 sticky-top">
         <h3>{% translate "Vis" %}</h3>
-        <nav class="nav navbar-nav navbar-light flex-column sticky-top secondary-nav">
-            <a href="{% url "bf:person_detail" pk=person.pk %}" class="nav-item">{% translate "Nøgletal" %}</a>
-            <a href="{% url "bf:person_detail_benefits" pk=person.pk %}" class="nav-item">{% translate "Udbetalinger" %}</a>
-            <a href="{% url "bf:person_detail_income" pk=person.pk %}" class="nav-item">{% translate "Indkomst" %}</a>
+        <nav class="nav navbar-nav navbar-light flex-column secondary-nav">
+            <a href="{% url "bf:person_detail" pk=person.pk %}?year={{ year }}" class="nav-item {{ request|is_current_url:"bf:person_detail" }}">{% translate "Nøgletal" %}</a>
+            <a href="{% url "bf:person_detail_benefits" pk=person.pk %}?year={{ year }}" class="nav-item {{ request|is_current_url:"bf:person_detail_benefits" }}">{% translate "Udbetalinger" %}</a>
+            <a href="{% url "bf:person_detail_income" pk=person.pk %}?year={{ year }}" class="nav-item {{ request|is_current_url:"bf:person_detail_income" }}">{% translate "Indkomst" %}</a>
         </nav>
         <h3>{% translate "Skatteår" %}</h3>
-        <nav class="nav navbar-nav navbar-light flex-column sticky-top secondary-nav">
+        <nav class="nav navbar-nav navbar-light flex-column secondary-nav">
             {% for year in years %}
-            <a href="?year={{ year }}" class="nav-item">{{ year }}</a>
+            <a href="?year={{ year }}" class="year nav-item">{{ year }}</a>
             {% endfor  %}
         </nav>
     </div>
@@ -49,21 +50,30 @@
 <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
 <script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
 <script nonce="{{ request.csp_nonce }}">
-$(function () {
-    // Render chart from inline JSON doc
-    const renderChart = async function (elemName, dataElemName) {
-        const chartElem = $(elemName);
-        const chartData = JSON.parse($(dataElemName).text());
-        try {
-            const chart = new ApexCharts(chartElem.get(0), chartData);
-            await chart.render();
-        } catch (exc) {
-            console.error(exc, chartData);
-        }
+// Render chart from inline JSON doc
+const renderChart = async function (elemName, dataElemName) {
+    const chartElem = $(elemName);
+    const chartData = JSON.parse($(dataElemName).text());
+    try {
+        const chart = new ApexCharts(chartElem.get(0), chartData);
+        await chart.render();
+    } catch (exc) {
+        console.error(exc, chartData);
     }
+}
 
-    renderChart("#incomeChart", "#incomeData");
-    renderChart("#benefitChart", "#benefitData");
+// Highlight currently active year in year nav items
+$(function () {
+    const queryString = new URLSearchParams(window.location.search);
+    const year = queryString.get("year");
+    let link;
+    if (year !== null) {
+        link = $("a.year[href$=" + year + "]");
+
+    } else {
+        link = $("a.year[href$={{ this_year }}]");
+    }
+    link.addClass("active");
 });
 </script>
 {% endblock %}
