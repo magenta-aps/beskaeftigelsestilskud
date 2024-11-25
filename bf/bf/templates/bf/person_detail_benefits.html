@@ -1,0 +1,68 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "bf/person_detail_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load date_tags %}
+
+{% block breadcrumb %}
+{{ block.super }}
+<li class="breadcrumb-item active" aria-current="page">{% translate "Udbetalinger" %}</li>
+{% endblock %}
+
+{% block person_data %}
+{# Benefits #}
+<h1 id="benefits">
+    {% blocktrans trimmed with year=year %}
+        Udbetalinger i {{ year }}
+    {% endblocktrans %}
+</h1>
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="benefit-table-tab" data-bs-toggle="tab" data-bs-target="#benefit-table" type="button" role="tab" aria-controls="benefit-table" aria-selected="true">
+            {% translate "Tabel" %}
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="benefit-graph-tab" data-bs-toggle="tab" data-bs-target="#benefit-graph" type="button" role="tab" aria-controls="benefit-graph" aria-selected="false">
+            {% translate "Graf" %}
+        </button>
+    </li>
+</ul>
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="benefit-table" role="tabpanel" aria-labelledby="benefit-table-tab">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="col-6">{% translate "Måned" %}</th>
+                    <th class="col-3">{% translate "Beløb" %}</th>
+                    <th class="col-3">{% translate "Estimeret samlet årsindkomst" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in benefit_data %}
+                <tr>
+                    <td>{{ forloop.counter|month_name }}</td>
+                    <td>{{ row.benefit }}</td>
+                    <td>{{ row.estimate }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="benefit-graph" role="tabpanel" aria-labelledby="benefit-graph-tab">
+        <div class="chart" id="benefitChart"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_headers %}
+{{ block.super }}
+<script id="benefitData" type="application/json">{{ benefit_chart|safe }}</script>
+<script nonce="{{ request.csp_nonce }}">
+$(function () {
+    renderChart("#benefitChart", "#benefitData");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/base.html" %}
+{% load i18n %}
+{% load static %}
+{% load date_tags %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'bf:person_search' %}">{% translate "Personer" %}</a></li>
+<li class="breadcrumb-item">{{ person }}</li>
+{% endblock %}
+
+{% block content %}
+{% with month_name=month|month_name %}
+<div class="row mx-1 mt-3">
+    <div class="col-2">
+        <h3>{% translate "Vis" %}</h3>
+        <nav class="nav navbar-nav navbar-light flex-column sticky-top secondary-nav">
+            <a href="{% url "bf:person_detail" pk=person.pk %}" class="nav-item">{% translate "Nøgletal" %}</a>
+            <a href="{% url "bf:person_detail_benefits" pk=person.pk %}" class="nav-item">{% translate "Udbetalinger" %}</a>
+            <a href="{% url "bf:person_detail_income" pk=person.pk %}" class="nav-item">{% translate "Indkomst" %}</a>
+        </nav>
+        <h3>{% translate "Skatteår" %}</h3>
+        <nav class="nav navbar-nav navbar-light flex-column sticky-top secondary-nav">
+            {% for year in years %}
+            <a href="?year={{ year }}" class="nav-item">{{ year }}</a>
+            {% endfor  %}
+        </nav>
+    </div>
+    <div class="person-details col-10">
+        <h1>{{ person.name }} ({{ person.cpr }})</h1>
+        <dl class="row">
+            <dt class="col-3">{% translate "Adresse" %}</dt>
+            <dd class="col-9">{{ person.full_address }}</dd>
+            <dt class="col-3">{% translate "Civilstand" %}</dt>
+            <dd class="col-9">{{ person.civil_state }}</dd>
+            <dt class="col-3">{% translate "Stedkode" %}</dt>
+            <dd class="col-9">{{ person.location_code }}</dd>
+        </dl>
+        {% block person_data %}
+        {% endblock  %}
+    </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block extra_headers %}
+<link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+<script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+$(function () {
+    // Render chart from inline JSON doc
+    const renderChart = async function (elemName, dataElemName) {
+        const chartElem = $(elemName);
+        const chartData = JSON.parse($(dataElemName).text());
+        try {
+            const chart = new ApexCharts(chartElem.get(0), chartData);
+            await chart.render();
+        } catch (exc) {
+            console.error(exc, chartData);
+        }
+    }
+
+    renderChart("#incomeChart", "#incomeData");
+    renderChart("#benefitChart", "#benefitData");
+});
+</script>
+{% endblock %}
