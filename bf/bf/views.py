@@ -106,15 +106,17 @@ class PersonFilterSet(FilterSet):
     )
 
 
-class PersonKeyFigureViewMixin:
-    def get_key_figure_queryset(self) -> PersonKeyFigureQuerySet:
-        # Get "key figure" queryset for current year and month
-        qs = PersonKeyFigureQuerySet.from_queryset(
-            super().get_queryset(),  # type: ignore[misc]
-            year=self.year,
-            month=self.month,
-        )
-        return qs
+class YearMonthMixin:
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        # Add displayed year and month
+        context_data["year"] = self.year
+        context_data["month"] = self.month
+        # Add available years for person
+        context_data["years"] = self.object.personyear_set.order_by(
+            "year__year"
+        ).values_list("year__year", flat=True)
+        return context_data
 
     @property
     def year(self) -> int:
@@ -132,6 +134,25 @@ class PersonKeyFigureViewMixin:
                 return int(self.request.GET.get("month"))  # type: ignore[attr-defined]
             except (TypeError, ValueError):
                 return timezone.now().month
+
+
+class ChartMixin:
+    def get_month_names(self) -> list[str]:
+        return [month_name(month) for month in range(1, 13)]
+
+    def to_json(self, obj: dict) -> str:
+        return json.dumps(obj, cls=DjangoJSONEncoder)
+
+
+class PersonKeyFigureViewMixin(YearMonthMixin):
+    def get_key_figure_queryset(self) -> PersonKeyFigureQuerySet:
+        # Get "key figure" queryset for current year and month
+        qs = PersonKeyFigureQuerySet.from_queryset(
+            super().get_queryset(),  # type: ignore[misc]
+            year=self.year,
+            month=self.month,
+        )
+        return qs
 
 
 class PersonSearchView(
@@ -162,10 +183,6 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        # Add displayed year and month
-        context_data["year"] = self.year
-        context_data["month"] = self.month
-
         # Add key figures as separate context variables
         for annotation in (
             "_total_estimated_year_result",
@@ -175,85 +192,38 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
             # Strip leading underscore, which is not allowed in Django templates
             context_data[annotation[1:]] = getattr(self.object, annotation)
 
+        return context_data
+
+
+class PersonDetailBenefitView(
+    LoginRequiredMixin, YearMonthMixin, ChartMixin, DetailView
+):
+    model = Person
+    context_object_name = "person"
+    template_name = "bf/person_detail_benefits.html"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
         # Add table data: benefits per month
         context_data["benefit_data"] = self.get_benefit_data()
         # Add chart data: benefit chart
         context_data["benefit_chart"] = self.to_json(self.get_benefit_chart())
 
-        # Add table data: *total* income per employer and type (A and B)
-        context_data["income_per_employer_and_type"] = (
-            self.get_income_per_employer_and_type()
-        )
-        # Add table data: income per employer and type
-        context_data["income_data"] = self.get_income_chart_series()
-        # Add chart data: income chart (same data as "income per employer and type")
-        context_data["income_chart"] = self.to_json(self.get_income_chart())
-
         return context_data
 
-    def to_json(self, obj: dict) -> str:
-        return json.dumps(obj, cls=DjangoJSONEncoder)
-
-    def get_income_per_employer_and_type(self) -> list[dict]:
-        def get_qs(model: type[MonthlyAIncomeReport] | type[MonthlyBIncomeReport]):
-            qs = model.objects.filter(
-                person_month__person_year__person=self.object,
-                person_month__person_year__year__year=self.year,
-            )
-
-            # Alias `trader` as `employer`
-            if model is MonthlyBIncomeReport:
-                qs = qs.annotate(employer=F("trader"))
-
-            # Group by `employer` and aggregate sum of `amount` per `employer`
-            qs = qs.values("employer").annotate(  # type: ignore
-                total_amount=Sum("amount")
-            )
-
-            return qs
-
-        def get_all_rows():
-            for model in (MonthlyAIncomeReport, MonthlyBIncomeReport):
-                for row in get_qs(model):
-                    yield model, row
-
+    def get_benefit_data(self):
+        benefit_series = self.get_benefit_series()
+        estimate_series = self.get_estimated_yearly_income_series()
         return [
             {
-                "source": self.get_source_name(model, row["employer"]),
-                "total_amount": row["total_amount"],
+                "benefit": benefit,
+                "estimate": estimate,
             }
-            for model, row in get_all_rows()
+            for benefit, estimate in zip(
+                benefit_series["data"], estimate_series["data"]
+            )
         ]
-
-    def get_income_chart(self) -> dict:
-        return {
-            "chart": {
-                "type": "bar",
-                "stacked": True,
-                "height": 600,
-                "animations": {"enabled": False},
-            },
-            "series": self.get_income_chart_series(),
-            "xaxis": {
-                "type": "category",
-                "categories": self.get_month_names(),
-            },
-            "yaxis": [
-                {
-                    "group": "income",
-                    "seriesName": [
-                        series["name"] for series in self.get_income_chart_series()
-                    ],
-                    "type": "numeric",
-                },
-            ],
-            "plotOptions": {
-                # Show totals for each month
-                "bar": {"dataLabels": {"total": {"enabled": True}}}
-            },
-            "dataLabels": {"enabled": True},
-            "legend": {"show": True, "position": "left"},
-        }
 
     def get_benefit_chart(self) -> dict:
         return {
@@ -289,44 +259,8 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
             "legend": {"show": True, "position": "left"},
         }
 
-    def get_month_names(self) -> list[str]:
-        return [month_name(month) for month in range(1, 13)]
-
-    def get_income_chart_series(self) -> list[dict]:
-        result: list[dict] = []
-
-        # All income data (A and B, separate series for each employer/trader)
-        for model, source_field in (
-            (MonthlyAIncomeReport, "employer"),
-            (MonthlyBIncomeReport, "trader"),
-        ):
-            for source, data in self.get_income_by_source(model, source_field):
-                result.append(
-                    {
-                        "data": data,
-                        "name": self.get_source_name(model, source),
-                        "group": "income",
-                        "type": "column",
-                    }
-                )
-
-        return result
-
     def get_all_benefit_chart_series(self) -> list[dict]:
         return [self.get_benefit_series(), self.get_estimated_yearly_income_series()]
-
-    def get_benefit_data(self):
-        benefit_series = self.get_benefit_series()
-        estimate_series = self.get_estimated_yearly_income_series()
-        return [
-            {
-                "benefit": benefit,
-                "estimate": estimate,
-            }
-            for benefit, estimate in zip(
-                benefit_series["data"], estimate_series["data"]
-            )
-        ]
 
     def get_benefit_series(self) -> dict:
         # Calculated benefit (based on monthly A and B income sums)
@@ -381,6 +315,109 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
             "group": "estimated_total_income",
             "type": "column",
         }
+
+
+class PersonDetailIncomeView(
+    LoginRequiredMixin, YearMonthMixin, ChartMixin, DetailView
+):
+    model = Person
+    context_object_name = "person"
+    template_name = "bf/person_detail_income.html"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        # Add table data: *total* income per employer and type (A and B)
+        context_data["income_per_employer_and_type"] = (
+            self.get_income_per_employer_and_type()
+        )
+        # Add table data: income per employer and type
+        context_data["income_data"] = self.get_income_chart_series()
+        # Add chart data: income chart (same data as "income per employer and type")
+        context_data["income_chart"] = self.to_json(self.get_income_chart())
+
+        return context_data
+
+    def get_income_chart_series(self) -> list[dict]:
+        result: list[dict] = []
+
+        # All income data (A and B, separate series for each employer/trader)
+        for model, source_field in (
+            (MonthlyAIncomeReport, "employer"),
+            (MonthlyBIncomeReport, "trader"),
+        ):
+            for source, data in self.get_income_by_source(model, source_field):
+                result.append(
+                    {
+                        "data": data,
+                        "name": self.get_source_name(model, source),
+                        "group": "income",
+                        "type": "column",
+                    }
+                )
+
+        return result
+
+    def get_income_chart(self) -> dict:
+        return {
+            "chart": {
+                "type": "bar",
+                "stacked": True,
+                "height": 600,
+                "animations": {"enabled": False},
+            },
+            "series": self.get_income_chart_series(),
+            "xaxis": {
+                "type": "category",
+                "categories": self.get_month_names(),
+            },
+            "yaxis": [
+                {
+                    "group": "income",
+                    "seriesName": [
+                        series["name"] for series in self.get_income_chart_series()
+                    ],
+                    "type": "numeric",
+                },
+            ],
+            "plotOptions": {
+                # Show totals for each month
+                "bar": {"dataLabels": {"total": {"enabled": True}}}
+            },
+            "dataLabels": {"enabled": True},
+            "legend": {"show": True, "position": "left"},
+        }
+
+    def get_income_per_employer_and_type(self) -> list[dict]:
+        def get_qs(model: type[MonthlyAIncomeReport] | type[MonthlyBIncomeReport]):
+            qs = model.objects.filter(
+                person_month__person_year__person=self.object,
+                person_month__person_year__year__year=self.year,
+            )
+
+            # Alias `trader` as `employer`
+            if model is MonthlyBIncomeReport:
+                qs = qs.annotate(employer=F("trader"))
+
+            # Group by `employer` and aggregate sum of `amount` per `employer`
+            qs = qs.values("employer").annotate(  # type: ignore
+                total_amount=Sum("amount")
+            )
+
+            return qs
+
+        def get_all_rows():
+            for model in (MonthlyAIncomeReport, MonthlyBIncomeReport):
+                for row in get_qs(model):
+                    yield model, row
+
+        return [
+            {
+                "source": self.get_source_name(model, row["employer"]),
+                "total_amount": row["total_amount"],
+            }
+            for model, row in get_all_rows()
+        ]
 
     def get_income_by_source(self, model, source_field: str):
         def zero_pad(income) -> list[int]:
