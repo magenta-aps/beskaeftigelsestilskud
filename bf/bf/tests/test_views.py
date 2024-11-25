@@ -218,7 +218,7 @@ class TestPersonDetailView(PersonEnv):
         # Assert: the context key is present
         self.assertIn("benefit_data", context)
         # Assert: the table data is correct (one figure for each month)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             context["benefit_data"],
             range(1, 13),
             transform=lambda obj: obj["benefit"],
