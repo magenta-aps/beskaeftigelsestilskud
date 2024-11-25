@@ -8,7 +8,9 @@ from unittest.mock import patch
 from django.db.models import Sum
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.test.testcases import SimpleTestCase
 from django.utils.translation import gettext_lazy as _
+from django.views.generic.base import ContextMixin, View
 
 from bf.models import (
     Employer,
@@ -21,7 +23,14 @@ from bf.models import (
     PersonYear,
     Year,
 )
-from bf.views import CategoryChoiceFilter, PersonDetailView, PersonSearchView
+from bf.views import (
+    CategoryChoiceFilter,
+    PersonDetailBenefitView,
+    PersonDetailIncomeView,
+    PersonDetailView,
+    PersonSearchView,
+    YearMonthMixin,
+)
 
 
 class PersonEnv(TestCase):
@@ -132,47 +141,77 @@ class TestPersonSearchView(PersonEnv):
         )
 
 
-class TestPersonDetailView(PersonEnv):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls._request_factory = RequestFactory()
+class TimeContextMixin:
+    view_class = None
+    request_factory = RequestFactory()
 
-    def setUp(self):
-        super().setUp()
-        request = self._request_factory.get("")
-        self.view = PersonDetailView()
-        self.view.setup(request, pk=self.person1.pk)
+    @property
+    def view(self):
+        view = self.view_class()
+        request = self.request_factory.get("")
+        view.setup(request, pk=self.person1.pk)
         with self._time_context():
-            self.view.get(request, pk=self.person1.pk)
+            view.get(request, pk=self.person1.pk)
+        return view
+
+    def _time_context(self, year: int = 2020, month: int = 12):
+        return patch("bf.views.timezone.now", return_value=datetime(year, month, 1))
+
+    def _get_context_data(self):
+        with self._time_context():
+            return self.view.get_context_data()
+
+
+class TestYearMonthMixin(TimeContextMixin, SimpleTestCase):
+    class ImplView(YearMonthMixin, ContextMixin, View):
+        """View implementation to use in tests"""
+
+    request_factory = RequestFactory()
 
     def test_year_and_month_property_defaults(self):
+        view = self._use_defaults()
         with self._time_context():
-            self.assertEqual(self.view.year, 2020)
-            self.assertEqual(self.view.month, 12)
+            self.assertEqual(view.year, 2020)
+            self.assertEqual(view.month, 12)
 
     def test_year_and_month_query_parameters(self):
-        def use_query_parameters(year: int, month: int) -> PersonDetailView:
-            view = PersonDetailView()
-            view.setup(
-                self._request_factory.get("", data={"year": year, "month": month}),
-                pk=self.person1.pk,
-            )
-            return view
-
         # Act: 1. Test query parameters usage when year is current year
         with self._time_context(year=2020, month=6):
-            view = use_query_parameters(2020, 1)
+            view = self._use_query_parameters(2020, 1)
             self.assertEqual(view.year, 2020)
             # When `year` is current year, use the `month` provided in query params
             self.assertEqual(view.month, 1)
 
         # Act: 2. Test query parameters usage when year is before current year
         with self._time_context(year=2020, month=6):
-            view = use_query_parameters(2019, 1)
+            view = self._use_query_parameters(2019, 1)
             self.assertEqual(view.year, 2019)
             # When `year` is before current year, always use the last month of the year
             self.assertEqual(view.month, 12)
+
+    def test_context_data_includes_year_and_month(self):
+        view = self._use_defaults()
+        with self._time_context(year=2020, month=12):
+            context_data = view.get_context_data()
+            self.assertEqual(context_data["year"], 2020)
+            self.assertEqual(context_data["month"], 12)
+
+    def _use_defaults(self) -> ImplView:
+        view = self.ImplView()
+        view.setup(self.request_factory.get(""))
+        return view
+
+    def _use_query_parameters(self, year: int, month: int) -> ImplView:
+        view = self.ImplView()
+        view.setup(
+            self.request_factory.get("", data={"year": year, "month": month}),
+            pk=0,
+        )
+        return view
+
+
+class TestPersonDetailView(TimeContextMixin, PersonEnv):
+    view_class = PersonDetailView
 
     def test_context_includes_key_figures(self):
         """The context must include the key figures for each person"""
@@ -193,23 +232,20 @@ class TestPersonDetailView(PersonEnv):
         )
         self.assertEqual(context["benefit_paid"], sum(range(1, 13)))
 
-    def test_context_includes_income_per_employer_and_type(self):
-        """The context must include the `income_per_employer_and_type` table"""
-        # Act
-        context = self._get_context_data()
-        # Assert: the context key is present
-        self.assertIn("income_per_employer_and_type", context)
-        # Assert: the table data is correct (one yearly total for each employer/type)
-        expected_total = Decimal(sum(x * 10 for x in range(1, 13)))
-        self.assertListEqual(
-            context["income_per_employer_and_type"],
-            [
-                {"source": "A-indkomst hos: 1", "total_amount": expected_total},
-                {"source": "A-indkomst hos: 2", "total_amount": expected_total},
-                {"source": "B-indkomst hos: 1", "total_amount": expected_total},
-                {"source": "B-indkomst hos: 2", "total_amount": expected_total},
-            ],
-        )
+    def _get_income_estimate_attr_sum(
+        self, attr: str, year: int = 2020, month: int = 12
+    ) -> Decimal:
+        return (
+            IncomeEstimate.objects.filter(
+                person_month__person_year__person=self.person1,
+                person_month__person_year__year__year=year,
+                person_month__month=month,
+            ).aggregate(sum=Sum(attr))
+        )["sum"]
+
+
+class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
+    view_class = PersonDetailBenefitView
 
     def test_context_includes_benefit_data(self):
         """The context data must include the `benefit_data` table"""
@@ -225,42 +261,9 @@ class TestPersonDetailView(PersonEnv):
             ordered=True,
         )
 
-    def test_context_includes_income_chart(self):
-        """The context data must include the `income_chart` chart"""
-        self.assertIn("income_chart", self._get_context_data())
-
     def test_context_includes_benefit_chart(self):
         """The context data must include the `benefit_chart` chart"""
         self.assertIn("benefit_chart", self._get_context_data())
-
-    def test_get_income_chart_series(self):
-        """The `income chart` must consist of the expected series.
-        The "income chart" consists of N series, one series for each source of income
-        that the person has had during the year.
-        """
-        # Act
-        with self._time_context():
-            income_chart_series = self.view.get_income_chart_series()
-        # Assert: verify that we get the expected series: two A income series, and two
-        # B income series (4 series total.)
-        self.assertEqual(len(income_chart_series), 4)
-        self.assertListEqual(
-            income_chart_series,
-            [
-                {
-                    "data": [float(x * 10) for x in range(1, 13)],
-                    "name": name,
-                    "group": "income",
-                    "type": "column",
-                }
-                for name in (
-                    _("A-indkomst hos: 1"),
-                    _("A-indkomst hos: 2"),
-                    _("B-indkomst hos: 1"),
-                    _("B-indkomst hos: 2"),
-                )
-            ],
-        )
 
     def test_get_benefit_chart_series(self):
         """The `benefit chart` must consist of the expected series
@@ -292,20 +295,57 @@ class TestPersonDetailView(PersonEnv):
             },
         )
 
-    def _time_context(self, year: int = 2020, month: int = 12):
-        return patch("bf.views.timezone.now", return_value=datetime(year, month, 1))
 
-    def _get_context_data(self):
+class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
+    view_class = PersonDetailIncomeView
+
+    def test_context_includes_income_per_employer_and_type(self):
+        """The context must include the `income_per_employer_and_type` table"""
+        # Act
+        context = self._get_context_data()
+        # Assert: the context key is present
+        self.assertIn("income_per_employer_and_type", context)
+        # Assert: the table data is correct (one yearly total for each employer/type)
+        expected_total = Decimal(sum(x * 10 for x in range(1, 13)))
+        self.assertListEqual(
+            context["income_per_employer_and_type"],
+            [
+                {"source": "A-indkomst hos: 1", "total_amount": expected_total},
+                {"source": "A-indkomst hos: 2", "total_amount": expected_total},
+                {"source": "B-indkomst hos: 1", "total_amount": expected_total},
+                {"source": "B-indkomst hos: 2", "total_amount": expected_total},
+            ],
+        )
+
+    def test_context_includes_income_chart(self):
+        """The context data must include the `income_chart` chart"""
+        self.assertIn("income_chart", self._get_context_data())
+
+    def test_get_income_chart_series(self):
+        """The `income chart` must consist of the expected series.
+        The "income chart" consists of N series, one series for each source of income
+        that the person has had during the year.
+        """
+        # Act
         with self._time_context():
-            return self.view.get_context_data()
-
-    def _get_income_estimate_attr_sum(
-        self, attr: str, year: int = 2020, month: int = 12
-    ) -> Decimal:
-        return (
-            IncomeEstimate.objects.filter(
-                person_month__person_year__person=self.person1,
-                person_month__person_year__year__year=year,
-                person_month__month=month,
-            ).aggregate(sum=Sum(attr))
-        )["sum"]
+            income_chart_series = self.view.get_income_chart_series()
+        # Assert: verify that we get the expected series: two A income series, and two
+        # B income series (4 series total.)
+        self.assertEqual(len(income_chart_series), 4)
+        self.assertListEqual(
+            income_chart_series,
+            [
+                {
+                    "data": [float(x * 10) for x in range(1, 13)],
+                    "name": name,
+                    "group": "income",
+                    "type": "column",
+                }
+                for name in (
+                    _("A-indkomst hos: 1"),
+                    _("A-indkomst hos: 2"),
+                    _("B-indkomst hos: 1"),
+                    _("B-indkomst hos: 2"),
+                )
+            ],
+        )
