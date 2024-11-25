@@ -23,10 +23,9 @@ from django.urls import reverse
 
 from bf.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
 from bf.models import (
-    Employer,
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -200,7 +199,6 @@ class PersonYearEstimationSetupMixin:
     def setUpTestData(cls):
         super().setUpTestData()
         cls.person, _ = Person.objects.get_or_create(cpr="0101012222")
-        cls.employer, _ = Employer.objects.get_or_create(cvr="1212122222")
         cls.year, _ = Year.objects.get_or_create(year=2020)
         cls.person_year, _ = PersonYear.objects.get_or_create(
             person=cls.person,
@@ -213,9 +211,8 @@ class PersonYearEstimationSetupMixin:
             actual_year_benefit=200,
             benefit_paid=150,
         )
-        cls.a_income_report, _ = MonthlyAIncomeReport.objects.get_or_create(
+        cls.income_report, _ = MonthlyIncomeReport.objects.get_or_create(
             person_month=cls.person_month,
-            employer=cls.employer,
             salary_income=42,
             month=cls.person_month.month,
             year=cls.year.year,
@@ -383,7 +380,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         )
 
     def test_filter_no_a(self):
-        request = self.format_request("?has_a=False&has_b=True")
+        request = self.format_request("?has_a=False")
         self._view.setup(request, year=2020)
         response = self._view.get(request, year=2020)
         self.assertIsInstance(response, TemplateResponse)
@@ -392,7 +389,27 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list.count(), 0)
 
     def test_filter_a(self):
-        request = self.format_request("?has_a=True&has_b=False")
+        request = self.format_request("?has_a=True")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 1)
+        self.assertEqual(object_list[0].person, self.person)
+        self.assertEqual(object_list[0].actual_sum, Decimal(42))
+
+    def test_filter_b(self):
+        request = self.format_request("?has_b=True")
+        self._view.setup(request, year=2020)
+        response = self._view.get(request, year=2020)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(response.context_data["year"], 2020)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 0)
+
+    def test_filter_no_b(self):
+        request = self.format_request("?has_b=False")
         self._view.setup(request, year=2020)
         response = self._view.get(request, year=2020)
         self.assertIsInstance(response, TemplateResponse)

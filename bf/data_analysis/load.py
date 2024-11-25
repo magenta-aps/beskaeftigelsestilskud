@@ -17,9 +17,7 @@ from django.db import transaction
 from bf.models import (
     AnnualIncome,
     DataLoad,
-    Employer,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -154,8 +152,8 @@ class FileLine:
 class IndkomstCSVFileLine(FileLine):
     arbejdsgiver: str
     cvr: int
-    a_amounts: List[int]
-    b_amounts: List[int]
+    a_incomes: List[int]
+    b_incomes: List[int]
     low: int
     high: int
     sum: int
@@ -167,8 +165,8 @@ class IndkomstCSVFileLine(FileLine):
                 cpr=cls.list_get(row, 0),
                 arbejdsgiver=cls.list_get(row, 1),
                 cvr=int(cls.list_get(row, 2)),
-                a_amounts=cls._get_columns(row, 3, 3 + 12),
-                b_amounts=cls._get_columns(row, 3 + 12, 3 + 24),
+                a_incomes=cls._get_columns(row, 3, 3 + 12),
+                b_incomes=cls._get_columns(row, 3 + 12, 3 + 24),
                 low=cls.list_get(row, 3 + 24),
                 high=cls.list_get(row, 3 + 24 + 1),
                 sum=cls.list_get(row, 3 + 24 + 2),
@@ -233,18 +231,6 @@ class IndkomstCSVFileLine(FileLine):
             # Create or update Year object
             person_years = cls.create_person_years(year, rows, load, out)
             if person_years:
-                # Create or update Employer objects
-                employers = {
-                    cvr: Employer(cvr=cvr, load=load)
-                    for cvr in set(row.cvr for row in rows)
-                }
-                Employer.objects.bulk_create(
-                    employers.values(),
-                    update_conflicts=True,
-                    update_fields=("cvr",),
-                    unique_fields=("cvr",),
-                )
-                out.write(f"Processed {len(employers)} Employer objects")
 
                 # Create or update PersonMonth objects
                 person_months = {}
@@ -267,54 +253,38 @@ class IndkomstCSVFileLine(FileLine):
                 )
                 out.write(f"Processed {len(person_months)} PersonMonth objects")
 
-                # Create MonthlyAIncomeReport objects
+                # Create MonthlyIncomeReport objects
                 # (existing objects for this year will be deleted!)
-                a_income_reports = []
+                income_reports: List[MonthlyIncomeReport] = []
                 for row in rows:
-                    for index, amount in enumerate(row.a_amounts):
-                        if amount != 0:
-                            person_month = person_months[(row.cpr, (index % 12) + 1)]
-                            report = MonthlyAIncomeReport(
-                                person_month=person_month,
-                                employer=employers[row.cvr],
-                                salary_income=amount,
-                                amount=amount,
-                                load=load,
-                            )
-                            report.update_amount()
-                            a_income_reports.append(report)
-                MonthlyAIncomeReport.objects.filter(
+                    person_income_reports: Dict[int, MonthlyIncomeReport] = {}
+                    for report_field, amounts in (
+                        ("salary_income", row.a_incomes),
+                        ("capital_income", row.b_incomes),
+                    ):
+                        for index, income in enumerate(amounts):
+                            if income != 0:
+                                person_month = person_months[
+                                    (row.cpr, (index % 12) + 1)
+                                ]
+                                if index in person_income_reports:
+                                    report = person_income_reports[index]
+                                else:
+                                    report = MonthlyIncomeReport(
+                                        person_month=person_month,
+                                        load=load,
+                                    )
+                                    person_income_reports[index] = report
+                                setattr(report, report_field, income)
+                    for report in person_income_reports.values():
+                        report.update_amount()
+                    income_reports += person_income_reports.values()
+                MonthlyIncomeReport.objects.filter(
                     person_month__person_year__year=year
                 ).delete()
-                MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
+                MonthlyIncomeReport.objects.bulk_create(income_reports)
 
-                out.write(
-                    f"Created {len(a_income_reports)} MonthlyAIncomeReport objects"
-                )
-
-                # Create MonthlyBIncomeReport objects
-                # (existing objects for this year will be deleted!)
-                b_income_reports = []
-                for row in rows:
-                    for index, amount in enumerate(row.b_amounts):
-                        if amount != 0:
-                            person_month = person_months[(row.cpr, (index % 12) + 1)]
-                            b_income_reports.append(
-                                MonthlyBIncomeReport(
-                                    person_month=person_month,
-                                    trader=employers[row.cvr],
-                                    amount=amount,
-                                    load=load,
-                                )
-                            )
-                MonthlyBIncomeReport.objects.filter(
-                    person_month__person_year__year=year
-                ).delete()
-                MonthlyBIncomeReport.objects.bulk_create(b_income_reports)
-                out.write(
-                    f"Created {len(b_income_reports)} MonthlyBIncomeReport objects"
-                )
-
+                out.write(f"Created {len(income_reports)} MonthlyIncomeReport objects")
                 for person_month in person_months.values():
                     person_month.update_amount_sum()
                     person_month.save(update_fields=("amount_sum",))
@@ -523,6 +493,7 @@ class FinalCSVFileLine(FileLine):
                 final_statements.append(
                     AnnualIncome(person_year=person_year, load=load, **model_data)
                 )
+            AnnualIncome.objects.filter(person_year__in=person_years.values()).delete()
             AnnualIncome.objects.bulk_create(final_statements)
             out.write(f"Created {len(final_statements)} FinalStatement objects")
 

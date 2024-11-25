@@ -21,8 +21,7 @@ from django.test import TestCase
 from bf.models import (
     AnnualIncome,
     Employer,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -57,8 +56,11 @@ class LoadIncomeTest(BaseTestCase):
             "Sep indh.-indkomst,Okt indh.-indkomst,Nov indh.-indkomst,"
             "Dec indh.-indkomst,Laveste indkomst beløb,Højeste indkomst beløb,"
             "A-indkomst for året\n"
-            "0,TestFirma,123,10000,10000,11000,12000,13000,12000,10000,11000,"
-            "10000,11000,15000,0,,,,,,,5000,0,0,0,0,0,10000,15000,137000\n"
+            "0,TestFirma,123,"
+            "10000,10000,11000,12000,13000,12000,10000,11000,"
+            "10000,11000,15000,0,"
+            ",,,,,,5000,0,0,0,0,0,"
+            "10000,15000,137000\n"
         )
 
     def test_list_get(self):
@@ -122,8 +124,8 @@ class LoadIncomeTest(BaseTestCase):
             self.assertEqual(
                 buffer.read(),
                 "IndkomstCSVFileLine(cpr='0', arbejdsgiver='TestFirma', "
-                "cvr=123, a_amounts=[10000, 10000, 11000, 12000, 13000, 12000, "
-                "10000, 11000, 10000, 11000, 15000, 0], b_amounts=[0, 0, 0, "
+                "cvr=123, a_incomes=[10000, 10000, 11000, 12000, 13000, 12000, "
+                "10000, 11000, 10000, 11000, 15000, 0], b_incomes=[0, 0, 0, "
                 "0, 0, 0, 5000, 0, 0, 0, 0, 0], low='10000', high='15000', "
                 "sum='137000')\n",
             )
@@ -132,7 +134,7 @@ class LoadIncomeTest(BaseTestCase):
         self.assertEqual(Employer.objects.count(), 0)
         self.assertEqual(PersonYear.objects.count(), 0)
         self.assertEqual(PersonMonth.objects.count(), 0)
-        self.assertEqual(MonthlyAIncomeReport.objects.count(), 0)
+        self.assertEqual(MonthlyIncomeReport.objects.count(), 0)
 
     def test_load(self):
         load_csv(
@@ -156,12 +158,6 @@ class LoadIncomeTest(BaseTestCase):
         self.assertEqual(person.load.source, "csv")
         self.assertEqual(person.load.parameters["filename"], "testdata")
 
-        self.assertEqual(Employer.objects.count(), 1)
-        employer = Employer.objects.first()
-        self.assertEqual(employer.cvr, 123)
-        self.assertEqual(employer.load.source, "csv")
-        self.assertEqual(employer.load.parameters["filename"], "testdata")
-
         self.assertEqual(PersonYear.objects.count(), 1)
         person_year = PersonYear.objects.first()
         self.assertEqual(person_year.person, person)
@@ -177,10 +173,10 @@ class LoadIncomeTest(BaseTestCase):
             self.assertEqual(person_month.load.source, "csv")
             self.assertEqual(person_month.load.parameters["filename"], "testdata")
 
-        self.assertEqual(MonthlyAIncomeReport.objects.count(), 11)
+        self.assertEqual(MonthlyIncomeReport.objects.count(), 11)
         a_incomes = [
-            report.amount
-            for report in MonthlyAIncomeReport.objects.all().order_by("month")
+            report.a_income
+            for report in MonthlyIncomeReport.objects.all().order_by("month")
         ]
         self.assertEqual(
             a_incomes,
@@ -198,13 +194,12 @@ class LoadIncomeTest(BaseTestCase):
                 Decimal("15000.00"),
             ],
         )
-        for report in MonthlyAIncomeReport.objects.all():
+        for report in MonthlyIncomeReport.objects.all():
             self.assertEqual(report.load.source, "csv")
             self.assertEqual(report.load.parameters["filename"], "testdata")
 
-        self.assertEqual(MonthlyBIncomeReport.objects.count(), 1)
-        report = MonthlyBIncomeReport.objects.first()
-        self.assertEqual(report.amount, Decimal("5000.00"))
+        report = MonthlyIncomeReport.objects.filter(month=7).first()
+        self.assertEqual(report.b_income, Decimal("5000.00"))
         self.assertEqual(report.month, 7)
         self.assertEqual(report.load.source, "csv")
         self.assertEqual(report.load.parameters["filename"], "testdata")
@@ -225,7 +220,7 @@ class LoadIncomeTest(BaseTestCase):
         self.assertEqual(Employer.objects.count(), 0)
         self.assertEqual(PersonYear.objects.count(), 0)
         self.assertEqual(PersonMonth.objects.count(), 0)
-        self.assertEqual(MonthlyAIncomeReport.objects.count(), 0)
+        self.assertEqual(MonthlyIncomeReport.objects.count(), 0)
 
     def test_from_csv_row_invalid_row(self):
         self.assertIsNone(IndkomstCSVFileLine.from_csv_row(["foo"]))

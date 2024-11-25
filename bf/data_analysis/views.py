@@ -16,7 +16,7 @@ from data_analysis.forms import (
     PersonYearListOptionsForm,
 )
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count, F, Model, OuterRef, Subquery, Sum
+from django.db.models import F, Func, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import DetailView, FormView, View
@@ -29,6 +29,7 @@ from bf.estimation import EstimationEngine
 from bf.models import (
     AnnualIncome,
     IncomeType,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -150,18 +151,37 @@ class PersonYearEstimationMixin:
         form = self.get_form()
         if form.is_valid():
 
-            a_income = form.cleaned_data["has_a"]
-            if a_income not in (None, ""):
-                qs = qs.annotate(a_count=Count("personmonth__monthlyaincomereport"))
-                if strtobool(a_income):
+            has_a = form.cleaned_data["has_a"]
+            if has_a not in (None, ""):
+                qs = qs.annotate(
+                    a_count=Subquery(
+                        MonthlyIncomeReport.objects.filter(
+                            person_month__person_year=OuterRef("pk"), a_income__gt=0
+                        )
+                        .order_by()
+                        .values("id")
+                        .annotate(count=Func(F("id"), function="COUNT"))
+                        .values("count")
+                    )
+                )
+                if strtobool(has_a):
                     qs = qs.filter(a_count__gt=0)
                 else:
                     qs = qs.filter(a_count=0)
 
-            b_income = form.cleaned_data["has_b"]
-            if b_income not in (None, ""):
-                qs = qs.annotate(b_count=Count("personmonth__monthlybincomereport"))
-                if strtobool(b_income):
+            has_b = form.cleaned_data["has_b"]
+            if has_b not in (None, ""):
+                qs = qs.annotate(
+                    b_count=Subquery(
+                        MonthlyIncomeReport.objects.filter(
+                            person_month__person_year=OuterRef("pk"), b_income__gt=0
+                        )
+                        .order_by()
+                        .annotate(count=Func(F("id"), function="COUNT"))
+                        .values("count")
+                    )
+                )
+                if strtobool(has_b):
                     qs = qs.filter(b_count__gt=0)
                 else:
                     qs = qs.filter(b_count=0)

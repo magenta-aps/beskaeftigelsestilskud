@@ -276,11 +276,15 @@ class PersonYear(models.Model):
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):
             sum += MonthlyIncomeReport.sum_queryset(
-                MonthlyAIncomeReport.objects.filter(person_month__person_year=self)
+                MonthlyIncomeReport.objects.filter(
+                    person_month__person_year=self, a_income__gt=0
+                )
             )
         if income_type in (IncomeType.B, None):
             sum += MonthlyIncomeReport.sum_queryset(
-                MonthlyBIncomeReport.objects.filter(person_month__person_year=self)
+                MonthlyIncomeReport.objects.filter(
+                    person_month__person_year=self, b_income__gt=0
+                )
             )
             sum += self.b_income or 0
         return sum
@@ -417,9 +421,7 @@ class PersonMonth(models.Model):
         return None
 
     def update_amount_sum(self):
-        self.amount_sum = MonthlyIncomeReport.sum_queryset(
-            self.monthlyaincomereport_set
-        ) + MonthlyIncomeReport.sum_queryset(self.monthlybincomereport_set)
+        self.amount_sum = MonthlyIncomeReport.sum_queryset(self.monthlyincomereport_set)
 
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
@@ -459,14 +461,17 @@ class Employer(models.Model):
 
 
 class MonthlyIncomeReport(models.Model):
-    class Meta:
-        abstract = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.month = self.person_month.month
         self.year = self.person_month.year
         self.person = self.person_month.person
+
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
 
     load = models.ForeignKey(
         DataLoad,
@@ -480,13 +485,22 @@ class MonthlyIncomeReport(models.Model):
         PersonMonth,
         on_delete=models.CASCADE,
     )
-    amount = models.DecimalField(
+
+    # Autoupdated fields. Do not write into these.
+    a_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+    b_income = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=False,
         blank=False,
     )
 
+    # Source income fields. Write into these.
     salary_income = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -571,13 +585,29 @@ class MonthlyIncomeReport(models.Model):
         blank=False,
         default=Decimal(0),
     )
+    capital_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
+    )
+
+    # TODO: More fields?
+
+    @property
+    def person_year(self) -> PersonYear:
+        return self.person_month.person_year
 
     def update_amount(self):
-        self.amount = (
+        # Define how A and B income is calculated here.
+        # TODO: Update as needed
+        self.a_income = (
             self.salary_income
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
         )
+        self.b_income = self.disability_pension_income + self.capital_income
 
     @staticmethod
     def annotate_month(
@@ -603,9 +633,14 @@ class MonthlyIncomeReport(models.Model):
     ) -> QuerySet["MonthlyIncomeReport"]:
         return qs.annotate(f_person=F("person_month__person_year__person"))
 
+    def __str__(self):
+        return f"Indkomst for {self.person_month}"
+
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
-        return qs.aggregate(sum=Coalesce(Sum("amount"), Decimal(0)))["sum"]
+        return qs.aggregate(
+            sum=Coalesce(Sum(F("a_income") + F("b_income")), Decimal(0))
+        )["sum"]
 
     @staticmethod
     def pre_save(sender, instance: MonthlyIncomeReport, *args, **kwargs):
@@ -621,114 +656,25 @@ class MonthlyIncomeReport(models.Model):
         update_fields: Sequence[str] | None,
         **kwargs,
     ):
-        if update_fields is None or "amount" in update_fields:
+        if (
+            update_fields is None
+            or "a_income" in update_fields
+            or "b_income" in update_fields
+        ):
             instance.person_month.update_amount_sum()
             instance.person_month.save(update_fields=["amount_sum"])
 
 
-class MonthlyAIncomeReport(MonthlyIncomeReport):
-    class Meta:
-        indexes = (
-            Index(
-                name="MonthlyAIncomeReport_person",
-                fields=("person_id",),
-                include=(
-                    "id",
-                    "person",
-                    "month",
-                    "year",
-                    "person_month",
-                    "amount",
-                    "employer",
-                ),
-            ),
-            Index(
-                name="MonthlyAIncomeReport_year",
-                fields=("year",),
-                include=("id", "person", "month", "person_month", "amount", "employer"),
-            ),
-            Index(
-                name="MonthlyAIncomeReport_month",
-                fields=("month",),
-                include=("id", "person", "year", "person_month", "amount", "employer"),
-            ),
-        )
-
-    history = HistoricalRecords(
-        history_change_reason_field=models.TextField(null=True),
-        related_name="history_entries",
-    )
-
-    employer = models.ForeignKey(Employer, on_delete=models.CASCADE)
-
-    @property
-    def person_year(self) -> PersonYear:
-        return self.person_month.person_year
-
-    def __str__(self):
-        return f"{self.person_month} | {self.employer}"
-
-
 pre_save.connect(
     MonthlyIncomeReport.pre_save,
-    MonthlyAIncomeReport,
-    dispatch_uid="MonthlyAIncomeReport_pre_save",
+    MonthlyIncomeReport,
+    dispatch_uid="MonthlyIncomeReport_pre_save",
 )
 
 post_save.connect(
     MonthlyIncomeReport.post_save,
-    MonthlyAIncomeReport,
-    dispatch_uid="MonthlyAIncomeReport_post_save",
-)
-
-
-class MonthlyBIncomeReport(MonthlyIncomeReport):
-    class Meta:
-        indexes = (
-            Index(
-                name="MonthlyBIncomeReport_person",
-                fields=("person_id",),
-                include=(
-                    "id",
-                    "person",
-                    "month",
-                    "year",
-                    "person_month",
-                    "amount",
-                    "trader",
-                ),
-            ),
-            Index(
-                name="MonthlyBIncomeReport_year",
-                fields=("year",),
-                include=("id", "person", "month", "person_month", "amount", "trader"),
-            ),
-            Index(
-                name="MonthlyBIncomeReport_month",
-                fields=("month",),
-                include=("id", "person", "year", "person_month", "amount", "trader"),
-            ),
-        )
-
-    history = HistoricalRecords(
-        history_change_reason_field=models.TextField(null=True),
-        related_name="history_entries",
-    )
-
-    trader = models.ForeignKey(
-        Employer,
-        verbose_name=_("Indhandler"),
-        on_delete=models.CASCADE,
-    )
-
-    def __str__(self):
-        return f"{self.person_month} | {self.trader}"
-
-
-post_save.connect(
-    MonthlyIncomeReport.post_save,
-    MonthlyBIncomeReport,
-    dispatch_uid="MonthlyBIncomeReport_save",
+    MonthlyIncomeReport,
+    dispatch_uid="MonthlyIncomeReport_post_save",
 )
 
 

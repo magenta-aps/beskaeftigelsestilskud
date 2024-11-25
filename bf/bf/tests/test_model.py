@@ -14,8 +14,7 @@ from bf.models import (
     Employer,
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -83,43 +82,32 @@ class ModelTest(TestCase):
             name="Ronnis Rejer",
             cvr=87654321,
         )
-        cls.report1 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer1,
+        cls.report1 = MonthlyIncomeReport.objects.create(
             person_month=cls.month1,
             salary_income=Decimal(10000),
+            capital_income=Decimal(15000),  # Any field that counts a B income
             month=cls.month1.month,
             year=cls.year.year,
             person=cls.person,
         )
-        cls.report2 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer1,
+        cls.report2 = MonthlyIncomeReport.objects.create(
             person_month=cls.month2,
             salary_income=Decimal(11000),
             month=cls.month2.month,
             year=cls.year.year,
             person=cls.person,
         )
-        cls.report3 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer1,
+        cls.report3 = MonthlyIncomeReport.objects.create(
             person_month=cls.month3,
             salary_income=Decimal(12000),
             month=cls.month3.month,
             year=cls.year.year,
             person=cls.person,
         )
-        cls.report4 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer1,
+        cls.report4 = MonthlyIncomeReport.objects.create(
             person_month=cls.month4,
             salary_income=Decimal(13000),
             month=cls.month4.month,
-            year=cls.year.year,
-            person=cls.person,
-        )
-        cls.report5 = MonthlyBIncomeReport.objects.create(
-            trader=cls.employer2,
-            person_month=cls.month1,
-            amount=Decimal(15000),
-            month=cls.month1.month,
             year=cls.year.year,
             person=cls.person,
         )
@@ -137,8 +125,7 @@ class ModelTest(TestCase):
             engine="InYearExtrapolationEngine",
             income_type=IncomeType.B,
         )
-        cls.report6 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer2,
+        cls.report6 = MonthlyIncomeReport.objects.create(
             person_month=cls.month2,
             salary_income=Decimal(12000),
             month=cls.month2.month,
@@ -152,8 +139,7 @@ class ModelTest(TestCase):
             engine="InYearExtrapolationEngine",
             income_type=IncomeType.A,
         )
-        cls.report7 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer2,
+        cls.report7 = MonthlyIncomeReport.objects.create(
             person_month=cls.month3,
             salary_income=Decimal(10000),
             month=cls.month3.month,
@@ -168,8 +154,7 @@ class ModelTest(TestCase):
             engine="InYearExtrapolationEngine",
             income_type=IncomeType.A,
         )
-        cls.report8 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer2,
+        cls.report8 = MonthlyIncomeReport.objects.create(
             person_month=cls.month4,
             salary_income=Decimal(8000),
             month=cls.month4.month,
@@ -184,8 +169,7 @@ class ModelTest(TestCase):
             engine="InYearExtrapolationEngine",
             income_type=IncomeType.A,
         )
-        cls.report9 = MonthlyAIncomeReport.objects.create(
-            employer=cls.employer2,
+        cls.report9 = MonthlyIncomeReport.objects.create(
             person_month=cls.year2month1,
             salary_income=Decimal(8000),
             month=cls.year2month1.month,
@@ -316,41 +300,36 @@ class TestIncomeReport(ModelTest):
         self.assertEqual(self.report1.month, 1)
 
     def test_string_methods(self):
-        self.assertEqual(
-            str(self.report1), "Jens Hansen (2024/1) | Fredes Fisk (12345678)"
-        )
-        self.assertEqual(
-            str(self.report5), "Jens Hansen (2024/1) | Ronnis Rejer (87654321)"
-        )
+        self.assertEqual(str(self.report1), "Indkomst for Jens Hansen (2024/1)")
 
     def test_annotate_month(self):
-        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
-        self.assertEqual(MonthlyAIncomeReport.annotate_month(qs).first().f_month, 1)
+        qs = MonthlyIncomeReport.objects.filter(pk=self.report1.pk)
+        self.assertEqual(MonthlyIncomeReport.annotate_month(qs).first().f_month, 1)
 
     def test_annotate_year(self):
-        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
-        self.assertEqual(MonthlyAIncomeReport.annotate_year(qs).first().f_year, 2024)
+        qs = MonthlyIncomeReport.objects.filter(pk=self.report1.pk)
+        self.assertEqual(MonthlyIncomeReport.annotate_year(qs).first().f_year, 2024)
 
     def test_annotate_person_year(self):
-        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
+        qs = MonthlyIncomeReport.objects.filter(pk=self.report1.pk)
         self.assertEqual(
-            MonthlyAIncomeReport.annotate_person_year(qs).first().f_person_year,
+            MonthlyIncomeReport.annotate_person_year(qs).first().f_person_year,
             self.person_year.pk,
         )
 
     def test_annotate_person(self):
-        qs = MonthlyAIncomeReport.objects.filter(pk=self.report1.pk)
+        qs = MonthlyIncomeReport.objects.filter(pk=self.report1.pk)
         self.assertEqual(
-            MonthlyAIncomeReport.annotate_person(qs).first().f_person,
+            MonthlyIncomeReport.annotate_person(qs).first().f_person,
             self.person.pk,
         )
 
-    def test_data_amount(self):
+    def test_data_income(self):
         data = MonthlyIncomeData(
             month=6,
             year=2024,
-            a_amount=Decimal(15000),
-            b_amount=Decimal(5000),
+            a_income=Decimal(15000),
+            b_income=Decimal(5000),
             person_pk=1,
             person_month_pk=1,
             person_year_pk=1,
@@ -358,18 +337,18 @@ class TestIncomeReport(ModelTest):
         self.assertEqual(data.amount, Decimal(20000))
 
     def test_post_save(self):
-        report = self.report5
-        old_amount = report.amount
+        report = self.report1
+        old_amount = report.a_income
         new_amount = 200
         old_amount_sum = report.person_month.amount_sum
-        report.amount = new_amount
-        report.save(update_fields=("amount",))
+        report.salary_income = new_amount
+        report.save(update_fields=("a_income",))
         self.assertEqual(
             report.person_month.amount_sum, old_amount_sum - old_amount + new_amount
         )
 
         # post_save is not triggered when the amount is not updated
-        report.amount = 1122
+        report.a_income = 1122
         report.save(update_fields=("catchsale_income",))
         self.assertEqual(
             report.person_month.amount_sum, old_amount_sum - old_amount + new_amount

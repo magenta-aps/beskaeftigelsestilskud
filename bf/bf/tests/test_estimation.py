@@ -22,11 +22,9 @@ from bf.estimation import (
 from bf.exceptions import IncomeTypeUnhandledByEngine
 from bf.models import (
     AnnualIncome,
-    Employer,
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -77,19 +75,14 @@ class TestEstimationEngine(TestCase):
             preferred_estimation_engine_a="InYearExtrapolationEngine",
             preferred_estimation_engine_b="SelfReportedEngine",
         )
-        cls.employer = Employer.objects.create(
-            cvr=12345678,
-            name="Kolbøttefabrikken",
-        )
         for month, income in enumerate(
             [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
         ):
             person_month = PersonMonth.objects.create(
                 person_year=cls.person_year, month=month, import_date=date.today()
             )
-            MonthlyAIncomeReport.objects.create(
+            MonthlyIncomeReport.objects.create(
                 person_month=person_month,
-                employer=cls.employer,
                 salary_income=Decimal(income),
             )
         AnnualIncome.objects.create(
@@ -103,9 +96,8 @@ class TestEstimationEngine(TestCase):
             person_month = PersonMonth.objects.create(
                 person_year=cls.person_year2, month=month, import_date=date.today()
             )
-            MonthlyAIncomeReport.objects.create(
+            MonthlyIncomeReport.objects.create(
                 person_month=person_month,
-                employer=cls.employer,
                 salary_income=Decimal(income),
             )
 
@@ -313,10 +305,6 @@ class TestInYearExtrapolationEngine(TestCase):
             preferred_estimation_engine_a="InYearExtrapolationEngine",
             preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
-        cls.employer = Employer.objects.create(
-            cvr=12345678,
-            name="Kolbøttefabrikken",
-        )
         cls.months = []
         cls.reports = []
         for month, income in enumerate(
@@ -327,9 +315,8 @@ class TestInYearExtrapolationEngine(TestCase):
             )
             cls.months.append(person_month)
             cls.reports.append(
-                MonthlyAIncomeReport.objects.create(
+                MonthlyIncomeReport.objects.create(
                     person_month=person_month,
-                    employer=cls.employer,
                     salary_income=Decimal(income),
                 )
             )
@@ -342,11 +329,11 @@ class TestInYearExtrapolationEngine(TestCase):
             MonthlyIncomeData(
                 month=report.person_month.month,
                 year=report.person_month.year,
-                a_amount=report.amount,
+                a_income=report.a_income,
                 person_pk=self.person.pk,
                 person_year_pk=self.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_amount=Decimal(0),
+                b_income=Decimal(0),
             )
             for report in self.reports
         ]
@@ -404,10 +391,6 @@ class TwelveMonthsSummationEngineTest(TestCase):
             preferred_estimation_engine_a="TwelveMonthsSummationEngine",
             preferred_estimation_engine_b="TwelveMonthsSummationEngine",
         )
-        cls.employer = Employer.objects.create(
-            cvr=12345678,
-            name="Kolbøttefabrikken",
-        )
         cls.months = []
         cls.reports = []
         for year in (cls.person_year0, cls.person_year1):
@@ -420,9 +403,8 @@ class TwelveMonthsSummationEngineTest(TestCase):
                 )
                 cls.months.append(person_month)
                 cls.reports.append(
-                    MonthlyAIncomeReport.objects.create(
+                    MonthlyIncomeReport.objects.create(
                         person_month=person_month,
-                        employer=cls.employer,
                         salary_income=Decimal(income),
                     )
                 )
@@ -437,11 +419,11 @@ class TwelveMonthsSummationEngineTest(TestCase):
             MonthlyIncomeData(
                 month=report.person_month.month,
                 year=report.person_month.year,
-                a_amount=report.amount,
+                a_income=report.a_income,
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_amount=Decimal(0),
+                b_income=Decimal(0),
             )
             for report in self.reports
         ]
@@ -538,10 +520,6 @@ class TwoYearSummationEngineTest(TestCase):
             preferred_estimation_engine_a="TwoYearSummationEngine",
             preferred_estimation_engine_b="TwoYearSummationEngine",
         )
-        cls.employer = Employer.objects.create(
-            cvr=12345678,
-            name="Kolbøttefabrikken",
-        )
         cls.months = []
         cls.reports = []
         for year, months in (
@@ -564,9 +542,8 @@ class TwoYearSummationEngineTest(TestCase):
                 )
                 cls.months.append(person_month)
                 cls.reports.append(
-                    MonthlyAIncomeReport.objects.create(
+                    MonthlyIncomeReport.objects.create(
                         person_month=person_month,
-                        employer=cls.employer,
                         salary_income=Decimal(income),
                     )
                 )
@@ -579,11 +556,11 @@ class TwoYearSummationEngineTest(TestCase):
             MonthlyIncomeData(
                 month=report.person_month.month,
                 year=report.person_month.year,
-                a_amount=report.amount,
+                a_income=report.a_income,
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_amount=Decimal(0),
+                b_income=Decimal(0),
             )
             for report in self.reports
         ]
@@ -660,10 +637,6 @@ class TestSelfReportedEngine(TestCase):
             name="Jens Hansen",
             cpr="1234567890",
         )
-        cls.employer = Employer.objects.create(
-            cvr=12345678,
-            name="Kolbøttefabrikken",
-        )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
@@ -677,10 +650,9 @@ class TestSelfReportedEngine(TestCase):
                 person_year=cls.person_year, month=month, import_date=date.today()
             )
             cls.person_months.append(person_month)
-            MonthlyBIncomeReport.objects.create(
+            MonthlyIncomeReport.objects.create(
                 person_month=person_month,
-                trader=cls.employer,
-                amount=Decimal(10000),
+                capital_income=Decimal(10000),
             )
         cls.assessment = PersonYearAssessment.objects.create(
             person_year=cls.person_year,

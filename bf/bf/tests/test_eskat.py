@@ -33,8 +33,7 @@ from bf.integrations.eskat.responses.data_models import (
 from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
     DataLoad,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -684,7 +683,7 @@ class TestMonthlyIncome(BaseTestCase):
                     2024,
                     1,
                     salary_income=25000.00,
-                    foreign_pension_income=1000.00,
+                    disability_pension_income=1000.00,
                 )
             ],
             DataLoad.objects.create(source="test"),
@@ -694,37 +693,33 @@ class TestMonthlyIncome(BaseTestCase):
             PersonMonth.objects.filter(person_year__year__year=2024, month=1).count(), 1
         )
         self.assertEqual(
-            MonthlyAIncomeReport.objects.filter(year=2024, month=1).count(), 1
+            MonthlyIncomeReport.objects.filter(year=2024, month=1).count(), 1
         )
         self.assertEqual(
-            MonthlyBIncomeReport.objects.filter(year=2024, month=1).count(), 1
-        )
-        self.assertEqual(
-            MonthlyAIncomeReport.objects.filter(year=2024, month=1).first().amount,
+            MonthlyIncomeReport.objects.filter(year=2024, month=1).first().a_income,
             Decimal(25000.00),
         )
         self.assertEqual(
-            MonthlyBIncomeReport.objects.filter(year=2024, month=1).first().amount,
+            MonthlyIncomeReport.objects.filter(year=2024, month=1).first().b_income,
             Decimal(1000.00),
         )
         self.assertEqual(Person.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
-        self.assertEqual(MonthlyAIncomeReport.objects.first().load.source, "test")
-        self.assertEqual(MonthlyBIncomeReport.objects.first().load.source, "test")
+        self.assertEqual(MonthlyIncomeReport.objects.first().load.source, "test")
 
     def test_monthly_income_load_no_items(self):
-        objects_before = len(MonthlyAIncomeReport.objects.all())
+        objects_before = len(MonthlyIncomeReport.objects.all())
         MonthlyIncomeHandler.create_or_update_objects(
             2024,
             [],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
-        objects_after = len(MonthlyAIncomeReport.objects.all())
+        objects_after = len(MonthlyIncomeReport.objects.all())
         self.assertEqual(objects_before, objects_after)
 
     def test_monthly_income_load_no_month(self):
-        objects_before = len(MonthlyAIncomeReport.objects.all())
+        objects_before = len(MonthlyIncomeReport.objects.all())
         MonthlyIncomeHandler.create_or_update_objects(
             2024,
             [
@@ -739,7 +734,7 @@ class TestMonthlyIncome(BaseTestCase):
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
-        objects_after = len(MonthlyAIncomeReport.objects.all())
+        objects_after = len(MonthlyIncomeReport.objects.all())
         self.assertEqual(objects_before, objects_after)
 
 

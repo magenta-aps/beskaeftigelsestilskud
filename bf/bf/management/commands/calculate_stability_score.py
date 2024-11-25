@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from cProfile import Profile
+from decimal import Decimal
 
 import numpy as np
 from common.utils import calculate_stability_score_for_entire_year
@@ -28,13 +29,17 @@ class Command(BaseCommand):
         for person_year in person_years:
             if person_year.person.cpr in df_stability_score.index:
 
-                stability_score_a = df_stability_score.loc[person_year.person.cpr, "A"]
-                stability_score_b = df_stability_score.loc[person_year.person.cpr, "B"]
+                stability_score_a: np.int64 = df_stability_score.loc[
+                    person_year.person.cpr, "A"
+                ]
+                stability_score_b: np.int64 = df_stability_score.loc[
+                    person_year.person.cpr, "B"
+                ]
 
                 if not np.isnan(stability_score_a):
-                    person_year.stability_score_a = stability_score_a
+                    person_year.stability_score_a = Decimal(stability_score_a.item())
                 if not np.isnan(stability_score_b):
-                    person_year.stability_score_b = stability_score_b
+                    person_year.stability_score_b = Decimal(stability_score_b.item())
 
                 person_year_objects_to_update.append(person_year)
 

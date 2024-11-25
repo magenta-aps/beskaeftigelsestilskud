@@ -17,8 +17,7 @@ from bf.estimation import EstimationEngine, SameAsLastMonthEngine
 from bf.models import (
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     PersonMonth,
     PersonYear,
     Year,
@@ -125,24 +124,19 @@ def get_income_as_dataframe(year: int, cpr_numbers: list = []) -> dict:
         Dict with two keys ("A" and "B") and two dataframes. Dataframes
         are indexed by CPR-number and every column represents a month
     """
-    a_income_qs = MonthlyAIncomeReport.objects.filter(year=year)
-    b_income_qs = MonthlyBIncomeReport.objects.filter(year=year)
-
+    income_qs = MonthlyIncomeReport.objects.filter(year=year)
     if cpr_numbers:
-        a_income_qs = a_income_qs.filter(person__cpr__in=cpr_numbers)
-        b_income_qs = b_income_qs.filter(person__cpr__in=cpr_numbers)
+        income_qs = income_qs.filter(person__cpr__in=cpr_numbers)
 
     output_dict = {}
-    for qs, income_type in zip([a_income_qs, b_income_qs], IncomeType):
-
+    for income_type, amount_field in zip(IncomeType, ["a_income", "b_income"]):
         df = to_dataframe(
-            qs=qs,
+            qs=income_qs,
             index="person__cpr",
-            dtypes={"amount": float, "month": int},
+            dtypes={amount_field: float, "month": int},
         )
-
         output_dict[income_type] = df.pivot_table(
-            values="amount",
+            values=amount_field,
             index=df.index,
             columns="month",
             aggfunc="sum",
