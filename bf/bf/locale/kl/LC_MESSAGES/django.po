@@ -47,27 +47,8 @@ msgid "Personer"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail.html bf/templates/bf/person_detail_base.html
 msgid "Nøgletal"
-msgstr ""
-
-#: bf/templates/bf/person_detail.html
-msgid "Udbetalinger"
-msgstr ""
-
-#: bf/templates/bf/person_detail.html
-msgid "Indkomst"
-msgstr ""
-
-#: bf/templates/bf/person_detail.html bf/views.py
-msgid "Adresse"
-msgstr ""
-
-#: bf/templates/bf/person_detail.html bf/views.py
-msgid "Civilstand"
-msgstr ""
-
-#: bf/templates/bf/person_detail.html bf/views.py
-msgid "Stedkode"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html bf/views.py
@@ -82,46 +63,89 @@ msgstr ""
 msgid "Beskæftigelsesfradrag til dato i indeværende år"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_base.html bf/templates/bf/person_search.html
+msgid "Personer"
+msgstr ""
+
+#: bf/templates/bf/person_detail_base.html
+msgid "Vis"
+msgstr ""
+
+#: bf/templates/bf/person_detail_base.html
+#: bf/templates/bf/person_detail_benefits.html
+msgid "Udbetalinger"
+msgstr ""
+
+#: bf/templates/bf/person_detail_base.html
+#: bf/templates/bf/person_detail_income.html
+msgid "Indkomst"
+msgstr ""
+
+#: bf/templates/bf/person_detail_base.html
+msgid "Skatteår"
+msgstr ""
+
+#: bf/templates/bf/person_detail_base.html bf/views.py
+msgid "Adresse"
+msgstr ""
+
+#: bf/templates/bf/person_detail_base.html bf/views.py
+msgid "Civilstand"
+msgstr ""
+
+#: bf/templates/bf/person_detail_base.html bf/views.py
+msgid "Stedkode"
+msgstr ""
+
+#: bf/templates/bf/person_detail_benefits.html
 #, python-format
 msgid "Udbetalinger i %(year)s"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_benefits.html
 msgid "Tabel"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_benefits.html
 msgid "Graf"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_benefits.html
+#: bf/templates/bf/person_detail_income.html
 msgid "Måned"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_benefits.html
 msgid "Beløb"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_benefits.html
 msgid "Estimeret samlet årsindkomst"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_income.html
 #, python-format
 msgid "Indkomst i %(year)s"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_income.html
 msgid "Arbejdsgiver"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
+#: bf/templates/bf/person_detail_income.html
 msgid "Indkomst til dato"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
-msgid "Fordelt på arbejdsgivere og type"
+#: bf/templates/bf/person_detail_income.html
+msgid "Vis på graf"
+msgstr ""
+
+#: bf/templates/bf/person_detail_income.html
+msgid "Luk"
+msgstr ""
+
+#: bf/templates/bf/person_detail_income.html
+msgid "Indkomst fordelt på måneder"
 msgstr ""
 
 #: bf/templates/bf/person_search.html
