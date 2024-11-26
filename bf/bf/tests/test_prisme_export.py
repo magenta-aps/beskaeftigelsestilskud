@@ -10,6 +10,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from django.test import TestCase
 from tenQ.client import ClientException
+from tenQ.writer.g68 import BetalingstekstLinje
 
 from bf.integrations.prisme.benefits import BatchExport
 from bf.models import (
@@ -124,6 +125,14 @@ class TestBatchExport(TestCase):
             # Root, tax municipality code, tax year, and recipient CPR
             "1000452406140101010000242040195" + "010400" + "25" + "3112700000",
         )
+        # Assert: the field `BetalingstekstLinje` follows the expected format
+        text = self._get_floating_field(
+            prisme_batch_item.g68_content,
+            BetalingstekstLinje._min_id,
+            length=2,
+        )
+        self.assertEqual(text, "SUILA" + "3112700000" + "JAN25")
+        self.assertLessEqual(len(text), 20)
 
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
@@ -260,6 +269,6 @@ class TestBatchExport(TestCase):
 
     def _get_floating_field(self, transaction: str, field: int, length: int = 3) -> str:
         field: str = str(field).zfill(length)
-        match: re.Match = re.match(rf".*&{field}(?P<val>\w+)&.*", transaction)
+        match: re.Match = re.match(rf".*&{field}(?P<val>\w+)(&.*|$)", transaction)
         self.assertIsNotNone(match)
         return match.groupdict()["val"]

@@ -99,7 +99,7 @@ class BatchExport:
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),  # TODO: use calculated date
             date.today(),  # TODO: use calculated date
-            "Some descriptive text",  # TODO: generate proper text
+            self.get_transaction_text(person_month),
         )
         return PrismeBatchItem(
             prisme_batch=prisme_batch,
@@ -107,6 +107,14 @@ class BatchExport:
             g68_content=transaction_pair.g68,
             g69_content=transaction_pair.g69,
         )
+
+    def get_transaction_text(self, person_month: PersonMonth) -> str:
+        cpr: str = person_month.identifier  # type: ignore[attr-defined]
+        person_month_date: date = date(
+            year=person_month.person_year.year.year, month=person_month.month, day=1
+        )
+        date_formatted: str = person_month_date.strftime("%b%y").upper()
+        return f"SUILA{cpr}{date_formatted}"
 
     def upload_batch(
         self,
