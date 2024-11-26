@@ -16,8 +16,7 @@ from bf.models import (
     Employer,
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -60,28 +59,21 @@ class PersonEnv(TestCase):
             for i in range(1, 13)
         ]
         PersonMonth.objects.bulk_create(person_months)
-        # 2 * 12 MonthlyAIncomeReport objects, and 2 * 12  MonthlyBIncomeReport objects
+        # 2 * 2 * 12 MonthlyIncomeReport objects
         employer1, _ = Employer.objects.update_or_create(name="Employer 1", cvr=1)
         employer2, _ = Employer.objects.update_or_create(name="Employer 2", cvr=2)
         for employer in (employer1, employer2):
-            a_income_reports = [
-                MonthlyAIncomeReport(
-                    person_month=person_month,
-                    amount=person_month.benefit_paid * 10,
-                    employer=employer,
-                )
-                for person_month in person_months
-            ]
-            MonthlyAIncomeReport.objects.bulk_create(a_income_reports)
-            b_income_reports = [
-                MonthlyBIncomeReport(
-                    person_month=person_month,
-                    amount=person_month.benefit_paid * 10,
-                    trader=employer,
-                )
-                for person_month in person_months
-            ]
-            MonthlyBIncomeReport.objects.bulk_create(b_income_reports)
+            for field in ("salary_income", "disability_pension_income"):
+                income_reports = []
+                for person_month in person_months:
+                    income_report = MonthlyIncomeReport(
+                        person_month=person_month,
+                        # employer=employer,
+                        **{field: person_month.benefit_paid * 10},
+                    )
+                    income_report.update_amount()
+                    income_reports.append(income_report)
+                MonthlyIncomeReport.objects.bulk_create(income_reports)
         # 2 * 12 IncomeEstimate objects
         for income_type in IncomeType:
             income_estimates = [
@@ -306,14 +298,12 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
         # Assert: the context key is present
         self.assertIn("income_per_employer_and_type", context)
         # Assert: the table data is correct (one yearly total for each employer/type)
-        expected_total = Decimal(sum(x * 10 for x in range(1, 13)))
+        expected_total = Decimal(sum(x * 2 * 10 for x in range(1, 13)))
         self.assertListEqual(
             context["income_per_employer_and_type"],
             [
-                {"source": "A-indkomst hos: 1", "total_amount": expected_total},
-                {"source": "A-indkomst hos: 2", "total_amount": expected_total},
-                {"source": "B-indkomst hos: 1", "total_amount": expected_total},
-                {"source": "B-indkomst hos: 2", "total_amount": expected_total},
+                {"source": "A-indkomst", "total_amount": expected_total},
+                {"source": "B-indkomst", "total_amount": expected_total},
             ],
         )
 
@@ -331,21 +321,16 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
             income_chart_series = self.view.get_income_chart_series()
         # Assert: verify that we get the expected series: two A income series, and two
         # B income series (4 series total.)
-        self.assertEqual(len(income_chart_series), 4)
+        self.assertEqual(len(income_chart_series), 2)
         self.assertListEqual(
             income_chart_series,
             [
                 {
-                    "data": [float(x * 10) for x in range(1, 13)],
+                    "data": [float(x * 2 * 10) for x in range(1, 13)],
                     "name": name,
                     "group": "income",
                     "type": "column",
                 }
-                for name in (
-                    _("A-indkomst hos: 1"),
-                    _("A-indkomst hos: 2"),
-                    _("B-indkomst hos: 1"),
-                    _("B-indkomst hos: 2"),
-                )
+                for name in (_("A-indkomst"), _("B-indkomst"))
             ],
         )

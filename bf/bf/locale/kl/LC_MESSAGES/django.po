@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-19 10:52-0200\n"
+"POT-Creation-Date: 2024-11-26 06:27-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -170,6 +170,14 @@ msgstr ""
 msgid "Estimeringsoverblik"
 msgstr ""
 
+#: bf/tests/test_views.py bf/views.py
+msgid "Beregnet beskæftigelsesfradrag"
+msgstr ""
+
+#: bf/tests/test_views.py bf/views.py
+msgid "Estimeret samlet lønindkomst"
+msgstr ""
+
 #: bf/tests/test_views.py
 msgid "A-indkomst hos: 1"
 msgstr ""
@@ -186,14 +194,6 @@ msgstr ""
 msgid "B-indkomst hos: 2"
 msgstr ""
 
-#: bf/tests/test_views.py bf/views.py
-msgid "Beregnet beskæftigelsesfradrag"
-msgstr ""
-
-#: bf/tests/test_views.py bf/views.py
-msgid "Estimeret samlet lønindkomst"
-msgstr ""
-
 #: bf/views.py
 msgid "CPR-nummer"
 msgstr ""
@@ -204,14 +204,4 @@ msgstr ""
 
 #: bf/views.py
 msgid "Estimeret total årsindkomst"
-msgstr ""
-
-#: bf/views.py
-#, python-format
-msgid "A-indkomst hos: %(name)s"
-msgstr ""
-
-#: bf/views.py
-#, python-format
-msgid "B-indkomst hos: %(name)s"
 msgstr ""
