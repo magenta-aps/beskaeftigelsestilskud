@@ -1,14 +1,13 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import itertools
 import json
-from functools import cache
 from typing import Callable
 
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import CharField, Count, F, Field, Q, Sum, Value
-from django.db.models.functions import Cast, JSONObject, LPad
+from django.db.models import CharField, Count, F, Field, Q, QuerySet, Sum, Value
+from django.db.models.functions import Cast, LPad
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView
@@ -20,11 +19,9 @@ from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
 from bf.models import (
-    Employer,
     IncomeEstimate,
     IncomeType,
-    MonthlyAIncomeReport,
-    MonthlyBIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
 )
@@ -337,19 +334,15 @@ class PersonDetailIncomeView(
         result: list[dict] = []
 
         # All income data (A and B, separate series for each employer/trader)
-        for model, source_field in (
-            (MonthlyAIncomeReport, "employer"),
-            (MonthlyBIncomeReport, "trader"),
-        ):
-            for source, data in self.get_income_by_source(model, source_field):
-                result.append(
-                    {
-                        "data": data,
-                        "name": self.get_source_name(model, source),
-                        "group": "income",
-                        "type": "column",
-                    }
-                )
+        for name, data in self.get_income_by_source():
+            result.append(
+                {
+                    "data": data,
+                    "name": name,
+                    "group": "income",
+                    "type": "column",
+                }
+            )
 
         return result
 
@@ -384,67 +377,42 @@ class PersonDetailIncomeView(
         }
 
     def get_income_per_employer_and_type(self) -> list[dict]:
-        def get_qs(model: type[MonthlyAIncomeReport] | type[MonthlyBIncomeReport]):
-            qs = model.objects.filter(
+        qs = (
+            MonthlyIncomeReport.objects.filter(
                 person_month__person_year__person=self.object,
                 person_month__person_year__year__year=self.year,
             )
-
-            # Alias `trader` as `employer`
-            if model is MonthlyBIncomeReport:
-                qs = qs.annotate(employer=F("trader"))
-
-            # Group by `employer` and aggregate sum of `amount` per `employer`
-            qs = qs.values("employer").annotate(  # type: ignore
-                total_amount=Sum("amount")
+            .values("year")  # TODO: use employer as group-by key when we have it
+            .annotate(
+                total_a_income=Sum("a_income"),
+                total_b_income=Sum("b_income"),
             )
-
-            return qs
-
-        def get_all_rows():
-            for model in (MonthlyAIncomeReport, MonthlyBIncomeReport):
-                for row in get_qs(model):
-                    yield model, row
+        )
 
         return [
+            # TODO: yield a row for each employer when we have it
             {
-                "source": self.get_source_name(model, row["employer"]),
-                "total_amount": row["total_amount"],
+                "source": _("A-indkomst") if field == "a_income" else _("B-indkomst"),
+                "total_amount": row[f"total_{field}"],
             }
-            for model, row in get_all_rows()
+            for field, row in itertools.product(["a_income", "b_income"], qs)
         ]
 
-    def get_income_by_source(self, model, source_field: str):
-        def zero_pad(income) -> list[int]:
-            by_month = {item["month"]: item["amount"] for item in income}
+    def get_income_by_source(self):
+        def zero_pad(qs: QuerySet, field: str) -> list[int]:
+            by_month = {row["month"]: row[field] for row in qs}
             return [by_month.get(month, 0) for month in range(1, 13)]
 
-        by_source = (
-            model.objects.filter(person=self.object, year=self.year)
-            .order_by()
-            .values(source_field)
+        qs = (
+            MonthlyIncomeReport.objects.filter(person=self.object, year=self.year)
+            .values("month")  # TODO: use employer as group-by key when we have it
             .annotate(
-                income=ArrayAgg(
-                    JSONObject(
-                        month=F("month"),
-                        amount=F("amount"),
-                    )
-                ),
+                _a_income=Sum("a_income"),
+                _b_income=Sum("b_income"),
             )
-            .order_by(f"{source_field}__name")
+            .order_by("month")
         )
-        for row in by_source:
-            yield row[source_field], zero_pad(row["income"])
 
-    @cache
-    def get_source_name(
-        self,
-        model: type[MonthlyAIncomeReport] | type[MonthlyBIncomeReport],
-        source: int,
-    ) -> str:
-        labels = {
-            MonthlyAIncomeReport: _("A-indkomst hos: %(name)s"),
-            MonthlyBIncomeReport: _("B-indkomst hos: %(name)s"),
-        }
-        employers = {employer.pk: employer for employer in Employer.objects.all()}
-        return labels[model] % dict(name=f"{employers[source].cvr}")
+        # TODO: yield a row for each employer when we have it
+        yield _("A-indkomst"), zero_pad(qs, "_a_income")
+        yield _("B-indkomst"), zero_pad(qs, "_b_income")

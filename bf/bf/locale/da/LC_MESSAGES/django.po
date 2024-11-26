@@ -177,6 +177,14 @@ msgstr ""
 msgid "Estimeringsoverblik"
 msgstr ""
 
+#: bf/tests/test_views.py bf/views.py
+msgid "Beregnet beskæftigelsesfradrag"
+msgstr ""
+
+#: bf/tests/test_views.py bf/views.py
+msgid "Estimeret samlet lønindkomst"
+msgstr ""
+
 #: bf/tests/test_views.py
 msgid "A-indkomst hos: 1"
 msgstr ""
@@ -193,14 +201,6 @@ msgstr ""
 msgid "B-indkomst hos: 2"
 msgstr ""
 
-#: bf/tests/test_views.py bf/views.py
-msgid "Beregnet beskæftigelsesfradrag"
-msgstr ""
-
-#: bf/tests/test_views.py bf/views.py
-msgid "Estimeret samlet lønindkomst"
-msgstr ""
-
 #: bf/views.py
 msgid "CPR-nummer"
 msgstr ""
@@ -211,14 +211,4 @@ msgstr ""
 
 #: bf/views.py
 msgid "Estimeret total årsindkomst"
-msgstr ""
-
-#: bf/views.py
-#, python-format
-msgid "A-indkomst hos: %(name)s"
-msgstr ""
-
-#: bf/views.py
-#, python-format
-msgid "B-indkomst hos: %(name)s"
 msgstr ""
