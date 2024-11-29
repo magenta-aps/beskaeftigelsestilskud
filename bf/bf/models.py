@@ -868,6 +868,11 @@ class PrismeBatchItem(models.Model):
     class Meta:
         unique_together = ("prisme_batch", "person_month")
 
+    class PostingStatus(models.TextChoices):
+        Sent = "sent", _("Sent")
+        Posted = "posted", _("Posted")
+        Failed = "failed", _("Failed")
+
     prisme_batch = models.ForeignKey(
         PrismeBatch,
         on_delete=models.CASCADE,
@@ -881,6 +886,40 @@ class PrismeBatchItem(models.Model):
     g68_content = models.TextField()
 
     g69_content = models.TextField()
+
+    posting_status_filename = models.TextField()
+    """Contains the filename of the the "bogføringsstatus" (posting status) CSV file"""
+
+    invoice_no = models.TextField(
+        null=True,
+        unique=True,
+    )
+    """Contains the invoice number used for this Prisme batch item"""
+
+    status = models.CharField(
+        choices=PostingStatus.choices,
+        default=PostingStatus.Sent,
+        db_index=True,
+    )
+    """Indicates posting status (bogføringsstatus) in Prisme.
+    - `Sent`:   the item has been sent to Prisme, but we don't know its posting
+                status yet.
+    - `Posted`: the item is assumed to have been posted (bogført) in Prisme.
+                This happens when processing an item whose due date is in the past,
+                *and* is not present on the list of failed postings.
+    - `Failed`: the item is present on the list of failed postings.
+    """
+
+    error_code = models.TextField()
+    """Contains an error code received from NemKonto when the item was attempted to be
+    posted in Prisme. Only valid if `PrismeBatchItem.status` is `PostingStatus.Failed`.
+    """
+
+    error_description = models.TextField()
+    """Contains an error description received from NemKonto when the item was attempted
+    to be posted in Prisme. Only valid if `PrismeBatchItem.status` is
+    `PostingStatus.Failed`.
+    """
 
 
 class AnnualIncome(models.Model):
