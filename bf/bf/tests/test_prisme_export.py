@@ -10,7 +10,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from django.test import TestCase
 from tenQ.client import ClientException
-from tenQ.writer.g68 import BetalingstekstLinje
+from tenQ.writer.g68 import BetalingstekstLinje, Fakturanummer
 
 from bf.integrations.prisme.benefits import BatchExport
 from bf.models import (
@@ -106,7 +106,9 @@ class TestBatchExport(TestCase):
         """
         # Arrange
         self._add_person_month(3112700000, Decimal("1000"))
-        prisme_batch = PrismeBatch()
+        prisme_batch, _ = PrismeBatch.objects.get_or_create(
+            prefix=0, export_date=date(2025, 1, 1)
+        )
         export = self._get_instance()
         # Act
         prisme_batch_item, person_month = self._get_prisme_batch_item(
@@ -133,6 +135,17 @@ class TestBatchExport(TestCase):
         )
         self.assertEqual(text, "SUILA" + "3112700000" + "JAN25")
         self.assertLessEqual(len(text), 20)
+        # Assert: the field `Fakturanummer` is present and its value follows the
+        # expected format.
+        invoice_no = self._get_floating_field(
+            prisme_batch_item.g68_content,
+            Fakturanummer.id,
+            length=2,
+        )
+        # Format: Prisme batch ID (15 digits, zero padded), followed by line number
+        # (5 digits, zero padded.)
+        self.assertRegex(invoice_no, f"{prisme_batch.pk:015d}\\d{{5}}")
+        self.assertEqual(invoice_no, prisme_batch_item.invoice_no)
 
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
