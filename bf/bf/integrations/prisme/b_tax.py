@@ -67,7 +67,7 @@ class BTaxPaymentImport(SFTPImport):
         stdout.write("All done\n")
 
     def get_remote_folder_name(self) -> str:
-        prisme: dict = settings.PRISME
+        prisme: dict = settings.PRISME  # type: ignore[misc]
         remote_folder: str = prisme["b_tax_folder"]
         return remote_folder
 
