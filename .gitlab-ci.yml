@@ -178,7 +178,11 @@ Lint REUSE compliance:
     PRISME_TEST_PATH: test
     PRISME_USER_NUMBER: 0900
     PRISME_MACHINE_ID: 4321
+<<<<<<< HEAD
     PRISME_POSTING_STATUS_FOLDER: posting_status_folder
+=======
+    PRISME_B_TAX_FOLDER: btax
+>>>>>>> 598213b (chore: [#62972] Add new `PRISME_B_TAX_FOLDER` setting)
     BYPASS_2FA: 'True'
 
   image: ${IMAGE_SHA}
