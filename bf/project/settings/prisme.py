@@ -24,4 +24,5 @@ PRISME = {
     },
     "user_number": int(os.environ.get("PRISME_USER_NUMBER", "0900")),
     "machine_id": int(os.environ["PRISME_MACHINE_ID"]),
+    "posting_status_folder": os.environ["PRISME_POSTING_STATUS_FOLDER"],
 }

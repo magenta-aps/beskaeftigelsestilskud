@@ -178,6 +178,7 @@ Lint REUSE compliance:
     PRISME_TEST_PATH: test
     PRISME_USER_NUMBER: 0900
     PRISME_MACHINE_ID: 4321
+    PRISME_POSTING_STATUS_FOLDER: posting_status_folder
     BYPASS_2FA: 'True'
 
   image: ${IMAGE_SHA}
