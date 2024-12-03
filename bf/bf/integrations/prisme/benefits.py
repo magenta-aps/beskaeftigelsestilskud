@@ -90,6 +90,12 @@ class BatchExport:
         cpr = person_month.identifier  # type: ignore[attr-defined]
         # Concatenate account alias and CPR to get the complete account alias
         account_alias_cpr = account_alias.alias + cpr
+
+        # Construct invoice number by concatenating batch ID and line number
+        # Line numbers can only be 5 digits, so we use the rest of the available 20
+        # digits for the Prisme batch ID.
+        invoice_no: str = f"{prisme_batch.pk:015d}{writer.line_no:05d}"
+
         # Build G68/G69 transaction pair
         transaction_pair: G68G69TransactionPair = writer.serialize_transaction_pair(
             TransaktionstypeEnum.AndenDestinationTilladt,
@@ -99,13 +105,16 @@ class BatchExport:
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),  # TODO: use calculated date
             date.today(),  # TODO: use calculated date
+            invoice_no,
             self.get_transaction_text(person_month),
         )
+
         return PrismeBatchItem(
             prisme_batch=prisme_batch,
             person_month=person_month,
             g68_content=transaction_pair.g68,
             g69_content=transaction_pair.g69,
+            invoice_no=invoice_no,
         )
 
     def get_transaction_text(self, person_month: PersonMonth) -> str:

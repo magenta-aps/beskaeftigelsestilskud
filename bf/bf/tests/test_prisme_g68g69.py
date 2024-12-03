@@ -67,6 +67,7 @@ class TestG68G69TransactionWriter(SimpleTestCase):
             1000,  # amount
             self.payment_date,
             self.posting_date,
+            "12345678",  # invoice number
             "Some descriptive text",
         )
 

@@ -46,6 +46,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
         amount: int,
         payment_date: date,
         posting_date: date,
+        invoice_no: str,
         text: str,
     ) -> G68G69TransactionPair:
         # This also increments `self._line_no`
@@ -56,6 +57,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
             amount,
             payment_date,
             posting_date,
+            invoice_no,
             text,
         )
 
