@@ -1,8 +1,10 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
+from itertools import groupby
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -49,22 +51,46 @@ class BTaxPaymentImport(SFTPImport):
     def __init__(self, year: int, month: int):
         self._year = year
         self._month = month
+        # Construct dictionary which maps `(cpr, year, month)` tuples to `PersonMonth`
+        # objects.
+        self._person_months_keyed: dict[tuple[int, int, int], PersonMonth] = {
+            (int(pm.person_year.person.cpr), pm.person_year.year.year, pm.month): pm
+            for pm in PersonMonth.objects.select_related(
+                "person_year__person", "person_year__year"
+            )
+        }
 
     @transaction.atomic()
-    def import_b_tax(self, stdout: OutputWrapper, verbosity: int):
+    def import_b_tax(
+        self, stdout: OutputWrapper, verbosity: int
+    ) -> tuple[list[BTaxPaymentModel], list[BTaxPayment]]:
+        created: list[BTaxPaymentModel] = []
+        skipped: list[BTaxPayment] = []
+
         known_filenames: set[str] = self._get_known_filenames()
         new_filenames: set[str] = self.get_new_filenames(known_filenames)
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
-            rows: list[BTaxPayment] = self._parse(filename)
-            self._create_objects(filename, rows)
+            all_rows: list[BTaxPayment] = self._parse(filename)
+            split: defaultdict[bool, list[BTaxPayment]] = self._split_rows(all_rows)
+            objs: list[BTaxPaymentModel] = self._create_objects(filename, split[True])
+            # Update lists of created objects and skipped input rows
+            created.extend(objs)
+            skipped.extend(split[False])
+            # List processed data
             if verbosity >= 2:
-                for row in rows:
-                    stdout.write(f"{row}\n")
+                for obj in created:
+                    stdout.write(f"Created {obj}\n")
+                for row in split[False]:
+                    stdout.write(
+                        f"Could not import {row} (no matching `PersonMonth`)\n"
+                    )
                 stdout.write("\n")
 
         stdout.write("All done\n")
+
+        return created, skipped
 
     def get_remote_folder_name(self) -> str:
         prisme: dict = settings.PRISME  # type: ignore[misc]
@@ -83,16 +109,32 @@ class BTaxPaymentImport(SFTPImport):
     def _parse(self, filename: str) -> list[BTaxPayment]:
         return BTaxPayment.from_csv_buf(self.get_file(filename))
 
+    def _split_rows(
+        self, rows: list[BTaxPayment]
+    ) -> defaultdict[bool, list[BTaxPayment]]:
+        def key(row: BTaxPayment) -> bool:
+            return (row.cpr, row.tax_year, row.rate_number) in self._person_months_keyed
+
+        # Split `rows` into two lists:
+        # - `split[True]` contains rows that have a matching `PersonMonth`, and
+        # - `split[False]` contains rows that do not have a matching `PersonMonth`.
+        return defaultdict(
+            list, {k: list(v) for k, v in groupby(sorted(rows, key=key), key=key)}
+        )
+
     def _create_objects(
         self,
         filename: str,
         rows: list[BTaxPayment],
     ) -> list[BTaxPaymentModel]:
+        # Construct list of objects to insert
         objs: list[BTaxPaymentModel] = [
             BTaxPaymentModel(
                 filename=filename,
-                person_month=self._get_person_month(row),
-                amount_paid=row.amount_paid,
+                person_month=self._person_months_keyed[
+                    (row.cpr, row.tax_year, row.rate_number)
+                ],
+                amount_paid=abs(row.amount_paid),  # input value is always negative
                 amount_charged=row.amount_charged,
                 date_charged=row.date_charged,
                 rate_number=row.rate_number,
@@ -101,10 +143,3 @@ class BTaxPaymentImport(SFTPImport):
             for row in rows
         ]
         return BTaxPaymentModel.objects.bulk_create(objs)
-
-    def _get_person_month(self, row: BTaxPayment) -> PersonMonth:
-        return PersonMonth.objects.get(
-            person_year__person__cpr=row.cpr,
-            person_year__year__year=row.tax_year,
-            month=row.rate_number,
-        )
