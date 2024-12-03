@@ -39,7 +39,7 @@ class TestBTaxPaymentImport(ImportTestCase):
 
     def test_import_b_tax(self):
         # Arrange
-        instance = BTaxPaymentImport(2021, 4)
+        instance = BTaxPaymentImport()
         with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
             # Act
             created, skipped = instance.import_b_tax(MagicMock(), 1)
@@ -74,7 +74,7 @@ class TestBTaxPaymentImport(ImportTestCase):
     def test_import_b_tax_verbosity_2(self):
         # Arrange
         stdout = MagicMock()
-        instance = BTaxPaymentImport(2021, 4)
+        instance = BTaxPaymentImport()
         with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
             # Act
             instance.import_b_tax(stdout, 2)
