@@ -48,9 +48,8 @@ class BTaxPayment(CSVFormat):
 class BTaxPaymentImport(SFTPImport):
     """Import one or more B tax CSV files from Prisme SFTP"""
 
-    def __init__(self, year: int, month: int):
-        self._year = year
-        self._month = month
+    def __init__(self):
+        super().__init__()
         # Construct dictionary which maps `(cpr, year, month)` tuples to `PersonMonth`
         # objects.
         self._person_months_keyed: dict[tuple[int, int, int], PersonMonth] = {
