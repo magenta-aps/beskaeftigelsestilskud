@@ -299,10 +299,8 @@ Deploy to Test:
     # Matches all of SemVer 2.0.0
     - if: $CI_COMMIT_TAG =~ /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
       # Deploy rc-versions automatically
-# Not sure if this is actually needed
-#  environment:
-#    name: test
-#    url: "https://test.bf.aka.gl"
+  environment:
+    name: test
 
 Deploy to Production:
   stage: deploy
@@ -316,4 +314,3 @@ Deploy to Production:
   when: manual
   environment:
     name: production
-    url: "https://bf.aka.gl"
