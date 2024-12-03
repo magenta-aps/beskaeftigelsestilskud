@@ -1,23 +1,15 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from contextlib import contextmanager
 from datetime import date
-from io import BytesIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from bf.integrations.prisme.posting_status import PostingStatus, PostingStatusImport
-from bf.models import (
-    Person,
-    PersonMonth,
-    PersonYear,
-    PrismeBatch,
-    PrismeBatchItem,
-    Year,
-)
+from bf.models import PersonMonth, PrismeBatch, PrismeBatchItem
+from bf.tests.helpers import ImportTestCase
 
 _EXAMPLE_1 = "§15;3112700000;00587075;9700;2021/04/09;RJ00;JKH Tesst;§15-000000059;"
 _EXAMPLE_2 = "§15;3112700000;01587075;9700;2021/04/09;RJ00;JKH Tesst;§15-000000059;"
@@ -35,37 +27,27 @@ class TestPostingStatus(SimpleTestCase):
         self.assertEqual(obj.error_description, "JKH Tesst")
         self.assertEqual(obj.voucher_no, "§15-000000059")
 
-    def test_from_csv_buf(self):
-        buf: BytesIO = BytesIO(_EXAMPLE_1.encode())
-        rows = PostingStatus.from_csv_buf(buf)
-        self.assertEqual(len(rows), 1)
-        self.assertIsInstance(rows[0], PostingStatus)
 
-    def test_parse_date_raises_exception_on_invalid_input(self):
-        with self.assertRaises(ValueError):
-            PostingStatus._parse_date("")
-
-
-class TestPostingStatusImport(TestCase):
+class TestPostingStatusImport(ImportTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
         # This item has an invoice number matching the invoice number in the mocked
         # "posting status" CSV file, and should be considered "failed to post."
         cls._item_on_posting_status_list = cls._add_prisme_batch_item(
-            cls._add_person_month(311270_0000),
+            cls.add_person_month(311270_0000),
             "00587075",
         )
         # This item has an invoice number which is not present in the mocked "posting
         # status" CSV file, and should be considered "succeeded to post."
         cls._item_not_on_posting_status_list = cls._add_prisme_batch_item(
-            cls._add_person_month(311271_0000),
+            cls.add_person_month(311271_0000),
             "12345678",
         )
 
     @classmethod
     def _add_prisme_batch_item(
-        self,
+        cls,
         person_month: PersonMonth,
         invoice_no: str,
         posting_status_filename: str = "",
@@ -83,49 +65,18 @@ class TestPostingStatusImport(TestCase):
         )
         return prisme_batch_item
 
-    @classmethod
-    def _add_person_month(
-        self,
-        cpr: int,
-        year: int = 2020,
-        month: int = 1,
-    ) -> PersonMonth:
-        year, _ = Year.objects.get_or_create(year=year)
-        person, _ = Person.objects.get_or_create(cpr=cpr)
-        person_year, _ = PersonYear.objects.get_or_create(year=year, person=person)
-        person_month, _ = PersonMonth.objects.get_or_create(
-            person_year=person_year, month=month, import_date=date.today()
-        )
-        return person_month
-
-    @contextmanager
-    def _mock_sftp_server(self, *files):
-        with patch(
-            "bf.integrations.prisme.posting_status.list_prisme_folder",
-            # This causes N calls to `get_file_in_prisme_folder` to be made, where N is
-            # the length of `files`.
-            return_value=[f"filename{i}.csv" for i, _ in enumerate(files, start=1)],
-        ):
-            with patch(
-                "bf.integrations.prisme.posting_status.get_file_in_prisme_folder",
-                # On each call to `get_file_in_prisme_folder`, provide a new return
-                # value from this iterable.
-                side_effect=[BytesIO(file.encode()) for file in files],
-            ):
-                yield
-
     def test_import_posting_status_is_idempotent(self):
         # Arrange
         instance = PostingStatusImport(2020, 1)
 
         # First run
-        with self._mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
+        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
             instance.import_posting_status(MagicMock(), 1)
         # First run creates the expected item statuses
         self._assert_expected_item_statuses()
 
         # Second run
-        with self._mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
+        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
             instance.import_posting_status(MagicMock(), 1)
         # Second run: result is identical to first run
         self._assert_expected_item_statuses()
@@ -134,41 +85,25 @@ class TestPostingStatusImport(TestCase):
         # Arrange
         stdout = MagicMock()
         instance = PostingStatusImport(2020, 1)
-        with self._mock_sftp_server(_EXAMPLE_1):
+        with self.mock_sftp_server(_EXAMPLE_1):
             # Act
             instance.import_posting_status(stdout, 2)
         # Assert
         self.assertEqual(stdout.write.call_count, 4)
-
-    def test_get_new_filenames(self):
-        # Arrange
-        instance = PostingStatusImport(2020, 1)
-        # Arrange: add `PrismeBatchItem` indicating that we have already loaded
-        # `filename1.csv`.
-        self._add_prisme_batch_item(
-            self._add_person_month(311272_0000),
-            "1234",
-            "filename1.csv",
-        )
-        # Act
-        with self._mock_sftp_server(_EXAMPLE_1):
-            new_filenames: set[str] = instance._get_new_filenames()
-        # Assert
-        self.assertSetEqual(new_filenames, set())
 
     @override_settings(PRISME={"posting_status_folder": "foo"})
     def test_get_remote_folder_name(self):
         # Arrange
         instance = PostingStatusImport(2020, 1)
         # Act and assert
-        self.assertEqual(instance._get_remote_folder_name(), "foo")
+        self.assertEqual(instance.get_remote_folder_name(), "foo")
 
-    def test_load_file(self):
+    def test_parse(self):
         # Arrange
         instance = PostingStatusImport(2020, 1)
-        with self._mock_sftp_server(_EXAMPLE_1):
+        with self.mock_sftp_server(_EXAMPLE_1):
             # Act
-            result: list[PostingStatus] = instance._load_file("filename1.csv")
+            result: list[PostingStatus] = instance._parse("filename1.csv")
             # Assert
             self.assertIsInstance(result, list)
             self.assertIsInstance(result[0], PostingStatus)

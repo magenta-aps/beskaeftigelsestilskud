@@ -16,7 +16,7 @@ class ImportTestCase(TestCase):
 
     @classmethod
     def add_person_month(
-        self,
+        cls,
         cpr: int,
         year: int = 2020,
         month: int = 1,

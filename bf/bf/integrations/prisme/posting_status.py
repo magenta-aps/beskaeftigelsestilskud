@@ -1,27 +1,25 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import csv
 import logging
-import re
 from dataclasses import dataclass
 from datetime import date
-from io import BytesIO, TextIOWrapper
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import QuerySet
-from tenQ.client import get_file_in_prisme_folder, list_prisme_folder
 
+from bf.integrations.prisme.csv_format import CSVFormat
+from bf.integrations.prisme.sftp_import import SFTPImport
 from bf.models import PrismeBatch, PrismeBatchItem
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class PostingStatus:
+class PostingStatus(CSVFormat):
     """Represents a single line in a "posting status" CSV file"""
 
     type: str
@@ -40,45 +38,30 @@ class PostingStatus:
             cpr=int(row[1]),
             invoice_no=row[2],
             amount=int(row[3]),
-            due_date=cls._parse_date(row[4]),
+            due_date=cls.parse_date(row[4]),
             error_code=row[5],
             error_description=row[6],
             voucher_no=row[7],
         )
 
-    @classmethod
-    def from_csv_buf(cls, buf: BytesIO, delimiter: str = ";") -> list["PostingStatus"]:
-        reader = csv.reader(TextIOWrapper(buf), delimiter=delimiter)
-        return [cls.from_csv_row(row) for row in reader]
 
-    @classmethod
-    def _parse_date(cls, val: str) -> date:
-        match: re.Match[str] | None = re.match(
-            r"(?P<year>\d{4})/(?P<month>\d{2})/(?P<day>\d{2})",
-            val,
-        )
-        if match:
-            return date(
-                *[int(match.group(field)) for field in ("year", "month", "day")]
-            )
-        raise ValueError(f"could not parse date {val!r}")
-
-
-class PostingStatusImport:
+class PostingStatusImport(SFTPImport):
     """Import one or more posting status CSV files from Prisme SFTP"""
 
     def __init__(self, year: int, month: int):
+        super().__init__()
         self._year = year
         self._month = month
 
     @transaction.atomic()
     def import_posting_status(self, stdout: OutputWrapper, verbosity: int):
-        new_filenames: set[str] = self._get_new_filenames()
+        known_filenames: set[str] = self._get_known_filenames()
+        new_filenames: set[str] = self.get_new_filenames(known_filenames)
 
         # Process new files, marking relevant items as "failed to post"
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
-            rows: list[PostingStatus] = self._load_file(filename)
+            rows: list[PostingStatus] = self._parse(filename)
             self._update_failed_items(filename, rows)
             if verbosity >= 2:
                 for row in rows:
@@ -89,34 +72,22 @@ class PostingStatusImport:
         succeeded: int = self._update_succeeded_items()
         stdout.write(f"Marked {succeeded} Prisme batch items as successfully posted\n")
 
-    def _get_new_filenames(self) -> set[str]:
+    def get_remote_folder_name(self) -> str:
+        prisme: dict = settings.PRISME  # type: ignore[misc]
+        remote_folder: str = prisme["posting_status_folder"]
+        return remote_folder
+
+    def _get_known_filenames(self) -> set[str]:
         known_filenames: set[str] = set(
             PrismeBatchItem.objects.aggregate(
                 filenames=ArrayAgg("posting_status_filename", distinct=True)
             )["filenames"]
             or set()
         )
-        remote_filenames: set[str] = set(
-            list_prisme_folder(
-                settings.PRISME,  # type: ignore[misc]
-                self._get_remote_folder_name(),
-            )
-        )
-        new_filenames: set[str] = remote_filenames - known_filenames
-        return new_filenames
+        return known_filenames
 
-    def _get_remote_folder_name(self):
-        prisme: dict = settings.PRISME
-        remote_folder: str = prisme["posting_status_folder"]
-        return remote_folder
-
-    def _load_file(self, filename: str) -> list[PostingStatus]:
-        buf: BytesIO = get_file_in_prisme_folder(
-            settings.PRISME,  # type: ignore[misc]
-            self._get_remote_folder_name(),
-            filename,
-        )
-        return PostingStatus.from_csv_buf(buf)
+    def _parse(self, filename: str) -> list[PostingStatus]:
+        return PostingStatus.from_csv_buf(self.get_file(filename))
 
     def _update_failed_items(self, filename: str, rows: list[PostingStatus]):
         items: list[PrismeBatchItem] = []

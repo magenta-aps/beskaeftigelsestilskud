@@ -7,6 +7,7 @@ from operator import attrgetter
 from unittest.mock import MagicMock
 
 from django.test import SimpleTestCase
+from django.test.utils import override_settings
 
 from bf.integrations.prisme.b_tax import BTaxPayment, BTaxPaymentImport
 from bf.models import BTaxPayment as BTaxPaymentModel
@@ -80,3 +81,20 @@ class TestBTaxPaymentImport(ImportTestCase):
             instance.import_b_tax(stdout, 2)
         # Assert
         self.assertEqual(stdout.write.call_count, 8)
+
+    @override_settings(PRISME={"b_tax_folder": "foo"})
+    def test_get_remote_folder_name(self):
+        # Arrange
+        instance = BTaxPaymentImport()
+        # Act and assert
+        self.assertEqual(instance.get_remote_folder_name(), "foo")
+
+    def test_parse(self):
+        # Arrange
+        instance = BTaxPaymentImport()
+        with self.mock_sftp_server(_EXAMPLE_1):
+            # Act
+            result: list[BTaxPayment] = instance._parse("filename1.csv")
+            # Assert
+            self.assertIsInstance(result, list)
+            self.assertIsInstance(result[0], BTaxPayment)
