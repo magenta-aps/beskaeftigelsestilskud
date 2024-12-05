@@ -11,6 +11,9 @@ class SampleSFTPImport(SFTPImport):
     def get_remote_folder_name(self) -> str:
         return "sample"
 
+    def get_known_filenames(self) -> set[str]:
+        return {"filename1.csv"}
+
 
 class TestSFTPImport(ImportTestCase):
     def setUp(self):
@@ -18,8 +21,13 @@ class TestSFTPImport(ImportTestCase):
         self.instance = SampleSFTPImport()
 
     def test_get_new_filenames(self):
+        # Arrange: this mocks an SFTP server with files called `filename1.csv`,
+        # `filename2.csv`, and `filename3.csv`.
         with self.mock_sftp_server("1", "2", "3"):
-            result: set[str] = self.instance.get_new_filenames({"filename1.csv"})
+            # Act
+            result: set[str] = self.instance.get_new_filenames()
+            # Assert: the new filenames are `filename2.csv` and `filename3.csv`, as
+            # `SampleSFTPImport.get_known_filenames` returns `{"filename1.csv"}`.
             self.assertEqual(result, {f"filename{i}.csv" for i in (2, 3)})
 
     def test_get_file(self):

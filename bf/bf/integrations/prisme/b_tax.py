@@ -65,8 +65,7 @@ class BTaxPaymentImport(SFTPImport):
         created: list[BTaxPaymentModel] = []
         skipped: list[BTaxPayment] = []
 
-        known_filenames: set[str] = self._get_known_filenames()
-        new_filenames: set[str] = self.get_new_filenames(known_filenames)
+        new_filenames: set[str] = self.get_new_filenames()
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
@@ -99,7 +98,7 @@ class BTaxPaymentImport(SFTPImport):
         remote_folder: str = prisme["b_tax_folder"]
         return remote_folder
 
-    def _get_known_filenames(self) -> set[str]:
+    def get_known_filenames(self) -> set[str]:
         known_filenames: set[str] = set(
             BTaxPaymentModel.objects.aggregate(
                 filenames=ArrayAgg("filename", distinct=True)

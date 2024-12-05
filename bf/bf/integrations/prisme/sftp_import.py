@@ -11,7 +11,11 @@ class SFTPImport:
     def get_remote_folder_name(self) -> str:
         raise NotImplementedError("must be implemented by subclass")  # pragma: no cover
 
-    def get_new_filenames(self, known_filenames: set[str]) -> set[str]:
+    def get_known_filenames(self) -> set[str]:
+        raise NotImplementedError("must be implemented by subclass")  # pragma: no cover
+
+    def get_new_filenames(self) -> set[str]:
+        known_filenames: set[str] = self.get_known_filenames()
         remote_filenames: set[str] = set(
             list_prisme_folder(
                 settings.PRISME,  # type: ignore[misc]
