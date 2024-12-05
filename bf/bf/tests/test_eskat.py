@@ -667,9 +667,9 @@ class TestMonthlyIncome(BaseTestCase):
             2024,
             [
                 MonthlyIncome(
-                    "1234",
-                    2024,
-                    1,
+                    cpr="1234",
+                    year=2024,
+                    month=1,
                     salary_income=25000.00,
                     disability_pension_income=1000.00,
                 )
@@ -713,8 +713,8 @@ class TestMonthlyIncome(BaseTestCase):
             [
                 MonthlyIncome(
                     "1234",
-                    2024,
-                    None,  # Month = None
+                    year=2024,
+                    month=None,
                     salary_income=25000.00,
                     foreign_pension_income=1000.00,
                 )
