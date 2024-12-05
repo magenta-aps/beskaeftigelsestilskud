@@ -55,8 +55,7 @@ class PostingStatusImport(SFTPImport):
 
     @transaction.atomic()
     def import_posting_status(self, stdout: OutputWrapper, verbosity: int):
-        known_filenames: set[str] = self._get_known_filenames()
-        new_filenames: set[str] = self.get_new_filenames(known_filenames)
+        new_filenames: set[str] = self.get_new_filenames()
 
         # Process new files, marking relevant items as "failed to post"
         for filename in new_filenames:
@@ -77,7 +76,7 @@ class PostingStatusImport(SFTPImport):
         remote_folder: str = prisme["posting_status_folder"]
         return remote_folder
 
-    def _get_known_filenames(self) -> set[str]:
+    def get_known_filenames(self) -> set[str]:
         known_filenames: set[str] = set(
             PrismeBatchItem.objects.aggregate(
                 filenames=ArrayAgg("posting_status_filename", distinct=True)
