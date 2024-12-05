@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from itertools import groupby
@@ -71,17 +70,21 @@ class BTaxPaymentImport(SFTPImport):
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
+            # Split rows in CSV into `matched` and `unmatched` rows
             all_rows: list[BTaxPayment] = self._parse(filename)
-            split: defaultdict[bool, list[BTaxPayment]] = self._split_rows(all_rows)
-            objs: list[BTaxPaymentModel] = self._create_objects(filename, split[True])
+            matched: list[BTaxPayment]
+            unmatched: list[BTaxPayment]
+            matched, unmatched = self._split_rows(all_rows)
+            # Create objects for matched rows
+            objs: list[BTaxPaymentModel] = self._create_objects(filename, matched)
             # Update lists of created objects and skipped input rows
             created.extend(objs)
-            skipped.extend(split[False])
+            skipped.extend(unmatched)
             # List processed data
             if verbosity >= 2:
                 for obj in created:
                     stdout.write(f"Created {obj}\n")
-                for row in split[False]:
+                for row in unmatched:
                     stdout.write(
                         f"Could not import {row} (no matching `PersonMonth`)\n"
                     )
@@ -110,16 +113,17 @@ class BTaxPaymentImport(SFTPImport):
 
     def _split_rows(
         self, rows: list[BTaxPayment]
-    ) -> defaultdict[bool, list[BTaxPayment]]:
+    ) -> tuple[list[BTaxPayment], list[BTaxPayment]]:
         def key(row: BTaxPayment) -> bool:
             return (row.cpr, row.tax_year, row.rate_number) in self._person_months_keyed
 
-        # Split `rows` into two lists:
-        # - `split[True]` contains rows that have a matching `PersonMonth`, and
-        # - `split[False]` contains rows that do not have a matching `PersonMonth`.
-        return defaultdict(
-            list, {k: list(v) for k, v in groupby(sorted(rows, key=key), key=key)}
-        )
+        # Split rows by whether they have a matching `PersonMonth`, or not
+        split: dict[bool, list[BTaxPayment]] = {
+            k: list(v) for k, v in groupby(sorted(rows, key=key), key=key)
+        }
+
+        # Return tuple of matched and unmatched rows, respectively
+        return split.get(True, []), split.get(False, [])
 
     def _create_objects(
         self,
