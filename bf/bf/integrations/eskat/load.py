@@ -249,7 +249,13 @@ class MonthlyIncomeHandler(Handler):
                             **{
                                 f.name: Decimal(getattr(item, f.name) or 0)
                                 for f in fields(item)
-                                if f.name not in {"cpr", "month"}
+                                if f.name
+                                not in {
+                                    "cpr",
+                                    "cvr",
+                                    "tax_municipality_number",
+                                    "month",
+                                }
                             },
                         )
                         report.update_amount()

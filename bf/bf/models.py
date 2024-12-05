@@ -940,7 +940,7 @@ class AnnualIncome(models.Model):
     salary = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )
-    social_benefit_income = models.DecimalField(
+    public_assistance_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )
     retirement_pension_income = models.DecimalField(
@@ -1027,9 +1027,6 @@ class AnnualIncome(models.Model):
     free_other_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )
-    other_debt_interest_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
-    )
     pension_payment_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )
@@ -1039,22 +1036,7 @@ class AnnualIncome(models.Model):
     catch_sale_factory_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )
-    account_extraord_entries_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
-    )
-    account_business_interest = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
-    )
-    account_business_interest_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
-    )
-    account_business_interest_deduct = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
-    )
     account_tax_result = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
-    )
-    account_share_business_percentage = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )
     account_share_business_amount = models.DecimalField(
