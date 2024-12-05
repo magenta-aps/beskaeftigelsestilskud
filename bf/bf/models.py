@@ -691,25 +691,43 @@ class BTaxPayment(models.Model):
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,
+        null=False,
+        blank=False,
     )
 
     amount_paid = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        null=False,
+        blank=False,
     )
 
     amount_charged = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        null=False,
+        blank=False,
     )
 
-    date_charged = models.DateField()
+    date_charged = models.DateField(
+        null=False,
+        blank=False,
+    )
 
-    rate_number = models.PositiveSmallIntegerField()
+    rate_number = models.PositiveSmallIntegerField(
+        null=False,
+        blank=False,
+    )
 
-    filename = models.TextField()
+    filename = models.TextField(
+        null=False,
+        blank=False,
+    )
 
-    serial_number = models.PositiveBigIntegerField()
+    serial_number = models.PositiveBigIntegerField(
+        null=False,
+        blank=False,
+    )
 
     def __str__(self) -> str:
         return f"{self.person_month}: {self.amount_paid}"
