@@ -397,6 +397,7 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertFalse(isnan(np.float64(42)))
 
 
+@override_settings(ENFORCE_QUARANTINE=True)
 class QuarantineTest(BaseTestCase):
     @classmethod
     def setUpTestData(cls):
@@ -469,6 +470,9 @@ class QuarantineTest(BaseTestCase):
         self.assertTrue(df.in_quarantine[self.person1.cpr])
         self.assertFalse(df.in_quarantine[self.person2.cpr])
 
+    @override_settings(QUARANTINE_IF_EARNS_TOO_LITTLE=True)
+    @override_settings(QUARANTINE_IF_EARNS_TOO_MUCH=True)
+    @override_settings(QUARANTINE_IF_WRONG_PAYOUT=True)
     def test_in_quarantine_property(self):
         person_year_1 = PersonYear.objects.get(year=self.year, person=self.person1)
         person_year_2 = PersonYear.objects.get(year=self.year, person=self.person2)
@@ -484,6 +488,20 @@ class QuarantineTest(BaseTestCase):
         self.assertEqual("-", person_year_2.quarantine_reason)
         self.assertIn("for tæt på bundgrænsen", person_year_3.quarantine_reason)
         self.assertIn("for tæt på øverste grænse", person_year_4.quarantine_reason)
+
+    @override_settings(QUARANTINE_IF_EARNS_TOO_LITTLE=False)
+    @override_settings(QUARANTINE_IF_EARNS_TOO_MUCH=False)
+    @override_settings(QUARANTINE_IF_WRONG_PAYOUT=False)
+    def test_in_quarantine_property_turned_off(self):
+        person_year_1 = PersonYear.objects.get(year=self.year, person=self.person1)
+        person_year_2 = PersonYear.objects.get(year=self.year, person=self.person2)
+        person_year_3 = PersonYear.objects.get(year=self.year, person=self.person3)
+        person_year_4 = PersonYear.objects.get(year=self.year, person=self.person4)
+
+        self.assertFalse(person_year_1.in_quarantine)
+        self.assertFalse(person_year_2.in_quarantine)
+        self.assertFalse(person_year_3.in_quarantine)
+        self.assertFalse(person_year_4.in_quarantine)
 
     def test_get_people_who_might_earn_too_much_or_little(self):
         df = get_people_in_quarantine(

@@ -51,6 +51,17 @@ CALCULATION_SAFETY_FACTOR = Decimal(os.environ.get("CALCULATION_SAFETY_FACTOR", 
 # rather than throughout the year
 ENFORCE_QUARANTINE = bool(strtobool(os.environ.get("ENFORCE_QUARANTINE", "True")))
 
+# Possibility to fine-tune quarantine rules
+QUARANTINE_IF_EARNS_TOO_LITTLE = bool(
+    strtobool(os.environ.get("QUARANTINE_IF_EARNS_TOO_LITTLE", "False"))
+)
+QUARANTINE_IF_EARNS_TOO_MUCH = bool(
+    strtobool(os.environ.get("QUARANTINE_IF_EARNS_TOO_MUCH", "True"))
+)
+QUARANTINE_IF_WRONG_PAYOUT = bool(
+    strtobool(os.environ.get("QUARANTINE_IF_WRONG_PAYOUT", "True"))
+)
+
 
 class XMLFilter(logging.Filter):
     def filter(self, record):
