@@ -20,10 +20,7 @@ class CSVFormat:
 
     @classmethod
     def parse_date(cls, val: str) -> date:
-        match: re.Match[str] | None = re.match(
-            r"(?P<year>\d{4})/(?P<month>\d{2})/(?P<day>\d{2})",
-            val,
-        )
+        match = re.match(r"(?P<year>\d{4})/(?P<month>\d{2})/(?P<day>\d{2})", val)
         if match:
             return date(
                 *[int(match.group(field)) for field in ("year", "month", "day")]
