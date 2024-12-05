@@ -1,6 +1,6 @@
 openapi: 3.0.0
 x-origin:
-  - url: http://localhost:8000/swagger_spec.json
+  - url: http://localhost:9999/swagger_spec.json
     format: swagger
     version: "2.0"
     converter:
@@ -299,6 +299,91 @@ paths:
         otherwise, it fetches the data from the service and caches it.
       operationId: MonthlyIncome_Get
       parameters:
+        - name: cpr
+          in: path
+          description: The CPR number of the individual
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: path
+          description: The year for which the income is requested
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: month
+          in: path
+          description: The month for which the income is requested
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse_MonthlyIncome_"
+            text/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse_MonthlyIncome_"
+  "/api/monthlyincome/get/employer/{cvr}/{cpr}/{year}":
+    get:
+      tags:
+        - MonthlyIncome
+      summary: Retrieves the monthly income data for a specific CPR number. CVR number
+        and year.
+      description: If the data is available in the cache, it returns the cached response;
+        otherwise, it fetches the data from the service and caches it.
+      operationId: MonthlyIncome_Get
+      parameters:
+        - name: cvr
+          in: path
+          description: The CVR number of the employer
+          required: true
+          schema:
+            type: string
+        - name: cpr
+          in: path
+          description: The CPR number of the individual.
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: path
+          description: The year for which the income data is requested.
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse_MonthlyIncome_"
+            text/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse_MonthlyIncome_"
+  "/api/monthlyincome/get/employer/{cvr}/{cpr}/{year}/{month}":
+    get:
+      tags:
+        - MonthlyIncome
+      summary: Retrieves the monthly income for a specific CPR number and CVR number
+        for a given year and month.
+      description: If the data is available in the cache, it returns the cached response;
+        otherwise, it fetches the data from the service and caches it.
+      operationId: MonthlyIncome_Get
+      parameters:
+        - name: cvr
+          in: path
+          description: The CVR number of the employer
+          required: true
+          schema:
+            type: string
         - name: cpr
           in: path
           description: The CPR number of the individual
@@ -736,143 +821,187 @@ paths:
             text/json:
               schema:
                 $ref: "#/components/schemas/ServiceListResponse_String_"
+  /api/taxinformation/get/municipalities:
+    get:
+      tags:
+        - TaxInformation
+      summary: Retrieves all municipalities.
+      description: "Municipalities are practically static data.\r
+
+        If the data is available in the cache, it returns the cached
+        response; otherwise, it fetches the data from the service and caches
+        it."
+      operationId: TaxInformation_GetMunicipalities
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse_MunicipalityInforma\
+                  tion_"
+            text/json:
+              schema:
+                $ref: "#/components/schemas/ServiceListResponse_MunicipalityInforma\
+                  tion_"
 servers:
   - url: https://eskattest/eTaxCommonDataApi
 components:
   schemas:
     AnnualIncome:
+      description: Represents the annual income details of an individual.
       type: object
       properties:
         cpr:
+          description: Gets or sets the CPR number of the individual.
           type: string
         year:
           format: int32
+          description: Gets or sets the year for which the income is reported for.
           type: integer
         salary:
           format: double
+          description: Gets or sets the salary income.
           type: number
-        socialBenefitIncome:
+        publicAssistanceIncome:
           format: double
+          description: Gets or sets the public assistance income.
           type: number
         retirementPensionIncome:
           format: double
+          description: Gets or sets the retirement pension income.
           type: number
         disabilityPensionIncome:
           format: double
+          description: Gets or sets the disability pension income.
           type: number
         ignoredBenefits:
           format: double
+          description: Gets or sets the ignored benefits income.
           type: number
         occupationalBenefit:
           format: double
+          description: Gets or sets the occupational benefit income.
           type: number
         foreignPensionIncome:
           format: double
+          description: Gets or sets the foreign pension income.
           type: number
         subsidyForeignPensionIncome:
           format: double
+          description: Gets or sets the subsidy foreign pension income.
           type: number
         disGisIncome:
           format: double
+          description: Gets or sets the dis GIS income.
           type: number
         otherAIncome:
           format: double
+          description: Gets or sets the other A income.
           type: number
         depositInterestIncome:
           format: double
+          description: Gets or sets the deposit interest income.
           type: number
         bondInterestIncome:
           format: double
+          description: Gets or sets the bond interest income.
           type: number
         otherInterestIncome:
           format: double
+          description: Gets or sets the other interest income.
           type: number
         educationSupportIncome:
           format: double
+          description: Gets or sets the education support income.
           type: number
         careFeeIncome:
           format: double
+          description: Gets or sets the care fee income.
           type: number
         alimonyIncome:
           format: double
+          description: Gets or sets the alimony income.
           type: number
         foreignDividendIncome:
           format: double
+          description: Gets or sets the foreign dividend income.
           type: number
         foreignIncome:
           format: double
+          description: Gets or sets the foreign income.
           type: number
         freeJourneyIncome:
           format: double
+          description: Gets or sets the free journey income.
           type: number
         groupLifeIncome:
           format: double
+          description: Gets or sets the group life income.
           type: number
         rentalIncome:
           format: double
+          description: Gets or sets the rental income.
           type: number
         otherBIncome:
           format: double
+          description: Gets or sets the other B income.
           type: number
         freeBoardIncome:
           format: double
+          description: Gets or sets the free board income.
           type: number
         freeLodgingIncome:
           format: double
+          description: Gets or sets the free lodging income.
           type: number
         freeHousingIncome:
           format: double
+          description: Gets or sets the free housing income.
           type: number
         freePhoneIncome:
           format: double
+          description: Gets or sets the free phone income.
           type: number
         freeCarIncome:
           format: double
+          description: Gets or sets the free car income.
           type: number
         freeInternetIncome:
           format: double
+          description: Gets or sets the free internet income.
           type: number
         freeBoatIncome:
           format: double
+          description: Gets or sets the free boat income.
           type: number
         freeOtherIncome:
           format: double
-          type: number
-        otherDebtInterestIncome:
-          format: double
+          description: Gets or sets the free other income.
           type: number
         pensionPaymentIncome:
           format: double
+          description: Gets or sets the pension payment income.
           type: number
         catchSaleMarketIncome:
           format: double
+          description: Gets or sets the catch sale market income.
           type: number
         catchSaleFactoryIncome:
           format: double
-          type: number
-        accountExtraordEntriesIncome:
-          format: double
-          type: number
-        accountBusinessInterest:
-          format: double
-          type: number
-        accountBusinessInterestIncome:
-          format: double
-          type: number
-        accountBusinessInterestDeduct:
-          format: double
+          description: Gets or sets the catch sale factory income.
           type: number
         accountTaxResult:
           format: double
-          type: number
-        accountShareBusinessPercentage:
-          format: double
+          description: Gets or sets the account tax result.
           type: number
         accountShareBusinessAmount:
           format: double
+          description: Gets or sets the account share business amount.
           type: number
         shareholderDividendIncome:
           format: double
+          description: Gets or sets the shareholder dividend income.
           type: number
     ExpectedIncome:
       type: object
@@ -932,16 +1061,18 @@ components:
           description: E9 Ekstraordinære indtægter
           type: number
     MonthlyIncome:
-      description: Specifies that the type is a data contract and can be serialized and
-        deserialized by the DataContractSerializer.
+      description: Represents the monthly income details of an individual for an employer.
       type: object
       properties:
         cpr:
-          description: "Data member attribute indicating that the property should be
-            included in serialization and deserialization processes. (felt: 3)\r
-
-            Represents a CPR (Central Person Register) number as a
-            string."
+          description: Represents a CPR (Central Person Register) number as a string.
+          type: string
+        cvr:
+          description: Represents a CVR number as a string for the employer of the income
+            information.
+          type: string
+        taxMunicipalityNumber:
+          description: Represents the tax municipality no. of the employee.
           type: string
         year:
           format: int32
@@ -1003,32 +1134,71 @@ components:
             person. (felt: 13)"
           type: number
     TaxInformation:
+      description: Tax related information presented as census.
       type: object
       properties:
         cpr:
+          description: Represents a CPR (Central Person Register) number as a string.
           type: string
         year:
           format: int32
+          description: The tax year of the census.
           type: integer
         taxScope:
+          description: The tax scope of the census.
           type: string
         startDate:
           format: date-time
+          description: The end date of the census. Usually the last date of the year.
           type: string
         endDate:
           format: date-time
+          description: The start date of the census. Usually the first date of the year.
           type: string
         taxMunicipalityNumber:
+          description: Represents the tax municipality no. of the employee.
           type: string
         cprMunicipalityCode:
-          type: string
-        cprMunicipalityName:
+          description: Represents the municipality no. of the employee as represented in
+            CPR.
           type: string
         regionNumber:
+          description: Represents the region no., if indicated.
           type: string
         regionName:
+          description: Represents the region name, if indicated.
           type: string
         districtName:
+          description: Represents the district name, if indicated.
+          type: string
+    MunicipalityInformation:
+      description: Tax related information about municipalities.
+      type: object
+      properties:
+        taxMunicipalityNumber:
+          description: Represents the tax municipality no. of the employee.
+          type: string
+        cprMunicipalityCode:
+          description: Represents the municipality no. of the employee as represented in
+            CPR.
+          type: string
+        cprMunicipalityName:
+          description: Represents the municipality name of the employee.
+          type: string
+        startYear:
+          format: int32
+          description: The end year of the municipality.
+          type: integer
+        endYear:
+          format: int32
+          description: The start year of the municipality.
+          type: integer
+        regionNumber:
+          format: int32
+          description: Represents the region no., if indicated.
+          type: integer
+        regionName:
+          description: Represents the region name, if indicated.
           type: string
     ServiceListResponse_AnnualIncome_:
       description: "Represents a generic class for a service list response containing items
@@ -1178,6 +1348,40 @@ components:
           type: array
           items:
             type: string
+        message:
+          description: Gets or sets the message string with an initial value of an empty
+            string.
+          type: string
+        chunk:
+          format: int32
+          description: Gets or sets the chunk value, with a default value of 1.
+          type: integer
+        chunkSize:
+          format: int32
+          description: Gets or sets the size of the chunk.
+          type: integer
+        totalChunks:
+          format: int32
+          description: "Gets or sets the total number of chunks.\r
+
+            Default value is 1."
+          type: integer
+        totalRecordsInChunks:
+          format: int32
+          description: Gets or sets the total number of records in chunks.
+          type: integer
+    ServiceListResponse_MunicipalityInformation_:
+      description: "Represents a generic class for a service list response containing items
+        of type T.\r
+
+        For a singular response data object use ServiceResponse."
+      type: object
+      properties:
+        data:
+          description: Gets or sets the list of data of type T.
+          type: array
+          items:
+            $ref: "#/components/schemas/MunicipalityInformation"
         message:
           description: Gets or sets the message string with an initial value of an empty
             string.
