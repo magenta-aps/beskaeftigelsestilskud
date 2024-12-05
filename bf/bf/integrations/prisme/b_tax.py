@@ -94,9 +94,7 @@ class BTaxPaymentImport(SFTPImport):
         return created, skipped
 
     def get_remote_folder_name(self) -> str:
-        prisme: dict = settings.PRISME  # type: ignore[misc]
-        remote_folder: str = prisme["b_tax_folder"]
-        return remote_folder
+        return settings.PRISME["b_tax_folder"]  # type: ignore[misc]
 
     def get_known_filenames(self) -> set[str]:
         known_filenames: set[str] = set(
