@@ -33,6 +33,7 @@ from bf.integrations.eskat.responses.data_models import (
 from bf.models import AnnualIncome as AnnualIncomeModel
 from bf.models import (
     DataLoad,
+    Employer,
     MonthlyIncomeReport,
     Person,
     PersonMonth,
@@ -511,6 +512,7 @@ class TestMonthlyIncome(BaseTestCase):
     monthly_data = [
         {
             "cpr": "1234",
+            "cvr": "123",
             "year": 2024,
             "month": m,
             "salaryIncome": m * 1000,
@@ -530,6 +532,7 @@ class TestMonthlyIncome(BaseTestCase):
     ] + [
         {
             "cpr": "5678",
+            "cvr": "567",
             "year": 2024,
             "month": m,
             "salaryIncome": m * 500,
@@ -668,6 +671,7 @@ class TestMonthlyIncome(BaseTestCase):
             [
                 MonthlyIncome(
                     cpr="1234",
+                    cvr="123",
                     year=2024,
                     month=1,
                     salary_income=25000.00,
@@ -682,6 +686,10 @@ class TestMonthlyIncome(BaseTestCase):
         )
         self.assertEqual(
             MonthlyIncomeReport.objects.filter(year=2024, month=1).count(), 1
+        )
+        self.assertEqual(
+            MonthlyIncomeReport.objects.filter(year=2024, month=1).first().employer,
+            Employer.objects.get(cvr=123),
         )
         self.assertEqual(
             MonthlyIncomeReport.objects.filter(year=2024, month=1).first().a_income,

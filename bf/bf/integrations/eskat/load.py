@@ -200,12 +200,21 @@ class MonthlyIncomeHandler(Handler):
         cls, year: int, items: List["MonthlyIncome"], load: DataLoad, out: TextIO
     ):
         with transaction.atomic():
-
-            # TODO: vi får ikke en cvr fra eskat,
-            # så dette er en dummy indtil vi ved mere
-            employer, _ = Employer.objects.get_or_create(
-                cvr="11111111", defaults={"load": load}
+            # Create Employer objects (for CVRs that we have not already created an
+            # Employer object for.)
+            Employer.objects.bulk_create(
+                [
+                    Employer(cvr=cvr, load=load)
+                    for cvr in {item.cvr for item in items if item.cvr is not None}
+                ],
+                update_conflicts=True,
+                update_fields=("load",),
+                unique_fields=("cvr",),
             )
+            # Construct dictionary mapping employer CVRs to Employer objects
+            employer_map = {
+                employer.cvr: employer for employer in Employer.objects.all()
+            }
 
             # Create or update Year object
             person_years = cls.create_person_years(
@@ -215,7 +224,6 @@ class MonthlyIncomeHandler(Handler):
                 out,
             )
             if person_years:
-
                 # Create or update PersonMonth objects
                 person_months = {}
                 for person_year in person_years.values():
@@ -245,6 +253,11 @@ class MonthlyIncomeHandler(Handler):
                         person_month = person_months[(item.cpr, item.month)]
                         report = MonthlyIncomeReport(
                             person_month=person_month,
+                            employer=(
+                                employer_map[int(item.cvr)]
+                                if item.cvr is not None
+                                else None
+                            ),
                             load=load,
                             **{
                                 f.name: Decimal(getattr(item, f.name) or 0)
