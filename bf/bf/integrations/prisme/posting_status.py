@@ -72,9 +72,7 @@ class PostingStatusImport(SFTPImport):
         stdout.write(f"Marked {succeeded} Prisme batch items as successfully posted\n")
 
     def get_remote_folder_name(self) -> str:
-        prisme: dict = settings.PRISME  # type: ignore[misc]
-        remote_folder: str = prisme["posting_status_folder"]
-        return remote_folder
+        return settings.PRISME["posting_status_folder"]  # type: ignore[misc]
 
     def get_known_filenames(self) -> set[str]:
         known_filenames: set[str] = set(
