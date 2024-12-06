@@ -292,9 +292,7 @@ class MonthlyIncomeHandler(Handler):
         objs_to_update = []
 
         # Construct dictionary mapping employer CVRs to Employer objects
-        employer_map = {
-            employer.cvr: employer for employer in Employer.objects.all()
-        }
+        employer_map = {employer.cvr: employer for employer in Employer.objects.all()}
 
         for item in items:
             if item.cpr is not None and item.month is not None:
@@ -313,9 +311,7 @@ class MonthlyIncomeHandler(Handler):
                     report = MonthlyIncomeReport(
                         person_month=person_month,
                         load=load,
-                        employer=(
-                            employer_map[int(item.cvr)] if item.cvr else None
-                        ),
+                        employer=employer_map[int(item.cvr)] if item.cvr else None,
                         **field_values,
                     )
                     report.update_amount()

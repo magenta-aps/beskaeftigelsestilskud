@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from datetime import date
 from typing import Iterator
 
 from suila.integrations.eskat.client import EskatClient
@@ -79,6 +80,7 @@ class Command(SuilaBaseCommand):
         offset: int = 2,
     ) -> Iterator[tuple[int, dict]]:
         def ym(offset: int) -> tuple[int, int]:
+            assert isinstance(month, int)
             div: int
             mod: int
             div, mod = divmod(month - num - offset, 12)
