@@ -193,7 +193,7 @@ class JobListOptionsForm(BootstrapForm):
     )
 
 
-class CalculationForm(BootstrapForm):
+class CalculatorForm(BootstrapForm):
     estimated_month_income = forms.DecimalField(
         required=False,
         label=_("Estimeret månedsindkomst"),

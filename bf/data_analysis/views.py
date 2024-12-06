@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 
 from common.models import EngineViewPreferences
 from data_analysis.forms import (
-    CalculationForm,
+    CalculatorForm,
     HistogramOptionsForm,
     JobListOptionsForm,
     PersonAnalysisOptionsForm,
@@ -486,7 +486,7 @@ class JobListView(LoginRequiredMixin, ListView, FormView):
 
 
 class CalculatorView(FormView):
-    form_class = CalculationForm
+    form_class = CalculatorForm
     template_name = "data_analysis/calculate.html"
 
     def form_valid(self, form):
