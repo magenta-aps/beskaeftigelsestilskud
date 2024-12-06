@@ -1,0 +1,110 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "data_analysis/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load csp %}
+{% load bf_tags %}
+{% load bootstrap_icons %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<div class="row my-1 mx-1">
+    <h1>{% translate "Jobliste" %} </h1>
+</div>
+<div class="row my-1 mx-1">
+    <table class="table table-bordered"  id="table">
+    <thead class="shadow-sm p-3 mb-5 bg-body rounded sticky-top">
+    <tr>
+        <th class="col-2">
+            <a href="?{{ sort_params.name }}" class="link-dark">
+                Job
+                {% include "data_analysis/sort_icon.html" with field="name" %}
+            </a>
+        </th>
+        <th class="col-2">
+            <a href="?{{ sort_params.runtime }}" class="link-dark">
+                Kørselsdato (UTC)
+                {% include "data_analysis/sort_icon.html" with field="runtime" %}
+            </a>
+        </th>
+        <th class="col-2">
+            <a href="?{{ sort_params.status }}" class="link-dark">
+                Status
+                {% include "data_analysis/sort_icon.html" with field="status" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.year_param }}" class="link-dark">
+                År
+                {% include "data_analysis/sort_icon.html" with field="year_param" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.month_param }}" class="link-dark">
+                Måned
+                {% include "data_analysis/sort_icon.html" with field="month_param" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.cpr_param }}" class="link-dark">
+                CPR
+                {% include "data_analysis/sort_icon.html" with field="cpr_param" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.type_param }}" class="link-dark">
+                Type
+                {% include "data_analysis/sort_icon.html" with field="type_param" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.count_param }}" class="link-dark">
+                Antal
+                {% include "data_analysis/sort_icon.html" with field="count_param" %}
+            </a>
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for object in object_list %}
+    <tr>
+        <td>{{ object.name }}</td>
+        <td>{{ object.runtime }}</td>
+        <td>{{ object.status }}</td>
+        <td>{{ object.year_param|default_if_none:"-" }}</td>
+        <td>{{ object.month_param|default_if_none:"-" }}</td>
+        <td>{{ object.cpr_param|default_if_none:"-" }}</td>
+        <td>{{ object.type_param|default_if_none:"-" }}</td>
+        <td>{{ object.count_param|default_if_none:"-" }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+    <div class="pagination">
+    <span class="step-links btn-group">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">1</a>
+            {% if page_obj.previous_page_number != 1 %}
+                <a href="?page={{ page_obj.previous_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.previous_page_number }}</a>
+            {% endif %}
+        {% endif %}
+        <a class="current btn btn-outline-primary active">
+            {{ page_obj.number }}
+        </a>
+        {% if page_obj.has_next %}
+            {% if page_obj.next_page_number != page_obj.paginator.num_pages %}
+            <a href="?page={{ page_obj.next_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.next_page_number }}</a>
+            {% endif %}
+            <a href="?page={{ page_obj.paginator.num_pages }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.paginator.num_pages }}</a>
+        {% endif %}
+    </span>
+    </div>
+</div>
+
+{% endblock %}

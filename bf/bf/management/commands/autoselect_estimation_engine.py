@@ -1,23 +1,22 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from cProfile import Profile
-
 from common.utils import get_best_engine
-from django.core.management.base import BaseCommand
 
+from bf.management.commands.common import BfBaseCommand
 from bf.models import PersonYear
 
 
-class Command(BaseCommand):
+class Command(BfBaseCommand):
+    filename = __file__
 
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
             self.stdout.write(msg, **kwargs)
 
     def add_arguments(self, parser):
-        parser.add_argument("--profile", action="store_true", default=False)
         parser.add_argument("year", type=int)
+        super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
         self._verbose = kwargs["verbosity"] > 1
@@ -41,11 +40,3 @@ class Command(BaseCommand):
             batch_size=1000,
         )
         self._write_verbose("Done")
-
-    def handle(self, *args, **options):
-        if options.get("profile", False):
-            profiler = Profile()
-            profiler.runcall(self._handle, *args, **options)
-            profiler.print_stats(sort="tottime")
-        else:
-            self._handle(*args, **options)

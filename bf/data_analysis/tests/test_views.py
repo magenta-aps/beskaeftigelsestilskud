@@ -10,6 +10,7 @@ from common.models import EngineViewPreferences, User
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
     HistogramView,
+    JobListView,
     PersonAnalysisView,
     PersonListView,
     PersonYearEstimationMixin,
@@ -25,6 +26,8 @@ from bf.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
 from bf.models import (
     IncomeEstimate,
     IncomeType,
+    JobLog,
+    ManagementCommands,
     MonthlyIncomeReport,
     Person,
     PersonMonth,
@@ -334,6 +337,26 @@ class ViewTestCase(TestCase):
         request = self._request_factory.get(params)
         request.user = self.user
         return request
+
+
+class TestJobListView(ViewTestCase):
+    view_class = JobListView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        JobLog.objects.create(
+            name=ManagementCommands.CALCULATE_STABILITY_SCORE, cpr_param="111"
+        )
+
+    def test_get_returns_html(self):
+        request = self.format_request()
+        self._view.setup(request)
+        response = self._view.get(request)
+        self.assertIsInstance(response, TemplateResponse)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list.count(), 1)
+        self.assertEqual(object_list[0].cpr_param, "111")
 
 
 class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):

@@ -5,12 +5,10 @@
 # Job which runs all other relevant management jobs on the proper days.
 # Intended to be run daily
 
-import datetime
-
-from common.utils import get_payout_date
 from django.conf import settings
-from django.core import management
 from django.core.management.base import BaseCommand
+
+from bf.dispatch import JobDispatcher
 
 
 class Command(BaseCommand):
@@ -67,39 +65,21 @@ class Command(BaseCommand):
         """
         verbosity = options["verbosity"]
         self._verbose = verbosity > 1
-        today = datetime.date.today()
+        job_dispatcher = JobDispatcher(
+            day=options["day"], month=options["month"], year=options["year"]
+        )
 
-        day = options["day"] or today.day
-        month = options["month"] or today.month
-        year = options["year"] or today.year
+        year = job_dispatcher.year
+        month = job_dispatcher.month
         cpr = options["cpr"]
         ESKAT_BASE_URL = settings.ESKAT_BASE_URL  # type: ignore[misc]
-        PRISME_DELAY = settings.PRISME_DELAY
 
-        # Get the date on which citizens expect their money to be on their accounts.
-        payout_date = get_payout_date(year, month)
-
-        # Allow for a week between calculation and payout
-        calculation_date = payout_date - datetime.timedelta(days=7)
-
-        # We send data to prisme "x" days before the payout date
-        prisme_date = payout_date - datetime.timedelta(days=PRISME_DELAY)
-
-        # Jobs to run once a year (Before the first benefit calculation)
-        if month == 1 and day == 1:
-            # Calculate stability score
-            management.call_command(
-                "calculate_stability_score",
-                year - 1,
-                verbosity=verbosity,
-            )
-
-            # Auto-select estimation engine
-            management.call_command(
-                "autoselect_estimation_engine",
-                year,
-                verbosity=verbosity,
-            )
+        job_dispatcher.call_job(
+            "calculate_stability_score", year - 1, verbosity=verbosity
+        )
+        job_dispatcher.call_job(
+            "autoselect_estimation_engine", year, verbosity=verbosity
+        )
 
         for typ in ["expectedincome", "monthlyincome", "taxinformation"]:
 
@@ -110,7 +90,7 @@ class Command(BaseCommand):
                 break
 
             # Load data from eskat
-            management.call_command(
+            job_dispatcher.call_job(
                 "load_eskat",
                 year,
                 typ,
@@ -120,31 +100,29 @@ class Command(BaseCommand):
             )
 
         # Estimate income
-        management.call_command(
+        job_dispatcher.call_job(
             "estimate_income",
             year=year,
             cpr=cpr,
             verbosity=verbosity,
         )
 
-        if day == calculation_date.day:
-            # Calculate benefit
-            management.call_command(
-                "calculate_benefit",
-                year,
-                month=month,
-                cpr=cpr,
-                verbosity=verbosity,
-            )
+        # Calculate benefit
+        job_dispatcher.call_job(
+            "calculate_benefit",
+            year,
+            month=month,
+            cpr=cpr,
+            verbosity=verbosity,
+        )
 
-        if day == prisme_date.day:
-            # Send to prisme
-            management.call_command(
-                "export_benefits_to_prisme",
-                year=year,
-                month=month,
-                verbosity=verbosity,
-            )
+        # Send to prisme
+        job_dispatcher.call_job(
+            "export_benefits_to_prisme",
+            year=year,
+            month=month,
+            verbosity=verbosity,
+        )
 
         self._write_verbose("Done")
 
