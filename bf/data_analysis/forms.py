@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from common.form_mixins import BootstrapForm
 from django import forms
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -10,7 +11,7 @@ from bf.data import engine_keys
 from bf.models import IncomeType, Year
 
 
-class PersonYearListOptionsForm(forms.Form):
+class PersonYearListOptionsForm(BootstrapForm):
     has_a = forms.ChoiceField(
         label="A-indkomst",
         choices=(
@@ -19,7 +20,6 @@ class PersonYearListOptionsForm(forms.Form):
             (False, "Har ikke A-indkomst"),
         ),
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
     has_b = forms.ChoiceField(
@@ -30,14 +30,12 @@ class PersonYearListOptionsForm(forms.Form):
             (False, "Har ikke B-indkomst"),
         ),
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
     has_zero_income = forms.BooleanField(
         label="Har indkomst",
         required=False,
         widget=forms.widgets.Select(
-            attrs={"class": "form-control"},
             choices=(
                 (False, "Kun dem der har indkomst"),
                 (True, "Alle"),
@@ -72,12 +70,12 @@ class PersonYearListOptionsForm(forms.Form):
 
     min_offset = forms.IntegerField(
         label="Min. offset [%]",
-        widget=forms.widgets.NumberInput(attrs={"class": "form-control"}),
+        widget=forms.widgets.NumberInput(),
         required=False,
     )
     max_offset = forms.IntegerField(
         label="Max. offset [%]",
-        widget=forms.widgets.NumberInput(attrs={"class": "form-control"}),
+        widget=forms.widgets.NumberInput(),
         required=False,
     )
     selected_model = forms.ChoiceField(
@@ -97,12 +95,10 @@ class PersonYearListOptionsForm(forms.Form):
         ]
         + [("payout_offset", "Tilskudsafvigelse")],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
     cpr = forms.Field(
         required=False,
         label="Cpr-nummer",
-        widget=forms.widgets.TextInput(attrs={"class": "form-control"}),
     )
 
 
@@ -110,7 +106,6 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
     year = forms.ChoiceField(
         choices=[],  # populated in `__init__`
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("År"),
     )
 
@@ -123,7 +118,6 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
             (1000, "1000kr"),
         ],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Opløsning"),
     )
     metric = forms.ChoiceField(
@@ -133,13 +127,11 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
             ("payout_offset", "Tilskudsafvigelse"),
         ],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Metrik"),
     )
     income_type = forms.ChoiceField(
         choices=IncomeType,
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -153,26 +145,23 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
         return reverse("data_analysis:histogram", kwargs={"year": year.year})
 
 
-class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
+class PersonAnalysisOptionsForm(DynamicFormMixin, BootstrapForm):
     year_start = DynamicField(
         forms.ChoiceField,
         choices=lambda form: [(year, year) for year in form.years],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("År"),
     )
     year_end = DynamicField(
         forms.ChoiceField,
         choices=lambda form: [(year, year) for year in form.years],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("År"),
     )
 
     income_type = forms.ChoiceField(
         choices=[(None, _("Begge"))]
         + [(choice.value, choice.label) for choice in IncomeType],
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Indkomsttype"),
         required=False,
     )
@@ -184,7 +173,7 @@ class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
 
 
-class JobListOptionsForm(forms.Form):
+class JobListOptionsForm(BootstrapForm):
     order_by = forms.ChoiceField(
         choices=(
             (f"{prefix}{field}", f"{prefix}{field}")
@@ -201,4 +190,14 @@ class JobListOptionsForm(forms.Form):
             for prefix in ("", "-")
         ),
         required=False,
+    )
+
+
+class CalculatorForm(BootstrapForm):
+    estimated_month_income = forms.DecimalField(
+        required=False,
+        label=_("Estimeret månedsindkomst"),
+    )
+    estimated_year_income = forms.DecimalField(
+        required=True, label=_("Estimeret årsindkomst")
     )

@@ -54,6 +54,11 @@
                 {% endfor %}
             </ul>
         </div>
+        <div class="p-2">
+            <a class="btn btn-primary" href="{% url 'data_analysis:calculator' %}" role="button">
+                {% translate "Tilskudsberegner" %}
+            </a>
+        </div>
         {% endcache %}
         <div class="p-2">
             <a class="btn btn-primary" href="{% url 'data_analysis:job_log' %}" role="button" >
@@ -66,9 +71,11 @@
             {{user.first_name}} {{user.last_name}}
         </span>
         {% if user.is_authenticated %}
-            <a href="{% url 'login:logout' %}" class="btn btn-primary mx-1 my-2" id="logout-link">
+            <div class="p-2">
+            <a href="{% url 'login:logout' %}" class="btn btn-primary" id="logout-link">
                 {% translate "Log out" %}
             </a>
+            </div>
         {% endif %}
 
         <span class="locale-changer navbar-text">
