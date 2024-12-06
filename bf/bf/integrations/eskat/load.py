@@ -205,7 +205,7 @@ class MonthlyIncomeHandler(Handler):
             Employer.objects.bulk_create(
                 [
                     Employer(cvr=cvr, load=load)
-                    for cvr in {item.cvr for item in items if item.cvr is not None}
+                    for cvr in {int(item.cvr) for item in items if item.cvr}
                 ],
                 update_conflicts=True,
                 update_fields=("load",),
@@ -254,9 +254,7 @@ class MonthlyIncomeHandler(Handler):
                         report = MonthlyIncomeReport(
                             person_month=person_month,
                             employer=(
-                                employer_map[int(item.cvr)]
-                                if item.cvr is not None
-                                else None
+                                employer_map[int(item.cvr)] if item.cvr else None
                             ),
                             load=load,
                             **{
