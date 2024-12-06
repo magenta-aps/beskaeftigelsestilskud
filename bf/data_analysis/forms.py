@@ -11,7 +11,7 @@ from bf.data import engine_keys
 from bf.models import IncomeType, Year
 
 
-class PersonYearListOptionsForm(forms.Form):
+class PersonYearListOptionsForm(BootstrapForm):
     has_a = forms.ChoiceField(
         label="A-indkomst",
         choices=(
@@ -20,7 +20,6 @@ class PersonYearListOptionsForm(forms.Form):
             (False, "Har ikke A-indkomst"),
         ),
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
     has_b = forms.ChoiceField(
@@ -31,14 +30,12 @@ class PersonYearListOptionsForm(forms.Form):
             (False, "Har ikke B-indkomst"),
         ),
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
     has_zero_income = forms.BooleanField(
         label="Har indkomst",
         required=False,
         widget=forms.widgets.Select(
-            attrs={"class": "form-control"},
             choices=(
                 (False, "Kun dem der har indkomst"),
                 (True, "Alle"),
@@ -73,12 +70,12 @@ class PersonYearListOptionsForm(forms.Form):
 
     min_offset = forms.IntegerField(
         label="Min. offset [%]",
-        widget=forms.widgets.NumberInput(attrs={"class": "form-control"}),
+        widget=forms.widgets.NumberInput(),
         required=False,
     )
     max_offset = forms.IntegerField(
         label="Max. offset [%]",
-        widget=forms.widgets.NumberInput(attrs={"class": "form-control"}),
+        widget=forms.widgets.NumberInput(),
         required=False,
     )
     selected_model = forms.ChoiceField(
@@ -98,12 +95,10 @@ class PersonYearListOptionsForm(forms.Form):
         ]
         + [("payout_offset", "Tilskudsafvigelse")],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
     cpr = forms.Field(
         required=False,
         label="Cpr-nummer",
-        widget=forms.widgets.TextInput(attrs={"class": "form-control"}),
     )
 
 
@@ -111,7 +106,6 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
     year = forms.ChoiceField(
         choices=[],  # populated in `__init__`
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("År"),
     )
 
@@ -124,7 +118,6 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
             (1000, "1000kr"),
         ],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Opløsning"),
     )
     metric = forms.ChoiceField(
@@ -134,13 +127,11 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
             ("payout_offset", "Tilskudsafvigelse"),
         ],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Metrik"),
     )
     income_type = forms.ChoiceField(
         choices=IncomeType,
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -182,7 +173,7 @@ class PersonAnalysisOptionsForm(DynamicFormMixin, BootstrapForm):
         super().__init__(*args, **kwargs)
 
 
-class JobListOptionsForm(forms.Form):
+class JobListOptionsForm(BootstrapForm):
     order_by = forms.ChoiceField(
         choices=(
             (f"{prefix}{field}", f"{prefix}{field}")
