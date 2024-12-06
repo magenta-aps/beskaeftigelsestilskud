@@ -678,6 +678,61 @@ post_save.connect(
 )
 
 
+class BTaxPayment(models.Model):
+    """This model is used for tracking whether the person has actually paid tax on their
+    B income for a given month.
+    They are only eligible for receiving benefits due to B income if they have indeed
+    paid tax on their B income.
+    Note that we only get a total amount of B tax paid - it is not split on the
+    different types of B income.
+    Also note that the B tax paid may differ from the B tax that was charged.
+    """
+
+    person_month = models.ForeignKey(
+        PersonMonth,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+    )
+
+    amount_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
+    amount_charged = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+
+    date_charged = models.DateField(
+        null=False,
+        blank=False,
+    )
+
+    rate_number = models.PositiveSmallIntegerField(
+        null=False,
+        blank=False,
+    )
+
+    filename = models.TextField(
+        null=False,
+        blank=False,
+    )
+
+    serial_number = models.PositiveBigIntegerField(
+        null=False,
+        blank=False,
+    )
+
+    def __str__(self) -> str:
+        return f"{self.person_month}: {self.amount_paid}"
+
+
 class IncomeEstimate(models.Model):
 
     class Meta:
