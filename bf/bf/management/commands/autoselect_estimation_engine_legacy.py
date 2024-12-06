@@ -12,6 +12,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--profile", action="store_true", default=False)
+        super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
         for person in Person.objects.all():

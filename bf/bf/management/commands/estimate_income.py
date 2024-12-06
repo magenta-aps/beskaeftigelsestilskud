@@ -3,17 +3,18 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 import time
-from cProfile import Profile
 from typing import List
 
-from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from bf.estimation import EstimationEngine
+from bf.management.commands.common import BfBaseCommand
 from bf.models import Person, Year
 
 
-class Command(BaseCommand):
+class Command(BfBaseCommand):
+    filename = __file__
+
     engines: List[EstimationEngine] = EstimationEngine.instances()
 
     def add_arguments(self, parser):
@@ -21,7 +22,7 @@ class Command(BaseCommand):
         parser.add_argument("--count", type=int)
         parser.add_argument("--dry", action="store_true")
         parser.add_argument("--cpr", type=str)
-        parser.add_argument("--profile", action="store_true", default=False)
+        super().add_arguments(parser)
 
     @transaction.atomic
     def _handle(self, *args, **kwargs):
@@ -47,11 +48,3 @@ class Command(BaseCommand):
         if verbose:
             duration = datetime.datetime.utcfromtimestamp(time.time() - start)
             self.stdout.write(f"Done (took {duration.strftime('%H:%M:%S')})")
-
-    def handle(self, *args, **options):
-        if options.get("profile", False):
-            profiler = Profile()
-            profiler.runcall(self._handle, *args, **options)
-            profiler.print_stats(sort="tottime")
-        else:
-            self._handle(*args, **options)

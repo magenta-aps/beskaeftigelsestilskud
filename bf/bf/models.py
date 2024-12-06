@@ -28,6 +28,21 @@ class IncomeType(TextChoices):
     B = "B"
 
 
+class ManagementCommands(TextChoices):
+    CALCULATE_STABILITY_SCORE = "calculate_stability_score"
+    AUTOSELECT_ESTIMATION_ENGINE = "autoselect_estimation_engine"
+    LOAD_ESKAT = "load_eskat"
+    ESTIMATE_INCOME = "estimate_income"
+    CALCULATE_BENEFIT = "calculate_benefit"
+    EXPORT_BENEFITS_TO_PRISME = "export_benefits_to_prisme"
+
+
+class StatusChoices(TextChoices):
+    RUNNING = "Kører"
+    SUCCEEDED = "Gennemført"
+    FAILED = "Fejl"
+
+
 class WorkingTaxCreditCalculationMethod(models.Model):
     class Meta:
         abstract = True
@@ -1100,3 +1115,33 @@ class AnnualIncome(models.Model):
     shareholder_dividend_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=None, null=True
     )
+
+
+class JobLog(models.Model):
+    """
+    model which keeps track of:
+        - which jobs were run
+        - On what date
+        - Whether they finished
+        - With which args/kwargs
+    """
+
+    name = models.TextField(choices=ManagementCommands)
+    runtime = models.DateTimeField(auto_now_add=True)
+    year = models.IntegerField(default=None, null=True)
+    month = models.IntegerField(default=None, null=True)
+    status = models.TextField(default=StatusChoices.RUNNING, choices=StatusChoices)
+
+    # Job parameters
+    year_param = models.IntegerField(default=None, null=True)
+    month_param = models.IntegerField(default=None, null=True)
+    count_param = models.IntegerField(default=None, null=True)
+    cpr_param = models.TextField(default=None, null=True)
+    type_param = models.TextField(default=None, null=True)
+    verbosity_param = models.IntegerField(default=None, null=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.year = self.runtime.year
+        self.month = self.runtime.month
+        super().save(update_fields=["year", "month"])

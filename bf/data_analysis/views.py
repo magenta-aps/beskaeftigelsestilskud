@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from common.models import EngineViewPreferences
 from data_analysis.forms import (
     HistogramOptionsForm,
+    JobListOptionsForm,
     PersonAnalysisOptionsForm,
     PersonYearListOptionsForm,
 )
@@ -29,6 +30,7 @@ from bf.estimation import EstimationEngine
 from bf.models import (
     AnnualIncome,
     IncomeType,
+    JobLog,
     MonthlyIncomeReport,
     Person,
     PersonMonth,
@@ -436,3 +438,47 @@ class UpdateEngineViewPreferences(View):
                 setattr(preferences, field.name, show_field)
         preferences.save()
         return HttpResponse("ok")
+
+
+class JobListView(LoginRequiredMixin, ListView, FormView):
+    paginate_by = 30
+    model = JobLog
+    template_name = "data_analysis/job_list.html"
+    form_class = JobListOptionsForm
+    default_ordering = "-runtime"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.object_list = None
+
+    def get_form_kwargs(self):
+        return {
+            **super().get_form_kwargs(),
+            "data": self.request.GET,
+        }
+
+    def get_ordering(self) -> List[str]:
+        ordering = self.request.GET.get("order_by") or self.default_ordering
+        return ordering.split(",")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.order_by(*self.get_ordering())
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        form = context["form"]
+        form.full_clean()
+        params = params_no_none(form.cleaned_data)
+        current_order_by = params.pop("order_by", None) or self.default_ordering
+        params["page"] = context["page_obj"].number
+        sort_params = {}
+        for value, label in form.fields["order_by"].choices:
+            order_by = value if value != current_order_by else ("-" + value)
+            sort_params[value] = urlencode({**params, "order_by": order_by})
+        context["sort_params"] = sort_params
+        context["order_current"] = current_order_by
+
+        return context

@@ -13,3 +13,8 @@ class IncomeTypeUnhandledByEngine(Exception):
         super().__init__(
             f"The income type {income_type} is not handled by {engine.__name__}"
         )
+
+
+class DependenciesNotMet(Exception):
+    def __init__(self, name: str, dependency: str):
+        super().__init__(f"'{dependency}' dependency for '{name}' is not met")
