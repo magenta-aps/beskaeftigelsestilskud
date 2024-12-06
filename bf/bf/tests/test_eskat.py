@@ -1022,7 +1022,7 @@ class TestLoadEskatCommand(TestCase):
 
 class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
     """Test that subsequent updates to the same monthly income report (same person and
-    month) are stored as updates to the same `MonthlyAIncomeReport`, and that the
+    month) are stored as updates to the same `MonthlyIncomeReport`, and that the
     `PersonMonth` is updated as expected.
     """
 
@@ -1034,20 +1034,20 @@ class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
         # Assert: two separate loads are recorded
         self.assertNotEqual(load1, load2)
         # Assert: there is only one `MonthlyAIncomeReport` (with the latest value)
-        monthly_a_income_reports = MonthlyAIncomeReport.objects.filter(
+        monthly_income_reports = MonthlyIncomeReport.objects.filter(
             person=self.person,
             person_month__month=1,
         )
         self.assertQuerySetEqual(
-            monthly_a_income_reports.values_list("month", "amount"),
+            monthly_income_reports.values_list("month", "a_income"),
             [(1, 2000)],
         )
         # Assert: both current and previous versions of the `MonthlyAIncomeReport` are
         # kept in history, so previous amount, etc. is available.
         self.assertQuerySetEqual(
-            monthly_a_income_reports[0]
+            monthly_income_reports[0]
             .history.order_by("history_date")
-            .values_list("amount", flat=True),
+            .values_list("a_income", flat=True),
             [Decimal(1000), Decimal(2000)],
         )
 

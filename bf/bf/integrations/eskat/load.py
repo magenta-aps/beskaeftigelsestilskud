@@ -211,10 +211,6 @@ class MonthlyIncomeHandler(Handler):
                 update_fields=("load",),
                 unique_fields=("cvr",),
             )
-            # Construct dictionary mapping employer CVRs to Employer objects
-            employer_map = {
-                employer.cvr: employer for employer in Employer.objects.all()
-            }
 
             # Create or update Year object
             person_years = cls.create_person_years(
@@ -245,53 +241,32 @@ class MonthlyIncomeHandler(Handler):
                 )
                 out.write(f"Processed {len(person_months)} PersonMonth objects")
 
-                # Create MonthlyIncomeReport objects
-                # (existing objects for this year will be deleted!)
-                income_reports = []
-                for item in items:
-                    if item.cpr is not None and item.month is not None:
-                        person_month = person_months[(item.cpr, item.month)]
-                        report = MonthlyIncomeReport(
-                            person_month=person_month,
-                            employer=(
-                                employer_map[int(item.cvr)] if item.cvr else None
-                            ),
-                            load=load,
-                            **{
-                                f.name: Decimal(getattr(item, f.name) or 0)
-                                for f in fields(item)
-                                if f.name
-                                not in {
-                                    "cpr",
-                                    "cvr",
-                                    "tax_municipality_number",
-                                    "month",
-                                }
-                            },
-                        )
-                        report.update_amount()
-                        income_reports.append(report)
-                MonthlyIncomeReport.objects.filter(
-                    person_month__person_year__year=year
-                ).delete()
-                MonthlyIncomeReport.objects.bulk_create(income_reports)
+                income_reports = cls._create_or_update_monthly_income_reports(
+                    items,
+                    person_months,
+                    load,
+                )
 
                 for person_month in person_months.values():
                     # FIXME: shouldn't the objects in `person_months` be written to DB?
-                    # And shouldn't `update_amount_sum` be called for B income reports?
                     person_month.update_amount_sum()
+
                 out.write(f"Created {len(income_reports)} MonthlyIncomeReport objects")
 
     @classmethod
     def _create_or_update_monthly_income_reports(
         self,
-        model: type[MonthlyIncomeReport],
         items: list[MonthlyIncome],
         person_months: dict[tuple[str, int], PersonMonth],
-        employer: Employer,
+        load: DataLoad,
     ) -> list:
         objs_to_create = []
         objs_to_update = []
+
+        # Construct dictionary mapping employer CVRs to Employer objects
+        employer_map = {
+            employer.cvr: employer for employer in Employer.objects.all()
+        }
 
         for item in items:
             if item.cpr is not None and item.month is not None:
@@ -299,17 +274,20 @@ class MonthlyIncomeHandler(Handler):
                 field_values = {
                     f.name: Decimal(getattr(item, f.name) or 0)
                     for f in fields(item)
-                    if f.name not in {"cpr", "month"}
+                    if f.name not in {"cpr", "cvr", "tax_municipality_number", "month"}
                 }
                 try:
-                    report = model.objects.get(
+                    report = MonthlyIncomeReport.objects.get(
                         person_month=person_month,
-                        employer=employer,
+                        # employer=employer,
                     )
-                except model.DoesNotExist:
-                    report = model(
+                except MonthlyIncomeReport.DoesNotExist:
+                    report = MonthlyIncomeReport(
                         person_month=person_month,
-                        employer=employer,
+                        load=load,
+                        employer=(
+                            employer_map[int(item.cvr)] if item.cvr else None
+                        ),
                         **field_values,
                     )
                     report.update_amount()
@@ -322,11 +300,11 @@ class MonthlyIncomeHandler(Handler):
 
         bulk_update_with_history(
             objs_to_update,
-            model,
-            [f.name for f in model._meta.fields if not f.primary_key],
+            MonthlyIncomeReport,
+            [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
         )
 
-        bulk_create_with_history(objs_to_create, model)
+        bulk_create_with_history(objs_to_create, MonthlyIncomeReport)
 
         return objs_to_create + objs_to_update
 

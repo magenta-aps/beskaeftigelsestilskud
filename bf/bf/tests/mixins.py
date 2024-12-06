@@ -4,7 +4,7 @@
 
 from bf.models import (
     Employer,
-    MonthlyAIncomeReport,
+    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -38,9 +38,9 @@ class BaseEnvMixin:
         self,
         person_month: PersonMonth,
         **kwargs,
-    ) -> MonthlyAIncomeReport:
-        monthly_a_income_report, _ = MonthlyAIncomeReport.objects.create(
-            employer=self.employer,
+    ) -> MonthlyIncomeReport:
+        monthly_a_income_report, _ = MonthlyIncomeReport.objects.create(
+            # employer=self.employer,
             person=self.person,
             person_month=person_month,
             month=person_month.month,
