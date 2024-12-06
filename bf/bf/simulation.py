@@ -139,7 +139,7 @@ class Simulation:
         if self.income_type in (IncomeType.A, None):
             income += list(
                 MonthlyIncomeReport.objects.filter(
-                    person=self.person,
+                    person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
                     a_income__gt=0,
@@ -148,7 +148,7 @@ class Simulation:
         if self.income_type in (IncomeType.B, None):
             income += list(
                 MonthlyIncomeReport.objects.filter(
-                    person=self.person,
+                    person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
                     b_income__gt=0,
@@ -231,7 +231,7 @@ class Simulation:
         if income_type in (IncomeType.A, None):
             income += list(
                 MonthlyIncomeReport.objects.filter(
-                    person=self.person,
+                    person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
                     a_income__gt=0,
@@ -240,7 +240,7 @@ class Simulation:
         if income_type in (IncomeType.B, None):
             income += list(
                 MonthlyIncomeReport.objects.filter(
-                    person=self.person,
+                    person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
                     b_income__gt=0,

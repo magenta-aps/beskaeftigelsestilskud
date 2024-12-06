@@ -495,7 +495,6 @@ class MonthlyIncomeReport(models.Model):
     )
     month = models.PositiveSmallIntegerField()
     year = models.PositiveSmallIntegerField()
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,
