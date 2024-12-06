@@ -182,3 +182,23 @@ class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
         person_years = instance.personyear_set.all().select_related("year")
         self.years = sorted([person_year.year.year for person_year in person_years])
         super().__init__(*args, **kwargs)
+
+
+class JobListOptionsForm(forms.Form):
+    order_by = forms.ChoiceField(
+        choices=(
+            (f"{prefix}{field}", f"{prefix}{field}")
+            for field in (
+                "name",
+                "runtime",
+                "status",
+                "year_param",
+                "month_param",
+                "cpr_param",
+                "type_param",
+                "count_param",
+            )
+            for prefix in ("", "-")
+        ),
+        required=False,
+    )

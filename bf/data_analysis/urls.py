@@ -5,6 +5,7 @@
 
 from data_analysis.views import (
     HistogramView,
+    JobListView,
     PersonAnalysisView,
     PersonListView,
     UpdateEngineViewPreferences,
@@ -27,4 +28,5 @@ urlpatterns: list[URLResolver | URLPattern] = [
         UpdateEngineViewPreferences.as_view(),
         name="update_preferences",
     ),
+    path("job_log", JobListView.as_view(), name="job_log"),
 ]

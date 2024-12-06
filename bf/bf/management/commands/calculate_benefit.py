@@ -2,21 +2,20 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from cProfile import Profile
-
 from common.utils import calculate_benefit, isnan
-from django.core.management.base import BaseCommand
 
+from bf.management.commands.common import BfBaseCommand
 from bf.models import PersonMonth
 
 
-class Command(BaseCommand):
+class Command(BfBaseCommand):
+    filename = __file__
 
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
         parser.add_argument("--month", type=int)
         parser.add_argument("--cpr", type=str)
-        parser.add_argument("--profile", action="store_true", default=False)
+        super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
         self._verbose = kwargs["verbosity"] > 1
@@ -65,11 +64,3 @@ class Command(BaseCommand):
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
             self.stdout.write(msg, **kwargs)
-
-    def handle(self, *args, **options):
-        if options.get("profile", False):
-            profiler = Profile()
-            profiler.runcall(self._handle, *args, **options)
-            profiler.print_stats(sort="tottime")
-        else:
-            self._handle(*args, **options)
