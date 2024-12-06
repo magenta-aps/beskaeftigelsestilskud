@@ -432,7 +432,7 @@ class SelfReportedEngine(EstimationEngine):
             if person_month.month == 12:
                 estimated_year_result = MonthlyIncomeReport.objects.filter(
                     year=person_month.year,
-                    person=person_month.person,
+                    person_month__person_year__person=person_month.person,
                 ).aggregate(sum=Sum("b_income"))["sum"] or Decimal(0)
                 # Add any income from final settlement
                 estimated_year_result += person_month.person_year.b_income or 0
