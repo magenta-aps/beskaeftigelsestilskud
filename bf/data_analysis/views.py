@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 
 from common.models import EngineViewPreferences
 from data_analysis.forms import (
+    CalculatorForm,
     HistogramOptionsForm,
     JobListOptionsForm,
     PersonAnalysisOptionsForm,
@@ -36,6 +37,7 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 from bf.simulation import Simulation
@@ -431,7 +433,6 @@ class UpdateEngineViewPreferences(View):
 
     def post(self, request, *args, **kwargs):
         preferences, _ = self.model.objects.get_or_create(user=self.request.user)
-
         for field in self.model._meta.fields:
             if field.name in request.POST and field.name.startswith("show_"):
                 show_field = request.POST[field.name].lower() == "true"
@@ -482,3 +483,20 @@ class JobListView(LoginRequiredMixin, ListView, FormView):
         context["order_current"] = current_order_by
 
         return context
+
+
+class CalculatorView(FormView):
+    form_class = CalculatorForm
+    template_name = "data_analysis/calculate.html"
+
+    def form_valid(self, form):
+        method = StandardWorkBenefitCalculationMethod.objects.first()
+        result = method.calculate(form.cleaned_data["estimated_year_income"])
+        return self.render_to_response(
+            self.get_context_data(
+                form=form,
+                result=str(result),
+                result_monthly=str(Decimal(result / 12).quantize(Decimal(".01"))),
+                graph_points=json.dumps(method.graph_points, cls=SimulationJSONEncoder),
+            )
+        )
