@@ -99,7 +99,8 @@ services:
     volumes:
       - ./dev-environment/sftp_users.conf:/etc/sftp/users.conf
       - ./data/sftp_uploads/:/home/besk/test/:rw
-      - ./data/sftp_downloads/:/home/besk/posting_status_folder/:rw
+      - ./data/sftp_downloads/posting_status:/home/besk/posting_status/:rw
+      - ./data/sftp_downloads/b_tax:/home/besk/btax/:rw
 
 volumes:
   postgres-data:

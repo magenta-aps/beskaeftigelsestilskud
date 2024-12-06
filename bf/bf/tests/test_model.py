@@ -11,6 +11,7 @@ from django.test import TestCase
 from bf.data import MonthlyIncomeData
 from bf.models import (
     AnnualIncome,
+    BTaxPayment,
     Employer,
     IncomeEstimate,
     IncomeType,
@@ -427,3 +428,21 @@ class TestPrismeAccountAlias(TestCase):
 
     def test_tax_municipality_six_digit_code_property(self):
         self.assertEqual(self.instance.tax_municipality_six_digit_code, "012345")
+
+
+class TestBTaxPayment(ModelTest):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.instance = BTaxPayment.objects.create(
+            person_month=cls.month1,
+            amount_paid=Decimal("900"),
+            amount_charged=Decimal("1000"),
+            date_charged=date(2020, 1, 1),
+            rate_number=1,
+            filename="",
+            serial_number=1,
+        )
+
+    def test_str(self):
+        self.assertEqual(str(self.instance), f"{self.month1}: 900")
