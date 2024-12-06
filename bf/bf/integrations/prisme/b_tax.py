@@ -71,8 +71,6 @@ class BTaxPaymentImport(SFTPImport):
             stdout.write(f"Loading new file: {filename}\n")
             # Split rows in CSV into `matched` and `unmatched` rows
             all_rows: list[BTaxPayment] = self._parse(filename)
-            matched: list[BTaxPayment]
-            unmatched: list[BTaxPayment]
             matched, unmatched = self._split_rows(all_rows)
             # Create objects for matched rows
             objs: list[BTaxPaymentModel] = self._create_objects(filename, matched)
