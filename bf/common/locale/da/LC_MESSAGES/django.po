@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-15 06:19-0100\n"
+"POT-Creation-Date: 2024-12-06 08:51-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,6 +29,10 @@ msgid "Histogrammer over estimeringernes afvigelse"
 msgstr ""
 
 #: common/templates/common/base.html
+msgid "Tilskudsberegner"
+msgstr ""
+
+#: common/templates/common/base.html
 msgid "Log out"
 msgstr ""
 
@@ -47,10 +51,10 @@ msgstr ""
 
 #: common/utils.py
 #, python-brace-format
-msgid "Tjente for tæt på bundgrænsen i {year}"
+msgid "Tjente for tæt på øverste grænse i {year}"
 msgstr ""
 
 #: common/utils.py
 #, python-brace-format
-msgid "Tjente for tæt på øverste grænse i {year}"
+msgid "Tjente for tæt på bundgrænsen i {year}"
 msgstr ""

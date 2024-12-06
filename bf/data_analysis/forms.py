@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from common.form_mixins import BootstrapForm
 from django import forms
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -153,26 +154,23 @@ class HistogramOptionsForm(PersonYearListOptionsForm):
         return reverse("data_analysis:histogram", kwargs={"year": year.year})
 
 
-class PersonAnalysisOptionsForm(DynamicFormMixin, forms.Form):
+class PersonAnalysisOptionsForm(DynamicFormMixin, BootstrapForm):
     year_start = DynamicField(
         forms.ChoiceField,
         choices=lambda form: [(year, year) for year in form.years],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("År"),
     )
     year_end = DynamicField(
         forms.ChoiceField,
         choices=lambda form: [(year, year) for year in form.years],
         required=False,
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("År"),
     )
 
     income_type = forms.ChoiceField(
         choices=[(None, _("Begge"))]
         + [(choice.value, choice.label) for choice in IncomeType],
-        widget=forms.widgets.Select(attrs={"class": "form-control"}),
         label=_("Indkomsttype"),
         required=False,
     )
@@ -201,4 +199,14 @@ class JobListOptionsForm(forms.Form):
             for prefix in ("", "-")
         ),
         required=False,
+    )
+
+
+class CalculationForm(BootstrapForm):
+    estimated_month_income = forms.DecimalField(
+        required=False,
+        label=_("Estimeret månedsindkomst"),
+    )
+    estimated_year_income = forms.DecimalField(
+        required=True, label=_("Estimeret årsindkomst")
     )

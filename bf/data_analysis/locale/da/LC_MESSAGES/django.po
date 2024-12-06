@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-09 07:28-0100\n"
+"POT-Creation-Date: 2024-12-06 10:48-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,6 +35,26 @@ msgstr ""
 
 #: data_analysis/forms.py
 msgid "Indkomsttype"
+msgstr ""
+
+#: data_analysis/forms.py
+msgid "Estimeret månedsindkomst"
+msgstr ""
+
+#: data_analysis/forms.py
+msgid "Estimeret årsindkomst"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/calculate.html
+msgid "Beregn"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/calculate.html
+msgid "Beregnet beskæftigelsestilskud for hele året:"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/calculate.html
+msgid "Beregnet beskæftigelsestilskud pr. måned:"
 msgstr ""
 
 #: data_analysis/templates/data_analysis/histogram.html

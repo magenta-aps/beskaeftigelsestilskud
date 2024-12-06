@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 from common.models import EngineViewPreferences, User
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
+    CalculatorView,
     HistogramView,
     JobListView,
     PersonAnalysisView,
@@ -33,6 +34,7 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 from bf.simulation import IncomeItem, Simulation
@@ -680,3 +682,72 @@ class TestUpdateEngineViewPreferences(TestCase):
         self.user.refresh_from_db()
 
         self.assertTrue(self.user.engine_view_preferences.show_SameAsLastMonthEngine)
+
+
+class TestCalculator(ViewTestCase):
+    view_class = CalculatorView
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+
+    def request(self, amount):
+        request = self._request_factory.post(
+            path=reverse("data_analysis:calculator"),
+            data={"estimated_year_income": amount},
+        )
+        self._view.setup(request)
+        return self._view.post(request)
+
+    def test_calculator_zero(self):
+        response = self.request(0)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertTrue(response.context_data["form"].is_valid())
+        self.assertEqual(response.context_data["result"], "0.00")
+        self.assertEqual(response.context_data["result_monthly"], "0.00")
+        self.assertJSONEqual(
+            response.context_data["graph_points"],
+            [
+                [0.0, 0.0],
+                [68000.0, 0.0],
+                [158000.0, 15750.0],
+                [250000.0, 15750.0],
+                [500000.0, 0.0],
+            ],
+        )
+
+    def test_calculator_ramp_up(self):
+        response = self.request(100000)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertTrue(response.context_data["form"].is_valid())
+        self.assertEqual(response.context_data["result"], "5600.00")
+        self.assertEqual(response.context_data["result_monthly"], "466.67")
+
+    def test_calculator_ramp_plateau(self):
+        response = self.request(250000)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertTrue(response.context_data["form"].is_valid())
+        self.assertEqual(response.context_data["result"], "15750.00")
+        self.assertEqual(response.context_data["result_monthly"], "1312.50")
+
+    def test_calculator_ramp_down(self):
+        response = self.request(350000)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertTrue(response.context_data["form"].is_valid())
+        self.assertEqual(response.context_data["result"], "9450.00")
+        self.assertEqual(response.context_data["result_monthly"], "787.50")
+
+    def test_calculator_ramp_over(self):
+        response = self.request(500000)
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertTrue(response.context_data["form"].is_valid())
+        self.assertEqual(response.context_data["result"], "0.00")
+        self.assertEqual(response.context_data["result_monthly"], "0.00")

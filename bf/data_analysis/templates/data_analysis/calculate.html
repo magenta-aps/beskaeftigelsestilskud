@@ -1,0 +1,132 @@
+{% extends "data_analysis/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load csp %}
+
+
+{% block extra_headers %}
+    {% if result is not None %}
+        <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+        <script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="row m-1">
+        <h1>Tilskudsberegner</h1>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row m-1">
+            <div class="col-md-6 col-12">
+                <div class="row align-items-center my-1">
+                    <div class="col-6"><label for="{{ form.estimated_month_income.id_for_label }}">{{ form.estimated_month_income.label }}</label></div>
+                    <div class="col-6">{{ form.estimated_month_income }}</div>
+                </div>
+                <div class="row align-items-center my-1">
+                    <div class="col-6"><label for="{{ form.estimated_year_income.id_for_label }}">{{ form.estimated_year_income.label }}</label></div>
+                    <div class="col-6">{{ form.estimated_year_income }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-12 clearfix">
+                        <button type="submit" class="btn btn-primary float-end">{% translate "Beregn" %}</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-12">
+                {% if result is not None %}
+                    <div class="row py-2 my-1">
+                        <div class="col-8">
+                            {% translate "Beregnet beskæftigelsestilskud for hele året:" %}
+                        </div>
+                        <div class="col-4 text-end">
+                            {{ result }}
+                        </div>
+                    </div>
+                    <div class="row py-2 my-1">
+                        <div class="col-8">
+                            {% translate "Beregnet beskæftigelsestilskud pr. måned:" %}
+                        </div>
+                        <div class="col-4 text-end">
+                            {{ result_monthly }}
+                        </div>
+                    </div>
+                    <div class="row">
+                    <div class="col-12">
+                        <div id="graph"></div>
+                        {{ form.estimated_year_income.value|json_script:"year_income" }}
+                        {{ result|json_script:"result" }}
+                        <script id="graph_points" type="application/json">{{graph_points|safe}}</script>
+                        <script nonce="{{ request.csp_nonce }}">
+                            let data = JSON.parse($("#graph_points").text());
+                            const year_income = parseFloat(JSON.parse($("#year_income").text()));
+                            const result = parseFloat(JSON.parse($("#result").text()));
+                            const graph = $("#graph");
+                            if (year_income > data[data.length - 1][0]) {
+                                // result is greater than our current max point in the graph
+                                data = [...method.points, [year_income, 0]];  // Clone array
+                            }
+
+                            const chart = new ApexCharts(graph.get(0), {
+                                "chart": {
+                                    "type": "line"
+                                },
+                                "series": [{
+                                    "name": "Beskæftigelsestilskud",
+                                    "data": data,
+                                }],
+                                "xaxis": {
+                                    "type": "numeric",
+                                    "title": {
+                                        "text": "Estimeret årsindkomst"
+                                    }
+                                },
+                                "yaxis": {
+                                    "title": {
+                                        "text": "Beregnet beskæftigelsestilskud for hele året"
+                                    }
+                                },
+                                "annotations": {
+                                    "xaxis": [{
+                                        "x": year_income || 0,
+                                        "borderColor": '#FF4560',
+                                        "strokeDashArray": 0
+                                    }],
+                                    "yaxis": [{
+                                        "y": result || 0,
+                                        "borderColor": '#FF4560',
+                                        "strokeDashArray": 0
+                                    }],
+                                    "points": [{
+                                        "x": year_income || 0,
+                                        "y": result || 0,
+                                        "marker": {
+                                            "size": 4,
+                                            "fillColor": "#FF4560",
+                                            "strokeColor": "#fff"
+                                        },
+                                        "label": {
+                                            "borderColor": '#FF4560',
+                                        }
+                                    }]
+                                },
+                                "tooltip": {
+                                    "enabled": false,
+                                }
+                            });
+                            chart.render();
+                        </script>
+                    </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+    <script nonce="{{ request.csp_nonce }}">
+        const month_field = $("[name={{ form.estimated_month_income.name }}]");
+        const year_field = $("[name={{ form.estimated_year_income.name }}]");
+        $("[name={{ form.estimated_month_income.name }}]").on("change keyup", function(){
+            year_field.val(12 * month_field.val());
+        });
+    </script>
+{% endblock %}
