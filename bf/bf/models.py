@@ -501,6 +501,13 @@ class MonthlyIncomeReport(models.Model):
         on_delete=models.CASCADE,
     )
 
+    employer = models.ForeignKey(
+        Employer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
     # Autoupdated fields. Do not write into these.
     a_income = models.DecimalField(
         max_digits=12,
