@@ -4,6 +4,7 @@
 
 import json
 import re
+from datetime import date
 from decimal import Decimal
 from io import StringIO, TextIOBase
 from math import ceil
@@ -41,6 +42,7 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     TaxScope,
+    Year,
 )
 from suila.tests.mixins import BaseEnvMixin
 
@@ -1005,14 +1007,22 @@ class TestTaxInformation(BaseTestCase):
             self.assertEqual(data, ["FULL", "LIM"])
 
 
-class TestLoadEskatCommand(TestCase):
+class TestLoadEskatCommand(BaseEnvMixin, TestCase):
     """Test the logic in `bf.management.commands.load_eskat.Command`"""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.year_2019 = Year.objects.create(year=2019, calculation_method=cls.calc)
         cls.command = LoadEskatCommand()
-        cls.command.stdout = StringIO()
+        # cls.command.stdout = StringIO()
+
+    def setUp(self):
+        super().setUp()
+        self.person_month = self.get_or_create_person_month(
+            month=1,
+            import_date=date(self.year.year, 1, 1),
+        )
 
     def test_monthly_income_retrieval_from_previous_months(self):
         """Fetching `monthlyincome` from eSkat in month N should fetch data for months
@@ -1037,18 +1047,29 @@ class TestLoadEskatCommand(TestCase):
             with self.subTest(year=input_year, month=input_month):
                 # Arrange
                 mock_client = MagicMock()
+                mock_client.get_monthly_income = MagicMock()
+                mock_client.get_monthly_income.return_value = [
+                    MonthlyIncome(
+                        cpr=self.person.cpr,
+                        year=expected["year"],
+                        month=m,
+                        salary_income=1000,
+                    )
+                    for expected in expected_args
+                    for m in range(expected["month_from"], expected["month_to"])
+                ]
                 with patch.object(
                     EskatClient, "from_settings", return_value=mock_client
                 ):
                     # Act
-                    self.command._handle(
+                    result: list[PersonMonth] = self.command._handle(
                         type="monthlyincome",
                         year=input_year,
                         month=input_month,
                         cpr=None,
                         verbosity=1,
                     )
-                    # Assert
+                    # Assert: API data is fetched for the expected year and month range
                     self.assertListEqual(
                         [
                             {
@@ -1059,6 +1080,14 @@ class TestLoadEskatCommand(TestCase):
                             for call in mock_client.get_monthly_income.call_args_list
                         ],
                         expected_args,
+                    )
+                    # Assert: benefit recalculations are triggered
+                    self.assertGreater(len(result), 0)
+                    self.assertTrue(
+                        all(
+                            person_month.benefit_paid is not None
+                            for person_month in result
+                        )
                     )
 
 

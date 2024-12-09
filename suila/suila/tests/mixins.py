@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from decimal import Decimal
 
 from suila.models import (
     Employer,
@@ -8,6 +9,7 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 
@@ -18,7 +20,15 @@ class BaseEnvMixin:
         super().setUpTestData()
         cls.person = Person.objects.create(name="Person", cpr="1234567890")
         cls.employer = Employer.objects.create(name="Employer", cvr=12345678)
-        cls.year = Year.objects.create(year=2020)
+        cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.year = Year.objects.create(year=2020, calculation_method=cls.calc)
         cls.personyear = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
