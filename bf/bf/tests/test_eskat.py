@@ -4,6 +4,7 @@
 
 import json
 import re
+from datetime import date
 from decimal import Decimal
 from io import StringIO, TextIOBase
 from math import ceil
@@ -41,6 +42,7 @@ from bf.models import (
     PersonYear,
     PersonYearAssessment,
     TaxScope,
+    Year,
 )
 from bf.tests.mixins import BaseEnvMixin
 
@@ -963,14 +965,22 @@ class TestTaxInformation(BaseTestCase):
             self.assertEqual(data, ["FULL", "LIM"])
 
 
-class TestLoadEskatCommand(TestCase):
+class TestLoadEskatCommand(BaseEnvMixin, TestCase):
     """Test the logic in `bf.management.commands.load_eskat.Command`"""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.year_2019 = Year.objects.create(year=2019, calculation_method=cls.calc)
         cls.command = LoadEskatCommand()
-        cls.command.stdout = StringIO()
+        # cls.command.stdout = StringIO()
+
+    def setUp(self):
+        super().setUp()
+        self.person_month = self.get_or_create_person_month(
+            month=1,
+            import_date=date(self.year.year, 1, 1),
+        )
 
     def test_monthly_income_retrieval_from_previous_months(self):
         """Fetching `monthlyincome` from eSkat in month N should fetch data for months
@@ -995,18 +1005,29 @@ class TestLoadEskatCommand(TestCase):
             with self.subTest(year=input_year, month=input_month):
                 # Arrange
                 mock_client = MagicMock()
+                mock_client.get_monthly_income = MagicMock()
+                mock_client.get_monthly_income.return_value = [
+                    MonthlyIncome(
+                        cpr=self.person.cpr,
+                        year=expected["year"],
+                        month=m,
+                        salary_income=1000,
+                    )
+                    for expected in expected_args
+                    for m in range(expected["month_from"], expected["month_to"])
+                ]
                 with patch.object(
                     EskatClient, "from_settings", return_value=mock_client
                 ):
                     # Act
-                    self.command._handle(
+                    result: list[PersonMonth] = self.command._handle(
                         type="monthlyincome",
                         year=input_year,
                         month=input_month,
                         cpr=None,
                         verbosity=1,
                     )
-                    # Assert
+                    # Assert: API data is fetched for the expected year and month range
                     self.assertListEqual(
                         [
                             {
@@ -1017,6 +1038,14 @@ class TestLoadEskatCommand(TestCase):
                             for call in mock_client.get_monthly_income.call_args_list
                         ],
                         expected_args,
+                    )
+                    # Assert: benefit recalculations are triggered
+                    self.assertGreater(len(result), 0)
+                    self.assertTrue(
+                        all(
+                            person_month.benefit_paid is not None
+                            for person_month in result
+                        )
                     )
 
 
@@ -1033,7 +1062,7 @@ class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
         load2 = self._create_or_update_objects(month=1, salary_income=2000)
         # Assert: two separate loads are recorded
         self.assertNotEqual(load1, load2)
-        # Assert: there is only one `MonthlyAIncomeReport` (with the latest value)
+        # Assert: there is only one `MonthlyIncomeReport` (with the latest value)
         monthly_income_reports = MonthlyIncomeReport.objects.filter(
             person=self.person,
             person_month__month=1,
@@ -1042,7 +1071,7 @@ class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
             monthly_income_reports.values_list("month", "a_income"),
             [(1, 2000)],
         )
-        # Assert: both current and previous versions of the `MonthlyAIncomeReport` are
+        # Assert: both current and previous versions of the `MonthlyIncomeReport` are
         # kept in history, so previous amount, etc. is available.
         self.assertQuerySetEqual(
             monthly_income_reports[0]

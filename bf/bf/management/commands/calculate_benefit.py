@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from common.utils import calculate_benefit, isnan
+from simple_history.utils import bulk_update_with_history
 
 from bf.management.commands.common import BfBaseCommand
 from bf.models import PersonMonth
@@ -40,10 +40,13 @@ class Command(BfBaseCommand):
         for month_number in month_range:
             benefit = calculate_benefit(month_number, year, kwargs["cpr"])
 
-            person_months_to_update = []
-            for person_month in PersonMonth.objects.filter(
+            person_month_qs = PersonMonth.objects.filter(
                 person_year__year__year=kwargs["year"], month=month_number
-            ).select_related("person_year__person"):
+            ).select_related("person_year__person")
+
+            person_months_to_update = []
+
+            for person_month in person_month_qs:
                 cpr = person_month.person_year.person.cpr
                 if cpr in benefit.index:
                     for col in cols_to_update:
@@ -53,8 +56,9 @@ class Command(BfBaseCommand):
                         setattr(person_month, col, value)
                     person_months_to_update.append(person_month)
 
-            PersonMonth.objects.bulk_update(
+            bulk_update_with_history(
                 person_months_to_update,
+                PersonMonth,
                 cols_to_update,
                 batch_size=1000,
             )

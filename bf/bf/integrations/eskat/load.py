@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
@@ -28,6 +29,8 @@ from bf.models import (
     TaxScope,
     Year,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class Handler:
@@ -198,7 +201,7 @@ class MonthlyIncomeHandler(Handler):
     @classmethod
     def create_or_update_objects(
         cls, year: int, items: List["MonthlyIncome"], load: DataLoad, out: TextIO
-    ):
+    ) -> list[PersonMonth]:
         with transaction.atomic():
             # Create Employer objects (for CVRs that we have not already created an
             # Employer object for.)
@@ -221,7 +224,7 @@ class MonthlyIncomeHandler(Handler):
             )
             if person_years:
                 # Create or update PersonMonth objects
-                person_months = {}
+                person_months: list[PersonMonth] = []
                 for person_year in person_years.values():
                     for month in range(1, 13):
                         person_month = PersonMonth(
@@ -231,33 +234,41 @@ class MonthlyIncomeHandler(Handler):
                             import_date=date.today(),
                             amount_sum=Decimal(0),
                         )
-                        key = (person_year.person.cpr, month)
-                        person_months[key] = person_month
+                        person_months.append(person_month)
                 PersonMonth.objects.bulk_create(
-                    person_months.values(),
+                    person_months,
                     update_conflicts=True,
-                    update_fields=("import_date",),
+                    update_fields=("load", "amount_sum", "import_date"),
                     unique_fields=("person_year", "month"),
+                    batch_size=500,
                 )
-                out.write(f"Processed {len(person_months)} PersonMonth objects")
-
+                for person_month in person_months:
+                    person_month.update_amount_sum()
+                PersonMonth.objects.bulk_update(
+                    person_months,
+                    ["amount_sum"],
+                    batch_size=500,
+                )
+                out.write(
+                    f"Created or updated {len(person_months)} PersonMonth objects"
+                )
                 income_reports = cls._create_or_update_monthly_income_reports(
                     items,
-                    person_months,
                     load,
                 )
+                out.write(
+                    f"Created or updated {len(income_reports)} MonthlyIncomeReport "
+                    "objects"
+                )
+                return person_months
 
-                for person_month in person_months.values():
-                    # FIXME: shouldn't the objects in `person_months` be written to DB?
-                    person_month.update_amount_sum()
-
-                out.write(f"Created {len(income_reports)} MonthlyIncomeReport objects")
+        # Fall-through: return empty list (rather than None)
+        return []
 
     @classmethod
     def _create_or_update_monthly_income_reports(
         self,
         items: list[MonthlyIncome],
-        person_months: dict[tuple[str, int], PersonMonth],
         load: DataLoad,
     ) -> list:
         objs_to_create = []
@@ -268,27 +279,47 @@ class MonthlyIncomeHandler(Handler):
 
         for item in items:
             if item.cpr is not None and item.month is not None:
-                person_month = person_months[(item.cpr, item.month)]
+                employer = employer_map[int(item.cvr)] if item.cvr else None
+
+                person_month = PersonMonth.objects.select_related(
+                    "person_year__person"
+                ).get(
+                    person_year__person__cpr=item.cpr,
+                    person_year__year__year=item.year,
+                    month=item.month,
+                )
+
                 field_values = {
                     f.name: Decimal(getattr(item, f.name) or 0)
                     for f in fields(item)
                     if f.name not in {"cpr", "cvr", "tax_municipality_number", "month"}
                 }
+
+                print(
+                    "Handling income data for %r, year=%r, month=%r"
+                    % (person_month, item.year, item.month)
+                )
+
                 try:
+                    # Find existing monthly income report
                     report = MonthlyIncomeReport.objects.get(
                         person_month=person_month,
-                        # employer=employer,
+                        employer=employer,
                     )
                 except MonthlyIncomeReport.DoesNotExist:
+                    # An existing monthly income report does not exist for this person
+                    # month and employer - create it.
                     report = MonthlyIncomeReport(
                         person_month=person_month,
                         load=load,
-                        employer=employer_map[int(item.cvr)] if item.cvr else None,
+                        employer=employer,
                         **field_values,
                     )
                     report.update_amount()
                     objs_to_create.append(report)
                 else:
+                    # An existing monthly income report exists for this person month and
+                    # employer - update it.
                     for name, value in field_values.items():
                         setattr(report, name, value)
                     report.update_amount()

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
+import logging
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
@@ -16,11 +17,14 @@ from django.db.models import F, Index, QuerySet, Sum, TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.utils.translation import gettext_lazy as _
+from pandas import DataFrame
 from project.util import int_divide_end
 from simple_history.models import HistoricalRecords
 
 from bf.data import engine_choices
 from bf.integrations.eskat.responses.data_models import TaxInformation
+
+logger = logging.getLogger(__name__)
 
 
 class IncomeType(TextChoices):
@@ -451,6 +455,48 @@ class PersonMonth(models.Model):
         if b_income is not None:
             return int_divide_end(int(b_income), 12)[self.month - 1]
         return 0
+
+    def _update_benefit(self):
+        from common.utils import calculate_benefit, isnan
+
+        cols_to_update = [
+            "benefit_paid",
+            "prior_benefit_paid",
+            "estimated_year_benefit",
+            "actual_year_benefit",
+            "estimated_year_result",
+        ]
+
+        cpr = self.person_year.person.cpr
+        benefit_df: DataFrame = calculate_benefit(
+            self.month, self.person_year.year.year, cpr
+        )
+
+        if cpr not in benefit_df.index:
+            logger.info("no data for %r", self)
+            return
+
+        for col in cols_to_update:
+            old_value = getattr(self, col, None)
+            new_value = benefit_df.loc[cpr, col]
+
+            if isnan(new_value):
+                new_value = None
+            else:
+                # Convert float value in data frame to decimal with same precision as
+                # old values (which come from the DB.)
+                new_value = Decimal(new_value).quantize(Decimal("1.00"))
+
+            if new_value != old_value:
+                logger.info("%r.%s old=%r new=%r", self, col, old_value, new_value)
+                setattr(self, col, new_value)
+
+    def recalculate_benefit_if_not_paid_out(
+        self,
+        nominal_year: int,
+        nominal_month: int,
+    ):
+        self._update_benefit()
 
 
 class Employer(models.Model):
