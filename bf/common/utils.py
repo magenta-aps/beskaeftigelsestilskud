@@ -126,13 +126,15 @@ def get_income_as_dataframe(year: int, cpr_numbers: list = []) -> dict:
     """
     income_qs = MonthlyIncomeReport.objects.filter(year=year)
     if cpr_numbers:
-        income_qs = income_qs.filter(person__cpr__in=cpr_numbers)
+        income_qs = income_qs.filter(
+            person_month__person_year__person__cpr__in=cpr_numbers
+        )
 
     output_dict = {}
     for income_type, amount_field in zip(IncomeType, ["a_income", "b_income"]):
         df = to_dataframe(
             qs=income_qs,
-            index="person__cpr",
+            index="person_month__person_year__person__cpr",
             dtypes={amount_field: float, "month": int},
         )
         output_dict[income_type] = df.pivot_table(

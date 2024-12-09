@@ -89,28 +89,24 @@ class ModelTest(TestCase):
             capital_income=Decimal(15000),  # Any field that counts a B income
             month=cls.month1.month,
             year=cls.year.year,
-            person=cls.person,
         )
         cls.report2 = MonthlyIncomeReport.objects.create(
             person_month=cls.month2,
             salary_income=Decimal(11000),
             month=cls.month2.month,
             year=cls.year.year,
-            person=cls.person,
         )
         cls.report3 = MonthlyIncomeReport.objects.create(
             person_month=cls.month3,
             salary_income=Decimal(12000),
             month=cls.month3.month,
             year=cls.year.year,
-            person=cls.person,
         )
         cls.report4 = MonthlyIncomeReport.objects.create(
             person_month=cls.month4,
             salary_income=Decimal(13000),
             month=cls.month4.month,
             year=cls.year.year,
-            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month1,
@@ -131,7 +127,6 @@ class ModelTest(TestCase):
             salary_income=Decimal(12000),
             month=cls.month2.month,
             year=cls.year.year,
-            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month2,
@@ -145,7 +140,6 @@ class ModelTest(TestCase):
             salary_income=Decimal(10000),
             month=cls.month3.month,
             year=cls.year.year,
-            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month3,
@@ -160,7 +154,6 @@ class ModelTest(TestCase):
             salary_income=Decimal(8000),
             month=cls.month4.month,
             year=cls.year.year,
-            person=cls.person,
         )
         IncomeEstimate.objects.create(
             person_month=cls.month4,
@@ -175,7 +168,6 @@ class ModelTest(TestCase):
             salary_income=Decimal(8000),
             month=cls.year2month1.month,
             year=cls.year2.year,
-            person=cls.person,
         )
         # No IncomeEstimate
 

@@ -118,7 +118,9 @@ class TestStabilityScoreUtils(TestCase):
 
     def test_to_dataframe(self):
         qs = MonthlyIncomeReport.objects.filter(a_income__gt=0).order_by("month")
-        df = to_dataframe(qs, "person__cpr", {"a_income": float})
+        df = to_dataframe(
+            qs, "person_month__person_year__person__cpr", {"a_income": float}
+        )
         self.assertIn(self.person.cpr, df.index)
         self.assertEqual(list(df["a_income"].values), self.reasonably_stable_income)
 
@@ -210,7 +212,6 @@ class BaseTestCase(TestCase):
                     disability_pension_income=Decimal(15000),
                     month=month.month,
                     year=cls.year.year,
-                    person=person_year.person,
                 )
 
                 # The InYearExtrapolationEngine estimates correctly
@@ -460,7 +461,6 @@ class QuarantineTest(BaseTestCase):
                     salary_income=Decimal(salary[person_year.person] * offset),
                     month=month.month,
                     year=cls.last_year.year,
-                    person=person_year.person,
                 )
 
     def test_get_people_in_quarantine(self):
