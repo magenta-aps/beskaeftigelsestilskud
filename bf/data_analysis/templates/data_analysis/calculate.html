@@ -128,8 +128,11 @@
     <script nonce="{{ request.csp_nonce }}">
         const month_field = $("[name={{ form.estimated_month_income.name }}]");
         const year_field = $("[name={{ form.estimated_year_income.name }}]");
-        $("[name={{ form.estimated_month_income.name }}]").on("change keyup", function(){
+        month_field.on("change keyup", function(){
             year_field.val(12 * month_field.val());
+        });
+        year_field.on("change keyup", function(){
+            month_field.val(year_field.val() / 12);
         });
     </script>
 {% endblock %}
