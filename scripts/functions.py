@@ -149,7 +149,7 @@ def makedir(Path):
 def calculate_benefit(
     amount,
     benefit_rate_percent=17.5,
-    personal_allowance=58000,
+    personal_allowance=60000,
     standard_allowance=10000,
     max_benefit=15750,
     scaledown_rate_percent=6.3,
