@@ -15,7 +15,7 @@ class Command(BaseCommand):
             id=1,
             defaults={
                 "benefit_rate_percent": Decimal("17.5"),
-                "personal_allowance": Decimal("58000.00"),
+                "personal_allowance": Decimal("60000.00"),
                 "standard_allowance": Decimal("10000"),
                 "max_benefit": Decimal("15750.00"),
                 "scaledown_rate_percent": Decimal("6.3"),
