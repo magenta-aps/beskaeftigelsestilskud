@@ -82,6 +82,8 @@ class G68G69TransactionWriter(G68TransactionWriter):
             deb_kred="D",
             beløb=amount,
             post_dato=posting_date,
+            ydelse_modtager=recipient,
+            ydelse_modtager_nrkode=2,  # 02=CPR
         )
 
         return G68G69TransactionPair(
