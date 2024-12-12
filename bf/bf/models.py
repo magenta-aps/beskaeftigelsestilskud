@@ -1272,6 +1272,7 @@ class JobLog(models.Model):
     year = models.IntegerField(default=None, null=True)
     month = models.IntegerField(default=None, null=True)
     status = models.TextField(default=StatusChoices.RUNNING, choices=StatusChoices)
+    traceback = models.TextField(null=True, blank=True)
 
     # Job parameters
     year_param = models.IntegerField(default=None, null=True)
