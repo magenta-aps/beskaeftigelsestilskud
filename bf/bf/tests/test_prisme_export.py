@@ -173,7 +173,14 @@ class TestBatchExport(TestCase):
                     # Act
                     export.upload_batch(prisme_batch, [prisme_batch_item])
                     # Assert: the upload function is called
-                    mock_put.assert_called_once_with(settings.PRISME, ANY, ANY, ANY)
+                    mock_put.assert_called_once_with(
+                        settings.PRISME,
+                        ANY,  # `buf`
+                        ANY,  # `destination_folder`
+                        "RES_G68_export_"
+                        f"{prisme_batch.prefix:02}_{export._year}_{export._month:02}"
+                        ".g68",
+                    )
                     # Assert: the `PrismeBatch` object is updated
                     prisme_batch.refresh_from_db()
                     if test_upload_exception:
