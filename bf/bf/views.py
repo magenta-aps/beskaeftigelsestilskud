@@ -404,7 +404,7 @@ class PersonDetailIncomeView(
             return [by_month.get(month, 0) for month in range(1, 13)]
 
         qs = (
-            MonthlyIncomeReport.objects.filter(person=self.object, year=self.year)
+            MonthlyIncomeReport.objects.filter(person_month__person_year__person=self.object, year=self.year)
             .values("month")  # TODO: use employer as group-by key when we have it
             .annotate(
                 _a_income=Sum("a_income"),

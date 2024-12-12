@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-28 08:08-0200\n"
+"POT-Creation-Date: 2024-12-12 06:44-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -42,11 +42,8 @@ msgstr ""
 
 #: bf/models.py
 msgid "Posted"
-#: bf/templates/bf/person_detail.html bf/templates/bf/person_search.html
-msgid "Personer"
 msgstr ""
 
-#: bf/templates/bf/person_detail.html
 #: bf/templates/bf/person_detail.html bf/templates/bf/person_detail_base.html
 msgid "Nøgletal"
 msgstr ""
@@ -185,20 +182,12 @@ msgstr ""
 msgid "Estimeret samlet lønindkomst"
 msgstr ""
 
-#: bf/tests/test_views.py
-msgid "A-indkomst hos: 1"
+#: bf/tests/test_views.py bf/views.py
+msgid "A-indkomst"
 msgstr ""
 
-#: bf/tests/test_views.py
-msgid "A-indkomst hos: 2"
-msgstr ""
-
-#: bf/tests/test_views.py
-msgid "B-indkomst hos: 1"
-msgstr ""
-
-#: bf/tests/test_views.py
-msgid "B-indkomst hos: 2"
+#: bf/tests/test_views.py bf/views.py
+msgid "B-indkomst"
 msgstr ""
 
 #: bf/views.py
