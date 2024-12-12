@@ -1,0 +1,105 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "bf/person_detail_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load date_tags %}
+
+{% block breadcrumb %}
+{{ block.super }}
+<li class="breadcrumb-item active" aria-current="page">{% translate "Indkomst" %}</li>
+{% endblock %}
+
+{% block person_data %}
+{# Income #}
+<h1 id="income">
+    {% blocktrans trimmed with year=year %}
+        Indkomst i {{ year }}
+    {% endblocktrans %}
+</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th class="col-6">{% translate "Arbejdsgiver" %}</th>
+            <th class="col-6">{% translate "Indkomst til dato" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in income_per_employer_and_type %}
+        <tr>
+            <td>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#{{ row.source|slugify }}">
+                    {{ row.source }}
+                </a>
+            </td>
+            <td>{{ row.total_amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="#" data-bs-toggle="modal" data-bs-target="#income-chart">
+    {% translate "Vis på graf" %}
+</a>
+{% for series in income_data %}
+<div class="modal" id="{{ series.name|slugify }}" tabindex="-1" aria-labelledby="{{ series.name|slugify }}-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ series.name|slugify }}-label">{{ series.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate "Luk" %}"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="col-6">{% translate "Måned" %}</th>
+                            <th class="col-6">{% translate "Indkomst" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for datum in series.data %}
+                        <tr>
+                            <td>{{ forloop.counter|month_name }}</td>
+                            <td>{{ datum }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Luk" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+<div class="modal" id="income-chart" tabindex="-1" aria-labelledby="income-chart-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="income-chart-label">{% translate "Indkomst fordelt på måneder" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate "Luk" %}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="chart" id="incomeChart"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Luk" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block extra_headers %}
+{{ block.super }}
+<script id="incomeData" type="application/json">{{ income_chart|safe }}</script>
+<script nonce="{{ request.csp_nonce }}">
+$(function () {
+    renderChart("#incomeChart", "#incomeData");
+});
+</script>
+{% endblock %}
