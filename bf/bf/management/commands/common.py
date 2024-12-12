@@ -4,6 +4,7 @@
 
 import os
 from cProfile import Profile
+from traceback import format_exception
 
 from django.core.management.base import BaseCommand
 
@@ -38,7 +39,11 @@ class BfBaseCommand(BaseCommand):
             else:
                 self._handle(*args, **options)
             job_log.status = StatusChoices.SUCCEEDED
-        except:  # noqa: E722
+            job_log.traceback = None
+        except Exception as exc:
             job_log.status = StatusChoices.FAILED
+            job_log.traceback = "\n".join(format_exception(exc))
+            if options.get("traceback"):
+                raise  # re-raise exception if `--traceback` argument is given
         finally:
-            job_log.save(update_fields=("status",))
+            job_log.save(update_fields=("status", "traceback"))
