@@ -1,0 +1,26 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "bf/person_detail_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load date_tags %}
+
+{% block breadcrumb %}
+{{ block.super }}
+<li class="breadcrumb-item active" aria-current="page">{% translate "Nøgletal" %}</li>
+{% endblock %}
+
+{% block person_data %}
+{# Key figures #}
+<h2 id="keyfigures">{% translate "Nøgletal" %}</h2>
+<p>{{ month_name }} {{ year }}</p>
+<dl class="row">
+    <dt class="col-3">{% translate "Forventet samlet indtægt i indeværende år" %}</dt>
+    <dd class="col-9">{{ total_estimated_year_result }}</dd>
+    <dt class="col-3">{% translate "Faktisk samlet indtægt i indeværende år" %}</dt>
+    <dd class="col-9">{{ total_actual_year_result }}</dd>
+    <dt class="col-3">{% translate "Beskæftigelsesfradrag til dato i indeværende år" %}</dt>
+    <dd class="col-9">{{ benefit_paid }}</dd>
+</dl>
+{% endblock %}

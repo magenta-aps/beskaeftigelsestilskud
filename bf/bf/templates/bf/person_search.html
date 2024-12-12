@@ -1,0 +1,36 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/base.html" %}
+{% load i18n %}
+{% load render_table from django_tables2 %}
+{% load django_bootstrap5 %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">{% translate "Personer" %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mx-1 mt-3">
+    {% if filter %}
+    <div class="col-6">
+        <form action="" method="get" class="form filter-form">
+            {% bootstrap_form filter.form layout="floating" %}
+            <div class="row">
+                <div class="col-9">
+                    {% bootstrap_button _("Søg") %}
+                </div>
+                <div class="col-3 text-end">
+                    <span class="badge bg-secondary mt-2 mb-2">
+                        {% blocktrans trimmed with count=person_list.count %}
+                        {{ count }} resultater
+                        {% endblocktrans %}
+                    </span>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+    {% render_table table %}
+</div>
+{% endblock %}
