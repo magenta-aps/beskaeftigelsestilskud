@@ -67,7 +67,6 @@ class BatchExport:
             if (current_batch is None) or (person_month_prefix != current_batch.prefix):
                 current_batch = PrismeBatch(
                     prefix=person_month_prefix,
-                    # TODO: should this be passed in from the management command?
                     export_date=date.today(),
                 )
                 yield (
@@ -145,8 +144,7 @@ class BatchExport:
 
         # TODO: revise filename based on customer input
         filename = (
-            f"RES_G68_export_{prisme_batch.prefix}_"
-            f"{prisme_batch.export_date.strftime('%Y-%m-%d')}.g68"
+            f"RES_G68_export_{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
         )
 
         try:
