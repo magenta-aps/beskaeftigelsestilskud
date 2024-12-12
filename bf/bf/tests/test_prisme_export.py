@@ -124,9 +124,17 @@ class TestBatchExport(TestCase):
         account_alias = self._get_floating_field(prisme_batch_item.g69_content, 111)
         self.assertEqual(
             account_alias,
-            # Root, tax municipality code, tax year, and recipient CPR
-            "1000452406140101010000242040195" + "010400" + "25" + "3112700000",
+            # Root, tax municipality code, and tax year
+            "1000452406140101010000242040195" + "010400" + "25",
         )
+        # Assert: G69 contains CPR in `Ydelsesmodtager` (field 133) and specifies CPR
+        # (02) in `YdelsesmodtagerNrkode` (field 132)
+        ydelsesmodtager_nrkode = self._get_floating_field(
+            prisme_batch_item.g69_content, 132
+        )
+        ydelsesmodtager = self._get_floating_field(prisme_batch_item.g69_content, 133)
+        self.assertEqual(ydelsesmodtager_nrkode, "02")
+        self.assertEqual(ydelsesmodtager, "3112700000")
         # Assert: the field `BetalingstekstLinje` follows the expected format
         text = self._get_floating_field(
             prisme_batch_item.g68_content,

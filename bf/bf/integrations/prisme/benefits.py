@@ -87,8 +87,6 @@ class BatchExport:
         )
         # Zero-padded CPR (as string)
         cpr = person_month.identifier  # type: ignore[attr-defined]
-        # Concatenate account alias and CPR to get the complete account alias
-        account_alias_cpr = account_alias.alias + cpr
 
         # Construct invoice number by concatenating batch ID and line number
         # Line numbers can only be 5 digits, so we use the rest of the available 20
@@ -100,7 +98,7 @@ class BatchExport:
             TransaktionstypeEnum.AndenDestinationTilladt,
             UdbetalingsberettigetIdentKodeEnum.CPR,
             cpr,
-            int(account_alias_cpr),
+            int(account_alias.alias),
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),  # TODO: use calculated date
             date.today(),  # TODO: use calculated date
