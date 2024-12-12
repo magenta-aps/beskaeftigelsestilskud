@@ -28,7 +28,8 @@ RUN curl -fsSLO "$SUPERCRONIC_URL" && \
 
 # hadolint ignore=DL3008
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gettext python3-distutils graphviz libxmlsec1-dev xmlsec1 libssl-dev libsasl2-dev && \
+    apt-get install -y --no-install-recommends \
+        gettext python3-distutils graphviz libxmlsec1-dev xmlsec1 libssl-dev libsasl2-dev postgresql-client-common postgresql-client-16 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt
