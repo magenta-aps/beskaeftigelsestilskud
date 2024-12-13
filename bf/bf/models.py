@@ -74,10 +74,12 @@ class WorkingTaxCreditCalculationMethod(models.Model):
         )
 
     def __str__(self):
-        return (
-            f"{self.__class__.__name__} for "
-            f"{', '.join([str(year_object.year) for year_object in self.years])}"
+        name = self.__class__.__name__
+        years = (
+            ", ".join([str(year_object.year) for year_object in self.years])
+            or "no years"
         )
+        return f"{name} for {years}"
 
 
 class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
@@ -159,13 +161,14 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
     def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
         allowance = self.personal_allowance + self.standard_allowance
         # Calculate breakpoints in graph, by identifying points where the
-        # contents of the min() and max() terms are identical, and isolating year_income
-        x_points = [Decimal(0)]
+        # contents of the min() and max() terms are identical,
+        # then isolating year_income
+        x_points = [0]
 
         # max A, where year_income == allowance
         x_points.append(allowance)
 
-        # max B, where year_income = scaledown_ceiling
+        # max B, where year_income == scaledown_ceiling
         x_points.append(self.scaledown_ceiling)
 
         # min A
@@ -176,7 +179,8 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         # max_benefit / benefit_rate = year_income - allowance
         # =>
         # max_benefit / benefit_rate + allowance = year_income
-        x_points.append((self.max_benefit / self.benefit_rate) + allowance)
+        if not self.benefit_rate_percent.is_zero():
+            x_points.append((self.max_benefit / self.benefit_rate) + allowance)
 
         # min A
         # (of max A, where year_income < allowance)
@@ -226,7 +230,7 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         # Same as prior, no point added
 
         # max C
-        # (of min A, where benefit_rate * rateable_amount > max_benefit),
+        # (of min A, where max_benefit < benefit_rate * rateable_amount),
         #     meaning risen_benefit = max_benefit
         # (of max B, where year_income > scaledown_ceiling,
         #     meaning scaledown_amount = year_income - scaledown_ceiling
@@ -236,9 +240,10 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         # max_benefit / scaledown_rate = year_income - scaledown_ceiling
         # =>
         # year_income = (max_benefit / scaledown_rate) + scaledown_ceiling
-        x_points.append(
-            (self.max_benefit / self.scaledown_rate) + self.scaledown_ceiling
-        )
+        if not self.scaledown_rate_percent.is_zero():
+            x_points.append(
+                (self.max_benefit / self.scaledown_rate) + self.scaledown_ceiling
+            )
 
         # max C
         # (of min A, where benefit_rate * rateable_amount > max_benefit),
@@ -249,8 +254,19 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         # =>
         # year_income eliminated, no point here
 
-        x_points = sorted(list(filter(lambda x: x >= 0, x_points)))
-        return list(zip(x_points, [self.calculate(x) for x in x_points]))
+        # dedup, filter out x<0, then sort ascending
+        x_points = sorted(
+            [Decimal(x).quantize(Decimal("0.01")) for x in set(x_points) if x >= 0]
+        )
+
+        # Calculate y for every x
+        points = list(zip(x_points, [self.calculate(x) for x in x_points]))
+
+        while len(points) > 1 and points[-1][1] == points[-2][1]:
+            # Last two items have same y value, remove last point
+            points.pop(-1)
+
+        return points
 
 
 class DataLoad(models.Model):
