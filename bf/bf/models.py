@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import Sequence, Tuple
+from typing import List, Sequence, Tuple
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -163,7 +163,7 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         # Calculate breakpoints in graph, by identifying points where the
         # contents of the min() and max() terms are identical,
         # then isolating year_income
-        x_points = [0]
+        x_points: List[Decimal] = [Decimal(0)]
 
         # max A, where year_income == allowance
         x_points.append(allowance)
