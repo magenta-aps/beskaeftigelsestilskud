@@ -54,10 +54,36 @@ class WorkingTaxCreditCalculationMethod(models.Model):
     def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
         raise NotImplementedError  # pragma: no cover
 
+    @classmethod
+    def subclass_instances(cls):
+        return [
+            item for subclass in cls.__subclasses__() for item in subclass.objects.all()
+        ]
+
+    @classmethod
+    def subclasses_by_name(cls):
+        return {subclass.__name__: subclass for subclass in cls.__subclasses__()}
+
+    @property
+    def years(self) -> QuerySet[Year]:
+        return Year.objects.filter(
+            calculation_method_content_type=ContentType.objects.get_for_model(
+                self.__class__
+            ),
+            calculation_method_object_id=self.id,
+        )
+
+    def __str__(self):
+        return (
+            f"{self.__class__.__name__} for "
+            f"{', '.join([str(year_object.year) for year_object in self.years])}"
+        )
+
 
 class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
 
     benefit_rate_percent = models.DecimalField(
+        verbose_name=_("Benefit rate percent"),
         max_digits=5,
         decimal_places=3,
         null=False,
@@ -69,24 +95,28 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         return self.benefit_rate_percent * Decimal("0.01")
 
     personal_allowance = models.DecimalField(
+        verbose_name=_("Personal allowance"),
         max_digits=12,
         decimal_places=2,
         null=False,
         blank=False,
     )
     standard_allowance = models.DecimalField(
+        verbose_name=_("Standard allowance"),
         max_digits=12,
         decimal_places=2,
         null=False,
         blank=False,
     )
     max_benefit = models.DecimalField(
+        verbose_name=_("Max benefit"),
         max_digits=12,
         decimal_places=2,
         null=False,
         blank=False,
     )
     scaledown_rate_percent = models.DecimalField(
+        verbose_name=_("Scaledown rate percent"),
         max_digits=5,
         decimal_places=3,
         null=False,
@@ -106,14 +136,16 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
 
     def calculate(self, year_income: Decimal) -> Decimal:
         zero = Decimal(0)
-        rateable_amount = max(
+        rateable_amount = max(  # max A
             year_income - self.personal_allowance - self.standard_allowance, zero
         )
-        scaledown_amount = max(year_income - self.scaledown_ceiling, zero)
+        scaledown_amount = max(year_income - self.scaledown_ceiling, zero)  # max B
+        risen_benefit = min(  # min A
+            self.benefit_rate * rateable_amount, self.max_benefit
+        )
         return round(
-            max(
-                min(self.benefit_rate * rateable_amount, self.max_benefit)
-                - self.scaledown_rate * scaledown_amount,
+            max(  # max C
+                risen_benefit - self.scaledown_rate * scaledown_amount,
                 zero,
             ),
             2,
@@ -126,16 +158,99 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
     @cached_property
     def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
         allowance = self.personal_allowance + self.standard_allowance
-        return [
-            (Decimal(0), Decimal(0)),
-            (allowance, Decimal(0)),
-            ((allowance + self.max_benefit / self.benefit_rate), self.max_benefit),
-            (self.scaledown_ceiling, self.max_benefit),
-            (
-                self.max_benefit / self.scaledown_rate + self.scaledown_ceiling,
-                Decimal(0),
-            ),
-        ]
+        # Calculate breakpoints in graph, by identifying points where the
+        # contents of the min() and max() terms are identical, and isolating year_income
+        x_points = [Decimal(0)]
+
+        # max A, where year_income == allowance
+        x_points.append(allowance)
+
+        # max B, where year_income = scaledown_ceiling
+        x_points.append(self.scaledown_ceiling)
+
+        # min A
+        # (of max A, where year_income > allowance)
+        #
+        # max_benefit = benefit_rate * (year_income - allowance)
+        # =>
+        # max_benefit / benefit_rate = year_income - allowance
+        # =>
+        # max_benefit / benefit_rate + allowance = year_income
+        x_points.append((self.max_benefit / self.benefit_rate) + allowance)
+
+        # min A
+        # (of max A, where year_income < allowance)
+        #
+        # max_benefit = benefit_rate * 0
+        # =>
+        # year_income eliminated, no point here
+
+        # max C
+        # (of min A, where benefit_rate * rateable_amount < max_benefit),
+        #     meaning risen_benefit = benefit_rate * rateable_amount
+        # (of max B, where year_income > self.scaledown_ceiling,
+        #     meaning scaledown_amount = year_income - scaledown_ceiling
+        #
+        # benefit_rate * (year_income - allowance)
+        #     = scaledown_rate * (year_income - scaledown_ceiling)
+        # =>
+        # benefit_rate * year_income - benefit_rate * allowance
+        #     = scaledown_rate * year_income - scaledown_rate * scaledown_ceiling
+        # =>
+        # benefit_rate * year_income - scaledown_rate * year_income
+        #     = benefit_rate * allowance - scaledown_rate * scaledown_ceiling
+        # =>
+        # year_income * (benefit_rate - scaledown_rate)
+        #     = benefit_rate * allowance - scaledown_rate * scaledown_ceiling
+        # =>
+        # year_income = (benefit_rate * allowance - scaledown_rate * scaledown_ceiling)
+        #               / (benefit_rate - scaledown_rate)
+        if self.benefit_rate_percent != self.scaledown_rate_percent:
+            x_points.append(
+                (
+                    self.benefit_rate * allowance
+                    - self.scaledown_rate * self.scaledown_ceiling
+                )
+                / (self.benefit_rate - self.scaledown_rate)
+            )
+
+        # max C
+        # (of min A, where benefit_rate * rateable_amount < max_benefit),
+        #     meaning risen_benefit = benefit_rate * rateable_amount
+        # (of max B, where year_income < self.scaledown_ceiling,
+        #     meaning scaledown_amount = 0
+        #
+        # benefit_rate * (year_income - allowance) = scaledown_rate * 0
+        # =>
+        # benefit_rate = 0 or year_income = allowance
+        # Same as prior, no point added
+
+        # max C
+        # (of min A, where benefit_rate * rateable_amount > max_benefit),
+        #     meaning risen_benefit = max_benefit
+        # (of max B, where year_income > scaledown_ceiling,
+        #     meaning scaledown_amount = year_income - scaledown_ceiling
+        #
+        # max_benefit = scaledown_rate * (year_income - scaledown_ceiling)
+        # =>
+        # max_benefit / scaledown_rate = year_income - scaledown_ceiling
+        # =>
+        # year_income = (max_benefit / scaledown_rate) + scaledown_ceiling
+        x_points.append(
+            (self.max_benefit / self.scaledown_rate) + self.scaledown_ceiling
+        )
+
+        # max C
+        # (of min A, where benefit_rate * rateable_amount > max_benefit),
+        #     meaning risen_benefit = max_benefit
+        # (of max B, where year_income < scaledown_ceiling,
+        #     meaning scaledown_amount = 0
+        # max_benefit = scaledown_rate * 0
+        # =>
+        # year_income eliminated, no point here
+
+        x_points = sorted(list(filter(lambda x: x >= 0, x_points)))
+        return list(zip(x_points, [self.calculate(x) for x in x_points]))
 
 
 class DataLoad(models.Model):
