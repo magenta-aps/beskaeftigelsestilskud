@@ -1455,3 +1455,174 @@ class EboksMessage(models.Model):
                             "is_postprocessing",
                         ]
                     )
+
+
+class U1AEntry(models.Model):
+    u1a_id = models.IntegerField(
+        verbose_name=_("U1A ID i AKAP"),
+        unique=True,
+    )
+
+    name = models.CharField(
+        verbose_name=_("Navn på udfylder"),
+        max_length=255,
+        error_messages={"required": "error.required"},
+    )
+
+    accounting_firm = models.CharField(
+        verbose_name=_("Revisionsfirma"),
+        max_length=255,
+    )
+
+    company_name = models.CharField(
+        verbose_name=_("Virksomhedsnavn"),
+        max_length=255,
+        error_messages={"required": "error.required"},
+    )
+
+    cvr = models.CharField(
+        verbose_name=_("CVR"),
+        max_length=255,
+        error_messages={"required": "error.required", "invalid": "error.invalid_cvr"},
+    )
+
+    email = models.CharField(
+        verbose_name=_("Email-adresse"),
+        max_length=255,
+        error_messages={"required": "error.required", "invalid": "error.invalid_email"},
+    )
+
+    financial_year = models.IntegerField(
+        verbose_name=_("Udbyttet vedrører regnskabsåret"),
+    )
+
+    u1_filled = models.BooleanField(
+        verbose_name=_("Har du allerede udfyldt U1?"),
+        choices=[
+            (None, "---------"),
+            ("0", "No"),
+            ("1", "Yes"),
+        ],
+        blank=True,
+        null=True,
+    )
+
+    dividend = models.DecimalField(
+        verbose_name=_("Udbetalt/godskrevet udbytte i DKK, før skat"),
+        max_digits=12,
+        decimal_places=2,
+        error_messages={
+            "required": "error.required",
+            "invalid": "error.number_required",
+        },
+    )
+
+    notes = models.TextField(
+        verbose_name=_("Særlige oplysninger"),
+        blank=True,
+        null=True,
+    )
+
+    city = models.CharField(
+        verbose_name=_("By"),
+        max_length=255,
+        error_messages={
+            "required": "error.required",
+        },
+    )
+
+    date = models.DateField(
+        verbose_name=_("Dato"),
+        error_messages={
+            "required": "error.required",
+            "invalid": "error.invalid_date",
+        },
+    )
+
+    authorized_signatory = models.CharField(
+        verbose_name=_("Navn på underskriftsberettiget for selskabet"),
+        max_length=255,
+        error_messages={
+            "required": "error.required",
+        },
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+    )
+
+    created_by_cpr = models.CharField(
+        db_index=True,
+        verbose_name=_("Oprettet af CPR"),
+        error_messages={"required": "error.required"},
+    )
+
+    created_by_cvr = models.CharField(
+        db_index=True,
+        verbose_name=_("Oprettet af CVR"),
+        blank=True,
+        null=True,
+    )
+
+
+class U1AItemEntry(models.Model):
+    u1a_item_id = models.IntegerField(
+        verbose_name=_("U1AItem ID i AKAP"),
+        unique=True,
+    )
+
+    u1a_entry = models.ForeignKey(
+        U1AEntry,
+        on_delete=models.CASCADE,
+        related_name="u1a_entry",
+    )
+
+    cpr_cvr_tin = models.CharField(
+        verbose_name=_("CPR-nr / CVR-nr / TIN"),
+        validators=[RegexValidator(r"^\d{8}(\d{2})?$", "error.invalid_cpr_cvr")],
+        error_messages={
+            "required": "error.required",
+            "invalid": "error.invalid_cpr_cvr",
+        },
+    )
+
+    name = models.CharField(
+        verbose_name=_("Navn"),
+        error_messages={"required": "error.required"},
+    )
+
+    address = models.CharField(
+        verbose_name=_("Adresse"),
+        error_messages={"required": "error.required"},
+    )
+
+    postal_code = models.CharField(
+        verbose_name=_("Postnummer"),
+        error_messages={"required": "error.required"},
+    )
+
+    city = models.CharField(
+        verbose_name=_("By"),
+        error_messages={"required": "error.required"},
+    )
+
+    country = models.CharField(
+        verbose_name=_("Land"),
+        error_messages={"required": "error.required"},
+    )
+
+    dividend = models.DecimalField(
+        verbose_name=_("Udbetalt/godskrevet udbytte i DKK, før skat"),
+        max_digits=12,
+        decimal_places=2,
+        error_messages={
+            "required": "error.required",
+            "invalid": "error.number_required",
+        },
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+    )
