@@ -70,7 +70,7 @@ class WorkingTaxCreditCalculationMethod(models.Model):
             calculation_method_content_type=ContentType.objects.get_for_model(
                 self.__class__
             ),
-            calculation_method_object_id=self.id,
+            calculation_method_object_id=self.pk,
         )
 
     def __str__(self):
