@@ -28,6 +28,22 @@ class AKAPU1AItem(BaseModel):
     udbytte: Decimal
     oprettet: datetime
 
+    @property
+    def model_dict(self) -> Dict:
+        return {
+            "u1a_item_id": self.id,
+            "u1a_entry_id": None,
+            # NOTE: "u1a_entry_id" needs to be populated from the bf-database
+            "cpr_cvr_tin": self.cpr_cvr_tin,
+            "name": self.navn,
+            "address": self.adresse,
+            "postal_code": self.postnummer,
+            "city": self.by,
+            "country": self.land,
+            "dividend": self.udbytte,
+            "created": self.oprettet,
+        }
+
 
 class AKAPU1A(BaseModel):
     id: int
@@ -47,6 +63,27 @@ class AKAPU1A(BaseModel):
     oprettet_af_cpr: str
     oprettet_af_cvr: Optional[str] = None
     items: Optional[List[AKAPU1AItem]] = None
+
+    @property
+    def model_dict(self) -> Dict:
+        return {
+            "u1a_id": self.id,
+            "name": self.navn,
+            "accounting_firm": self.revisionsfirma,
+            "company_name": self.virksomhedsnavn,
+            "cvr": self.cvr,
+            "email": self.email,
+            "financial_year": self.regnskabsår,
+            "u1_filled": self.u1_udfyldt,
+            "dividend": self.udbytte,
+            "notes": self.noter,
+            "city": self.by,
+            "date": self.dato,
+            "authorized_signatory": self.underskriftsberettiget,
+            "created": self.oprettet,
+            "created_by_cpr": self.oprettet_af_cpr,
+            "created_by_cvr": self.oprettet_af_cvr,
+        }
 
 
 class AKAPAPIPaginatedResponse(BaseModel):
