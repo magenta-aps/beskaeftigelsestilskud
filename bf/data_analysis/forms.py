@@ -217,34 +217,40 @@ class CalculatorForm(DynamicFormMixin, BootstrapForm):
         min_value=Decimal(0),
         decimal_places=3,
         required=False,
+        localize=True,
     )
     personal_allowance = forms.DecimalField(
         max_digits=12,
         min_value=Decimal(0),
         decimal_places=2,
         required=False,
+        localize=True,
     )
     standard_allowance = forms.DecimalField(
         max_digits=12,
         min_value=Decimal(0),
         decimal_places=2,
         required=False,
+        localize=True,
     )
     max_benefit = forms.DecimalField(
         max_digits=12,
         min_value=Decimal(0),
         decimal_places=2,
         required=False,
+        localize=True,
     )
     scaledown_rate_percent = forms.DecimalField(
         max_digits=5,
         min_value=Decimal(0),
         decimal_places=3,
         required=False,
+        localize=True,
     )
     scaledown_ceiling = forms.DecimalField(
         max_digits=12,
         min_value=Decimal(0),
         decimal_places=2,
         required=False,
+        localize=True,
     )

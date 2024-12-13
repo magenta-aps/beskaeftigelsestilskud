@@ -530,6 +530,7 @@ class CalculatorView(FormView):
         method_class = WorkingTaxCreditCalculationMethod.subclasses_by_name()[
             method_name
         ]
+        print(form.cleaned_data)
         method = method_class(
             **{
                 key: value

@@ -40,8 +40,15 @@
                 <div id="engine_parameters">
                     {% for fieldname, field in engines.0.fields.items %}
                         <div class="row align-items-center my-1">
-                            <div class="col-6"><label for="{{ fieldname }}">{{ field.label }}</label></div>
-                            <div class="col-6"><input type="number" name="{{ fieldname }}" value="{{ form.data|get:fieldname|default:field.value }}" class="form-control" step="0.01"/></div>
+                            <div class="col-6">
+                                <label for="{{ fieldname }}">{{ field.label }}</label>
+                            </div>
+                            <div class="col-6">
+                                {% with form.errors|get:fieldname as errors %}
+                                <input type="number" name="{{ fieldname }}" value="{{ form.data|get:fieldname|default:field.value }}" class="form-control {% if errors %}is-invalid{% endif %}" step="0.01"/>
+                                {% if errors %}{{ errors }}{% endif %}
+                                {% endwith %}
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
