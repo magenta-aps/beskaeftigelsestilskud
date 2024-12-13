@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-12 06:44-0200\n"
+"POT-Creation-Date: 2024-12-13 12:04-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -42,6 +42,86 @@ msgstr ""
 
 #: bf/models.py
 msgid "Posted"
+msgstr ""
+
+#: bf/models.py
+msgid "U1A ID i AKAP"
+msgstr ""
+
+#: bf/models.py
+msgid "Navn på udfylder"
+msgstr ""
+
+#: bf/models.py
+msgid "Revisionsfirma"
+msgstr ""
+
+#: bf/models.py
+msgid "Virksomhedsnavn"
+msgstr ""
+
+#: bf/models.py
+msgid "CVR"
+msgstr ""
+
+#: bf/models.py
+msgid "Email-adresse"
+msgstr ""
+
+#: bf/models.py
+msgid "Udbyttet vedrører regnskabsåret"
+msgstr ""
+
+#: bf/models.py
+msgid "Har du allerede udfyldt U1?"
+msgstr ""
+
+#: bf/models.py
+msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
+msgstr ""
+
+#: bf/models.py
+msgid "Særlige oplysninger"
+msgstr ""
+
+#: bf/models.py
+msgid "By"
+msgstr ""
+
+#: bf/models.py
+msgid "Navn på underskriftsberettiget for selskabet"
+msgstr ""
+
+#: bf/models.py
+msgid "Oprettet af CPR"
+msgstr ""
+
+#: bf/models.py
+msgid "Oprettet af CVR"
+msgstr ""
+
+#: bf/models.py
+msgid "U1AItem ID i AKAP"
+msgstr ""
+
+#: bf/models.py
+msgid "CPR-nr / CVR-nr / TIN"
+msgstr ""
+
+#: bf/models.py bf/views.py
+msgid "Navn"
+msgstr ""
+
+#: bf/models.py bf/templates/bf/person_detail_base.html bf/views.py
+msgid "Adresse"
+msgstr ""
+
+#: bf/models.py
+msgid "Postnummer"
+msgstr ""
+
+#: bf/models.py
+msgid "Land"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html bf/templates/bf/person_detail_base.html
@@ -80,10 +160,6 @@ msgstr ""
 
 #: bf/templates/bf/person_detail_base.html
 msgid "Skatteår"
-msgstr ""
-
-#: bf/templates/bf/person_detail_base.html bf/views.py
-msgid "Adresse"
 msgstr ""
 
 #: bf/templates/bf/person_detail_base.html bf/views.py
@@ -192,10 +268,6 @@ msgstr ""
 
 #: bf/views.py
 msgid "CPR-nummer"
-msgstr ""
-
-#: bf/views.py
-msgid "Navn"
 msgstr ""
 
 #: bf/views.py
