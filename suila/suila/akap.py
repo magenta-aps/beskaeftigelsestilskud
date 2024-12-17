@@ -44,6 +44,12 @@ class AKAPU1AItem(BaseModel):
             "created": self.oprettet,
         }
 
+    def __str__(self):
+        return (
+            f"{self.navn} - {self.cpr_cvr_tin} - {self.adresse}, "
+            f"{self.postnummer} {self.by} - {self.land}"
+        )
+
 
 class AKAPU1A(BaseModel):
     id: int
@@ -84,6 +90,9 @@ class AKAPU1A(BaseModel):
             "created_by_cpr": self.oprettet_af_cpr,
             "created_by_cvr": self.oprettet_af_cvr,
         }
+
+    def __str__(self):
+        return f"{self.navn} - {self.cvr} - {self.email} - {self.regnskabsår}"
 
 
 class AKAPAPIPaginatedResponse(BaseModel):
