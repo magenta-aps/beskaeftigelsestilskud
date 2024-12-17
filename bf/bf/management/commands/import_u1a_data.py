@@ -43,22 +43,8 @@ class Command(BfBaseCommand):
 
         result: Optional[ImportResult] = None
         try:
-            if not year and not cpr:
-                logger.info("Importing: All entries")
-                result = self._import_everything()
-            elif year and not cpr:
-                logger.info(f"Importing: Entries from year: {year}")
-                result = self._import_year(int(year))
-            elif not year and cpr:
-                logger.info(f"Importing: Entries by CPR: {cpr}")
-                result = self._import_cpr(cpr)
-            elif year and cpr:
-                logger.info(f"Importing: Entries by CPR: {cpr}, from year: {year}")
-                pass
-            else:
-                logger.warning(
-                    f"import_u1a_data called with invalid arguments: {kwargs}"
-                )
+            logger.info(f"Importing: U1A entries (YEAR={year}, CPR={cpr})")
+            result = self._import_data(year, cpr)
 
             if dry:
                 transaction.set_rollback(True)
@@ -73,90 +59,20 @@ class Command(BfBaseCommand):
         duration = datetime.datetime.fromtimestamp(
             time.time() - start, datetime.timezone.utc
         )
+
+        logger.info(f"Report: U1AEntries created: {result.new_entries}")
+        logger.info(f"Report: U1AEntries updated: {result.updated_entries}")
+        logger.info(f"Report: U1AItemEntries created: {result.new_items}")
+        logger.info(f"Report: U1AItemEntries updated: {result.updated_items}")
+        logger.info(f"Report: Exec time: {duration.strftime('%H:%M:%S')}")
         logger.info("DONE!")
-        logger.info(f"U1AEntries created: {result.new_entries}")
-        logger.info(f"U1AEntries updated: {result.updated_entries}")
-        logger.info(f"U1AItemEntries created: {result.new_items}")
-        logger.info(f"U1AItemEntries updated: {result.updated_items}")
-        logger.info(f"Exec time: {duration.strftime('%H:%M:%S')}")
 
-    # Import logic
-
-    def _import_everything(self) -> ImportResult:
+    def _import_data(self, year: Optional[int] = None, cpr: Optional[str] = None):
         result = ImportResult()
-
-        akap_u1as = get_akap_u1a_entries(
-            settings.AKAP_HOST,  # type: ignore[misc]
-            settings.AKAP_API_SECRET,  # type: ignore[misc]
-            fetch_all=True,
-        )
-
-        for u1a in akap_u1as:
-            db_u1a_entry, u1a_created = self._create_or_update_u1a(u1a)
-            if u1a_created:
-                result.new_entries += 1
-            else:
-                result.updated_entries += 1
-
-            u1a.items = get_akap_u1a_items(
-                settings.AKAP_HOST,  # type: ignore[misc]
-                settings.AKAP_API_SECRET,  # type: ignore[misc]
-                u1a.id,
-                fetch_all=True,
-            )
-
-            for u1a_item in u1a.items:
-                _, u1a_item_created = self._create_or_update_u1a_item(
-                    db_u1a_entry.id, u1a_item
-                )
-                if u1a_item_created:
-                    result.new_items += 1
-                else:
-                    result.updated_items += 1
-
-        return result
-
-    def _import_year(self, year: int) -> ImportResult:
-        result = ImportResult()
-
         akap_u1as = get_akap_u1a_entries(
             settings.AKAP_HOST,  # type: ignore[misc]
             settings.AKAP_API_SECRET,  # type: ignore[misc]
             year=year,
-            fetch_all=True,
-        )
-
-        for u1a in akap_u1as:
-            db_u1a_entry, u1a_created = self._create_or_update_u1a(u1a)
-            if u1a_created:
-                result.new_entries += 1
-            else:
-                result.updated_entries += 1
-
-            u1a.items = get_akap_u1a_items(
-                settings.AKAP_HOST,  # type: ignore[misc]
-                settings.AKAP_API_SECRET,  # type: ignore[misc]
-                u1a.id,
-                fetch_all=True,
-            )
-
-            for u1a_item in u1a.items:
-                _, u1a_item_created = self._create_or_update_u1a_item(
-                    db_u1a_entry.id, u1a_item
-                )
-                if u1a_item_created:
-                    result.new_items += 1
-                else:
-                    result.updated_items += 1
-
-        return result
-
-    def _import_cpr(self, cpr: str) -> ImportResult:
-        result = ImportResult()
-
-        akap_u1as = get_akap_u1a_entries(
-            settings.AKAP_HOST,  # type: ignore[misc]
-            settings.AKAP_API_SECRET,  # type: ignore[misc]
             cpr=cpr,
             fetch_all=True,
         )
@@ -183,17 +99,16 @@ class Command(BfBaseCommand):
                     result.new_items += 1
                 else:
                     result.updated_items += 1
-        return result
 
-    # Create & Update logic
+        return result
 
     def _create_or_update_u1a(self, akap_u1a: AKAPU1A) -> Tuple[U1AEntry, bool]:
         qs_current_u1a_entry = U1AEntry.objects.filter(u1a_id=akap_u1a.id)
         if qs_current_u1a_entry.exists():
             qs_current_u1a_entry.update(**akap_u1a.model_dict)
-            return U1AEntry.objects.get(u1a_id=akap_u1a.id), 0
+            return U1AEntry.objects.get(u1a_id=akap_u1a.id), False
 
-        return U1AEntry.objects.create(**akap_u1a.model_dict), 1
+        return U1AEntry.objects.create(**akap_u1a.model_dict), True
 
     def _create_or_update_u1a_item(
         self, db_u1a_entry_id: int, akap_u1a_item: AKAPU1AItem
@@ -203,11 +118,11 @@ class Command(BfBaseCommand):
             qs_u1a_item_current.update(
                 **{**akap_u1a_item.model_dict, "u1a_entry_id": db_u1a_entry_id}
             )
-            return U1AItemEntry.objects.get(u1a_item_id=akap_u1a_item.id), 0
+            return U1AItemEntry.objects.get(u1a_item_id=akap_u1a_item.id), False
 
         return (
             U1AItemEntry.objects.create(
                 **{**akap_u1a_item.model_dict, "u1a_entry_id": db_u1a_entry_id}
             ),
-            1,
+            True,
         )
