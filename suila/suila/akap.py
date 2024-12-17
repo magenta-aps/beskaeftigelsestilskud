@@ -94,6 +94,7 @@ class AKAPAPIPaginatedResponse(BaseModel):
 def get_akap_u1a_entries(
     host: str,
     auth_token: str,
+    year: Optional[int] = None,
     limit: Optional[int] = None,
     offset: Optional[int] = None,
     fetch_all: Optional[bool] = None,
@@ -101,10 +102,14 @@ def get_akap_u1a_entries(
     limit = limit if limit else 50
     offset = offset if offset else 0
 
+    query_params = {"limit": limit, "offset": offset}
+    if year:
+        query_params["regnskabsår"] = year
+
     resp = requests.get(
         host + URL_U1A_LIST,
         headers={"Authorization": f"Bearer {auth_token}"},
-        params={"limit": limit, "offset": offset},
+        params=query_params,
     )
 
     if resp.status_code != 200:
