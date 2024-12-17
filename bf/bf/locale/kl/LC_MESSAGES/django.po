@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-12 13:28-0200\n"
+"POT-Creation-Date: 2024-12-17 08:19-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -62,6 +62,58 @@ msgstr ""
 
 #: bf/models.py
 msgid "Posted"
+msgstr ""
+
+#: bf/models.py
+msgid "Genereret"
+msgstr ""
+
+#: bf/models.py
+msgid "Afsendt"
+msgstr ""
+
+#: bf/models.py
+msgid "Afventer efterbehandling"
+msgstr ""
+
+#: bf/models.py
+msgid "Afsendelse fejlet"
+msgstr ""
+
+#: bf/models.py
+msgid "Gyldig E-boks modtager"
+msgstr ""
+
+#: bf/models.py
+msgid "Fritaget modtager"
+msgstr ""
+
+#: bf/models.py
+msgid "Ugyldig E-boks modtager (sendes til efterbehandling)"
+msgstr ""
+
+#: bf/models.py
+msgid "Afdød"
+msgstr ""
+
+#: bf/models.py
+msgid "Mindreårig"
+msgstr ""
+
+#: bf/models.py
+msgid "Afventer processering"
+msgstr ""
+
+#: bf/models.py
+msgid "Fundet gyldig postadresse"
+msgstr ""
+
+#: bf/models.py
+msgid "Ingen gyldig postadresse"
+msgstr ""
+
+#: bf/models.py
+msgid "Overført til fjernprint"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html bf/templates/bf/person_detail_base.html
