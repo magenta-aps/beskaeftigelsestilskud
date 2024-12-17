@@ -5,3 +5,4 @@
 # │ │ │ │ ┌─ day of the week (0 - 6) (Sunday to Saturday)
 # │ │ │ │ │
 # * * * * * command to execute
+  * * * * * python manage.py eboks_update_status
