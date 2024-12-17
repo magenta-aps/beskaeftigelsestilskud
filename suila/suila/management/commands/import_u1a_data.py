@@ -39,9 +39,9 @@ class Command(BfBaseCommand):
         start = time.time()
 
         # Parse args
-        dry = kwargs["dry"]
-        year = kwargs["year"]
-        cpr = kwargs["cpr"]
+        dry = kwargs.get("dry", False)
+        year = kwargs.get("year", None)
+        cpr = kwargs.get("cpr", None)
 
         # LOGIC
         result: Optional[ImportResult] = None
@@ -51,6 +51,7 @@ class Command(BfBaseCommand):
                 result = self._import_everything(dry)
             elif year and not cpr:
                 logger.info(f"Importing: Entries from {year}")
+                result = self._import_year(dry)
                 pass
             elif not year and cpr:
                 logger.info(f"Importing: Entries by {cpr}")
@@ -59,7 +60,13 @@ class Command(BfBaseCommand):
                 logger.info(f"Importing: Entries by {cpr}, from {year}")
                 pass
             else:
-                raise Exception("Unsupported")
+                logger.warning(
+                    f"import_u1a_data called with invalid arguments: {kwargs}"
+                )
+
+            if dry:
+                transaction.set_rollback(True)
+                logger.info("Dry run complete. All changes rolled back.")
         except Exception as e:
             logger.exception(
                 f"Unknown error occured for import: CPR={cpr}, YEAR={year}"
@@ -71,12 +78,10 @@ class Command(BfBaseCommand):
             time.time() - start, datetime.timezone.utc
         )
         logger.info("DONE!")
-
         logger.info(f"U1AEntries created: {result.new_entries}")
         logger.info(f"U1AEntries updated: {result.updated_entries}")
         logger.info(f"U1AItemEntries created: {result.new_items}")
         logger.info(f"U1AItemEntries updated: {result.updated_items}")
-
         logger.info(f"Exec time: {duration.strftime('%H:%M:%S')}")
 
     def _import_everything(self, dry: bool = False) -> ImportResult:
@@ -99,7 +104,9 @@ class Command(BfBaseCommand):
             qs_current_u1a_entry = U1AEntry.objects.filter(u1a_id=u1a.id)
             db_u1a_entry: Optional[U1AEntry] = None
             if qs_current_u1a_entry.exists():
-                qs_current_u1a_entry.update(**u1a.model_dict)
+                if not dry:
+                    qs_current_u1a_entry.update(**u1a.model_dict)
+
                 db_u1a_entry = U1AEntry.objects.get(u1a_id=u1a.id)
                 result.updated_entries += 1
             else:
