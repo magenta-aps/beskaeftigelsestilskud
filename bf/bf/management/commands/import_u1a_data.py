@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import datetime
 import logging
 import time
 from typing import Optional, Tuple
@@ -32,6 +31,7 @@ class Command(BfBaseCommand):
         parser.add_argument("--year", type=int)
         parser.add_argument("--dry", action="store_true")
         parser.add_argument("--cpr", type=str)
+        parser.add_argument("--verbose", action="store_true")
         super().add_arguments(parser)
 
     @transaction.atomic
@@ -40,11 +40,12 @@ class Command(BfBaseCommand):
         dry = kwargs.get("dry", False)
         year = kwargs.get("year", None)
         cpr = kwargs.get("cpr", None)
+        verbose = kwargs.get("verbose", None)
 
         result: Optional[ImportResult] = None
         try:
             logger.info(f"Importing: U1A entries (YEAR={year}, CPR={cpr})")
-            result = self._import_data(year, cpr)
+            result = self._import_data(year, cpr, verbose)
 
             if dry:
                 transaction.set_rollback(True)
@@ -56,18 +57,20 @@ class Command(BfBaseCommand):
             raise e
 
         # Finish
-        duration = datetime.datetime.fromtimestamp(
-            time.time() - start, datetime.timezone.utc
-        )
-
+        duration = time.time() - start
         logger.info(f"Report: U1AEntries created: {result.new_entries}")
         logger.info(f"Report: U1AEntries updated: {result.updated_entries}")
         logger.info(f"Report: U1AItemEntries created: {result.new_items}")
         logger.info(f"Report: U1AItemEntries updated: {result.updated_items}")
-        logger.info(f"Report: Exec time: {duration.strftime('%H:%M:%S')}")
+        logger.info(f"Report: Exec time: {duration:.3f}s")
         logger.info("DONE!")
 
-    def _import_data(self, year: Optional[int] = None, cpr: Optional[str] = None):
+    def _import_data(
+        self,
+        year: Optional[int] = None,
+        cpr: Optional[str] = None,
+        verbose: Optional[bool] = None,
+    ):
         result = ImportResult()
         akap_u1as = get_akap_u1a_entries(
             settings.AKAP_HOST,  # type: ignore[misc]
@@ -77,7 +80,13 @@ class Command(BfBaseCommand):
             fetch_all=True,
         )
 
+        if verbose:
+            logger.info(f"- U1A entries fetch from akap: {len(akap_u1as)}")
+
         for u1a in akap_u1as:
+            if verbose:
+                logger.info(f"- Importing U1A: {u1a}")
+
             db_u1a_entry, u1a_created = self._create_or_update_u1a(u1a)
             if u1a_created:
                 result.new_entries += 1
@@ -92,6 +101,9 @@ class Command(BfBaseCommand):
             )
 
             for u1a_item in u1a.items:
+                if verbose:
+                    logger.info(f"- Importing U1AItem: {u1a_item}")
+
                 _, u1a_item_created = self._create_or_update_u1a_item(
                     db_u1a_entry.id, u1a_item
                 )
