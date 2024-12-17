@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 URL_U1A_LIST = "/udbytte/api/u1a"
-URL_U1A_ITEMS = "/udbytte/api/u1a/{u1a_id}/items"
+URL_U1A_ITEMS = "/udbytte/api/u1a-items"
 
 
 class AKAPU1AItem(BaseModel):
@@ -95,6 +95,7 @@ def get_akap_u1a_entries(
     host: str,
     auth_token: str,
     year: Optional[int] = None,
+    cpr: Optional[str] = None,
     limit: Optional[int] = None,
     offset: Optional[int] = None,
     fetch_all: Optional[bool] = None,
@@ -105,6 +106,9 @@ def get_akap_u1a_entries(
     query_params = {"limit": limit, "offset": offset}
     if year:
         query_params["regnskabsår"] = year
+
+    if cpr:
+        query_params["cpr"] = cpr
 
     resp = requests.get(
         host + URL_U1A_LIST,
@@ -131,7 +135,7 @@ def get_akap_u1a_entries(
 def get_akap_u1a_items(
     host: str,
     auth_token: str,
-    u1a_id: int,
+    u1a_id: Optional[int] = None,
     limit: Optional[int] = None,
     offset: Optional[int] = None,
     fetch_all: Optional[bool] = None,
@@ -139,10 +143,14 @@ def get_akap_u1a_items(
     limit = limit if limit else 50
     offset = offset if offset else 0
 
+    query_params = {"limit": limit, "offset": offset}
+    if u1a_id:
+        query_params["u1a"] = u1a_id
+
     resp = requests.get(
-        host + URL_U1A_ITEMS.format(u1a_id=u1a_id),
+        host + URL_U1A_ITEMS,
         headers={"Authorization": f"Bearer {auth_token}"},
-        params={"limit": limit, "offset": offset},
+        params=query_params,
     )
 
     if resp.status_code != 200:
