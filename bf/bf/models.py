@@ -1454,3 +1454,43 @@ class EboksMessage(models.Model):
                             "is_postprocessing",
                         ]
                     )
+
+
+# U1A Import
+
+
+class PersonYearU1AAssessment(models.Model):
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
+
+    person_year = models.ForeignKey(
+        PersonYear, on_delete=models.CASCADE, related_name="u1a_assessments"
+    )
+
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
+    u1a_ids = models.CharField(
+        verbose_name=_("U1A IDs i AKAP"),
+        max_length=255,
+        error_messages={"required": "error.required", "invalid": "error.invalid_email"},
+    )
+
+    dividend_total = models.DecimalField(
+        verbose_name=_("Udbetalt/godskrevet udbytte i DKK, før skat"),
+        max_digits=12,
+        decimal_places=2,
+        error_messages={
+            "required": "error.required",
+            "invalid": "error.number_required",
+        },
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+    )
