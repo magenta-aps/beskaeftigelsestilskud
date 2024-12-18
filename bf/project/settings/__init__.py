@@ -20,4 +20,5 @@ include(
     "eskat.py",
     "tables2.py",
     "bootstrap5.py",
+    "eboks.py",
 )
