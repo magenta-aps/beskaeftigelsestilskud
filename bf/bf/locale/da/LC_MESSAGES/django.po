@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-12 06:44-0200\n"
+"POT-Creation-Date: 2024-12-12 13:28-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,6 +15,26 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: bf/models.py
+msgid "Benefit rate percent"
+msgstr ""
+
+#: bf/models.py
+msgid "Personal allowance"
+msgstr ""
+
+#: bf/models.py
+msgid "Standard allowance"
+msgstr ""
+
+#: bf/models.py
+msgid "Max benefit"
+msgstr ""
+
+#: bf/models.py
+msgid "Scaledown rate percent"
+msgstr ""
 
 #: bf/models.py
 msgid "CPR nummer"

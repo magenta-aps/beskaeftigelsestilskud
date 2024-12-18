@@ -686,22 +686,19 @@ class TestUpdateEngineViewPreferences(TestCase):
 class TestCalculator(ViewTestCase):
     view_class = CalculatorView
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        StandardWorkBenefitCalculationMethod.objects.create(
-            benefit_rate_percent=Decimal("17.5"),
-            personal_allowance=Decimal("58000.00"),
-            standard_allowance=Decimal("10000"),
-            max_benefit=Decimal("15750.00"),
-            scaledown_rate_percent=Decimal("6.3"),
-            scaledown_ceiling=Decimal("250000.00"),
-        )
-
     def request(self, amount):
         request = self._request_factory.post(
             path=reverse("data_analysis:calculator"),
-            data={"estimated_year_income": amount},
+            data={
+                "estimated_year_income": amount,
+                "method": "StandardWorkBenefitCalculationMethod",
+                "benefit_rate_percent": "17.5",
+                "personal_allowance": "58000.00",
+                "standard_allowance": "10000",
+                "max_benefit": "15750.00",
+                "scaledown_rate_percent": "6.3",
+                "scaledown_ceiling": "250000.00",
+            },
         )
         self._view.setup(request)
         return self._view.post(request)
@@ -726,27 +723,77 @@ class TestCalculator(ViewTestCase):
     def test_calculator_ramp_up(self):
         response = self.request(100000)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertTrue(response.context_data["form"].is_valid())
-        self.assertEqual(response.context_data["result"], "5600.00")
-        self.assertEqual(response.context_data["result_monthly"], "466.67")
+        context = response.context_data
+        self.assertTrue(context["form"].is_valid(), context["form"].errors)
+        self.assertEqual(context["result"], "5600.00")
+        self.assertEqual(context["result_monthly"], "466.67")
 
     def test_calculator_ramp_plateau(self):
         response = self.request(250000)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertTrue(response.context_data["form"].is_valid())
-        self.assertEqual(response.context_data["result"], "15750.00")
-        self.assertEqual(response.context_data["result_monthly"], "1312.50")
+        context = response.context_data
+        self.assertTrue(context["form"].is_valid(), context["form"].errors)
+        self.assertEqual(context["result"], "15750.00")
+        self.assertEqual(context["result_monthly"], "1312.50")
 
     def test_calculator_ramp_down(self):
         response = self.request(350000)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertTrue(response.context_data["form"].is_valid())
-        self.assertEqual(response.context_data["result"], "9450.00")
-        self.assertEqual(response.context_data["result_monthly"], "787.50")
+        context = response.context_data
+        self.assertTrue(context["form"].is_valid(), context["form"].errors)
+        self.assertEqual(context["result"], "9450.00")
+        self.assertEqual(context["result_monthly"], "787.50")
 
     def test_calculator_ramp_over(self):
         response = self.request(500000)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertTrue(response.context_data["form"].is_valid())
-        self.assertEqual(response.context_data["result"], "0.00")
-        self.assertEqual(response.context_data["result_monthly"], "0.00")
+        context = response.context_data
+        self.assertTrue(context["form"].is_valid(), context["form"].errors)
+        self.assertEqual(context["result"], "0.00")
+        self.assertEqual(context["result_monthly"], "0.00")
+
+    def test_get_engines(self):
+        method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.50"),
+            personal_allowance=Decimal("60000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.30"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        Year.objects.create(year=2026, calculation_method=method)
+        self.assertEqual(
+            self._view.engines,
+            [
+                {
+                    "name": "StandardWorkBenefitCalculationMethod for 2026",
+                    "class": "StandardWorkBenefitCalculationMethod",
+                    "fields": {
+                        "benefit_rate_percent": {
+                            "value": Decimal("17.500"),
+                            "label": "Benefit rate percent",
+                        },
+                        "personal_allowance": {
+                            "value": Decimal("60000.00"),
+                            "label": "Personal allowance",
+                        },
+                        "standard_allowance": {
+                            "value": Decimal("10000.00"),
+                            "label": "Standard allowance",
+                        },
+                        "max_benefit": {
+                            "value": Decimal("15750.00"),
+                            "label": "Max benefit",
+                        },
+                        "scaledown_rate_percent": {
+                            "value": Decimal("6.300"),
+                            "label": "Scaledown rate percent",
+                        },
+                        "scaledown_ceiling": {
+                            "value": Decimal("250000.00"),
+                            "label": "Scaledown ceiling",
+                        },
+                    },
+                }
+            ],
+        )
