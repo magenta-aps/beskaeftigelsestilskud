@@ -11,27 +11,9 @@ from bf.models import StandardWorkBenefitCalculationMethod, Year
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+
         method, _ = StandardWorkBenefitCalculationMethod.objects.get_or_create(
             id=1,
-            defaults={
-                "benefit_rate_percent": Decimal("17.5"),
-                "personal_allowance": Decimal("58000.00"),
-                "standard_allowance": Decimal("10000"),
-                "max_benefit": Decimal("15750.00"),
-                "scaledown_rate_percent": Decimal("6.3"),
-                "scaledown_ceiling": Decimal("250000.00"),
-            },
-        )
-        for year in range(date.today().year - 4, date.today().year):
-            Year.objects.update_or_create(
-                year=year,
-                defaults={
-                    "calculation_method": method,
-                },
-            )
-
-        method2, _ = StandardWorkBenefitCalculationMethod.objects.get_or_create(
-            id=2,
             defaults={
                 "benefit_rate_percent": Decimal("17.5"),
                 "personal_allowance": Decimal("60000.00"),
@@ -45,6 +27,6 @@ class Command(BaseCommand):
         Year.objects.update_or_create(
             year=year,
             defaults={
-                "calculation_method": method2,
+                "calculation_method": method,
             },
         )
