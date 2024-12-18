@@ -5,7 +5,7 @@
 import logging
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Any, List, Optional
 
 import requests
 from pydantic import BaseModel, Field
@@ -61,7 +61,7 @@ class AKAPU1A(BaseModel):
 
 class AKAPAPIPaginatedResponse(BaseModel):
     count: int
-    items: List[Dict]
+    items: List[Any]
 
 
 def get_akap_u1a_entries(
@@ -109,6 +109,8 @@ def get_akap_u1a_items(
     host: str,
     auth_token: str,
     u1a_id: Optional[int] = None,
+    year: Optional[int] = None,
+    cpr: Optional[str] = None,
     limit: Optional[int] = None,
     offset: Optional[int] = None,
     fetch_all: Optional[bool] = None,
@@ -119,6 +121,12 @@ def get_akap_u1a_items(
     query_params = {"limit": limit, "offset": offset}
     if u1a_id:
         query_params["u1a"] = u1a_id
+
+    if year:
+        query_params["year"] = year
+
+    if cpr:
+        query_params["cpr_cvr_tin"] = cpr
 
     resp = requests.get(
         host + URL_U1A_ITEMS,
