@@ -30,6 +30,29 @@
                     <div class="col-6"><label for="{{ form.estimated_year_income.id_for_label }}">{{ form.estimated_year_income.label }}</label></div>
                     <div class="col-6">{{ form.estimated_year_income }}</div>
                 </div>
+                <div class="row align-items-center my-1">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#engine_modal">Indlæs beregningsmotor</button>
+                    </div>
+                </div>
+
+                {{ form.method }}
+                <div id="engine_parameters">
+                    {% for fieldname, field in engines.0.fields.items %}
+                        <div class="row align-items-center my-1">
+                            <div class="col-6">
+                                <label for="{{ fieldname }}">{{ field.label }}</label>
+                            </div>
+                            <div class="col-6">
+                                {% with form.errors|get:fieldname as errors %}
+                                <input type="number" name="{{ fieldname }}" value="{{ form.data|get:fieldname|default:field.value }}" class="form-control {% if errors %}is-invalid{% endif %}" step="0.01"/>
+                                {% if errors %}{{ errors }}{% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
                 <div class="row">
                     <div class="col-12 clearfix">
                         <button type="submit" class="btn btn-primary float-end">{% translate "Beregn" %}</button>
@@ -67,7 +90,7 @@
                             const graph = $("#graph");
                             if (year_income > data[data.length - 1][0]) {
                                 // result is greater than our current max point in the graph
-                                data = [...method.points, [year_income, 0]];  // Clone array
+                                data = [...data, [year_income, 0]];  // Clone array
                             }
 
                             const chart = new ApexCharts(graph.get(0), {
@@ -125,6 +148,26 @@
             </div>
         </div>
     </form>
+
+    <div id="engine_modal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Indlæs beregningsmotor</h5></div>
+                <div class="modal-body">
+                    <select id="engine_select" class="form-control">
+                        {% for engine in engines %}
+                            <option value="{{ forloop.counter0 }}">{{ engine.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button id="engine_selected" class="btn btn-primary" data-bs-target="#engine_modal" data-bs-toggle="modal">Indlæs</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {{ engines|json_script:"engines" }}
     <script nonce="{{ request.csp_nonce }}">
         const month_field = $("[name={{ form.estimated_month_income.name }}]");
         const year_field = $("[name={{ form.estimated_year_income.name }}]");
@@ -135,4 +178,29 @@
             month_field.val(year_field.val() / 12);
         });
     </script>
+    <script nonce="{{ request.csp_nonce }}">
+        const engine_parameters = $("#engine_parameters");
+        const method = $("[name={{ form.method.name }}]");
+        const engines = JSON.parse($("#engines").text());
+        const update_parameters = function() {
+            // On new engine selected
+            engine_parameters.empty();
+            const engine_index = parseInt($("#engine_select").val());
+            const engine = engines[engine_index];
+
+            for (let fieldname in engine["fields"]) {
+                const field = engine["fields"][fieldname];
+                const row = $(`<div class="row align-items-center my-1">
+                    <div class="col-6"><label for="${fieldname}">${field["label"]}</label></div>
+                    <div class="col-6"><input type="number" name="${fieldname}" value="${field["value"]}" class="form-control" step="0.01"/></div>
+                </div>`);
+                engine_parameters.append(row);
+            }
+            method.val(engine["class"]);
+        }
+        $("#engine_selected").on("click", update_parameters);
+
+
+    </script>
+
 {% endblock %}

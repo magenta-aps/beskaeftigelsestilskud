@@ -6,10 +6,12 @@ import dataclasses
 import json
 from collections import Counter, defaultdict
 from decimal import Decimal
+from functools import cached_property
 from typing import List
 from urllib.parse import urlencode
 
 from common.models import EngineViewPreferences
+from common.utils import omit
 from data_analysis.forms import (
     CalculatorForm,
     HistogramOptionsForm,
@@ -20,7 +22,9 @@ from data_analysis.forms import (
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, Model, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
+from django.forms.models import fields_for_model, model_to_dict
 from django.http import HttpResponse
+from django.utils import timezone
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
 from login.view_mixins import LoginRequiredMixin
@@ -37,7 +41,7 @@ from bf.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
-    StandardWorkBenefitCalculationMethod,
+    WorkingTaxCreditCalculationMethod,
     Year,
 )
 from bf.simulation import Simulation
@@ -489,8 +493,60 @@ class CalculatorView(FormView):
     form_class = CalculatorForm
     template_name = "data_analysis/calculate.html"
 
+    def get_initial(self):
+        year_object = Year.objects.filter(year=timezone.now().year).first()
+        engine = year_object.calculation_method if year_object else None
+        return {
+            "calculation_engine": engine,
+            "method": engine.__class__.__name__,
+        }
+
+    @cached_property
+    def engines(self):
+        engines = []
+        for engine in WorkingTaxCreditCalculationMethod.subclass_instances():
+            values = omit(model_to_dict(engine), "id")
+            fields = omit(fields_for_model(engine.__class__), "id")
+            engines.append(
+                {
+                    "name": str(engine),
+                    "class": engine.__class__.__name__,
+                    "fields": {
+                        fieldname: {
+                            "value": values[fieldname],
+                            "label": field.label,
+                        }
+                        for fieldname, field in fields.items()
+                    },
+                }
+            )
+        return engines
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(**{**kwargs, "engines": self.engines})
+
     def form_valid(self, form):
-        method = StandardWorkBenefitCalculationMethod.objects.first()
+        method_name = form.cleaned_data["method"]
+        method_class = WorkingTaxCreditCalculationMethod.subclasses_by_name()[
+            method_name
+        ]
+        print(form.cleaned_data)
+        method = method_class(
+            **{
+                key: value
+                for key, value in form.cleaned_data.items()
+                if key
+                in {
+                    "benefit_rate_percent",
+                    "personal_allowance",
+                    "standard_allowance",
+                    "max_benefit",
+                    "scaledown_rate_percent",
+                    "scaledown_ceiling",
+                }
+            }
+        )
+
         result = method.calculate(form.cleaned_data["estimated_year_income"])
         return self.render_to_response(
             self.get_context_data(

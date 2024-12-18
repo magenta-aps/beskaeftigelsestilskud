@@ -219,6 +219,89 @@ class TestStandardWorkBenefitCalculationMethod(ModelTest):
             ],
         )
 
+        self.assertEqual(
+            StandardWorkBenefitCalculationMethod(
+                benefit_rate_percent=Decimal("17.50"),
+                personal_allowance=Decimal("60000.00"),
+                standard_allowance=Decimal("10000"),
+                max_benefit=Decimal("100000.00"),  # much higher ceiling
+                scaledown_rate_percent=Decimal("6.30"),
+                scaledown_ceiling=Decimal("250000.00"),
+            ).graph_points,
+            [
+                (Decimal("0.00"), Decimal("0.00")),
+                (Decimal("70000.00"), Decimal("0.00")),
+                (Decimal("250000.00"), Decimal("31500.00")),
+                (Decimal("641428.57"), Decimal("75340.00")),
+                (Decimal("1837301.59"), Decimal("0.00")),
+            ],
+        )
+
+        self.assertEqual(
+            StandardWorkBenefitCalculationMethod(
+                benefit_rate_percent=Decimal("17.50"),
+                personal_allowance=Decimal("60000.00"),
+                standard_allowance=Decimal("10000.00"),
+                max_benefit=Decimal("15750.00"),
+                scaledown_rate_percent=Decimal("63.00"),  # Much higher scaledown
+                scaledown_ceiling=Decimal("250000.00"),
+            ).graph_points,
+            [
+                (Decimal("0.00"), Decimal("0.00")),
+                (Decimal("70000.00"), Decimal("0.00")),
+                (Decimal("160000.00"), Decimal("15750.00")),
+                (Decimal("250000.00"), Decimal("15750.00")),
+                (Decimal("275000.00"), Decimal("0.00")),
+            ],
+        )
+        self.assertEqual(
+            StandardWorkBenefitCalculationMethod(
+                benefit_rate_percent=Decimal("10.00"),
+                personal_allowance=Decimal("60000.00"),
+                standard_allowance=Decimal("10000.00"),
+                max_benefit=Decimal("15750.00"),
+                scaledown_rate_percent=Decimal("10.00"),
+                scaledown_ceiling=Decimal("250000.00"),
+            ).graph_points,
+            [
+                (Decimal("0.00"), Decimal("0.00")),
+                (Decimal("70000.00"), Decimal("0.00")),
+                (Decimal("227500.00"), Decimal("15750.00")),
+                (Decimal("250000.00"), Decimal("15750.00")),
+                (Decimal("407500.00"), Decimal("0.00")),
+            ],
+        )
+
+        self.assertEqual(
+            StandardWorkBenefitCalculationMethod(
+                benefit_rate_percent=Decimal("0.00"),
+                personal_allowance=Decimal("60000.00"),
+                standard_allowance=Decimal("10000"),
+                max_benefit=Decimal("15750.00"),
+                scaledown_rate_percent=Decimal("6.30"),
+                scaledown_ceiling=Decimal("250000.00"),
+            ).graph_points,
+            [
+                (Decimal("0.00"), Decimal("0.00")),
+            ],
+        )
+
+        self.assertEqual(
+            StandardWorkBenefitCalculationMethod(
+                benefit_rate_percent=Decimal("17.50"),
+                personal_allowance=Decimal("60000.00"),
+                standard_allowance=Decimal("10000"),
+                max_benefit=Decimal("15750.00"),
+                scaledown_rate_percent=Decimal("0.00"),
+                scaledown_ceiling=Decimal("250000.00"),
+            ).graph_points,
+            [
+                (Decimal("0.00"), Decimal("0.00")),
+                (Decimal("70000.00"), Decimal("0.00")),
+                (Decimal("160000.00"), Decimal("15750.00")),
+            ],
+        )
+
 
 pitu_client_mock = MagicMock()
 pitu_client_mock.get_person_info.return_value = {"civilstand": "G", "stedkode": "001"}
