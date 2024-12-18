@@ -42,19 +42,13 @@ class Command(BfBaseCommand):
         cpr = kwargs.get("cpr", None)
         verbose = kwargs.get("verbose", None)
 
-        result: Optional[ImportResult] = None
-        try:
-            logger.info(f"Importing: U1A entries (YEAR={year}, CPR={cpr})")
-            result = self._import_data(year, cpr, verbose)
+        result = ImportResult()
+        logger.info(f"Importing: U1A entries (YEAR={year}, CPR={cpr})")
+        result = self._import_data(year, cpr, verbose)
 
-            if dry:
-                transaction.set_rollback(True)
-                logger.info("Dry run complete. All changes rolled back.")
-        except Exception as e:
-            logger.exception(
-                f"Unknown error occured for import: CPR={cpr}, YEAR={year}"
-            )
-            raise e
+        if dry:
+            transaction.set_rollback(True)
+            logger.info("Dry run complete. All changes rolled back.")
 
         # Finish
         duration = time.time() - start
