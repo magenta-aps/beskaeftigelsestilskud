@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-17 08:19-0200\n"
+"POT-Creation-Date: 2024-12-18 10:31-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -114,6 +114,14 @@ msgstr ""
 
 #: bf/models.py
 msgid "Overført til fjernprint"
+msgstr ""
+
+#: bf/models.py
+msgid "U1A IDs i AKAP"
+msgstr ""
+
+#: bf/models.py
+msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
 msgstr ""
 
 #: bf/templates/bf/person_detail.html bf/templates/bf/person_detail_base.html
