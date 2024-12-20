@@ -108,6 +108,9 @@ class Command(BaseCommand):
         )
 
         # Calculate benefit
+        # TODO: Alt tilbageholdt bidrag (pga. "karantæne") skal indgå i den
+        # beregning der kører i oktober, så det kan udbetales to måneder senere,
+        # i december
         job_dispatcher.call_job(
             "calculate_benefit",
             year,
@@ -117,6 +120,10 @@ class Command(BaseCommand):
         )
 
         # Send to prisme
+        # TODO: year og month skal være to måneder forskudt, så når vi kører
+        # det her på en given dato, sender vi data til prisme der er
+        # beregnet for to måneder siden
+        # Hvis vi er i december, skal vi dog udbetale al tilbageholdt bidrag
         job_dispatcher.call_job(
             "export_benefits_to_prisme",
             year=year,
