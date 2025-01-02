@@ -24,4 +24,5 @@ INSTALLED_APPS = [
     "django_otp.plugins.otp_totp",
     "django_extensions",
     "two_factor",
+    "ninja_extra",
 ]
