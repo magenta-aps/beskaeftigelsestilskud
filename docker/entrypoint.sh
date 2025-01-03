@@ -38,7 +38,7 @@ fi
 
 if [ "${CREATE_DUMMY_API_USER}" = true ]; then
   echo 'creating api user'
-  python manage.py create_user rest rest --cert-subject "C=DK,ST=Midtjylland,O=Magenta+ApS,CN=Suila+Developer" --groups api
+  python manage.py create_user rest rest --cert-subject "C=DK,ST=Midtjylland,L=Århus,O=Magenta+ApS,CN=Suila+Dev+Client" --groups api
 fi
 
 python manage.py createcachetable
