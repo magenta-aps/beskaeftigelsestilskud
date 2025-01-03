@@ -11,6 +11,7 @@ TEST=${TEST:=false}
 MAKEMESSAGES=${MAKEMESSAGES:=false}
 PULL_IDP_METADATA=${PULL_IDP_METADATA:=false}
 CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
+CREATE_DUMMY_API_USER=${CREATE_DUMMY_API_USER:=false}
 LOAD_CALCULATION_METHOD=${LOAD_CALCULATION_METHOD:=true}
 
 python manage.py wait_for_db
@@ -26,7 +27,12 @@ fi
 
 if [ "${CREATE_DUMMY_ADMIN}" = true ]; then
   echo 'creating superuser'
-  python manage.py create_user admin admin -S
+  python manage.py create_user admin admin --is_superuser
+fi
+
+if [ "${CREATE_DUMMY_API_USER}" = true ]; then
+  echo 'creating api user'
+  python manage.py create_user rest rest --cert-subject "C=DK,ST=Midtjylland,O=Magenta+ApS,CN=Suila+Developer"
 fi
 
 python manage.py createcachetable

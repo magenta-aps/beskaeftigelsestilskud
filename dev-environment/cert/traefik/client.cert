@@ -1,0 +1,48 @@
+Certificate:
+    Data:
+        Version: 1 (0x0)
+        Serial Number: 3 (0x3)
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: C=DK, ST=Midtjylland, L=\xC3\x83\xC2\x85rhus, O=Magenta ApS, CN=Suila Dev CA
+        Validity
+            Not Before: Jan  3 16:39:38 2025 GMT
+            Not After : Jan  1 16:39:38 2035 GMT
+        Subject: C=DK, ST=Midtjylland, O=Magenta ApS, CN=Suila Developer
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:a8:02:52:f4:d5:75:da:e0:78:e9:7f:60:83:50:
+                    0d:81:c6:1a:12:77:cf:c8:43:17:ec:a8:8e:39:c9:
+                    99:2e:ab:e4:0f:99:fc:ab:51:c9:fe:81:81:ea:a0:
+                    9e:61:e2:98:72:56:08:b0:8a:4e:74:13:a8:cf:0f:
+                    37:c7:b4:d4:fe:db:2b:f8:0b:eb:36:89:b2:b3:65:
+                    de:2d:15:ae:90:f0:ad:c5:27:78:e4:5f:9b:4f:ef:
+                    45:01:25:03:88:3c:d1:75:20:f1:92:be:38:54:9a:
+                    63:a4:a8:a0:5f:e4:d2:40:f0:a1:02:2d:b3:2f:99:
+                    32:c4:c3:01:bd:52:24:26:b1
+                Exponent: 65537 (0x10001)
+    Signature Algorithm: md5WithRSAEncryption
+    Signature Value:
+        6a:3e:3d:09:8d:b1:a2:1a:93:5d:e7:ae:e4:3e:ba:fb:03:65:
+        7b:1d:5b:7f:0e:df:4e:d8:f6:52:37:6e:f3:ff:30:bf:97:bf:
+        30:1a:4e:b2:8f:39:a9:bc:25:ea:1c:f5:b2:fe:cc:b7:a2:bc:
+        b7:a0:d4:06:6d:0b:89:96:9e:ac:69:43:ec:43:4e:24:df:38:
+        72:d2:d4:aa:ff:b5:fb:24:bc:d6:ca:96:cb:dc:1d:a6:25:9e:
+        cd:3c:33:78:1f:99:50:cb:3f:64:e4:d2:68:b0:23:f5:5e:a8:
+        ce:f1:75:2d:ed:04:9d:e8:33:14:0d:69:90:68:fe:9b:04:c5:
+        8f:4a
+-----BEGIN CERTIFICATE-----
+MIICJTCCAY4CAQMwDQYJKoZIhvcNAQEEBQAwYzELMAkGA1UEBhMCREsxFDASBgNV
+BAgMC01pZHRqeWxsYW5kMREwDwYDVQQHDAjDg8KFcmh1czEUMBIGA1UECgwLTWFn
+ZW50YSBBcFMxFTATBgNVBAMMDFN1aWxhIERldiBDQTAeFw0yNTAxMDMxNjM5Mzha
+Fw0zNTAxMDExNjM5MzhaMFMxCzAJBgNVBAYTAkRLMRQwEgYDVQQIDAtNaWR0anls
+bGFuZDEUMBIGA1UECgwLTWFnZW50YSBBcFMxGDAWBgNVBAMMD1N1aWxhIERldmVs
+b3BlcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqAJS9NV12uB46X9gg1AN
+gcYaEnfPyEMX7KiOOcmZLqvkD5n8q1HJ/oGB6qCeYeKYclYIsIpOdBOozw83x7TU
+/tsr+AvrNomys2XeLRWukPCtxSd45F+bT+9FASUDiDzRdSDxkr44VJpjpKigX+TS
+QPChAi2zL5kyxMMBvVIkJrECAwEAATANBgkqhkiG9w0BAQQFAAOBgQBqPj0JjbGi
+GpNd567kPrr7A2V7HVt/Dt9O2PZSN27z/zC/l78wGk6yjzmpvCXqHPWy/sy3ory3
+oNQGbQuJlp6saUPsQ04k3zhy0tSq/7X7JLzWypbL3B2mJZ7NPDN4H5lQyz9k5NJo
+sCP1XqjO8XUt7QSd6DMUDWmQaP6bBMWPSg==
+-----END CERTIFICATE-----

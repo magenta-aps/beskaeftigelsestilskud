@@ -1,31 +1,73 @@
 http:
-  routers:
-    bf:
-      rule: "Host(`localhost`)"
-      service: "bf"
-      entryPoints: ["websecure"]
-      tls:
-
-    web-to-websecure-bf:
-      entryPoints: ["web"]
-      rule: "Host(`localhost`)"
-      service: "noop@internal"
-      middlewares:
-        - "redirect-web-to-websecure-bf"
-
-  middlewares:
-    redirect-web-to-websecure-bf:
-      redirectScheme:
-        scheme: "https"
-        permanent: true
 
   services:
     bf:
       loadBalancer:
         servers:
-          - url: "http://bf:8000/"
+          - url: "http://bf-web:8000/"
 
+  routers:
+    rest:
+      entryPoints:
+        - "websecure"
+      # rule: "PathPrefix(`/api`)"
+      rule: "Host(`bf-traefik`) || Host(`localhost`)"
+      service: "bf"
+      middlewares:
+        - "pass-tls-clientcert"
+      tls:
+        options: clientcert
+#        clientAuth:
+#          clientAuthType: RequireAndVerifyClientCert
+#          caFiles:
+#            - "/etc/traefik/certs/client.cert"
+
+
+  #
+#    bf:
+#      rule: "Host(`localhost`)"
+#      service: "bf"
+#      entryPoints: ["websecure"]
+#      tls:
+#
+#    web-to-websecure-bf:
+#      entryPoints: ["web"]
+#      rule: "Host(`localhost`)"
+#      service: "noop@internal"
+#      middlewares:
+#        - "redirect-web-to-websecure-bf"
+
+
+  middlewares:
+#    redirect-web-to-websecure-bf:
+#      redirectScheme:
+#        scheme: "https"
+#        permanent: true
+    pass-tls-clientcert:
+      passTLSClientCert:
+        info:
+          subject:
+            country: true
+            province: true
+            locality: true
+            organization: true
+            organizationalUnit: true
+            commonName: true
+            serialNumber: true
+            domainComponent: true
+
+#
 tls:
-  certificates:
-    - certFile: "/etc/traefik/certs/traefik.cert"
-      keyFile: "/etc/traefik/certs/traefik.key"
+  stores:
+    default:
+      defaultCertificate:
+        certFile: "/etc/traefik/certs/server.cert"
+        keyFile: "/etc/traefik/certs/server.key"
+  options:
+    default:
+      minVersion: "VersionTLS12"
+    clientcert:
+      clientAuth:
+        clientAuthType: RequireAndVerifyClientCert
+        caFiles:
+          - "/etc/traefik/certs/client.cert"

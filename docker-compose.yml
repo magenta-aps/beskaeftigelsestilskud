@@ -44,34 +44,34 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - database
-
-  bf-cron:
-    user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
-    container_name: bf-cron
-    image: bf:latest
-    env_file:
-      - ./dev-environment/bf.env
-    depends_on:
-      - bf-db
-    volumes:
-      - ./bf/:/app
-      - file-data:/upload:ro
-      - ./log/cron.log:/log/cron.log:rw
-      - ./dev-environment/cert:/ssl:ro
-      - ./dev-environment/crontab:/crontab:ro
-    environment:
-      - MAKE_MIGRATIONS=false
-      - MIGRATE=false
-      - LOAD_FIXTURES=false
-      - MAKEMESSAGES=false
-      - PULL_IDP_METADATA=false
-      - CREATE_DUMMY_ADMIN=false
-      - LOAD_CALCULATION_METHOD=false
-      - TEST=false
-      - HOME=/tmp/
-    command: [ "supercronic", "/crontab" ]
-    networks:
-      - database
+#
+#  bf-cron:
+#    user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
+#    container_name: bf-cron
+#    image: bf:latest
+#    env_file:
+#      - ./dev-environment/bf.env
+#    depends_on:
+#      - bf-db
+#    volumes:
+#      - ./bf/:/app
+#      - file-data:/upload:ro
+#      - ./log/cron.log:/log/cron.log:rw
+#      - ./dev-environment/cert:/ssl:ro
+#      - ./dev-environment/crontab:/crontab:ro
+#    environment:
+#      - MAKE_MIGRATIONS=false
+#      - MIGRATE=false
+#      - LOAD_FIXTURES=false
+#      - MAKEMESSAGES=false
+#      - PULL_IDP_METADATA=false
+#      - CREATE_DUMMY_ADMIN=false
+#      - LOAD_CALCULATION_METHOD=false
+#      - TEST=false
+#      - HOME=/tmp/
+#    command: [ "supercronic", "/crontab" ]
+#    networks:
+#      - database
 
   bf-idp:
     user: "1000:1000"  # Override in docker-compose.override.yml if your local user is different
@@ -119,6 +119,18 @@ services:
     ports:
       - "8123:8025"
 
+  bf-traefik:
+    image: traefik:2.2
+    container_name: bf-traefik
+    networks:
+      - default
+    ports:
+      - "8124:443"
+    volumes:
+      - ./dev-environment/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dev-environment/traefik/bf.yml:/etc/traefik/dynamic/bf.yml:ro
+      - ./dev-environment/cert/traefik/:/etc/traefik/certs/:ro
+
   bf-hosts-updater:
     container_name: bf-hosts-updater
     image: bash
@@ -126,17 +138,6 @@ services:
       - ./dev-environment/hosts.sh:/hosts.sh:ro
       - /etc/hosts:/hosts:rw
     command: [ "bash", "/hosts.sh" ]
-
-
-  bf-traefik:
-    image: traefik:2.2
-    container_name: bf-traefik
-    ports:
-      - "8110:443"
-    volumes:
-      - ./dev-environment/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./dev-environment/traefik/bf.yml:/etc/traefik/dynamic/bf.yml:ro
-      - ./dev-environment/cert/traefik/:/etc/traefik/certs/:ro
 
 volumes:
   postgres-data:

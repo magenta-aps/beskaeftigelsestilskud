@@ -3,7 +3,7 @@
 hosts_file="/hosts"
 
 add_hosts=""
-for hostname in bf-web bf-idp bf-mailhog; do
+for hostname in bf-web bf-idp bf-mailhog bf-traefik; do
   if ! grep $hostname $hosts_file; then
     add_hosts+=" $hostname"
   fi

@@ -61,7 +61,7 @@ LOGIN_WHITELISTED_URLS = [
     LOGIN_NO_CPRCVR_URL,
     LOGIN_REDIRECT_URL,
     LOGOUT_REDIRECT_URL,
-    re.compile("^/api/.*"),
+    re.compile("^/api.*"),
 ]
 MITID_TEST_ENABLED = bool(strtobool(os.environ.get("MITID_TEST_ENABLED", "False")))
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

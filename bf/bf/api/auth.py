@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # mypy: disable-error-code="call-arg, attr-defined"
 from typing import Dict
+from urllib.parse import unquote
 
 from common.models import User
 from django.http import HttpRequest
@@ -42,12 +43,16 @@ class ClientCertAuth(AuthBase):
 
     @classmethod
     def get_info(cls, request: HttpRequest) -> Dict[str, str] | None:
+        print(request.headers)
         info = request.headers.get(cls.cert_info_header)
         if info is not None:
+            info = unquote(info)
+            print(f"info: {info}")
             items = {}
             for part in info.split(";"):
                 eq_index = part.index("=")
                 items[part[0:eq_index]] = part[eq_index + 1 :].strip('"')
+            print(f"items: {items}")
             return items
         return None
 
@@ -62,6 +67,8 @@ class ClientCertAuth(AuthBase):
         try:
             return User.objects.get(cert_subject=subject)
         except User.DoesNotExist:
+            print("did not find user")
+            print(User.objects.all().values_list("cert_subject", flat=True))
             return None
 
 
