@@ -34,7 +34,7 @@ class PersonOut(ModelSchema):
 
 class PersonFilterSchema(FilterSchema):
     cpr: Optional[str] = None
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, q="name__iexact")
     name_contains: Optional[str] = Field(None, q="name__icontains")
     address_contains: Optional[str] = Field(None, q="full_address__icontains")
     location_code: Optional[str] = None
