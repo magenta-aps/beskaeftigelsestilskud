@@ -9,6 +9,7 @@ from pathlib import Path
 
 import saml2
 from django.urls import reverse_lazy
+from project.settings.base import DEBUG
 from project.util import strtobool
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -33,7 +34,9 @@ AUTHENTICATION_BACKENDS = [
 
 DEFAULT_CPR = "1234567890"
 
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = not DEBUG
+if not DEBUG:
+    SESSION_COOKIE_SAMESITE = "None"
 SESSION_EXPIRE_SECONDS = int(os.environ.get("SESSION_EXPIRE_SECONDS") or 1800)
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 

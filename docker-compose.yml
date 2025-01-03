@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: MPL-2.0
 services:
 
-  bf:
+  bf-web:
     user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
-    container_name: bf
+    container_name: bf-web
     image: bf:latest
     build:
       context: .
@@ -26,7 +26,12 @@ services:
       - PULL_IDP_METADATA=true
       - TEST=false
       - HOME=/tmp/
-    network_mode: "host"
+    networks:
+      - default
+      - database
+      - mail
+    ports:
+      - "8120:8000"
     command: gunicorn -b 0.0.0.0:8000 project.wsgi:application --timeout 120 --reload -w 1 --access-logfile - --error-logfile - --capture-output # reload on code changes
 
   bf-db:
@@ -37,7 +42,8 @@ services:
       - ./dev-environment/bf.env
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    network_mode: "host"
+    networks:
+      - database
 
   bf-cron:
     user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
@@ -63,45 +69,70 @@ services:
       - LOAD_CALCULATION_METHOD=false
       - TEST=false
       - HOME=/tmp/
-    network_mode: "host"
     command: [ "supercronic", "/crontab" ]
+    networks:
+      - database
 
+  bf-idp:
+    user: "1000:1000"  # Override in docker-compose.override.yml if your local user is different
+    image: kenchan0130/simplesamlphp
+    container_name: bf-idp
+    environment:
+      HTTP_PORT: 8121
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://bf-web:8120/mitid/saml/metadata/
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://bf-web:8120/mitid/login/callback/
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://bf-web:8120/mitid/logout/callback/
+      SIMPLESAMLPHP_IDP_CERTIFICATE: /var/www/simplesamlphp/cert/selfsigned.crt
+      SIMPLESAMLPHP_IDP_PRIVATEKEY: /var/www/simplesamlphp/cert/selfsigned.key
+    volumes:
+      - ./dev-environment/cert/idp/selfsigned.crt:/var/www/simplesamlphp/cert/server.crt:ro
+      - ./dev-environment/cert/idp/selfsigned.key:/var/www/simplesamlphp/cert/server.pem:ro
+      - ./dev-environment/idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
+      - ./dev-environment/idp/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php:ro
+      - ./dev-environment/idp/ports.conf:/etc/apache2/ports.conf:ro
+      - ./dev-environment/idp/site.conf:/etc/apache2/sites-available/simplesamlphp.conf:ro
+    ports:
+      - "8121:8121"
+    networks:
+      - default
+
+  bf-sftp:
+    image: atmoz/sftp
+    container_name: "bf-sftp"
+    volumes:
+      - ./dev-environment/sftp_users.conf:/etc/sftp/users.conf
+      - ./data/sftp_uploads/:/home/besk/test/:rw
+      - ./data/sftp_downloads/posting_status:/home/besk/posting_status/:rw
+      - ./data/sftp_downloads/b_tax:/home/besk/btax/:rw
+    networks:
+      - default
+    ports:
+      - "8122:22"
 
   bf-mailhog:
     container_name: bf-mailhog
     image: mailhog/mailhog
     logging:
       driver: 'none' # Disable saving logs
-    network_mode: "host"
+    networks:
+      - mail
+    ports:
+      - "8123:8025"
 
-  bf-test-idp:
-    user: "1000:1000"  # Override in docker-compose.override.yml if your local user is different
-    image: kenchan0130/simplesamlphp
-    container_name: bf-test-idp
-    network_mode: "host"
-    environment:
-      SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:8000/mitid/saml/metadata/
-      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:8000/mitid/login/callback/
-      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost:8000/mitid/logout/callback/
-      SIMPLESAMLPHP_IDP_CERTIFICATE: /var/www/simplesamlphp/cert/selfsigned.crt
-      SIMPLESAMLPHP_IDP_PRIVATEKEY: /var/www/simplesamlphp/cert/selfsigned.key
-
+  bf-hosts-updater:
+    container_name: bf-hosts-updater
+    image: bash
     volumes:
-      - ./dev-environment/cert/idp/selfsigned.crt:/var/www/simplesamlphp/cert/server.crt:ro
-      - ./dev-environment/cert/idp/selfsigned.key:/var/www/simplesamlphp/cert/server.pem:ro
-      - ./dev-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
-      - ./dev-idp/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php:ro
+      - ./dev-environment/hosts.sh:/hosts.sh:ro
+      - /etc/hosts:/hosts:rw
+    command: [ "bash", "/hosts.sh" ]
 
-  bf-sftp:
-    image: atmoz/sftp
-    container_name: "bf-sftp"
-    network_mode: "host"
-    volumes:
-      - ./dev-environment/sftp_users.conf:/etc/sftp/users.conf
-      - ./data/sftp_uploads/:/home/besk/test/:rw
-      - ./data/sftp_downloads/posting_status:/home/besk/posting_status/:rw
-      - ./data/sftp_downloads/b_tax:/home/besk/btax/:rw
 
 volumes:
   postgres-data:
   file-data:
+
+networks:
+  default:
+  database:
+  mail:
