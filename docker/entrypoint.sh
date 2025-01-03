@@ -10,6 +10,7 @@ MIGRATE=${MIGRATE:=true}
 TEST=${TEST:=false}
 MAKEMESSAGES=${MAKEMESSAGES:=false}
 PULL_IDP_METADATA=${PULL_IDP_METADATA:=false}
+CREATE_API_GROUP=${CREATE_API_GROUP:=false}
 CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
 CREATE_DUMMY_API_USER=${CREATE_DUMMY_API_USER:=false}
 LOAD_CALCULATION_METHOD=${LOAD_CALCULATION_METHOD:=true}
@@ -25,6 +26,11 @@ if [ "${MIGRATE,,}" = true ]; then
   python manage.py migrate
 fi
 
+if [ "${CREATE_API_GROUP}" = true ]; then
+  echo 'creating api group'
+  python manage.py create_api_group api
+fi
+
 if [ "${CREATE_DUMMY_ADMIN}" = true ]; then
   echo 'creating superuser'
   python manage.py create_user admin admin --is_superuser
@@ -32,7 +38,7 @@ fi
 
 if [ "${CREATE_DUMMY_API_USER}" = true ]; then
   echo 'creating api user'
-  python manage.py create_user rest rest --cert-subject "C=DK,ST=Midtjylland,O=Magenta+ApS,CN=Suila+Developer"
+  python manage.py create_user rest rest --cert-subject "C=DK,ST=Midtjylland,O=Magenta+ApS,CN=Suila+Developer" --groups api
 fi
 
 python manage.py createcachetable
