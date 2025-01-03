@@ -10,6 +10,7 @@ from ninja.renderers import JSONRenderer
 from ninja_extra import NinjaExtraAPI
 
 from bf.api.person import PersonAPI
+from bf.api.personmonth import PersonMonthAPI
 from bf.api.personyear import PersonYearAPI
 
 
@@ -21,4 +22,4 @@ api = NinjaExtraAPI(
     title="Beskæftigelsestilskud", renderer=SuilaJSONRenderer(), csrf=False
 )
 
-api.register_controllers(PersonAPI, PersonYearAPI)
+api.register_controllers(PersonAPI, PersonYearAPI, PersonMonthAPI)

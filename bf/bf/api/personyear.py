@@ -17,8 +17,8 @@ from bf.models import PersonYear
 
 class PersonYearOut(ModelSchema):
 
-    year: int = Field(..., alias="year.year")
     cpr: str = Field(..., alias="person.cpr")
+    year: int = Field(..., alias="year.year")
 
     class Meta:
         model = PersonYear
@@ -41,7 +41,7 @@ class PersonYearPermission(RestPermission):
 
 @api_controller(
     "/personyear",
-    tags=["Person"],
+    tags=["PersonYear"],
     permissions=[permissions.IsAuthenticated & PersonYearPermission],
 )
 class PersonYearAPI(ControllerBase):

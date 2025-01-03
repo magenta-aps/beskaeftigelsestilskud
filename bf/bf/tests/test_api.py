@@ -1,3 +1,5 @@
+from datetime import datetime
+from decimal import Decimal
 from typing import Dict
 
 from common.models import User
@@ -5,8 +7,9 @@ from django.test import TestCase
 from ninja_extra.testing import TestClient
 
 from bf.api import PersonAPI
+from bf.api.personmonth import PersonMonthAPI
 from bf.api.personyear import PersonYearAPI
-from bf.models import Person, PersonYear, Year
+from bf.models import Person, PersonMonth, PersonYear, Year
 
 
 class ApiTestCase(TestCase):
@@ -16,6 +19,7 @@ class ApiTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.maxDiff = 10000
         cls.client = TestClient(cls.controller)
         cls.user = User.objects.create(
             username="test", is_superuser=True, cert_subject="OU=Suila,DN=Testing"
@@ -72,18 +76,19 @@ class ApiTestCase(TestCase):
         )
 
     def expect_get(self, url: str, item: Dict):
-        response = self.client.get(
-            url,
-            headers=self.headers_user_accepted,
-        )
+        self.requires_auth(url)
+        response = self.client.get(url, headers=self.headers_user_accepted)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), item)
 
+    def expect_404(self, url: str):
+        self.requires_auth(url)
+        response = self.client.get(url, headers=self.headers_user_accepted)
+        self.assertEqual(response.status_code, 404)
+
     def expect_list(self, url: str, *items: Dict):
-        response = self.client.get(
-            url,
-            headers=self.headers_user_accepted,
-        )
+        self.requires_auth(url)
+        response = self.client.get(url, headers=self.headers_user_accepted)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json(),
@@ -139,78 +144,35 @@ class PersonApiTest(ApiTestCase):
         }
 
     def test_get(self):
-        url = "/api/person/1234567890"
-        self.requires_auth(url)
-
-        self.expect_get(
-            url,
-            self.expected1,
-        )
+        self.expect_get("/api/person/1234567890", self.expected1)
+        self.expect_404("/api/person/0000000000")
 
     def test_list_by_cpr(self):
-        url = "/api/person?cpr=2233445566"
-        self.requires_auth(url)
-
-        self.expect_list(
-            url,
-            self.expected2,
-        )
+        self.expect_list("/api/person?cpr=2233445566", self.expected2)
+        self.expect_list("/api/person?cpr=0000000000")  # no items
 
     def test_list_by_name(self):
-        url = "/api/person?name=Anders sand"
-        self.requires_auth(url)
-
-        self.expect_list(
-            url,
-            self.expected2,
-        )
+        self.expect_list("/api/person?name=Anders sand", self.expected2)
+        self.expect_list("/api/person?name=Benny Nåså")  # no items
 
     def test_list_by_name_contains(self):
-        url = "/api/person?name_contains=Oluf"
-        self.requires_auth(url)
-
+        self.expect_list("/api/person?name_contains=Oluf", self.expected1)
         self.expect_list(
-            url,
-            self.expected1,
+            "/api/person?name_contains=Sand", self.expected1, self.expected2
         )
-
-        url = "/api/person?name_contains=Sand"
-        self.requires_auth(url)
-
-        self.expect_list(
-            url,
-            self.expected1,
-            self.expected2,
-        )
+        self.expect_list("/api/person?name_contains=Benny")  # no items
 
     def test_list_by_address_contains(self):
-        url = "/api/person?address_contains=Mørke"
-        self.requires_auth(url)
-
+        self.expect_list("/api/person?address_contains=Mørke", self.expected1)
         self.expect_list(
-            url,
-            self.expected1,
+            "/api/person?address_contains=Jylland", self.expected1, self.expected2
         )
-
-        url = "/api/person?address_contains=Jylland"
-        self.requires_auth(url)
-
-        self.expect_list(
-            url,
-            self.expected1,
-            self.expected2,
-        )
+        self.expect_list("/api/person?address_contains=Fyn")  # no items
 
     def test_list_by_location_code(self):
-        url = "/api/person?location_code=123"
-        self.requires_auth(url)
-
-        self.expect_list(url, self.expected1)
-
-        url = "/api/person?location_code=456"
-        self.requires_auth(url)
-
-        self.expect_list(url, self.expected2)
+        self.expect_list("/api/person?location_code=123", self.expected1)
+        self.expect_list("/api/person?location_code=456", self.expected2)
+        self.expect_list("/api/person?location_code=789")  # no items
 
 
 class PersonYearApiTest(ApiTestCase):
@@ -292,36 +254,207 @@ class PersonYearApiTest(ApiTestCase):
         }
 
     def test_get(self):
-        url = "/api/personyear/1234567890/2024"
-        self.requires_auth(url)
-
-        self.expect_get(
-            url,
-            self.expected1a,
-        )
-        url = "/api/personyear/2233445566/2025"
-        self.requires_auth(url)
-
-        self.expect_get(
-            url,
-            self.expected2b,
-        )
+        self.expect_get("/api/personyear/1234567890/2024", self.expected1a)
+        self.expect_get("/api/personyear/2233445566/2025", self.expected2b)
+        self.expect_404("/api/personyear/2233445566/2026")
 
     def test_list_by_cpr(self):
-        url = "/api/personyear?cpr=2233445566"
-        self.requires_auth(url)
-        self.expect_list(url, self.expected2a, self.expected2b)
+        self.expect_list(
+            "/api/personyear?cpr=2233445566", self.expected2a, self.expected2b
+        )
+        self.expect_list("/api/personyear?cpr=0000000000")  # no items
 
     def test_list_by_year(self):
-        url = "/api/personyear?year=2025"
-        self.requires_auth(url)
-        self.expect_list(url, self.expected1b, self.expected2b)
+        self.expect_list("/api/personyear?year=2025", self.expected1b, self.expected2b)
+        self.expect_list("/api/personyear?year=2026")  # no items
 
     def test_list_by_cpr_year(self):
-        url = "/api/personyear?cpr=2233445566&year=2024"
-        self.requires_auth(url)
+        self.expect_list("/api/personyear?cpr=2233445566&year=2024", self.expected2a)
+        self.expect_list("/api/personyear?cpr=2233445566&year=2025", self.expected2b)
+        self.expect_list("/api/personyear?cpr=2233445566&year=2026")  # no items
 
-        self.expect_list(
-            url,
-            self.expected2a,
+
+class PersonMonthApiTest(ApiTestCase):
+
+    controller = PersonMonthAPI
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.year1 = Year.objects.create(year=2024)
+        cls.year2 = Year.objects.create(year=2025)
+        cls.person1 = Person.objects.create(
+            name="Oluf Sand",
+            cpr="1234567890",
+            full_address="Det Mørke Jylland",
+            location_code="123",
         )
+        cls.personyear1 = PersonYear.objects.create(
+            person=cls.person1,
+            year=cls.year1,
+        )
+        cls.personyear2 = PersonYear.objects.create(
+            person=cls.person1,
+            year=cls.year2,
+        )
+        cls.personmonth1a = PersonMonth.objects.create(
+            person_year=cls.personyear1,
+            month=12,
+            import_date=datetime.today(),
+            municipality_code=573,
+            municipality_name="Varde",
+            fully_tax_liable=False,
+            amount_sum=Decimal(10000),
+            estimated_year_result=Decimal(120000),
+            benefit_paid=Decimal(1000),
+            estimated_year_benefit=Decimal(12000),
+            actual_year_benefit=Decimal(12000),
+        )
+        cls.personmonth1b = PersonMonth.objects.create(
+            person_year=cls.personyear2,
+            month=1,
+            import_date=datetime.today(),
+            municipality_code=573,
+            municipality_name="Varde",
+            fully_tax_liable=False,
+            amount_sum=Decimal(11000),
+            estimated_year_result=Decimal(132000),
+            benefit_paid=Decimal(1100),
+            estimated_year_benefit=Decimal(13200),
+            actual_year_benefit=Decimal(13200),
+        )
+        cls.personmonth1c = PersonMonth.objects.create(
+            person_year=cls.personyear2,
+            month=2,
+            import_date=datetime.today(),
+            municipality_code=573,
+            municipality_name="Varde",
+            fully_tax_liable=False,
+            amount_sum=Decimal(12000),
+            estimated_year_result=Decimal(144000),
+            benefit_paid=Decimal(1200),
+            estimated_year_benefit=Decimal(14400),
+            actual_year_benefit=Decimal(14400),
+        )
+
+        cls.expected1a = {
+            "year": 2024,
+            "month": 12,
+            "cpr": "1234567890",
+            "income": "10000.00",
+            "municipality_code": 573,
+            "municipality_name": "Varde",
+            "fully_tax_liable": False,
+            "estimated_year_result": "120000.00",
+            "estimated_year_benefit": "12000.00",
+            "actual_year_benefit": "12000.00",
+            "prior_benefit_paid": None,
+            "benefit_paid": "1000.00",
+        }
+
+        cls.expected1b = {
+            "year": 2025,
+            "month": 1,
+            "cpr": "1234567890",
+            "income": "11000.00",
+            "municipality_code": 573,
+            "municipality_name": "Varde",
+            "fully_tax_liable": False,
+            "estimated_year_result": "132000.00",
+            "estimated_year_benefit": "13200.00",
+            "actual_year_benefit": "13200.00",
+            "prior_benefit_paid": None,
+            "benefit_paid": "1100.00",
+        }
+
+        cls.expected1c = {
+            "year": 2025,
+            "month": 2,
+            "cpr": "1234567890",
+            "income": "12000.00",
+            "municipality_code": 573,
+            "municipality_name": "Varde",
+            "fully_tax_liable": False,
+            "estimated_year_result": "144000.00",
+            "estimated_year_benefit": "14400.00",
+            "actual_year_benefit": "14400.00",
+            "prior_benefit_paid": None,
+            "benefit_paid": "1200.00",
+        }
+
+        cls.person2 = Person.objects.create(
+            name="Anders Sand",
+            cpr="2233445566",
+            full_address="Det Lidt Lysere Jylland",
+            location_code="456",
+        )
+        cls.personyear2a = PersonYear.objects.create(
+            person=cls.person2,
+            year=cls.year1,
+        )
+        cls.personmonth2a = PersonMonth.objects.create(
+            person_year=cls.personyear2a,
+            month=12,
+            import_date=datetime.today(),
+            municipality_code=561,
+            municipality_name="Esbjerg",
+            fully_tax_liable=False,
+            amount_sum=Decimal(0),
+            estimated_year_result=Decimal(0),
+            benefit_paid=Decimal(0),
+            estimated_year_benefit=Decimal(0),
+            actual_year_benefit=Decimal(0),
+        )
+        cls.expected2a = {
+            "year": 2024,
+            "month": 12,
+            "cpr": "2233445566",
+            "income": "0.00",
+            "municipality_code": 561,
+            "municipality_name": "Esbjerg",
+            "fully_tax_liable": False,
+            "estimated_year_result": "0.00",
+            "estimated_year_benefit": "0.00",
+            "actual_year_benefit": "0.00",
+            "prior_benefit_paid": None,
+            "benefit_paid": "0.00",
+        }
+
+    def test_get(self):
+        self.expect_get("/api/personmonth/1234567890/2024/12", self.expected1a)
+        self.expect_get("/api/personmonth/1234567890/2025/1", self.expected1b)
+        self.expect_404("/api/personmonth/1234567890/2025/3")
+
+    def test_list_by_cpr(self):
+        self.expect_list(
+            "/api/personmonth?cpr=1234567890",
+            self.expected1a,
+            self.expected1b,
+            self.expected1c,
+        )
+        self.expect_list("/api/personmonth?cpr=0000000000")  # no items
+
+    def test_list_by_year(self):
+        self.expect_list("/api/personmonth?year=2024", self.expected1a, self.expected2a)
+        self.expect_list("/api/personmonth?year=2025", self.expected1b, self.expected1c)
+        self.expect_list("/api/personmonth?year=2026")  # no items
+
+    def test_list_by_cpr_year(self):
+        self.expect_list("/api/personmonth?cpr=1234567890&year=2024", self.expected1a)
+        self.expect_list(
+            "/api/personmonth?cpr=1234567890&year=2025",
+            self.expected1b,
+            self.expected1c,
+        )
+        self.expect_list("/api/personmonth?cpr=2233445566&year=2025")  # no items
+
+    def test_list_by_cpr_year_month(self):
+        self.expect_list(
+            "/api/personmonth?cpr=1234567890&year=2025&month=1", self.expected1b
+        )
+        self.expect_list(
+            "/api/personmonth?cpr=2233445566&year=2024&month=12", self.expected2a
+        )
+        self.expect_list(
+            "/api/personmonth?cpr=2233445566&year=2025&month=1"
+        )  # no items
