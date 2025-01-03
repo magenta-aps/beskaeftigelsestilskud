@@ -20,7 +20,7 @@ class PersonMonthOut(ModelSchema):
 
     cpr: str = Field(..., alias="person_year.person.cpr")
     year: int = Field(..., alias="person_year.year.year")
-    income: Decimal = Field(None, alias="amount_sum")
+    income: Decimal = Field(..., alias="amount_sum")
 
     class Meta:
         model = PersonMonth
@@ -38,9 +38,13 @@ class PersonMonthOut(ModelSchema):
 
 
 class PersonMonthFilterSchema(FilterSchema):
-    cpr: Optional[str] = Field(None, q="person_year__person__cpr")
-    year: Optional[int] = Field(None, q="person_year__year__year")
-    month: Optional[int] = Field(None, q="month")
+    cpr: Optional[str] = Field(
+        None, q="person_year__person__cpr"
+    )  # type: ignore[call-overload]
+    year: Optional[int] = Field(
+        None, q="person_year__year__year"
+    )  # type: ignore[call-overload]
+    month: Optional[int] = Field(None, q="month")  # type: ignore[call-overload]
 
 
 class PersonMonthPermission(RestPermission):

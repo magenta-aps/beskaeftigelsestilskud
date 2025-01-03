@@ -34,9 +34,13 @@ class PersonOut(ModelSchema):
 
 class PersonFilterSchema(FilterSchema):
     cpr: Optional[str] = None
-    name: Optional[str] = Field(None, q="name__iexact")
-    name_contains: Optional[str] = Field(None, q="name__icontains")
-    address_contains: Optional[str] = Field(None, q="full_address__icontains")
+    name: Optional[str] = Field(None, q="name__iexact")  # type: ignore[call-overload]
+    name_contains: Optional[str] = Field(
+        None, q="name__icontains"
+    )  # type: ignore[call-overload]
+    address_contains: Optional[str] = Field(
+        None, q="full_address__icontains"
+    )  # type: ignore[call-overload]
     location_code: Optional[str] = None
 
 

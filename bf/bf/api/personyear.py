@@ -30,8 +30,8 @@ class PersonYearOut(ModelSchema):
 
 
 class PersonYearFilterSchema(FilterSchema):
-    cpr: Optional[str] = Field(None, q="person__cpr")
-    year: Optional[int] = Field(None, q="year__year")
+    cpr: Optional[str] = Field(None, q="person__cpr")  # type: ignore[call-overload]
+    year: Optional[int] = Field(None, q="year__year")  # type: ignore[call-overload]
 
 
 class PersonYearPermission(RestPermission):
