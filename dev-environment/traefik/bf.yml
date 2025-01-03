@@ -10,20 +10,13 @@ http:
     rest:
       entryPoints:
         - "websecure"
-      # rule: "PathPrefix(`/api`)"
-      rule: "Host(`bf-traefik`) || Host(`localhost`)"
+      rule: "(Host(`bf-traefik`) || Host(`localhost`)) && PathPrefix(`/api`)"
       service: "bf"
       middlewares:
         - "pass-tls-clientcert"
       tls:
         options: clientcert
-#        clientAuth:
-#          clientAuthType: RequireAndVerifyClientCert
-#          caFiles:
-#            - "/etc/traefik/certs/client.cert"
 
-
-  #
 #    bf:
 #      rule: "Host(`localhost`)"
 #      service: "bf"
@@ -56,7 +49,6 @@ http:
             serialNumber: true
             domainComponent: true
 
-#
 tls:
   stores:
     default:
