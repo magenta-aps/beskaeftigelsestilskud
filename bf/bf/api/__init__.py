@@ -5,7 +5,7 @@
 from json import JSONEncoder
 from typing import Type
 
-from data_analysis.views import SimulationJSONEncoder
+from common.utils import SuilaJSONEncoder
 from ninja.renderers import JSONRenderer
 from ninja_extra import NinjaExtraAPI
 
@@ -15,7 +15,7 @@ from bf.api.personyear import PersonYearAPI
 
 
 class SuilaJSONRenderer(JSONRenderer):
-    encoder_class: Type[JSONEncoder] = SimulationJSONEncoder
+    encoder_class: Type[JSONEncoder] = SuilaJSONEncoder
 
 
 api = NinjaExtraAPI(

@@ -1,15 +1,18 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import dataclasses
 import datetime
 import re
+from decimal import Decimal
 from typing import Any, Collection, Dict, TypeVar
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import numpy as np
 import pandas as pd
 from django.conf import settings
-from django.db.models import QuerySet
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Model, QuerySet
 from django.utils.translation import gettext_lazy as _
 from more_itertools import one
 
@@ -674,3 +677,24 @@ def get_payout_date(year: int, month: int) -> datetime.date:
             payout_date = date
             break
     return payout_date
+
+
+class SuilaJSONEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        if dataclasses.is_dataclass(obj):
+            return dataclasses.asdict(obj)
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if isinstance(obj, Model):
+            return {
+                k: v
+                for k, v in obj.__dict__.items()
+                if not k.startswith("_") and k not in ("load_id",)
+            }
+        if isinstance(obj, EstimationEngine):
+            return {
+                "class": obj.__class__.__name__,
+                "description": obj.description,
+            }
+
+        return super().default(obj)
