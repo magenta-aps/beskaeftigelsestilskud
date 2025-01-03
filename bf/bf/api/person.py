@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2023 Magenta ApS <info@magenta.dk>
+# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
 # mypy: disable-error-code="call-arg, attr-defined"
@@ -69,4 +69,4 @@ class PersonAPI(ControllerBase):
     )
     @paginate()
     def list(self, filters: PersonFilterSchema = Query(...)):
-        return list(filters.filter(Person.objects.all()))
+        return list(filters.filter(Person.objects.all()).order_by("cpr"))
