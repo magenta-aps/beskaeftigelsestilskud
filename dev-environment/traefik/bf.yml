@@ -1,0 +1,31 @@
+http:
+  routers:
+    bf:
+      rule: "Host(`localhost`)"
+      service: "bf"
+      entryPoints: ["websecure"]
+      tls:
+
+    web-to-websecure-bf:
+      entryPoints: ["web"]
+      rule: "Host(`localhost`)"
+      service: "noop@internal"
+      middlewares:
+        - "redirect-web-to-websecure-bf"
+
+  middlewares:
+    redirect-web-to-websecure-bf:
+      redirectScheme:
+        scheme: "https"
+        permanent: true
+
+  services:
+    bf:
+      loadBalancer:
+        servers:
+          - url: "http://bf:8000/"
+
+tls:
+  certificates:
+    - certFile: "/etc/traefik/certs/traefik.cert"
+      keyFile: "/etc/traefik/certs/traefik.key"
