@@ -1,7 +1,13 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from data_analysis.templatetags.bf_tags import concat, get, multiply, urlparams, yesno
+from data_analysis.templatetags.suila_tags import (
+    concat,
+    get,
+    multiply,
+    urlparams,
+    yesno,
+)
 from django.template import Context, Engine
 from django.test import TestCase
 from django.utils.translation import gettext_lazy as _
@@ -12,7 +18,7 @@ class TagsTest(TestCase):
         self.assertEqual(urlparams({"foo": "bar", "answer": 42}), "foo=bar&answer=42")
         self.assertEqual(
             Engine.get_default()
-            .from_string("{% load bf_tags %}{{ test|urlparams|safe }}")
+            .from_string("{% load suila_tags %}{{ test|urlparams|safe }}")
             .render(Context({"test": {"foo": "bar", "answer": 42}})),
             "foo=bar&answer=42",
         )
