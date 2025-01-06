@@ -5,7 +5,7 @@
 from django.db import migrations
 
 
-def update_prisme_account_aliases(apps, schema_editor):
+def remove_prisme_account_aliases(apps, schema_editor):
     PrismeAccountAlias = apps.get_model("bf", "PrismeAccountAlias")
     PrismeAccountAlias.objects.all().delete()
 
@@ -16,4 +16,6 @@ class Migration(migrations.Migration):
         ("bf", "0025_alter_standardworkbenefitcalculationmethod_benefit_rate_percent_and_more"),
     ]
 
-    operations = []
+    operations = [
+        migrations.RunPython(remove_prisme_account_aliases)
+    ]
