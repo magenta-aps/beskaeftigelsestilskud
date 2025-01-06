@@ -25,7 +25,7 @@ TAX_YEARS = range(2025, 2031)
 
 
 def update_prisme_account_aliases(apps, schema_editor):
-    PrismeAccountAlias = apps.get_model("bf", "PrismeAccountAlias")
+    PrismeAccountAlias = apps.get_model("suila", "PrismeAccountAlias")
     objects: list[PrismeAccountAlias] = [
         PrismeAccountAlias(
             alias=f"{AFDELING}{FINANSLOV}{FORMAAL}{ART}{municipality_code[0]}{tax_year - 2000}",
