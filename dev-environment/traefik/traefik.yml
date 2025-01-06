@@ -1,0 +1,13 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    filename: "/etc/traefik/dynamic/bf.yml"
+    watch: true
+
+accessLog:
+  format: "json"

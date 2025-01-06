@@ -15,6 +15,7 @@ class Command(BaseCommand):
         parser.add_argument("-s", "--is_staff", action="store_true")
         parser.add_argument("-S", "--is_superuser", action="store_true")
         parser.add_argument("-g", "--groups", type=str, nargs="+")
+        parser.add_argument("-c", "--cert-subject", type=str)
 
     def handle(self, *args, **options):
         user, _ = User.objects.update_or_create(
@@ -36,3 +37,7 @@ class Command(BaseCommand):
                     user.groups.add(group)
                 except Group.DoesNotExist:
                     self.stdout.write(f"Group {group_name} does not exist")
+        cert_subject = options.get("cert_subject")
+        if cert_subject:
+            user.cert_subject = cert_subject
+            user.save()
