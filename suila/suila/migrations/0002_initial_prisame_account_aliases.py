@@ -8,22 +8,23 @@ from django.db import migrations
 
 AFDELING = "100045"
 FINANSLOV = "240614"
-FORMAAL = "0101010000"
+FORMAAL = "101010000"
 ART = "242040195"
 
 MUNICIPALITY_CODES = [
-    ("010300", "955"),  # Kommune Kujalleq           31 (eSkat) og 010300 (Prisme SEL)
-    ("010400", "956"),  # Kommuneqarfik Sermersooq   32 (eSkat) og 010400 (Prisme SEL)
-    ("010500", "957"),  # Qeqqata Kommunia           33 (eSkat) og 010500 (Prisme SEL)
-    ("010600", "959"),  # Kommune Qeqertalik         36 (eSkat) og 010600 (Prisme SEL)
-    ("010700", "960"),  # Avannaata Kommunia         37 (eSkat) og 010700 (Prisme SEL)
-    ("010900", "961"),  # SDI (Skattestyrelsen)      20 (eSkat) og 010900 (Prisme SEL)
+    ("10300", "955"),  # Kommune Kujalleq           31 (eSkat) og 010300 (Prisme SEL)
+    ("10400", "956"),  # Kommuneqarfik Sermersooq   32 (eSkat) og 010400 (Prisme SEL)
+    ("10500", "957"),  # Qeqqata Kommunia           33 (eSkat) og 010500 (Prisme SEL)
+    ("10600", "959"),  # Kommune Qeqertalik         36 (eSkat) og 010600 (Prisme SEL)
+    ("10700", "960"),  # Avannaata Kommunia         37 (eSkat) og 010700 (Prisme SEL)
+    ("10900", "961"),  # SDI (Skattestyrelsen)      20 (eSkat) og 010900 (Prisme SEL)
 ]
 
 # Currently, account aliases are defined for the years 2025, 2026, 2027, 2029 and 2030
 TAX_YEARS = range(2025, 2031)
 
-def load_initial_prisme_account_aliases(apps, schema_editor):
+
+def update_prisme_account_aliases(apps, schema_editor):
     PrismeAccountAlias = apps.get_model("bf", "PrismeAccountAlias")
     objects: list[PrismeAccountAlias] = [
         PrismeAccountAlias(
@@ -34,14 +35,18 @@ def load_initial_prisme_account_aliases(apps, schema_editor):
         for municipality_code, tax_year
         in itertools.product(MUNICIPALITY_CODES, TAX_YEARS)
     ]
-    PrismeAccountAlias.objects.bulk_create(objects)
+    return PrismeAccountAlias.objects.bulk_create(
+        objects,
+        update_conflicts=True,
+        unique_fields=["tax_municipality_location_code", "tax_year"],
+        update_fields=["alias"],
+    )
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
         ("suila", "0001_initial"),
     ]
 
-    operations = [
-        migrations.RunPython(load_initial_prisme_account_aliases)
-    ]
+    operations = []
