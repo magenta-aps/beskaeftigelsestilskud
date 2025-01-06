@@ -14,7 +14,7 @@ http:
       service: "bf"
       middlewares:
         - "pass-tls-clientcert"
-        #- "api-path"
+        - "api-path"
       tls:
         options: clientcert
 
@@ -51,9 +51,9 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-#    api-path:
-#      addPrefix:
-#        prefix: "/api"
+    api-path:
+      addPrefix:
+        prefix: "/api"
 
 tls:
   stores:
