@@ -3,43 +3,43 @@
 # SPDX-License-Identifier: MPL-2.0
 import itertools
 
-from bf.management.commands.common import BfBaseCommand
+from django.core.management import BaseCommand
+
 from bf.models import PrismeAccountAlias
 
 
-class Command(BfBaseCommand):
-    filename = __file__
+class Command(BaseCommand):
 
-    def _handle(self, *args, **kwargs):
+    def handle(self, *args, **kwargs):
 
         AFDELING = "100045"
         FINANSLOV = "240614"
-        FORMAAL = "101010000"
+        FORMAAL = "0101010000"
         ART = "242040195"
 
         MUNICIPALITY_CODES = [
             (
-                "10300",
+                "010300",
                 "955",
             ),  # Kommune Kujalleq           31 (eSkat) og 010300 (Prisme SEL)
             (
-                "10400",
+                "010400",
                 "956",
             ),  # Kommuneqarfik Sermersooq   32 (eSkat) og 010400 (Prisme SEL)
             (
-                "10500",
+                "010500",
                 "957",
             ),  # Qeqqata Kommunia           33 (eSkat) og 010500 (Prisme SEL)
             (
-                "10600",
+                "010600",
                 "959",
             ),  # Kommune Qeqertalik         36 (eSkat) og 010600 (Prisme SEL)
             (
-                "10700",
+                "010700",
                 "960",
             ),  # Avannaata Kommunia         37 (eSkat) og 010700 (Prisme SEL)
             (
-                "10900",
+                "010900",
                 "961",
             ),  # SDI (Skattestyrelsen)      20 (eSkat) og 010900 (Prisme SEL)
         ]
