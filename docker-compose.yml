@@ -125,7 +125,8 @@ services:
     networks:
       - default
     ports:
-      - "8124:443"
+      - "8124:80"
+      - "8125:443"
     volumes:
       - ./dev-environment/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./dev-environment/traefik/bf.yml:/etc/traefik/dynamic/bf.yml:ro
