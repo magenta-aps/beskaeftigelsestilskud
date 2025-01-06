@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+[run]
+relative_files = True
+branch = True
+source = .
+omit =
+    */manage.py
+    */project/*
+    */admin.py
+    */apps.py
+    */urls.py
+    */tests.py
+    */__init__.py
+    */migrations/*
+    */tests/*
+    */mitid_test/*
+    */suila/simulation.py
+    */suila/integrations/eskat/responses/*
+    */management/commands/*.py
+parallel = true
+concurrency = multiprocessing
