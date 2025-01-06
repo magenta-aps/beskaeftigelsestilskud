@@ -18,21 +18,20 @@ http:
       tls:
         options: clientcert
 
-#    bf:
-#      entryPoints:
-#        - "websecure"
-#      rule: "Host(`bf-traefik`)"
-#      service: "bf"
-#      tls: {}
+    bf:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`bf-traefik`)"
+      service: "bf"
+      tls: {}
 
-#    web-to-websecure-bf:
-#      entryPoints:
-#        - "web"
-#      rule: "Host(`bf-traefik`) || Host(`localhost`)"
-#      service: "noop@internal"
-#      middlewares:
-#        - "redirect-web-to-websecure-bf"
-
+    web-to-websecure-bf:
+      entryPoints:
+        - "web"
+      rule: "Host(`bf-traefik`) || Host(`localhost`)"
+      service: "noop@internal"
+      middlewares:
+        - "redirect-web-to-websecure-bf"
 
   middlewares:
     redirect-web-to-websecure-bf:
