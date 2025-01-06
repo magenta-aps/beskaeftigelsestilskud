@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 import itertools
 
-from bf.bf.models import PrismeAccountAlias
 from bf.management.commands.common import BfBaseCommand
+from bf.models import PrismeAccountAlias
 
 
 class Command(BfBaseCommand):
