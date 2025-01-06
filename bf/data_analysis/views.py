@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import copy
-import dataclasses
 import json
 from collections import Counter, defaultdict
 from decimal import Decimal
@@ -11,7 +10,7 @@ from typing import List
 from urllib.parse import urlencode
 
 from common.models import EngineViewPreferences
-from common.utils import omit
+from common.utils import SuilaJSONEncoder, omit
 from data_analysis.forms import (
     CalculatorForm,
     HistogramOptionsForm,
@@ -20,7 +19,7 @@ from data_analysis.forms import (
     PersonYearListOptionsForm,
 )
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import F, Func, Model, OuterRef, Subquery, Sum
+from django.db.models import F, Func, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.forms.models import fields_for_model, model_to_dict
 from django.http import HttpResponse
@@ -47,23 +46,8 @@ from bf.models import (
 from bf.simulation import Simulation
 
 
-class SimulationJSONEncoder(DjangoJSONEncoder):
+class SimulationJSONEncoder(SuilaJSONEncoder):
     def default(self, obj):
-        if dataclasses.is_dataclass(obj):
-            return dataclasses.asdict(obj)
-        if isinstance(obj, Decimal):
-            return float(obj)
-        if isinstance(obj, Model):
-            return {
-                k: v
-                for k, v in obj.__dict__.items()
-                if not k.startswith("_") and k not in ("load_id",)
-            }
-        if isinstance(obj, EstimationEngine):
-            return {
-                "class": obj.__class__.__name__,
-                "description": obj.description,
-            }
         if isinstance(obj, Simulation):
             return {
                 "person": obj.person,
@@ -72,7 +56,6 @@ class SimulationJSONEncoder(DjangoJSONEncoder):
                 "rows": obj.result.rows,
                 "calculation_methods": obj.calculation_methods,
             }
-
         return super().default(obj)
 
 
@@ -530,7 +513,6 @@ class CalculatorView(FormView):
         method_class = WorkingTaxCreditCalculationMethod.subclasses_by_name()[
             method_name
         ]
-        print(form.cleaned_data)
         method = method_class(
             **{
                 key: value

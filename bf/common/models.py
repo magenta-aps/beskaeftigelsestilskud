@@ -22,6 +22,13 @@ class User(AbstractUser):
             RegexValidator(r"\d{10}"),
         ],
     )
+    cert_subject = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        default=None,
+        unique=True,
+    )
 
 
 class EngineViewPreferences(models.Model):

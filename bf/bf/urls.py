@@ -6,6 +6,7 @@ from typing import List
 
 from django.urls import URLPattern, URLResolver, path
 
+from bf.api import api
 from bf.views import (
     PersonDetailBenefitView,
     PersonDetailIncomeView,
@@ -18,6 +19,7 @@ app_name = "bf"
 
 
 urlpatterns: List[URLResolver | URLPattern] = [
+    path("api/", api.urls),
     path("", RootView.as_view(), name="root"),
     path("persons", PersonSearchView.as_view(), name="person_search"),
     path("persons/<int:pk>/", PersonDetailView.as_view(), name="person_detail"),

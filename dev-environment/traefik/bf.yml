@@ -1,0 +1,69 @@
+http:
+
+  services:
+    bf:
+      loadBalancer:
+        servers:
+          - url: "http://bf-web:8000/"
+
+  routers:
+    rest:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`api.bf-traefik`)"
+      service: "bf"
+      middlewares:
+        - "pass-tls-clientcert"
+        - "api-path"
+      tls:
+        options: clientcert
+
+    bf:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`bf-traefik`)"
+      service: "bf"
+      tls: {}
+
+    web-to-websecure-bf:
+      entryPoints:
+        - "web"
+      rule: "Host(`bf-traefik`) || Host(`localhost`)"
+      service: "noop@internal"
+      middlewares:
+        - "redirect-web-to-websecure-bf"
+
+  middlewares:
+    redirect-web-to-websecure-bf:
+      redirectScheme:
+        scheme: "https"
+        port: 8125  # matches port in docker-compose.yml
+    pass-tls-clientcert:
+      passTLSClientCert:
+        info:
+          subject:
+            country: true
+            province: true
+            locality: true
+            organization: true
+            organizationalUnit: true
+            commonName: true
+            serialNumber: true
+            domainComponent: true
+    api-path:
+      addPrefix:
+        prefix: "/api"
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: "/etc/traefik/certs/server.cert"
+        keyFile: "/etc/traefik/certs/server.key"
+  options:
+    clientcert:
+      minVersion: VersionTLS12
+      clientAuth:
+        clientAuthType: RequireAndVerifyClientCert
+        caFiles:
+          - "/etc/traefik/certs/ca.cert"
