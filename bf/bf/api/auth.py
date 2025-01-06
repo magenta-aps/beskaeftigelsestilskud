@@ -49,7 +49,6 @@ class ClientCertAuth(AuthBase):
             info = unquote(info)
             items = []
             for part in re.findall(r'\w+="[^"]*"', info):
-                print(f"part={part}")
                 eq_index = part.index("=")
                 key: str = part[0:eq_index]
                 value: str = part[eq_index + 1 :].strip('"')
