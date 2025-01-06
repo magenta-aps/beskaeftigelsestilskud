@@ -5,7 +5,7 @@ docker-compose.override.yml fil:
 
 ```
 services:
-  suila:
+  suila-web:
     environment:
       - ESKAT_BASE_URL=https://eskattest/eTaxCommonDataApi
       - ESKAT_USERNAME=<username>
