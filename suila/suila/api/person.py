@@ -11,8 +11,8 @@ from ninja_extra import ControllerBase, api_controller, permissions, route
 from ninja_extra.pagination import paginate
 from ninja_extra.schemas import NinjaPaginationResponseSchema
 
-from bf.api.auth import RestPermission, get_auth_methods
-from bf.models import Person
+from suila.api.auth import RestPermission, get_auth_methods
+from suila.models import Person
 
 
 class PersonOut(ModelSchema):

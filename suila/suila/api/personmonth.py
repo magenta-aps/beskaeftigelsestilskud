@@ -12,8 +12,8 @@ from ninja.params import Query
 from ninja_extra import ControllerBase, api_controller, paginate, permissions, route
 from ninja_extra.schemas import NinjaPaginationResponseSchema
 
-from bf.api.auth import RestPermission, get_auth_methods
-from bf.models import PersonMonth
+from suila.api.auth import RestPermission, get_auth_methods
+from suila.models import PersonMonth
 
 
 class PersonMonthOut(ModelSchema):

@@ -10,10 +10,10 @@ from common.models import User
 from django.test import TestCase
 from ninja_extra.testing import TestClient
 
-from bf.api import PersonAPI
-from bf.api.personmonth import PersonMonthAPI
-from bf.api.personyear import PersonYearAPI
-from bf.models import Person, PersonMonth, PersonYear, Year
+from suila.api import PersonAPI
+from suila.api.personmonth import PersonMonthAPI
+from suila.api.personyear import PersonYearAPI
+from suila.models import Person, PersonMonth, PersonYear, Year
 
 
 class ApiTestCase(TestCase):

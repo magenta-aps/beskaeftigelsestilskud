@@ -9,9 +9,9 @@ from common.utils import SuilaJSONEncoder
 from ninja.renderers import JSONRenderer
 from ninja_extra import NinjaExtraAPI
 
-from bf.api.person import PersonAPI
-from bf.api.personmonth import PersonMonthAPI
-from bf.api.personyear import PersonYearAPI
+from suila.api.person import PersonAPI
+from suila.api.personmonth import PersonMonthAPI
+from suila.api.personyear import PersonYearAPI
 
 
 class SuilaJSONRenderer(JSONRenderer):

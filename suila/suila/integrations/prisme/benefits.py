@@ -84,6 +84,12 @@ class BatchExport:
         writer: G68G69TransactionWriter,
     ) -> PrismeBatchItem:
         # Find Prisme account alias for this municipality and tax year
+        print(
+            dict(
+                tax_municipality_location_code=str(person_month.municipality_code),
+                tax_year=person_month.person_year.year.year,
+            )
+        )
         account_alias = PrismeAccountAlias.objects.get(
             tax_municipality_location_code=str(person_month.municipality_code),
             tax_year=person_month.person_year.year.year,
