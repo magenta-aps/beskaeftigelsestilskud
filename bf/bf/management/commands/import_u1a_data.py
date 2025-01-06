@@ -111,9 +111,7 @@ class Command(BfBaseCommand):
                 person = Person.objects.get(cpr=u1a_cpr)
                 persons.append(person)
             except Person.DoesNotExist:
-                logger.warning(
-                    f"Could not find a Person with CPR: {u1a_cpr}, skipping!"
-                )
+                logger.warning(f"Could not find Person with CPR: {u1a_cpr}, skipping!")
                 continue
 
         if verbose:
