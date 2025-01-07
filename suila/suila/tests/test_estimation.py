@@ -264,7 +264,7 @@ class TestEstimationEngine(TestCase):
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 1
         )
-
+        print("now")
         results, summaries = EstimationEngine.estimate_all(
             self.year.year, None, None, dry_run=False
         )

@@ -242,20 +242,28 @@ class EstimationEngine:
 
         if not dry_run:
             with transaction.atomic():
-                if output_stream is not None:
-                    output_stream.write(
-                        "Removing current `IncomeEstimate` objects ...\n"
-                    )
-                IncomeEstimate.objects.filter(
+                qs = IncomeEstimate.objects.filter(
                     person_month__person_year__in=person_year_qs
-                ).delete()
-                if output_stream is not None:
-                    output_stream.write(
-                        "Removing current `PersonYearEstimateSummary` objects ...\n"
-                    )
-                PersonYearEstimateSummary.objects.filter(
+                )
+                count = qs.count()
+                if count > 0:
+                    if output_stream is not None:
+                        output_stream.write(
+                            f"Removing {count} current `IncomeEstimate` objects ...\n"
+                        )
+                    qs.delete()
+
+                qs = PersonYearEstimateSummary.objects.filter(
                     person_year__in=person_year_qs
-                ).delete()
+                )
+                count = qs.count()
+                if count > 0:
+                    if output_stream is not None:
+                        output_stream.write(
+                            f"Removing {count} current "
+                            f"`PersonYearEstimateSummary` objects ...\n"
+                        )
+                    qs.delete()
 
                 if output_stream is not None:
                     output_stream.write(
