@@ -134,7 +134,7 @@ class TestBatchExport(TestCase):
         self.assertEqual(
             account_alias,
             # Root, tax municipality code, and tax year
-            "1000452406140101010000242040195" + "010400" + "25",
+            "100045240614101010000242040195" + "10400" + "25",
         )
         # Assert: G69 contains CPR in `Ydelsesmodtager` (field 133) and specifies CPR
         # (02) in `YdelsesmodtagerNrkode` (field 132)
