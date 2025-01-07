@@ -262,15 +262,16 @@ class TestEstimationEngine(TestCase):
         )
 
         self.assertEqual(
-            len(IncomeEstimate.objects.filter(estimated_year_result=12341122)), 1
+            IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 1
         )
 
         results, summaries = EstimationEngine.estimate_all(
             self.year.year, None, None, dry_run=False
         )
 
+        self.assertEqual(IncomeEstimate.objects.all().count(), 108)
         self.assertEqual(
-            len(IncomeEstimate.objects.filter(estimated_year_result=12341122)), 0
+            IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
 
     @mock.patch("suila.estimation.EstimationEngine.instances")

@@ -5,7 +5,7 @@ import itertools
 
 from django.core.management import BaseCommand
 
-from bf.models import PrismeAccountAlias
+from suila.models import PrismeAccountAlias
 
 
 class Command(BaseCommand):

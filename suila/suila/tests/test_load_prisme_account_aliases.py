@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -7,10 +7,10 @@ from django.core.management import call_command
 from django.db.models.functions import Length
 from django.test import TestCase
 
-from bf.management.commands.load_prisme_account_aliases import (
+from suila.management.commands.load_prisme_account_aliases import (
     Command as LoadPrismeAccountAliasesCommand,
 )
-from bf.models import PrismeAccountAlias
+from suila.models import PrismeAccountAlias
 
 
 class TestLoadPrismeAccountAliases(TestCase):
