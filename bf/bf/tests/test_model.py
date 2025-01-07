@@ -493,16 +493,16 @@ class TestPrismeAccountAlias(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         cls.instance = PrismeAccountAlias.objects.create(
-            alias="0123456789",
-            tax_municipality_location_code="956",
+            alias="1000452406141010100002420401951900025",
+            tax_municipality_location_code="961",
             tax_year=2020,
         )
 
     def test_str(self):
         self.assertEqual(str(self.instance), self.instance.alias)
 
-    def test_tax_municipality_six_digit_code_property(self):
-        self.assertEqual(self.instance.tax_municipality_six_digit_code, "012345")
+    def test_tax_municipality_five_digit_code_property(self):
+        self.assertEqual(self.instance.tax_municipality_five_digit_code, "19000")
 
 
 class TestBTaxPayment(ModelTest):

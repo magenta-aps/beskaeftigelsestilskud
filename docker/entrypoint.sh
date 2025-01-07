@@ -14,6 +14,7 @@ CREATE_API_GROUP=${CREATE_API_GROUP:=false}
 CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
 CREATE_DUMMY_API_USER=${CREATE_DUMMY_API_USER:=false}
 LOAD_CALCULATION_METHOD=${LOAD_CALCULATION_METHOD:=true}
+LOAD_PRISME_ACCOUNT_ALIASES=${LOAD_PRISME_ACCOUNT_ALIASES:=true}
 
 python manage.py wait_for_db
 
@@ -50,6 +51,11 @@ fi
 if [ "${LOAD_CALCULATION_METHOD}" = true ]; then
   echo "Loading calculation method"
   python manage.py load_dummy_calculation_method
+fi
+
+if [ "${LOAD_PRISME_ACCOUNT_ALIASES}" = true ]; then
+  echo "Loading prisme account aliases"
+  python manage.py load_prisme_account_aliases
 fi
 
 if [ "${MAKEMESSAGES,,}" = true ]; then
