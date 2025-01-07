@@ -1048,8 +1048,8 @@ class PrismeAccountAlias(models.Model):
         return f"{self.alias}"
 
     @property
-    def tax_municipality_six_digit_code(self) -> str:
-        return self.alias[-10:-4]
+    def tax_municipality_five_digit_code(self) -> str:
+        return self.alias[-7:-2]
 
 
 class PrismeBatch(models.Model):

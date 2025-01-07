@@ -12,7 +12,7 @@ class PrismeAccountAliasAdmin(admin.ModelAdmin):
         "tax_municipality_location_code",
         "tax_year",
         "alias",
-        "tax_municipality_six_digit_code",
+        "tax_municipality_five_digit_code",
     ]
     ordering = [
         "tax_municipality_location_code",
