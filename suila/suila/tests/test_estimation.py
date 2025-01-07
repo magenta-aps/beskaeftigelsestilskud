@@ -101,6 +101,9 @@ class TestEstimationEngine(TestCase):
                 salary_income=Decimal(income),
             )
 
+    def setUp(self):
+        IncomeEstimate.objects.all().delete()
+
     def test_estimate(self):
         month = self.person_year.personmonth_set.first()
         with self.assertRaises(NotImplementedError):
@@ -264,7 +267,7 @@ class TestEstimationEngine(TestCase):
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 1
         )
-        print("now")
+
         results, summaries = EstimationEngine.estimate_all(
             self.year.year, None, None, dry_run=False
         )
