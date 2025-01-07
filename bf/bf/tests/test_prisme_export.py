@@ -7,6 +7,7 @@ from decimal import Decimal
 from unittest.mock import ANY, Mock, patch
 
 from django.conf import settings
+from django.core.management import call_command
 from django.db.models import QuerySet
 from django.test import TestCase
 from tenQ.client import ClientException
@@ -24,6 +25,14 @@ from bf.models import (
 
 
 class TestBatchExport(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        call_command(
+            "load_prisme_account_aliases",
+        )
+
     def test_init(self):
         export = self._get_instance()
         self.assertEqual(export._year, 2025)
@@ -125,7 +134,7 @@ class TestBatchExport(TestCase):
         self.assertEqual(
             account_alias,
             # Root, tax municipality code, and tax year
-            "1000452406140101010000242040195" + "010400" + "25",
+            "100045240614101010000242040195" + "10400" + "25",
         )
         # Assert: G69 contains CPR in `Ydelsesmodtager` (field 133) and specifies CPR
         # (02) in `YdelsesmodtagerNrkode` (field 132)
