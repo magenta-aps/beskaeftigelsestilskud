@@ -247,12 +247,12 @@ class EstimationEngine:
                     output_stream.write(
                         "Removing current `IncomeEstimate` objects ...\n"
                     )
-                qs = IncomeEstimate.objects.filter(
+                iqs = IncomeEstimate.objects.filter(
                     person_month__person_year__in=person_year_qs
                 )
-                print(qs.count())
-                qs.delete()
-                print(qs.count())
+                print(iqs.count())
+                iqs.delete()
+                print(iqs.count())
 
                 if output_stream is not None:
                     output_stream.write(
