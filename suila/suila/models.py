@@ -415,7 +415,7 @@ class PersonYear(models.Model):
         return self.quarantine_df.loc[self.person.cpr, "in_quarantine"]
 
     @property
-    def quarantine_reason(self) -> bool:
+    def quarantine_reason(self) -> str:
         return self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
 
     @property
@@ -581,11 +581,11 @@ class PersonMonth(models.Model):
         return date(self.year, self.month, 1)
 
     @property
-    def b_income_from_year(self) -> int:
+    def b_income_from_year(self) -> Decimal:
         b_income = self.person_year.b_income
         if b_income is not None:
-            return int_divide_end(int(b_income), 12)[self.month - 1]
-        return 0
+            return Decimal(int_divide_end(int(b_income), 12)[self.month - 1])
+        return Decimal(0)
 
 
 class Employer(models.Model):

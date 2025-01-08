@@ -5,6 +5,7 @@
 from decimal import Decimal
 from typing import Optional
 
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from ninja import Field, ModelSchema
 from ninja.filter_schema import FilterSchema
@@ -21,6 +22,9 @@ class PersonMonthOut(ModelSchema):
     cpr: str = Field(..., alias="person_year.person.cpr")
     year: int = Field(..., alias="person_year.year.year")
     income: Decimal = Field(..., alias="amount_sum")
+    a_income: Optional[Decimal] = None
+    b_income: Optional[Decimal] = None
+    b_income_from_year: Decimal = Field(..., alias="b_income_from_year")
 
     class Meta:
         model = PersonMonth
@@ -35,6 +39,14 @@ class PersonMonthOut(ModelSchema):
             "prior_benefit_paid",
             "benefit_paid",
         ]
+
+    @staticmethod
+    def resolve_a_income(obj) -> Decimal | None:
+        return obj.monthlyincomereport_set.aggregate(Sum("a_income"))["a_income__sum"]
+
+    @staticmethod
+    def resolve_b_income(obj) -> Decimal | None:
+        return obj.monthlyincomereport_set.aggregate(Sum("b_income"))["b_income__sum"]
 
 
 class PersonMonthFilterSchema(FilterSchema):
