@@ -254,7 +254,9 @@ class TestEstimationEngine(TestCase):
     def test_estimate_all_dry_run(self):
 
         IncomeEstimate.objects.create(
-            person_month=PersonMonth.objects.all()[0],
+            person_month=PersonMonth.objects.filter(
+                person_year=self.person_year
+            ).first(),
             estimated_year_result=12341122,
             income_type=IncomeType.A,
             engine="InYearExtrapolationEngine",
