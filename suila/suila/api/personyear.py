@@ -19,14 +19,26 @@ class PersonYearOut(ModelSchema):
 
     cpr: str = Field(..., alias="person.cpr")
     year: int = Field(..., alias="year.year")
+    in_quarantine: bool = False
+    quarantine_reason: str = ""
 
     class Meta:
         model = PersonYear
         fields = [
             "preferred_estimation_engine_a",
             "preferred_estimation_engine_b",
+            "stability_score_a",
+            "stability_score_b",
             "tax_scope",
         ]
+
+    @staticmethod
+    def resolve_in_quarantine(obj: PersonYear) -> bool:
+        return obj.in_quarantine
+
+    @staticmethod
+    def resolve_quarantine_reason(obj: PersonYear) -> str:
+        return obj.quarantine_reason
 
 
 class PersonYearFilterSchema(FilterSchema):

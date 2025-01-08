@@ -13,7 +13,7 @@ from ninja_extra.testing import TestClient
 from suila.api import PersonAPI
 from suila.api.personmonth import PersonMonthAPI
 from suila.api.personyear import PersonYearAPI
-from suila.models import Person, PersonMonth, PersonYear, Year
+from suila.models import MonthlyIncomeReport, Person, PersonMonth, PersonYear, Year
 
 
 class ApiTestCase(TestCase):
@@ -100,6 +100,7 @@ class ApiTestCase(TestCase):
                 "count": len(items),
                 "items": list(items),
             },
+            f"response: {response.json()['items']} does not match {items}",
         )
 
 
@@ -214,6 +215,10 @@ class PersonYearApiTest(ApiTestCase):
             "preferred_estimation_engine_a": "InYearExtrapolationEngine",
             "preferred_estimation_engine_b": "TwelveMonthsSummationEngine",
             "tax_scope": "FULD",
+            "in_quarantine": False,
+            "quarantine_reason": "",
+            "stability_score_a": None,
+            "stability_score_b": None,
         }
         cls.expected1b = {
             "year": 2025,
@@ -221,6 +226,10 @@ class PersonYearApiTest(ApiTestCase):
             "preferred_estimation_engine_a": "SameAsLastMonthEngine",
             "preferred_estimation_engine_b": "SelfReportedEngine",
             "tax_scope": "DELVIS",
+            "in_quarantine": False,
+            "quarantine_reason": "",
+            "stability_score_a": None,
+            "stability_score_b": None,
         }
         cls.person2 = Person.objects.create(
             name="Anders Sand",
@@ -248,6 +257,10 @@ class PersonYearApiTest(ApiTestCase):
             "preferred_estimation_engine_a": "TwelveMonthsSummationEngine",
             "preferred_estimation_engine_b": "InYearExtrapolationEngine",
             "tax_scope": "DELVIS",
+            "in_quarantine": False,
+            "quarantine_reason": "",
+            "stability_score_a": None,
+            "stability_score_b": None,
         }
         cls.expected2b = {
             "year": 2025,
@@ -255,6 +268,10 @@ class PersonYearApiTest(ApiTestCase):
             "preferred_estimation_engine_a": "TwoYearSummationEngine",
             "preferred_estimation_engine_b": "InYearExtrapolationEngine",
             "tax_scope": "FULD",
+            "in_quarantine": False,
+            "quarantine_reason": "",
+            "stability_score_a": None,
+            "stability_score_b": None,
         }
 
     def test_get(self):
@@ -340,6 +357,54 @@ class PersonMonthApiTest(ApiTestCase):
             estimated_year_benefit=Decimal(14400),
             actual_year_benefit=Decimal(14400),
         )
+        MonthlyIncomeReport.objects.create(
+            person_month=cls.personmonth1a,
+            salary_income=Decimal(8000),
+            catchsale_income=Decimal(2000),
+            public_assistance_income=Decimal(0),
+            alimony_income=Decimal(0),
+            dis_gis_income=Decimal(0),
+            retirement_pension_income=Decimal(0),
+            disability_pension_income=Decimal(0),
+            ignored_benefits_income=Decimal(0),
+            employer_paid_gl_pension_income=Decimal(0),
+            foreign_pension_income=Decimal(0),
+            civil_servant_pension_income=Decimal(0),
+            other_pension_income=Decimal(0),
+            capital_income=Decimal(0),
+        )
+        MonthlyIncomeReport.objects.create(
+            person_month=cls.personmonth1b,
+            salary_income=Decimal(8000),
+            catchsale_income=Decimal(3000),
+            public_assistance_income=Decimal(0),
+            alimony_income=Decimal(0),
+            dis_gis_income=Decimal(0),
+            retirement_pension_income=Decimal(0),
+            disability_pension_income=Decimal(0),
+            ignored_benefits_income=Decimal(0),
+            employer_paid_gl_pension_income=Decimal(0),
+            foreign_pension_income=Decimal(0),
+            civil_servant_pension_income=Decimal(0),
+            other_pension_income=Decimal(0),
+            capital_income=Decimal(0),
+        )
+        MonthlyIncomeReport.objects.create(
+            person_month=cls.personmonth1c,
+            salary_income=Decimal(8000),
+            catchsale_income=Decimal(4000),
+            public_assistance_income=Decimal(0),
+            alimony_income=Decimal(0),
+            dis_gis_income=Decimal(0),
+            retirement_pension_income=Decimal(0),
+            disability_pension_income=Decimal(0),
+            ignored_benefits_income=Decimal(0),
+            employer_paid_gl_pension_income=Decimal(0),
+            foreign_pension_income=Decimal(0),
+            civil_servant_pension_income=Decimal(0),
+            other_pension_income=Decimal(0),
+            capital_income=Decimal(0),
+        )
 
         cls.expected1a = {
             "year": 2024,
@@ -354,8 +419,10 @@ class PersonMonthApiTest(ApiTestCase):
             "actual_year_benefit": "12000.00",
             "prior_benefit_paid": None,
             "benefit_paid": "1000.00",
+            "a_income": "10000.00",
+            "b_income": "0.00",
+            "b_income_from_year": "0",
         }
-
         cls.expected1b = {
             "year": 2025,
             "month": 1,
@@ -369,8 +436,10 @@ class PersonMonthApiTest(ApiTestCase):
             "actual_year_benefit": "13200.00",
             "prior_benefit_paid": None,
             "benefit_paid": "1100.00",
+            "a_income": "11000.00",
+            "b_income": "0.00",
+            "b_income_from_year": "0",
         }
-
         cls.expected1c = {
             "year": 2025,
             "month": 2,
@@ -384,6 +453,9 @@ class PersonMonthApiTest(ApiTestCase):
             "actual_year_benefit": "14400.00",
             "prior_benefit_paid": None,
             "benefit_paid": "1200.00",
+            "a_income": "12000.00",
+            "b_income": "0.00",
+            "b_income_from_year": "0",
         }
 
         cls.person2 = Person.objects.create(
@@ -422,6 +494,9 @@ class PersonMonthApiTest(ApiTestCase):
             "actual_year_benefit": "0.00",
             "prior_benefit_paid": None,
             "benefit_paid": "0.00",
+            "a_income": None,
+            "b_income": None,
+            "b_income_from_year": "0",
         }
 
     def test_get(self):
