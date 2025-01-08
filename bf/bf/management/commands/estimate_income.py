@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import datetime
+import logging
 import time
 from typing import List
 
@@ -10,6 +11,8 @@ from django.db import transaction
 from bf.estimation import EstimationEngine
 from bf.management.commands.common import BfBaseCommand
 from bf.models import Person, Year
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BfBaseCommand):
@@ -42,8 +45,14 @@ class Command(BfBaseCommand):
         else:
             years = [year]
 
-        for year in years:
-            EstimationEngine.estimate_all(year, person, count, dry, output_stream)
+        try:
+            for year in years:
+                EstimationEngine.estimate_all(year, person, count, dry, output_stream)
+        except Exception:
+            logger.exception(
+                f"ERROR running EstimationEngine.estimate_all() for years: {years}"
+            )
+            transaction.set_rollback(True)
 
         if verbose:
             duration = datetime.datetime.utcfromtimestamp(time.time() - start)
