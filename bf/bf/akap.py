@@ -5,7 +5,7 @@
 import logging
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 from pydantic import BaseModel, Field
@@ -76,7 +76,7 @@ def get_akap_u1a_entries(
     limit = limit if limit else 50
     offset = offset if offset else 0
 
-    query_params = {"limit": limit, "offset": offset}
+    query_params: Dict[str, str | int] = {"limit": limit, "offset": offset}
     if year:
         query_params["regnskabsår"] = year
 
@@ -118,7 +118,7 @@ def get_akap_u1a_items(
     limit = limit if limit else 50
     offset = offset if offset else 0
 
-    query_params = {"limit": limit, "offset": offset}
+    query_params: Dict[str, str | int] = {"limit": limit, "offset": offset}
     if u1a_id:
         query_params["u1a"] = u1a_id
 

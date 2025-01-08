@@ -37,6 +37,40 @@ services:
         - "5432:5432"
 ```
 
+### Import of U1A data from AKA-Selvbetjening
+
+By default the host-domain for AKA-Selvbetjening is set to the test-server: https://akap.sullissivik.gl
+
+if we want to interact with our local development version instead of the test-server, we need to connect
+the `bf-web`-container to AKA-Selvbetjening's container network. This can be done by adding the following
+to a `docker-compose.override.yml`-file:
+
+```yml
+networks:
+  aka-selvbetjening_default:
+    external: true
+
+services:
+  bf-web:
+    networks:
+      - aka-selvbetjening_default
+    environment:
+      AKAP_HOST: http://akap-web:8010
+```
+
+**NOTE:** This assumes you use the default setup for the aka-selvbetjening's project,
+configured in the `docker-compose.yml`-file.
+
+Now run the `import_u1a_data`-command:
+
+```bash
+docker exec bf-web python manage.py import_u1a_data --verbose
+```
+
+**IMPORTANT:** U1A data is used when running the `estimate_income`-command, which is done through the `load_data.sh`-script.
+This means that if the `import_u1a_data`-command is executed after the `load_data.sh`-script, we need to run the
+`estimate_income`-command again, so the newly imported U1A data avaialble to the calculations.
+
 ## Testing
 
 To run the tests run

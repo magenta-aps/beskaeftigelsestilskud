@@ -108,7 +108,7 @@ class Command(BfBaseCommand):
             u1a_cprs = get_akap_u1a_items_unique_cprs(
                 settings.AKAP_HOST,  # type: ignore[misc]
                 settings.AKAP_API_SECRET,  # type: ignore[misc]
-                year,
+                year.year,
                 fetch_all=True,
             )
 
@@ -142,7 +142,7 @@ class Command(BfBaseCommand):
             person_akap_u1a_items = get_akap_u1a_items(
                 settings.AKAP_HOST,  # type: ignore[misc]
                 settings.AKAP_API_SECRET,  # type: ignore[misc]
-                year=year,
+                year=year.year,
                 cpr=person.cpr,
                 fetch_all=True,
             )

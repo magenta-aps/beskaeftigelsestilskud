@@ -7,7 +7,7 @@ import base64
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import List, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -467,7 +467,7 @@ class PersonYear(models.Model):
             "-created"
         ).first()
 
-        b_income: Decimal = None
+        b_income: Optional[Decimal] = None
         if annual_income:
             b_income = annual_income.account_tax_result
 
