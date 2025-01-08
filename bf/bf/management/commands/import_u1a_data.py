@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImportResult(BaseModel):
+    import_year: int
     cprs_handled: int = 0
     assessments_created: int = 0
     assessments_updated: int = 0
@@ -56,10 +57,11 @@ class Command(BfBaseCommand):
         )
 
         # Import data for each year
+        results: List[ImportResult] = []
         for year in years:
             logger.info(f"Importing: U1A entries for year {year} (CPR={cpr})")
             try:
-                result = self._import_data(data_load, year, cpr, verbose)
+                results.append(self._import_data(data_load, year, cpr, verbose))
             except Exception as e:
                 logger.exception("IMPORT ERROR!")
                 raise e
@@ -71,14 +73,20 @@ class Command(BfBaseCommand):
 
         # Finish
         duration = time.time() - start
-        logger.info(f"Report: Years convered: {", ".join([str(y) for y in years])}")
-        logger.info(f"Report: CPRs handled: {result.cprs_handled}")
-        logger.info(
-            f"Report: PersonYear U1A Assessments created: {result.assessments_created}"
-        )
-        logger.info(
-            f"Report: PersonYear U1A Assessments updated: {result.assessments_updated}"
-        )
+        logger.info("-------------------- REPORT --------------------")
+        for idx, result in enumerate(results):
+            logger.info(f"Year: {result.import_year}")
+            logger.info(f"CPRs handled: {result.cprs_handled}")
+            logger.info(
+                f"PersonYear U1A Assessments created: {result.assessments_created}"
+            )
+            logger.info(
+                f"PersonYear U1A Assessments updated: {result.assessments_updated}"
+            )
+
+            if idx < len(results) - 1:
+                logger.info("")
+        logger.info("------------------------------------------------")
         logger.info(f"Report: Exec time: {duration:.3f}s")
         logger.info("DONE!")
 
@@ -88,12 +96,15 @@ class Command(BfBaseCommand):
         year: Year,
         cpr: Optional[str] = None,
         verbose: Optional[bool] = None,
-    ):
-        result = ImportResult()
+    ) -> ImportResult:
+        result = ImportResult(import_year=year.year)
 
         u1a_cprs: List[str] = [cpr] if cpr else []
         if len(u1a_cprs) == 0:
             # Get all unique CPRs in that year (from AKAP api)
+            if verbose:
+                logger.info(f"- No CPR specified, fetching all for year: {year}")
+
             u1a_cprs = get_akap_u1a_items_unique_cprs(
                 settings.AKAP_HOST,  # type: ignore[misc]
                 settings.AKAP_API_SECRET,  # type: ignore[misc]
@@ -101,10 +112,16 @@ class Command(BfBaseCommand):
                 fetch_all=True,
             )
 
-        if verbose:
-            logger.info(f"- Handling CPRs: {u1a_cprs}")
+            if verbose:
+                logger.info(f"- Fetched CPRs: {u1a_cprs}")
 
-        # Get Person object for the CPR
+        if len(u1a_cprs) < 1:
+            return result
+
+        # Get Person objects for the CPR
+        if verbose:
+            logger.info(f"- Fetching persons from CPRs: {u1a_cprs}")
+
         persons: List[Person] = []
         for u1a_cpr in u1a_cprs:
             try:
@@ -114,14 +131,14 @@ class Command(BfBaseCommand):
                 logger.warning(f"Could not find Person with CPR: {u1a_cpr}, skipping!")
                 continue
 
-        if verbose:
-            logger.info(f"- Fetched persons: {persons}")
-
         if len(persons) < 1:
             return result
 
-        # TODO: Get all U1AItem's for the CPR in the given year.
+        # Go through each person and create a PersonYearU1AAssessment
         for person in persons:
+            if verbose:
+                logger.info(f"- Fetching U1A items for person: {person}")
+
             person_akap_u1a_items = get_akap_u1a_items(
                 settings.AKAP_HOST,  # type: ignore[misc]
                 settings.AKAP_API_SECRET,  # type: ignore[misc]
@@ -136,22 +153,14 @@ class Command(BfBaseCommand):
                     u1a_items_dict[item.u1a_id] = []
                 u1a_items_dict[item.u1a_id].append(item)
 
-            if verbose:
-                logger.info(f"- Fetched AKAP U1A items: {len(u1a_items_dict)}")
-
             # Calculate total divident
             dividend_total: Decimal = Decimal(0)
-            for u1a, u1a_items in u1a_items_dict.items():
+            for _, u1a_items in u1a_items_dict.items():
                 for u1a_item in u1a_items:
                     dividend_total += u1a_item.udbytte
 
-            # TODO: Get, or create, PersonYear
-            person_year, _ = PersonYear.objects.get_or_create(
-                person=person,
-                year=year,
-                preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-                preferred_estimation_engine_b="TwelveMonthsSummationEngine",
-            )
+            # Get, or create, PersonYear
+            person_year, _ = PersonYear.objects.get_or_create(person=person, year=year)
 
             # Create or update assessemt
             u1a_ids_str = ", ".join(str(u1a_id) for u1a_id in u1a_items_dict.keys())
@@ -161,11 +170,13 @@ class Command(BfBaseCommand):
             )
 
             if qs_assessment.exists():
-                qs_assessment.update(
-                    load=data_load,
-                    dividend_total=dividend_total,
-                )
-                result.assessments_updated += 1
+                # OBS: We use a for-loop instead of "qs_assessment.update()" to ensure
+                # that simple_history tracks the changes
+                for assessment in qs_assessment:
+                    assessment.load = data_load
+                    assessment.dividend_total = dividend_total
+                    assessment.save()
+                result.assessments_updated += qs_assessment.count()
             else:
                 _ = PersonYearU1AAssessment.objects.create(
                     **{
@@ -178,5 +189,7 @@ class Command(BfBaseCommand):
                     }
                 )
                 result.assessments_created += 1
+
+            result.cprs_handled += 1
 
         return result
