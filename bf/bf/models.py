@@ -422,6 +422,14 @@ class PersonYear(models.Model):
     def amount_sum(self) -> Decimal:
         return self.amount_sum_by_type(None)
 
+    @cached_property
+    def u1a_assessments_sum(self) -> Decimal:
+        result = PersonYearU1AAssessment.objects.filter(person_year=self).aggregate(
+            total=Sum("dividend_total")
+        )["total"]
+
+        return result or Decimal("0.00")
+
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):
@@ -458,9 +466,19 @@ class PersonYear(models.Model):
         annual_income: AnnualIncome | None = self.annual_income_statements.order_by(
             "-created"
         ).first()
-        if annual_income is not None:
-            return annual_income.account_tax_result
-        return None
+
+        b_income: Decimal = None
+        if annual_income:
+            b_income = annual_income.account_tax_result
+
+        # Include U1A assessments in b_income as well
+        if self.u1a_assessments_sum:
+            if not b_income:
+                b_income = Decimal("0.00")
+
+            b_income += self.u1a_assessments_sum
+
+        return b_income
 
 
 class PersonMonth(models.Model):
