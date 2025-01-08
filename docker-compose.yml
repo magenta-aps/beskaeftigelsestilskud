@@ -3,21 +3,21 @@
 # SPDX-License-Identifier: MPL-2.0
 services:
 
-  bf-web:
+  suila-web:
     user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
-    container_name: bf-web
-    image: bf:latest
+    container_name: suila-web
+    image: suila:latest
     build:
       context: .
       dockerfile: docker/Dockerfile
     env_file:
-      - ./dev-environment/bf.env
+      - ./dev-environment/suila.env
     depends_on:
-      - bf-db
+      - suila-db
     volumes:
-      - ./bf/:/app
+      - ./suila/:/app
       - file-data:/upload  # rw for at kunne teste; bør være ro i deployments
-      - ./log/bf.log:/log/bf.log:rw
+      - ./log/suila.log:/log/suila.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./mypy.ini:/mypy.ini:ro
     environment:
@@ -34,27 +34,27 @@ services:
       - "8120:8000"
     command: gunicorn -b 0.0.0.0:8000 project.wsgi:application --timeout 120 --reload -w 1 --access-logfile - --error-logfile - --capture-output # reload on code changes
 
-  bf-db:
+  suila-db:
     # Do not set `user` here
-    container_name: bf-db
+    container_name: suila-db
     image: postgres:16
     env_file:
-      - ./dev-environment/bf.env
+      - ./dev-environment/suila.env
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - database
 
-  bf-cron:
+  suila-cron:
     user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
-    container_name: bf-cron
-    image: bf:latest
+    container_name: suila-cron
+    image: suila:latest
     env_file:
-      - ./dev-environment/bf.env
+      - ./dev-environment/suila.env
     depends_on:
-      - bf-db
+      - suila-db
     volumes:
-      - ./bf/:/app
+      - ./suila/:/app
       - file-data:/upload:ro
       - ./log/cron.log:/log/cron.log:rw
       - ./dev-environment/cert:/ssl:ro
@@ -74,15 +74,15 @@ services:
     networks:
       - database
 
-  bf-idp:
+  suila-idp:
     user: "1000:1000"  # Override in docker-compose.override.yml if your local user is different
     image: kenchan0130/simplesamlphp
-    container_name: bf-idp
+    container_name: suila-idp
     environment:
       HTTP_PORT: 8121
-      SIMPLESAMLPHP_SP_ENTITY_ID: http://bf-web:8120/mitid/saml/metadata/
-      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://bf-web:8120/mitid/login/callback/
-      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://bf-web:8120/mitid/logout/callback/
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://suila-web:8120/mitid/saml/metadata/
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://suila-web:8120/mitid/login/callback/
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://suila-web:8120/mitid/logout/callback/
       SIMPLESAMLPHP_IDP_CERTIFICATE: /var/www/simplesamlphp/cert/selfsigned.crt
       SIMPLESAMLPHP_IDP_PRIVATEKEY: /var/www/simplesamlphp/cert/selfsigned.key
     volumes:
@@ -97,9 +97,9 @@ services:
     networks:
       - default
 
-  bf-sftp:
+  suila-sftp:
     image: atmoz/sftp
-    container_name: "bf-sftp"
+    container_name: "suila-sftp"
     volumes:
       - ./dev-environment/sftp_users.conf:/etc/sftp/users.conf
       - ./data/sftp_uploads/:/home/besk/test/:rw
@@ -110,8 +110,8 @@ services:
     ports:
       - "8122:22"
 
-  bf-mailhog:
-    container_name: bf-mailhog
+  suila-mailhog:
+    container_name: suila-mailhog
     image: mailhog/mailhog
     logging:
       driver: 'none' # Disable saving logs
@@ -120,9 +120,9 @@ services:
     ports:
       - "8123:8025"
 
-  bf-traefik:
+  suila-traefik:
     image: traefik:2.2
-    container_name: bf-traefik
+    container_name: suila-traefik
     networks:
       - default
     ports:
@@ -133,8 +133,8 @@ services:
       - ./dev-environment/traefik/bf.yml:/etc/traefik/dynamic/bf.yml:ro
       - ./dev-environment/cert/traefik/:/etc/traefik/certs/:ro
 
-  bf-hosts-updater:
-    container_name: bf-hosts-updater
+  suila-hosts-updater:
+    container_name: suila-hosts-updater
     image: bash
     volumes:
       - ./dev-environment/hosts.sh:/hosts.sh:ro

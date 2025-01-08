@@ -87,7 +87,7 @@ def load_data():
 
     for year in [2020, 2021, 2022, 2023]:
         file = f"a_og_b_{year}.csv"
-        df = pd.read_csv(os.path.join(file_path, "../bf/data", file), sep=",")
+        df = pd.read_csv(os.path.join(file_path, "../suila/data", file), sep=",")
         df = df.groupby(df.CPR).sum()
         df.columns = [c + f" ({year})" for c in df.columns]
 

@@ -3,19 +3,19 @@ SPDX-PackageName = "Beskæftigelsestilskud"
 SPDX-PackageSupplier = "Magenta ApS <info@magenta.dk>"
 
 [[annotations]]
-path = ["REUSE.toml", "**bf/logo**", "**bf/favicon.ico", "bf/**/migrations/**", "bf/bf/integrations/eskat/responses/*", "log/**", "dev-environment/**", "**README.md", "dev-idp/**", "rfc/**", "data/**", "bf/bf/tests/test.pdf"]
+path = ["REUSE.toml", "**suila/logo**", "**suila/favicon.ico", "suila/**/migrations/**", "suila/suila/integrations/eskat/responses/*", "log/**", "dev-environment/**", "**README.md", "dev-idp/**", "rfc/**", "data/**", "suila/suila/tests/test.pdf"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2024 Magenta ApS <info@magenta.dk>"
 SPDX-License-Identifier = "MPL-2.0"
 
 [[annotations]]
-path = "bf/bf/static/jquery/**"
+path = "suila/suila/static/jquery/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2022 OpenJS Foundation and jQuery contributors"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
-path = ["bf/bf/static/bootstrap/**.map", "bf/bf/static/bootstrap-icons/**.svg", "bf/bf/static/bootstrap-icons/font/fonts/**", "bf/bf/static/bootstrap-icons/font/bootstrap-icons.json"]
+path = ["suila/suila/static/bootstrap/**.map", "suila/suila/static/bootstrap-icons/**.svg", "suila/suila/static/bootstrap-icons/font/fonts/**", "suila/suila/static/bootstrap-icons/font/bootstrap-icons.json"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2011-2021 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)"
 SPDX-License-Identifier = "MIT"

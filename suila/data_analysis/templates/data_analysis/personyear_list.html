@@ -1,0 +1,319 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "data_analysis/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load csp %}
+{% load suila_tags %}
+{% load bootstrap_icons %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<div class="row my-1 mx-1">
+    <h1>{% translate "Estimeringsoverblik for" %} {{ year }} </h1>
+</div>
+<div class="row my-1 mx-1">
+    <form id="list-options" method="get" action=".">
+        <div class="row justify-content-start my-1">
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.has_zero_income.label }}</div>
+                    {{ form.has_zero_income }}
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.has_a.label }}</div>
+                    {{ form.has_a }}
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.has_b.label }}</div>
+                    {{ form.has_b }}
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-start my-1">
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.selected_model.label }}</div>
+                    {{ form.selected_model }}
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.min_offset.label }}</div>
+                    {{ form.min_offset }}
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.max_offset.label }}</div>
+                    {{ form.max_offset }}
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-start my-1">
+            <div class="col-2">
+                <div class="input-group">
+                    <div class="input-group-text">{{ form.cpr.label }}</div>
+                    {{ form.cpr }}
+                </div>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
+            </div>
+        </div>
+    </form>    
+    <div class="dropdown float-end" id="filter_dropdown">
+        <a class="btn btn-primary dropdown-toggle" role="button" id="dropdownMenuButton"
+        data-bs-toggle="dropdown" aria-expanded="false">
+        {% bs_icon "funnel" size="1em" %}
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            {% for name, verbose_name, show in columns %}
+            <li>
+                <a class="dropdown-item">
+                    <div class="form-check">
+                        {% if show|default_if_none:True %}
+                            <input class="form-check-input" type="checkbox" value="" id="{{name}}Toggle" checked />
+                        {% else %}
+                            <input class="form-check-input" type="checkbox" value="" id="{{name}}Toggle" />
+                        {% endif %}
+                        <label class="form-check-label" for="{{name}}Toggle" style="display: block">{{verbose_name}}</label>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>    
+    <table class="table table-bordered"  id="table">
+    <thead class="shadow-sm p-3 mb-5 bg-body rounded sticky-top">
+    <tr class="shadow p-3 mb-5 bg-body rounded" >
+        <th class="col-1">
+        </th>
+        {% for engine in engines %}
+        <th colspan="{{ engine.valid_income_types|length|multiply:2 }}" class="col-2">
+            {{ engine.name }}
+        </th>
+        {% endfor %}
+        <th colspan="12" class="col-5">
+        </th>
+    </tr>
+    <tr>
+        <th class="col-1">
+            <a href="?{{ sort_params.person__cpr }}" class="link-dark">
+                Person
+                {% include "data_analysis/sort_icon.html" with field="person__cpr" %}
+            </a>
+        </th>
+        {% for engine in engines %}
+            {% for income_type in engine.valid_income_types %}
+            {% with me_name=engine.name|concat:"_mean_error_"|concat:income_type %}
+            <th class="col-1">
+                <a href="?{{ sort_params|get:me_name }}" class="link-dark">
+                    ME ({{ income_type }})
+                    {% include "data_analysis/sort_icon.html" with field=me_name %}
+                </a>
+            </th>
+            {% endwith %}
+            {% endfor %}
+
+            {% for income_type in engine.valid_income_types %}
+            {% with rmse_name=engine.name|concat:"_rmse_"|concat:income_type %}
+            <th class="col-1">
+                <a href="?{{ sort_params|get:rmse_name }}" class="link-dark">
+                    RMSE ({{ income_type }})
+                    {% include "data_analysis/sort_icon.html" with field=rmse_name %}
+                </a>
+            </th>
+            {% endwith %}
+            {% endfor %}
+        {% endfor %}
+
+        <th class="col-2">
+            <a href="?{{ sort_params.actual_sum }}" class="link-dark">
+                Actual year sum
+                {% include "data_analysis/sort_icon.html" with field="actual_sum" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.payout }}" class="link-dark">
+                Udbetalt tilskud
+                {% include "data_analysis/sort_icon.html" with field="payout" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.correct_payout }}" class="link-dark">
+                Korrekt tilskud
+                {% include "data_analysis/sort_icon.html" with field="correct_payout" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.payout_offset }}" class="link-dark">
+                Tilskuds&shy;afvigelse
+                {% include "data_analysis/sort_icon.html" with field="payout_offset" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.stability_score_a }}" class="link-dark">
+                Stabilitets-score (A)
+                {% include "data_analysis/sort_icon.html" with field="stability_score_a" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.stability_score_b }}" class="link-dark">
+                Stabilitets-score (B)
+                {% include "data_analysis/sort_icon.html" with field="stability_score_b" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.preferred_estimation_engine_a }}" class="link-dark">
+                Estimeringsmotor (A)
+                {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine_a" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.preferred_estimation_engine_b }}" class="link-dark">
+                Estimeringsmotor (B)
+                {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine_b" %}
+            </a>
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+{% for object in object_list %}
+
+    <tr>
+        <td>
+            <a href="{% url 'data_analysis:person_analysis' pk=object.person.pk %}?year_start={{ year }}&year_end={{ year }}">
+                {{ object.person.cpr }}
+            </a>
+        </td>
+
+        {% for engine in engines %}
+            {% for income_type in engine.valid_income_types %}
+                {% with me_name=engine.name|concat:"_mean_error_"|concat:income_type %}
+                <td>
+                    {% if object|get:me_name is not None %}
+                        {{ object|get:me_name|floatformat:2 }} %
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                {% endwith %}
+            {% endfor %}
+            {% for income_type in engine.valid_income_types %}
+                {% with rmse_name=engine.name|concat:"_rmse_"|concat:income_type %}
+                <td>
+                    {% if object|get:rmse_name is not None %}
+                        {{ object|get:rmse_name|floatformat:2 }} %
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                {% endwith %}
+            {% endfor %}
+
+        {% endfor %}
+
+        <td>{{ object.actual_sum }}</td>
+        <td>{{ object.payout|default_if_none:"" }}</td>
+        <td>{{ object.correct_payout|default_if_none:"" }}</td>
+        <td>{{ object.payout_offset|default_if_none:"" }}</td>
+        <td>{{ object.stability_score_a|default_if_none:"-" }}</td>
+        <td>{{ object.stability_score_b|default_if_none:"-" }}</td>
+        <td>{{ object.preferred_estimation_engine_a|default_if_none:"" }}</td>
+        <td>{{ object.preferred_estimation_engine_b|default_if_none:"" }}</td>
+    </tr>
+{% endfor %}
+    </tbody>
+    </table>
+
+    <div class="pagination">
+    <span class="step-links btn-group">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">1</a>
+            {% if page_obj.previous_page_number != 1 %}
+                <a href="?page={{ page_obj.previous_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.previous_page_number }}</a>
+            {% endif %}
+        {% endif %}
+        <a class="current btn btn-outline-primary active">
+            {{ page_obj.number }}
+        </a>
+        {% if page_obj.has_next %}
+            {% if page_obj.next_page_number != page_obj.paginator.num_pages %}
+            <a href="?page={{ page_obj.next_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.next_page_number }}</a>
+            {% endif %}
+            <a href="?page={{ page_obj.paginator.num_pages }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.paginator.num_pages }}</a>
+        {% endif %}
+    </span>
+    </div>
+</div>
+<script nonce="{{ request.csp_nonce }}">
+function invalidateMinMax() {
+    const noValue = !$("#id_selected_model").val();
+    $("#id_min_offset,#id_max_offset").prop('disabled', noValue);
+}
+$("#id_selected_model").change(invalidateMinMax);
+invalidateMinMax()
+</script>
+
+<script nonce="{{ request.csp_nonce }}">
+function get_cols_to_hide(item_name){
+    const header_col = $(`table tr th:contains('${item_name}')`);
+    const header_col_index = header_col.index();  // There is one column before the first we are interested in, so we'll get 1,2,3,4 of a zero-indexed list
+    const num_cols = header_col.attr("colspan") || 1;
+    const cols_to_hide = [];
+    let prior_colspans = 0;
+    header_col.prevUntil().each(function () {
+        prior_colspans += parseInt($(this).attr("colspan") || "1");
+    });
+    for (let i=0; i<num_cols; i++) {
+        cols_to_hide.push(prior_colspans + 1 + i);
+    }
+    let col_string = [`tr:first th:nth-child(${header_col_index+1})`];
+    for (let col_to_hide of cols_to_hide) {
+        col_string.push(`tr:not(:first) th:nth-child(${col_to_hide})`);
+        col_string.push(`td:nth-child(${col_to_hide})`);
+    }
+    return col_string.join(", ");
+}
+function hideItem(item_name){   
+    const col_string = get_cols_to_hide(item_name);      
+    $(col_string).hide();
+}
+function showItem(item_name){
+    const col_string = get_cols_to_hide(item_name);      
+    $(col_string).show();
+
+}
+function checkboxHandler(){
+    const $this = $(this);
+    const id = $this.attr('id');
+    const itemName = id.replace("Toggle", "");
+    const itemState = $this.is(":checked");
+
+    const col_string = get_cols_to_hide(itemName);
+    $(col_string).toggle(Boolean(itemState));
+
+    let data = {
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    };
+    data["show_" + itemName] = itemState;
+
+    $.ajax({
+        type: 'POST',
+        url: '{% url "data_analysis:update_preferences" request.user.id %}',
+        data: data,
+    });
+}
+$('#filter_dropdown input[type=checkbox]').each(checkboxHandler);
+$('#filter_dropdown input[type=checkbox][id$=Toggle]').change(checkboxHandler);
+</script>
+{% endblock %}
