@@ -9,15 +9,15 @@ ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.
     PYTHONUNBUFFERED=1
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir /app && \
-    mkdir -p /var/cache/bf && \
+    mkdir -p /var/cache/suila && \
     mkdir /static && \
     #gid/uid from salt
-    groupadd -g 75180 -r bf && \
+    groupadd -g 75180 -r suila && \
     groupadd -g 75100 -r certificate_exporter && \
-    useradd -u 75180 --no-log-init -r -g bf -G certificate_exporter bf && \
-    chown -R bf:bf /static && \
-    chown -R bf:bf /var/cache/bf && \
-    chmod a+w /var/cache/bf
+    useradd -u 75180 --no-log-init -r -g suila -G certificate_exporter suila && \
+    chown -R suila:suila /static && \
+    chown -R suila:suila /var/cache/suila && \
+    chmod a+w /var/cache/suila
 
 # supercronic
 RUN curl -fsSLO "$SUPERCRONIC_URL" && \
@@ -43,21 +43,21 @@ ARG COMMIT_TAG
 ENV COMMIT_TAG=${COMMIT_TAG:-HEAD}
 
 COPY ./docker/entrypoint.sh /entrypoint.sh
-COPY --chown=bf:bf ./bf /app
-RUN chown bf:bf /app
-USER bf
+COPY --chown=suila:suila ./suila /app
+RUN chown suila:suila /app
+USER suila
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /app
 RUN django-admin compilemessages
 
 # temporary use of dev env to make manage.py work
-COPY --chown=bf:bf ./dev-environment/bf.env bf.env
+COPY --chown=suila:suila ./dev-environment/suila.env suila.env
 # hadolint ignore=SC1091
 RUN set -a && \
-    source bf.env && \
+    source suila.env && \
     set +a && \
     python manage.py collectstatic --no-input --clear && \
-    rm bf.env
+    rm suila.env
 
 CMD ["gunicorn","-b","0.0.0.0:8000","project.wsgi:application","-w","4","--timeout","120","--error-logfile","-","--capture-output"]

@@ -114,9 +114,9 @@ Lint Python:
     - pip3 install isort==5.13.2
     #- pip3 install -r django/requirements.txt
   script:
-    - flake8 --max-line-length 88 --exclude=migrations,settings --extend-ignore E226,E203 bf/ --
-    - black --check --diff --exclude=migrations bf/
-    - isort -c --profile black --diff --skip migrations bf/
+    - flake8 --max-line-length 88 --exclude=migrations,settings --extend-ignore E226,E203 suila/ --
+    - black --check --diff --exclude=migrations suila/
+    - isort -c --profile black --diff --skip migrations suila/
 
 
 Lint Dockerfiles:
@@ -144,16 +144,16 @@ Lint REUSE compliance:
   needs: [ "Build" ]
   services:
     - name: postgres:16
-      alias: bf-db
+      alias: suila-db
   variables:
     # Simulate development environment while running tests so we use mockup data
     DJANGO_SECRET_KEY: e$s6@0(hs5ja79-&!l7vt^onoe4h^*bv_e4hj&wt5^8*&x76-$
     DJANGO_TIMEZONE: Europe/Copenhagen
     HOST_DOMAIN: http://localhost
-    POSTGRES_USER: bf
-    POSTGRES_PASSWORD: bf
-    POSTGRES_DB: bf
-    POSTGRES_HOST: bf-db
+    POSTGRES_USER: suila
+    POSTGRES_PASSWORD: suila
+    POSTGRES_DB: suila
+    POSTGRES_HOST: suila-db
     ENVIRONMENT: development
     SAML_SP_ENTITY_ID: http://localhost:8000/saml/metadata/
     SAML_SP_LOGIN_CALLBACK_URI: http://localhost:8000/login/callback/
@@ -226,7 +226,7 @@ Django check:
   <<: *test-default
   script:
     - cd /app
-    - python manage.py check bf
+    - python manage.py check suila
 
 
 # Release stage

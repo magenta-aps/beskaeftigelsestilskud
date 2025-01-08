@@ -1,0 +1,277 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-17 08:19-0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: da-DK\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: suila/models.py
+msgid "Benefit rate percent"
+msgstr ""
+
+#: suila/models.py
+msgid "Personal allowance"
+msgstr ""
+
+#: suila/models.py
+msgid "Standard allowance"
+msgstr ""
+
+#: suila/models.py
+msgid "Max benefit"
+msgstr ""
+
+#: suila/models.py
+msgid "Scaledown rate percent"
+msgstr ""
+
+#: suila/models.py
+msgid "CPR nummer"
+msgstr ""
+
+#: suila/models.py
+msgid "Dato"
+msgstr ""
+
+#: suila/models.py
+msgid "CVR-nummer"
+msgstr ""
+
+#: suila/models.py
+msgid "Sending"
+msgstr ""
+
+#: suila/models.py
+msgid "Sent"
+msgstr ""
+
+#: suila/models.py
+msgid "Failed"
+msgstr ""
+
+#: suila/models.py
+msgid "Posted"
+msgstr ""
+
+#: suila/models.py
+msgid "Genereret"
+msgstr ""
+
+#: suila/models.py
+msgid "Afsendt"
+msgstr ""
+
+#: suila/models.py
+msgid "Afventer efterbehandling"
+msgstr ""
+
+#: suila/models.py
+msgid "Afsendelse fejlet"
+msgstr ""
+
+#: suila/models.py
+msgid "Gyldig E-boks modtager"
+msgstr ""
+
+#: suila/models.py
+msgid "Fritaget modtager"
+msgstr ""
+
+#: suila/models.py
+msgid "Ugyldig E-boks modtager (sendes til efterbehandling)"
+msgstr ""
+
+#: suila/models.py
+msgid "Afdød"
+msgstr ""
+
+#: suila/models.py
+msgid "Mindreårig"
+msgstr ""
+
+#: suila/models.py
+msgid "Afventer processering"
+msgstr ""
+
+#: suila/models.py
+msgid "Fundet gyldig postadresse"
+msgstr ""
+
+#: suila/models.py
+msgid "Ingen gyldig postadresse"
+msgstr ""
+
+#: suila/models.py
+msgid "Overført til fjernprint"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_base.html
+msgid "Nøgletal"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html suila/views.py
+msgid "Forventet samlet indtægt i indeværende år"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html suila/views.py
+msgid "Faktisk samlet indtægt i indeværende år"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html suila/views.py
+msgid "Beskæftigelsesfradrag til dato i indeværende år"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html
+#: suila/templates/suila/person_search.html
+msgid "Personer"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html
+msgid "Vis"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html
+#: suila/templates/suila/person_detail_benefits.html
+msgid "Udbetalinger"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html
+#: suila/templates/suila/person_detail_income.html
+msgid "Indkomst"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html
+msgid "Skatteår"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html suila/views.py
+msgid "Adresse"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html suila/views.py
+msgid "Civilstand"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html suila/views.py
+msgid "Stedkode"
+msgstr ""
+
+#: suila/templates/suila/person_detail_benefits.html
+#, python-format
+msgid "Udbetalinger i %(year)s"
+msgstr ""
+
+#: suila/templates/suila/person_detail_benefits.html
+msgid "Tabel"
+msgstr ""
+
+#: suila/templates/suila/person_detail_benefits.html
+msgid "Graf"
+msgstr ""
+
+#: suila/templates/suila/person_detail_benefits.html
+#: suila/templates/suila/person_detail_income.html
+msgid "Måned"
+msgstr ""
+
+#: suila/templates/suila/person_detail_benefits.html
+msgid "Beløb"
+msgstr ""
+
+#: suila/templates/suila/person_detail_benefits.html
+msgid "Estimeret samlet årsindkomst"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+#, python-format
+msgid "Indkomst i %(year)s"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Arbejdsgiver"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Indkomst til dato"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Vis på graf"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Luk"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Indkomst fordelt på måneder"
+msgstr ""
+
+#: suila/templates/suila/person_search.html
+msgid "Søg"
+msgstr ""
+
+#: suila/templates/suila/person_search.html
+#, python-format
+msgid "%(count)s resultater"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "To-faktor-godkendelse er nu aktiv"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Velkommen"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Til beskæftigelsestilskud portalen."
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Genveje"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Estimeringsoverblik"
+msgstr ""
+
+#: suila/tests/test_views.py suila/views.py
+msgid "Beregnet beskæftigelsesfradrag"
+msgstr ""
+
+#: suila/tests/test_views.py suila/views.py
+msgid "Estimeret samlet lønindkomst"
+msgstr ""
+
+#: suila/tests/test_views.py suila/views.py
+msgid "A-indkomst"
+msgstr ""
+
+#: suila/tests/test_views.py suila/views.py
+msgid "B-indkomst"
+msgstr ""
+
+#: suila/views.py
+msgid "CPR-nummer"
+msgstr ""
+
+#: suila/views.py
+msgid "Navn"
+msgstr ""
+
+#: suila/views.py
+msgid "Estimeret total årsindkomst"
+msgstr ""

@@ -3,7 +3,7 @@
 hosts_file="/hosts"
 
 add_hosts=""
-for hostname in bf-web bf-idp bf-mailhog bf-traefik api.bf-traefik; do
+for hostname in suila-web suila-idp suila-mailhog suila-traefik api.suila-traefik; do
   if ! grep $hostname $hosts_file; then
     add_hosts+=" $hostname"
   fi
