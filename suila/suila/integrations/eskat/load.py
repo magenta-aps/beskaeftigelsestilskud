@@ -130,7 +130,7 @@ class AnnualIncomeHandler(Handler):
                 dict
             )
             for item in items:
-                if item.cpr:
+                if item.year is not None and item.cpr is not None:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
@@ -162,7 +162,7 @@ class ExpectedIncomeHandler(Handler):
                 dict
             )
             for item in items:
-                if item.cpr:
+                if item.year is not None and item.cpr is not None:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
@@ -237,7 +237,7 @@ class MonthlyIncomeHandler(Handler):
                 dict
             )
             for item in items:
-                if item.cpr:
+                if item.year is not None and item.cpr is not None:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
@@ -314,7 +314,7 @@ class TaxInformationHandler(Handler):
     ):
         year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
         for item in items:
-            if item.cpr:
+            if item.year is not None and item.cpr is not None:
                 year_cpr_tax_scopes[item.year][item.cpr] = TaxScope.from_taxinformation(
                     item
                 )
