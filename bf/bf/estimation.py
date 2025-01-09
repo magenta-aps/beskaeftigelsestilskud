@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
+import logging
 from datetime import date
 from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
-from typing import Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Sequence, Tuple
 
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
@@ -25,6 +26,8 @@ from bf.models import (
     PersonYear,
     PersonYearEstimateSummary,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class EstimationEngine:
@@ -51,6 +54,8 @@ class EstimationEngine:
             return Decimal(0) + sum([row.a_income for row in relevant])
         if income_type == IncomeType.B:  # pragma: no branch
             return Decimal(0) + sum([row.b_income for row in relevant])
+        if income_type == IncomeType.U:
+            return Decimal(0) + sum([row.u_income for row in relevant])
 
     @classmethod
     def classes(cls) -> List[type[EstimationEngine]]:
@@ -71,6 +76,7 @@ class EstimationEngine:
     valid_income_types: List[IncomeType] = [
         IncomeType.A,
         IncomeType.B,
+        IncomeType.U,
     ]
 
     @staticmethod
@@ -137,26 +143,24 @@ class EstimationEngine:
                 a_income=Decimal(person_month.a_income or 0),
                 b_income=Decimal(person_month.b_income or 0)
                 + Decimal(person_month.b_income_from_year or 0),
+                u_income=Decimal(person_month.u_income_from_year or 0),
             )
             for person_month in qs
         ]
 
-        person_month_map = {
-            pm.pk: pm for pm in PersonMonth.objects.all().select_related("person_year")
-        }
-
         if output_stream is not None:
             output_stream.write("Computing estimates ...\n")
+
         results = []
         summaries = []
-
         for idx, (key, items) in enumerate(
             groupby(data_qs, key=attrgetter("person_pk"))
         ):
             subset = list(items)
+            person_pk = subset[0].person_pk
+
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
-            person_pk = subset[0].person_pk
 
             first_income_month = 1
             for month_data in [  # pragma: no branch
@@ -166,18 +170,35 @@ class EstimationEngine:
                     first_income_month = month_data.month
                     break
 
-            person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
+            actual_year_sums: Dict[IncomeType, Dict[int, Decimal]] = {}
+            for income_type in IncomeType:
+                actual_year_sums[income_type] = {}
 
-            actual_year_sums = {
-                income_type: {
-                    month: sum(
-                        row.a_income if income_type == "A" else row.b_income
+                for month in range(first_income_month, 13):
+                    income_type_sum = Decimal("0.00")
+
+                    if income_type == "A":
+                        row_income_selector = "a_income"
+                    elif income_type == "U":
+                        row_income_selector = "u_income"
+                    else:
+                        # NOTE: Our old logic defaulted to b_income if it didn't "know"
+                        # the income_type, so we continue to do this here
+                        row_income_selector = "b_income"
+
+                    income_type_sum = sum(
+                        getattr(row, row_income_selector)
                         for row in subset
                         if row.year == year and row.year_month <= date(year, month, 1)
                     )
-                    for month in range(first_income_month, 13)
-                }
-                for income_type in IncomeType
+
+                    actual_year_sums[income_type][month] = income_type_sum
+
+            # Handle EstimationEngine instances
+            person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
+            person_month_map = {
+                pm.pk: pm
+                for pm in PersonMonth.objects.all().select_related("person_year")
             }
 
             for engine in EstimationEngine.instances():
@@ -299,9 +320,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         # Trim off items with no income from the beginning of the list
         relevant_items = trim_list_first(
             relevant_items,
-            lambda item: not (
-                item.a_income if income_type == IncomeType.A else item.b_income
-            ).is_zero(),
+            InYearExtrapolationEngine.filter_relevant_items(income_type),
         )
 
         relevant_count = len(relevant_items)
@@ -331,6 +350,18 @@ class InYearExtrapolationEngine(EstimationEngine):
             if item.year == year_month.year and item.year_month <= year_month
         ]
         return items
+
+    @staticmethod
+    def filter_relevant_items(income_type):
+        def _filter(item):
+            if income_type == IncomeType.A:
+                return not item.a_income.is_zero()
+            elif income_type == IncomeType.U:
+                return not item.u_income.is_zero()
+            else:
+                return not item.b_income.is_zero()
+
+        return _filter
 
 
 class TwelveMonthsSummationEngine(EstimationEngine):

@@ -165,14 +165,20 @@ class Simulation:
             for (year, month), amount in income_series_build.items()
         }
 
+        print(income_series)
+
         # Add any income from final settlement
         if self.income_type in (IncomeType.B, None):
             for person_year in self.person_years:
                 year = person_year.year.year
-                b_income = person_year.b_income
-                if b_income:
+                for yearly_income_field in ["b_income", "u_income"]:
+                    if not hasattr(person_year, yearly_income_field):
+                        continue
+
+                    yearly_income_value = getattr(person_year, yearly_income_field)
+
                     # Divide by 12. Spread the remainder over the last months
-                    monthly_income = int_divide_end(int(b_income), 12)
+                    monthly_income = int_divide_end(int(yearly_income_value), 12)
                     for month in range(1, 13):
                         income_item = income_series.get((year, month))
                         if income_item is None:

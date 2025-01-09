@@ -12,6 +12,7 @@ class MonthlyIncomeData:
     year: int
     a_income: Decimal
     b_income: Decimal
+    u_income: Decimal
     person_pk: int
     person_month_pk: int
     person_year_pk: int
