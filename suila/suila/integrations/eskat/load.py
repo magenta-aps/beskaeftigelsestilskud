@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from collections import defaultdict
 from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, TextIO
+from typing import Dict, List, Set, TextIO
 
 from common.utils import camelcase_to_snakecase, omit
 from django.db import transaction
@@ -216,6 +217,11 @@ class MonthlyIncomeHandler(Handler):
                 employer.cvr: employer for employer in Employer.objects.all()
             }
 
+            data_months: Dict[int, Set[int]] = defaultdict(set)
+            for item in items:
+                if item.year is not None and item.month is not None:
+                    data_months[item.year].add(item.month)
+
             # Create or update Year object
             person_years = cls.create_person_years(
                 year,
@@ -227,7 +233,7 @@ class MonthlyIncomeHandler(Handler):
                 # Create or update PersonMonth objects
                 person_months = {}
                 for person_year in person_years.values():
-                    for month in range(1, 13):
+                    for month in data_months[person_year.year.year]:
                         person_month = PersonMonth(
                             person_year=person_year,
                             load=load,
@@ -235,11 +241,12 @@ class MonthlyIncomeHandler(Handler):
                             import_date=date.today(),
                             amount_sum=Decimal(0),
                         )
-                        key = (person_year.person.cpr, month)
+                        key = (person_year.year_id, month, person_year.person.cpr)
                         person_months[key] = person_month
                 PersonMonth.objects.bulk_create(
                     person_months.values(),
                     update_conflicts=True,
+                    # Update existing object if it already exists
                     update_fields=("import_date",),
                     unique_fields=("person_year", "month"),
                 )
@@ -249,8 +256,12 @@ class MonthlyIncomeHandler(Handler):
                 # (existing objects for this year will be deleted!)
                 income_reports = []
                 for item in items:
-                    if item.cpr is not None and item.month is not None:
-                        person_month = person_months[(item.cpr, item.month)]
+                    if (
+                        item.cpr is not None
+                        and item.year is not None
+                        and item.month is not None
+                    ):
+                        person_month = person_months[(item.year, item.month, item.cpr)]
                         report = MonthlyIncomeReport(
                             person_month=person_month,
                             employer=(
@@ -272,7 +283,7 @@ class MonthlyIncomeHandler(Handler):
                         report.update_amount()
                         income_reports.append(report)
                 MonthlyIncomeReport.objects.filter(
-                    person_month__person_year__year=year
+                    person_month__in=person_months.values()
                 ).delete()
                 MonthlyIncomeReport.objects.bulk_create(income_reports)
                 for person_month in person_months.values():
