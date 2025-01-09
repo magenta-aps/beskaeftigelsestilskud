@@ -126,7 +126,9 @@ class AnnualIncomeHandler(Handler):
         out: TextIO,
     ):
         with transaction.atomic():
-            year_cpr_tax_scopes = defaultdict(dict)
+            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
+                dict
+            )
             for item in items:
                 if item.cpr:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
@@ -156,7 +158,9 @@ class ExpectedIncomeHandler(Handler):
         cls, year: int, items: List["ExpectedIncome"], load: DataLoad, out: TextIO
     ):
         with transaction.atomic():
-            year_cpr_tax_scopes = defaultdict(dict)
+            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
+                dict
+            )
             for item in items:
                 if item.cpr:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
@@ -229,7 +233,9 @@ class MonthlyIncomeHandler(Handler):
                     data_months[item.year].add(item.month)
 
             # Create or update Year object
-            year_cpr_tax_scopes = defaultdict(dict)
+            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
+                dict
+            )
             for item in items:
                 if item.cpr:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
@@ -306,7 +312,7 @@ class TaxInformationHandler(Handler):
     def create_or_update_objects(
         cls, year: int, items: List["TaxInformation"], load: DataLoad, out: TextIO
     ):
-        year_cpr_tax_scopes = defaultdict(dict)
+        year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
         for item in items:
             if item.cpr:
                 year_cpr_tax_scopes[item.year][item.cpr] = TaxScope.from_taxinformation(
