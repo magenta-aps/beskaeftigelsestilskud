@@ -211,7 +211,7 @@ class PersonYearEstimationMixin:
                 Subquery(
                     AnnualIncome.objects.filter(person_year=OuterRef("pk"))
                     .order_by("-created")
-                    .values("account_tax_result")[0:]
+                    .values("account_tax_result")[:1]
                 ),
                 Decimal("0.00"),
             )
