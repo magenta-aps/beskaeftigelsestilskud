@@ -30,6 +30,7 @@ from bf.integrations.eskat.responses.data_models import TaxInformation
 class IncomeType(TextChoices):
     A = "A"
     B = "B"
+    U = "U"  # Udbytte / AKAP U1A
 
 
 class ManagementCommands(TextChoices):
@@ -467,18 +468,20 @@ class PersonYear(models.Model):
             "-created"
         ).first()
 
-        b_income: Optional[Decimal] = None
-        if annual_income:
-            b_income = annual_income.account_tax_result
+        return annual_income.account_tax_result if annual_income is not None else None
 
-        # Include U1A assessments in b_income as well
+    @property
+    def u_income(self) -> Decimal | None:
+        u_income: Optional[Decimal] = None
+
+        # Fetch AKAP u1a assessments sum
         if self.u1a_assessments_sum:
-            if not b_income:
-                b_income = Decimal("0.00")
+            if not u_income:
+                u_income = Decimal("0.00")
 
-            b_income += self.u1a_assessments_sum
+            u_income += self.u1a_assessments_sum
 
-        return b_income
+        return u_income
 
 
 class PersonMonth(models.Model):
@@ -603,6 +606,13 @@ class PersonMonth(models.Model):
         b_income = self.person_year.b_income
         if b_income is not None:
             return int_divide_end(int(b_income), 12)[self.month - 1]
+        return 0
+
+    @property
+    def u_income_from_year(self) -> int:
+        u_income = self.person_year.u_income
+        if u_income is not None:
+            return int_divide_end(int(u_income), 12)[self.month - 1]
         return 0
 
 
