@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from collections import defaultdict
 from dataclasses import asdict, fields
 from datetime import date
@@ -8,6 +9,7 @@ from decimal import Decimal
 from typing import Dict, List, Set, TextIO
 
 from common.utils import camelcase_to_snakecase, omit
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
@@ -30,6 +32,8 @@ from suila.models import (
     Year,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class Handler:
 
@@ -41,19 +45,25 @@ class Handler:
         out: TextIO,
         set_taxscope_on_missing: int | None = None,
     ) -> Dict[str, PersonYear] | None:
-
         person_years_count = 0
         person_years = {}
-        for year, cpr_taxscopes in year_cpr_taxscopes.items():
 
+        for year, cpr_taxscopes in year_cpr_taxscopes.items():
             # Create or get Year objects
             year_obj, _ = Year.objects.get_or_create(year=year)
 
             # Create or update Person objects
-            persons = {
-                cpr: Person(cpr=cpr, name=cpr, load=load)
-                for cpr in cpr_taxscopes.keys()
-            }
+            persons: dict[str, Person] = {}
+            for cpr in cpr_taxscopes.keys():
+                person = Person(cpr=cpr, name=cpr, load=load)
+                try:
+                    # Validate CPR against custom validator
+                    person.full_clean(validate_unique=False)
+                except ValidationError as exc:
+                    logger.info("skipping Person: cpr=%r (error=%r)", cpr, exc)
+                else:
+                    persons[cpr] = person
+
             Person.objects.bulk_create(
                 persons.values(),
                 update_conflicts=True,
