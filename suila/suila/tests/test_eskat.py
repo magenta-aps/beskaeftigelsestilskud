@@ -324,13 +324,13 @@ class TestAnnualIncome(BaseTestCase):
 
     def test_annual_income_load(self):
         AnnualIncomeHandler.create_or_update_objects(
-            2024,
             [
                 AnnualIncome(
                     "1234",
                     2024,
                     salary=1234.56,
-                )
+                ),
+                AnnualIncome(None, 2024),  # shall be ignored
             ],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
@@ -339,14 +339,15 @@ class TestAnnualIncome(BaseTestCase):
             AnnualIncomeModel.objects.filter(person_year__year__year=2024).count(), 1
         )
 
+        self.assertEqual(Person.objects.count(), 1)
         self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(Person.objects.first().cpr, "1234")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(AnnualIncomeModel.objects.first().load.source, "test")
 
     def test_monthly_income_load_no_items(self):
         objects_before = len(AnnualIncomeModel.objects.all())
         AnnualIncomeHandler.create_or_update_objects(
-            2024,
             [],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
@@ -470,7 +471,8 @@ class TestExpectedIncome(BaseTestCase):
                     "1234",
                     2024,
                     other_b_income=2000.00,
-                )
+                ),
+                ExpectedIncome(None, 2024),  # shall be ignored
             ],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
@@ -484,7 +486,9 @@ class TestExpectedIncome(BaseTestCase):
             .other_b_income,
             Decimal(2000.00),
         )
+        self.assertEqual(Person.objects.count(), 1)
         self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(Person.objects.first().cpr, "1234")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYearAssessment.objects.first().load.source, "test")
 
@@ -676,11 +680,16 @@ class TestMonthlyIncome(BaseTestCase):
                     month=1,
                     salary_income=25000.00,
                     disability_pension_income=1000.00,
-                )
+                ),
+                MonthlyIncome(  # shall be ignored
+                    cpr=None,
+                    year=2024,
+                ),
             ],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
+        self.assertEqual(Person.objects.count(), 1)
         self.assertEqual(
             PersonMonth.objects.filter(person_year__year__year=2024, month=1).count(), 1
         )
@@ -700,6 +709,7 @@ class TestMonthlyIncome(BaseTestCase):
             Decimal(1000.00),
         )
         self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(Person.objects.first().cpr, "1234")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(MonthlyIncomeReport.objects.first().load.source, "test")
 
@@ -892,7 +902,11 @@ class TestTaxInformation(BaseTestCase):
                     "1234",
                     2024,
                     tax_scope="FULL",
-                )
+                ),
+                TaxInformation(
+                    None,
+                    2024,
+                ),
             ],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),

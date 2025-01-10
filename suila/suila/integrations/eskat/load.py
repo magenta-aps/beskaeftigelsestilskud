@@ -36,63 +36,66 @@ class Handler:
     @classmethod
     def create_person_years(
         cls,
-        year: int,
-        cpr_taxscopes: Dict[str, TaxScope | None],
+        year_cpr_taxscopes: Dict[int, Dict[str, TaxScope | None]],
         load: DataLoad,
         out: TextIO,
-        set_taxscope_on_missing: bool = False,
+        set_taxscope_on_missing: int | None = None,
     ) -> Dict[str, PersonYear] | None:
-
-        # Create or get Year objects
-        year_obj, _ = Year.objects.get_or_create(year=year)
-
-        # Create or update Person objects
-        persons = {
-            cpr: Person(cpr=cpr, name=cpr, load=load) for cpr in cpr_taxscopes.keys()
-        }
-        Person.objects.bulk_create(
-            persons.values(),
-            update_conflicts=True,
-            update_fields=("cpr", "name"),
-            unique_fields=("cpr",),
-        )
-        out.write(f"Processed {len(persons)} Person objects")
 
         person_years_count = 0
         person_years = {}
+        for year, cpr_taxscopes in year_cpr_taxscopes.items():
 
-        # Update existing items in DB that are in the input
-        to_update = []
-        for person_year_1 in PersonYear.objects.filter(
-            year=year, person__in=persons.values()
-        ).select_related("person"):
-            cpr = person_year_1.person.cpr
-            tax_scope = cpr_taxscopes[cpr]
-            if tax_scope is not None:  # only update if we have a taxscope to set
-                person_year_1.load = load
-                person_year_1.tax_scope = tax_scope
-                to_update.append(person_year_1)
-            person_years[cpr] = person_year_1
-        if len(to_update) > 0:
-            bulk_update_with_history(
-                to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
+            # Create or get Year objects
+            year_obj, _ = Year.objects.get_or_create(year=year)
+
+            # Create or update Person objects
+            persons = {
+                cpr: Person(cpr=cpr, name=cpr, load=load)
+                for cpr in cpr_taxscopes.keys()
+            }
+            Person.objects.bulk_create(
+                persons.values(),
+                update_conflicts=True,
+                update_fields=("cpr", "name"),
+                unique_fields=("cpr",),
             )
+            out.write(f"Processed {len(persons)} Person objects")
 
-        # Create new items in DB for items in the input
-        to_create = []
-        for cpr, person in persons.items():
-            if cpr not in person_years:
-                person_year_2 = PersonYear(person=person, year=year_obj, load=load)
+            # Update existing items in DB that are in the input
+            to_update = []
+            for person_year_1 in PersonYear.objects.filter(
+                year=year, person__in=persons.values()
+            ).select_related("person"):
+                cpr = person_year_1.person.cpr
                 tax_scope = cpr_taxscopes[cpr]
-                if tax_scope is not None:
-                    person_year_2.tax_scope = tax_scope
-                to_create.append(person_year_2)
-                person_years[cpr] = person_year_2
-        created = bulk_create_with_history(to_create, PersonYear, batch_size=1000)
-        person_years_count += len(created)
+                if tax_scope is not None:  # only update if we have a taxscope to set
+                    person_year_1.load = load
+                    person_year_1.tax_scope = tax_scope
+                    to_update.append(person_year_1)
+                person_years[cpr] = person_year_1
+            if len(to_update) > 0:
+                bulk_update_with_history(
+                    to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
+                )
+
+            # Create new items in DB for items in the input
+            to_create = []
+            for cpr, person in persons.items():
+                if cpr not in person_years:
+                    person_year_2 = PersonYear(person=person, year=year_obj, load=load)
+                    tax_scope = cpr_taxscopes[cpr]
+                    if tax_scope is not None:
+                        person_year_2.tax_scope = tax_scope
+                    to_create.append(person_year_2)
+                    person_years[cpr] = person_year_2
+            created = bulk_create_with_history(to_create, PersonYear, batch_size=1000)
+            person_years_count += len(created)
 
         # Update existing items in DB that are not in the input
-        if set_taxscope_on_missing:
+        if set_taxscope_on_missing is not None:
+            year_obj = Year.objects.get(year=set_taxscope_on_missing)
+
             to_update = list(
                 PersonYear.objects.filter(year=year_obj).exclude(
                     person__cpr__in=person_years.keys()
@@ -118,15 +121,18 @@ class AnnualIncomeHandler(Handler):
     @classmethod
     def create_or_update_objects(
         cls,
-        year: int,
         items: List[AnnualIncome],
         load: DataLoad,
         out: TextIO,
     ):
         with transaction.atomic():
-            person_years = cls.create_person_years(
-                year, {item.cpr: None for item in items if item.cpr}, load, out
+            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
+                dict
             )
+            for item in items:
+                if item.year is not None and item.cpr is not None:
+                    year_cpr_tax_scopes[item.year][item.cpr] = None
+            person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
                 annual_incomes = [
                     AnnualIncomeModel(
@@ -152,9 +158,13 @@ class ExpectedIncomeHandler(Handler):
         cls, year: int, items: List["ExpectedIncome"], load: DataLoad, out: TextIO
     ):
         with transaction.atomic():
-            person_years = cls.create_person_years(
-                year, {item.cpr: None for item in items if item.cpr}, load, out
+            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
+                dict
             )
+            for item in items:
+                if item.year is not None and item.cpr is not None:
+                    year_cpr_tax_scopes[item.year][item.cpr] = None
+            person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
                 assessments = [
                     PersonYearAssessment(
@@ -223,12 +233,13 @@ class MonthlyIncomeHandler(Handler):
                     data_months[item.year].add(item.month)
 
             # Create or update Year object
-            person_years = cls.create_person_years(
-                year,
-                {item.cpr: None for item in items if item.cpr is not None},
-                load,
-                out,
+            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
+                dict
             )
+            for item in items:
+                if item.year is not None and item.cpr is not None:
+                    year_cpr_tax_scopes[item.year][item.cpr] = None
+            person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
                 # Create or update PersonMonth objects
                 person_months = {}
@@ -299,18 +310,21 @@ class TaxInformationHandler(Handler):
 
     @classmethod
     def create_or_update_objects(
-        cls, year, items: List["TaxInformation"], load: DataLoad, out: TextIO
+        cls, year: int, items: List["TaxInformation"], load: DataLoad, out: TextIO
     ):
+        year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
+        for item in items:
+            if item.year is not None and item.cpr is not None:
+                year_cpr_tax_scopes[item.year][item.cpr] = TaxScope.from_taxinformation(
+                    item
+                )
         with transaction.atomic():
             cls.create_person_years(
-                year,
-                {
-                    item.cpr: TaxScope.from_taxinformation(item)
-                    for item in items
-                    if item.cpr is not None
-                },
+                year_cpr_tax_scopes,
                 load,
                 out,
-                set_taxscope_on_missing=True,
+                # Sæt eksisterende objekter på dette år,
+                # som ikke er i year_cpr_tax_scopes, til forsvundet
+                set_taxscope_on_missing=year,
             )
             # TODO: Brug data i items til at populere databasen
