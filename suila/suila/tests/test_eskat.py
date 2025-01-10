@@ -171,7 +171,7 @@ class TestAnnualIncome(BaseTestCase):
 
     annual_data = [
         {
-            "cpr": "1234",
+            "cpr": "0000001234",
             "year": 2024,
             "salary": None,
             "public_assistance_income": None,
@@ -212,7 +212,7 @@ class TestAnnualIncome(BaseTestCase):
         }
     ] + [
         {
-            "cpr": "5678",
+            "cpr": "0000005678",
             "year": 2024,
             "salary": None,
             "public_assistance_income": None,
@@ -298,9 +298,9 @@ class TestAnnualIncome(BaseTestCase):
         ):
             data = client.get_annual_income(2024)
             self.assertEqual(len(data), 2)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[0].year, 2024)
-            self.assertEqual(data[1].cpr, "5678")
+            self.assertEqual(data[1].cpr, "0000005678")
             self.assertEqual(data[1].year, 2024)
 
     def test_get_annual_income_by_cpr(self):
@@ -308,25 +308,25 @@ class TestAnnualIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.annual_income_testdata
         ):
-            data = client.get_annual_income(year=None, cpr="1234")
+            data = client.get_annual_income(year=None, cpr="0000001234")
             self.assertEqual(len(data), 1)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
 
     def test_get_annual_income_by_cpr_year(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.annual_income_testdata
         ):
-            data = client.get_annual_income(2024, cpr="1234")
+            data = client.get_annual_income(2024, cpr="0000001234")
             self.assertEqual(len(data), 1)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[0].year, 2024)
 
     def test_annual_income_load(self):
         AnnualIncomeHandler.create_or_update_objects(
             [
                 AnnualIncome(
-                    "1234",
+                    "0000001234",
                     2024,
                     salary=1234.56,
                 ),
@@ -341,7 +341,7 @@ class TestAnnualIncome(BaseTestCase):
 
         self.assertEqual(Person.objects.count(), 1)
         self.assertEqual(Person.objects.first().load.source, "test")
-        self.assertEqual(Person.objects.first().cpr, "1234")
+        self.assertEqual(Person.objects.first().cpr, "0000001234")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(AnnualIncomeModel.objects.first().load.source, "test")
 
@@ -366,7 +366,7 @@ class TestExpectedIncome(BaseTestCase):
 
     expected_data = [
         {
-            "cpr": "1234",
+            "cpr": "0000001234",
             "year": 2024,
             "valid_from": "20240201",
             "do_expect_a_income": True,
@@ -381,7 +381,7 @@ class TestExpectedIncome(BaseTestCase):
             "catch_sale_market_income": 0.0,
         },
         {
-            "cpr": "5678",
+            "cpr": "0000005678",
             "year": 2024,
             "valid_from": "20240201",
             "do_expect_a_income": True,
@@ -442,33 +442,33 @@ class TestExpectedIncome(BaseTestCase):
         ):
             data = client.get_expected_income(year=2024)
             self.assertEqual(len(data), 2)
-            self.assertEqual(data[0].cpr, "1234")
-            self.assertEqual(data[1].cpr, "5678")
+            self.assertEqual(data[0].cpr, "0000001234")
+            self.assertEqual(data[1].cpr, "0000005678")
 
     def test_get_expected_income_by_cpr(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.expected_income_testdata
         ):
-            data = client.get_expected_income(cpr="1234")
+            data = client.get_expected_income(cpr="0000001234")
             self.assertEqual(len(data), 1)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
 
     def test_get_expected_income_by_cpr_year(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.expected_income_testdata
         ):
-            data = client.get_expected_income(year=2024, cpr="1234")
+            data = client.get_expected_income(year=2024, cpr="0000001234")
             self.assertEqual(len(data), 1)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
 
     def test_expected_income_load(self):
         ExpectedIncomeHandler.create_or_update_objects(
             2024,
             [
                 ExpectedIncome(
-                    "1234",
+                    "0000001234",
                     2024,
                     other_b_income=2000.00,
                 ),
@@ -488,7 +488,7 @@ class TestExpectedIncome(BaseTestCase):
         )
         self.assertEqual(Person.objects.count(), 1)
         self.assertEqual(Person.objects.first().load.source, "test")
-        self.assertEqual(Person.objects.first().cpr, "1234")
+        self.assertEqual(Person.objects.first().cpr, "0000001234")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYearAssessment.objects.first().load.source, "test")
 
@@ -515,7 +515,7 @@ class TestMonthlyIncome(BaseTestCase):
 
     monthly_data = [
         {
-            "cpr": "1234",
+            "cpr": "0000001234",
             "cvr": "123",
             "year": 2024,
             "month": m,
@@ -535,7 +535,7 @@ class TestMonthlyIncome(BaseTestCase):
         for m in range(1, 13)
     ] + [
         {
-            "cpr": "5678",
+            "cpr": "0000005678",
             "cvr": "567",
             "year": 2024,
             "month": m,
@@ -605,10 +605,10 @@ class TestMonthlyIncome(BaseTestCase):
             data = client.get_monthly_income(2024)
             self.assertEqual(len(data), 24)
             for m in range(0, 12):
-                self.assertEqual(data[m].cpr, "1234")
+                self.assertEqual(data[m].cpr, "0000001234")
                 self.assertEqual(data[m].month, m + 1)
             for m in range(12, 24):
-                self.assertEqual(data[m].cpr, "5678")
+                self.assertEqual(data[m].cpr, "0000005678")
                 self.assertEqual(data[m].month, m - 11)
 
     def test_get_monthly_income_by_year_month(self):
@@ -619,9 +619,9 @@ class TestMonthlyIncome(BaseTestCase):
             data = client.get_monthly_income(2024, 1)
             self.assertEqual(len(data), 2)
             self.assertEqual(data[0].month, 1)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[1].month, 1)
-            self.assertEqual(data[1].cpr, "5678")
+            self.assertEqual(data[1].cpr, "0000005678")
 
     def test_get_monthly_income_by_year_monthrange(self):
         client = EskatClient.from_settings()
@@ -632,20 +632,20 @@ class TestMonthlyIncome(BaseTestCase):
             self.assertEqual(len(data), 12)
             for m in range(0, 6):
                 self.assertEqual(data[m].month, m + 1)
-                self.assertEqual(data[m].cpr, "1234")
+                self.assertEqual(data[m].cpr, "0000001234")
             for m in range(6, 12):
                 self.assertEqual(data[m].month, m - 5)
-                self.assertEqual(data[m].cpr, "5678")
+                self.assertEqual(data[m].cpr, "0000005678")
 
     def test_get_monthly_income_by_cpr_year(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, cpr="1234")
+            data = client.get_monthly_income(2024, cpr="0000001234")
             self.assertEqual(len(data), 12)
             for m in range(0, 12):
-                self.assertEqual(data[m].cpr, "1234")
+                self.assertEqual(data[m].cpr, "0000001234")
                 self.assertEqual(data[m].month, m + 1)
 
     def test_get_monthly_income_by_cpr_year_month(self):
@@ -653,28 +653,28 @@ class TestMonthlyIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, 1, cpr="1234")
+            data = client.get_monthly_income(2024, 1, cpr="0000001234")
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].month, 1)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
 
     def test_get_monthly_income_by_cpr_year_month_range(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, 1, 6, cpr="1234")
+            data = client.get_monthly_income(2024, 1, 6, cpr="0000001234")
             self.assertEqual(len(data), 6)
             for m in range(0, 6):
                 self.assertEqual(data[m].month, m + 1)
-                self.assertEqual(data[m].cpr, "1234")
+                self.assertEqual(data[m].cpr, "0000001234")
 
     def test_monthly_income_load(self):
         MonthlyIncomeHandler.create_or_update_objects(
             2024,
             [
                 MonthlyIncome(
-                    cpr="1234",
+                    cpr="0000001234",
                     cvr="123",
                     year=2024,
                     month=1,
@@ -709,7 +709,7 @@ class TestMonthlyIncome(BaseTestCase):
             Decimal(1000.00),
         )
         self.assertEqual(Person.objects.first().load.source, "test")
-        self.assertEqual(Person.objects.first().cpr, "1234")
+        self.assertEqual(Person.objects.first().cpr, "0000001234")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(MonthlyIncomeReport.objects.first().load.source, "test")
 
@@ -730,7 +730,7 @@ class TestMonthlyIncome(BaseTestCase):
             2024,
             [
                 MonthlyIncome(
-                    "1234",
+                    "0000001234",
                     year=2024,
                     month=None,
                     salary_income=25000.00,
@@ -754,7 +754,7 @@ class TestTaxInformation(BaseTestCase):
 
     taxinfo_data = [
         {
-            "cpr": "1234",
+            "cpr": "0000001234",
             "year": 2023,
             "tax_scope": "FULL",
             "start_date": "2024-11-01T12:39:16.986Z",
@@ -766,7 +766,7 @@ class TestTaxInformation(BaseTestCase):
             "district_name": "",
         },
         {
-            "cpr": "5678",
+            "cpr": "0000005678",
             "year": 2023,
             "tax_scope": "FULL",
             "start_date": "2024-11-01T12:39:16.986Z",
@@ -778,7 +778,7 @@ class TestTaxInformation(BaseTestCase):
             "district_name": "",
         },
         {
-            "cpr": "9012",
+            "cpr": "0000009012",
             "year": 2023,
             "tax_scope": "FULL",
             "start_date": "2024-11-01T12:39:16.986Z",
@@ -790,7 +790,7 @@ class TestTaxInformation(BaseTestCase):
             "district_name": "",
         },
         {
-            "cpr": "1234",
+            "cpr": "0000001234",
             "year": 2024,
             "tax_scope": "FULL",
             "start_date": "2024-11-01T12:39:16.986Z",
@@ -802,7 +802,19 @@ class TestTaxInformation(BaseTestCase):
             "district_name": "",
         },
         {
-            "cpr": "5678",
+            "cpr": "0000005678",
+            "year": 2024,
+            "tax_scope": "LIM",
+            "start_date": "2024-11-01T12:39:16.986Z",
+            "end_date": "2024-11-01T12:39:16.986Z",
+            "tax_municipality_number": "956",
+            "cpr_municipality_code": "956",
+            "region_number": "",
+            "regionName": "",
+            "district_name": "",
+        },
+        {
+            "cpr": "bogus",
             "year": 2024,
             "tax_scope": "LIM",
             "start_date": "2024-11-01T12:39:16.986Z",
@@ -864,25 +876,26 @@ class TestTaxInformation(BaseTestCase):
         ):
             data = client.get_tax_information(year=2023)
             self.assertEqual(len(data), 3)
-            self.assertEqual(data[0].cpr, "1234")
-            self.assertEqual(data[1].cpr, "5678")
-            self.assertEqual(data[2].cpr, "9012")
+            self.assertEqual(data[0].cpr, "0000001234")
+            self.assertEqual(data[1].cpr, "0000005678")
+            self.assertEqual(data[2].cpr, "0000009012")
 
             data = client.get_tax_information(year=2024)
-            self.assertEqual(len(data), 2)
-            self.assertEqual(data[0].cpr, "1234")
-            self.assertEqual(data[1].cpr, "5678")
+            self.assertEqual(len(data), 3)
+            self.assertEqual(data[0].cpr, "0000001234")
+            self.assertEqual(data[1].cpr, "0000005678")
+            self.assertEqual(data[2].cpr, "bogus")
 
     def test_get_tax_information_by_cpr(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
         ):
-            data = client.get_tax_information(cpr="1234")
+            data = client.get_tax_information(cpr="0000001234")
             self.assertEqual(len(data), 2)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[0].year, 2023)
-            self.assertEqual(data[1].cpr, "1234")
+            self.assertEqual(data[1].cpr, "0000001234")
             self.assertEqual(data[1].year, 2024)
 
     def test_get_tax_information_by_cpr_year(self):
@@ -890,16 +903,16 @@ class TestTaxInformation(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
         ):
-            data = client.get_tax_information(year=2024, cpr="1234")
+            data = client.get_tax_information(year=2024, cpr="0000001234")
             self.assertEqual(len(data), 1)
-            self.assertEqual(data[0].cpr, "1234")
+            self.assertEqual(data[0].cpr, "0000001234")
 
     def test_tax_information_load(self):
         TaxInformationHandler.create_or_update_objects(
             2024,
             [
                 TaxInformation(
-                    "1234",
+                    "0000001234",
                     2024,
                     tax_scope="FULL",
                 ),
@@ -919,7 +932,7 @@ class TestTaxInformation(BaseTestCase):
             2024,
             [
                 TaxInformation(
-                    "1234",
+                    "0000001234",
                     2024,
                     tax_scope="LIM",
                 )
@@ -939,7 +952,7 @@ class TestTaxInformation(BaseTestCase):
             2024,
             [
                 TaxInformation(
-                    "1234",
+                    "0000001234",
                     2024,
                 )
             ],
@@ -964,6 +977,21 @@ class TestTaxInformation(BaseTestCase):
             PersonYear.objects.filter(year__year=2024).first().tax_scope,
             TaxScope.FORSVUNDET_FRA_MANDTAL,
         )
+
+    def test_tax_information_load_skips_bogus_cpr(self):
+        TaxInformationHandler.create_or_update_objects(
+            2024,
+            [
+                TaxInformation(
+                    "bogus",
+                    2024,
+                    tax_scope="FULL",
+                )
+            ],
+            DataLoad.objects.create(source="test"),
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        self.assertQuerySetEqual(Person.objects.all(), [])
 
     def test_get_taxscopes(self):
         client = EskatClient.from_settings()
