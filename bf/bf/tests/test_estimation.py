@@ -330,10 +330,11 @@ class TestInYearExtrapolationEngine(TestCase):
                 month=report.person_month.month,
                 year=report.person_month.year,
                 a_income=report.a_income,
+                b_income=Decimal(0),
+                u_income=Decimal(0),
                 person_pk=self.person.pk,
                 person_year_pk=self.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_income=Decimal(0),
             )
             for report in self.reports
         ]
@@ -420,10 +421,11 @@ class TwelveMonthsSummationEngineTest(TestCase):
                 month=report.person_month.month,
                 year=report.person_month.year,
                 a_income=report.a_income,
+                b_income=Decimal(0),
+                u_income=Decimal(0),
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_income=Decimal(0),
             )
             for report in self.reports
         ]
@@ -557,10 +559,11 @@ class TwoYearSummationEngineTest(TestCase):
                 month=report.person_month.month,
                 year=report.person_month.year,
                 a_income=report.a_income,
+                b_income=Decimal(0),
+                u_income=Decimal(0),
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_income=Decimal(0),
             )
             for report in self.reports
         ]
