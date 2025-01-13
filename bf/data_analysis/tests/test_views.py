@@ -41,7 +41,6 @@ from bf.simulation import IncomeItem, Simulation
 
 
 class TestSimulationJSONEncoder(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         cls.person = Person.objects.create()
@@ -94,6 +93,7 @@ class TestSimulationJSONEncoder(TestCase):
             year_end=2020,
             income_type=IncomeType.A,
         )
+
         self._assert_json_equal(
             simulation,
             {
@@ -102,13 +102,19 @@ class TestSimulationJSONEncoder(TestCase):
                     {
                         "income_series": [],
                         "title": "Månedlig indkomst",
+                        "chart_type": "bar",
                     },
-                    {"payout": [], "title": "Månedlig udbetaling"},
+                    {
+                        "payout": [],
+                        "title": "Månedlig udbetaling",
+                        "chart_type": "line",
+                    },
                     {
                         "income_sum": {"2020": 0.0},
                         "predictions": [],
                         "title": "TwelveMonthsSummationEngine"
                         " - Summation af beløb for de seneste 12 måneder",
+                        "chart_type": "line",
                     },
                 ],
                 "year_start": 2020,
