@@ -99,7 +99,7 @@ def get_akap_u1a_entries(
     entries = [AKAPU1A.model_validate(e) for e in response.items]
     if fetch_all and offset + limit < response.count:
         entries += get_akap_u1a_entries(
-            host, auth_token, limit=limit, offset=offset + limit
+            host, auth_token, limit=limit, offset=offset + limit, fetch_all=fetch_all
         )
 
     return entries
