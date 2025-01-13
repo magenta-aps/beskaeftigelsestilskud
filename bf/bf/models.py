@@ -385,12 +385,24 @@ class PersonYear(models.Model):
         null=True,
         default="InYearExtrapolationEngine",
     )
+    preferred_estimation_engine_u = models.CharField(
+        max_length=100,
+        choices=engine_choices,
+        null=True,
+        default="InYearExtrapolationEngine",
+    )
     stability_score_a = models.DecimalField(
         decimal_places=1, default=None, null=True, max_digits=2
     )
     stability_score_b = models.DecimalField(
         decimal_places=1, default=None, null=True, max_digits=2
     )
+
+    # TODO: Figure out if we need this field for the new IncomeType.U
+    # stability_score_u = models.DecimalField(
+    #     decimal_places=1, default=None, null=True, max_digits=2
+    # )
+
     tax_scope = models.CharField(
         choices=TaxScope,
         default=TaxScope.FULDT_SKATTEPLIGTIG,

@@ -217,6 +217,7 @@ def get_income_estimates_df(
             "engine": str,
             "person_month__person_year__preferred_estimation_engine_a": str,
             "person_month__person_year__preferred_estimation_engine_b": str,
+            "person_month__person_year__preferred_estimation_engine_u": str,
             "income_type": str,
             "estimated_year_result": float,
             "actual_year_result": float,
