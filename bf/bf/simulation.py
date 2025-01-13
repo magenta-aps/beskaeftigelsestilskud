@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Literal, Optional, Sequence, Tuple
 
 from django.db.models import QuerySet
 from project.util import int_divide_end
@@ -24,10 +24,17 @@ from bf.models import (
 
 
 @dataclass(slots=True)
+class IncomeItemValuePart:
+    income_type: IncomeType
+    value: Decimal
+
+
+@dataclass(slots=True)
 class IncomeItem:
     year: int
     month: int
     value: Decimal
+    value_parts: Optional[List[IncomeItemValuePart]] = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,12 +68,14 @@ class SimulationResultRow:
     income_sum: Dict[int, Decimal]
     predictions: list[Prediction]
     title: str
+    chart_type: Literal["line", "bar"] = "line"
 
 
 @dataclass(frozen=True, repr=False, slots=True)
 class IncomeRow:
     income_series: list[IncomeItem]
     title: str
+    chart_type: Literal["line", "bar"] = "line"
 
 
 @dataclass(frozen=True, repr=False, slots=True)
@@ -78,6 +87,7 @@ class SingleDatasetRow:
 class PayoutRow:
     payout: list[PayoutItem]
     title: str
+    chart_type: Literal["line", "bar"] = "line"
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,9 +145,10 @@ class Simulation:
         return year_sum
 
     def income(self):
-        income = []
+        incomes_monthly: List[IncomeItemValuePart] = []
+
         if self.income_type in (IncomeType.A, None):
-            income += list(
+            incomes_monthly += list(
                 MonthlyIncomeReport.objects.filter(
                     person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
@@ -146,7 +157,7 @@ class Simulation:
                 )
             )
         if self.income_type in (IncomeType.B, None):
-            income += list(
+            incomes_monthly += list(
                 MonthlyIncomeReport.objects.filter(
                     person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
@@ -155,52 +166,97 @@ class Simulation:
                 )
             )
 
-        income_series_build = defaultdict(lambda: Decimal(0))
-        for item in income:
-            income_series_build[(item.year, item.month)] += (
-                item.a_income + item.b_income
-            )
-        income_series = {
-            (year, month): IncomeItem(year=year, month=month, value=amount)
-            for (year, month), amount in income_series_build.items()
-        }
+        income_series_new: Dict[tuple, IncomeItem] = {}
+        for item in incomes_monthly:
+            if (item.year, item.month) not in income_series_new:
+                income_series_new[(item.year, item.month)] = IncomeItem(
+                    year=item.year,
+                    month=item.month,
+                    value=item.a_income + item.b_income,
+                    value_parts=[],
+                )
+            else:
+                income_series_new[(item.year, item.month)].value += (
+                    item.a_income + item.b_income
+                )
 
-        print(income_series)
+            if item.a_income:
+                income_series_new[(item.year, item.month)].value_parts.append(
+                    IncomeItemValuePart(income_type=IncomeType.A, value=item.a_income)
+                )
 
-        # Add any income from final settlement
-        if self.income_type in (IncomeType.B, None):
+            if item.b_income:
+                income_series_new[(item.year, item.month)].value_parts.append(
+                    IncomeItemValuePart(income_type=IncomeType.B, value=item.b_income)
+                )
+
+        # Add any income from final settelment / yearly
+        if self.income_type in (IncomeType.B, IncomeType.U, None):
             for person_year in self.person_years:
                 year = person_year.year.year
+
                 for yearly_income_field in ["b_income", "u_income"]:
                     if not hasattr(person_year, yearly_income_field):
                         continue
 
                     yearly_income_value = getattr(person_year, yearly_income_field)
 
+                    # Skip calculations for incomes which are None
+                    if yearly_income_value is None:
+                        continue
+
+                    if yearly_income_field == "b_income":
+                        yearly_income_field_type = IncomeType.B
+                    elif yearly_income_field == "u_income":
+                        yearly_income_field_type = IncomeType.U
+                    else:
+                        raise ValueError(
+                            (
+                                "invalid 'yearly_income_field' "
+                                f"value: {yearly_income_field}"
+                            )
+                        )
+
                     # Divide by 12. Spread the remainder over the last months
                     monthly_income = int_divide_end(int(yearly_income_value), 12)
                     for month in range(1, 13):
-                        income_item = income_series.get((year, month))
+                        income_item_value_part = IncomeItemValuePart(
+                            income_type=yearly_income_field_type,
+                            value=Decimal(monthly_income[month - 1]),
+                        )
+
+                        if not income_item_value_part.value:
+                            continue
+
+                        income_item = income_series_new.get((year, month))
                         if income_item is None:
-                            income_item = IncomeItem(
+                            income_series_new[(year, month)] = IncomeItem(
                                 year=year,
                                 month=month,
-                                value=Decimal(monthly_income[month - 1]),
+                                value=income_item_value_part.value,
+                                value_parts=[income_item_value_part],
                             )
-                            income_series[(year, month)] = income_item
                         else:
-                            income_item.value += monthly_income[month - 1]
+                            income_series_new[
+                                (year, month)
+                            ].value += income_item_value_part.value
 
-        income_series = list(income_series.values())
-        income_series.sort(
+                            income_series_new[(year, month)].value_parts.append(
+                                income_item_value_part
+                            )
+
+        income_series_list = list(income_series_new.values())
+        income_series_list.sort(
             key=lambda item: (
                 item.year,
                 item.month,
             )
         )
+
         return IncomeRow(
             title="Månedlig indkomst",
-            income_series=income_series,
+            income_series=income_series_list,
+            chart_type="bar",
         )
 
     def payout(self):
