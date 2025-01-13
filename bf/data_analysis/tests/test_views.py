@@ -37,7 +37,7 @@ from bf.models import (
     StandardWorkBenefitCalculationMethod,
     Year,
 )
-from bf.simulation import IncomeItem, Simulation
+from bf.simulation import IncomeItem, IncomeItemValuePart, Simulation
 
 
 class TestSimulationJSONEncoder(TestCase):
@@ -61,10 +61,27 @@ class TestSimulationJSONEncoder(TestCase):
         }
 
     def test_can_serialize_dataclass(self):
-        dataclass_instance = IncomeItem(year=2020, month=1, value=Decimal("42"))
+        dataclass_instance = IncomeItem(
+            year=2020,
+            month=1,
+            value=Decimal("42"),
+            value_parts=[
+                IncomeItemValuePart(income_type=IncomeType.A, value=Decimal("42"))
+            ],
+        )
         self._assert_json_equal(
             dataclass_instance,
-            {"year": 2020, "month": 1, "value": 42},
+            {
+                "year": 2020,
+                "month": 1,
+                "value": 42,
+                "value_parts": [
+                    {
+                        "income_type": "A",
+                        "value": 42,
+                    }
+                ],
+            },
         )
 
     def test_can_serialize_decimal(self):
