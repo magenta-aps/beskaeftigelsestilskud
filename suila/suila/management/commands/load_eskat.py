@@ -44,7 +44,7 @@ class Command(SuilaBaseCommand):
                     "--month is not relevant when fetching expected income"
                 )
             AnnualIncomeHandler.create_or_update_objects(
-                year, client.get_annual_income(year, cpr), load, self.stdout
+                client.get_annual_income(year, cpr), load, self.stdout
             )
         if typ == "expectedincome":
             if month is not None:
