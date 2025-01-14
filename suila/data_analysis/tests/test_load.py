@@ -574,7 +574,7 @@ class LoadAnnualIncomeTest(BaseTestCase):
             dry=False,
             stdout=self.OutputWrapper(sys.stdout, ending="\n"),
         )
-
+        from_csv_row.assert_called()
         self.assertEqual(Year.objects.count(), 1)
         self.assertEqual(Person.objects.count(), 0)
         self.assertEqual(PersonYear.objects.count(), 0)

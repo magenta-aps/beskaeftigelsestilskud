@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 
-from common.utils import get_payout_date
 from django.conf import settings
 from django.core import management
 from django.utils import timezone
 
+from suila.benefit import get_payout_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 

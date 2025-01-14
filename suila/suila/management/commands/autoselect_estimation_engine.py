@@ -1,8 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from common.utils import get_best_engine
-
+from suila.benefit import get_best_engine
 from suila.management.commands.common import SuilaBaseCommand
 from suila.models import PersonYear
 
