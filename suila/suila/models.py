@@ -30,6 +30,7 @@ from suila.integrations.eskat.responses.data_models import TaxInformation
 class IncomeType(TextChoices):
     A = "A"
     B = "B"
+    U = "U"  # Udbytte / AKAP U1A
 
 
 class ManagementCommands(TextChoices):
@@ -385,6 +386,12 @@ class PersonYear(models.Model):
         null=True,
         default="InYearExtrapolationEngine",
     )
+    preferred_estimation_engine_u = models.CharField(
+        max_length=100,
+        choices=engine_choices,
+        null=True,
+        default="InYearExtrapolationEngine",
+    )
     stability_score_a = models.DecimalField(
         decimal_places=1, default=None, null=True, max_digits=2
     )
@@ -422,6 +429,14 @@ class PersonYear(models.Model):
     @property
     def amount_sum(self) -> Decimal:
         return self.amount_sum_by_type(None)
+
+    @cached_property
+    def u1a_assessments_sum(self) -> Decimal:
+        result = PersonYearU1AAssessment.objects.filter(person_year=self).aggregate(
+            total=Sum("dividend_total")
+        )["total"]
+
+        return result or Decimal("0.00")
 
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
@@ -462,6 +477,10 @@ class PersonYear(models.Model):
         if annual_income is not None:
             return annual_income.account_tax_result
         return None
+
+    @property
+    def u_income(self) -> Decimal:
+        return self.u1a_assessments_sum or Decimal("0")
 
 
 class PersonMonth(models.Model):
@@ -588,6 +607,10 @@ class PersonMonth(models.Model):
             return Decimal(int_divide_end(int(b_income), 12)[self.month - 1])
         return Decimal(0)
 
+    @property
+    def u_income_from_year(self) -> int:
+        return int_divide_end(int(self.person_year.u_income), 12)[self.month - 1]
+
 
 class Employer(models.Model):
     cvr = models.PositiveIntegerField(
@@ -655,6 +678,13 @@ class MonthlyIncomeReport(models.Model):
         decimal_places=2,
         null=False,
         blank=False,
+    )
+    u_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        default=Decimal(0),
     )
 
     # Source income fields. Write into these.
@@ -765,6 +795,8 @@ class MonthlyIncomeReport(models.Model):
             + self.catchsale_income
         )
         self.b_income = self.disability_pension_income + self.capital_income
+
+        self.u_income = Decimal(self.person_month.u_income_from_year)
 
     @staticmethod
     def annotate_month(
@@ -1455,3 +1487,40 @@ class EboksMessage(models.Model):
                             "is_postprocessing",
                         ]
                     )
+
+
+class PersonYearU1AAssessment(models.Model):
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
+
+    person_year = models.ForeignKey(
+        PersonYear, on_delete=models.CASCADE, related_name="u1a_assessments"
+    )
+
+    load = models.ForeignKey(
+        DataLoad,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
+    u1a_ids = models.CharField(
+        verbose_name=_("U1A IDs i AKAP"),
+        max_length=255,
+        error_messages={"required": "error.required", "invalid": "error.invalid_email"},
+    )
+
+    dividend_total = models.DecimalField(
+        verbose_name=_("Udbetalt/godskrevet udbytte i DKK, før skat"),
+        max_digits=12,
+        decimal_places=2,
+        error_messages={
+            "required": "error.required",
+            "invalid": "error.number_required",
+        },
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+    )
