@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from bf.akap import (
     AKAPU1A,
     URL_U1A_ITEMS,
+    URL_U1A_ITEMS_UNIQUE_CPRS,
     URL_U1A_LIST,
     AKAPU1AItem,
     get_akap_u1a_entries,
@@ -247,20 +248,6 @@ class TestAKAPAPI(unittest.TestCase):
         )
 
     @patch("bf.akap.requests.get")
-    def test_get_akap_u1a_items_unique_cprs(self, mock_get: MagicMock):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "count": 1,
-            "items": ["1234567890"],
-        }
-        mock_get.return_value = mock_response
-
-        unique_cprs = get_akap_u1a_items_unique_cprs(self.host, self.auth_token)
-        self.assertEqual(len(unique_cprs), 1)
-        self.assertEqual(unique_cprs[0], "1234567890")
-
-    @patch("bf.akap.requests.get")
     @patch("bf.akap.logger")
     def test_get_akap_u1a_items_non_200_response(
         self, mock_logger: MagicMock, mock_get: MagicMock
@@ -369,6 +356,41 @@ class TestAKAPAPI(unittest.TestCase):
             headers={"Authorization": f"Bearer {self.auth_token}"},
             params={"limit": 1, "offset": 2},
         )
+
+    @patch("bf.akap.requests.get")
+    def test_get_akap_u1a_items_unique_cprs(self, mock_get: MagicMock):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "count": 1,
+            "items": ["1234567890"],
+        }
+        mock_get.return_value = mock_response
+
+        unique_cprs = get_akap_u1a_items_unique_cprs(self.host, self.auth_token)
+        self.assertEqual(len(unique_cprs), 1)
+        self.assertEqual(unique_cprs[0], "1234567890")
+
+    @patch("bf.akap.requests.get")
+    def test_get_akap_u1a_items_unique_cprs_with_year(self, mock_get: MagicMock):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "count": 1,
+            "items": ["1234567890"],
+        }
+        mock_get.return_value = mock_response
+
+        year = 2023
+        cprs = get_akap_u1a_items_unique_cprs(self.host, self.auth_token, year=year)
+
+        mock_get.assert_called_once_with(
+            self.host + URL_U1A_ITEMS_UNIQUE_CPRS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 50, "offset": 0, "year": year},
+        )
+        self.assertEqual(len(cprs), 1)
+        self.assertEqual(cprs[0], "1234567890")
 
     def test_model_validation_error(self):
         with self.assertRaises(ValidationError):
