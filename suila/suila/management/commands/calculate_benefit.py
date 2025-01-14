@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from common.utils import calculate_benefit, isnan
+from common.utils import isnan
 
+from suila.benefit import calculate_benefit
 from suila.management.commands.common import SuilaBaseCommand
 from suila.models import PersonMonth
 

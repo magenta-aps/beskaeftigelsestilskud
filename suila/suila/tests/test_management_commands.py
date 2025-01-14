@@ -12,7 +12,7 @@ from django.test import TestCase
 from suila.models import Person, PersonMonth, PersonYear, Year
 
 
-@mock.patch("common.utils.calculate_benefit")
+@mock.patch("suila.benefit.calculate_benefit")
 class AutoSelectEngineTests(TestCase):
 
     @classmethod
