@@ -99,7 +99,13 @@ def get_akap_u1a_entries(
     entries = [AKAPU1A.model_validate(e) for e in response.items]
     if fetch_all and offset + limit < response.count:
         entries += get_akap_u1a_entries(
-            host, auth_token, limit=limit, offset=offset + limit, fetch_all=fetch_all
+            host,
+            auth_token,
+            year=year,
+            cpr=cpr,
+            limit=limit,
+            offset=offset + limit,
+            fetch_all=fetch_all,
         )
 
     return entries
@@ -144,7 +150,14 @@ def get_akap_u1a_items(
     items = [AKAPU1AItem.model_validate(i) for i in response.items]
     if fetch_all and offset + limit < response.count:
         items += get_akap_u1a_items(
-            host, auth_token, u1a_id, limit=limit, offset=offset + limit
+            host,
+            auth_token,
+            u1a_id=u1a_id,
+            year=year,
+            cpr=cpr,
+            limit=limit,
+            offset=offset + limit,
+            fetch_all=fetch_all,
         )
 
     return items
@@ -181,7 +194,7 @@ def get_akap_u1a_items_unique_cprs(
     cprs = response.items
     if fetch_all and offset + limit < response.count:
         cprs += get_akap_u1a_items_unique_cprs(
-            host, auth_token, year, limit, offset + limit
+            host, auth_token, year, limit, offset + limit, fetch_all=fetch_all
         )
 
     return cprs
