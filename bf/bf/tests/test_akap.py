@@ -176,6 +176,19 @@ class TestAKAPAPI(unittest.TestCase):
         )
 
     @patch("bf.akap.requests.get")
+    def test_get_akap_u1a_entries_invalid_response(self, mock_get: MagicMock):
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.text = "Invalid request"
+        mock_get.return_value = mock_response
+
+        with self.assertRaises(Exception) as context:
+            get_akap_u1a_entries(self.host, self.auth_token)
+        self.assertIn(
+            "AKAP udbytte API did not respond with HTTP 200", str(context.exception)
+        )
+
+    @patch("bf.akap.requests.get")
     def test_get_akap_u1a_items_full_coverage(self, mock_get: MagicMock):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -248,16 +261,26 @@ class TestAKAPAPI(unittest.TestCase):
         self.assertEqual(unique_cprs[0], "1234567890")
 
     @patch("bf.akap.requests.get")
-    def test_get_akap_u1a_entries_invalid_response(self, mock_get: MagicMock):
+    @patch("bf.akap.logger")
+    def test_get_akap_u1a_items_non_200_response(
+        self, mock_logger: MagicMock, mock_get: MagicMock
+    ):
         mock_response = MagicMock()
-        mock_response.status_code = 400
-        mock_response.text = "Invalid request"
+        mock_response.status_code = 500
+        mock_response.text = "Internal Server Error"
         mock_get.return_value = mock_response
 
         with self.assertRaises(Exception) as context:
-            get_akap_u1a_entries(self.host, self.auth_token)
+            get_akap_u1a_items(self.host, self.auth_token)
+
+        mock_logger.error.assert_called_once_with("Internal Server Error")
         self.assertIn(
             "AKAP udbytte API did not respond with HTTP 200", str(context.exception)
+        )
+        mock_get.assert_called_once_with(
+            self.host + URL_U1A_ITEMS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 50, "offset": 0},
         )
 
     def test_model_validation_error(self):
