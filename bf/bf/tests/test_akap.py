@@ -415,6 +415,57 @@ class TestAKAPAPI(unittest.TestCase):
             params={"limit": 50, "offset": 0},
         )
 
+    @patch("bf.akap.requests.get")
+    def test_get_akap_u1a_items_unique_cprs_with_pagination(self, mock_get: MagicMock):
+        # Mock responses for pagination
+        first_response = MagicMock()
+        first_response.status_code = 200
+        first_response.json.return_value = {
+            "count": 3,
+            "items": ["1234567890"],
+        }
+        second_response = MagicMock()
+        second_response.status_code = 200
+        second_response.json.return_value = {
+            "count": 3,
+            "items": ["1234567891"],
+        }
+        third_response = MagicMock()
+        third_response.status_code = 200
+        third_response.json.return_value = {
+            "count": 3,
+            "items": ["1234567892"],
+        }
+
+        mock_get.side_effect = [first_response, second_response, third_response]
+
+        cprs = get_akap_u1a_items_unique_cprs(
+            self.host, self.auth_token, limit=1, fetch_all=True
+        )
+
+        # Verify that all CPRs have been fetched
+        self.assertEqual(len(cprs), 3)
+        self.assertEqual(cprs[0], "1234567890")
+        self.assertEqual(cprs[1], "1234567891")
+        self.assertEqual(cprs[2], "1234567892")
+
+        # Verify that all pagination calls were made
+        mock_get.assert_any_call(
+            self.host + URL_U1A_ITEMS_UNIQUE_CPRS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 1, "offset": 0},
+        )
+        mock_get.assert_any_call(
+            self.host + URL_U1A_ITEMS_UNIQUE_CPRS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 1, "offset": 1},
+        )
+        mock_get.assert_any_call(
+            self.host + URL_U1A_ITEMS_UNIQUE_CPRS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 1, "offset": 2},
+        )
+
     def test_model_validation_error(self):
         with self.assertRaises(ValidationError):
             AKAPU1A(
