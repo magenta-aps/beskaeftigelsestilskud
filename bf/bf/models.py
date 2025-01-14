@@ -7,7 +7,7 @@ import base64
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Sequence, Tuple
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -398,11 +398,6 @@ class PersonYear(models.Model):
         decimal_places=1, default=None, null=True, max_digits=2
     )
 
-    # TODO: Figure out if we need this field for the new IncomeType.U
-    # stability_score_u = models.DecimalField(
-    #     decimal_places=1, default=None, null=True, max_digits=2
-    # )
-
     tax_scope = models.CharField(
         choices=TaxScope,
         default=TaxScope.FULDT_SKATTEPLIGTIG,
@@ -484,16 +479,7 @@ class PersonYear(models.Model):
 
     @property
     def u_income(self) -> Decimal | None:
-        u_income: Optional[Decimal] = None
-
-        # Fetch AKAP u1a assessments sum
-        if self.u1a_assessments_sum:
-            if not u_income:
-                u_income = Decimal("0.00")
-
-            u_income += self.u1a_assessments_sum
-
-        return u_income
+        return self.u1a_assessments_sum or Decimal("0")
 
 
 class PersonMonth(models.Model):

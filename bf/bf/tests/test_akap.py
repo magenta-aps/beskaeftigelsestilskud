@@ -28,7 +28,6 @@ class TestAKAPAPI(unittest.TestCase):
 
     @patch("bf.akap.requests.get")
     def test_get_akap_u1a_entries(self, mock_get: MagicMock):
-        # Mock response data
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -70,7 +69,7 @@ class TestAKAPAPI(unittest.TestCase):
         self.assertEqual(entries[0].navn, "Test Company")
 
     @patch("bf.akap.requests.get")
-    def test_get_akap_u1a_entries_with_pagination(self, mock_get):
+    def test_get_akap_u1a_entries_with_pagination(self, mock_get: MagicMock):
         # Mock responses for pagination
         first_response = MagicMock()
         first_response.status_code = 200

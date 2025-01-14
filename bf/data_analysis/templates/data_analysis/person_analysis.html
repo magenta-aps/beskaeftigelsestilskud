@@ -200,7 +200,7 @@ const getChartData = function (doc, row, rowId, options) {
     if (row.income_series) {
         const data = bucketize(row.income_series);
 
-        if (chartData.chart.type == "bar") {
+        if (chartData.chart.type === "bar") {
             const incomeTypesSet = new Set();
             const incomeTypeValues = {};
 
@@ -258,7 +258,6 @@ const getChartData = function (doc, row, rowId, options) {
                 type: "column",
             });
             labelledSeries.push(series.length-1);
-
         }
 
         hasData = true;

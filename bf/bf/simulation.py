@@ -237,11 +237,9 @@ class Simulation:
                                 value_parts=[income_item_value_part],
                             )
                         else:
-                            income_series_new[
-                                (year, month)
-                            ].value += income_item_value_part.value
-
-                            income_series_new[(year, month)].value_parts.append(
+                            income_series_new_ref = income_series_new[(year, month)]
+                            income_series_new_ref.value += income_item_value_part.value
+                            income_series_new_ref.value_parts.append(
                                 income_item_value_part
                             )
 
