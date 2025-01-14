@@ -283,6 +283,93 @@ class TestAKAPAPI(unittest.TestCase):
             params={"limit": 50, "offset": 0},
         )
 
+    @patch("bf.akap.requests.get")
+    def test_get_akap_u1a_items_with_pagination(self, mock_get: MagicMock):
+        first_response = MagicMock()
+        first_response.status_code = 200
+        first_response.json.return_value = {
+            "count": 3,
+            "items": [
+                {
+                    "id": 1,
+                    "u1a": 1,
+                    "cpr_cvr_tin": "1234567890",
+                    "navn": "Test Name 1",
+                    "adresse": "Test Address 1",
+                    "postnummer": "1000",
+                    "by": "Copenhagen",
+                    "land": "Denmark",
+                    "udbytte": "5000.00",
+                    "oprettet": "2023-01-01T12:00:00",
+                }
+            ],
+        }
+        second_response = MagicMock()
+        second_response.status_code = 200
+        second_response.json.return_value = {
+            "count": 3,
+            "items": [
+                {
+                    "id": 2,
+                    "u1a": 1,
+                    "cpr_cvr_tin": "1234567891",
+                    "navn": "Test Name 2",
+                    "adresse": "Test Address 2",
+                    "postnummer": "1001",
+                    "by": "Aarhus",
+                    "land": "Denmark",
+                    "udbytte": "6000.00",
+                    "oprettet": "2023-01-02T12:00:00",
+                }
+            ],
+        }
+        third_response = MagicMock()
+        third_response.status_code = 200
+        third_response.json.return_value = {
+            "count": 3,
+            "items": [
+                {
+                    "id": 3,
+                    "u1a": 1,
+                    "cpr_cvr_tin": "1234567892",
+                    "navn": "Test Name 3",
+                    "adresse": "Test Address 3",
+                    "postnummer": "1002",
+                    "by": "Odense",
+                    "land": "Denmark",
+                    "udbytte": "7000.00",
+                    "oprettet": "2023-01-03T12:00:00",
+                }
+            ],
+        }
+
+        mock_get.side_effect = [first_response, second_response, third_response]
+
+        items = get_akap_u1a_items(self.host, self.auth_token, limit=1, fetch_all=True)
+
+        # Verify that all items have been fetched
+        self.assertEqual(len(items), 3)
+        self.assertEqual(items[0].id, 1)
+        self.assertEqual(items[1].id, 2)
+        self.assertEqual(items[2].id, 3)
+
+        # Verify that all pagination calls were made
+        mock_get.assert_any_call(
+            self.host + URL_U1A_ITEMS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 1, "offset": 0},
+        )
+        mock_get.assert_any_call(
+            self.host + URL_U1A_ITEMS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 1, "offset": 1},
+        )
+        mock_get.assert_any_call(
+            self.host + URL_U1A_ITEMS,
+            headers={"Authorization": f"Bearer {self.auth_token}"},
+            params={"limit": 1, "offset": 2},
+        )
+
     def test_model_validation_error(self):
         with self.assertRaises(ValidationError):
             AKAPU1A(
