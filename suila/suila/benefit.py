@@ -85,21 +85,19 @@ def calculate_benefit(
         # Do not payout if the amount is below the trivial limit
         df.loc[df.benefit_this_month < trivial_limit, "benefit_this_month"] = 0
 
-        # if the amount is very similar to last months amount, use the same amount
+        # if the amount is very similar to last month's amount, use the same amount
         # as last month
         df["benefit_last_month"] = df.loc[:, f"benefit_paid_month_{month-1}"]
-
         diff = pd.Series(index=df.index)
         I_diff = df.benefit_last_month > 0
         diff_abs = (df.benefit_this_month - df.benefit_last_month).abs()
         diff[I_diff] = diff_abs[I_diff] / df.benefit_last_month[I_diff]
         small_diffs = diff < treshold
-
         df.loc[small_diffs, "benefit_this_month"] = df.loc[
             small_diffs, "benefit_last_month"
         ]
 
-        # If you are in quarantaine you get nothing (unless it's December)
+        # If you are in quarantine you get nothing (unless it's December)
         if enforce_quarantine:
             df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
             df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = 0
