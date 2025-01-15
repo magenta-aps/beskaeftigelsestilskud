@@ -38,6 +38,9 @@ class PersonKeyFigureQuerySet(QuerySet):
             _preferred_estimation_engine_b=self._get_preferred_engine_subquery(
                 IncomeType.B
             ),
+            _preferred_estimation_engine_u=self._get_preferred_engine_subquery(
+                IncomeType.U
+            ),
             # Needs `_preferred_estimation_engine_a`
             _estimated_year_result_a=self._get_income_estimate_subquery(
                 IncomeType.A, "estimated_year_result"
@@ -46,6 +49,10 @@ class PersonKeyFigureQuerySet(QuerySet):
             _estimated_year_result_b=self._get_income_estimate_subquery(
                 IncomeType.B, "estimated_year_result"
             ),
+            # Needs `_preferred_estimation_engine_u`
+            _estimated_year_result_u=self._get_income_estimate_subquery(
+                IncomeType.U, "estimated_year_result"
+            ),
             # Needs `_preferred_estimation_engine_a`
             _actual_year_result_a=self._get_income_estimate_subquery(
                 IncomeType.A, "actual_year_result"
@@ -53,6 +60,10 @@ class PersonKeyFigureQuerySet(QuerySet):
             # Needs `_preferred_estimation_engine_b`
             _actual_year_result_b=self._get_income_estimate_subquery(
                 IncomeType.B, "actual_year_result"
+            ),
+            # Needs `_preferred_estimation_engine_u`
+            _actual_year_result_u=self._get_income_estimate_subquery(
+                IncomeType.U, "actual_year_result"
             ),
         )
 
@@ -108,4 +119,4 @@ class PersonKeyFigureQuerySet(QuerySet):
         )
 
     def _get_total(self, field: str) -> CombinedExpression:
-        return F(f"_{field}_a") + F(f"_{field}_b")
+        return F(f"_{field}_a") + F(f"_{field}_b") + F(f"_{field}_u")
