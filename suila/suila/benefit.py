@@ -51,7 +51,6 @@ def calculate_benefit(
         safety_factor = 1
     else:
         safety_factor = float(settings.CALCULATION_SAFETY_FACTOR)  # type: ignore
-    print(f"safety_factor: {safety_factor}")
     calculation_method = Year.objects.get(year=year).calculation_method
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
     benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]

@@ -9,12 +9,14 @@ from itertools import groupby
 from operator import attrgetter
 from typing import Iterable, List, Sequence, Tuple
 
+from common import utils
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from django.db.models import F, QuerySet, Sum
 from django.utils import timezone
 from project.util import mean_error, root_mean_sq_error, trim_list_first
 
+from suila import data
 from suila.data import MonthlyIncomeData
 from suila.exceptions import IncomeTypeUnhandledByEngine
 from suila.models import (
@@ -84,7 +86,7 @@ class EstimationEngine:
     @staticmethod
     def estimate_all(
         year: int,
-        person: int | None,
+        person_pk: int | None,
         count: int | None,
         dry_run: bool = True,
         output_stream=None,
@@ -93,13 +95,21 @@ class EstimationEngine:
         person_year_qs: QuerySet[PersonYear] = PersonYear.objects.filter(
             year__year=year
         ).select_related("person")
-        if person:
-            person_year_qs = person_year_qs.filter(person=person)
+        if person_pk:
+            person_year_qs = person_year_qs.filter(person=person_pk)
         if count:
             person_year_qs = person_year_qs[:count]
 
         if output_stream is not None:
             output_stream.write("Fetching income data ...\n")
+
+        quarantine_df = utils.get_people_in_quarantine(
+            year, {personyear.person.cpr for personyear in person_year_qs}
+        )
+        exclude_months = {
+            (now.year, now.month),
+            (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
+        }
 
         # Create queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
@@ -112,6 +122,7 @@ class EstimationEngine:
             .select_related("person_year")
             .annotate(
                 person_pk=F("person_year__person__pk"),
+                person_cpr=F("person_year__person__cpr"),
                 person_year_pk=F("person_year__pk"),
                 _year=F(  # underscore to avoid collision with class property
                     "person_year__year_id"
@@ -128,7 +139,7 @@ class EstimationEngine:
             )
         )
         data_qs = [
-            MonthlyIncomeData(
+            data.MonthlyIncomeData(
                 month=person_month.month,
                 person_pk=person_month.person_pk,
                 person_month_pk=person_month.pk,
@@ -139,6 +150,10 @@ class EstimationEngine:
                 + Decimal(person_month.b_income_from_year or 0),
             )
             for person_month in qs
+            if not (
+                quarantine_df.loc[person_month.person_cpr, "in_quarantine"]
+                and (person_month._year, person_month.month) in exclude_months
+            )
         ]
 
         person_month_map = {

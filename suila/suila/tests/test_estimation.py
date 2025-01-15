@@ -2,13 +2,15 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from io import TextIOBase
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
+from common.utils import get_people_in_quarantine
 from django.test import TestCase
+from pandas import DataFrame
 
 from suila.data import MonthlyIncomeData
 from suila.estimation import (
@@ -30,6 +32,7 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     PersonYearEstimateSummary,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 
@@ -57,8 +60,20 @@ class TestEstimationEngine(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.year = Year.objects.create(year=2024)
-        cls.year2 = Year.objects.create(year=2025)
+        cls.calculation_method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.year = Year.objects.create(
+            year=2024, calculation_method=cls.calculation_method
+        )
+        cls.year2 = Year.objects.create(
+            year=2025, calculation_method=cls.calculation_method
+        )
         cls.person = Person.objects.create(
             name="Jens Hansen",
             cpr="1234567890",
@@ -91,7 +106,9 @@ class TestEstimationEngine(TestCase):
         )
 
         for month, income in enumerate(
-            [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000], start=1
+            # Udelader december med vilje
+            [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000],
+            start=1,
         ):
             person_month = PersonMonth.objects.create(
                 person_year=cls.person_year2, month=month, import_date=date.today()
@@ -289,11 +306,112 @@ class TestEstimationEngine(TestCase):
         instances.return_value = [MockEngine]
 
         results, summaries = EstimationEngine.estimate_all(self.year.year, None, None)
+        instances.assert_called()
         self.assertEqual(len(results), 0)
 
     def test_b_income_from_year(self):
         for month in PersonMonth.objects.filter(person_year=self.person_year):
             self.assertEqual(month.b_income_from_year, 100)
+
+    def test_quarantined(self):
+        # Indstil månedsindkomster, så:
+        # sum < 500000 (øvre grænse), og
+        # sum + stddev > 500000
+        for month, month_income in enumerate(
+            [
+                30000,
+                30000,
+                41250,
+                41250,
+                41250,
+                41250,
+                41250,
+                41250,
+                41250,
+                41250,
+                52500,
+                52500,
+            ],
+            1,
+        ):
+            person_month = PersonMonth.objects.get(
+                person_year=self.person_year, month=month
+            )
+            person_month.monthlyincomereport_set.all().delete()
+            MonthlyIncomeReport.objects.create(
+                person_month=person_month,
+                salary_income=Decimal(month_income),
+            )
+        quarantine_df = get_people_in_quarantine(self.year2.year, {self.person.cpr})
+        self.assertTrue(quarantine_df.loc[self.person.cpr, "earns_too_much"])
+        self.assertTrue(quarantine_df.loc[self.person.cpr, "in_quarantine"])
+
+    @mock.patch("django.utils.timezone.now")
+    @mock.patch("common.utils.get_people_in_quarantine")
+    @mock.patch("suila.data.MonthlyIncomeData", autospec=True)
+    def test_quarantined_estimate(
+        self,
+        monthlyincomedata: MagicMock,
+        get_people_in_quarantine: MagicMock,
+        now: MagicMock,
+    ):
+        get_people_in_quarantine.return_value = DataFrame(
+            {
+                "in_quarantine": [True],
+                "quarantine_reason": ["Earns too much"],
+                "earns_too_little": [False],
+                "earns_too_much": [True],
+            },
+            index=[self.person.cpr],
+        )
+        now.return_value = datetime(2025, 1, 15, 15, 0, 0, tzinfo=timezone.utc)
+        with self.assertRaises(TypeError):
+            # Mocking breaker noget i metoden, men det sker efter
+            # vi har fået det vi skal bruge i assertions nedenfor
+            EstimationEngine.estimate_all(
+                self.year.year, self.person.pk, count=1, dry_run=True
+            )
+        get_people_in_quarantine.assert_called()
+        monthlyincomedata.assert_called()
+        exclude_months = {(2024, 12), (2025, 1)}
+        for year in (2024, 2025):
+            for month in range(1, 13):
+                try:
+                    person_month = PersonMonth.objects.get(
+                        person_year__year=year, month=month
+                    )
+                except PersonMonth.DoesNotExist:
+                    continue
+                data = {
+                    "year": year,
+                    "month": month,
+                    "person_pk": self.person.pk,
+                    "person_month_pk": person_month.pk,
+                    "person_year_pk": person_month.person_year.pk,
+                    "a_income": sum(
+                        person_month.monthlyincomereport_set.all().values_list(
+                            "a_income", flat=True
+                        )
+                    ),
+                    "b_income": sum(
+                        person_month.monthlyincomereport_set.all().values_list(
+                            "b_income", flat=True
+                        )
+                    )
+                    + Decimal(person_month.b_income_from_year or 0),
+                }
+                if (year, month) in exclude_months:
+                    self.assertNotIn(
+                        call(**data),
+                        monthlyincomedata.call_args_list,
+                        f"year: {year}, month: {month}",
+                    )
+                else:
+                    self.assertIn(
+                        call(**data),
+                        monthlyincomedata.call_args_list,
+                        f"year: {year}, month: {month}",
+                    )
 
 
 class TestInYearExtrapolationEngine(TestCase):
