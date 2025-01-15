@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Literal, Optional, Sequence, Tuple
 
 from django.db.models import QuerySet
 from project.util import int_divide_end
@@ -24,10 +24,17 @@ from suila.models import (
 
 
 @dataclass(slots=True)
+class IncomeItemValuePart:
+    income_type: IncomeType
+    value: Decimal
+
+
+@dataclass(slots=True)
 class IncomeItem:
     year: int
     month: int
     value: Decimal
+    value_parts: List[IncomeItemValuePart]
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,12 +68,14 @@ class SimulationResultRow:
     income_sum: Dict[int, Decimal]
     predictions: list[Prediction]
     title: str
+    chart_type: Literal["line", "bar"] = "line"
 
 
 @dataclass(frozen=True, repr=False, slots=True)
 class IncomeRow:
     income_series: list[IncomeItem]
     title: str
+    chart_type: Literal["line", "bar"] = "line"
 
 
 @dataclass(frozen=True, repr=False, slots=True)
@@ -78,6 +87,7 @@ class SingleDatasetRow:
 class PayoutRow:
     payout: list[PayoutItem]
     title: str
+    chart_type: Literal["line", "bar"] = "line"
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,66 +145,69 @@ class Simulation:
         return year_sum
 
     def income(self):
-        income = []
+        income_series: Dict[tuple, IncomeItem] = {}
+
         if self.income_type in (IncomeType.A, None):
-            income += list(
+            for item in list(
                 MonthlyIncomeReport.objects.filter(
                     person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
                     a_income__gt=0,
                 )
-            )
+            ):
+                income_series = self._monthly_income_report_to_income_series(
+                    income_series, IncomeType.A, item
+                )
+
         if self.income_type in (IncomeType.B, None):
-            income += list(
+            for item in list(
                 MonthlyIncomeReport.objects.filter(
                     person_month__person_year__person=self.person,
                     person_month__person_year__year__gte=self.year_start,
                     person_month__person_year__year__lte=self.year_end,
                     b_income__gt=0,
                 )
-            )
+            ):
+                income_series = self._monthly_income_report_to_income_series(
+                    income_series, IncomeType.B, item
+                )
 
-        income_series_build = defaultdict(lambda: Decimal(0))
-        for item in income:
-            income_series_build[(item.year, item.month)] += (
-                item.a_income + item.b_income
-            )
-        income_series = {
-            (year, month): IncomeItem(year=year, month=month, value=amount)
-            for (year, month), amount in income_series_build.items()
-        }
-
-        # Add any income from final settlement
-        if self.income_type in (IncomeType.B, None):
+            # Add any income from final settlement
             for person_year in self.person_years:
                 year = person_year.year.year
-                b_income = person_year.b_income
-                if b_income:
-                    # Divide by 12. Spread the remainder over the last months
-                    monthly_income = int_divide_end(int(b_income), 12)
-                    for month in range(1, 13):
-                        income_item = income_series.get((year, month))
-                        if income_item is None:
-                            income_item = IncomeItem(
-                                year=year,
-                                month=month,
-                                value=Decimal(monthly_income[month - 1]),
-                            )
-                            income_series[(year, month)] = income_item
-                        else:
-                            income_item.value += monthly_income[month - 1]
 
-        income_series = list(income_series.values())
-        income_series.sort(
+                if not person_year.b_income:
+                    continue
+
+                income_series = self._yearly_monthly_income_to_income_series(
+                    income_series, IncomeType.B, person_year.b_income, year
+                )
+
+        if self.income_type in (IncomeType.U, None):
+            # Add any income from final settlement
+            for person_year in self.person_years:
+                year = person_year.year.year
+
+                if not person_year.u_income:
+                    continue
+
+                income_series = self._yearly_monthly_income_to_income_series(
+                    income_series, IncomeType.U, person_year.u_income, year
+                )
+
+        income_series_list = list(income_series.values())
+        income_series_list.sort(
             key=lambda item: (
                 item.year,
                 item.month,
             )
         )
+
         return IncomeRow(
             title="Månedlig indkomst",
-            income_series=income_series,
+            income_series=income_series_list,
+            chart_type="bar",
         )
 
     def payout(self):
@@ -255,9 +268,14 @@ class Simulation:
                 item.a_income + item.b_income
             )
         income_series = [
-            IncomeItem(year=year, month=month, value=amount)
+            IncomeItem(year=year, month=month, value=amount, value_parts=[])
             for (year, month), amount in income_series_build.items()
         ]
+        # NOTE: 'value_parts' is currently set to an empty array, since it was
+        # implemented in `self.income()`. The fields purpose is to show all the
+        # different values that make up the 'value'-field. It have just not been
+        # implemented in this method yet.
+
         income_series.sort(
             key=lambda item: (
                 item.year,
@@ -316,3 +334,70 @@ class Simulation:
             income_sum=actual_year_sums,
             predictions=estimates,
         )
+
+    def _monthly_income_report_to_income_series(
+        self,
+        income_series: Dict[tuple, IncomeItem],
+        income_type: IncomeType,
+        item: MonthlyIncomeReport,
+    ) -> Dict[tuple, IncomeItem]:
+        value_part: Optional[IncomeItemValuePart] = None
+
+        if income_type == income_type.A and item.a_income:
+            value_part = IncomeItemValuePart(
+                income_type=income_type, value=item.a_income
+            )
+
+        if income_type == income_type.B and item.b_income:
+            value_part = IncomeItemValuePart(
+                income_type=income_type, value=item.b_income
+            )
+
+        if (item.year, item.month) not in income_series:
+            income_series[(item.year, item.month)] = IncomeItem(
+                year=item.year,
+                month=item.month,
+                value=item.a_income + item.b_income,
+                value_parts=[value_part] if value_part else [],
+            )
+        else:
+            income_series[(item.year, item.month)].value += (
+                item.a_income + item.b_income
+            )
+
+            if value_part:
+                income_series[(item.year, item.month)].value_parts.append(value_part)
+
+        return income_series
+
+    def _yearly_monthly_income_to_income_series(
+        self,
+        income_series: Dict[tuple, IncomeItem],
+        income_type: IncomeType,
+        income_value: Decimal,
+        year: int,
+    ) -> Dict[tuple, IncomeItem]:
+        monthly_income = int_divide_end(int(income_value), 12)
+        for month in range(1, 13):
+            income_item_value_part = IncomeItemValuePart(
+                income_type=income_type,
+                value=Decimal(monthly_income[month - 1]),
+            )
+
+            if not income_item_value_part.value:
+                continue
+
+            income_item = income_series.get((year, month))
+            if income_item is None:
+                income_series[(year, month)] = IncomeItem(
+                    year=year,
+                    month=month,
+                    value=income_item_value_part.value,
+                    value_parts=[income_item_value_part],
+                )
+            else:
+                income_series_new_ref = income_series[(year, month)]
+                income_series_new_ref.value += income_item_value_part.value
+                income_series_new_ref.value_parts.append(income_item_value_part)
+
+        return income_series
