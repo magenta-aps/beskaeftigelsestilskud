@@ -140,27 +140,22 @@ class CalculateBenefitTest(BaseTestCase):
             columns=["in_quarantine", "quarantine_reason"],
         )
         yearly_salary = 10000 * 12 + 15000 * 12
+        correct_year_benefit = self.year.calculation_method.calculate(yearly_salary)
 
         for month in range(1, 13):
-            if month == 12:
-                correct_benefit = self.year.calculation_method.calculate(yearly_salary)
-            else:
-                correct_benefit = 0
+            correct_month_benefit = correct_year_benefit if month == 10 else 0
 
             df = calculate_benefit(month, self.year.year)
             get_people_in_quarantine.assert_called()
-            self.assertEqual(
-                df.loc[self.person1.cpr, "benefit_paid"],
-                correct_benefit,
-                f"For month {month}",
-            )
+            benefit_paid = df.loc[self.person1.cpr, "benefit_paid"]
+            self.assertEqual(benefit_paid, correct_month_benefit, f"For month {month}")
 
             person_month = PersonMonth.objects.get(
                 person_year__person__cpr=self.person1.cpr,
                 month=month,
                 person_year__year__year=self.year.year,
             )
-            person_month.benefit_paid = correct_benefit
+            person_month.benefit_paid = benefit_paid
             person_month.save()
 
     def test_isnan(self):

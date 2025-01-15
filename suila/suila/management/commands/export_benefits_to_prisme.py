@@ -29,6 +29,13 @@ class Command(SuilaBaseCommand):
     def _handle(self, *args, **options):
 
         # Always export for two months back
+        year = options["year"]
+        month = options["month"]
+        month -= 2
+        if month < 1:
+            month += 12
+            year -= 1
+
         d = date(options["year"], options["month"], 1) - timedelta(days=45)
         year = d.year
         month = d.month

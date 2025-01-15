@@ -45,7 +45,7 @@ def calculate_benefit(
         The abovementioned columns map one-to-one to a PersonMonth object.
     """
     trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
-    treshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
+    threshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
     enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
     if month == 12:
         safety_factor = 1
@@ -74,14 +74,13 @@ def calculate_benefit(
         calculate_benefit_func
     )
     df["prior_benefit_paid"] = df.loc[:, benefit_cols_this_year].sum(axis=1)
-    df["benefit_this_month"] = (
-        (df.estimated_year_benefit - df.prior_benefit_paid) / (13 - month)
-    ).round(2)
+    df["remaining_benefit_for_year"] = df.estimated_year_benefit - df.prior_benefit_paid
+    df["benefit_this_month"] = (df.remaining_benefit_for_year / (13 - month)).round(2)
 
     # Do not payout if the amount is below zero
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
 
-    if month < 12:
+    if month != 12:
         # Do not payout if the amount is below the trivial limit
         df.loc[df.benefit_this_month < trivial_limit, "benefit_this_month"] = 0
 
@@ -92,15 +91,23 @@ def calculate_benefit(
         I_diff = df.benefit_last_month > 0
         diff_abs = (df.benefit_this_month - df.benefit_last_month).abs()
         diff[I_diff] = diff_abs[I_diff] / df.benefit_last_month[I_diff]
-        small_diffs = diff < treshold
+        small_diffs = diff < threshold
         df.loc[small_diffs, "benefit_this_month"] = df.loc[
             small_diffs, "benefit_last_month"
         ]
 
-        # If you are in quarantine you get nothing (unless it's December)
-        if enforce_quarantine:
-            df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
+    # If you are in quarantine you get nothing (unless it's for october)
+    if enforce_quarantine:
+        df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
+        if month != 10:
+            # payout nothing
             df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = 0
+        else:
+            # payout everything we estimated for the year
+            df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = (
+                df.remaining_benefit_for_year
+            )
+            df.loc[df_quarantine.in_quarantine, "remaining_benefit_for_year"] = 0
 
     df["benefit_paid"] = df.benefit_this_month
     return df
