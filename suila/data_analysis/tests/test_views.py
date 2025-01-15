@@ -37,7 +37,7 @@ from suila.models import (
     StandardWorkBenefitCalculationMethod,
     Year,
 )
-from suila.simulation import IncomeItem, Simulation
+from suila.simulation import IncomeItem, IncomeItemValuePart, Simulation
 
 
 class TestSimulationJSONEncoder(TestCase):
@@ -62,10 +62,27 @@ class TestSimulationJSONEncoder(TestCase):
         }
 
     def test_can_serialize_dataclass(self):
-        dataclass_instance = IncomeItem(year=2020, month=1, value=Decimal("42"))
+        dataclass_instance = IncomeItem(
+            year=2020,
+            month=1,
+            value=Decimal("42"),
+            value_parts=[
+                IncomeItemValuePart(income_type=IncomeType.A, value=Decimal("42"))
+            ],
+        )
         self._assert_json_equal(
             dataclass_instance,
-            {"year": 2020, "month": 1, "value": 42},
+            {
+                "year": 2020,
+                "month": 1,
+                "value": 42,
+                "value_parts": [
+                    {
+                        "income_type": "A",
+                        "value": 42,
+                    }
+                ],
+            },
         )
 
     def test_can_serialize_decimal(self):
@@ -102,13 +119,19 @@ class TestSimulationJSONEncoder(TestCase):
                     {
                         "income_series": [],
                         "title": "Månedlig indkomst",
+                        "chart_type": "bar",
                     },
-                    {"payout": [], "title": "Månedlig udbetaling"},
+                    {
+                        "payout": [],
+                        "title": "Månedlig udbetaling",
+                        "chart_type": "line",
+                    },
                     {
                         "income_sum": {"2020": 0.0},
                         "predictions": [],
                         "title": "TwelveMonthsSummationEngine"
                         " - Summation af beløb for de seneste 12 måneder",
+                        "chart_type": "line",
                     },
                 ],
                 "year_start": 2020,

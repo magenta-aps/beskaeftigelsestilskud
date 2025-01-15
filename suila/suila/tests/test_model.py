@@ -406,6 +406,7 @@ class TestIncomeReport(ModelTest):
             year=2024,
             a_income=Decimal(15000),
             b_income=Decimal(5000),
+            u_income=Decimal(0),
             person_pk=1,
             person_month_pk=1,
             person_year_pk=1,

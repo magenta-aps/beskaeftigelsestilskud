@@ -32,6 +32,7 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     PersonYearEstimateSummary,
+    PersonYearU1AAssessment,
     StandardWorkBenefitCalculationMethod,
     Year,
 )
@@ -291,7 +292,7 @@ class TestEstimationEngine(TestCase):
             self.year.year, None, None, dry_run=False
         )
 
-        self.assertEqual(IncomeEstimate.objects.all().count(), 108)
+        self.assertEqual(IncomeEstimate.objects.all().count(), 156)
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
@@ -399,6 +400,7 @@ class TestEstimationEngine(TestCase):
                         )
                     )
                     + Decimal(person_month.b_income_from_year or 0),
+                    "u_income": Decimal(person_month.u_income_from_year or 0),
                 }
                 if (year, month) in exclude_months:
                     self.assertNotIn(
@@ -419,6 +421,7 @@ class TestInYearExtrapolationEngine(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.year = Year.objects.create(year=2024)
+
         cls.person = Person.objects.create(
             name="Jens Hansen",
             cpr="1234567890",
@@ -429,6 +432,13 @@ class TestInYearExtrapolationEngine(TestCase):
             preferred_estimation_engine_a="InYearExtrapolationEngine",
             preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
+
+        cls.person_year_u1a_assessment = PersonYearU1AAssessment.objects.create(
+            person_year=cls.person_year,
+            u1a_ids="1, 2, 3",
+            dividend_total=Decimal("1500.00"),
+        )
+
         cls.months = []
         cls.reports = []
         for month, income in enumerate(
@@ -454,10 +464,11 @@ class TestInYearExtrapolationEngine(TestCase):
                 month=report.person_month.month,
                 year=report.person_month.year,
                 a_income=report.a_income,
+                b_income=Decimal(0),
+                u_income=report.u_income,
                 person_pk=self.person.pk,
                 person_year_pk=self.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_income=Decimal(0),
             )
             for report in self.reports
         ]
@@ -489,6 +500,19 @@ class TestInYearExtrapolationEngine(TestCase):
             self.assertEqual(
                 income_estimate.estimated_year_result.quantize(Decimal("0.01")),
                 expectation,
+                month,
+            )
+
+            # Assert income estimate for IncomeType.U (year 2025)
+            income_estimate_u = InYearExtrapolationEngine.estimate(
+                person_month,
+                data,
+                IncomeType.U,
+            )
+
+            self.assertEqual(
+                income_estimate_u.estimated_year_result.quantize(Decimal("0.01")),
+                Decimal("1500.00"),
                 month,
             )
 
@@ -544,10 +568,11 @@ class TwelveMonthsSummationEngineTest(TestCase):
                 month=report.person_month.month,
                 year=report.person_month.year,
                 a_income=report.a_income,
+                b_income=Decimal(0),
+                u_income=Decimal(0),
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_income=Decimal(0),
             )
             for report in self.reports
         ]
@@ -681,10 +706,11 @@ class TwoYearSummationEngineTest(TestCase):
                 month=report.person_month.month,
                 year=report.person_month.year,
                 a_income=report.a_income,
+                b_income=Decimal(0),
+                u_income=Decimal(0),
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
-                b_income=Decimal(0),
             )
             for report in self.reports
         ]
