@@ -141,22 +141,38 @@ class CalculateBenefitTest(BaseTestCase):
         )
         yearly_salary = 10000 * 12 + 15000 * 12
         correct_year_benefit = self.year.calculation_method.calculate(yearly_salary)
+        quarantine_weights = (
+            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 1),
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12),
+            (0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0),
+            (2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0),
+        )
 
-        for month in range(1, 13):
-            correct_month_benefit = correct_year_benefit if month == 10 else 0
+        for weight_list in quarantine_weights:
+            with self.settings(QUARANTINE_WEIGHTS=weight_list):
 
-            df = calculate_benefit(month, self.year.year)
-            get_people_in_quarantine.assert_called()
-            benefit_paid = df.loc[self.person1.cpr, "benefit_paid"]
-            self.assertEqual(benefit_paid, correct_month_benefit, f"For month {month}")
+                for month in range(1, 13):
+                    correct_month_benefit = (
+                        correct_year_benefit * weight_list[month - 1] / 12
+                    )
 
-            person_month = PersonMonth.objects.get(
-                person_year__person__cpr=self.person1.cpr,
-                month=month,
-                person_year__year__year=self.year.year,
-            )
-            person_month.benefit_paid = benefit_paid
-            person_month.save()
+                    df = calculate_benefit(month, self.year.year)
+                    get_people_in_quarantine.assert_called()
+                    benefit_paid = df.loc[self.person1.cpr, "benefit_paid"]
+                    self.assertEqual(
+                        benefit_paid,
+                        correct_month_benefit,
+                        f"For month {month} and weights {weight_list}",
+                    )
+
+                    person_month = PersonMonth.objects.get(
+                        person_year__person__cpr=self.person1.cpr,
+                        month=month,
+                        person_year__year__year=self.year.year,
+                    )
+                    person_month.benefit_paid = benefit_paid
+                    person_month.save()
 
     def test_isnan(self):
         self.assertTrue(isnan(np.float64(None)))
