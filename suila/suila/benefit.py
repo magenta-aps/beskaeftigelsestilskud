@@ -49,8 +49,12 @@ def calculate_benefit(
     trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
     threshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
     enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
-    quarantine_weight = Fraction(settings.QUARANTINE_WEIGHTS[month - 1], 12)
-    accumulated_weight = Fraction(sum(settings.QUARANTINE_WEIGHTS[0:month]), 12)
+    quarantine_weight = Fraction(
+        settings.QUARANTINE_WEIGHTS[month - 1], 12
+    )  # type: ignore
+    accumulated_weight = Fraction(
+        sum(settings.QUARANTINE_WEIGHTS[0:month]), 12
+    )  # type: ignore
     if month == 12:
         safety_factor = 1
     else:
@@ -104,7 +108,7 @@ def calculate_benefit(
     if enforce_quarantine:
         df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
         if quarantine_weight <= 0:
-            weight_on_remainder = 0
+            weight_on_remainder: Fraction = Fraction(0, 1)
         else:
             # quarantine_weight = factor for year payment to month payment
             # we need a factor for `remaining year payment` to month payment
