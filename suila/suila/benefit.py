@@ -50,7 +50,9 @@ def calculate_benefit(
     threshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
     enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
     quarantine_weight = Fraction(
-        settings.QUARANTINE_WEIGHTS[month - 1], 12  # type: ignore
+        # Using fraction because we don't like float-point errors
+        settings.QUARANTINE_WEIGHTS[month - 1],
+        12,  # type: ignore
     )
     accumulated_weight = Fraction(
         sum(settings.QUARANTINE_WEIGHTS[0:month]), 12  # type: ignore
