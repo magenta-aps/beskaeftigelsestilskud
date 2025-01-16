@@ -102,7 +102,13 @@ class TestJobDispatcher(TestCase):
         self.job_dispatcher.allow_job.return_value = True
         self.job_dispatcher.call_job("foo", "die", mucki="bar")
 
-        management_mock.call_command.assert_called_once_with("foo", "die", mucki="bar")
+        management_mock.call_command.assert_called_once_with(
+            "foo",
+            "die",
+            mucki="bar",
+            traceback=False,
+            reraise=False,
+        )
 
     def allow_job(self, name, year, month, day, job_ran_this_month=False):
 

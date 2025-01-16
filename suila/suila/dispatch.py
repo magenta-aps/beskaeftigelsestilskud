@@ -13,11 +13,12 @@ from suila.models import JobLog, ManagementCommands, StatusChoices
 
 
 class JobDispatcher:
-    def __init__(self, day=None, month=None, year=None):
+    def __init__(self, day=None, month=None, year=None, reraise=False):
         today = timezone.now()
         self.year = year or today.year
         self.month = month or today.month
         self.day = day or today.day
+        self.reraise = reraise
 
         self.payout_date = get_payout_date(self.year, self.month)
 
@@ -106,4 +107,14 @@ class JobDispatcher:
     def call_job(self, name, *args, **kwargs):
         if self.allow_job(name):
             self.check_dependencies(name)
-            management.call_command(name, *args, **kwargs)
+            print(
+                f"\n{datetime.date(self.year, self.month, self.day)}: "
+                f"Running job {name} ..."
+            )
+            management.call_command(
+                name,
+                *args,
+                traceback=self.reraise,
+                reraise=self.reraise,
+                **kwargs,
+            )
