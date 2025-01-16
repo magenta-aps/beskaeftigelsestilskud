@@ -5,6 +5,7 @@ import datetime
 
 from django.conf import settings
 from django.core import management
+from django.db.models import Q
 from django.utils import timezone
 
 from suila.benefit import get_payout_date
@@ -50,12 +51,17 @@ class JobDispatcher:
 
     def job_ran_this_month(self, name):
         return JobLog.objects.filter(
-            name=name, status=StatusChoices.SUCCEEDED, year=self.year, month=self.month
+            Q(month_param=self.month) | Q(month_param=None),
+            name=name,
+            status=StatusChoices.SUCCEEDED,
+            year_param=self.year,
         ).exists()
 
     def job_ran_this_year(self, name):
         return JobLog.objects.filter(
-            name=name, status=StatusChoices.SUCCEEDED, year=self.year
+            name=name,
+            status=StatusChoices.SUCCEEDED,
+            year_param=self.year,
         ).exists()
 
     def check_dependencies(self, name):
@@ -92,8 +98,7 @@ class JobDispatcher:
 
         elif name == ManagementCommands.CALCULATE_BENEFIT:
             if (
-                self.day >= self.calculation_date.day
-                and self.day < self.prisme_date.day
+                self.calculation_date.day <= self.day < self.prisme_date.day
                 and not job_ran_this_month
             ):
                 return True
