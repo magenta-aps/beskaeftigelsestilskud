@@ -61,6 +61,14 @@ QUARANTINE_IF_EARNS_TOO_MUCH = bool(
 QUARANTINE_IF_WRONG_PAYOUT = bool(
     strtobool(os.environ.get("QUARANTINE_IF_WRONG_PAYOUT", "True"))
 )
+QUARANTINE_WEIGHTS = json.loads(
+    os.environ.get("QUARANTINE_WEIGHTS", "[0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 1]")
+)
+
+if len(QUARANTINE_WEIGHTS) != 12:
+    raise ValueError("Configured QUARANTINE_WEIGHTS must have 12 numbers")
+if sum(QUARANTINE_WEIGHTS) != 12:
+    raise ValueError("Configured QUARANTINE_WEIGHTS must sum to 12")
 
 
 class XMLFilter(logging.Filter):
