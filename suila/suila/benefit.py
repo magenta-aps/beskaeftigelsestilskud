@@ -51,8 +51,8 @@ def calculate_benefit(
     enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
     quarantine_weight = Fraction(
         # Using fraction because we don't like float-point errors
-        settings.QUARANTINE_WEIGHTS[month - 1],
-        12,  # type: ignore
+        settings.QUARANTINE_WEIGHTS[month - 1],  # type: ignore
+        12,
     )
     accumulated_weight = Fraction(
         sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]), 12  # type: ignore
