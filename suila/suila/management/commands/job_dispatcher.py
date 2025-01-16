@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from suila.dispatch import JobDispatcher
+from suila.models import ManagementCommands
 
 
 class Command(BaseCommand):
@@ -102,6 +103,14 @@ class Command(BaseCommand):
                 verbosity=verbosity,
                 cpr=cpr,
             )
+
+        # Populate `Person.location_code` and `Person.civil_state` (requires Pitu/DAFO
+        # API access via valid client certificate.)
+        job_dispatcher.call_job(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            cpr=cpr,
+            verbosity=verbosity,
+        )
 
         # Estimate income
         job_dispatcher.call_job(
