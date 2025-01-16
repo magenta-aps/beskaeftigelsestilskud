@@ -65,6 +65,8 @@ QUARANTINE_WEIGHTS = json.loads(
     os.environ.get("QUARANTINE_WEIGHTS", "[0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 1]")
 )
 
+if len(QUARANTINE_WEIGHTS) != 12:
+    raise ValueError("Configured QUARANTINE_WEIGHTS must have 12 numbers")
 if sum(QUARANTINE_WEIGHTS) != 12:
     raise ValueError("Configured QUARANTINE_WEIGHTS must sum to 12")
 

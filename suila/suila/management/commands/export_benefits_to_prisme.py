@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date, timedelta
+from datetime import date
 
 from suila.integrations.prisme.benefits import BatchExport
 from suila.management.commands.common import SuilaBaseCommand
@@ -35,10 +35,6 @@ class Command(SuilaBaseCommand):
         if month < 1:
             month += 12
             year -= 1
-
-        d = date(options["year"], options["month"], 1) - timedelta(days=45)
-        year = d.year
-        month = d.month
 
         batch_export: BatchExport = BatchExport(year, month)
         batch_export.export_batches(self.stdout, verbosity=options["verbosity"])
