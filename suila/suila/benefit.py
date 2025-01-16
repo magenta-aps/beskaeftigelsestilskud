@@ -2,11 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
+from fractions import Fraction
 
 import pandas as pd
 from common import utils
 from django.conf import settings
 from more_itertools import one
+from numpy import float64
 
 from suila.estimation import EstimationEngine, SameAsLastMonthEngine
 from suila.models import IncomeType, PersonMonth, PersonYear, Year
@@ -45,8 +47,16 @@ def calculate_benefit(
         The abovementioned columns map one-to-one to a PersonMonth object.
     """
     trivial_limit = settings.CALCULATION_TRIVIAL_LIMIT  # type: ignore
-    treshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
+    threshold = float(settings.CALCULATION_STICKY_THRESHOLD)  # type: ignore
     enforce_quarantine = settings.ENFORCE_QUARANTINE  # type: ignore
+    quarantine_weight = Fraction(
+        # Using fraction because we don't like float-point errors
+        settings.QUARANTINE_WEIGHTS[month - 1],  # type: ignore
+        12,
+    )
+    accumulated_weight = Fraction(
+        sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]), 12  # type: ignore
+    )
     if month == 12:
         safety_factor = 1
     else:
@@ -74,35 +84,54 @@ def calculate_benefit(
         calculate_benefit_func
     )
     df["prior_benefit_paid"] = df.loc[:, benefit_cols_this_year].sum(axis=1)
-    df["benefit_this_month"] = (
-        (df.estimated_year_benefit - df.prior_benefit_paid) / (13 - month)
-    ).round(2)
+    df["remaining_benefit_for_year"] = df.estimated_year_benefit - df.prior_benefit_paid
+    df["benefit_this_month"] = (df.remaining_benefit_for_year / (13 - month)).round(2)
 
     # Do not payout if the amount is below zero
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
 
-    if month < 12:
+    if month != 12:
         # Do not payout if the amount is below the trivial limit
         df.loc[df.benefit_this_month < trivial_limit, "benefit_this_month"] = 0
 
-        # if the amount is very similar to last months amount, use the same amount
+        # if the amount is very similar to last month's amount, use the same amount
         # as last month
         df["benefit_last_month"] = df.loc[:, f"benefit_paid_month_{month-1}"]
-
         diff = pd.Series(index=df.index)
         I_diff = df.benefit_last_month > 0
         diff_abs = (df.benefit_this_month - df.benefit_last_month).abs()
         diff[I_diff] = diff_abs[I_diff] / df.benefit_last_month[I_diff]
-        small_diffs = diff < treshold
-
+        small_diffs = diff < threshold
         df.loc[small_diffs, "benefit_this_month"] = df.loc[
             small_diffs, "benefit_last_month"
         ]
 
-        # If you are in quarantaine you get nothing (unless it's December)
-        if enforce_quarantine:
-            df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
-            df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = 0
+    # If you are in quarantine you get nothing (unless it's for october)
+    if enforce_quarantine:
+        df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
+        if quarantine_weight <= 0:
+            weight_on_remainder: Fraction = Fraction(0, 1)
+        else:
+            # quarantine_weight = factor for year payment to month payment
+            # we need a factor for `remaining year payment` to month payment
+            # that is, which portion of the remainder should be paid out this month:
+            #
+            # accumulated_weight is how big a proportion
+            # of year payment we already have paid out (e.g. 10/12)
+            #
+            # 1 - accumulated_weight is how big
+            # a proportion we have yet to pay out this year (e.g. 2/12)
+            #
+            # quarantine_weight / (1 - accumulated_weight)
+            # is how much of that proportion is to be paid out this month
+            # (e.g. half of the proportion, thus we pay out half of the remainder)
+            weight_on_remainder = quarantine_weight / (1 - accumulated_weight)
+        df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = (
+            df.remaining_benefit_for_year * float64(weight_on_remainder)
+        )
+        df.loc[
+            df_quarantine.in_quarantine, "remaining_benefit_for_year"
+        ] -= df.benefit_this_month
 
     df["benefit_paid"] = df.benefit_this_month
     return df
