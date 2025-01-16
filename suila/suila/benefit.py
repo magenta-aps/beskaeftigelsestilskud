@@ -55,7 +55,7 @@ def calculate_benefit(
         12,  # type: ignore
     )
     accumulated_weight = Fraction(
-        sum(settings.QUARANTINE_WEIGHTS[0:month]), 12  # type: ignore
+        sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]), 12  # type: ignore
     )
     if month == 12:
         safety_factor = 1
@@ -116,18 +116,16 @@ def calculate_benefit(
             # we need a factor for `remaining year payment` to month payment
             # that is, which portion of the remainder should be paid out this month:
             #
-            # (accumulated_weight - quarantine_weight) is how big a proportion
+            # accumulated_weight is how big a proportion
             # of year payment we already have paid out (e.g. 10/12)
             #
-            # 1 - (accumulated_weight - quarantine_weight) is how big
+            # 1 - accumulated_weight is how big
             # a proportion we have yet to pay out this year (e.g. 2/12)
             #
-            # quarantine_weight / (1 - accumulated_weight + quarantine_weight)
+            # quarantine_weight / (1 - accumulated_weight)
             # is how much of that proportion is to be paid out this month
             # (e.g. half of the proportion, thus we pay out half of the remainder)
-            weight_on_remainder = quarantine_weight / (
-                1 - accumulated_weight + quarantine_weight
-            )
+            weight_on_remainder = quarantine_weight / (1 - accumulated_weight)
         df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = (
             df.remaining_benefit_for_year * float64(weight_on_remainder)
         )
