@@ -14,11 +14,12 @@ from suila.dispatch import JobDispatcher
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-
         parser.add_argument("--year", type=int)
         parser.add_argument("--month", type=int)
         parser.add_argument("--day", type=int)
         parser.add_argument("--cpr", type=str)
+        parser.add_argument("--reraise", action="store_true", default=False)
+        super().add_arguments(parser)
 
     def handle(self, *args, **options):
         """
@@ -66,7 +67,10 @@ class Command(BaseCommand):
         verbosity = options["verbosity"]
         self._verbose = verbosity > 1
         job_dispatcher = JobDispatcher(
-            day=options["day"], month=options["month"], year=options["year"]
+            day=options["day"],
+            month=options["month"],
+            year=options["year"],
+            reraise=options["reraise"],
         )
 
         year = job_dispatcher.year

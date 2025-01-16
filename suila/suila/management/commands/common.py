@@ -5,6 +5,7 @@
 import os
 from cProfile import Profile
 
+from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
 from suila.models import JobLog, StatusChoices
@@ -13,6 +14,7 @@ from suila.models import JobLog, StatusChoices
 class SuilaBaseCommand(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--profile", action="store_true", default=False)
+        parser.add_argument("--reraise", action="store_true", default=False)
         super().add_arguments(parser)
 
     def handle(self, *args, **options):
@@ -38,7 +40,11 @@ class SuilaBaseCommand(BaseCommand):
             else:
                 self._handle(*args, **options)
             job_log.status = StatusChoices.SUCCEEDED
-        except:  # noqa: E722
+        except Exception as exc:
             job_log.status = StatusChoices.FAILED
+            if options.get("reraise", False):
+                raise exc
+            else:
+                raise CommandError() from exc
         finally:
             job_log.save(update_fields=("status",))
