@@ -13,7 +13,7 @@ from django.test import TestCase
 from tenQ.client import ClientException
 from tenQ.writer.g68 import BetalingstekstLinje, Fakturanummer
 
-from suila.integrations.prisme.benefits import BatchExport
+from suila.integrations.prisme.benefits import BatchExport, MissingAccountAliasException
 from suila.models import (
     Person,
     PersonMonth,
@@ -164,6 +164,24 @@ class TestBatchExport(TestCase):
         self.assertRegex(invoice_no, f"{prisme_batch.pk:015d}\\d{{5}}")
         self.assertEqual(invoice_no, prisme_batch_item.invoice_no)
 
+    def test_get_prisme_batch_item_exception_on_missing_location_code(self):
+        """If a `Person` has no `location_code`, the corresponding `PrismeAccountAlias`
+        cannot be retrieved, and `get_prisme_batch_item` should raise an exception.
+        """
+        # Arrange
+        self._add_person_month(
+            3112700000,
+            Decimal("1000"),
+            municipality_code=None,  # type: ignore
+        )
+        prisme_batch, _ = PrismeBatch.objects.get_or_create(
+            prefix=0, export_date=date(2025, 1, 1)
+        )
+        export = self._get_instance()
+        with self.assertRaises(MissingAccountAliasException):
+            # Act
+            self._get_prisme_batch_item(export, prisme_batch)
+
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
         should upload the serialized G68/G69 transaction pairs using the
@@ -293,14 +311,16 @@ class TestBatchExport(TestCase):
         municipality_code: int = 956,
     ) -> PersonMonth:
         year, _ = Year.objects.get_or_create(year=year)
-        person, _ = Person.objects.get_or_create(cpr=cpr)
+        person, _ = Person.objects.get_or_create(
+            cpr=cpr,
+            defaults={"location_code": municipality_code},
+        )
         person_year, _ = PersonYear.objects.get_or_create(year=year, person=person)
         person_month, _ = PersonMonth.objects.get_or_create(
             person_year=person_year,
             month=month,
             benefit_paid=benefit_paid,
             import_date=date.today(),
-            municipality_code=municipality_code,
         )
         return person_month
 
