@@ -1,0 +1,150 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "suila/person_detail_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load date_tags %}
+
+{% block breadcrumb %}
+    {{ block.super }}
+    <li class="breadcrumb-item active" aria-current="page">{% translate "Udbetalinger" %}</li>
+{% endblock %}
+
+{% block person_data %}
+    {# Benefits #}
+    <h1 id="notes">
+        {% blocktrans trimmed with year=year %}
+            Noter i {{ year }}
+        {% endblocktrans %}
+    </h1>
+
+    {% if notes %}
+    <div id="notater">
+    <table class="table">
+        <thead>
+        <tr>
+            <th class="col-2">Forfatter</th>
+            <th class="col-2">Dato</th>
+            <th class="col-6">Besked</th>
+            <th class="col-2">Filer</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for note in notes %}
+            <tr>
+            <td>{{ note.author.username }}</td>
+            <td>{{ note.created }}</td>
+            <td>{{ note.text }}</td>
+            <td>
+                {% for attachment in note.noteattachment_set.all %}
+                    <a href="{% url 'suila:note_attachment' pk=attachment.pk %}">{{ attachment.filename }}</a>
+                {% endfor %}
+            </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {{ form.errors }}
+    {{ formset.errors }}
+        <div class="row">
+        <label for="{{ form.text.id_for_label }}">Tilføj notat</label>
+        </div>
+        <div class="row">
+            <div class="col-12">{{ form.text }}</div>
+        </div>
+        <div class="row">
+            <div class="col-8">
+                {% for subform in formset %}
+                    <div id="formset_container">
+                        <div class="row">
+                            <div class="col-6">
+                                {{ subform.file }}
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-outline-primary bi-x remove-row"></button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                <div id="formset_prototype" class="d-none">
+                    {% with formset.empty_form as subform %}
+                        <div class="row">
+                            <div class="col-6">
+                                {{ subform.file }}
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-outline-primary bi-x remove-row"></button>
+                            </div>
+                        </div>
+                    {% endwith %}
+                </div>
+            </div>
+            <div class="col-4 d-flex justify-content-end align-items-start">
+                <button type="submit" class="btn btn-success">Opret notat</button>
+            </div>
+        </div>
+
+    </form>
+
+{% endblock %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+    <script src="{% static 'suila/formset.js' %}" nonce="{{ request.csp_nonce }}"></script>
+    <script nonce="{{ request.csp_nonce }}">
+        $(function (){
+            const container = $("#formset_container");
+
+            // Formset
+            // -------
+            const formset = container.formset("noteattachment_set", $("#formset_prototype"), true);
+            const subformAdded = function(subform) {
+                if (!(subform instanceof $)) {
+                    subform = $(subform);
+                }
+                subform.find(".remove-row").click(removeForm.bind(subform, subform));
+                subformsUpdated();
+            };
+            const subformRemoved = function(subform) {
+                const rows = container.find(".row");
+                rows.each(function (index, element) {
+                    $(this).find("input[name],select[name]").each(function (){
+                        this.id = this.id.replace(/-\d+-/, "-"+index+"-");
+                        this.name = this.name.replace(/-\d+-/, "-"+index+"-");
+                    });
+                });
+                subformsUpdated();
+            };
+            const subformsUpdated = function () {
+                const rows = container.find(".row");
+                const lastRow = rows.last();
+                rows.find(".remove-row").show();
+                lastRow.find(".remove-row").hide();
+            }
+
+            const removeForm = function(subform) {
+                subform.slideUp(400, () => {
+                    formset.removeForm(subform, true);
+                });
+            };
+            container.find(".row").each(function (){subformAdded(this)});
+            container.on("subform.post_add", function(event, row) {
+                subformAdded(row)
+                $(row).slideDown(400);
+            });
+            container.on("subform.pre_add", function(event, row) {
+                $(row).hide();
+            });
+            container.on("subform.post_remove", function(event, row) {
+                subformRemoved(row);
+            });
+        });
+    </script>
+{% endblock %}

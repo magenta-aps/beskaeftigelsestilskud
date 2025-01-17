@@ -12,9 +12,10 @@ SPDX-License-Identifier: MPL-2.0
 }
 
 .errorlist {
-  list-style-type: none;
-  padding: 0;
-  color: red;
+    list-style-type: none;
+    padding: 0;
+    color: red;
+}
 /* Disable "is-valid" style on "filter" forms */
 form.filter-form .is-valid {
     --bs-form-select-bg-icon: none !important;
@@ -41,4 +42,7 @@ form.filter-form .is-valid:focus {
 }
 .nav.secondary-nav a.nav-item.active {
     font-weight: bold;
+}
+textarea {
+    resize: none;
 }

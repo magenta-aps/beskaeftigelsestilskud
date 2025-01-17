@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-14 12:30-0200\n"
+"POT-Creation-Date: 2025-01-17 09:31-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -152,12 +152,17 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_base.html
 #: suila/templates/suila/person_detail_benefits.html
+#: suila/templates/suila/person_detail_notes.html
 msgid "Udbetalinger"
 msgstr ""
 
 #: suila/templates/suila/person_detail_base.html
 #: suila/templates/suila/person_detail_income.html
 msgid "Indkomst"
+msgstr ""
+
+#: suila/templates/suila/person_detail_base.html
+msgid "Noter"
 msgstr ""
 
 #: suila/templates/suila/person_detail_base.html
@@ -225,6 +230,11 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
 msgid "Indkomst fordelt på måneder"
+msgstr ""
+
+#: suila/templates/suila/person_detail_notes.html
+#, python-format
+msgid "Noter i %(year)s"
 msgstr ""
 
 #: suila/templates/suila/person_search.html

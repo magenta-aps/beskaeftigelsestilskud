@@ -3,14 +3,20 @@
 # SPDX-License-Identifier: MPL-2.0
 import itertools
 import json
+from functools import cached_property
 from typing import Callable
+from urllib.parse import urlencode
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import CharField, Count, F, Field, Q, QuerySet, Sum, Value
 from django.db.models.functions import Cast, LPad
+from django.forms import Form
+from django.http import HttpResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView
+from django.views.generic.detail import BaseDetailView
 from django_filters import CharFilter, ChoiceFilter, FilterSet
 from django_filters.views import FilterView
 from django_tables2 import Column, SingleTableMixin, Table
@@ -18,15 +24,20 @@ from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
+from suila.forms import NoteAttachmentFormSet, NoteForm
 from suila.models import (
     IncomeEstimate,
     IncomeType,
     MonthlyIncomeReport,
+    Note,
+    NoteAttachment,
     Person,
     PersonMonth,
+    PersonYear,
 )
 from suila.querysets import PersonKeyFigureQuerySet
 from suila.templatetags.date_tags import month_name
+from suila.view_mixins import FormWithFormsetView
 
 
 class RootView(LoginRequiredMixin, TemplateView):
@@ -110,14 +121,14 @@ class YearMonthMixin:
         context_data["month"] = self.month
         return context_data
 
-    @property
+    @cached_property
     def year(self) -> int:
         try:
             return int(self.request.GET.get("year"))  # type: ignore[attr-defined]
         except (TypeError, ValueError):
             return timezone.now().year
 
-    @property
+    @cached_property
     def month(self) -> int:
         if self.year < timezone.now().year:
             return 12  # For past years, always use last month of year
@@ -128,6 +139,17 @@ class YearMonthMixin:
                 return timezone.now().month
 
 
+class PersonYearMonthMixin(YearMonthMixin):
+
+    @cached_property
+    def person_pk(self) -> int:
+        return self.kwargs["pk"]
+
+    @cached_property
+    def person_year(self):
+        return PersonYear.objects.get(year_id=self.year, person_id=self.person_pk)
+
+
 class ChartMixin:
     def get_month_names(self) -> list[str]:
         return [month_name(month) for month in range(1, 13)]
@@ -136,7 +158,7 @@ class ChartMixin:
         return json.dumps(obj, cls=DjangoJSONEncoder)
 
 
-class PersonKeyFigureViewMixin(YearMonthMixin):
+class PersonKeyFigureViewMixin(PersonYearMonthMixin):
     def get_key_figure_queryset(self) -> PersonKeyFigureQuerySet:
         # Get "key figure" queryset for current year and month
         qs = PersonKeyFigureQuerySet.from_queryset(
@@ -188,7 +210,7 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
 
 
 class PersonDetailBenefitView(
-    LoginRequiredMixin, YearMonthMixin, ChartMixin, DetailView
+    LoginRequiredMixin, PersonYearMonthMixin, ChartMixin, DetailView
 ):
     model = Person
     context_object_name = "person"
@@ -418,3 +440,61 @@ class PersonDetailIncomeView(
         # TODO: yield a row for each employer when we have it
         yield _("A-indkomst"), zero_pad(qs, "_a_income")
         yield _("B-indkomst"), zero_pad(qs, "_b_income")
+
+
+class PersonDetailNotesView(
+    LoginRequiredMixin, PersonYearMonthMixin, FormWithFormsetView, DetailView
+):
+
+    model = Person
+    context_object_name = "person"
+    template_name = "suila/person_detail_notes.html"
+    form_class = NoteForm
+    formset_class = NoteAttachmentFormSet
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form: Form, formset):
+        object: Note = form.save(commit=False)
+        object.author = self.request.user
+        object.personyear = self.person_year
+        object.save()
+        formset.instance = object
+        formset.save()
+        return super().form_valid(form, formset)
+
+    def get_success_url(self):
+        return (
+            reverse("suila:person_detail_notes", kwargs={"pk": self.person_pk})
+            + "?"
+            + urlencode({"year": self.year})
+        )
+
+    def get_notes(self) -> QuerySet[Note]:
+        return Note.objects.filter(
+            personyear__year_id=self.year, personyear__person_id=self.person_pk
+        ).order_by("created")
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            **{
+                **kwargs,
+                "notes": self.get_notes(),
+            }
+        )
+
+
+class PersonDetailNotesAttachmentView(LoginRequiredMixin, BaseDetailView):
+
+    # TODO: adgangskontrol
+    model = NoteAttachment
+
+    def get(self, request, *args, **kwargs):
+        self.object: NoteAttachment = self.get_object()
+        response = HttpResponse(
+            self.object.file.read(), content_type=self.object.content_type
+        )
+        response["Content-Disposition"] = f"attachment; filename={self.object.filename}"
+        return response
