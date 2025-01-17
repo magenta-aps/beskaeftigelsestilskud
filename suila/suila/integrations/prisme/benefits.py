@@ -24,6 +24,10 @@ from suila.models import PersonMonth, PrismeAccountAlias, PrismeBatch, PrismeBat
 logger = logging.getLogger(__name__)
 
 
+class MissingAccountAliasException(Exception):
+    pass
+
+
 class BatchExport:
     def __init__(self, year: int, month: int):
         self._year = year
@@ -84,10 +88,20 @@ class BatchExport:
         writer: G68G69TransactionWriter,
     ) -> PrismeBatchItem:
         # Find Prisme account alias for this municipality and tax year
-        account_alias = PrismeAccountAlias.objects.get(
-            tax_municipality_location_code=str(person_month.municipality_code),
-            tax_year=person_month.person_year.year.year,
-        )
+        location_code: str | None = person_month.person_year.person.location_code
+        tax_year: int = person_month.person_year.year.year
+        try:
+            account_alias = PrismeAccountAlias.objects.get(
+                tax_municipality_location_code=location_code,
+                tax_year=tax_year,
+            )
+        except PrismeAccountAlias.DoesNotExist:
+            raise MissingAccountAliasException(
+                "No Prisme account alias found for tax municipality location code "
+                f"{location_code}, tax year {tax_year} "
+                f"(person: {person_month.person_year.person})"
+            )
+
         # Zero-padded CPR (as string)
         cpr = person_month.identifier  # type: ignore[attr-defined]
 
