@@ -33,6 +33,7 @@ class IncomeType(TextChoices):
 
 
 class ManagementCommands(TextChoices):
+    GET_PERSON_INFO_FROM_DAFO = "get_person_info_from_dafo"
     CALCULATE_STABILITY_SCORE = "calculate_stability_score"
     AUTOSELECT_ESTIMATION_ENGINE = "autoselect_estimation_engine"
     LOAD_ESKAT = "load_eskat"
