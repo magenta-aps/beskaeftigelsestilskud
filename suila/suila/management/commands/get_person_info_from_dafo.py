@@ -2,18 +2,20 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from common.pitu import PituClient
-from django.core.management.base import BaseCommand
 from requests.exceptions import HTTPError
 
+from suila.management.commands.common import SuilaBaseCommand
 from suila.models import Person
 
 
-class Command(BaseCommand):
+class Command(SuilaBaseCommand):
+    filename = __file__
 
     def add_arguments(self, parser):
         parser.add_argument("--cpr", type=str)
+        super().add_arguments(parser)
 
-    def handle(self, *args, **kwargs):
+    def _handle(self, *args, **kwargs):
         """
         Loops over all persons and populates civil_state and location_code
         """
@@ -40,10 +42,19 @@ class Command(BaseCommand):
                     self._write_verbose(
                         f"Could not find person with CPR={person.cpr} in DAFO"
                     )
-                    continue
-            person.civil_state = person_data["civilstand"]
-            person.location_code = person_data["stedkode"]
-            person.save()
+                else:
+                    self._write_verbose(
+                        f"Unexpected {e.response.status_code} error: "
+                        f"{e.response.content}"
+                    )
+            else:
+                person.civil_state = person_data["civilstand"]
+                person.location_code = person_data["stedkode"]
+                person.save()
+                self._write_verbose(
+                    f"Updated civil state and location code for {person.cpr}"
+                    f"(person data = {person_data})"
+                )
 
         self._write_verbose("Done")
         pitu_client.close()
