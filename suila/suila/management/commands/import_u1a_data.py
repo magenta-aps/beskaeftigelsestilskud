@@ -10,9 +10,9 @@ from django.conf import settings
 from django.db import transaction
 from pydantic import BaseModel
 
-from bf.akap import AKAPU1A, AKAPU1AItem, get_akap_u1a_entries, get_akap_u1a_items
-from bf.management.commands.common import BfBaseCommand
-from bf.models import U1AEntry, U1AItemEntry
+from suila.akap import AKAPU1A, AKAPU1AItem, get_akap_u1a_entries, get_akap_u1a_items
+from suila.management.commands.common import SuilaBaseCommand
+from suila.models import U1AEntry, U1AItemEntry
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class ImportResult(BaseModel):
     updated_items: int = 0
 
 
-class Command(BfBaseCommand):
+class Command(SuilaBaseCommand):
     filename = __file__
 
     def add_arguments(self, parser):

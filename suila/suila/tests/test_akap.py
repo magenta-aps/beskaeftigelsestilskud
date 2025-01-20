@@ -9,8 +9,8 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
-from bf.akap import get_akap_u1a_entries, get_akap_u1a_items
-from bf.management.commands.import_u1a_data import ImportResult
+from suila.akap import get_akap_u1a_entries, get_akap_u1a_items
+from suila.management.commands.import_u1a_data import ImportResult
 
 
 class AKAPTest(TestCase):
@@ -35,7 +35,7 @@ class ImportU1ADataTest(TestCase):
     def setUp(self):
         self.logger = logging.getLogger("test")
 
-    @patch("bf.management.commands.import_u1a_data.Command._import_data")
+    @patch("suila.management.commands.import_u1a_data.Command._import_data")
     def test_handle(self, mock_import_data: MagicMock):
 
         # Mock the import result
