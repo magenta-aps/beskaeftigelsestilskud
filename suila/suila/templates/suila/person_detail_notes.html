@@ -37,8 +37,8 @@
             <td>{{ note.created }}</td>
             <td>{{ note.text }}</td>
             <td>
-                {% for attachment in note.noteattachment_set.all %}
-                    <a href="{% url 'suila:note_attachment' pk=attachment.pk %}">{{ attachment.filename }}</a>
+                {% for attachment in note.attachments.all %}
+                    <div><a href="{% url 'suila:note_attachment' pk=attachment.pk %}">{{ attachment.filename }}</a></div>
                 {% endfor %}
             </td>
             </tr>
@@ -51,8 +51,6 @@
     <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ formset.management_form }}
-    {{ form.errors }}
-    {{ formset.errors }}
         <div class="row">
         <label for="{{ form.text.id_for_label }}">Tilføj notat</label>
         </div>
@@ -76,7 +74,7 @@
                 <div id="formset_prototype" class="d-none">
                     {% with formset.empty_form as subform %}
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-6 file-input">
                                 {{ subform.file }}
                             </div>
                             <div class="col-6">
@@ -98,13 +96,14 @@
 {% block extra_headers %}
     <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
     <script src="{% static 'suila/formset.js' %}" nonce="{{ request.csp_nonce }}"></script>
+    <script src="{% static 'suila/fileinput.js' %}" nonce="{{ request.csp_nonce }}"></script>
     <script nonce="{{ request.csp_nonce }}">
         $(function (){
             const container = $("#formset_container");
 
             // Formset
             // -------
-            const formset = container.formset("noteattachment_set", $("#formset_prototype"), true);
+            const formset = container.formset("attachments", $("#formset_prototype"), true);
             const subformAdded = function(subform) {
                 if (!(subform instanceof $)) {
                     subform = $(subform);

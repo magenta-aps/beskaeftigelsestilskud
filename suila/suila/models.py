@@ -1551,7 +1551,7 @@ class NoteAttachment(models.Model):
     class Meta:
         ordering = ["file"]
 
-    note = models.ForeignKey(Note, on_delete=models.CASCADE)
+    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="attachments")
     file = models.FileField(upload_to=get_attachment_path)
     content_type = models.CharField(max_length=100)
 

@@ -5,18 +5,24 @@ from datetime import date, datetime
 from decimal import Decimal
 from unittest.mock import patch
 
+from common.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Sum
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.testcases import SimpleTestCase
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, View
 
+from suila.forms import NoteAttachmentFormSet
 from suila.models import (
     Employer,
     IncomeEstimate,
     IncomeType,
     MonthlyIncomeReport,
+    Note,
+    NoteAttachment,
     Person,
     PersonMonth,
     PersonYear,
@@ -26,6 +32,8 @@ from suila.views import (
     CategoryChoiceFilter,
     PersonDetailBenefitView,
     PersonDetailIncomeView,
+    PersonDetailNotesAttachmentView,
+    PersonDetailNotesView,
     PersonDetailView,
     PersonSearchView,
     YearMonthMixin,
@@ -42,7 +50,7 @@ class PersonEnv(TestCase):
         cls.person3, _ = Person.objects.update_or_create(cpr=3, location_code=None)
         # Add data to person 1
         year, _ = Year.objects.update_or_create(year=2020)
-        person_year, _ = PersonYear.objects.update_or_create(
+        cls.person_year, _ = PersonYear.objects.update_or_create(
             person=cls.person1,
             year=year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
@@ -51,7 +59,7 @@ class PersonEnv(TestCase):
         # 12 PersonMonth objects where each month amount is equal to the month number
         person_months = [
             PersonMonth(
-                person_year=person_year,
+                person_year=cls.person_year,
                 month=i,
                 benefit_paid=i,
                 import_date=date(2020, 1, 1),
@@ -334,3 +342,186 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 for name in (_("A-indkomst"), _("B-indkomst"))
             ],
         )
+
+
+class TestNoteView(TimeContextMixin, PersonEnv):
+    view_class = PersonDetailNotesView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.user = User.objects.create(username="TestUser")
+
+    def test_get_formset(self):
+        view = self.view_class()
+        request = self.request_factory.get("")
+        view.setup(request, pk=self.person1.pk)
+        response = view.get(request, pk=self.person1.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(isinstance(view.get_formset(), NoteAttachmentFormSet))
+        self.assertTrue(
+            isinstance(view.get_formset(NoteAttachmentFormSet), NoteAttachmentFormSet)
+        )
+        self.assertTrue(
+            isinstance(view.get_context_data()["formset"], NoteAttachmentFormSet)
+        )
+        self.assertTrue(
+            isinstance(
+                view.get_context_data(formset=view.get_formset())["formset"],
+                NoteAttachmentFormSet,
+            )
+        )
+
+    def test_get_kwargs(self):
+        view = self.view_class()
+        for request in (self.request_factory.post(""), self.request_factory.put("")):
+            view.setup(request, pk=self.person1.pk)
+            self.assertTrue("data" in view.get_formset_kwargs())
+            self.assertTrue("files" in view.get_formset_kwargs())
+        for request in (self.request_factory.get(""), self.request_factory.head("")):
+            view.setup(request, pk=self.person1.pk)
+            self.assertFalse("data" in view.get_formset_kwargs())
+            self.assertFalse("files" in view.get_formset_kwargs())
+
+    def test_create_simple(self):
+        view = self.view_class()
+        request = self.request_factory.post(
+            reverse("suila:person_detail_notes", kwargs={"pk": self.person1.pk}),
+            {
+                "text": "Test tekst",
+                "attachments-TOTAL_FORMS": 0,
+                "attachments-INITIAL_FORMS": 0,
+                "attachments-MIN_NUM_FORMS": 0,
+                "attachments-MAX_NUM_FORMS": 1000,
+            },
+            format="multipart",
+        )
+        request.user = self.user
+        view.setup(request, pk=self.person1.pk)
+        with self._time_context():
+            response = view.post(request, pk=self.person1.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(view.get_context_data()["form"].errors, {})
+        qs = Note.objects.filter(personyear=self.person_year)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(list(view.get_context_data()["notes"]), list(qs))
+        self.assertEqual(qs.first().text, "Test tekst")
+
+    def test_create_attachment(self):
+        view = self.view_class()
+        request = self.request_factory.post(
+            reverse("suila:person_detail_notes", kwargs={"pk": self.person1.pk}),
+            {
+                "text": "Test tekst",
+                "attachments-TOTAL_FORMS": 3,
+                "attachments-INITIAL_FORMS": 0,
+                "attachments-MIN_NUM_FORMS": 0,
+                "attachments-MAX_NUM_FORMS": 1000,
+                "attachments-0-file": SimpleUploadedFile(
+                    name="testfile",
+                    content=b"Test data",
+                    content_type="text/plain",
+                ),
+                "attachments-1-file": SimpleUploadedFile(
+                    name="testfile2",
+                    content=b"Test data 2",
+                    content_type="text/plain",
+                ),
+            },
+            format="multipart",
+        )
+        request.user = self.user
+        view.setup(request, pk=self.person1.pk)
+        with self._time_context():
+            view.post(request, pk=self.person1.pk)
+        self.assertEqual(view.get_context_data()["form"].errors, {})
+        qs = Note.objects.filter(personyear=self.person_year)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(list(view.get_context_data()["notes"]), list(qs))
+        note = qs.first()
+        self.assertEqual(note.text, "Test tekst")
+        self.assertEqual(note.attachments.count(), 2)
+
+        attachments = list(note.attachments.all())
+        attachment = attachments[0]
+        self.assertEqual(attachment.content_type, "text/plain")
+        self.assertEqual(attachment.filename, "testfile")
+        with attachment.file.open() as f:
+            data = f.read()
+        self.assertEqual(data, b"Test data")
+
+        attachment = attachments[1]
+        self.assertEqual(attachment.content_type, "text/plain")
+        self.assertEqual(attachment.filename, "testfile2")
+        with attachment.file.open() as f:
+            data = f.read()
+        self.assertEqual(data, b"Test data 2")
+
+    def test_list_notes(self):
+        note = Note.objects.create(personyear=self.person_year, text="Test tekst")
+        attachment = NoteAttachment.objects.create(
+            note=note,
+            file=SimpleUploadedFile(name="testfile", content=b"Test data"),
+            content_type="text/plain",
+        )
+        view = self.view_class()
+        request = self.request_factory.get("")
+        request.user = self.user
+        view.setup(request, pk=self.person1.pk)
+        with self._time_context():
+            response = view.get(request, pk=self.person1.pk)
+        self.assertEqual(response.status_code, 200)
+        notes = view.get_context_data()["notes"]
+        self.assertEqual(notes[0], note)
+        self.assertEqual(notes[0].attachments.first(), attachment)
+
+    def test_create_invalid(self):
+        view = self.view_class()
+        request = self.request_factory.post(
+            reverse("suila:person_detail_notes", kwargs={"pk": self.person1.pk}),
+            {
+                "text": "Test tekst",
+            },
+            format="multipart",
+        )
+        request.user = self.user
+        view.setup(request, pk=self.person1.pk)
+        with self._time_context():
+            response = view.post(request, pk=self.person1.pk)
+        self.assertEqual(view.get_context_data()["form"].errors, {})
+        self.assertEqual(view.get_context_data()["formset"].errors, [])
+        self.assertEqual(len(view.get_context_data()["formset"].non_form_errors()), 1)
+        qs = Note.objects.filter(personyear=self.person_year)
+        self.assertEqual(qs.count(), 0)
+        self.assertEqual(response.status_code, 200)
+
+
+class TestNoteAttachmentView(TimeContextMixin, PersonEnv):
+
+    view_class = PersonDetailNotesAttachmentView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.note = Note.objects.create(text="Test tekst", personyear=cls.person_year)
+        cls.attachment = NoteAttachment.objects.create(
+            note=cls.note,
+            file=SimpleUploadedFile(
+                name="testfile",
+                content=b"Test data",
+                content_type="text/plain",
+            ),
+        )
+        cls.user = User.objects.create(username="TestUser")
+
+    def test_get(self):
+        request = self.request_factory.get(
+            reverse("suila:note_attachment", kwargs={"pk": self.attachment.pk})
+        )
+        request.user = self.user
+        view = self.view_class()
+        view.setup(request, pk=self.attachment.pk)
+        with self._time_context():
+            response = view.get(request, pk=self.person1.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"Test data")

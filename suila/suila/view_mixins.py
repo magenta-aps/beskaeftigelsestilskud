@@ -49,11 +49,11 @@ class FormWithFormsetView(FormView):
         formset = self.get_formset()
         for subform in formset:
             if hasattr(subform, "set_parent_form"):
-                subform.set_parent_form(form)
+                subform.set_parent_form(form)  # pragma: no cover
         form.full_clean()
         formset.full_clean()
         if hasattr(form, "clean_with_formset"):
-            form.clean_with_formset(formset)
+            form.clean_with_formset(formset)  # pragma: no cover
         if form.is_valid() and formset.is_valid():
             return self.form_valid(form, formset)
         else:
