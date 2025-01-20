@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal
 from itertools import groupby
 from operator import attrgetter
-from typing import Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Sequence, Tuple
 
 from common import utils
 from dateutil.relativedelta import relativedelta
@@ -31,6 +31,13 @@ from suila.models import (
 
 class EstimationEngine:
 
+    description = "Tom superklasse"
+    valid_income_types: List[IncomeType] = [
+        IncomeType.A,
+        IncomeType.B,
+        IncomeType.U,
+    ]
+
     @classmethod
     def estimate(
         cls,
@@ -40,19 +47,19 @@ class EstimationEngine:
     ) -> IncomeEstimate | None:
         raise NotImplementedError
 
-    description = "Tom superklasse"
-
     @classmethod
     def subset_sum(
         cls,
         relevant: Iterable[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> Decimal:
-        # Add Decimal(0) to shut MyPy up
-        if income_type == IncomeType.A:
-            return Decimal(0) + sum([row.a_income for row in relevant])
-        if income_type == IncomeType.B:  # pragma: no branch
-            return Decimal(0) + sum([row.b_income for row in relevant])
+        income_map = {
+            IncomeType.A: lambda row: row.a_income,
+            IncomeType.B: lambda row: row.b_income,
+            IncomeType.U: lambda row: row.u_income,
+        }
+
+        return Decimal(0) + sum(income_map[income_type](row) for row in relevant)
 
     @classmethod
     def classes(cls) -> List[type[EstimationEngine]]:
@@ -69,11 +76,6 @@ class EstimationEngine:
     @classmethod
     def name(cls):
         return cls.__name__
-
-    valid_income_types: List[IncomeType] = [
-        IncomeType.A,
-        IncomeType.B,
-    ]
 
     @staticmethod
     def valid_engines_for_incometype(income_type: IncomeType):
@@ -148,6 +150,7 @@ class EstimationEngine:
                 a_income=Decimal(person_month.a_income or 0),
                 b_income=Decimal(person_month.b_income or 0)
                 + Decimal(person_month.b_income_from_year or 0),
+                u_income=Decimal(person_month.u_income_from_year or 0),
             )
             for person_month in qs
             if not (
@@ -162,16 +165,17 @@ class EstimationEngine:
 
         if output_stream is not None:
             output_stream.write("Computing estimates ...\n")
+
         results = []
         summaries = []
-
         for idx, (key, items) in enumerate(
             groupby(data_qs, key=attrgetter("person_pk"))
         ):
             subset = list(items)
+            person_pk = subset[0].person_pk
+
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
-            person_pk = subset[0].person_pk
 
             first_income_month = 1
             for month_data in [  # pragma: no branch
@@ -181,19 +185,32 @@ class EstimationEngine:
                     first_income_month = month_data.month
                     break
 
-            person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
+            actual_year_sums: Dict[IncomeType, Dict[int, Decimal]] = {}
+            for income_type in IncomeType:
+                actual_year_sums[income_type] = {}
 
-            actual_year_sums = {
-                income_type: {
-                    month: sum(
-                        row.a_income if income_type == "A" else row.b_income
+                for month in range(first_income_month, 13):
+                    income_type_sum = Decimal("0.00")
+
+                    if income_type == "A":
+                        row_income_selector = "a_income"
+                    elif income_type == "U":
+                        row_income_selector = "u_income"
+                    else:
+                        # NOTE: Our old logic defaulted to b_income if it didn't "know"
+                        # the income_type, so we continue to do this here
+                        row_income_selector = "b_income"
+
+                    income_type_sum = sum(
+                        getattr(row, row_income_selector)
                         for row in subset
                         if row.year == year and row.year_month <= date(year, month, 1)
                     )
-                    for month in range(first_income_month, 13)
-                }
-                for income_type in IncomeType
-            }
+
+                    actual_year_sums[income_type][month] = income_type_sum
+
+            # Handle EstimationEngine instances
+            person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
 
             for engine in EstimationEngine.instances():
                 for income_type in engine.valid_income_types:
@@ -316,9 +333,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         # Trim off items with no income from the beginning of the list
         relevant_items = trim_list_first(
             relevant_items,
-            lambda item: not (
-                item.a_income if income_type == IncomeType.A else item.b_income
-            ).is_zero(),
+            InYearExtrapolationEngine.filter_relevant_items(income_type),
         )
 
         relevant_count = len(relevant_items)
@@ -348,6 +363,18 @@ class InYearExtrapolationEngine(EstimationEngine):
             if item.year == year_month.year and item.year_month <= year_month
         ]
         return items
+
+    @staticmethod
+    def filter_relevant_items(income_type):
+        def _filter(item):
+            if income_type == IncomeType.A:
+                return not item.a_income.is_zero()
+            elif income_type == IncomeType.U:
+                return not item.u_income.is_zero()
+            else:
+                return not item.b_income.is_zero()
+
+        return _filter
 
 
 class TwelveMonthsSummationEngine(EstimationEngine):

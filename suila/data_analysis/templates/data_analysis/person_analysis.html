@@ -135,7 +135,7 @@ const chartOptions = {
         x: {
             show:true,
         }
-    }    
+    }
 };
 
 
@@ -152,16 +152,36 @@ const bucketize = function(items) {
 
 // Build chart data based on each "row" in dataset
 const getChartData = function (doc, row, rowId, options) {
-    const series = [];
-    let hasData = false;
-    const labelledSeries = [];
+    const chartData = structuredClone(options);
+    chartData.chart.id = rowId;
+    chartData.chart.type = row.chart_type;
+    if (chartData.chart.type == "bar") {
+        chartData.chart.stacked = true
+        chartData.plotOptions.bar = {
+            dataLabels: {
+                total: {
+                    enabled: true,
+                }
+            }
+        }
+        chartData.tooltip = {
+            shared: true,
+            intersect: false,
+            x: {
+                show: true
+            }
+        }
+    }
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const category = function(year, month) {
         return monthNames[month-1] + " " + year;
     }
-    const chartData = structuredClone(options);
-    chartData.chart.id = rowId;
+
+    const series = [];
+    const labelledSeries = [];
+    let hasData = false;
+
     const xLabels = [];
     for (let year=doc.year_start; year<=doc.year_end; year++) {
         for (let month of monthNames) {
@@ -178,23 +198,68 @@ const getChartData = function (doc, row, rowId, options) {
     };
 
     if (row.income_series) {
-        const incomeData = []
         const data = bucketize(row.income_series);
-        for (let year = doc.year_start; year <= doc.year_end; year++) {
-            for (let month = 1; month <= 12; month++) {
-                const item = data[year] && data[year][month];
-                incomeData.push({
-                    x: category(year, month),
-                    y: item ? item.value : null,
-                });
+
+        if (chartData.chart.type === "bar") {
+            const incomeTypesSet = new Set();
+            const incomeTypeValues = {};
+
+            // Iterate over years and months once
+            for (let year = doc.year_start; year <= doc.year_end; year++) {
+                for (let month = 1; month <= 12; month++) {
+                    const item = data[year]?.[month];
+                    if (item?.value_parts) {
+                        for (const valuePart of item.value_parts) {
+                            const incomeType = valuePart.income_type;
+
+                            // Add to incomeTypesSet
+                            incomeTypesSet.add(incomeType);
+
+                            // Accumulate values for each income type
+                            if (!incomeTypeValues[incomeType]) {
+                                incomeTypeValues[incomeType] = [];
+                            }
+
+                            // Ensure array length matches the timeline
+                            while (incomeTypeValues[incomeType].length < (year - doc.year_start) * 12 + month) {
+                                incomeTypeValues[incomeType].push(0);
+                            }
+
+                            incomeTypeValues[incomeType][(year - doc.year_start) * 12 + month - 1] += valuePart.value;
+                        }
+                    }
+                }
             }
+
+            // Prepare series data
+            const incomeTypes = Array.from(incomeTypesSet);
+            for (const incomeType of incomeTypes) {
+                series.push({
+                    name: `${incomeType} indkomst`,
+                    data: incomeTypeValues[incomeType],
+                });
+                labelledSeries.push(series.length - 1);
+            }
+        } else {
+            const incomeData = []
+            for (let year = doc.year_start; year <= doc.year_end; year++) {
+                for (let month = 1; month <= 12; month++) {
+                    const item = data[year] && data[year][month];
+                    incomeData.push({
+                        x: category(year, month),
+                        y: item ? item.value : null,
+                    });
+                }
+            }
+
+            series.push({
+                data: incomeData,
+                name: "Indkomst",
+                type: "column",
+            });
+            labelledSeries.push(series.length-1);
         }
-        series.push({
-            data: incomeData,
-            name: "Indkomst",
-            type: "column",
-        });
-        labelledSeries.push(series.length-1);
+
         hasData = true;
     }
 
@@ -314,7 +379,6 @@ const getChartData = function (doc, row, rowId, options) {
     if (hasData) {
         // Construct chart data by combining series and options
         chartData.series = series;
-
         const annotations = [];
         for (let year = doc.year_start; year <= doc.year_end; year++) {
 
