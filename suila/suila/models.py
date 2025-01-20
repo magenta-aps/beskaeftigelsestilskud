@@ -1558,12 +1558,3 @@ class NoteAttachment(models.Model):
     @property
     def filename(self):
         return basename(self.file.name)
-
-
-#
-#     @staticmethod
-#     def set_content_type(sender, instance, **kwargs):
-#         print(dir(instance.file))
-#         instance.content_type = instance.file.content_type
-#
-# pre_save.connect(NoteAttachment.set_content_type, sender=NoteAttachment)

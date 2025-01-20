@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
+SPDX-License-Identifier: MPL-2.0
+*/
 $(function() {
     const fileInputContainer = $(".file-input");
     fileInputContainer.on("dragenter", function () {
