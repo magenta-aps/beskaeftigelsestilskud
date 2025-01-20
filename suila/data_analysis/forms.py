@@ -162,7 +162,7 @@ class PersonAnalysisOptionsForm(DynamicFormMixin, BootstrapForm):
     )
 
     income_type = forms.ChoiceField(
-        choices=[(None, _("Begge"))]
+        choices=[(None, _("Alle"))]
         + [(choice.value, choice.label) for choice in IncomeType],
         label=_("Indkomsttype"),
         required=False,
