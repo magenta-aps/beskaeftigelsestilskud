@@ -7,6 +7,7 @@ from functools import cached_property
 from typing import Callable
 from urllib.parse import urlencode
 
+from common.models import User
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import CharField, Count, F, Field, Q, QuerySet, Sum, Value
 from django.db.models.functions import Cast, LPad
@@ -456,12 +457,13 @@ class PersonDetailNotesView(
         self.object = self.get_object()
         return super().post(request, *args, **kwargs)
 
-    def form_valid(
+    def form_valid(  # type: ignore[override]
         self,
         form: NoteForm,
         formset: BaseInlineFormSet,
-    ) -> HttpResponse:  # type: ignore[override]
+    ) -> HttpResponse:
         object: Note = form.save(commit=False)
+        assert isinstance(self.request.user, User)
         object.author = self.request.user
         object.personyear = self.person_year
         object.save()
