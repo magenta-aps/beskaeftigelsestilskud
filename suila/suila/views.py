@@ -148,7 +148,11 @@ class PersonYearMonthMixin(YearMonthMixin):
 
     @cached_property
     def person_year(self):
-        return PersonYear.objects.get(year_id=self.year, person_id=self.person_pk)
+        personyear, _ = PersonYear.objects.get_or_create(
+            year_id=self.year,
+            person_id=self.person_pk,
+        )
+        return personyear
 
 
 class ChartMixin:
