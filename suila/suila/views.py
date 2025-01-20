@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import CharField, Count, F, Field, Q, QuerySet, Sum, Value
 from django.db.models.functions import Cast, LPad
-from django.forms import Form
+from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
@@ -143,7 +143,7 @@ class PersonYearMonthMixin(YearMonthMixin):
 
     @cached_property
     def person_pk(self) -> int:
-        return self.kwargs["pk"]
+        return self.kwargs["pk"]  # type: ignore[attr-defined]
 
     @cached_property
     def person_year(self):
@@ -456,7 +456,11 @@ class PersonDetailNotesView(
         self.object = self.get_object()
         return super().post(request, *args, **kwargs)
 
-    def form_valid(self, form: Form, formset):
+    def form_valid(
+        self,
+        form: NoteForm,
+        formset: BaseInlineFormSet,
+    ) -> HttpResponse:  # type: ignore[override]
         object: Note = form.save(commit=False)
         object.author = self.request.user
         object.personyear = self.person_year
