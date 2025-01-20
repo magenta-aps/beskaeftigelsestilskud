@@ -1062,7 +1062,7 @@ class TestLoadEskatCommand(BaseEnvMixin, TestCase):
                     EskatClient, "from_settings", return_value=mock_client
                 ):
                     # Act
-                    result: list[PersonMonth] = self.command._handle(
+                    self.command._handle(
                         type="monthlyincome",
                         year=input_year,
                         month=input_month,
@@ -1080,14 +1080,6 @@ class TestLoadEskatCommand(BaseEnvMixin, TestCase):
                             for call in mock_client.get_monthly_income.call_args_list
                         ],
                         expected_args,
-                    )
-                    # Assert: benefit recalculations are triggered
-                    self.assertGreater(len(result), 0)
-                    self.assertTrue(
-                        all(
-                            person_month.benefit_paid is not None
-                            for person_month in result
-                        )
                     )
 
 

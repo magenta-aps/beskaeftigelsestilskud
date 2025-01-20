@@ -12,7 +12,7 @@ from suila.integrations.eskat.load import (
     TaxInformationHandler,
 )
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import DataLoad, PersonMonth
+from suila.models import DataLoad
 
 
 class Command(SuilaBaseCommand):
@@ -57,21 +57,13 @@ class Command(SuilaBaseCommand):
                 year, client.get_expected_income(year, cpr), load, self.stdout
             )
         if typ == "monthlyincome":
-            result: list[PersonMonth] = []
             for year_, month_kwargs in self._get_year_and_month_kwargs(year, month):
-                person_months = MonthlyIncomeHandler.create_or_update_objects(
+                MonthlyIncomeHandler.create_or_update_objects(
                     year_,
                     client.get_monthly_income(year_, cpr=cpr, **month_kwargs),
                     load,
                     self.stdout,
                 )
-                if month is not None:
-                    assert isinstance(month, int)
-                    for person_month in person_months:
-                        person_month.recalculate_benefit_if_not_paid_out(year, month)
-                        self.stdout.write(f"Recalculated benefit for {person_month}")
-                result.extend(person_months)
-            return result
         if typ == "taxinformation":
             TaxInformationHandler.create_or_update_objects(
                 year,
