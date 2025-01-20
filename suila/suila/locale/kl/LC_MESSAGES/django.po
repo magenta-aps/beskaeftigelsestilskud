@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-17 08:19-0200\n"
+"POT-Creation-Date: 2025-01-20 06:37-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -116,6 +116,86 @@ msgstr ""
 msgid "Overført til fjernprint"
 msgstr ""
 
+#: suila/models.py
+msgid "U1A ID i AKAP"
+msgstr ""
+
+#: suila/models.py
+msgid "Navn på udfylder"
+msgstr ""
+
+#: suila/models.py
+msgid "Revisionsfirma"
+msgstr ""
+
+#: suila/models.py
+msgid "Virksomhedsnavn"
+msgstr ""
+
+#: suila/models.py
+msgid "CVR"
+msgstr ""
+
+#: suila/models.py
+msgid "Email-adresse"
+msgstr ""
+
+#: suila/models.py
+msgid "Udbyttet vedrører regnskabsåret"
+msgstr ""
+
+#: suila/models.py
+msgid "Har du allerede udfyldt U1?"
+msgstr ""
+
+#: suila/models.py
+msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
+msgstr ""
+
+#: suila/models.py
+msgid "Særlige oplysninger"
+msgstr ""
+
+#: suila/models.py
+msgid "By"
+msgstr ""
+
+#: suila/models.py
+msgid "Navn på underskriftsberettiget for selskabet"
+msgstr ""
+
+#: suila/models.py
+msgid "Oprettet af CPR"
+msgstr ""
+
+#: suila/models.py
+msgid "Oprettet af CVR"
+msgstr ""
+
+#: suila/models.py
+msgid "U1AItem ID i AKAP"
+msgstr ""
+
+#: suila/models.py
+msgid "CPR-nr / CVR-nr / TIN"
+msgstr ""
+
+#: suila/models.py suila/views.py
+msgid "Navn"
+msgstr ""
+
+#: suila/models.py suila/templates/suila/person_detail_base.html suila/views.py
+msgid "Adresse"
+msgstr ""
+
+#: suila/models.py
+msgid "Postnummer"
+msgstr ""
+
+#: suila/models.py
+msgid "Land"
+msgstr ""
+
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_base.html
 msgid "Nøgletal"
@@ -154,10 +234,6 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_base.html
 msgid "Skatteår"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html suila/views.py
-msgid "Adresse"
 msgstr ""
 
 #: suila/templates/suila/person_detail_base.html suila/views.py
@@ -266,10 +342,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "CPR-nummer"
-msgstr ""
-
-#: suila/views.py
-msgid "Navn"
 msgstr ""
 
 #: suila/views.py
