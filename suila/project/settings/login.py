@@ -48,6 +48,7 @@ LOGIN_REPEATED_URL = reverse_lazy("login:login-repeat")
 LOGIN_NO_CPRCVR_URL = reverse_lazy("login:login-no-cpr")
 LOGIN_REDIRECT_URL = reverse_lazy("suila:root")
 LOGIN_MITID_REDIRECT_URL = reverse_lazy("login:login")
+LOGIN_METADATA_URL = reverse_lazy(LOGIN_NAMESPACE + "saml:metadata")
 LOGIN_URL = reverse_lazy("login:login")
 LOGOUT_REDIRECT_URL = reverse_lazy("login:logged_out")
 LOGIN_PROVIDER_CLASS = os.environ.get("LOGIN_PROVIDER_CLASS") or None
@@ -61,6 +62,7 @@ LOGIN_WHITELISTED_URLS = [
     LOGIN_NO_CPRCVR_URL,
     LOGIN_REDIRECT_URL,
     LOGOUT_REDIRECT_URL,
+    LOGIN_METADATA_URL,
     re.compile("^/api.*"),
 ]
 MITID_TEST_ENABLED = bool(strtobool(os.environ.get("MITID_TEST_ENABLED", "False")))
@@ -81,7 +83,7 @@ SAML = {
     "entityid": os.environ.get("SAML_SP_ENTITY_ID"),
     "idp_entity_id": os.environ.get("SAML_IDP_ENTITY_ID"),
     "name": os.environ.get("SAML_SP_NAME") or "Toldbehandling",
-    "description": os.environ.get("SAML_SP_DESCRIPTION") or "Toldregistrering",
+    "description": os.environ.get("SAML_SP_DESCRIPTION") or "Beskæftigelsesfradrag",
     "verify_ssl_cert": False,
     "metadata_remote": os.environ.get("SAML_IDP_METADATA"),
     # Til metadata-fetch mellem containere
