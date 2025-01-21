@@ -1188,3 +1188,48 @@ class TestExpectedIncomeUpdate(BaseEnvMixin, TestCase):
             StringIO(),
         )
         return load
+
+
+class TestAnnualIncomeUpdate(BaseEnvMixin, TestCase):
+    """Test that subsequent updates to the same annual income report (same person and
+    year) are stored as updates to the same `AnnualIncome`.
+    """
+
+    def test_subsequent_update(self):
+        # Arrange: create an initial value for year
+        load1 = self._create_or_update_objects(salary=1000)
+        # Act: add an updated value for year
+        load2 = self._create_or_update_objects(salary=2000)
+        # Assert: two separate loads are recorded
+        self.assertNotEqual(load1, load2)
+        # Assert: there is only one `AnnualIncome` (with the latest value)
+        annual_incomes = AnnualIncomeModel.objects.filter(
+            person_year__person=self.person,
+            person_year__year=self.year,
+        )
+        self.assertQuerySetEqual(
+            annual_incomes.values_list("person_year__year__year", "salary"),
+            [(self.year.year, 2000)],
+        )
+        # Assert: both current and previous versions of the `AnnualIncome` are
+        # kept in history, so previous amount, etc. is available.
+        self.assertQuerySetEqual(
+            annual_incomes[0]
+            .history.order_by("history_date")
+            .values_list("salary", flat=True),
+            [Decimal(1000), Decimal(2000)],
+        )
+
+    def _create_or_update_objects(self, **kwargs) -> DataLoad:
+        annual_income = AnnualIncome(
+            cpr=self.person.cpr,
+            year=self.year.year,
+            **kwargs,
+        )
+        load = DataLoad.objects.create(source="testing")
+        AnnualIncomeHandler.create_or_update_objects(
+            [annual_income],
+            load,
+            StringIO(),
+        )
+        return load

@@ -170,7 +170,7 @@ class AnnualIncomeHandler(Handler):
         items: List[AnnualIncome],
         load: DataLoad,
         out: TextIO,
-    ):
+    ) -> list[AnnualIncomeModel]:
         with transaction.atomic():
             year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
                 dict
@@ -179,18 +179,60 @@ class AnnualIncomeHandler(Handler):
                 if item.year is not None and item.cpr is not None:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
+
             if person_years:
-                annual_incomes = [
-                    AnnualIncomeModel(
-                        person_year=person_years[item.cpr],
-                        load=load,
-                        **omit(asdict(item), "cpr", "year"),
-                    )
-                    for item in items
-                    if item.cpr is not None
-                ]
-                AnnualIncomeModel.objects.bulk_create(annual_incomes)
-                out.write(f"Created {len(annual_incomes)} AnnualIncome objects")
+                objs_to_create = []
+                objs_to_update = []
+
+                for item in items:
+                    if item.cpr is None or item.year is None:
+                        print(
+                            "Skipping item with empty CPR and/or year "
+                            f"(cpr={item.cpr!r}, year={item.year!r})"
+                        )
+                        continue
+
+                    field_values = omit(asdict(item), "cpr", "year")
+
+                    try:
+                        # Find existing `AnnualIncome` for this person year
+                        annual_income = AnnualIncomeModel.objects.get(
+                            person_year=person_years[item.cpr]
+                        )
+                    except AnnualIncomeModel.DoesNotExist:
+                        # An existing `AnnualIncome` does not exist for this person year
+                        # - create it.
+                        annual_income = AnnualIncomeModel(
+                            person_year=person_years[item.cpr],
+                            load=load,
+                            **field_values,
+                        )
+                        objs_to_create.append(annual_income)
+                    else:
+                        # An `AnnualIncome` exists for this person year - update it.
+                        for name, value in field_values.items():
+                            setattr(annual_income, name, value)
+                        objs_to_update.append(annual_income)
+
+                bulk_update_with_history(
+                    objs_to_update,
+                    AnnualIncomeModel,
+                    [
+                        f.name
+                        for f in AnnualIncomeModel._meta.fields
+                        if not f.primary_key
+                    ],
+                )
+
+                bulk_create_with_history(objs_to_create, AnnualIncomeModel)
+
+                out.write(f"Created {len(objs_to_create)} AnnualIncome objects")
+                out.write(f"Updated {len(objs_to_update)} AnnualIncome objects")
+
+                return objs_to_create + objs_to_update
+
+        # Fall-through: return empty list
+        return []
 
 
 class ExpectedIncomeHandler(Handler):
