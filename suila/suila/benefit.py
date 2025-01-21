@@ -4,6 +4,7 @@
 from datetime import date
 from fractions import Fraction
 
+import numpy as np
 import pandas as pd
 from common import utils
 from django.conf import settings
@@ -133,7 +134,8 @@ def calculate_benefit(
             df_quarantine.in_quarantine, "remaining_benefit_for_year"
         ] -= df.benefit_this_month
 
-    df["benefit_paid"] = df.benefit_this_month
+    df["benefit_paid"] = np.ceil(df["benefit_this_month"])
+
     return df
 
 
