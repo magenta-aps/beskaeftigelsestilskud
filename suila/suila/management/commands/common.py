@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import logging
 import os
 from cProfile import Profile
 
@@ -9,6 +10,8 @@ from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
 from suila.models import JobLog, StatusChoices
+
+logger = logging.getLogger(__name__)
 
 
 class SuilaBaseCommand(BaseCommand):
@@ -41,6 +44,7 @@ class SuilaBaseCommand(BaseCommand):
                 self._handle(*args, **options)
             job_log.status = StatusChoices.SUCCEEDED
         except Exception as exc:
+            logger.exception("SuilaBaseCommand error!")
             job_log.status = StatusChoices.FAILED
             if options.get("reraise", False):
                 raise exc
