@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import logging
 from collections import defaultdict
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List, Set, TextIO
@@ -122,7 +122,7 @@ class Handler:
         return person_years
 
     @classmethod
-    def get_person_month(cls, cpr: str, year: int, month: int) -> PersonMonth:
+    def get_person_month(cls, cpr: str, year: int | None, month: int) -> PersonMonth:
         qs = PersonMonth.objects.select_related("person_year__person")
         person_month = qs.get(
             person_year__person__cpr=cpr,
@@ -132,7 +132,7 @@ class Handler:
         return person_month
 
     @classmethod
-    def get_person_year(cls, cpr: str, year: int) -> PersonYear:
+    def get_person_year_assessment(cls, cpr: str, year: int) -> PersonYearAssessment:
         qs = PersonYearAssessment.objects.select_related(
             "person_year__year", "person_year__person"
         )
@@ -145,7 +145,7 @@ class Handler:
     @classmethod
     def get_field_values(
         cls,
-        item: dataclass,
+        item: Any,
         default: int = 0,
         exclude: set[str] | None = None,
     ) -> dict[str, Any]:
@@ -259,7 +259,7 @@ class ExpectedIncomeHandler(Handler):
 
                     try:
                         # Find existing assessment
-                        assessment = cls.get_person_year(item.cpr, item.year)
+                        assessment = cls.get_person_year_assessment(item.cpr, item.year)
                     except PersonYearAssessment.DoesNotExist:
                         # An existing assessment does not exist for this person and year
                         # - create it.
@@ -293,6 +293,9 @@ class ExpectedIncomeHandler(Handler):
                 out.write(f"Updated {len(objs_to_update)} PersonYearAssessment objects")
 
                 return objs_to_create + objs_to_update
+
+        # Fall-through: return empty list
+        return []
 
 
 class MonthlyIncomeHandler(Handler):
