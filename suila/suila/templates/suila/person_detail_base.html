@@ -21,6 +21,7 @@
             <a href="{% url "suila:person_detail" pk=person.pk %}?year={{ year }}" class="nav-item {{ request|is_current_url:"suila:person_detail" }}">{% translate "Nøgletal" %}</a>
             <a href="{% url "suila:person_detail_benefits" pk=person.pk %}?year={{ year }}" class="nav-item {{ request|is_current_url:"suila:person_detail_benefits" }}">{% translate "Udbetalinger" %}</a>
             <a href="{% url "suila:person_detail_income" pk=person.pk %}?year={{ year }}" class="nav-item {{ request|is_current_url:"suila:person_detail_income" }}">{% translate "Indkomst" %}</a>
+            <a href="{% url "suila:person_detail_notes" pk=person.pk %}?year={{ year }}" class="nav-item {{ request|is_current_url:"suila:person_detail_notes" }}">{% translate "Noter" %}</a>
         </nav>
         <h3>{% translate "Skatteår" %}</h3>
         <nav class="nav navbar-nav navbar-light flex-column secondary-nav">

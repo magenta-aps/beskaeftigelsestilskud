@@ -22,4 +22,5 @@ include(
     "bootstrap5.py",
     "eboks.py",
     "akap.py",
+    "upload.py",
 )

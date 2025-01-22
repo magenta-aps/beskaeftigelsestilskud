@@ -10,6 +10,7 @@ ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir /app && \
     mkdir -p /var/cache/suila && \
+    mkdir -p /upload/note && \
     mkdir /static && \
     #gid/uid from salt
     groupadd -g 75180 -r suila && \
@@ -17,6 +18,7 @@ RUN mkdir /app && \
     useradd -u 75180 --no-log-init -r -g suila -G certificate_exporter suila && \
     chown -R suila:suila /static && \
     chown -R suila:suila /var/cache/suila && \
+    chown -R suila:suila /upload && \
     chmod a+w /var/cache/suila
 
 # supercronic
