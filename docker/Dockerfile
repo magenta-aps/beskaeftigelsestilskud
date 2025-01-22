@@ -10,7 +10,7 @@ ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir /app && \
     mkdir -p /var/cache/suila && \
-    mkdir -p /upload && \
+    mkdir -p /upload/note && \
     mkdir /static && \
     #gid/uid from salt
     groupadd -g 75180 -r suila && \
