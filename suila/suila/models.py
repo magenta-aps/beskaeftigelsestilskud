@@ -7,8 +7,10 @@ import base64
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
+from os.path import basename
 from typing import List, Sequence, Tuple
 
+from common.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -1524,3 +1526,35 @@ class PersonYearU1AAssessment(models.Model):
     created = models.DateTimeField(
         auto_now_add=True,
     )
+
+
+class Note(models.Model):
+    personyear = models.ForeignKey(PersonYear, null=False, on_delete=models.CASCADE)
+    text = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    history = HistoricalRecords(
+        history_change_reason_field=models.TextField(null=True),
+        related_name="history_entries",
+    )
+
+
+def get_attachment_path(instance, filename):
+    return (
+        f"note/{instance.note.personyear.year.year}/"
+        f"{instance.note.personyear.person.cpr}/"
+        f"{instance.note.pk}/{filename}"
+    )
+
+
+class NoteAttachment(models.Model):
+    class Meta:
+        ordering = ["file"]
+
+    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="attachments")
+    file = models.FileField(upload_to=get_attachment_path)
+    content_type = models.CharField(max_length=100)
+
+    @property
+    def filename(self):
+        return basename(self.file.name)

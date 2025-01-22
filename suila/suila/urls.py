@@ -10,6 +10,8 @@ from suila.api import api
 from suila.views import (
     PersonDetailBenefitView,
     PersonDetailIncomeView,
+    PersonDetailNotesAttachmentView,
+    PersonDetailNotesView,
     PersonDetailView,
     PersonSearchView,
     RootView,
@@ -32,5 +34,15 @@ urlpatterns: List[URLResolver | URLPattern] = [
         "persons/<int:pk>/income/",
         PersonDetailIncomeView.as_view(),
         name="person_detail_income",
+    ),
+    path(
+        "persons/<int:pk>/notes/",
+        PersonDetailNotesView.as_view(),
+        name="person_detail_notes",
+    ),
+    path(
+        "notes/<int:pk>/",
+        PersonDetailNotesAttachmentView.as_view(),
+        name="note_attachment",
     ),
 ]
