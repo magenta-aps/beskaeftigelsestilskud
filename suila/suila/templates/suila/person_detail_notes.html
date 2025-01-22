@@ -35,7 +35,7 @@
             <tr>
             <td>{{ note.author.username }}</td>
             <td>{{ note.created }}</td>
-            <td>{{ note.text }}</td>
+            <td>{{ note.text|linebreaks }}</td>
             <td>
                 {% for attachment in note.attachments.all %}
                     <div><a href="{% url 'suila:note_attachment' pk=attachment.pk %}">{{ attachment.filename }}</a></div>
@@ -48,7 +48,7 @@
     </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="note-form">
     {% csrf_token %}
     {{ formset.management_form }}
         <div class="row">
@@ -145,5 +145,24 @@
                 subformRemoved(row);
             });
         });
+    </script>
+    <script nonce="{{ request.csp_nonce }}">
+    $(function(){
+        const form = $("#note-form");
+        const selector = "input[type=file],textarea";
+        const updateSubmit = function() {
+            let hasValue = false;
+            form.find(selector).each((index, element) => {
+                if (element.value) {
+                    hasValue = true;
+                    return true;
+                }
+            });
+            $("form button[type=submit]").prop("disabled", !hasValue);
+        };
+        form.on("change keyup", selector, updateSubmit);
+        $("#formset_container").on("subform.post_remove", updateSubmit);
+        updateSubmit();
+    });
     </script>
 {% endblock %}
