@@ -366,54 +366,58 @@ class TestEstimationEngine(TestCase):
             index=[self.person.cpr],
         )
         now.return_value = datetime(2025, 1, 15, 15, 0, 0, tzinfo=timezone.utc)
+
         with self.assertRaises(TypeError):
             # Mocking breaker noget i metoden, men det sker efter
             # vi har fået det vi skal bruge i assertions nedenfor
             EstimationEngine.estimate_all(
                 self.year.year, self.person.pk, count=1, dry_run=True
             )
+
+        # Asserts
         get_people_in_quarantine.assert_called()
         monthlyincomedata.assert_called()
         exclude_months = {(2024, 12), (2025, 1)}
-        for year in (2024, 2025):
-            for month in range(1, 13):
-                try:
-                    person_month = PersonMonth.objects.get(
-                        person_year__year=year, month=month
+        for month in range(1, 13):
+            try:
+                person_month = PersonMonth.objects.get(
+                    person_year__year=self.year.year, month=month
+                )
+            except PersonMonth.DoesNotExist:
+                continue
+
+            data = {
+                "year": self.year.year,
+                "month": month,
+                "person_pk": self.person.pk,
+                "person_month_pk": person_month.pk,
+                "person_year_pk": person_month.person_year.pk,
+                "a_income": sum(
+                    person_month.monthlyincomereport_set.all().values_list(
+                        "a_income", flat=True
                     )
-                except PersonMonth.DoesNotExist:
-                    continue
-                data = {
-                    "year": year,
-                    "month": month,
-                    "person_pk": self.person.pk,
-                    "person_month_pk": person_month.pk,
-                    "person_year_pk": person_month.person_year.pk,
-                    "a_income": sum(
-                        person_month.monthlyincomereport_set.all().values_list(
-                            "a_income", flat=True
-                        )
-                    ),
-                    "b_income": sum(
-                        person_month.monthlyincomereport_set.all().values_list(
-                            "b_income", flat=True
-                        )
+                ),
+                "b_income": sum(
+                    person_month.monthlyincomereport_set.all().values_list(
+                        "b_income", flat=True
                     )
-                    + Decimal(person_month.b_income_from_year or 0),
-                    "u_income": Decimal(person_month.u_income_from_year or 0),
-                }
-                if (year, month) in exclude_months:
-                    self.assertNotIn(
-                        call(**data),
-                        monthlyincomedata.call_args_list,
-                        f"year: {year}, month: {month}",
-                    )
-                else:
-                    self.assertIn(
-                        call(**data),
-                        monthlyincomedata.call_args_list,
-                        f"year: {year}, month: {month}",
-                    )
+                )
+                + Decimal(person_month.b_income_from_year or 0),
+                "u_income": Decimal(person_month.u_income_from_year or 0),
+            }
+
+            if (self.year.year, month) in exclude_months:
+                self.assertNotIn(
+                    call(**data),
+                    monthlyincomedata.call_args_list,
+                    f"year: {self.year.year}, month: {month}",
+                )
+            else:
+                self.assertIn(
+                    call(**data),
+                    monthlyincomedata.call_args_list,
+                    f"year: {self.year.year}, month: {month}",
+                )
 
 
 class TestInYearExtrapolationEngine(TestCase):
