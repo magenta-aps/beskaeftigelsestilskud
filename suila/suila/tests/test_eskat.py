@@ -34,6 +34,10 @@ from suila.integrations.eskat.responses.data_models import (
     MonthlyIncome,
     TaxInformation,
 )
+from suila.management.commands.calculate_benefit import (
+    Command as CalculateBenefitCommand,
+)
+from suila.management.commands.estimate_income import Command as EstimateIncomeCommand
 from suila.management.commands.load_eskat import Command as LoadEskatCommand
 from suila.models import AnnualIncome as AnnualIncomeModel
 from suila.models import (
@@ -1097,17 +1101,65 @@ class TestLoadEskatCommand(BaseEnvMixin, TestCase):
                     )
 
 
-class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
+class TestUpdateMixin(BaseEnvMixin):
+    """Helper class for testing the behavior of data updates, as well as processing
+    late data.
+    """
+
+    response_model: type | None = None
+    handler: type[Handler] | None = None
+
+    def create_or_update_objects(self, **kwargs) -> DataLoad:
+        response = self.response_model(
+            cpr=self.person.cpr,
+            year=self.year.year,
+            **kwargs,
+        )
+        load = DataLoad.objects.create(source="testing")
+        self.handler.create_or_update_objects(*self.get_handler_args(response, load))
+        return load
+
+    def get_handler_args(self, response, load: DataLoad) -> tuple:
+        return self.year.year, [response], load, StringIO()
+
+    def estimate_income(self, month: int = 1) -> Decimal | None:
+        command = EstimateIncomeCommand()
+        command._handle(
+            year=self.year.year,
+            cpr=self.person.cpr,
+            count=None,
+            dry=False,
+            verbosity=0,
+        )
+        command = CalculateBenefitCommand()
+        command._handle(
+            year=self.year.year,
+            month=month,
+            cpr=self.person.cpr,
+            verbosity=0,
+        )
+        person_month: PersonMonth = PersonMonth.objects.get(
+            person_year__year=self.year,
+            person_year__person=self.person,
+            month=month,
+        )
+        return person_month.estimated_year_result
+
+
+class TestMonthlyIncomeUpdate(TestUpdateMixin, TestCase):
     """Test that subsequent updates to the same monthly income report (same person and
     month) are stored as updates to the same `MonthlyIncomeReport`, and that the
     `PersonMonth` is updated as expected.
     """
 
+    response_model = MonthlyIncome
+    handler = MonthlyIncomeHandler
+
     def test_subsequent_update(self):
         # Arrange: create an initial value for month 1
-        load1 = self._create_or_update_objects(month=1, salary_income=1000)
+        load1 = self.create_or_update_objects(month=1, salary_income=1000)
         # Act: add an updated value for month 1
-        load2 = self._create_or_update_objects(month=1, salary_income=2000)
+        load2 = self.create_or_update_objects(month=1, salary_income=2000)
         # Assert: two separate loads are recorded
         self.assertNotEqual(load1, load2)
         # Assert: there is only one `MonthlyIncomeReport` (with the latest value)
@@ -1128,32 +1180,64 @@ class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
             [Decimal(1000), Decimal(2000)],
         )
 
-    def _create_or_update_objects(self, **kwargs) -> DataLoad:
-        monthly_income = MonthlyIncome(
-            cpr=self.person.cpr,
-            year=self.year.year,
-            **kwargs,
-        )
-        load = DataLoad.objects.create(source="testing")
-        MonthlyIncomeHandler.create_or_update_objects(
-            self.year.year,
-            [monthly_income],
-            load,
-            StringIO(),
-        )
-        return load
+    def test_updated_data_affects_estimated_year_income(self):
+        # Arrange: create an initial value for month 1
+        self.create_or_update_objects(month=1, salary_income=20000)
+        # Act: run an initial income estimation for month 1
+        estimate_1 = self.estimate_income(month=1)
+        # Assert: we expect 12 months of income 20,000 (= 240,000)
+        self.assertEqual(estimate_1, Decimal("240000"))
+
+        # Arrange: create an initial value for month 2, and an updated value for month 1
+        self.create_or_update_objects(month=2, salary_income=10000)
+        self.create_or_update_objects(month=1, salary_income=10000)
+        # Act: run another income estimation (for month 2)
+        estimate_2 = self.estimate_income(month=2)
+        # Assert: we now expect 12 months of income 10,000 (= 120,000)
+        self.assertEqual(estimate_2, Decimal("120000"))
+
+    def test_delayed_data_affects_estimated_year_income(self):
+        # Arrange: create a value for month 12
+        self.create_or_update_objects(month=12, salary_income=20000)
+        # Act: run an initial income estimation for month 12
+        estimate_1 = self.estimate_income(month=12)
+        # Assert: we expect 1 month of income 20,000, and 11 months of income 0
+        self.assertEqual(estimate_1, Decimal("20000"))
+
+        # Arrange: create a value for month 1 (= the delayed data)
+        self.create_or_update_objects(month=1, salary_income=20000)
+        # Act: run another income estimation (for month 12)
+        estimate_2 = self.estimate_income(month=12)
+        # Assert: we now expect 2 months of income 20,000 (January and December), and
+        # 10 months of income 0 (the months inbetween), making a total of income 40,000.
+        self.assertEqual(estimate_2, Decimal("40000"))
 
 
-class TestExpectedIncomeUpdate(BaseEnvMixin, TestCase):
+class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
     """Test that subsequent updates to the same expected income report (same person and
     year) are stored as updates to the same `PersonYearAssessment`.
     """
 
+    response_model = ExpectedIncome
+    handler = ExpectedIncomeHandler
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.personyear.preferred_estimation_engine_a = "InYearExtrapolationEngine"
+        cls.personyear.preferred_estimation_engine_b = "SelfReportedEngine"
+        cls.personyear.save()
+
+    def setUp(self):
+        super().setUp()
+        # Create an "empty" `PersonMonth` for month 1
+        self.get_or_create_person_month(month=1, import_date=date(2020, 1, 1))
+
     def test_subsequent_update(self):
         # Arrange: create an initial value for year
-        load1 = self._create_or_update_objects(capital_income=1000)
+        load1 = self.create_or_update_objects(capital_income=1000)
         # Act: add an updated value for year
-        load2 = self._create_or_update_objects(capital_income=2000)
+        load2 = self.create_or_update_objects(capital_income=2000)
         # Assert: two separate loads are recorded
         self.assertNotEqual(load1, load2)
         # Assert: there is only one `PersonYearAssessment` (with the latest value)
@@ -1174,32 +1258,40 @@ class TestExpectedIncomeUpdate(BaseEnvMixin, TestCase):
             [Decimal(1000), Decimal(2000)],
         )
 
-    def _create_or_update_objects(self, **kwargs) -> DataLoad:
-        expected_income = ExpectedIncome(
-            cpr=self.person.cpr,
-            year=self.year.year,
-            **kwargs,
-        )
-        load = DataLoad.objects.create(source="testing")
-        ExpectedIncomeHandler.create_or_update_objects(
-            self.year.year,
-            [expected_income],
-            load,
-            StringIO(),
-        )
-        return load
+    def test_updated_data_affects_estimated_year_income(self):
+        # Arrange: create an initial value for this year
+        self.create_or_update_objects(capital_income=120000)
+        # Act: run income estimation for month 1
+        estimate_1 = self.estimate_income(month=1)
+        # Assert: we expect a yearly income matching the self-reported expected income
+        self.assertEqual(estimate_1, Decimal("120000"))
+
+        # Arrange: update the previous value for this year
+        self.create_or_update_objects(capital_income=60000)
+        # Act: re-run income estimation for month 1
+        estimate_2 = self.estimate_income(month=1)
+        # Assert: we expect a yearly income matching the self-reported expected income
+        self.assertEqual(estimate_2, Decimal("60000"))
 
 
-class TestAnnualIncomeUpdate(BaseEnvMixin, TestCase):
+class TestAnnualIncomeUpdate(TestUpdateMixin, TestCase):
     """Test that subsequent updates to the same annual income report (same person and
     year) are stored as updates to the same `AnnualIncome`.
     """
 
+    response_model = AnnualIncome
+    handler = AnnualIncomeHandler
+
+    def setUp(self):
+        super().setUp()
+        # Create an "empty" `PersonMonth` for month 1 in 2020
+        self.get_or_create_person_month(month=1, import_date=date(2020, 1, 1))
+
     def test_subsequent_update(self):
         # Arrange: create an initial value for year
-        load1 = self._create_or_update_objects(salary=1000)
+        load1 = self.create_or_update_objects(salary=1000)
         # Act: add an updated value for year
-        load2 = self._create_or_update_objects(salary=2000)
+        load2 = self.create_or_update_objects(salary=2000)
         # Assert: two separate loads are recorded
         self.assertNotEqual(load1, load2)
         # Assert: there is only one `AnnualIncome` (with the latest value)
@@ -1220,16 +1312,20 @@ class TestAnnualIncomeUpdate(BaseEnvMixin, TestCase):
             [Decimal(1000), Decimal(2000)],
         )
 
-    def _create_or_update_objects(self, **kwargs) -> DataLoad:
-        annual_income = AnnualIncome(
-            cpr=self.person.cpr,
-            year=self.year.year,
-            **kwargs,
-        )
-        load = DataLoad.objects.create(source="testing")
-        AnnualIncomeHandler.create_or_update_objects(
-            [annual_income],
-            load,
-            StringIO(),
-        )
-        return load
+    def test_updated_data_affects_estimated_year_income(self):
+        # Arrange: create an initial value for 2020
+        self.create_or_update_objects(account_tax_result=120000)
+        # Act: run income estimation for month 1 in 2020
+        estimate_1 = self.estimate_income(month=1)
+        # Assert: we expect a yearly income matching the self-reported expected income
+        self.assertEqual(estimate_1, Decimal("120000"))
+
+        # Arrange: create an updated value for 2020
+        self.create_or_update_objects(account_tax_result=240000)
+        # Act: re-run income estimation for month 1 in 2020
+        estimate_2 = self.estimate_income(month=1)
+        # Assert: we expect a yearly income matching the self-reported expected income
+        self.assertEqual(estimate_2, Decimal("240000"))
+
+    def get_handler_args(self, response, load: DataLoad) -> tuple:
+        return [response], load, StringIO()
