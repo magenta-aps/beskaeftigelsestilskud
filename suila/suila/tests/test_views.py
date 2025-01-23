@@ -3,18 +3,20 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from unittest.mock import patch
 
 from common.models import User
 from django.core.files.storage import default_storage
+from common.tests.test_mixins import TestViewMixin
+from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Sum
 from django.test import TestCase
 from django.test.client import RequestFactory
-from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.base import ContextMixin, View
+from django.views.generic.base import ContextMixin, TemplateView, View
 
 from suila.forms import NoteAttachmentFormSet
 from suila.models import (
@@ -46,9 +48,15 @@ class PersonEnv(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         # Add persons
-        cls.person1, _ = Person.objects.update_or_create(cpr=1, location_code=1)
-        cls.person2, _ = Person.objects.update_or_create(cpr=2, location_code=1)
-        cls.person3, _ = Person.objects.update_or_create(cpr=3, location_code=None)
+        cls.person1, _ = Person.objects.update_or_create(
+            cpr="0101011111", location_code=1
+        )
+        cls.person2, _ = Person.objects.update_or_create(
+            cpr="0101012222", location_code=1
+        )
+        cls.person3, _ = Person.objects.update_or_create(
+            cpr="0101013333", location_code=None
+        )
         # Add data to person 1
         year, _ = Year.objects.update_or_create(year=2020)
         cls.person_year, _ = PersonYear.objects.update_or_create(
@@ -128,42 +136,35 @@ class TestCategoryChoiceFilter(PersonEnv):
         )
 
 
-class TestPersonSearchView(PersonEnv):
-    def setUp(self):
-        super().setUp()
-        self.view = PersonSearchView()
-        self.view.setup(RequestFactory().get(""))
+class TestPersonSearchView(TestViewMixin, PersonEnv):
+
+    view_class = PersonSearchView
 
     def test_get_queryset_includes_padded_cpr(self):
+        view = self.view(self.admin_user, "")
         self.assertQuerySetEqual(
-            self.view.get_queryset(),
+            view.get_queryset(),
             [person.cpr.zfill(10) for person in Person.objects.all()],
             transform=lambda obj: obj._cpr,
         )
 
 
-class TimeContextMixin:
-    view_class = None
-    request_factory = RequestFactory()
-
-    @property
-    def view(self):
-        view = self.view_class()
-        request = self.request_factory.get("")
-        view.setup(request, pk=self.person1.pk)
-        with self._time_context():
-            view.get(request, pk=self.person1.pk)
-        return view
+class TimeContextMixin(TestViewMixin):
 
     def _time_context(self, year: int = 2020, month: int = 12):
         return patch("suila.views.timezone.now", return_value=datetime(year, month, 1))
 
-    def _get_context_data(self):
+    def _get_context_data(self, **params: Any):
         with self._time_context():
-            return self.view.get_context_data()
+            view, response = self.request_get(self.admin_user, "", **params)
+            return view.get_context_data()
+
+    def view(self, user: User = None, path: str = "", **params: Any) -> TemplateView:
+        with self._time_context():
+            return super().view(user, path, **params)
 
 
-class TestYearMonthMixin(TimeContextMixin, SimpleTestCase):
+class TestYearMonthMixin(TimeContextMixin, TestCase):
     class ImplView(YearMonthMixin, ContextMixin, View):
         """View implementation to use in tests"""
 
@@ -217,7 +218,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
     def test_context_includes_key_figures(self):
         """The context must include the key figures for each person"""
         # Act
-        context = self._get_context_data()
+        context = self._get_context_data(pk=self.person1.pk)
         # Assert: the context keys are present
         self.assertIn("total_estimated_year_result", context)
         self.assertIn("total_actual_year_result", context)
@@ -244,6 +245,24 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             ).aggregate(sum=Sum(attr))
         )["sum"]
 
+    def test_borger_see_only_self(self):
+        self.request_get(self.normal_user, pk=self.person1.pk)
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, pk=self.person2.pk)
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, pk=self.person3.pk)
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person2.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
 
 class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailBenefitView
@@ -251,7 +270,7 @@ class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
     def test_context_includes_benefit_data(self):
         """The context data must include the `benefit_data` table"""
         # Act
-        context = self._get_context_data()
+        context = self._get_context_data(pk=self.person1.pk)
         # Assert: the context key is present
         self.assertIn("benefit_data", context)
         # Assert: the table data is correct (one figure for each month)
@@ -264,7 +283,7 @@ class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
 
     def test_context_includes_benefit_chart(self):
         """The context data must include the `benefit_chart` chart"""
-        self.assertIn("benefit_chart", self._get_context_data())
+        self.assertIn("benefit_chart", self._get_context_data(pk=self.person1.pk))
 
     def test_get_benefit_chart_series(self):
         """The `benefit chart` must consist of the expected series
@@ -275,7 +294,8 @@ class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
         """
         # Act
         with self._time_context():
-            benefit_chart_series = self.view.get_all_benefit_chart_series()
+            view, response = self.request_get(pk=self.person1.pk)
+            benefit_chart_series = view.get_all_benefit_chart_series()
         # Assert: verify the `benefit` series
         self.assertDictEqual(
             benefit_chart_series[0],
@@ -296,6 +316,24 @@ class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
             },
         )
 
+    def test_borger_see_only_self(self):
+        self.request_get(self.normal_user, pk=self.person1.pk)
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, pk=self.person2.pk)
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, pk=self.person3.pk)
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person2.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
 
 class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailIncomeView
@@ -303,7 +341,7 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     def test_context_includes_income_per_employer_and_type(self):
         """The context must include the `income_per_employer_and_type` table"""
         # Act
-        context = self._get_context_data()
+        context = self._get_context_data(pk=self.person1.pk)
         # Assert: the context key is present
         self.assertIn("income_per_employer_and_type", context)
         # Assert: the table data is correct (one yearly total for each employer/type)
@@ -318,7 +356,7 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
 
     def test_context_includes_income_chart(self):
         """The context data must include the `income_chart` chart"""
-        self.assertIn("income_chart", self._get_context_data())
+        self.assertIn("income_chart", self._get_context_data(pk=self.person1.pk))
 
     def test_get_income_chart_series(self):
         """The `income chart` must consist of the expected series.
@@ -327,7 +365,8 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
         """
         # Act
         with self._time_context():
-            income_chart_series = self.view.get_income_chart_series()
+            view, response = self.request_get(self.admin_user, pk=self.person1.pk)
+            income_chart_series = view.get_income_chart_series()
         # Assert: verify that we get the expected series: two A income series, and two
         # B income series (4 series total.)
         self.assertEqual(len(income_chart_series), 2)
@@ -343,6 +382,24 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 for name in (_("A-indkomst"), _("B-indkomst"))
             ],
         )
+
+    def test_borger_see_only_self(self):
+        self.request_get(self.normal_user, pk=self.person1.pk)
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, pk=self.person2.pk)
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, pk=self.person3.pk)
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person2.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
 
 
 class TestNoteView(TimeContextMixin, PersonEnv):
@@ -369,6 +426,7 @@ class TestNoteView(TimeContextMixin, PersonEnv):
     def test_get_formset(self):
         view = self.view_class()
         request = self.request_factory.get("")
+        request.user = self.admin_user
         view.setup(request, pk=self.person1.pk)
         response = view.get(request, pk=self.person1.pk)
         self.assertEqual(response.status_code, 200)
@@ -410,7 +468,7 @@ class TestNoteView(TimeContextMixin, PersonEnv):
             },
             format="multipart",
         )
-        request.user = self.user
+        request.user = self.admin_user
         view.setup(request, pk=self.person1.pk)
         with self._time_context():
             response = view.post(request, pk=self.person1.pk)
@@ -444,7 +502,7 @@ class TestNoteView(TimeContextMixin, PersonEnv):
             },
             format="multipart",
         )
-        request.user = self.user
+        request.user = self.admin_user
         view.setup(request, pk=self.person1.pk)
         with self._time_context():
             view.post(request, pk=self.person1.pk)
@@ -480,7 +538,7 @@ class TestNoteView(TimeContextMixin, PersonEnv):
         )
         view = self.view_class()
         request = self.request_factory.get("")
-        request.user = self.user
+        request.user = self.admin_user
         view.setup(request, pk=self.person1.pk)
         with self._time_context():
             response = view.get(request, pk=self.person1.pk)
@@ -498,7 +556,7 @@ class TestNoteView(TimeContextMixin, PersonEnv):
             },
             format="multipart",
         )
-        request.user = self.user
+        request.user = self.admin_user
         view.setup(request, pk=self.person1.pk)
         with self._time_context():
             response = view.post(request, pk=self.person1.pk)
@@ -526,13 +584,12 @@ class TestNoteAttachmentView(TimeContextMixin, PersonEnv):
                 content_type="text/plain",
             ),
         )
-        cls.user = User.objects.create(username="TestUser")
 
     def test_get(self):
         request = self.request_factory.get(
             reverse("suila:note_attachment", kwargs={"pk": self.attachment.pk})
         )
-        request.user = self.user
+        request.user = self.admin_user
         view = self.view_class()
         view.setup(request, pk=self.attachment.pk)
         with self._time_context():

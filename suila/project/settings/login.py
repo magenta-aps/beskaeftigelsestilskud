@@ -30,7 +30,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 AUTHENTICATION_BACKENDS = [
     "django_mitid_auth.saml.backend.Saml2Backend",  # Will log in mitid users
-    "django.contrib.auth.backends.ModelBackend",  # Will log in django users
+    "suila.permissions.SuilaPermissionBackend",  # Will log in django users
 ]
 
 DEFAULT_CPR = "1234567890"

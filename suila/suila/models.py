@@ -28,6 +28,7 @@ from simple_history.models import HistoricalRecords
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
 from suila.integrations.eskat.responses.data_models import TaxInformation
+from suila.model_mixins import PermissionsMixin
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class StatusChoices(TextChoices):
     FAILED = "Fejl"
 
 
-class WorkingTaxCreditCalculationMethod(models.Model):
+class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
     class Meta:
         abstract = True
 
@@ -280,13 +281,13 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         return points
 
 
-class DataLoad(models.Model):
+class DataLoad(PermissionsMixin, models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     source = models.CharField(max_length=20)
     parameters = models.JSONField(null=True)
 
 
-class Year(models.Model):
+class Year(PermissionsMixin, models.Model):
     year = models.PositiveSmallIntegerField(primary_key=True)
     calculation_method_content_type = models.ForeignKey(
         ContentType, on_delete=models.SET_NULL, null=True, blank=True
@@ -300,7 +301,7 @@ class Year(models.Model):
         return str(self.year)
 
 
-class Person(models.Model):
+class Person(PermissionsMixin, models.Model):
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
         related_name="history_entries",
@@ -338,6 +339,12 @@ class Person(models.Model):
     def last_year(self) -> PersonYear:
         return self.personyear_set.order_by("-year")[0]
 
+    @classmethod
+    def _filter_user_permissions(
+        cls, qs: QuerySet, user: User, action: str
+    ) -> QuerySet | None:
+        return qs.filter(cpr=user.cpr)
+
 
 class TaxScope(models.TextChoices):
     FULDT_SKATTEPLIGTIG = "FULD"
@@ -354,7 +361,7 @@ class TaxScope(models.TextChoices):
         return None
 
 
-class PersonYear(models.Model):
+class PersonYear(PermissionsMixin, models.Model):
 
     class Meta:
         unique_together = (("person", "year"),)
@@ -488,7 +495,7 @@ class PersonYear(models.Model):
         return self.u1a_assessments_sum or Decimal("0")
 
 
-class PersonMonth(models.Model):
+class PersonMonth(PermissionsMixin, models.Model):
 
     class Meta:
         indexes = [
@@ -617,7 +624,7 @@ class PersonMonth(models.Model):
         return int_divide_end(int(self.person_year.u_income), 12)[self.month - 1]
 
 
-class Employer(models.Model):
+class Employer(PermissionsMixin, models.Model):
     cvr = models.PositiveIntegerField(
         verbose_name=_("CVR-nummer"),
         db_index=True,
@@ -639,7 +646,7 @@ class Employer(models.Model):
         return f"{self.name} ({self.cvr})"
 
 
-class MonthlyIncomeReport(models.Model):
+class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -872,7 +879,7 @@ post_save.connect(
 )
 
 
-class BTaxPayment(models.Model):
+class BTaxPayment(PermissionsMixin, models.Model):
     """This model is used for tracking whether the person has actually paid tax on their
     B income for a given month.
     They are only eligible for receiving benefits due to B income if they have indeed
@@ -927,7 +934,7 @@ class BTaxPayment(models.Model):
         return f"{self.person_month}: {self.amount_paid}"
 
 
-class IncomeEstimate(models.Model):
+class IncomeEstimate(PermissionsMixin, models.Model):
 
     class Meta:
         unique_together = (("engine", "person_month", "income_type"),)
@@ -998,7 +1005,7 @@ class IncomeEstimate(models.Model):
         return (absdiff / actual_year_result) if actual_year_result else Decimal(0)
 
 
-class PersonYearEstimateSummary(models.Model):
+class PersonYearEstimateSummary(PermissionsMixin, models.Model):
     class Meta:
         unique_together = (("person_year", "estimation_engine", "income_type"),)
 
@@ -1028,7 +1035,7 @@ class PersonYearEstimateSummary(models.Model):
     )
 
 
-class PersonYearAssessment(models.Model):
+class PersonYearAssessment(PermissionsMixin, models.Model):
     # En forskudsopgørelse
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
@@ -1069,7 +1076,7 @@ class PersonYearAssessment(models.Model):
     )
 
 
-class PrismeAccountAlias(models.Model):
+class PrismeAccountAlias(PermissionsMixin, models.Model):
     class Meta:
         unique_together = [("tax_municipality_location_code", "tax_year")]
 
@@ -1090,7 +1097,7 @@ class PrismeAccountAlias(models.Model):
         return self.alias[-7:-2]
 
 
-class PrismeBatch(models.Model):
+class PrismeBatch(PermissionsMixin, models.Model):
     class Status(models.TextChoices):
         Sending = "sending", _("Sending")
         Sent = "sent", _("Sent")
@@ -1113,7 +1120,7 @@ class PrismeBatch(models.Model):
     )
 
 
-class PrismeBatchItem(models.Model):
+class PrismeBatchItem(PermissionsMixin, models.Model):
     class Meta:
         unique_together = ("prisme_batch", "person_month")
 
@@ -1171,7 +1178,7 @@ class PrismeBatchItem(models.Model):
     """
 
 
-class AnnualIncome(models.Model):
+class AnnualIncome(PermissionsMixin, models.Model):
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
     )
@@ -1296,7 +1303,7 @@ class AnnualIncome(models.Model):
     )
 
 
-class JobLog(models.Model):
+class JobLog(PermissionsMixin, models.Model):
     """
     model which keeps track of:
         - which jobs were run
@@ -1326,7 +1333,7 @@ class JobLog(models.Model):
         super().save(update_fields=["year", "month"])
 
 
-class EboksMessage(models.Model):
+class EboksMessage(PermissionsMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     sent = models.DateTimeField(null=True)
     xml = models.BinaryField()
@@ -1494,7 +1501,7 @@ class EboksMessage(models.Model):
                     )
 
 
-class PersonYearU1AAssessment(models.Model):
+class PersonYearU1AAssessment(PermissionsMixin, models.Model):
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
         related_name="history_entries",
@@ -1531,7 +1538,7 @@ class PersonYearU1AAssessment(models.Model):
     )
 
 
-class Note(models.Model):
+class Note(PermissionsMixin, models.Model):
     personyear = models.ForeignKey(PersonYear, null=False, on_delete=models.CASCADE)
     text = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -1550,7 +1557,7 @@ def get_attachment_path(instance, filename):
     )
 
 
-class NoteAttachment(models.Model):
+class NoteAttachment(PermissionsMixin, models.Model):
     class Meta:
         ordering = ["file"]
 
