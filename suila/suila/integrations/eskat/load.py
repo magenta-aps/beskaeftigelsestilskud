@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, Set, TextIO
+from typing import Any, Dict, List, Set, TextIO
 
 from common.utils import camelcase_to_snakecase, omit
 from django.core.exceptions import ValidationError
@@ -121,6 +121,42 @@ class Handler:
         out.write(f"Processed {len(person_years)} PersonYear objects")
         return person_years
 
+    @classmethod
+    def get_person_month(cls, cpr: str, year: int | None, month: int) -> PersonMonth:
+        qs = PersonMonth.objects.select_related("person_year__person")
+        person_month = qs.get(
+            person_year__person__cpr=cpr,
+            person_year__year__year=year,
+            month=month,
+        )
+        return person_month
+
+    @classmethod
+    def get_person_year_assessment(cls, cpr: str, year: int) -> PersonYearAssessment:
+        qs = PersonYearAssessment.objects.select_related(
+            "person_year__year", "person_year__person"
+        )
+        person_year = qs.get(
+            person_year__person__cpr=cpr,
+            person_year__year__year=year,
+        )
+        return person_year
+
+    @classmethod
+    def get_field_values(
+        cls,
+        item: Any,
+        default: int = 0,
+        exclude: set[str] | None = None,
+    ) -> dict[str, Any]:
+        if exclude is None:
+            exclude = set()
+        return {
+            f.name: Decimal(getattr(item, f.name) or default)
+            for f in fields(item)
+            if f.name not in exclude
+        }
+
 
 class AnnualIncomeHandler(Handler):
 
@@ -134,7 +170,7 @@ class AnnualIncomeHandler(Handler):
         items: List[AnnualIncome],
         load: DataLoad,
         out: TextIO,
-    ):
+    ) -> list[AnnualIncomeModel]:
         with transaction.atomic():
             year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
                 dict
@@ -143,18 +179,60 @@ class AnnualIncomeHandler(Handler):
                 if item.year is not None and item.cpr is not None:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
+
             if person_years:
-                annual_incomes = [
-                    AnnualIncomeModel(
-                        person_year=person_years[item.cpr],
-                        load=load,
-                        **omit(asdict(item), "cpr", "year"),
-                    )
-                    for item in items
-                    if item.cpr is not None
-                ]
-                AnnualIncomeModel.objects.bulk_create(annual_incomes)
-                out.write(f"Created {len(annual_incomes)} AnnualIncome objects")
+                objs_to_create = []
+                objs_to_update = []
+
+                for item in items:
+                    if item.cpr is None or item.year is None:
+                        print(
+                            "Skipping item with empty CPR and/or year "
+                            f"(cpr={item.cpr!r}, year={item.year!r})"
+                        )
+                        continue
+
+                    field_values = omit(asdict(item), "cpr", "year")
+
+                    try:
+                        # Find existing `AnnualIncome` for this person year
+                        annual_income = AnnualIncomeModel.objects.get(
+                            person_year=person_years[item.cpr]
+                        )
+                    except AnnualIncomeModel.DoesNotExist:
+                        # An existing `AnnualIncome` does not exist for this person year
+                        # - create it.
+                        annual_income = AnnualIncomeModel(
+                            person_year=person_years[item.cpr],
+                            load=load,
+                            **field_values,
+                        )
+                        objs_to_create.append(annual_income)
+                    else:
+                        # An `AnnualIncome` exists for this person year - update it.
+                        for name, value in field_values.items():
+                            setattr(annual_income, name, value)
+                        objs_to_update.append(annual_income)
+
+                bulk_update_with_history(
+                    objs_to_update,
+                    AnnualIncomeModel,
+                    [
+                        f.name
+                        for f in AnnualIncomeModel._meta.fields
+                        if not f.primary_key
+                    ],
+                )
+
+                bulk_create_with_history(objs_to_create, AnnualIncomeModel)
+
+                out.write(f"Created {len(objs_to_create)} AnnualIncome objects")
+                out.write(f"Updated {len(objs_to_update)} AnnualIncome objects")
+
+                return objs_to_create + objs_to_update
+
+        # Fall-through: return empty list
+        return []
 
 
 class ExpectedIncomeHandler(Handler):
@@ -166,7 +244,7 @@ class ExpectedIncomeHandler(Handler):
     @classmethod
     def create_or_update_objects(
         cls, year: int, items: List["ExpectedIncome"], load: DataLoad, out: TextIO
-    ):
+    ) -> list[PersonYearAssessment]:
         with transaction.atomic():
             year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
                 dict
@@ -175,39 +253,91 @@ class ExpectedIncomeHandler(Handler):
                 if item.year is not None and item.cpr is not None:
                     year_cpr_tax_scopes[item.year][item.cpr] = None
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
+
             if person_years:
-                assessments = [
-                    PersonYearAssessment(
-                        person_year=person_years[item.cpr],
-                        load=load,
-                        capital_income=item.capital_income or Decimal(0),
-                        education_support_income=item.education_support_income
-                        or Decimal(0),
-                        care_fee_income=item.care_fee_income or Decimal(0),
-                        alimony_income=item.alimony_income or Decimal(0),
-                        other_b_income=item.other_b_income or Decimal(0),
-                        gross_business_income=item.gross_business_income or Decimal(0),
-                        # TODO: Tilret dette ud fra hvad Torben
-                        #  svarer når han vender tilbage
-                        brutto_b_income=sum(
-                            filter(
-                                None,
-                                [
-                                    item.capital_income,
-                                    item.education_support_income,
-                                    item.care_fee_income,
-                                    item.alimony_income,
-                                    item.other_b_income,
-                                    item.gross_business_income,
-                                ],
-                            )
-                        ),
+                objs_to_create = []
+                objs_to_update = []
+
+                for item in items:
+                    if item.cpr is None or item.year is None:
+                        print(
+                            "Skipping item with empty CPR and/or year "
+                            f"(cpr={item.cpr!r}, year={item.year!r})"
+                        )
+                        continue
+
+                    field_values = cls.get_field_values(
+                        item,
+                        exclude={
+                            # Exclude identifier fields
+                            "cpr",
+                            "year",
+                            # Exclude fields not defined on `PersonYearAssessment`
+                            "valid_from",
+                            "do_expect_a_income",
+                            "benefits_income",
+                            "catch_sale_factory_income",
+                            "catch_sale_market_income",
+                            "bussiness_interest_income",
+                            "extraordinary_bussiness_income",
+                        },
                     )
-                    for item in items
-                    if item.cpr
-                ]
-                PersonYearAssessment.objects.bulk_create(assessments)
-                out.write(f"Created {len(assessments)} PersonYearAssessment objects")
+
+                    # TODO: Tilret dette ud fra hvad Torben svarer når han vender
+                    # tilbage
+                    brutto_b_income = sum(
+                        filter(
+                            None,
+                            [
+                                item.capital_income,
+                                item.education_support_income,
+                                item.care_fee_income,
+                                item.alimony_income,
+                                item.other_b_income,
+                                item.gross_business_income,
+                            ],
+                        )
+                    )
+
+                    try:
+                        # Find existing assessment
+                        assessment = cls.get_person_year_assessment(item.cpr, item.year)
+                    except PersonYearAssessment.DoesNotExist:
+                        # An existing assessment does not exist for this person and year
+                        # - create it.
+                        assessment = PersonYearAssessment(
+                            person_year=person_years[item.cpr],
+                            load=load,
+                            brutto_b_income=brutto_b_income,
+                            **field_values,
+                        )
+                        objs_to_create.append(assessment)
+                    else:
+                        # An assessment exists for this person and year - update it.
+                        for name, value in field_values.items():
+                            setattr(assessment, name, value)
+                        assessment.brutto_b_income = brutto_b_income
+                        objs_to_update.append(assessment)
+
+                bulk_update_with_history(
+                    objs_to_update,
+                    PersonYearAssessment,
+                    [
+                        f.name
+                        for f in PersonYearAssessment._meta.fields
+                        if not f.primary_key
+                    ],
+                )
+
+                bulk_create_with_history(objs_to_create, PersonYearAssessment)
+
+                out.write(f"Created {len(objs_to_create)} PersonYearAssessment objects")
+                out.write(f"Updated {len(objs_to_update)} PersonYearAssessment objects")
+
+                return objs_to_create + objs_to_update
+
+        # Fall-through: return empty list
+        return []
 
 
 class MonthlyIncomeHandler(Handler):
@@ -219,7 +349,7 @@ class MonthlyIncomeHandler(Handler):
     @classmethod
     def create_or_update_objects(
         cls, year: int, items: List["MonthlyIncome"], load: DataLoad, out: TextIO
-    ):
+    ) -> list[PersonMonth]:
         with transaction.atomic():
             # Create Employer objects (for CVRs that we have not already created an
             # Employer object for.)
@@ -232,10 +362,6 @@ class MonthlyIncomeHandler(Handler):
                 update_fields=("load",),
                 unique_fields=("cvr",),
             )
-            # Construct dictionary mapping employer CVRs to Employer objects
-            employer_map = {
-                employer.cvr: employer for employer in Employer.objects.all()
-            }
 
             data_months: Dict[int, Set[int]] = defaultdict(set)
             for item in items:
@@ -252,7 +378,7 @@ class MonthlyIncomeHandler(Handler):
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
                 # Create or update PersonMonth objects
-                person_months = {}
+                person_months: list[PersonMonth] = []
                 for person_year in person_years.values():
                     for month in data_months[person_year.year.year]:
                         person_month = PersonMonth(
@@ -262,54 +388,97 @@ class MonthlyIncomeHandler(Handler):
                             import_date=date.today(),
                             amount_sum=Decimal(0),
                         )
-                        key = (person_year.year_id, month, person_year.person.cpr)
-                        person_months[key] = person_month
+                        person_months.append(person_month)
                 PersonMonth.objects.bulk_create(
-                    person_months.values(),
+                    person_months,
                     update_conflicts=True,
-                    # Update existing object if it already exists
-                    update_fields=("import_date",),
+                    update_fields=("load", "amount_sum", "import_date"),
                     unique_fields=("person_year", "month"),
+                    batch_size=500,
                 )
-                out.write(f"Processed {len(person_months)} PersonMonth objects")
-
-                # Create MonthlyIncomeReport objects
-                # (existing objects for this year will be deleted!)
-                income_reports = []
-                for item in items:
-                    if (
-                        item.cpr is not None
-                        and item.year is not None
-                        and item.month is not None
-                    ):
-                        person_month = person_months[(item.year, item.month, item.cpr)]
-                        report = MonthlyIncomeReport(
-                            person_month=person_month,
-                            employer=(
-                                employer_map[int(item.cvr)] if item.cvr else None
-                            ),
-                            load=load,
-                            **{
-                                f.name: Decimal(getattr(item, f.name) or 0)
-                                for f in fields(item)
-                                if f.name
-                                not in {
-                                    "cpr",
-                                    "cvr",
-                                    "tax_municipality_number",
-                                    "month",
-                                }
-                            },
-                        )
-                        report.update_amount()
-                        income_reports.append(report)
-                MonthlyIncomeReport.objects.filter(
-                    person_month__in=person_months.values()
-                ).delete()
-                MonthlyIncomeReport.objects.bulk_create(income_reports)
-                for person_month in person_months.values():
+                for person_month in person_months:
                     person_month.update_amount_sum()
-                out.write(f"Created {len(income_reports)} MonthlyIncomeReport objects")
+                PersonMonth.objects.bulk_update(
+                    person_months,
+                    ["amount_sum"],
+                    batch_size=500,
+                )
+                out.write(
+                    f"Created or updated {len(person_months)} PersonMonth objects"
+                )
+                income_reports = cls._create_or_update_monthly_income_reports(
+                    items,
+                    load,
+                )
+                out.write(
+                    f"Created or updated {len(income_reports)} MonthlyIncomeReport "
+                    "objects"
+                )
+                return person_months
+
+        # Fall-through: return empty list (rather than None)
+        return []
+
+    @classmethod
+    def _create_or_update_monthly_income_reports(
+        cls,
+        items: list[MonthlyIncome],
+        load: DataLoad,
+    ) -> list:
+        objs_to_create = []
+        objs_to_update = []
+
+        # Construct dictionary mapping employer CVRs to Employer objects
+        employer_map = {employer.cvr: employer for employer in Employer.objects.all()}
+
+        for item in items:
+            if item.cpr is not None and item.month is not None:
+                employer = employer_map[int(item.cvr)] if item.cvr else None
+                person_month = cls.get_person_month(item.cpr, item.year, item.month)
+                field_values = cls.get_field_values(
+                    item,
+                    exclude={"cpr", "cvr", "tax_municipality_number", "month"},
+                )
+
+                print(
+                    f"Handling income data for {person_month!r}, year={item.year!r}, "
+                    f"month={item.month!r}"
+                )
+
+                try:
+                    # Find existing monthly income report
+                    report = MonthlyIncomeReport.objects.get(
+                        person_month=person_month,
+                        employer=employer,
+                    )
+                except MonthlyIncomeReport.DoesNotExist:
+                    # An existing monthly income report does not exist for this person
+                    # month and employer - create it.
+                    report = MonthlyIncomeReport(
+                        person_month=person_month,
+                        load=load,
+                        employer=employer,
+                        **field_values,
+                    )
+                    report.update_amount()
+                    objs_to_create.append(report)
+                else:
+                    # An existing monthly income report exists for this person month and
+                    # employer - update it.
+                    for name, value in field_values.items():
+                        setattr(report, name, value)
+                    report.update_amount()
+                    objs_to_update.append(report)
+
+        bulk_update_with_history(
+            objs_to_update,
+            MonthlyIncomeReport,
+            [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
+        )
+
+        bulk_create_with_history(objs_to_create, MonthlyIncomeReport)
+
+        return objs_to_create + objs_to_update
 
 
 class TaxInformationHandler(Handler):

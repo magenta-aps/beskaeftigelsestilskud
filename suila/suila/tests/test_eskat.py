@@ -4,23 +4,27 @@
 
 import json
 import re
+from dataclasses import fields
+from datetime import date
 from decimal import Decimal
-from io import TextIOBase
+from io import StringIO, TextIOBase
 from math import ceil
 from sys import stdout
 from threading import current_thread
 from typing import Any, List
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs
 
 import requests
 from django.test import TestCase, override_settings
+from django.test.testcases import SimpleTestCase
 from requests import HTTPError, Response
 
 from suila.integrations.eskat.client import EskatClient
 from suila.integrations.eskat.load import (
     AnnualIncomeHandler,
     ExpectedIncomeHandler,
+    Handler,
     MonthlyIncomeHandler,
     TaxInformationHandler,
 )
@@ -30,6 +34,7 @@ from suila.integrations.eskat.responses.data_models import (
     MonthlyIncome,
     TaxInformation,
 )
+from suila.management.commands.load_eskat import Command as LoadEskatCommand
 from suila.models import AnnualIncome as AnnualIncomeModel
 from suila.models import (
     DataLoad,
@@ -40,7 +45,9 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     TaxScope,
+    Year,
 )
+from suila.tests.mixins import BaseEnvMixin
 
 
 def make_response(status_code: int, content: str | dict):
@@ -1001,3 +1008,228 @@ class TestTaxInformation(BaseTestCase):
             data = client.get_tax_scopes()
             self.assertEqual(len(data), 2)
             self.assertEqual(data, ["FULL", "LIM"])
+
+
+class TestHandler(SimpleTestCase):
+    def test_get_field_values_exclude_kwarg_default(self):
+        # Arrange
+        instance = Handler()
+        item = MonthlyIncome()
+        # Act: call method without explicit `exclude` kwarg
+        field_values = instance.get_field_values(item)
+        # Assert: no fields were excluded
+        self.assertListEqual(list(field_values.keys()), [f.name for f in fields(item)])
+
+
+class TestLoadEskatCommand(BaseEnvMixin, TestCase):
+    """Test the logic in `bf.management.commands.load_eskat.Command`"""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.year_2019 = Year.objects.create(year=2019, calculation_method=cls.calc)
+        cls.command = LoadEskatCommand()
+        # cls.command.stdout = StringIO()
+
+    def setUp(self):
+        super().setUp()
+        self.person_month = self.get_or_create_person_month(
+            month=1,
+            import_date=date(self.year.year, 1, 1),
+        )
+
+    def test_monthly_income_retrieval_from_previous_months(self):
+        """Fetching `monthlyincome` from eSkat in month N should fetch data for months
+        N-4, N-3, and N-2.
+        """
+        test_cases: list[tuple[int, int, list[dict]]] = [
+            # In January, fetch for September, October and November
+            (2020, 1, [{"year": 2019, "month_from": 9, "month_to": 11}]),
+            # In February, fetch for October, November and December
+            (2020, 2, [{"year": 2019, "month_from": 10, "month_to": 12}]),
+            # In March, fetch for November, December and January
+            (
+                2020,
+                3,
+                [
+                    {"year": 2019, "month_from": 11, "month_to": 12},
+                    {"year": 2020, "month_from": 1, "month_to": 1},
+                ],
+            ),
+        ]
+        for input_year, input_month, expected_args in test_cases:
+            with self.subTest(year=input_year, month=input_month):
+                # Arrange
+                mock_client = MagicMock()
+                mock_client.get_monthly_income = MagicMock()
+                mock_client.get_monthly_income.return_value = [
+                    MonthlyIncome(
+                        cpr=self.person.cpr,
+                        year=expected["year"],
+                        month=m,
+                        salary_income=1000,
+                    )
+                    for expected in expected_args
+                    for m in range(expected["month_from"], expected["month_to"])
+                ]
+                with patch.object(
+                    EskatClient, "from_settings", return_value=mock_client
+                ):
+                    # Act
+                    self.command._handle(
+                        type="monthlyincome",
+                        year=input_year,
+                        month=input_month,
+                        cpr=None,
+                        verbosity=1,
+                    )
+                    # Assert: API data is fetched for the expected year and month range
+                    self.assertListEqual(
+                        [
+                            {
+                                "year": call.args[0],
+                                "month_from": call.kwargs["month_from"],
+                                "month_to": call.kwargs["month_to"],
+                            }
+                            for call in mock_client.get_monthly_income.call_args_list
+                        ],
+                        expected_args,
+                    )
+
+
+class TestMonthlyIncomeUpdate(BaseEnvMixin, TestCase):
+    """Test that subsequent updates to the same monthly income report (same person and
+    month) are stored as updates to the same `MonthlyIncomeReport`, and that the
+    `PersonMonth` is updated as expected.
+    """
+
+    def test_subsequent_update(self):
+        # Arrange: create an initial value for month 1
+        load1 = self._create_or_update_objects(month=1, salary_income=1000)
+        # Act: add an updated value for month 1
+        load2 = self._create_or_update_objects(month=1, salary_income=2000)
+        # Assert: two separate loads are recorded
+        self.assertNotEqual(load1, load2)
+        # Assert: there is only one `MonthlyIncomeReport` (with the latest value)
+        monthly_income_reports = MonthlyIncomeReport.objects.filter(
+            person_month__person_year__person=self.person,
+            person_month__month=1,
+        )
+        self.assertQuerySetEqual(
+            monthly_income_reports.values_list("month", "salary_income"),
+            [(1, 2000)],
+        )
+        # Assert: both current and previous versions of the `MonthlyIncomeReport` are
+        # kept in history, so previous amount, etc. is available.
+        self.assertQuerySetEqual(
+            monthly_income_reports[0]
+            .history.order_by("history_date")
+            .values_list("salary_income", flat=True),
+            [Decimal(1000), Decimal(2000)],
+        )
+
+    def _create_or_update_objects(self, **kwargs) -> DataLoad:
+        monthly_income = MonthlyIncome(
+            cpr=self.person.cpr,
+            year=self.year.year,
+            **kwargs,
+        )
+        load = DataLoad.objects.create(source="testing")
+        MonthlyIncomeHandler.create_or_update_objects(
+            self.year.year,
+            [monthly_income],
+            load,
+            StringIO(),
+        )
+        return load
+
+
+class TestExpectedIncomeUpdate(BaseEnvMixin, TestCase):
+    """Test that subsequent updates to the same expected income report (same person and
+    year) are stored as updates to the same `PersonYearAssessment`.
+    """
+
+    def test_subsequent_update(self):
+        # Arrange: create an initial value for year
+        load1 = self._create_or_update_objects(capital_income=1000)
+        # Act: add an updated value for year
+        load2 = self._create_or_update_objects(capital_income=2000)
+        # Assert: two separate loads are recorded
+        self.assertNotEqual(load1, load2)
+        # Assert: there is only one `PersonYearAssessment` (with the latest value)
+        assessments = PersonYearAssessment.objects.filter(
+            person_year__person=self.person,
+            person_year__year=self.year,
+        )
+        self.assertQuerySetEqual(
+            assessments.values_list("person_year__year__year", "capital_income"),
+            [(self.year.year, 2000)],
+        )
+        # Assert: both current and previous versions of the `PersonYearAssessment` are
+        # kept in history, so previous amount, etc. is available.
+        self.assertQuerySetEqual(
+            assessments[0]
+            .history.order_by("history_date")
+            .values_list("capital_income", flat=True),
+            [Decimal(1000), Decimal(2000)],
+        )
+
+    def _create_or_update_objects(self, **kwargs) -> DataLoad:
+        expected_income = ExpectedIncome(
+            cpr=self.person.cpr,
+            year=self.year.year,
+            **kwargs,
+        )
+        load = DataLoad.objects.create(source="testing")
+        ExpectedIncomeHandler.create_or_update_objects(
+            self.year.year,
+            [expected_income],
+            load,
+            StringIO(),
+        )
+        return load
+
+
+class TestAnnualIncomeUpdate(BaseEnvMixin, TestCase):
+    """Test that subsequent updates to the same annual income report (same person and
+    year) are stored as updates to the same `AnnualIncome`.
+    """
+
+    def test_subsequent_update(self):
+        # Arrange: create an initial value for year
+        load1 = self._create_or_update_objects(salary=1000)
+        # Act: add an updated value for year
+        load2 = self._create_or_update_objects(salary=2000)
+        # Assert: two separate loads are recorded
+        self.assertNotEqual(load1, load2)
+        # Assert: there is only one `AnnualIncome` (with the latest value)
+        annual_incomes = AnnualIncomeModel.objects.filter(
+            person_year__person=self.person,
+            person_year__year=self.year,
+        )
+        self.assertQuerySetEqual(
+            annual_incomes.values_list("person_year__year__year", "salary"),
+            [(self.year.year, 2000)],
+        )
+        # Assert: both current and previous versions of the `AnnualIncome` are
+        # kept in history, so previous amount, etc. is available.
+        self.assertQuerySetEqual(
+            annual_incomes[0]
+            .history.order_by("history_date")
+            .values_list("salary", flat=True),
+            [Decimal(1000), Decimal(2000)],
+        )
+
+    def _create_or_update_objects(self, **kwargs) -> DataLoad:
+        annual_income = AnnualIncome(
+            cpr=self.person.cpr,
+            year=self.year.year,
+            **kwargs,
+        )
+        load = DataLoad.objects.create(source="testing")
+        AnnualIncomeHandler.create_or_update_objects(
+            [annual_income],
+            load,
+            StringIO(),
+        )
+        return load
