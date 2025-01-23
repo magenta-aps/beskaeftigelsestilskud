@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from datetime import date
+from typing import Iterator
 
 from suila.integrations.eskat.client import EskatClient
 from suila.integrations.eskat.load import (
@@ -55,12 +57,13 @@ class Command(SuilaBaseCommand):
                 year, client.get_expected_income(year, cpr), load, self.stdout
             )
         if typ == "monthlyincome":
-            MonthlyIncomeHandler.create_or_update_objects(
-                year,
-                client.get_monthly_income(year, month_from=month, cpr=cpr),
-                load,
-                self.stdout,
-            )
+            for year_, month_kwargs in self._get_year_and_month_kwargs(year, month):
+                MonthlyIncomeHandler.create_or_update_objects(
+                    year_,
+                    client.get_monthly_income(year_, cpr=cpr, **month_kwargs),
+                    load,
+                    self.stdout,
+                )
         if typ == "taxinformation":
             TaxInformationHandler.create_or_update_objects(
                 year,
@@ -68,3 +71,33 @@ class Command(SuilaBaseCommand):
                 load,
                 self.stdout,
             )
+
+    def _get_year_and_month_kwargs(
+        self,
+        year: int,
+        month: int | None,
+        num: int = 3,
+        offset: int = 2,
+    ) -> Iterator[tuple[int, dict]]:
+        def ym(offset: int) -> tuple[int, int]:
+            assert isinstance(month, int)
+            div: int
+            mod: int
+            div, mod = divmod(month - num - offset, 12)
+            y: int = year + div
+            m: int = mod + 1
+            return y, m
+
+        if month is None:
+            month = date.today().month
+
+        assert 1 <= month <= 12
+
+        start_year, start_month = ym(offset)
+        end_year, end_month = ym(0)
+
+        if start_year == end_year:
+            yield start_year, {"month_from": start_month, "month_to": end_month}
+        else:
+            yield start_year, {"month_from": start_month, "month_to": 12}
+            yield end_year, {"month_from": 1, "month_to": end_month}

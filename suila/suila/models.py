@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import base64
+import logging
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
@@ -27,6 +28,8 @@ from simple_history.models import HistoricalRecords
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
 from suila.integrations.eskat.responses.data_models import TaxInformation
+
+logger = logging.getLogger(__name__)
 
 
 class IncomeType(TextChoices):
