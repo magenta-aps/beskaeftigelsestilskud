@@ -4,6 +4,7 @@
 from typing import Iterable, List
 
 from common.models import User
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 
 
@@ -12,7 +13,7 @@ class PermissionsMixin:
     @classmethod
     def permission_name(cls, action: str) -> str:
         if action in ("add", "view", "change", "delete"):
-            return f"suila.{action}_{cls._meta.model_name}"
+            return f"suila.{action}_{cls._meta.model_name}"  # type: ignore
         return action
 
     @classmethod
@@ -32,13 +33,13 @@ class PermissionsMixin:
     @classmethod
     def filter_user_instance_permissions(
         cls, qs: QuerySet, user: User, action: str
-    ) -> QuerySet | None:
+    ) -> QuerySet:
         return qs.none()  # pragma: no cover
 
     @classmethod
     def has_model_permissions(
         cls,
-        user: User,
+        user: User | AnonymousUser,
         required_permissions: str | Iterable[str],
     ) -> bool:
         if type(required_permissions) is str:

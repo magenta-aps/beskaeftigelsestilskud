@@ -67,7 +67,7 @@ class PersonAnalysisView(
     context_object_name = "person"
     template_name = "data_analysis/person_analysis.html"
     form_class = PersonAnalysisOptionsForm
-    required_model_permissions = ("suila.view_person", "suila.view_personyear")
+    required_model_permissions = ["suila.view_person", "suila.view_personyear"]
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -277,7 +277,7 @@ class PersonListView(
     template_name = "data_analysis/personyear_list.html"
     form_class = PersonYearListOptionsForm
     default_ordering = "person__cpr"
-    required_model_permissions = ("suila.view_person", "suila.view_personyear")
+    required_model_permissions = ["suila.view_person", "suila.view_personyear"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -341,7 +341,7 @@ class HistogramView(
 ):
     template_name = "data_analysis/histogram.html"
     form_class = HistogramOptionsForm
-    required_model_permissions = ("suila.view_person", "suila.view_personyear")
+    required_model_permissions = ["suila.view_person", "suila.view_personyear"]
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("format") == "json":
@@ -448,7 +448,7 @@ class JobListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormVi
     template_name = "data_analysis/job_list.html"
     form_class = JobListOptionsForm
     default_ordering = "-runtime"
-    required_model_permissions = ("suila.view_joblog",)
+    required_model_permissions = ["suila.view_joblog"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

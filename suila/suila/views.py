@@ -209,7 +209,7 @@ class PersonDetailView(
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail.html"
-    required_object_permissions = {"view"}
+    required_object_permissions = ["view"]
 
     def get_queryset(self):
         return self.get_key_figure_queryset()
@@ -239,7 +239,7 @@ class PersonDetailBenefitView(
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_benefits.html"
-    required_object_permissions = {"view"}
+    required_object_permissions = ["view"]
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -362,7 +362,7 @@ class PersonDetailIncomeView(
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_income.html"
-    required_object_permissions = {"view"}
+    required_object_permissions = ["view"]
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -537,7 +537,7 @@ class PersonDetailNotesView(
     template_name = "suila/person_detail_notes.html"
     form_class = NoteForm
     formset_class = NoteAttachmentFormSet
-    required_object_permissions = {"view"}
+    required_object_permissions = ["view"]
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -583,7 +583,7 @@ class PersonDetailNotesAttachmentView(
 ):
 
     model = NoteAttachment
-    required_object_permissions = {"view"}
+    required_object_permissions = ["view"]
 
     def get(self, request, *args, **kwargs):
         self.object: NoteAttachment = self.get_object()

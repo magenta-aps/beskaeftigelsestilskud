@@ -342,7 +342,7 @@ class Person(PermissionsMixin, models.Model):
     @classmethod
     def filter_user_instance_permissions(
         cls, qs: QuerySet[Person], user: User, action: str
-    ) -> QuerySet | None:
+    ) -> QuerySet:
         if action == "view":
             return qs.filter(cpr=user.cpr)
         return qs.none()
@@ -499,7 +499,7 @@ class PersonYear(PermissionsMixin, models.Model):
     @classmethod
     def filter_user_instance_permissions(
         cls, qs: QuerySet[PersonYear], user: User, action: str
-    ) -> QuerySet | None:
+    ) -> QuerySet:
         if action == "view":
             return qs.filter(person__cpr=user.cpr)
         return qs.none()
@@ -636,7 +636,7 @@ class PersonMonth(PermissionsMixin, models.Model):
     @classmethod
     def filter_user_instance_permissions(
         cls, qs: QuerySet[PersonMonth], user: User, action: str
-    ) -> QuerySet | None:
+    ) -> QuerySet:
         if action == "view":
             return qs.filter(person_year__person__cpr=user.cpr)
         return qs.none()

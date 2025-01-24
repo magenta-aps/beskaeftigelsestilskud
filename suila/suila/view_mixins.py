@@ -4,6 +4,7 @@
 from typing import Iterable, List, Optional
 
 from common.models import User
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 
@@ -34,7 +35,7 @@ class PermissionsRequiredMixin:
     @classmethod
     def has_permissions(
         cls,
-        user: User | None = None,
+        user: User | AnonymousUser | None = None,
         request: HttpRequest | None = None,
         required_permissions: Optional[Iterable[str]] = None,
     ) -> bool:
