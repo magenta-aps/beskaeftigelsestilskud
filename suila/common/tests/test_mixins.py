@@ -1,13 +1,13 @@
 from typing import Any, Dict, Tuple
 
 from common.models import User
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, Group, Permission
 from django.template.response import TemplateResponse
 from django.test import RequestFactory
 from django.views.generic import TemplateView
 
 
-class TestViewMixin:
+class UserMixin:
 
     @classmethod
     def setUpTestData(cls):
@@ -16,10 +16,27 @@ class TestViewMixin:
         cls.admin_user = User.objects.create_superuser(
             username="admin", password="admin"
         )
+
+        # Bruger med rettigheder
+        cls.staff_user = User.objects.create_user(username="staff", password="staff")
+        cls.staff_group = Group.objects.create(name="staff")
+        cls.staff_group.permissions.add(
+            *Permission.objects.filter(codename__startswith="view")
+        )
+        cls.staff_user.groups.add(cls.staff_group)
+
+        # Bruger der matcher et CPR-nummer i databasen
         cls.normal_user = User.objects.create_user(
-            username="borger", password="borger", cpr="0101011111"
+            username="borger1", password="borger1", cpr="0101011111"
+        )
+        # Bruger der ikke matcher et CPR-nummer
+        cls.other_user = User.objects.create_user(
+            username="borger2", password="borger2", cpr="9999999999"
         )
         cls.no_user = AnonymousUser()
+
+
+class TestViewMixin(UserMixin):
 
     def view(self, user: User = None, path: str = "", **params: Any) -> TemplateView:
         if user is None:

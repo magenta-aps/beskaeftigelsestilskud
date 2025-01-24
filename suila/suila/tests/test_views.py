@@ -148,6 +148,28 @@ class TestPersonSearchView(TestViewMixin, PersonEnv):
             transform=lambda obj: obj._cpr,
         )
 
+    def test_borger_see_only_self(self):
+        view, response = self.request_get(self.normal_user)
+        qs = view.get_queryset()
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first(), self.person1)
+
+    def test_staff_see_all(self):
+        view, response = self.request_get(self.staff_user)
+        qs = view.get_queryset()
+        self.assertEqual(qs.count(), 3)
+        self.assertEqual(qs[0], self.person1)
+        self.assertEqual(qs[1], self.person2)
+        self.assertEqual(qs[2], self.person3)
+
+    def test_other_see_none(self):
+        view, response = self.request_get(self.other_user)
+        self.assertEqual(view.get_queryset().count(), 0)
+
+    def test_anonymous_see_none(self):
+        view = self.view(self.no_user)
+        self.assertEqual(view.get_queryset().count(), 0)
+
 
 class TimeContextMixin(TestViewMixin):
 
@@ -252,6 +274,10 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         with self.assertRaises(PermissionDenied):
             self.request_get(self.normal_user, pk=self.person3.pk)
 
+    def test_other_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.other_user, pk=self.person1.pk)
+
     def test_view_anonymous_denied(self):
         view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
         self.assertEqual(response.status_code, 302)
@@ -323,6 +349,10 @@ class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
         with self.assertRaises(PermissionDenied):
             self.request_get(self.normal_user, pk=self.person3.pk)
 
+    def test_other_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.other_user, pk=self.person1.pk)
+
     def test_view_anonymous_denied(self):
         view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
         self.assertEqual(response.status_code, 302)
@@ -389,6 +419,10 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
             self.request_get(self.normal_user, pk=self.person2.pk)
         with self.assertRaises(PermissionDenied):
             self.request_get(self.normal_user, pk=self.person3.pk)
+
+    def test_other_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.other_user, pk=self.person1.pk)
 
     def test_view_anonymous_denied(self):
         view, response = self.request_get(self.no_user, "", pk=self.person1.pk)

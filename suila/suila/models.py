@@ -340,10 +340,12 @@ class Person(PermissionsMixin, models.Model):
         return self.personyear_set.order_by("-year")[0]
 
     @classmethod
-    def _filter_user_permissions(
-        cls, qs: QuerySet, user: User, action: str
+    def filter_user_instance_permissions(
+        cls, qs: QuerySet[Person], user: User, action: str
     ) -> QuerySet | None:
-        return qs.filter(cpr=user.cpr)
+        if action == "view":
+            return qs.filter(cpr=user.cpr)
+        return qs.none()
 
 
 class TaxScope(models.TextChoices):
@@ -493,6 +495,14 @@ class PersonYear(PermissionsMixin, models.Model):
     @property
     def u_income(self) -> Decimal:
         return self.u1a_assessments_sum or Decimal("0")
+
+    @classmethod
+    def filter_user_instance_permissions(
+        cls, qs: QuerySet[PersonYear], user: User, action: str
+    ) -> QuerySet | None:
+        if action == "view":
+            return qs.filter(person__cpr=user.cpr)
+        return qs.none()
 
 
 class PersonMonth(PermissionsMixin, models.Model):

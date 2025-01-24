@@ -8,7 +8,9 @@ class PermissionsMixin:
 
     @classmethod
     def permission_name(cls, action: str) -> str:
-        return f"suila.{action}_{cls._meta.model_name}"
+        if action in ("add", "view", "change", "delete"):
+            return f"suila.{action}_{cls._meta.model_name}"
+        return action
 
     @classmethod
     def filter_user_permissions(cls, qs: QuerySet, user: User, action: str) -> QuerySet:
@@ -20,24 +22,27 @@ class PermissionsMixin:
             # User has permission for all instances through
             # the standard Django permission system
             return qs
+        # User has permission to these specific instances
+        return cls.filter_user_instance_permissions(qs, user, action)
 
-        qs1 = cls._filter_user_permissions(qs, user, action)
-        if qs1 is not None:
-            # User has permission to these specific instances
-            return qs1
-        return qs.none()
-
+    # Skal overstyres i modelklasser
     @classmethod
-    def _filter_user_permissions(
+    def filter_user_instance_permissions(
         cls, qs: QuerySet, user: User, action: str
     ) -> QuerySet | None:
         return qs.none()
 
-    @staticmethod
+    @classmethod
     def has_model_permissions(
+        cls,
         user: User,
-        required_permissions: Iterable[str],
+        required_permissions: str | Iterable[str],
     ) -> bool:
+        if type(required_permissions) is str:
+            required_permissions = [required_permissions]
+        required_permissions = [
+            cls.permission_name(name) for name in required_permissions
+        ]
         if user.is_anonymous or not user.is_active:
             return False
         if user.is_superuser:
