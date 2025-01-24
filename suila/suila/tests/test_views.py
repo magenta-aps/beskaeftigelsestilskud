@@ -31,6 +31,7 @@ from suila.models import (
     PersonYear,
     Year,
 )
+from suila.view_mixins import PermissionsRequiredMixin
 from suila.views import (
     CategoryChoiceFilter,
     PersonDetailBenefitView,
@@ -630,3 +631,30 @@ class TestNoteAttachmentView(TimeContextMixin, PersonEnv):
             response = view.get(request, pk=self.person1.pk)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"Test data")
+
+
+class TestPermissionsRequiredMixin(TestViewMixin, PersonEnv):
+    class SuperView(View):
+        def get_object(self, queryset=None):
+            return Person.objects.get(cpr="0101013333")
+
+    class ImplView(PermissionsRequiredMixin, SuperView):
+        required_object_permissions = []
+
+    view_class = ImplView
+
+    def test_get_object(self):
+        view = self.view(self.staff_user)
+        self.assertEqual(view.get_object(), self.person3)
+
+        view2 = self.view(self.normal_user)
+        view2.required_object_permissions = ["view"]
+        with self.assertRaises(PermissionDenied):
+            view2.get_object()
+
+    def test_has_permissions(self):
+        view = self.view(self.staff_user)
+        self.assertTrue(self.ImplView.has_permissions(None, view.request))
+        self.assertTrue(self.ImplView.has_permissions(self.staff_user, None))
+        with self.assertRaises(ValueError):
+            self.ImplView.has_permissions(None, None)

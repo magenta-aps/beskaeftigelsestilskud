@@ -30,7 +30,7 @@ class PermissionsMixin:
     def filter_user_instance_permissions(
         cls, qs: QuerySet, user: User, action: str
     ) -> QuerySet | None:
-        return qs.none()
+        return qs.none()  # pragma: no cover
 
     @classmethod
     def has_model_permissions(

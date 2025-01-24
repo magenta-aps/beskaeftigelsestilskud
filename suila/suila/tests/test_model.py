@@ -311,13 +311,16 @@ PituClient_mock = MagicMock()
 PituClient_mock.from_settings.return_value = pitu_client_mock
 
 
-class TestPerson(UserMixin, ModelTest):
+class UserModelTest(UserMixin, ModelTest):
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
         cls.normal_user.cpr = "1234567890"
         cls.normal_user.save()
+
+
+class TestPerson(UserModelTest):
 
     def test_string_methods(self):
         self.assertEqual(str(self.person), "Jens Hansen")
@@ -377,13 +380,7 @@ class TestPerson(UserMixin, ModelTest):
         self.assertFalse(Person.has_model_permissions(self.no_user, "view"))
 
 
-class TestPersonYear(UserMixin, ModelTest):
-
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        cls.normal_user.cpr = "1234567890"
-        cls.normal_user.save()
+class TestPersonYear(UserModelTest):
 
     def test_string_methods(self):
         self.assertEqual(str(self.person_year), "Jens Hansen (2024)")
@@ -473,7 +470,7 @@ class TestPersonYear(UserMixin, ModelTest):
         self.assertFalse(PersonYear.has_model_permissions(self.no_user, "view"))
 
 
-class TestPersonMonth(ModelTest):
+class TestPersonMonth(UserModelTest):
 
     def test_shortcuts(self):
         self.assertEqual(self.month1.year, 2024)
@@ -498,6 +495,65 @@ class TestPersonMonth(ModelTest):
         self.assertEqual(self.year2month1.prev, self.month12)
         self.assertIsNone(self.month1.prev)
         self.assertIsNone(self.month12.prev)
+
+    def test_borger_permissions(self):
+        self.assertTrue(self.month1.has_object_permissions(self.normal_user, ["view"]))
+        self.assertFalse(
+            self.month1.has_object_permissions(self.normal_user, ["view", "add"])
+        )
+        with self.assertRaises(ValueError):
+            self.assertFalse(self.month1.has_object_permissions(self.normal_user, []))
+        qs = PersonMonth.filter_user_permissions(
+            PersonMonth.objects.all(), self.normal_user, "view"
+        )
+        self.assertEqual(
+            qs.count(),
+            PersonMonth.objects.filter(person_year__person=self.person).count(),
+        )
+        self.assertIn(self.month1, qs)
+        self.assertFalse(PersonMonth.has_model_permissions(self.normal_user, "view"))
+
+    def test_staff_permissions(self):
+        self.assertTrue(self.month1.has_object_permissions(self.staff_user, ["view"]))
+        self.assertFalse(
+            self.month1.has_object_permissions(self.staff_user, ["view", "add"])
+        )
+        with self.assertRaises(ValueError):
+            self.assertFalse(self.month1.has_object_permissions(self.staff_user, []))
+        qs = PersonMonth.filter_user_permissions(
+            PersonMonth.objects.all(), self.staff_user, "view"
+        )
+        self.assertEqual(qs.count(), PersonMonth.objects.all().count())
+        self.assertIn(self.month1, qs)
+        self.assertTrue(PersonMonth.has_model_permissions(self.staff_user, "view"))
+
+    def test_other_permissions(self):
+        self.assertFalse(self.month1.has_object_permissions(self.other_user, ["view"]))
+        self.assertFalse(
+            self.month1.has_object_permissions(self.other_user, ["view", "add"])
+        )
+        with self.assertRaises(ValueError):
+            self.assertFalse(self.month1.has_object_permissions(self.other_user, []))
+        qs = PersonMonth.filter_user_permissions(
+            PersonMonth.objects.all(), self.other_user, "view"
+        )
+        self.assertEqual(qs.count(), 0)
+        self.assertNotIn(self.month1, qs)
+        self.assertFalse(PersonMonth.has_model_permissions(self.other_user, "view"))
+
+    def test_anonymous_permissions(self):
+        self.assertFalse(self.month1.has_object_permissions(self.no_user, ["view"]))
+        self.assertFalse(
+            self.month1.has_object_permissions(self.no_user, ["view", "add"])
+        )
+        with self.assertRaises(ValueError):
+            self.assertFalse(self.month1.has_object_permissions(self.no_user, []))
+        qs = PersonMonth.filter_user_permissions(
+            PersonMonth.objects.all(), self.no_user, "view"
+        )
+        self.assertEqual(qs.count(), 0)
+        self.assertNotIn(self.month1, qs)
+        self.assertFalse(PersonMonth.has_model_permissions(self.no_user, "view"))
 
 
 class TestEmployer(ModelTest):

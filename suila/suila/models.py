@@ -633,6 +633,14 @@ class PersonMonth(PermissionsMixin, models.Model):
     def u_income_from_year(self) -> int:
         return int_divide_end(int(self.person_year.u_income), 12)[self.month - 1]
 
+    @classmethod
+    def filter_user_instance_permissions(
+        cls, qs: QuerySet[PersonMonth], user: User, action: str
+    ) -> QuerySet | None:
+        if action == "view":
+            return qs.filter(person_year__person__cpr=user.cpr)
+        return qs.none()
+
 
 class Employer(PermissionsMixin, models.Model):
     cvr = models.PositiveIntegerField(

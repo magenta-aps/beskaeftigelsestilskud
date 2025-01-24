@@ -37,7 +37,7 @@ class PermissionsRequiredMixin:
     ) -> bool:
         if user is None:
             if request is None:
-                raise Exception("Must specify either userdata or request")
+                raise ValueError("Must specify either userdata or request")
             user = request.user
         if required_permissions is None:
             required_permissions = cls.required_model_permissions
