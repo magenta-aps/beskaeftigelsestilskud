@@ -6,6 +6,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from common.models import User
+from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Sum
 from django.test import TestCase
@@ -351,6 +352,19 @@ class TestNoteView(TimeContextMixin, PersonEnv):
     def setUpTestData(cls):
         super().setUpTestData()
         cls.user = User.objects.create(username="TestUser")
+
+    def tearDown(self):
+        # Clean up notes & files saved to disk
+        note = Note.objects.filter(personyear=self.person_year).first()
+        if note:
+            for attachment in note.attachments.all():
+                if attachment.file:
+                    file_path = attachment.file.name
+                    if default_storage.exists(file_path):
+                        default_storage.delete(file_path)
+        Note.objects.filter(personyear=self.person_year).delete()
+
+        super().tearDown()
 
     def test_get_formset(self):
         view = self.view_class()

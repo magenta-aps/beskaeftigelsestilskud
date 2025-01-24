@@ -71,6 +71,34 @@ docker exec suila-web python manage.py import_u1a_data --verbose
 This means that if the `import_u1a_data`-command is executed after the `load_data.sh`-script, we need to run the
 `estimate_income`-command again, or just run the `load_data.sh`-script again.
 
+### Export to Prisme
+
+To send data to Prisme, use the following management command: `export_benefits_to_prisme`.
+
+If you are working with test data from the CSV files, some minor configurations need to be
+made for the command to work in a development environment:
+
+* Edit `suila/suila/management/commands/load_prisme_account_aliases.py` and set `TAX_YEARS = range(2020, 2031)`
+  * This ensures that `PrismeAccountAlias` rows are created for the years covered by the CSV test data.
+* Run the `load_prisme_account_aliases`-command
+  * ```bash
+    docker exec suila-web python manage.py load_prisme_account_aliases
+    ```
+* Update all rows in the `suila_person` table with a `location_code` that exists in the `suila_prismeaccountalias` table (column `tax_municipality_location_code`):
+  * ```bash
+    docker exec suila-db psql -U suila -c 'UPDATE suila_person SET location_code = 961'
+    ```
+  * **Note:** The available `location_code` values can be found in `suila/suila/management/commands/load_prisme_account_aliases.py`.
+
+Once these steps are complete, you can run the `export_benefits_to_prisme` command:
+
+```bash
+docker exec suila-web python manage.py export_benefits_to_prisme --year=2023 --month=01
+```
+
+Note: The `export_benefits_to_prisme` command requires that the `calculate_benefit` command has been executed beforehand for the
+year you want to export data to Prisme.
+
 ## Testing
 
 To run the tests run
@@ -88,3 +116,4 @@ To run type checks run:
 ```
 docker exec suila-web mypy --config ../mypy.ini suila/
 ```
+

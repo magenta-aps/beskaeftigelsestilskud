@@ -118,9 +118,7 @@ class EstimationEngine:
         # Each row also contains summed values for monthly reported A and B income, as
         # each person month can have one or more A or B incomes reported.
         qs = (
-            PersonMonth.objects.filter(
-                person_year__person__in=person_year_qs.values("person")
-            )
+            PersonMonth.objects.filter(person_year__in=person_year_qs.values("id"))
             .select_related("person_year")
             .annotate(
                 person_pk=F("person_year__person__pk"),
