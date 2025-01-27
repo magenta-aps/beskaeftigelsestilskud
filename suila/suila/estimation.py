@@ -105,21 +105,19 @@ class EstimationEngine:
         if output_stream is not None:
             output_stream.write("Fetching income data ...\n")
 
-        quarantine_df = utils.get_people_in_quarantine(
-            year, {personyear.person.cpr for personyear in person_year_qs}
-        )
-        exclude_months = {
-            (now.year, now.month),
-            (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
-        }
-
         # Create queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
         # Each row also contains summed values for monthly reported A and B income, as
         # each person month can have one or more A or B incomes reported.
+        if person_pk:
+            person_month_qs = PersonMonth.objects.filter(
+                person_year__year__year=year, person_year__person=person_pk
+            )
+        else:
+            person_month_qs = PersonMonth.objects.filter(person_year__year__year=year)
+
         qs = (
-            PersonMonth.objects.filter(person_year__in=person_year_qs.values("id"))
-            .select_related("person_year")
+            person_month_qs.select_related("person_year")
             .annotate(
                 person_pk=F("person_year__person__pk"),
                 person_cpr=F("person_year__person__cpr"),
@@ -138,6 +136,16 @@ class EstimationEngine:
                 "month",
             )
         )
+
+        # Get quarantined & excluded months
+        quarantine_df = utils.get_people_in_quarantine(
+            year, {personyear.person.cpr for personyear in person_year_qs}
+        )
+        exclude_months = {
+            (now.year, now.month),
+            (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
+        }
+
         data_qs = [
             data.MonthlyIncomeData(
                 month=person_month.month,
