@@ -7,9 +7,9 @@ from typing import Any
 from unittest.mock import patch
 
 from common.models import User
-from django.core.files.storage import default_storage
 from common.tests.test_mixins import TestViewMixin
 from django.core.exceptions import PermissionDenied
+from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Sum
 from django.test import TestCase
