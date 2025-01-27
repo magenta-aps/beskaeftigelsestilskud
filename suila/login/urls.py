@@ -31,7 +31,7 @@ urlpatterns: List[URLResolver | URLPattern] = [
     ),
     path(
         "error/login-repeat/",
-        TemplateView.as_view(template_name="login/login_repeat.html"),
+        AccessDeniedView.as_view(template_name="login/login_repeat.html"),
         name="login-repeat",
     ),
     path(
