@@ -38,6 +38,7 @@ from suila.models import (
 )
 from suila.querysets import PersonKeyFigureQuerySet
 from suila.templatetags.date_tags import month_name
+from suila.view_mixins import PermissionsRequiredMixin
 
 
 class RootView(LoginRequiredMixin, TemplateView):
@@ -163,18 +164,24 @@ class ChartMixin:
 
 
 class PersonKeyFigureViewMixin(PersonYearMonthMixin):
-    def get_key_figure_queryset(self) -> PersonKeyFigureQuerySet:
+    def get_key_figure_queryset(
+        self, person_qs: QuerySet[Person] | None = None
+    ) -> PersonKeyFigureQuerySet:
         # Get "key figure" queryset for current year and month
+        if person_qs is None:
+            person_qs = super().get_queryset()  # type: ignore[misc]
         qs = PersonKeyFigureQuerySet.from_queryset(
-            super().get_queryset(),  # type: ignore[misc]
-            year=self.year,
-            month=self.month,
+            person_qs, year=self.year, month=self.month
         )
         return qs
 
 
 class PersonSearchView(
-    LoginRequiredMixin, PersonKeyFigureViewMixin, SingleTableMixin, FilterView
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    PersonKeyFigureViewMixin,
+    SingleTableMixin,
+    FilterView,
 ):
     model = Person
     table_class = PersonTable
@@ -182,7 +189,13 @@ class PersonSearchView(
     template_name = "suila/person_search.html"
 
     def get_queryset(self):
-        qs = self.get_key_figure_queryset()
+        qs = self.get_key_figure_queryset(
+            Person.filter_user_permissions(
+                super().get_queryset(),
+                self.request.user,
+                "view",
+            )
+        )
         # Add zero-padded text version of CPR to ensure proper display and sorting
         qs = qs.annotate(_cpr=LPad(Cast("cpr", CharField()), 10, Value("0")))
         # Set initial sorting (can be overridden by user)
@@ -190,10 +203,13 @@ class PersonSearchView(
         return qs
 
 
-class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView):
+class PersonDetailView(
+    LoginRequiredMixin, PersonKeyFigureViewMixin, PermissionsRequiredMixin, DetailView
+):
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail.html"
+    required_object_permissions = ["view"]
 
     def get_queryset(self):
         return self.get_key_figure_queryset()
@@ -214,11 +230,16 @@ class PersonDetailView(LoginRequiredMixin, PersonKeyFigureViewMixin, DetailView)
 
 
 class PersonDetailBenefitView(
-    LoginRequiredMixin, PersonYearMonthMixin, ChartMixin, DetailView
+    LoginRequiredMixin,
+    PersonYearMonthMixin,
+    ChartMixin,
+    PermissionsRequiredMixin,
+    DetailView,
 ):
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_benefits.html"
+    required_object_permissions = ["view"]
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -336,11 +357,12 @@ class PersonDetailBenefitView(
 
 
 class PersonDetailIncomeView(
-    LoginRequiredMixin, YearMonthMixin, ChartMixin, DetailView
+    LoginRequiredMixin, YearMonthMixin, ChartMixin, PermissionsRequiredMixin, DetailView
 ):
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_income.html"
+    required_object_permissions = ["view"]
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -503,7 +525,11 @@ class FormWithFormsetView(FormView):
 
 
 class PersonDetailNotesView(
-    LoginRequiredMixin, PersonYearMonthMixin, FormWithFormsetView, DetailView
+    LoginRequiredMixin,
+    PersonYearMonthMixin,
+    FormWithFormsetView,
+    PermissionsRequiredMixin,
+    DetailView,
 ):
 
     model = Person
@@ -511,6 +537,7 @@ class PersonDetailNotesView(
     template_name = "suila/person_detail_notes.html"
     form_class = NoteForm
     formset_class = NoteAttachmentFormSet
+    required_object_permissions = ["view"]
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -551,10 +578,12 @@ class PersonDetailNotesView(
         )
 
 
-class PersonDetailNotesAttachmentView(LoginRequiredMixin, BaseDetailView):
+class PersonDetailNotesAttachmentView(
+    LoginRequiredMixin, PermissionsRequiredMixin, BaseDetailView
+):
 
-    # TODO: adgangskontrol
     model = NoteAttachment
+    required_object_permissions = ["view"]
 
     def get(self, request, *args, **kwargs):
         self.object: NoteAttachment = self.get_object()

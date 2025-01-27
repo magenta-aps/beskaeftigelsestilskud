@@ -11,7 +11,9 @@ TEST=${TEST:=false}
 MAKEMESSAGES=${MAKEMESSAGES:=false}
 PULL_IDP_METADATA=${PULL_IDP_METADATA:=false}
 CREATE_API_GROUP=${CREATE_API_GROUP:=false}
+CREATE_USER_GROUPS=${CREATE_USER_GROUPS:=false}
 CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
+CREATE_DUMMY_USERS=${CREATE_DUMMY_USERS:=false}
 CREATE_DUMMY_API_USER=${CREATE_DUMMY_API_USER:=false}
 LOAD_CALCULATION_METHOD=${LOAD_CALCULATION_METHOD:=true}
 LOAD_PRISME_ACCOUNT_ALIASES=${LOAD_PRISME_ACCOUNT_ALIASES:=true}
@@ -32,10 +34,21 @@ if [ "${CREATE_API_GROUP}" = true ]; then
   python manage.py create_api_group api
 fi
 
+if [ "${CREATE_USER_GROUPS}" = true ]; then
+  echo 'creating api group'
+  python manage.py create_groups
+fi
 if [ "${CREATE_DUMMY_ADMIN}" = true ]; then
   echo 'creating superuser'
   python manage.py create_user admin admin --is_superuser
 fi
+if [ "${CREATE_DUMMY_USERS}" = true ]; then
+  echo 'creating borgerservice user'
+  python manage.py create_user borgerservice borgerservice -g Borgerservice
+  echo 'creating skattestyrelsen user'
+  python manage.py create_user skattestyrelsen skattestyrelsen -g Skattestyrelsen
+fi
+
 
 if [ "${CREATE_DUMMY_API_USER}" = true ]; then
   echo 'creating api user'

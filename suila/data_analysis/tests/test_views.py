@@ -7,6 +7,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from common.models import EngineViewPreferences, User
+from common.tests.test_mixins import TestViewMixin
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
     CalculatorView,
@@ -17,10 +18,10 @@ from data_analysis.views import (
     PersonYearEstimationMixin,
     SimulationJSONEncoder,
 )
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.test import TestCase
-from django.test.client import RequestFactory
 from django.urls import reverse
 
 from suila.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
@@ -160,7 +161,9 @@ class TestSimulationJSONEncoder(TestCase):
             raise
 
 
-class TestPersonAnalysisView(TestCase):
+class TestPersonAnalysisView(TestViewMixin, TestCase):
+    view_class = PersonAnalysisView
+
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -177,49 +180,54 @@ class TestPersonAnalysisView(TestCase):
         cls.other_person_year, _ = PersonYear.objects.get_or_create(
             person=cls.person, year=cls.other_year
         )
-        cls.request_factory = RequestFactory()
-        cls.view = PersonAnalysisView()
 
     def test_setup(self):
-        request = self.request_factory.get("")
-        self.view.setup(request, pk=self.person.pk)
-        response = self.view.get(request)
+        view, response = self.request_get(self.admin_user, "", pk=self.person.pk)
         self.assertIsInstance(response, TemplateResponse)
-        self.assertEqual(self.view.year_start, 2022)
-        self.assertEqual(self.view.year_end, 2022)
+        self.assertEqual(view.year_start, 2022)
+        self.assertEqual(view.year_end, 2022)
 
     def test_get_form_kwargs(self):
-        request = self.request_factory.get("")
-        self.view.setup(request, pk=self.person.pk, year=2020)
-        self.view.get(request)
-        form_kwargs = self.view.get_form_kwargs()
+        view, response = self.request_get(
+            self.admin_user, "", pk=self.person.pk, year=2020
+        )
+        form_kwargs = view.get_form_kwargs()
         self.assertEqual(form_kwargs["instance"], self.person)
 
     def test_invalid(self):
-        request = self.request_factory.get("?income_type=foo")
-        self.view.setup(request, pk=self.person.pk, year=2020)
-        response = self.view.get(request)
+        view, response = self.request_get(
+            self.admin_user, "?income_type=foo", pk=self.person.pk, year=2020
+        )
         self.assertIsInstance(response, TemplateResponse)
         self.assertFalse(response.context_data["form"].is_valid())
 
     def test_income_type(self):
-        request = self.request_factory.get("?income_type=A")
-        self.view.setup(request, pk=self.person.pk, year=2020)
-        response = self.view.get(request)
+        view, response = self.request_get(
+            self.admin_user, "?income_type=A", pk=self.person.pk, year=2020
+        )
         self.assertIsInstance(response, TemplateResponse)
-        self.assertEqual(self.view.income_type, IncomeType.A)
+        self.assertEqual(view.income_type, IncomeType.A)
 
-        request = self.request_factory.get("?income_type=B")
-        self.view.setup(request, pk=self.person.pk, year=2020)
-        response = self.view.get(request)
+        view, response = self.request_get(
+            self.admin_user, "?income_type=B", pk=self.person.pk, year=2020
+        )
         self.assertIsInstance(response, TemplateResponse)
-        self.assertEqual(self.view.income_type, IncomeType.B)
+        self.assertEqual(view.income_type, IncomeType.B)
 
-        request = self.request_factory.get("?income_type=")
-        self.view.setup(request, pk=self.person.pk, year=2020)
-        response = self.view.get(request)
+        view, response = self.request_get(
+            self.admin_user, "?income_type=", pk=self.person.pk, year=2020
+        )
         self.assertIsInstance(response, TemplateResponse)
-        self.assertIsNone(self.view.income_type)
+        self.assertIsNone(view.income_type)
+
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "", pk=self.person.pk)
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", pk=self.person.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
 
 
 class PersonYearEstimationSetupMixin:
@@ -345,25 +353,7 @@ class TestPersonYearEstimationMixin(PersonYearEstimationSetupMixin, TestCase):
         self.assertEqual(list(qs1), list(qs2))
 
 
-class ViewTestCase(TestCase):
-    view_class = None
-
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        cls._request_factory = RequestFactory()
-        cls._view = cls.view_class()
-
-        cls.user = User(cpr="0101011111")
-        cls.user.save()
-
-    def format_request(self, params=""):
-        request = self._request_factory.get(params)
-        request.user = self.user
-        return request
-
-
-class TestJobListView(ViewTestCase):
+class TestJobListView(TestViewMixin, TestCase):
     view_class = JobListView
 
     @classmethod
@@ -374,22 +364,27 @@ class TestJobListView(ViewTestCase):
         )
 
     def test_get_returns_html(self):
-        request = self.format_request()
-        self._view.setup(request)
-        response = self._view.get(request)
+        view, response = self.request_get(self.admin_user, "")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].cpr_param, "111")
 
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "")
 
-class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
+
+class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase):
     view_class = PersonListView
 
     def test_get_returns_html(self):
-        request = self.format_request()
-        self._view.setup(request, year=2020)
-        response = self._view.get(request)
+        view, response = self.request_get(self.admin_user, "", year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -404,15 +399,13 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         )
 
     def test_get_no_results(self):
-        request = self.format_request()
         self.estimate1.delete()
         self.estimate2.delete()
         self.summary1.mean_error_percent = Decimal(0)
         self.summary2.mean_error_percent = Decimal(0)
         self.summary1.save()
         self.summary2.save()
-        self._view.setup(request, year=2020)
-        response = self._view.get(request)
+        view, response = self.request_get(self.admin_user, "", year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -427,18 +420,14 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         )
 
     def test_filter_no_a(self):
-        request = self.format_request("?has_a=False")
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, "?has_a=False", year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
     def test_filter_a(self):
-        request = self.format_request("?has_a=True")
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, "?has_a=True", year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -447,18 +436,14 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         self.assertEqual(object_list[0].actual_sum, Decimal(42))
 
     def test_filter_b(self):
-        request = self.format_request("?has_b=True")
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, "?has_b=True", year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
     def test_filter_no_b(self):
-        request = self.format_request("?has_b=False")
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, "?has_b=False", year=2020)
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -478,18 +463,19 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
             actual_year_benefit=0,
             benefit_paid=0,
         )
-        request = self.format_request("?has_zero_income=False")
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+
+        view, response = self.request_get(
+            self.admin_user, "?has_zero_income=False", year=2020
+        )
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person.cpr, "0101012222")
 
-        request = self.format_request("?has_zero_income=True")
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(
+            self.admin_user, "?has_zero_income=True", year=2020
+        )
         self.assertIsInstance(response, TemplateResponse)
         self.assertEqual(response.context_data["year"], 2020)
         object_list = response.context_data["object_list"]
@@ -502,40 +488,28 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         params = f"?min_offset={self.summary1.mean_error_percent-1}"
         params += f"&max_offset={self.summary1.mean_error_percent+1}"
         params += "&selected_model=TwelveMonthsSummationEngine_mean_error_A"
-
-        request = self.format_request(params)
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, params, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
 
         params = f"?min_offset={self.summary2.mean_error_percent-1}"
         params += f"&max_offset={self.summary2.mean_error_percent+1}"
         params += "&selected_model=InYearExtrapolationEngine_mean_error_A"
-
-        request = self.format_request(params)
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, params, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
 
         params = f"?min_offset={self.summary1.mean_error_percent+1}"
         params += f"&max_offset={self.summary1.mean_error_percent+2}"
         params += "&selected_model=TwelveMonthsSummationEngine_mean_error_A"
-
-        request = self.format_request(params)
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, params, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
         params = f"?min_offset={self.summary2.mean_error_percent+1}"
         params += f"&max_offset={self.summary2.mean_error_percent+2}"
         params += "&selected_model=InYearExtrapolationEngine_mean_error_A"
-
-        request = self.format_request(params)
-        self._view.setup(request, year=2020)
-        response = self._view.get(request, year=2020)
+        view, response = self.request_get(self.admin_user, params, year=2020)
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 0)
 
@@ -543,9 +517,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
         test_dict = {"0101012222": 1, "non_existing_number": 0}
 
         for cpr, expected_items in test_dict.items():
-            request = self.format_request(f"?cpr={cpr}")
-            self._view.setup(request, year=2020)
-            response = self._view.get(request, year=2020)
+            view, response = self.request_get(self.admin_user, f"?cpr={cpr}", year=2020)
             self.assertIsInstance(response, TemplateResponse)
             self.assertEqual(response.context_data["year"], 2020)
             object_list = response.context_data["object_list"]
@@ -554,17 +526,27 @@ class TestPersonListView(PersonYearEstimationSetupMixin, ViewTestCase):
     def test_get_queryset_invalid_form(self):
         form_mock = MagicMock()
         form_mock.is_valid.return_value = False
-        self._view.get_form = MagicMock()
-        self._view.get_form.return_value = form_mock
+        view = self.view()
+        view.get_form = MagicMock()
+        view.get_form.return_value = form_mock
 
-        self._view.kwargs = {"year": 2020}
-        self._view.get_ordering = MagicMock()
-        self._view.get_ordering.return_value = ["person_id"]
-        self._view.get_queryset()
+        view.kwargs = {"year": 2020}
+        view.get_ordering = MagicMock()
+        view.get_ordering.return_value = ["person_id"]
+        view.get_queryset()
         form_mock.cleaned_data.get.assert_not_called()
 
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "", year=2020)
 
-class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", year=2020)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
+
+class TestHistogramView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase):
     view_class = HistogramView
 
     def test_get_form_kwargs_populates_data_kwarg(self):
@@ -575,10 +557,10 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
         ]
         for query, resolution in tests:
             with self.subTest(f"resolution={resolution}"):
-                self._view.setup(self._request_factory.get(query), year=2020)
-                form_kwargs = self._view.get_form_kwargs()
+                view, response = self.request_get(self.admin_user, query, year=2020)
+                form_kwargs = view.get_form_kwargs()
                 self.assertEqual(form_kwargs["data"]["resolution"], resolution)
-                expected_year_url = self._view.form_class().get_year_url(self.year)
+                expected_year_url = view.form_class().get_year_url(self.year)
                 self.assertEqual(form_kwargs["data"]["year"], expected_year_url)
 
     def test_get_resolution_from_form(self):
@@ -590,9 +572,9 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
         ]
         for query, resolution in tests:
             with self.subTest(f"resolution={resolution}"):
-                self._view.setup(self._request_factory.get(query), year=2020)
+                view, response = self.request_get(self.admin_user, query, year=2020)
                 # self._view.get(self._request_factory.get(query), year=2020)
-                self.assertEqual(self._view.get_resolution(), resolution)
+                self.assertEqual(view.get_resolution(), resolution)
 
     def test_get_metric_from_form(self):
         tests = [
@@ -604,8 +586,8 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
         ]
         for query, metric in tests:
             with self.subTest(f"metric={metric}"):
-                self._view.setup(self._request_factory.get(query), year=2020)
-                self.assertEqual(self._view.get_metric(), metric)
+                view, response = self.request_get(self.admin_user, query, year=2020)
+                self.assertEqual(view.get_metric(), metric)
 
     def test_get_income_type_from_form(self):
         tests = [
@@ -616,8 +598,8 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
         ]
         for query, income_type in tests:
             with self.subTest(f"income_type={income_type}"):
-                self._view.setup(self._request_factory.get(query), year=2020)
-                self.assertEqual(self._view.get_income_type(), income_type)
+                view, response = self.request_get(self.admin_user, query, year=2020)
+                self.assertEqual(view.get_income_type(), income_type)
 
     def test_get_returns_json(self):
         tests = [
@@ -627,8 +609,7 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
         ]
         for query, resolution in tests:
             url = f"?format=json{query}&income_type=A"
-            self._view.setup(self._request_factory.get(url), year=2020)
-            response = self._view.get(self._request_factory.get(url))
+            view, response = self.request_get(self.admin_user, url, year=2020)
             self.assertIsInstance(response, HttpResponse)
 
             self.assertJSONEqual(
@@ -653,8 +634,7 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
 
     def test_payout_offset_histogram(self):
         url = "?format=json&resolution=200&metric=payout_offset"
-        self._view.setup(self._request_factory.get(url), year=2020)
-        response = self._view.get(self._request_factory.get(url))
+        view, response = self.request_get(self.admin_user, url, year=2020)
         self.assertIsInstance(response, HttpResponse)
 
         self.assertJSONEqual(
@@ -676,6 +656,15 @@ class TestHistogramView(PersonYearEstimationSetupMixin, ViewTestCase):
         data = dict.fromkeys([str(bucket) for bucket in range(0, 100, size)], 0)
         data[bucket] = count
         return data
+
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "", year=2020)
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", year=2020)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
 
 
 class TestUpdateEngineViewPreferences(TestCase):
@@ -706,13 +695,14 @@ class TestUpdateEngineViewPreferences(TestCase):
         self.assertTrue(self.user.engine_view_preferences.show_SameAsLastMonthEngine)
 
 
-class TestCalculator(ViewTestCase):
+class TestCalculator(TestViewMixin, TestCase):
     view_class = CalculatorView
 
     def request(self, amount):
-        request = self._request_factory.post(
-            path=reverse("data_analysis:calculator"),
-            data={
+        view, response = self.request_post(
+            self.admin_user,
+            reverse("data_analysis:calculator"),
+            {
                 "estimated_year_income": amount,
                 "method": "StandardWorkBenefitCalculationMethod",
                 "benefit_rate_percent": "17.5",
@@ -723,8 +713,7 @@ class TestCalculator(ViewTestCase):
                 "scaledown_ceiling": "250000.00",
             },
         )
-        self._view.setup(request)
-        return self._view.post(request)
+        return response
 
     def test_calculator_zero(self):
         response = self.request(0)
@@ -785,8 +774,9 @@ class TestCalculator(ViewTestCase):
             scaledown_ceiling=Decimal("250000.00"),
         )
         Year.objects.create(year=2026, calculation_method=method)
+        view = self.view()
         self.assertEqual(
-            self._view.engines,
+            view.engines,
             [
                 {
                     "name": "StandardWorkBenefitCalculationMethod for 2026",
