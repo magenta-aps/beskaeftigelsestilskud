@@ -1,0 +1,302 @@
+$primary: #276b93;
+$dark-primary: #254862;
+$secondary: #6599b7;
+$light-primary: #dfeef7;
+$lightest-primary: #f8fcff;
+
+// Neutral colours
+// Add a comment to check if this will cause the CSS to be built
+// correctly.
+$black: #000000;
+$dark-grey: #222222;
+$grey: #d7e0e6;
+$light-grey: #eaeff2;
+$lightest-grey: #f5f7f8;
+$white: #ffffff;
+$label: #6f7f88;
+
+// Accent colours
+$approved: #207255;
+$approved-light: #bdecdc;
+$waiting: #3157a1;
+$waiting-light: #bccded;
+$rejected: #af1d1d;
+$rejected-light: #f8cfcf;
+
+// Override Bootstrap defaults
+
+$primary: $primary;
+$secondary: $secondary;
+$success: $approved;
+$info: $waiting;
+// $warning: ?;  FIXME: This colour is usually yellow, but not defined in the design guide
+$danger: $rejected;
+$light: $lightest-grey;
+$dark: $dark-grey;
+
+$badge-font-size: 1em;
+$badge-font-weight: normal;
+
+$border-color: $grey;
+
+$breadcrumb-divider: quote("\203A");
+
+@import "./bootstrap/scss/bootstrap";
+
+// Figtree font
+@font-face {
+  font-family: "Figtree Normal";
+  font-weight: normal;
+  src: url("../figtree/Figtree-VariableFont_wght.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Figtree Italic";
+  font-weight: normal;
+  src: url("../figtree/Figtree-Italic-VariableFont_wght.ttf") format("truetype");
+}
+
+body {
+  font-family: "Figtree Normal", "Trebuchet MS", "Helvetica", sans-serif;
+}
+
+i {
+  font-family: "Figtree Italic", "Trebuchet MS", "Helvetica", sans-serif;
+  font-style: normal; /* avoid "double italicization" */
+}
+
+// Additional styling here
+h1 {
+  font-size: 32px;
+  color: $black;
+}
+
+h1 a {
+  color: $black;
+}
+
+h2 {
+  font-size: 22px;
+  color: $dark-primary;
+}
+
+h3 {
+  font-size: 20px;
+  color: $primary;
+}
+
+h4 {
+  font-size: 18px;
+  color: $primary;
+}
+
+// Makes it easier to align buttons with headers (default is 0.5rem)
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: 0;
+}
+
+body {
+  background-color: $lightest-primary;
+}
+
+h1.secondary,
+h2.secondary,
+div.secondary,
+span.secondary {
+  color: $label;
+}
+
+header {
+  margin: 0 3rem;
+}
+.content {
+  margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+  padding: 3 * $spacer;
+  background-color: #ffffff;
+  border-radius: $spacer;
+  box-shadow: 0 0 $spacer $light-grey;
+}
+.card-container {
+  height: 80vh;
+}
+.card {
+  min-width: 35vw;
+  padding: 3 * $spacer;
+  border-color: transparent;
+  border-radius: $spacer;
+  box-shadow: 0 0 $spacer $light-grey;
+}
+.card-body {
+  padding: 0;
+}
+.card-header {
+  padding: 0 0 2 * $spacer 0;
+  background-color: transparent;
+  border: none;
+}
+
+// Nav
+header nav .navbar-nav a {
+  text-decoration: none;
+}
+
+// Settings ("wheel") menu
+#settings {
+  padding: $spacer;
+  min-width: 15vw;
+  border-color: transparent;
+  border-radius: 0.5 * $spacer;
+  box-shadow: 0 0 0.5 * $spacer $light-grey;
+}
+#settings h4 {
+  margin-bottom: 2 * $spacer;
+}
+#settings h5 {
+  margin-top: 2 * $spacer;
+  margin-bottom: $spacer;
+}
+#settings select[name="language"] {
+  width: auto;
+  appearance: menulist-button;
+  border: none;
+}
+
+// No underlines for links
+a {
+  text-decoration: none;
+}
+
+// The design guide's colour are "inverted" and using a non-standard colour scheme
+.badge-draft {
+  background-color: $light-grey;
+  color: $label;
+}
+
+.badge-waiting {
+  background-color: $waiting-light;
+  color: $waiting;
+}
+
+.badge-approved {
+  background-color: $approved-light;
+  color: $approved;
+}
+
+.badge-rejected {
+  background-color: $rejected-light;
+  color: $rejected;
+}
+
+.table th {
+  background-color: $light-grey;
+  border-bottom: 0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.table tbody td {
+  padding: 20px;
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  padding: 20px;
+  vertical-align: middle;
+}
+
+table tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+
+// We want the headers of  sideways tables to have the same color as the background
+.table-sideways th {
+  background-color: $lightest-grey;
+}
+
+// 0.625rem (10px) rounding of all tables
+.table {
+  overflow: hidden !important;
+  border-radius: 0.625 * $spacer;
+}
+
+// Forces all table headers to be `dark-primary`
+.table > :not(caption) > * > th {
+  color: $dark-primary;
+}
+
+// ...and the headers that act as links (sorting)
+.table > :not(caption) > * > th > a {
+  color: $dark-primary;
+}
+
+.table-light {
+  border-color: $grey;
+}
+
+.form-select {
+  border-radius: 50 * $spacer;
+}
+
+.form-label {
+  font-size: 13px;
+}
+
+.language-picker {
+  background-color: $lightest-primary;
+  border: 0;
+}
+
+.language-picker:focus {
+  box-shadow: none;
+}
+
+.dark-icon {
+  color: $dark-primary;
+}
+
+// Receipt page
+nav.object-actions {
+  padding: 0;
+}
+div.receipt section {
+  background-color: $lightest-grey;
+  padding: 2 * $spacer;
+  border-radius: $spacer;
+  margin-bottom: 3 * $spacer;
+}
+div.receipt table {
+  margin: 3 * $spacer 0;
+}
+div.receipt table th,
+div.receipt table td {
+  padding: $spacer / 2 0 $spacer / 2 0;
+  background-color: transparent;
+  border-bottom: none;
+}
+div.receipt table th {
+  border-bottom: 1px solid $grey;
+}
+div.receipt table td:first-child div {
+  font-weight: bold;
+}
+div.receipt table td div.secondary {
+  font-weight: normal;
+}
+div.receipt table td p {
+  /* Emphasise form receipt help texts */
+  font-style: italic;
+}
+div.receipt table tfoot td {
+  font-weight: bold;
+}
+div.receipt table tfoot td p {
+  font-weight: normal;
+  font-style: normal;
+  font-size: $font-size-sm;
+}
