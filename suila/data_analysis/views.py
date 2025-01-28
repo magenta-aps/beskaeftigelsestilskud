@@ -348,7 +348,6 @@ class HistogramView(
     required_model_permissions = ["suila.view_person", "suila.view_personyear"]
 
     def get(self, request, *args, **kwargs):
-
         if request.GET.get("format") == "json":
             return HttpResponse(
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
@@ -445,7 +444,6 @@ class UpdateEngineViewPreferences(View):
                 show_field = request.POST[field.name].lower() == "true"
                 setattr(preferences, field.name, show_field)
         preferences.save()
-        PageView.log(self, preferences)
         return HttpResponse("ok")
 
 

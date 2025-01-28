@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
-from common.models import EngineViewPreferences, User
+from common.models import EngineViewPreferences, PageView, User
 from common.tests.test_mixins import TestViewMixin
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
@@ -229,6 +229,26 @@ class TestPersonAnalysisView(TestViewMixin, TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
 
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"person/{self.person.pk}/?year_start=2020&year_end=2022",
+            pk=self.person.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonAnalysisView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person.pk})
+        self.assertEqual(pageview.params, {"year_start": "2020", "year_end": "2022"})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 3)
+        self.assertEqual(
+            {itemview.item for itemview in itemviews},
+            {self.person_year, self.middle_person_year, self.other_person_year},
+        )
+
 
 class PersonYearEstimationSetupMixin:
     @classmethod
@@ -359,7 +379,7 @@ class TestJobListView(TestViewMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        JobLog.objects.create(
+        cls.joblog = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE, cpr_param="111"
         )
 
@@ -378,6 +398,19 @@ class TestJobListView(TestViewMixin, TestCase):
         view, response = self.request_get(self.no_user, "")
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
+
+    def test_view_log(self):
+        self.request_get(self.admin_user, "")
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "JobListView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {})
+        self.assertEqual(pageview.params, {})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.joblog)
 
 
 class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase):
@@ -545,6 +578,19 @@ class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
 
+    def test_view_log(self):
+        self.request_get(self.admin_user, "", year=2020)
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonListView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"year": 2020})
+        self.assertEqual(pageview.params, {})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.person_year)
+
 
 class TestHistogramView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase):
     view_class = HistogramView
@@ -665,6 +711,21 @@ class TestHistogramView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase)
         view, response = self.request_get(self.no_user, "", year=2020)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
+
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            "2020/histogram/",
+            year=2020,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "HistogramView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"year": 2020})
+        self.assertEqual(pageview.params, {})
+        self.assertEqual(pageview.itemviews.count(), 0)
 
 
 class TestUpdateEngineViewPreferences(TestCase):
@@ -810,3 +871,14 @@ class TestCalculator(TestViewMixin, TestCase):
                 }
             ],
         )
+
+    def test_view_log(self):
+        self.request_get(self.admin_user, "")
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "CalculatorView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {})
+        self.assertEqual(pageview.params, {})
+        self.assertEqual(pageview.itemviews.count(), 0)
