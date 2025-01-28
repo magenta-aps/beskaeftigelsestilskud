@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from dataclasses import dataclass
 from datetime import date
+from functools import cache
 from itertools import groupby
 
 from django.conf import settings
@@ -21,7 +22,7 @@ class BTaxPayment(CSVFormat):
     """Represents a single line in a "B tax payment" CSV file"""
 
     type: str
-    cpr: int
+    cpr: str
     tax_year: int
     amount_paid: int
     serial_number: int
@@ -33,7 +34,7 @@ class BTaxPayment(CSVFormat):
     def from_csv_row(cls, row: list[str]) -> "BTaxPayment":
         return cls(
             type=row[0],
-            cpr=int(row[1]),
+            cpr=row[1],
             # row[2] is always empty
             tax_year=int(row[3]),
             amount_paid=int(row[4]),
@@ -46,17 +47,6 @@ class BTaxPayment(CSVFormat):
 
 class BTaxPaymentImport(SFTPImport):
     """Import one or more B tax CSV files from Prisme SFTP"""
-
-    def __init__(self):
-        super().__init__()
-        # Construct dictionary which maps `(cpr, year, month)` tuples to `PersonMonth`
-        # objects.
-        self._person_months_keyed: dict[tuple[int, int, int], PersonMonth] = {
-            (int(pm.person_year.person.cpr), pm.person_year.year.year, pm.month): pm
-            for pm in PersonMonth.objects.select_related(
-                "person_year__person", "person_year__year"
-            )
-        }
 
     @transaction.atomic()
     def import_b_tax(
@@ -106,11 +96,30 @@ class BTaxPaymentImport(SFTPImport):
     def _parse(self, filename: str) -> list[BTaxPayment]:
         return BTaxPayment.from_csv_buf(self.get_file(filename))
 
+    @cache
+    def _get_person_month(
+        self, cpr: str, tax_year: int, rate_number: int
+    ) -> PersonMonth | None:
+        qs = PersonMonth.objects.select_related(
+            "person_year__person", "person_year__year"
+        )
+        try:
+            return qs.get(
+                person_year__person__cpr=cpr,
+                person_year__year__year=tax_year,
+                month=rate_number,
+            )
+        except PersonMonth.DoesNotExist:
+            return None
+
     def _split_rows(
         self, rows: list[BTaxPayment]
     ) -> tuple[list[BTaxPayment], list[BTaxPayment]]:
         def key(row: BTaxPayment) -> bool:
-            return (row.cpr, row.tax_year, row.rate_number) in self._person_months_keyed
+            return (
+                self._get_person_month(row.cpr, row.tax_year, row.rate_number)
+                is not None
+            )
 
         # Split rows by whether they have a matching `PersonMonth`, or not
         split: dict[bool, list[BTaxPayment]] = {
@@ -129,9 +138,9 @@ class BTaxPaymentImport(SFTPImport):
         objs: list[BTaxPaymentModel] = [
             BTaxPaymentModel(
                 filename=filename,
-                person_month=self._person_months_keyed[
-                    (row.cpr, row.tax_year, row.rate_number)
-                ],
+                person_month=self._get_person_month(
+                    row.cpr, row.tax_year, row.rate_number
+                ),
                 amount_paid=abs(row.amount_paid),  # input value is always negative
                 amount_charged=row.amount_charged,
                 date_charged=row.date_charged,
