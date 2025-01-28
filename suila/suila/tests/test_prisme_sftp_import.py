@@ -33,4 +33,4 @@ class TestSFTPImport(ImportTestCase):
     def test_get_file(self):
         with self.mock_sftp_server("1"):
             buf: BytesIO = self.instance.get_file("filename1.csv")
-            self.assertEqual(buf.getvalue(), b"1")
+            self.assertEqual(buf.getvalue(), "1".encode(self.encoding))

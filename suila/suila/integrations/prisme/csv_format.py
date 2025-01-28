@@ -14,8 +14,13 @@ class CSVFormat:
         raise NotImplementedError("must be implemented by subclass")  # pragma: no cover
 
     @classmethod
-    def from_csv_buf(cls, buf: BytesIO, delimiter: str = ";") -> list[Self]:
-        reader = csv.reader(TextIOWrapper(buf), delimiter=delimiter)
+    def from_csv_buf(
+        cls,
+        buf: BytesIO,
+        delimiter: str = ";",
+        encoding: str = "utf-16-le",
+    ) -> list[Self]:
+        reader = csv.reader(TextIOWrapper(buf, encoding=encoding), delimiter=delimiter)
         return [cls.from_csv_row(row) for row in reader]
 
     @classmethod

@@ -23,8 +23,10 @@ class SampleFormat(CSVFormat):
 
 
 class TestCSVFormat(SimpleTestCase):
+    encoding = "utf-16-le"
+
     def test_from_csv_buf(self):
-        buf: BytesIO = BytesIO(_EXAMPLE.encode())
+        buf: BytesIO = BytesIO(_EXAMPLE.encode(self.encoding))
         rows = SampleFormat.from_csv_buf(buf)
         self.assertEqual(len(rows), 1)
         self.assertIsInstance(rows[0], SampleFormat)
