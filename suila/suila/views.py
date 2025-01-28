@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import Any, Callable
 from urllib.parse import urlencode
 
-from common.models import User
+from common.models import PageView, User
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import CharField, Count, F, Field, Q, QuerySet, Sum, Value
 from django.db.models.functions import Cast, LPad
@@ -43,6 +43,10 @@ from suila.view_mixins import PermissionsRequiredMixin
 
 class RootView(LoginRequiredMixin, TemplateView):
     template_name = "suila/root.html"
+
+    def get(self, request, *args, **kwargs):
+        PageView.log(self)
+        return super().get(request, *args, **kwargs)
 
 
 class CPRColumn(BaseLinkColumn):
@@ -202,6 +206,11 @@ class PersonSearchView(
         qs = qs.order_by("_cpr")
         return qs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        PageView.log(self, context["table"].page.object_list.data)
+        return context
+
 
 class PersonDetailView(
     LoginRequiredMixin, PersonKeyFigureViewMixin, PermissionsRequiredMixin, DetailView
@@ -226,6 +235,7 @@ class PersonDetailView(
             # Strip leading underscore, which is not allowed in Django templates
             context_data[annotation[1:]] = getattr(self.object, annotation)
 
+        PageView.log(self, self.object)
         return context_data
 
 
@@ -249,6 +259,7 @@ class PersonDetailBenefitView(
         # Add chart data: benefit chart
         context_data["benefit_chart"] = self.to_json(self.get_benefit_chart())
 
+        PageView.log(self, self.object)
         return context_data
 
     def get_benefit_data(self):
@@ -376,6 +387,7 @@ class PersonDetailIncomeView(
         # Add chart data: income chart (same data as "income per employer and type")
         context_data["income_chart"] = self.to_json(self.get_income_chart())
 
+        PageView.log(self, self.object)
         return context_data
 
     def get_income_chart_series(self) -> list[dict]:
@@ -570,10 +582,12 @@ class PersonDetailNotesView(
         ).order_by("created")
 
     def get_context_data(self, **kwargs):
+        notes = self.get_notes()
+        PageView.log(self, notes)
         return super().get_context_data(
             **{
                 **kwargs,
-                "notes": self.get_notes(),
+                "notes": notes,
             }
         )
 
@@ -587,6 +601,7 @@ class PersonDetailNotesAttachmentView(
 
     def get(self, request, *args, **kwargs):
         self.object: NoteAttachment = self.get_object()
+        PageView.log(self, self.object)
         response = HttpResponse(
             self.object.file.read(), content_type=self.object.content_type
         )

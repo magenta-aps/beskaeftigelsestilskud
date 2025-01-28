@@ -9,7 +9,7 @@ from functools import cached_property
 from typing import List
 from urllib.parse import urlencode
 
-from common.models import EngineViewPreferences
+from common.models import EngineViewPreferences, PageView
 from common.utils import SuilaJSONEncoder, omit
 from data_analysis.forms import (
     CalculatorForm,
@@ -117,6 +117,8 @@ class PersonAnalysisView(
         else:
             chart_data = "{}"
             person_years = self.object.personyear_set.all()
+
+        PageView.log(self, person_years)
         return super().get_context_data(
             **{
                 **kwargs,
@@ -333,6 +335,8 @@ class PersonListView(
             columns.append([key, key, getattr(preferences, "show_" + key)])
         context["columns"] = columns
 
+        PageView.log(self, context["object_list"])
+
         return context
 
 
@@ -344,11 +348,13 @@ class HistogramView(
     required_model_permissions = ["suila.view_person", "suila.view_personyear"]
 
     def get(self, request, *args, **kwargs):
+
         if request.GET.get("format") == "json":
             return HttpResponse(
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
                 content_type="application/json",
             )
+        PageView.log(self)
         return super().get(request, *args, **kwargs)  # pragma: no cover
 
     def get_form_kwargs(self):
@@ -439,6 +445,7 @@ class UpdateEngineViewPreferences(View):
                 show_field = request.POST[field.name].lower() == "true"
                 setattr(preferences, field.name, show_field)
         preferences.save()
+        PageView.log(self, preferences)
         return HttpResponse("ok")
 
 
@@ -484,6 +491,7 @@ class JobListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormVi
         context["sort_params"] = sort_params
         context["order_current"] = current_order_by
 
+        PageView.log(self, self.object_list)
         return context
 
 
@@ -521,6 +529,7 @@ class CalculatorView(FormView):
         return engines
 
     def get_context_data(self, **kwargs):
+        PageView.log(self)
         return super().get_context_data(**{**kwargs, "engines": self.engines})
 
     def form_valid(self, form):
