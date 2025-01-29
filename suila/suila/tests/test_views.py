@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 from common.models import PageView, User
 from common.tests.test_mixins import TestViewMixin
+from common.view_mixins import ViewLogMixin
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -40,8 +42,25 @@ from suila.views import (
     PersonDetailNotesView,
     PersonDetailView,
     PersonSearchView,
+    RootView,
     YearMonthMixin,
 )
+
+
+class TestRootView(TestViewMixin, TestCase):
+
+    view_class = RootView
+
+    def test_view_log(self):
+        self.request_get(self.admin_user, "/")
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "RootView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {})
+        self.assertEqual(pageview.params, {})
+        self.assertEqual(pageview.itemviews.count(), 0)
 
 
 class PersonEnv(TestCase):
@@ -772,3 +791,19 @@ class TestPermissionsRequiredMixin(TestViewMixin, PersonEnv):
         self.assertTrue(self.ImplView.has_permissions(self.staff_user, None))
         with self.assertRaises(ValueError):
             self.ImplView.has_permissions(None, None)
+
+
+class TestViewLog(TestViewMixin, TestCase):
+
+    class TestView(ViewLogMixin, TemplateView):
+        template_name = "suila/root.html"
+
+        def get(self, request, *args, **kwargs):
+            self.log_view()
+            return super().get(request, *args, **kwargs)
+
+    view_class = TestView
+
+    def test_view_no_user(self):
+        with self.assertRaises(ValueError):
+            view, response = self.request_get(user=AnonymousUser())
