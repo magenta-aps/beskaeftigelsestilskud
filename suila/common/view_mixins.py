@@ -12,7 +12,7 @@ class ViewLogMixin:
         self,
         items: Model | List[Model] | QuerySet[Model] | None = None,
     ) -> PageView | None:
-        request = self.request
+        request = self.request  # type: ignore[attr-defined]
         user = request.user
         if type(user) is not User:
             return None
@@ -20,7 +20,7 @@ class ViewLogMixin:
             user=request.user,  # type: ignore[misc]
             url=request.build_absolute_uri(),
             class_name=self.__class__.__name__,
-            kwargs=self.kwargs,
+            kwargs=self.kwargs,  # type: ignore[attr-defined]
             params=request.GET.dict(),
         )
         if items is not None:
