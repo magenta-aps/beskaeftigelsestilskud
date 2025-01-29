@@ -39,3 +39,5 @@ suila/2023_a.csv
 *.g68
 suila/data/
 *.swp
+
+ssl/
