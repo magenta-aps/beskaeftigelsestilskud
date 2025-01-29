@@ -4,17 +4,15 @@
 import dataclasses
 import re
 from decimal import Decimal
-from typing import Any, Collection, Dict, Iterable, List, Optional, TypeVar
+from typing import Any, Collection, Dict, Iterable, TypeVar
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import numpy as np
 import pandas as pd
-from common.models import ItemView, PageView, User
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model, QuerySet
 from django.utils.translation import gettext_lazy as _
-from django.views import View
 
 from suila.models import (
     IncomeEstimate,
@@ -430,27 +428,3 @@ class SuilaJSONEncoder(DjangoJSONEncoder):
             }
 
         return super().default(obj)
-
-
-def log_view(
-    view: View,
-    items: Model | List[Model] | QuerySet[Model] | None = None,
-) -> Optional[PageView]:
-    request = view.request
-    user = request.user
-    if type(user) is not User:
-        return None
-    pageview = PageView.objects.create(
-        user=request.user,  # type: ignore[misc]
-        url=request.build_absolute_uri(),
-        class_name=view.__class__.__name__,
-        kwargs=view.kwargs,
-        params=request.GET.dict(),
-    )
-    if items is not None:
-        if isinstance(items, Model):
-            items = [items]
-        ItemView.objects.bulk_create(
-            [ItemView(pageview=pageview, item=item) for item in items]
-        )
-    return pageview
