@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from typing import List, Optional
 
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -12,8 +11,6 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
-from django.db.models import Model, QuerySet
-from django.views import View
 
 
 class User(AbstractUser):
@@ -67,30 +64,6 @@ class PageView(models.Model):
     class_name = models.CharField(max_length=50)
     kwargs = models.JSONField()
     params = models.JSONField()
-
-    @staticmethod
-    def log(
-        view: View,
-        items: Model | List[Model] | QuerySet[Model] | None = None,
-    ) -> Optional["PageView"]:
-        request = view.request
-        user = request.user
-        if type(user) is not User:
-            return None
-        pageview = PageView.objects.create(
-            user=request.user,  # type: ignore[misc]
-            url=request.build_absolute_uri(),
-            class_name=view.__class__.__name__,
-            kwargs=view.kwargs,
-            params=request.GET.dict(),
-        )
-        if items is not None:
-            if isinstance(items, Model):
-                items = [items]
-            ItemView.objects.bulk_create(
-                [ItemView(pageview=pageview, item=item) for item in items]
-            )
-        return pageview
 
 
 class ItemView(models.Model):

@@ -9,8 +9,8 @@ from functools import cached_property
 from typing import List
 from urllib.parse import urlencode
 
-from common.models import EngineViewPreferences, PageView
-from common.utils import SuilaJSONEncoder, omit
+from common.models import EngineViewPreferences
+from common.utils import SuilaJSONEncoder, log_view, omit
 from data_analysis.forms import (
     CalculatorForm,
     HistogramOptionsForm,
@@ -118,7 +118,7 @@ class PersonAnalysisView(
             chart_data = "{}"
             person_years = self.object.personyear_set.all()
 
-        PageView.log(self, person_years)
+        log_view(self, person_years)
         return super().get_context_data(
             **{
                 **kwargs,
@@ -335,7 +335,7 @@ class PersonListView(
             columns.append([key, key, getattr(preferences, "show_" + key)])
         context["columns"] = columns
 
-        PageView.log(self, context["object_list"])
+        log_view(self, context["object_list"])
 
         return context
 
@@ -353,7 +353,7 @@ class HistogramView(
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
                 content_type="application/json",
             )
-        PageView.log(self)
+        log_view(self)
         return super().get(request, *args, **kwargs)  # pragma: no cover
 
     def get_form_kwargs(self):
@@ -489,7 +489,7 @@ class JobListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormVi
         context["sort_params"] = sort_params
         context["order_current"] = current_order_by
 
-        PageView.log(self, self.object_list)
+        log_view(self, self.object_list)
         return context
 
 
@@ -527,7 +527,7 @@ class CalculatorView(FormView):
         return engines
 
     def get_context_data(self, **kwargs):
-        PageView.log(self)
+        log_view(self)
         return super().get_context_data(**{**kwargs, "engines": self.engines})
 
     def form_valid(self, form):
