@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 
 from common.models import EngineViewPreferences
 from common.utils import SuilaJSONEncoder, omit
+from common.view_mixins import ViewLogMixin
 from data_analysis.forms import (
     CalculatorForm,
     HistogramOptionsForm,
@@ -61,7 +62,7 @@ class SimulationJSONEncoder(SuilaJSONEncoder):
 
 
 class PersonAnalysisView(
-    LoginRequiredMixin, PermissionsRequiredMixin, DetailView, FormView
+    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, DetailView, FormView
 ):
     model = Person
     context_object_name = "person"
@@ -117,6 +118,8 @@ class PersonAnalysisView(
         else:
             chart_data = "{}"
             person_years = self.object.personyear_set.all()
+
+        self.log_view(person_years)
         return super().get_context_data(
             **{
                 **kwargs,
@@ -269,6 +272,7 @@ class PersonListView(
     PersonYearEstimationMixin,
     LoginRequiredMixin,
     PermissionsRequiredMixin,
+    ViewLogMixin,
     ListView,
     FormView,
 ):
@@ -333,11 +337,17 @@ class PersonListView(
             columns.append([key, key, getattr(preferences, "show_" + key)])
         context["columns"] = columns
 
+        self.log_view(context["object_list"])
+
         return context
 
 
 class HistogramView(
-    LoginRequiredMixin, PermissionsRequiredMixin, PersonYearEstimationMixin, FormView
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    PersonYearEstimationMixin,
+    ViewLogMixin,
+    FormView,
 ):
     template_name = "data_analysis/histogram.html"
     form_class = HistogramOptionsForm
@@ -349,6 +359,7 @@ class HistogramView(
                 json.dumps(self.get_histogram(), cls=DjangoJSONEncoder),
                 content_type="application/json",
             )
+        self.log_view()
         return super().get(request, *args, **kwargs)  # pragma: no cover
 
     def get_form_kwargs(self):
@@ -442,7 +453,9 @@ class UpdateEngineViewPreferences(View):
         return HttpResponse("ok")
 
 
-class JobListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormView):
+class JobListView(
+    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, ListView, FormView
+):
     paginate_by = 30
     model = JobLog
     template_name = "data_analysis/job_list.html"
@@ -484,10 +497,11 @@ class JobListView(LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormVi
         context["sort_params"] = sort_params
         context["order_current"] = current_order_by
 
+        self.log_view(self.object_list)
         return context
 
 
-class CalculatorView(FormView):
+class CalculatorView(ViewLogMixin, FormView):
     form_class = CalculatorForm
     template_name = "data_analysis/calculate.html"
 
@@ -521,6 +535,7 @@ class CalculatorView(FormView):
         return engines
 
     def get_context_data(self, **kwargs):
+        self.log_view()
         return super().get_context_data(**{**kwargs, "engines": self.engines})
 
     def form_valid(self, form):

@@ -8,6 +8,7 @@ from typing import Any, Callable
 from urllib.parse import urlencode
 
 from common.models import User
+from common.view_mixins import ViewLogMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import CharField, Count, F, Field, Q, QuerySet, Sum, Value
 from django.db.models.functions import Cast, LPad
@@ -41,8 +42,12 @@ from suila.templatetags.date_tags import month_name
 from suila.view_mixins import PermissionsRequiredMixin
 
 
-class RootView(LoginRequiredMixin, TemplateView):
+class RootView(LoginRequiredMixin, ViewLogMixin, TemplateView):
     template_name = "suila/root.html"
+
+    def get(self, request, *args, **kwargs):
+        self.log_view()
+        return super().get(request, *args, **kwargs)
 
 
 class CPRColumn(BaseLinkColumn):
@@ -181,6 +186,7 @@ class PersonSearchView(
     PermissionsRequiredMixin,
     PersonKeyFigureViewMixin,
     SingleTableMixin,
+    ViewLogMixin,
     FilterView,
 ):
     model = Person
@@ -202,9 +208,18 @@ class PersonSearchView(
         qs = qs.order_by("_cpr")
         return qs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.log_view(context["table"].page.object_list.data)
+        return context
+
 
 class PersonDetailView(
-    LoginRequiredMixin, PersonKeyFigureViewMixin, PermissionsRequiredMixin, DetailView
+    LoginRequiredMixin,
+    PersonKeyFigureViewMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    DetailView,
 ):
     model = Person
     context_object_name = "person"
@@ -226,6 +241,7 @@ class PersonDetailView(
             # Strip leading underscore, which is not allowed in Django templates
             context_data[annotation[1:]] = getattr(self.object, annotation)
 
+        self.log_view(self.object)
         return context_data
 
 
@@ -234,6 +250,7 @@ class PersonDetailBenefitView(
     PersonYearMonthMixin,
     ChartMixin,
     PermissionsRequiredMixin,
+    ViewLogMixin,
     DetailView,
 ):
     model = Person
@@ -249,6 +266,7 @@ class PersonDetailBenefitView(
         # Add chart data: benefit chart
         context_data["benefit_chart"] = self.to_json(self.get_benefit_chart())
 
+        self.log_view(self.object)
         return context_data
 
     def get_benefit_data(self):
@@ -357,7 +375,12 @@ class PersonDetailBenefitView(
 
 
 class PersonDetailIncomeView(
-    LoginRequiredMixin, YearMonthMixin, ChartMixin, PermissionsRequiredMixin, DetailView
+    LoginRequiredMixin,
+    YearMonthMixin,
+    ChartMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    DetailView,
 ):
     model = Person
     context_object_name = "person"
@@ -376,6 +399,7 @@ class PersonDetailIncomeView(
         # Add chart data: income chart (same data as "income per employer and type")
         context_data["income_chart"] = self.to_json(self.get_income_chart())
 
+        self.log_view(self.object)
         return context_data
 
     def get_income_chart_series(self) -> list[dict]:
@@ -529,6 +553,7 @@ class PersonDetailNotesView(
     PersonYearMonthMixin,
     FormWithFormsetView,
     PermissionsRequiredMixin,
+    ViewLogMixin,
     DetailView,
 ):
 
@@ -570,16 +595,18 @@ class PersonDetailNotesView(
         ).order_by("created")
 
     def get_context_data(self, **kwargs):
+        notes = self.get_notes()
+        self.log_view(notes)
         return super().get_context_data(
             **{
                 **kwargs,
-                "notes": self.get_notes(),
+                "notes": notes,
             }
         )
 
 
 class PersonDetailNotesAttachmentView(
-    LoginRequiredMixin, PermissionsRequiredMixin, BaseDetailView
+    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, BaseDetailView
 ):
 
     model = NoteAttachment
@@ -587,6 +614,7 @@ class PersonDetailNotesAttachmentView(
 
     def get(self, request, *args, **kwargs):
         self.object: NoteAttachment = self.get_object()
+        self.log_view(self.object)
         response = HttpResponse(
             self.object.file.read(), content_type=self.object.content_type
         )

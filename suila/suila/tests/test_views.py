@@ -6,8 +6,10 @@ from decimal import Decimal
 from typing import Any
 from unittest.mock import patch
 
-from common.models import User
+from common.models import PageView, User
 from common.tests.test_mixins import TestViewMixin
+from common.view_mixins import ViewLogMixin
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -40,8 +42,25 @@ from suila.views import (
     PersonDetailNotesView,
     PersonDetailView,
     PersonSearchView,
+    RootView,
     YearMonthMixin,
 )
+
+
+class TestRootView(TestViewMixin, TestCase):
+
+    view_class = RootView
+
+    def test_view_log(self):
+        self.request_get(self.admin_user, "/")
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "RootView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {})
+        self.assertEqual(pageview.params, {})
+        self.assertEqual(pageview.itemviews.count(), 0)
 
 
 class PersonEnv(TestCase):
@@ -171,6 +190,22 @@ class TestPersonSearchView(TestViewMixin, PersonEnv):
         view = self.view(self.no_user)
         self.assertEqual(view.get_queryset().count(), 0)
 
+    def test_view_log(self):
+        self.request_get(self.admin_user, "/persons/")
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonSearchView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {})
+        self.assertEqual(pageview.params, {})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 3)
+        self.assertEqual(
+            {itemview.item for itemview in itemviews},
+            {self.person1, self.person2, self.person3},
+        )
+
 
 class TimeContextMixin(TestViewMixin):
 
@@ -290,6 +325,23 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
 
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/?year=2020",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.person1)
+
 
 class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailBenefitView
@@ -365,6 +417,23 @@ class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
 
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/benefits/?year=2020",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailBenefitView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.person1)
+
 
 class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailIncomeView
@@ -435,6 +504,23 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
         view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
+
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/income/?year=2020",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailIncomeView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.person1)
 
 
 class TestNoteView(TimeContextMixin, PersonEnv):
@@ -572,7 +658,9 @@ class TestNoteView(TimeContextMixin, PersonEnv):
             content_type="text/plain",
         )
         view = self.view_class()
-        request = self.request_factory.get("")
+        request = self.request_factory.get(
+            "/persons/{self.person1.pk}/notes/?year=2020", pk=self.person1.pk
+        )
         request.user = self.admin_user
         view.setup(request, pk=self.person1.pk)
         with self._time_context():
@@ -581,6 +669,18 @@ class TestNoteView(TimeContextMixin, PersonEnv):
         notes = view.get_context_data()["notes"]
         self.assertEqual(notes[0], note)
         self.assertEqual(notes[0].attachments.first(), attachment)
+
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 2)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailNotesView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        self.assertEqual(pageview.itemviews.count(), 1)
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, note)
 
     def test_create_invalid(self):
         view = self.view_class()
@@ -601,6 +701,21 @@ class TestNoteView(TimeContextMixin, PersonEnv):
         qs = Note.objects.filter(personyear=self.person_year)
         self.assertEqual(qs.count(), 0)
         self.assertEqual(response.status_code, 200)
+
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/notes/?year=2020",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailNotesView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        self.assertEqual(pageview.itemviews.count(), 0)
 
 
 class TestNoteAttachmentView(TimeContextMixin, PersonEnv):
@@ -632,6 +747,24 @@ class TestNoteAttachmentView(TimeContextMixin, PersonEnv):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"Test data")
 
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"note_attachments/{self.attachment.pk}/",
+            pk=self.attachment.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailNotesAttachmentView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.attachment.pk})
+        self.assertEqual(pageview.params, {})
+        self.assertEqual(pageview.itemviews.count(), 1)
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.attachment)
+
 
 class TestPermissionsRequiredMixin(TestViewMixin, PersonEnv):
     class SuperView(View):
@@ -658,3 +791,19 @@ class TestPermissionsRequiredMixin(TestViewMixin, PersonEnv):
         self.assertTrue(self.ImplView.has_permissions(self.staff_user, None))
         with self.assertRaises(ValueError):
             self.ImplView.has_permissions(None, None)
+
+
+class TestViewLog(TestViewMixin, TestCase):
+
+    class TestView(ViewLogMixin, TemplateView):
+        template_name = "suila/root.html"
+
+        def get(self, request, *args, **kwargs):
+            self.log_view()
+            return super().get(request, *args, **kwargs)
+
+    view_class = TestView
+
+    def test_view_no_user(self):
+        with self.assertRaises(ValueError):
+            view, response = self.request_get(user=AnonymousUser())
