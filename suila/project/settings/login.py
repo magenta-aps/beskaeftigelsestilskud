@@ -114,6 +114,8 @@ SAML = {
             ],
             "optional_attributes": [
                 "https://data.gov.dk/model/core/eid/email",
+                "https://data.gov.dk/model/core/eid/professional/orgName",
+                "https://data.gov.dk/model/core/eid/professional/cvr",
             ],
             "name_id_format": [
                 "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
