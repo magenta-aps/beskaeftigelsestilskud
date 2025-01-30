@@ -14,7 +14,7 @@ class ViewLogMixin:
     ) -> PageView | None:
         request = self.request  # type: ignore[attr-defined]
         user = request.user
-        if type(user) is not User:
+        if not isinstance(user, User):
             raise ValueError
         pageview = PageView.objects.create(
             user=request.user,  # type: ignore[misc]
