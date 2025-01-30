@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
 import json
 
 from django.contrib.sessions.models import Session
