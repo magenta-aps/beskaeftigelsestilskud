@@ -211,6 +211,11 @@ def get_income_estimates_df(
     if cpr:
         estimates_qs = estimates_qs.filter(person_month__person_year__person__cpr=cpr)
 
+    estimates_qs = estimates_qs.order_by(
+        "person_month__person_year__year__year",
+        "person_month__month",
+        "person_month__person_year__person__cpr",
+    )
     df = to_dataframe(
         estimates_qs,
         index="person_month__person_year__person__cpr",
