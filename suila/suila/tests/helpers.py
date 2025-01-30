@@ -14,6 +14,8 @@ from suila.models import Person, PersonMonth, PersonYear, Year
 class ImportTestCase(TestCase):
     """Base class to help test Prisme SFTP imports"""
 
+    encoding = "utf-16-le"
+
     @classmethod
     def add_person_month(
         cls,
@@ -41,6 +43,6 @@ class ImportTestCase(TestCase):
                 "suila.integrations.prisme.sftp_import.get_file_in_prisme_folder",
                 # On each call to `get_file_in_prisme_folder`, provide a new return
                 # value from this iterable.
-                side_effect=[BytesIO(file.encode()) for file in files],
+                side_effect=[BytesIO(file.encode(self.encoding)) for file in files],
             ):
                 yield
