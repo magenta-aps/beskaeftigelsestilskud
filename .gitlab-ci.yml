@@ -148,7 +148,7 @@ Lint REUSE compliance:
   variables:
     # Simulate development environment while running tests so we use mockup data
     DJANGO_SECRET_KEY: e$s6@0(hs5ja79-&!l7vt^onoe4h^*bv_e4hj&wt5^8*&x76-$
-    DJANGO_TIMEZONE: Europe/Copenhagen
+    TZ: Europe/Copenhagen
     HOST_DOMAIN: http://localhost
     POSTGRES_USER: suila
     POSTGRES_PASSWORD: suila

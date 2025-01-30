@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-23 09:34-0100\n"
+"POT-Creation-Date: 2025-01-27 13:26-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,14 +27,6 @@ msgstr ""
 #: login/forms.py
 #, python-brace-format
 msgid "Husk mig på denne maskine i {days} dage"
-msgstr ""
-
-#: login/templates/login/error.html
-msgid "Log ud"
-msgstr ""
-
-#: login/templates/login/error.html
-msgid "Log ind"
 msgstr ""
 
 #: login/templates/login/logged_out.html
@@ -63,12 +55,22 @@ msgstr ""
 msgid "Der kunne ikke logges ind med den angivne bruger."
 msgstr ""
 
+#: login/templates/login/login_failed.html
+#: login/templates/login/login_no_cpr.html
+msgid "Log ud"
+msgstr ""
+
 #: login/templates/login/login_no_cpr.html
 msgid "Det anvendte login har ikke et CPR-nummer tilknyttet."
 msgstr ""
 
 #: login/templates/login/login_repeat.html
 msgid "Det anvendte login er allerede anvendt. Prøv at logge ind igen."
+msgstr ""
+
+#: login/templates/login/login_repeat.html
+#: login/templates/login/login_timeout.html
+msgid "Log ind"
 msgstr ""
 
 #: login/templates/login/login_timeout.html
