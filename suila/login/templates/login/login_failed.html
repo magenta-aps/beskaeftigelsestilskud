@@ -13,5 +13,7 @@ SPDX-License-Identifier: MPL-2.0
 {% block content %}
     {% translate "Adgang nægtet" as header %}
     {% translate 'Der kunne ikke logges ind med den angivne bruger.' as body %}
-    {% include 'login/error.html' with header=header body=body logout=True %}
+    <h1>{{ header }}</h1>
+    <p>{{ body }}</p>
+    <a class="btn btn-primary" href="{% url 'login:logout' %}">{% translate 'Log ud' %}</a>
 {% endblock %}
