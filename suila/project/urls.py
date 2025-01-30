@@ -20,6 +20,7 @@ Including another URLconf
 """
 
 from debug_toolbar.toolbar import debug_toolbar_urls
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from two_factor.urls import urlpatterns as tf_urls
@@ -50,3 +51,8 @@ urlpatterns = [
     ),
     path("", include(tf_urls)),
 ] + debug_toolbar_urls()
+
+if settings.MITID_TEST_ENABLED:
+    urlpatterns.append(
+        path("mitid_test/", include("mitid_test.urls", namespace="mitid_test"))
+    )
