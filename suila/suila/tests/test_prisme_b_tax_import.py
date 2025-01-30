@@ -21,7 +21,7 @@ class TestBTaxPayment(SimpleTestCase):
     def test_from_csv_row(self):
         obj = BTaxPayment.from_csv_row(_EXAMPLE_1.split(";"))
         self.assertEqual(obj.type, "BTAX")
-        self.assertEqual(obj.cpr, 311270_0000)
+        self.assertEqual(obj.cpr, "3112700000")
         self.assertEqual(obj.tax_year, 2021)
         self.assertEqual(obj.amount_paid, -3439)
         self.assertEqual(obj.serial_number, 2000004544)
@@ -70,7 +70,7 @@ class TestBTaxPaymentImport(ImportTestCase):
         )
         # Assert: no objects are created for `_EXAMPLE_2` (whose CPR, etc. do not match
         # any `PersonMonth` objects.)
-        self.assertQuerySetEqual(skipped, [3112710000], transform=attrgetter("cpr"))
+        self.assertQuerySetEqual(skipped, ["3112710000"], transform=attrgetter("cpr"))
 
     def test_import_b_tax_verbosity_2(self):
         # Arrange
