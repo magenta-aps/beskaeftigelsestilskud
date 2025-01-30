@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from django.contrib.auth.models import AbstractUser
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.core.validators import (
     MaxLengthValidator,
     MinLengthValidator,
@@ -47,3 +49,29 @@ class EngineViewPreferences(models.Model):
     show_TwoYearSummationEngine = models.BooleanField(default=True)
     show_SameAsLastMonthEngine = models.BooleanField(default=False)
     show_SelfReportedEngine = models.BooleanField(default=False)
+
+
+class PageView(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name="page_views",
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+    url = models.URLField()
+    class_name = models.CharField(max_length=50)
+    kwargs = models.JSONField()
+    params = models.JSONField()
+
+
+class ItemView(models.Model):
+    pageview = models.ForeignKey(
+        PageView,
+        on_delete=models.CASCADE,
+        related_name="itemviews",
+    )
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    item = GenericForeignKey("content_type", "object_id")

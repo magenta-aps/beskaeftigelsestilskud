@@ -163,8 +163,11 @@ class LoginTest(TestCase):
         }
         device.throttle_reset()
 
-        response = self.client.post(reverse("login:login"), data, follow=True)
-        self.assertRedirects(response, resolve_url(settings.LOGIN_REDIRECT_URL))
+        response = self.client.post(reverse("login:login"), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.headers["Location"], resolve_url(settings.LOGIN_REDIRECT_URL)
+        )
 
     @override_settings(BYPASS_2FA=True)
     def test_bypass_token_step(self):
@@ -177,7 +180,10 @@ class LoginTest(TestCase):
         }
         response = self.client.post(reverse("login:login"), data)
 
-        self.assertRedirects(response, resolve_url(settings.LOGIN_REDIRECT_URL))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.headers["Location"], resolve_url(settings.LOGIN_REDIRECT_URL)
+        )
 
     def test_two_factor_setup(self):
         self.client.login(username="test", password="test")
@@ -217,7 +223,8 @@ class LoginTest(TestCase):
         success_url = reverse("suila:root") + "?two_factor_success=1"
 
         self.assertEqual(1, self.user.totpdevice_set.count())
-        self.assertRedirects(response, success_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], success_url)
 
     def test_2fa_required(self):
         self.client.login(username="test", password="test")

@@ -41,7 +41,7 @@ urlpatterns: List[URLResolver | URLPattern] = [
         name="person_detail_notes",
     ),
     path(
-        "notes/<int:pk>/",
+        "note_attachments/<int:pk>/",
         PersonDetailNotesAttachmentView.as_view(),
         name="note_attachment",
     ),
