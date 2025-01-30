@@ -52,7 +52,7 @@ urlpatterns = [
     path("", include(tf_urls)),
 ] + debug_toolbar_urls()
 
-if settings.MITID_TEST_ENABLED:
+if settings.MITID_TEST_ENABLED:  # type: ignore[misc]
     urlpatterns.append(
         path("mitid_test/", include("mitid_test.urls", namespace="mitid_test"))
     )
