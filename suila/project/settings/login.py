@@ -106,16 +106,14 @@ SAML = {
                 ],
             },
             "required_attributes": [
-                "https://data.gov.dk/model/core/eid/professional/orgName",
                 "https://data.gov.dk/model/core/specVersion",
                 "https://data.gov.dk/concept/core/nsis/loa",
                 "https://data.gov.dk/model/core/eid/cprNumber",
                 "https://data.gov.dk/model/core/eid/firstName",
                 "https://data.gov.dk/model/core/eid/lastName",
-                "https://data.gov.dk/model/core/eid/email",
             ],
             "optional_attributes": [
-                "https://data.gov.dk/model/core/eid/professional/cvr",
+                "https://data.gov.dk/model/core/eid/email",
             ],
             "name_id_format": [
                 "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
