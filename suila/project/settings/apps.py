@@ -25,4 +25,5 @@ INSTALLED_APPS = [
     "django_extensions",
     "two_factor",
     "ninja_extra",
+    "mitid_test",
 ]
