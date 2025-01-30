@@ -75,6 +75,7 @@ services:
       - HOME=/tmp/
     command: [ "supercronic", "/crontab" ]
     networks:
+      - default
       - database
 
   suila-idp:
