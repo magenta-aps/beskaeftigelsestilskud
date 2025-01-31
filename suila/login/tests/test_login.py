@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from common.models import User
 from django.conf import settings
 from django.contrib.auth import BACKEND_SESSION_KEY
+from django.contrib.auth.models import Group
 from django.shortcuts import resolve_url
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -27,9 +28,11 @@ class LoginTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.group = Group.objects.create(name="Borgerservice")
         cls.user = User.objects.create(username="test")
         cls.user.set_password("test")
         cls.user.save()
+        cls.user.groups.add(cls.group)
 
     def test_django_login_form(self):
         self.client.get(reverse("login:login") + "?back=/foobar")
