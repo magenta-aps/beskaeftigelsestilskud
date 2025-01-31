@@ -94,11 +94,8 @@ msgid "Du skal logge ind med to-faktor-godkendelse for at kunne se denne side"
 msgstr ""
 
 #: login/templates/two_factor/core/otp_required.html
-msgid "Aktivér to-faktor-godkendelse"
-msgstr ""
-
 #: login/templates/two_factor/core/setup.html
-msgid "Aktivér To-faktor-godkendelse"
+msgid "Aktivér to-faktor-godkendelse"
 msgstr ""
 
 #: login/templates/two_factor/core/setup.html

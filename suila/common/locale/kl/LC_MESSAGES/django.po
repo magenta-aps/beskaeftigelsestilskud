@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-25 09:56-0100\n"
+"POT-Creation-Date: 2025-01-30 12:56-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,44 +16,56 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: common/templates/common/base.html
-msgid "Beskæftigelsesfradrag"
+#: common/templates/common/_base.html
+msgid "Suila"
 msgstr ""
 
-#: common/templates/common/base.html
+#: common/templates/common/_base.html
 msgid "Personer"
 msgstr ""
 
-#: common/templates/common/base.html
+#: common/templates/common/_base.html
+msgid "Suilaberegneren"
+msgstr ""
+
+#: common/templates/common/_base.html
 msgid "Estimeringsoverblik for hver person"
 msgstr ""
 
-#: common/templates/common/base.html
+#: common/templates/common/_base.html
 msgid "Histogrammer over estimeringernes afvigelse"
 msgstr ""
 
-#: common/templates/common/base.html
-msgid "Tilskudsberegner"
-msgstr ""
-
-#: common/templates/common/base.html
+#: common/templates/common/_base.html
 msgid "Jobliste"
 msgstr ""
 
-#: common/templates/common/base.html
+#: common/templates/common/_base.html
+msgid "Om Suila"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Version"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Kildekode"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Github - Beskæftigelsestilskud"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Kontakt"
+msgstr ""
+
+#: common/templates/common/_base.html
 msgid "Log out"
 msgstr ""
 
 #: common/templates/common/base.html
-msgid "Home"
-msgstr ""
-
-#: common/templates/common/base.html
-msgid "Version"
-msgstr ""
-
-#: common/templates/common/base.html
-msgid "Kildekode"
+msgid "Hjem"
 msgstr ""
 
 #: common/utils.py
