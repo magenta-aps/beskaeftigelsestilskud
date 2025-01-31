@@ -17,11 +17,15 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: login/forms.py
-msgid "Username"
+msgid "Brugernavn"
 msgstr ""
 
 #: login/forms.py
 msgid "Password"
+msgstr ""
+
+#: login/forms.py
+msgid "Kodeord"
 msgstr ""
 
 #: login/forms.py
@@ -74,6 +78,7 @@ msgstr ""
 
 #: login/templates/login/login_repeat.html
 #: login/templates/login/login_timeout.html
+#: login/templates/two_factor/_wizard_actions.html
 msgid "Log ind"
 msgstr ""
 
@@ -85,8 +90,8 @@ msgstr ""
 msgid "Fortsæt"
 msgstr ""
 
-#: login/templates/two_factor/_wizard_actions.html
-msgid "Login"
+#: login/templates/two_factor/core/login.html
+msgid "Indtast venligst koden, der er genereret af din token-generator."
 msgstr ""
 
 #: login/templates/two_factor/core/otp_required.html

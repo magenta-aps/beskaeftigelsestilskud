@@ -11,7 +11,7 @@
 
 {% block content %}
 {% if wizard.steps.current == 'token' %}
-<p>Indtast venligst koden, der er genereret af din token-generator.</p>
+<p>{% translate "Indtast venligst koden, der er genereret af din token-generator." %}</p>
 {% endif %}
 <form action="" method="post">
     {% block main_form_content %}
