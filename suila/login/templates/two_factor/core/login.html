@@ -11,7 +11,7 @@
 
 {% block content %}
 {% if wizard.steps.current == 'token' %}
-<p>Indtast venligst koden, der er genereret af din token-generator.</p>
+<p>{% translate "Indtast venligst koden, der er genereret af din token-generator." %}</p>
 {% endif %}
 <form action="" method="post">
     {% block main_form_content %}
@@ -21,7 +21,7 @@
     <input type="submit" value="" hidden/>
     {% include "two_factor/_wizard_actions.html" %}
     <a href="{% url 'login:mitid:login' %}{% if back %}?back={{ back|urlencode }}{% endif %}">
-        {% translate "Log in using MitID" %}
+        {% translate "Log ind med MitID" %}
     </a>
     {% endblock %}
 </form>
