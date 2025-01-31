@@ -18,10 +18,18 @@ class LoginRequiredMixin(DjangoLoginRequiredMixin):
         )
 
     def dispatch(self, request, *args, **kwargs):
+        user = self.request.user
         if (
-            not isinstance(self.request.user, AnonymousUser)
+            not isinstance(user, AnonymousUser)
             and not settings.BYPASS_2FA
-            and not self.request.user.is_verified()
+            and not user.is_verified()
+            and (
+                user.is_staff
+                or user.is_superuser
+                or user.groups.filter(
+                    name__in=("Borgerservice", "Skattestyrelsen")
+                ).exists()
+            )
         ):
             return self.two_factor_setup_required
         return super().dispatch(request, *args, **kwargs)
