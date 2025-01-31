@@ -51,7 +51,7 @@ USER suila
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /app
-RUN django-admin compilemessages
+RUN django-admin compilemessages --locale=da --locale=kl --verbosity=0
 
 # temporary use of dev env to make manage.py work
 COPY --chown=suila:suila ./dev-environment/suila.env suila.env
