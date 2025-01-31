@@ -62,7 +62,6 @@ class PersonTable(Table):
     cpr = CPRColumn(accessor=Accessor("_cpr"), order_by=Accessor("_cpr"))
     name = Column(verbose_name=_("Navn"))
     full_address = Column(verbose_name=_("Adresse"))
-    civil_state = Column(verbose_name=_("Civilstand"))
     location_code = Column(verbose_name=_("Stedkode"))
     total_estimated_year_result = Column(
         accessor=Accessor("_total_estimated_year_result"),
@@ -114,7 +113,6 @@ class PersonFilterSet(FilterSet):
     full_address = CharFilter(
         "full_address", lookup_expr="icontains", label=_("Adresse")
     )
-    civil_state = CategoryChoiceFilter(field=Person.civil_state, label=_("Civilstand"))
     location_code = CategoryChoiceFilter(
         field=Person.location_code, label=_("Stedkode")
     )
