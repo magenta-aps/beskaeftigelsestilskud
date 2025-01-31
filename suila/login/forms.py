@@ -18,7 +18,7 @@ class AuthenticationForm(BootstrapForm, DjangoAuthenticationForm):
             attrs={
                 "autofocus": True,
                 "class": "form-control",
-                "placeholder": _("Username"),
+                "placeholder": _("Brugernavn"),
             }
         )
     )
@@ -29,7 +29,7 @@ class AuthenticationForm(BootstrapForm, DjangoAuthenticationForm):
             attrs={
                 "autocomplete": "current-password",
                 "class": "form-control",
-                "placeholder": _("Password"),
+                "placeholder": _("Kodeord"),
             }
         ),
     )
