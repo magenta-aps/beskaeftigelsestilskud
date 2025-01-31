@@ -120,9 +120,6 @@ header {
   border-radius: $spacer;
   box-shadow: 0 0 $spacer $light-grey;
 }
-.card-container {
-  height: 80vh;
-}
 .card {
   min-width: 35vw;
   padding: 3 * $spacer;
@@ -147,7 +144,7 @@ header nav .navbar-nav a {
 // Settings ("wheel") menu
 #settings {
   padding: $spacer;
-  min-width: 15vw;
+  min-width: 20vw;
   border-color: transparent;
   border-radius: 0.5 * $spacer;
   box-shadow: 0 0 0.5 * $spacer $light-grey;
