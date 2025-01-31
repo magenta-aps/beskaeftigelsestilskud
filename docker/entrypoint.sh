@@ -14,7 +14,7 @@ CREATE_API_GROUP=${CREATE_API_GROUP:=false}
 CREATE_USER_GROUPS=${CREATE_USER_GROUPS:=false}
 CREATE_DUMMY_ADMIN=${CREATE_DUMMY_ADMIN:=false}
 CREATE_DUMMY_USERS=${CREATE_DUMMY_USERS:=false}
-CREATE_DUMMY_API_USER=${CREATE_DUMMY_API_USER:=false}
+CREATE_API_USER=${CREATE_API_USER:=false}
 LOAD_CALCULATION_METHOD=${LOAD_CALCULATION_METHOD:=true}
 LOAD_PRISME_ACCOUNT_ALIASES=${LOAD_PRISME_ACCOUNT_ALIASES:=true}
 
@@ -50,9 +50,9 @@ if [ "${CREATE_DUMMY_USERS}" = true ]; then
 fi
 
 
-if [ "${CREATE_DUMMY_API_USER}" = true ]; then
+if [ "${CREATE_API_USER}" = true ]; then
   echo 'creating api user'
-  python manage.py create_user rest rest --cert-subject "C=DK,ST=Midtjylland,L=Århus,O=Magenta+ApS,CN=Suila+Dev+Client" --groups api
+  python manage.py create_user rest rest --cert-subject "${API_USER_SUBJECT}" --groups api
 fi
 
 python manage.py createcachetable

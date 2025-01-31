@@ -64,7 +64,7 @@ services:
       - MIGRATE=false
       - LOAD_FIXTURES=false
       - MAKEMESSAGES=false
-      - CREATE_DUMMY_API_USER=false
+      - CREATE_API_USER=false
       - CREATE_USER_GROUPS=false
       - PULL_IDP_METADATA=false
       - CREATE_DUMMY_ADMIN=false
