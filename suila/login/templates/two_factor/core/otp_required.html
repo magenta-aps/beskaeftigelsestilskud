@@ -1,8 +1,6 @@
-<!--
-SPDX-FileCopyrightText: 2023 Magenta ApS <info@magenta.dk>
+{# SPDX-FileCopyrightText: 2023 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
 
-SPDX-License-Identifier: MPL-2.0
--->
 {% extends "common/card.html" %}
 {% load i18n %}
 
@@ -10,14 +8,8 @@ SPDX-License-Identifier: MPL-2.0
 {% translate "Ingen adgang" %}
 {% endblock %}
 
-{% block card_title %}
-{% translate "Ingen adgang" %}
-{% endblock %}
-
-{% block card_content %}
-<p>
-{% translate 'Du skal logge ind med to-faktor-godkendelse for at kunne se denne side' %}
-</p>
+{% block content %}
+<p>{% translate 'Du skal logge ind med to-faktor-godkendelse for at kunne se denne side' %}</p>
 <p>
     <a href="{% url 'login:two_factor_setup' %}" class="btn btn-primary">
     {% trans 'Aktivér to-faktor-godkendelse' %}</a>
