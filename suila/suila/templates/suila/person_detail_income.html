@@ -6,9 +6,8 @@
 {% load static %}
 {% load date_tags %}
 
-{% block breadcrumb %}
-{{ block.super }}
-<li class="breadcrumb-item active" aria-current="page">{% translate "Indkomst" %}</li>
+{% block title %}
+{% translate "Indkomst" %}
 {% endblock %}
 
 {% block person_data %}

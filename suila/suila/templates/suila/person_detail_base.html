@@ -9,7 +9,10 @@
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Personer" %}</a></li>
-<li class="breadcrumb-item">{{ person }}</li>
+{% endblock %}
+
+{% block title %}
+{{ person }}
 {% endblock %}
 
 {% block content %}
