@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-27 13:26-0200\n"
+"POT-Creation-Date: 2025-01-30 12:59-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -98,11 +98,8 @@ msgid "Du skal logge ind med to-faktor-godkendelse for at kunne se denne side"
 msgstr ""
 
 #: login/templates/two_factor/core/otp_required.html
-msgid "Aktivér to-faktor-godkendelse"
-msgstr ""
-
 #: login/templates/two_factor/core/setup.html
-msgid "Aktivér To-faktor-godkendelse"
+msgid "Aktivér to-faktor-godkendelse"
 msgstr ""
 
 #: login/templates/two_factor/core/setup.html
