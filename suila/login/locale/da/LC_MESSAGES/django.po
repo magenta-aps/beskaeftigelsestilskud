@@ -30,7 +30,7 @@ msgid "Husk mig på denne maskine i {days} dage"
 msgstr ""
 
 #: login/templates/login/logged_out.html
-msgid "Logged out"
+msgid "Logget ud"
 msgstr ""
 
 #: login/templates/login/logged_out.html
@@ -42,6 +42,10 @@ msgstr ""
 #: login/templates/login/logged_out.html
 #: login/templates/two_factor/core/login.html
 msgid "Log in"
+msgstr ""
+
+#: login/templates/login/login_failed.html
+msgid "Login mislykkedes"
 msgstr ""
 
 #: login/templates/login/login_failed.html
