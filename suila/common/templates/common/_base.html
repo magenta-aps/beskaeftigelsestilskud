@@ -1,0 +1,156 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load static %}
+{% load i18n %}
+{% load csp %}
+{% load cache %}
+{% load compress %}
+<!doctype html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% compress css %}
+    <link type="text/x-scss" href="{% static 'bootstrap/theme.scss' %}" rel="stylesheet" media="screen" nonce="{{ request.csp_nonce }}">
+    {% endcompress %}
+    <link rel="stylesheet" href="{% static 'suila/style.css' %}"  nonce="{{request.csp_nonce}}">
+    <link href="{% static 'material-design/filled.css' %}" rel="stylesheet" nonce="{{ request.csp_nonce }}"/>
+    <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+    <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+    <title>{% translate "Suila" %}</title>
+    <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}" >
+    {% block extra_headers %}
+    {% endblock %}
+</head>
+<body>
+    <header>
+        {% if environment != "production" %}
+        <nav class="bg-warning">
+            <p class="text-center fw-bold my-0">
+                {{environment|upper}}
+            </p>
+        </nav>
+        {% endif %}
+
+        <nav class="nav navbar navbar-expand py-3 my-3">
+            <h1 class="navbar-brand py-0 my-0"><a href="{% url 'suila:root' %}">Suila.gl</a></h1>
+            <ul class="navbar-nav d-flex align-items-center">
+                {% if user.is_authenticated %}
+                <li class="nav-item ms-4">
+                    <a href="{% url 'suila:person_search' %}" class="d-flex align-items-center">
+                        <span class="material-icons">groups</span>
+                        <span class="ms-1">{% translate "Personer" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <li class="nav-item ms-4">
+                    <a href="{% url 'data_analysis:calculator' %}" class="d-flex align-items-center">
+                        <span class="material-icons">calculate</span>
+                        <span class="ms-1">{% translate "Suilaberegneren" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <li class="nav-item ms-4">
+                    <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="material-icons">description</span>
+                        <span class="ms-1">{% translate "Estimeringsoverblik for hver person" %}</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% for year in years %}
+                        <li><a href="{% url 'data_analysis:person_years' year=year %}" class="dropdown-item">{{ year }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <li class="nav-item ms-4">
+                    <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="material-icons">description</span>
+                        <span class="ms-1">{% translate "Histogrammer over estimeringernes afvigelse" %}</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% for year in years %}
+                        <li><a href="{% url 'data_analysis:histogram' year=year %}" class="dropdown-item">{{ year }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <li class="nav-item ms-4">
+                    <a href="{% url 'data_analysis:job_log' %}" class="d-flex align-items-center">
+                        <span class="material-icons">description</span>
+                        <span class="ms-1">{% translate "Jobliste" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav d-flex align-items-center ms-auto">
+                <div class="d-flex align-items-center ms-4">
+                    <span class="material-icons dark-icon">language</span>
+                    <form action="{% url 'set_language' %}" method="post" class="navbar-form navbar-right mx-1 my-2">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <select name="language" class="form-select language-picker">
+                                {% get_available_languages as LANGUAGES %}
+                                {% get_language_info_list for LANGUAGES as languages %}
+                                {% for language in languages %}
+                                <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
+                                    {{ language.name_local|capfirst }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <script nonce="{{ request.csp_nonce }}">$("[name=language]").on("change", function () {
+                                this.form.submit()
+                            })</script>
+                        </div>
+                    </form>
+                </div>
+                <li class="nav-item dropdown">
+                    <a href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.is_authenticated %}
+                            <span class="material-icons dark-icon fs-3 d-flex">account_circle</span>
+                        {% else %}
+                            <span class="material-icons dark-icon fs-3 d-flex">help</span>
+                        {% endif %}
+                    </a>
+                    <div id="settings" class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <h4>{{ user.display_name }}</h4>
+                        <h5>{% translate "Om Suila" %}</h5>
+                        <p>{% translate 'Version' %}: {{ version }}</p>
+                        <p>
+                            {% translate "Kildekode" %}:
+                            <a href="https://github.com/magenta-aps/beskaeftigelsestilskud/">{% translate "Github - Beskæftigelsestilskud" %}</a>
+                        </p>
+                        <p>{% translate 'Kontakt' %}: {{ contact_email }}</p>
+                        {% if user.is_authenticated %}
+                        <div class="d-flex">
+                            <a href="{% url 'login:logout' %}" class="btn btn-primary d-flex align-items-center" id="logout-link">
+                                <span class="material-icons me-1">login</span>
+                                {% translate "Log out" %}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    {% block page %}
+    {% endblock %}
+
+    {% block footer %}
+    {% endblock %}
+
+    {% block modals %}
+    {% endblock %}
+</body>
+</html>
