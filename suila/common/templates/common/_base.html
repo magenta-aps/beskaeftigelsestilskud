@@ -20,7 +20,7 @@
     <link href="{% static 'material-design/filled.css' %}" rel="stylesheet" nonce="{{ request.csp_nonce }}"/>
     <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-    <title>{% translate "Suila" %}</title>
+    <title>{% block title %}{% translate "Suila" %}{% endblock %}</title>
     <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}" >
     {% block extra_headers %}
     {% endblock %}
@@ -38,6 +38,15 @@
         <nav class="nav navbar navbar-expand py-3 my-3">
             <h1 class="navbar-brand py-0 my-0"><a href="{% url 'suila:root' %}">Suila.gl</a></h1>
             <ul class="navbar-nav d-flex align-items-center">
+                {% if user.is_authenticated and user.cpr is not None %}
+                <li class="nav-item ms-4">
+                    <a href="{% url 'suila:person_detail' pk=person.pk %}" class="d-flex align-items-center">
+                        <span class="material-icons">person</span>
+                        <span class="ms-1">{% translate "Mit overblik" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+
                 {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
                 <li class="nav-item ms-4">
                     <a href="{% url 'suila:person_search' %}" class="d-flex align-items-center">
@@ -123,7 +132,7 @@
                         {% endif %}
                     </a>
                     <div id="settings" class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <h4>{{ user.display_name }}</h4>
+                        <h4>{{ user.get_full_name }}</h4>
                         <h5>{% translate "Om Suila" %}</h5>
                         <p>{% translate 'Version' %}: {{ version }}</p>
                         <p>

@@ -5,7 +5,7 @@ import datetime
 
 from django.conf import settings
 
-from suila.models import Year
+from suila.models import Person, Year
 
 
 def date_context(request):
@@ -20,3 +20,10 @@ def date_context(request):
 
 def version_context(request):
     return {"version": settings.VERSION}
+
+
+def person_context(request):
+    if request.user.is_authenticated and request.user.cpr is not None:
+        person, _ = Person.objects.get_or_create(cpr=request.user.cpr)
+        return {"person": person}
+    return {}
