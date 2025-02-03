@@ -9,6 +9,7 @@ from common.utils import SuilaJSONEncoder
 from ninja.renderers import JSONRenderer
 from ninja_extra import NinjaExtraAPI
 
+from suila.api.doc_decorator import swagger_csp
 from suila.api.person import PersonAPI
 from suila.api.personmonth import PersonMonthAPI
 from suila.api.personyear import PersonYearAPI
@@ -19,7 +20,11 @@ class SuilaJSONRenderer(JSONRenderer):
 
 
 api = NinjaExtraAPI(
-    title="Beskæftigelsestilskud", renderer=SuilaJSONRenderer(), csrf=False
+    title="Beskæftigelsestilskud",
+    renderer=SuilaJSONRenderer(),
+    csrf=False,
+    urls_namespace="suila:api",
+    docs_decorator=swagger_csp,
 )
 
 api.register_controllers(PersonAPI, PersonYearAPI, PersonMonthAPI)
