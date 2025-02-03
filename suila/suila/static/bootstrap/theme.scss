@@ -144,7 +144,7 @@ header nav .navbar-nav a {
 // Settings ("wheel") menu
 #settings {
   padding: $spacer;
-  min-width: 20vw;
+  min-width: 15vw;
   border-color: transparent;
   border-radius: 0.5 * $spacer;
   box-shadow: 0 0 0.5 * $spacer $light-grey;
@@ -257,43 +257,10 @@ table tbody > tr:last-child > td {
   color: $dark-primary;
 }
 
-// Receipt page
-nav.object-actions {
-  padding: 0;
+// Jumbo buttons on landing page
+.jumbo {
+  height: 15vh;
 }
-div.receipt section {
-  background-color: $lightest-grey;
-  padding: 2 * $spacer;
-  border-radius: $spacer;
-  margin-bottom: 3 * $spacer;
-}
-div.receipt table {
-  margin: 3 * $spacer 0;
-}
-div.receipt table th,
-div.receipt table td {
-  padding: $spacer / 2 0 $spacer / 2 0;
-  background-color: transparent;
-  border-bottom: none;
-}
-div.receipt table th {
-  border-bottom: 1px solid $grey;
-}
-div.receipt table td:first-child div {
-  font-weight: bold;
-}
-div.receipt table td div.secondary {
-  font-weight: normal;
-}
-div.receipt table td p {
-  /* Emphasise form receipt help texts */
-  font-style: italic;
-}
-div.receipt table tfoot td {
-  font-weight: bold;
-}
-div.receipt table tfoot td p {
-  font-weight: normal;
-  font-style: normal;
-  font-size: $font-size-sm;
+.jumbo h1 {
+  color: $light-primary;
 }

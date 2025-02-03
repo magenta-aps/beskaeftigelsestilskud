@@ -23,7 +23,7 @@ app_name = "suila"
 urlpatterns: List[URLResolver | URLPattern] = [
     path("api/", api.urls, name="api"),
     path("", RootView.as_view(), name="root"),
-    path("persons", PersonSearchView.as_view(), name="person_search"),
+    path("persons/", PersonSearchView.as_view(), name="person_search"),
     path("persons/<int:pk>/", PersonDetailView.as_view(), name="person_detail"),
     path(
         "persons/<int:pk>/benefits/",

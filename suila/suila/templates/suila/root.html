@@ -3,52 +3,90 @@
 
 {% extends 'common/base.html' %}
 {% load i18n %}
-{% load bootstrap_icons %}
 {% load static %}
+{% load suila_permissions %}
 
 {% block extra_headers %}
-    <script src="{% static 'jquery/besk.js' %}" nonce="{{request.csp_nonce}}"></script>
+<script src="{% static 'jquery/besk.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function () {
+    const modal = new bootstrap.Modal(document.getElementById("two_factor_confirmation"));
+    const twoFactorSuccess = getUrlParameter("two_factor_success");
+    if (twoFactorSuccess === "1") {
+        modal.show();
+    }
+});
+</script>
+{% endblock %}
+
+{% block title %}
+{% blocktrans trimmed with name=user.get_full_name %}
+Velkommen, {{ name }}
+{% endblocktrans %}
 {% endblock %}
 
 {% block content %}
-
-<nav class="bg-warning" id="two_factor_confirmation" style="display:none">
-    <p class="text-center fw-bold my-0">
-        {% bs_icon "shield-check" size="2em" extra_classes="my-1" %}
-        {% translate "To-faktor-godkendelse er nu aktiv" %}
-    </p>
-</nav>
-
-<div class="row mt-1 mb-5 mx-1">
-    <h1>{% translate "Velkommen" %}</h1>
-    <p>{% translate "Til beskæftigelsestilskud portalen." %}</p>
-</div>
-<div class="card mx-3" style="display:inline-block;">
-  <h5 class="card-header">{% translate "Genveje" %}</h5>
-    <ul class="mx-4 my-2" style="list-style-position: inside; padding: 0">
-        <li style="display:inline-block;">
-            <a href="{% url 'data_analysis:person_years' year=this_year %}" class="btn btn-outline-dark">
-                {% bs_icon "clipboard-data" size="5em" %}
-                <br>
-                <br>
-                {% translate "Estimeringsoverblik" %} {{ this_year }}
-            </a>
-        </li>
-        <li style="display:inline-block;">
-            <a href="{% url 'data_analysis:person_years' year=last_year %}" class="btn btn-outline-dark">
-                {% bs_icon "clipboard-data" size="5em" %}
-                <br>
-                <br>
-                {% translate "Estimeringsoverblik" %} {{ last_year }}
-            </a>
-        </li>
-    </ul>
+<div id="two_factor_confirmation" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title">{% translate "Aktiveret" %}</h1>
+            </div>
+            <div class="modal-body">
+                <p>{% translate "To-faktor-godkendelse er nu aktiv." %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "OK" %}</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<script nonce="{{ request.csp_nonce }}">
-var two_factor_success = getUrlParameter("two_factor_success");
-if (two_factor_success=="1"){
-    $("#two_factor_confirmation").show();
-    }
-</script>
+<div class="row mt-3">
+    <div class="col">
+        <p>{% translate "Beskrivelse af Suila (TBD)" %}</p>
+    </div>
+</div>
+
+{% if user|has_permissions:"suila.view_person,suila.view_personyear" %}
+{# Borgerservice links #}
+<div class="row mt-3">
+    <div class="col-4">
+        <a href="{% url "suila:person_search" %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
+            <h1>{% translate "Personer" %}</h1>
+        </a>
+    </div>
+    <div class="col-4">
+        <a href="{% url "data_analysis:calculator" %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
+            <h1>{% translate "Suilaberegneren" %}</h1>
+        </a>
+    </div>
+</div>
+{% else %}
+{# Borger links #}
+<div class="row mt-3">
+    <div class="col-4">
+        <a href="{% url "suila:person_detail" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
+            <h1>{% translate "Se mit overblik" %}</h1>
+        </a>
+    </div>
+    <div class="col-4">
+        <a href="{% url "suila:person_detail_income" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
+            <h1>{% translate "Beregningsgrundlag - Se mine signaler" %}</h1>
+        </a>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-4">
+        <a href="{% url "suila:person_detail" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
+            <h1>{% translate "Se sammenhæng mellem årsindkomst og udbetalinger" %}</h1>
+        </a>
+    </div>
+    <div class="col-4">
+        <a href="{% url "suila:person_detail" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
+            <h1>{% translate "Jeg har ikke modtaget Suila" %}</h1>
+        </a>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
