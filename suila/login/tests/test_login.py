@@ -241,6 +241,14 @@ class LoginTest(TestCase):
         self.assertTemplateUsed(response, "two_factor/core/otp_required.html")
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
+    def test_saml_redirect(self):
+        session = self.client.session
+        session["saml"] = {"cpr": "1234567890"}
+        session.save()
+        response = self.client.get(reverse("login:login"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], reverse("login:mitid:login"))
+
     def test_session_expired_call(self):
         session = self.client.session
         session["_session_init_timestamp_"] = time.time() - 10
