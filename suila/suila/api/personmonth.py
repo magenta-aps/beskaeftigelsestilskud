@@ -60,7 +60,7 @@ class PersonMonthFilterSchema(FilterSchema):
 
 
 class PersonMonthPermission(RestPermission):
-    appname = "bf"
+    appname = "suila"
     modelname = "personmonth"
 
 

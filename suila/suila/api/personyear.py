@@ -47,7 +47,7 @@ class PersonYearFilterSchema(FilterSchema):
 
 
 class PersonYearPermission(RestPermission):
-    appname = "bf"
+    appname = "suila"
     modelname = "personyear"
 
 
