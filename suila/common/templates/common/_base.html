@@ -65,7 +65,7 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+                {% if user.is_authenticated and user.is_superuser %}
                 <li class="nav-item dropdown ms-4">
                     <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="material-icons">description</span>
@@ -79,7 +79,7 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+                {% if user.is_authenticated and user.is_superuser %}
                 <li class="nav-item dropdown ms-4">
                     <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="material-icons">description</span>
