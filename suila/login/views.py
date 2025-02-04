@@ -11,6 +11,8 @@ from django.contrib.auth import (
     login,
     logout,
 )
+from django.contrib.auth.views import redirect_to_login
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import RedirectView
@@ -118,3 +120,13 @@ class LogoutView(RedirectView):
         else:
             logout(self.request)
             return settings.LOGOUT_REDIRECT_URL
+
+
+def on_session_expired(request: HttpRequest) -> HttpResponse | None:
+    if request.path == reverse("login:mitid:logout-callback"):
+        return None  # Do not redirect to login
+    redirect_url = getattr(settings, "SESSION_TIMEOUT_REDIRECT", None)
+    if redirect_url:
+        return redirect(redirect_url)
+    else:
+        return redirect_to_login(next=request.path)

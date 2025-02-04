@@ -1,9 +1,10 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+import time
 from binascii import unhexlify
 from http import HTTPStatus
+from unittest.mock import patch
 
 from bs4 import BeautifulSoup
 from common.models import User
@@ -11,11 +12,13 @@ from django.conf import settings
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.contrib.auth.models import Group
 from django.shortcuts import resolve_url
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 from django_otp.oath import totp
 from django_otp.util import random_hex
+from login import views
+from login.views import on_session_expired
 from two_factor.utils import totp_digits
 
 
@@ -237,3 +240,36 @@ class LoginTest(TestCase):
 
         self.assertTemplateUsed(response, "two_factor/core/otp_required.html")
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+    def test_session_expired_call(self):
+        session = self.client.session
+        session["_session_init_timestamp_"] = time.time() - 10
+        session.save()
+        with self.settings(SESSION_EXPIRE_SECONDS=1):
+            with patch.object(views, "on_session_expired") as mock_method:
+                mock_method.return_value = None
+                self.client.get("/")
+                mock_method.assert_called()
+
+    def test_on_session_expired(self):
+        request_factory = RequestFactory()
+        self.assertIsNone(
+            on_session_expired(
+                request_factory.get(reverse("login:mitid:logout-callback"))
+            )
+        )
+        with self.settings(SESSION_TIMEOUT_REDIRECT=reverse("suila:root")):
+            response = on_session_expired(
+                request_factory.get(reverse("suila:person_search"))
+            )
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.headers.get("location"), reverse("suila:root"))
+        with self.settings(SESSION_TIMEOUT_REDIRECT=None):
+            response = on_session_expired(
+                request_factory.get(reverse("suila:person_search"))
+            )
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(
+                response.headers.get("location"),
+                reverse("login:login") + "?next=" + reverse("suila:person_search"),
+            )

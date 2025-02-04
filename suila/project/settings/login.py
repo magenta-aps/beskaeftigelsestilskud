@@ -65,6 +65,7 @@ LOGIN_WHITELISTED_URLS = [
 ]
 MITID_TEST_ENABLED = bool(strtobool(os.environ.get("MITID_TEST_ENABLED", "False")))
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_EXPIRE_CALLABLE = "login.views.on_session_expired"
 SAML_DEFAULT_BINDING = saml2.BINDING_HTTP_REDIRECT
 SAML_ATTRIBUTE_MAPPING = {
     "username": "cpr",
