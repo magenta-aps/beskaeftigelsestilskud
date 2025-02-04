@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
+import re
 from collections import defaultdict
 from dataclasses import asdict, fields
 from datetime import date
@@ -350,31 +351,43 @@ class MonthlyIncomeHandler(Handler):
     def create_or_update_objects(
         cls, year: int, items: List["MonthlyIncome"], load: DataLoad, out: TextIO
     ) -> list[PersonMonth]:
+        data_months: Dict[int, Set[int]] = defaultdict(set)
+        year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
+        employers = []
+        employer_cvrs = set()
+        verified_monthly_income_reports: List["MonthlyIncome"] = []
+        for item in items:
+            if item.cvr and item.cvr not in employer_cvrs:
+                employers.append(Employer(cvr=item.cvr, load=load))
+                employer_cvrs.add(item.cvr)
+
+            if item.year is not None and item.month is not None:
+                data_months[item.year].add(item.month)
+
+            if item.year is not None and item.cpr is not None:
+                year_cpr_tax_scopes[item.year][item.cpr] = None
+
+            # Verify the MonthlyIncome-instance have required data
+            if item.cpr and bool(re.fullmatch(r"\d{10}", item.cpr)):
+                verified_monthly_income_reports.append(item)
+            else:
+                logger.info(
+                    'skipping MonthlyIncome: cpr=%r (error="invalid value for CPR")',
+                    item.cpr,
+                )
+                continue
+
         with transaction.atomic():
             # Create Employer objects (for CVRs that we have not already created an
             # Employer object for.)
-            Employer.objects.bulk_create(
-                [
-                    Employer(cvr=cvr, load=load)
-                    for cvr in {int(item.cvr) for item in items if item.cvr}
-                ],
-                update_conflicts=True,
-                update_fields=("load",),
-                unique_fields=("cvr",),
-            )
+            if len(employers) > 0:
+                Employer.objects.bulk_create(
+                    employers,
+                    update_conflicts=True,
+                    update_fields=("load",),
+                    unique_fields=("cvr",),
+                )
 
-            data_months: Dict[int, Set[int]] = defaultdict(set)
-            for item in items:
-                if item.year is not None and item.month is not None:
-                    data_months[item.year].add(item.month)
-
-            # Create or update Year object
-            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
-                dict
-            )
-            for item in items:
-                if item.year is not None and item.cpr is not None:
-                    year_cpr_tax_scopes[item.year][item.cpr] = None
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
             if person_years:
                 # Create or update PersonMonth objects
@@ -407,7 +420,7 @@ class MonthlyIncomeHandler(Handler):
                     f"Created or updated {len(person_months)} PersonMonth objects"
                 )
                 income_reports = cls._create_or_update_monthly_income_reports(
-                    items,
+                    verified_monthly_income_reports,
                     load,
                 )
                 out.write(
