@@ -2,10 +2,12 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 # mypy: disable-error-code="call-arg, attr-defined"
+import re
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict
 
+from bs4 import BeautifulSoup
 from common.models import User
 from django.test import TestCase
 from ninja_extra.testing import TestClient
@@ -537,3 +539,21 @@ class PersonMonthApiTest(ApiTestCase):
         self.expect_list(
             "/api/personmonth?cpr=2233445566&year=2025&month=1"
         )  # no items
+
+
+class ApiDocTest(TestCase):
+
+    def test_nonce(self):
+        response = self.client.get("/api/docs")
+        nonce = re.search(
+            r"'nonce-([\w+=/]+)'",
+            response.headers["Content-Security-Policy"],
+        ).group(1)
+        self.assertIsNotNone(nonce)
+        dom = BeautifulSoup(response.content, "html.parser")
+        for script_tag in dom.find_all("script"):
+            self.assertTrue(script_tag.has_attr("nonce"))
+            self.assertEqual(script_tag["nonce"], nonce)
+        for script_tag in dom.find_all("link"):
+            self.assertTrue(script_tag.has_attr("nonce"))
+            self.assertEqual(script_tag["nonce"], nonce)
