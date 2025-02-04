@@ -75,7 +75,10 @@ class BeskLoginView(LoginView):
                     backend="django_mitid_auth.saml.backend.Saml2Backend",
                 )
             if not self.request.user.is_authenticated:
-                response = super().get(request, *args, **kwargs)
+                if self.request.session.get("saml"):
+                    response = redirect(reverse("login:mitid:login"))
+                else:
+                    response = super().get(request, *args, **kwargs)
                 if self.back:
                     response.set_cookie(
                         "back", self.back, secure=True, httponly=True, samesite="None"
