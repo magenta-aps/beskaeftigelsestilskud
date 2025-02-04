@@ -45,7 +45,7 @@ class PersonFilterSchema(FilterSchema):
 
 
 class PersonPermission(RestPermission):
-    appname = "bf"
+    appname = "suila"
     modelname = "person"
 
 
