@@ -29,28 +29,27 @@ if [ "${MIGRATE,,}" = true ]; then
   python manage.py migrate
 fi
 
-if [ "${CREATE_API_GROUP}" = true ]; then
+if [ "${CREATE_API_GROUP,,}" = true ]; then
   echo 'creating api group'
   python manage.py create_api_group api
 fi
 
-if [ "${CREATE_USER_GROUPS}" = true ]; then
+if [ "${CREATE_USER_GROUPS,,}" = true ]; then
   echo 'creating api group'
   python manage.py create_groups
 fi
-if [ "${CREATE_DUMMY_ADMIN}" = true ]; then
+if [ "${CREATE_DUMMY_ADMIN,,}" = true ]; then
   echo 'creating superuser'
   python manage.py create_user admin admin --is_superuser
 fi
-if [ "${CREATE_DUMMY_USERS}" = true ]; then
+if [ "${CREATE_DUMMY_USERS,,}" = true ]; then
   echo 'creating borgerservice user'
   python manage.py create_user borgerservice borgerservice -g Borgerservice
   echo 'creating skattestyrelsen user'
   python manage.py create_user skattestyrelsen skattestyrelsen -g Skattestyrelsen
 fi
 
-
-if [ "${CREATE_API_USER}" = true ]; then
+if [ "${CREATE_API_USER,,}" = true ]; then
   echo 'creating api user'
   python manage.py create_user rest rest --cert-subject "${API_USER_SUBJECT}" --groups api
 fi
@@ -61,12 +60,12 @@ if [ "${PULL_IDP_METADATA,,}" = true ]; then
   python manage.py update_mitid_idp_metadata
 fi
 
-if [ "${LOAD_CALCULATION_METHOD}" = true ]; then
+if [ "${LOAD_CALCULATION_METHOD,,}" = true ]; then
   echo "Loading calculation method"
   python manage.py load_dummy_calculation_method
 fi
 
-if [ "${LOAD_PRISME_ACCOUNT_ALIASES}" = true ]; then
+if [ "${LOAD_PRISME_ACCOUNT_ALIASES,,}" = true ]; then
   echo "Loading prisme account aliases"
   python manage.py load_prisme_account_aliases
 fi
