@@ -16,7 +16,6 @@ services:
       - suila-db
     volumes:
       - ./suila/:/app
-#      - file-data:/upload:rw
       - ./log/cron.log:/log/cron.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./dev-environment/crontab:/crontab:ro
@@ -34,7 +33,7 @@ services:
       - LOAD_PRISME_ACCOUNT_ALIASES=true
       - TEST=false
       - HOME=/tmp/
-    command: [ "/bin/sh", "-c", "true" ]
+    command: [ "true" ]
     networks:
       - default
       - database
