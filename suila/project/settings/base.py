@@ -16,6 +16,7 @@ from project.util import strtobool
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 VERSION = os.environ.get("COMMIT_TAG", "")
 TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
+PUBLIC = bool(strtobool(os.environ.get("PUBLIC", "False")))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(strtobool(os.environ.get("DJANGO_DEBUG", "False")))
