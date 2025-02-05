@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: MPL-2.0
 services:
 
-  suila-web-public:
+  suila-init:
     user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
-    container_name: suila-web-public
+    container_name: suila-init
     image: suila:latest
     build:
       context: .
@@ -16,14 +16,46 @@ services:
       - suila-db
     volumes:
       - ./suila/:/app
+#      - file-data:/upload:rw
+      - ./log/cron.log:/log/cron.log:rw
+      - ./dev-environment/cert:/ssl:ro
+      - ./dev-environment/crontab:/crontab:ro
+    environment:
+      - MAKE_MIGRATIONS=true
+      - MIGRATE=true
+      - LOAD_FIXTURES=true
+      - MAKEMESSAGES=true
+      - CREATE_API_GROUP=true
+      - CREATE_API_USER=true
+      - CREATE_USER_GROUPS=true
+      - CREATE_DUMMY_ADMIN=true
+      - CREATE_DUMMY_USERS=true
+      - LOAD_CALCULATION_METHOD=true
+      - LOAD_PRISME_ACCOUNT_ALIASES=true
+      - TEST=false
+      - HOME=/tmp/
+    command: [ "/bin/sh", "-c", "true" ]
+    networks:
+      - default
+      - database
+
+  suila-web-public:
+    user: "75180:1000"  # Override in docker-compose.override.yml if your local user is different
+    container_name: suila-web-public
+    image: suila:latest
+    env_file:
+      - ./dev-environment/suila.env
+    depends_on:
+      suila-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./suila/:/app
       - file-data:/upload:rw
       - ./log/suila.log:/log/suila.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./mypy.ini:/mypy.ini:ro
     environment:
-      - MAKE_MIGRATIONS=true
-      - LOAD_FIXTURES=false
-      - PULL_IDP_METADATA=false
+      - PULL_IDP_METADATA=true
       - TEST=false
       - HOME=/tmp/
       - PUBLIC=true
@@ -42,7 +74,8 @@ services:
     env_file:
       - ./dev-environment/suila.env
     depends_on:
-      - suila-db
+      suila-init:
+        condition: service_completed_successfully
     volumes:
       - ./suila/:/app
       - file-data:/upload:rw
@@ -50,9 +83,6 @@ services:
       - ./dev-environment/cert:/ssl:ro
       - ./mypy.ini:/mypy.ini:ro
     environment:
-      - MAKE_MIGRATIONS=false
-      - LOAD_FIXTURES=true
-      - PULL_IDP_METADATA=false
       - TEST=false
       - HOME=/tmp/
       - PUBLIC=false
@@ -82,7 +112,8 @@ services:
     env_file:
       - ./dev-environment/suila.env
     depends_on:
-      - suila-db
+      suila-init:
+        condition: service_completed_successfully
     volumes:
       - ./suila/:/app
       - file-data:/upload:ro
@@ -90,17 +121,6 @@ services:
       - ./dev-environment/cert:/ssl:ro
       - ./dev-environment/crontab:/crontab:ro
     environment:
-      - MAKE_MIGRATIONS=false
-      - MIGRATE=false
-      - LOAD_FIXTURES=false
-      - MAKEMESSAGES=false
-      - CREATE_API_USER=false
-      - CREATE_USER_GROUPS=false
-      - PULL_IDP_METADATA=false
-      - CREATE_DUMMY_ADMIN=false
-      - CREATE_DUMMY_USERS=false
-      - LOAD_CALCULATION_METHOD=false
-      - LOAD_PRISME_ACCOUNT_ALIASES=false
       - TEST=false
       - HOME=/tmp/
     command: [ "supercronic", "/crontab" ]

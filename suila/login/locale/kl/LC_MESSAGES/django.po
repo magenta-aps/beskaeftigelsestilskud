@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-27 13:26-0200\n"
+"POT-Creation-Date: 2025-02-05 11:12-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -83,10 +83,6 @@ msgstr ""
 
 #: login/templates/two_factor/_wizard_actions.html
 msgid "Login"
-msgstr ""
-
-#: login/templates/two_factor/core/login.html
-msgid "Log in using MitID"
 msgstr ""
 
 #: login/templates/two_factor/core/otp_required.html

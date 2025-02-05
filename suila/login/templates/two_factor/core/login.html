@@ -28,7 +28,6 @@ SPDX-License-Identifier: MPL-2.0
     {# hidden submit button to enable [enter] key #}
     <input type="submit" value="" hidden />
     {% include "two_factor/_wizard_actions.html" %}
-    <a href="{% url 'login:mitid:login' %}{% if back %}?back={{back|urlencode}}{% endif %}">{% translate "Log in using MitID" %}</a>
     {% endblock %}
   </form>
 {% endblock %}

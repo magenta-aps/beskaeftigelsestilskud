@@ -37,6 +37,7 @@ class LoginTest(TestCase):
         cls.user.save()
         cls.user.groups.add(cls.group)
 
+    @override_settings(PUBLIC=False)
     def test_django_login_form(self):
         self.client.get(reverse("login:login") + "?back=/foobar")
         response = self.client.post(
@@ -49,7 +50,11 @@ class LoginTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], settings.LOGIN_REDIRECT_URL)
+        response = self.client.get(reverse("login:login") + "?back=/foobar")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/foobar")
 
+    @override_settings(PUBLIC=True)
     def test_saml_postlogin(self):
         session = self.client.session
         session.update(
@@ -70,6 +75,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], "/")
 
+    @override_settings(PUBLIC=False)
     def test_django_login_form_incorrect(self):
         self.client.get(reverse("login:login"))
         response = self.client.post(
@@ -86,6 +92,7 @@ class LoginTest(TestCase):
         self.assertIsNotNone(alert)
         self.assertIn("Indtast venligst korrekt brugernavn og adgangskode", str(alert))
 
+    @override_settings(PUBLIC=True)
     def test_saml_logout_redirect(self):
         self.client.login(username="test", password="test")
         session = self.client.session
@@ -99,11 +106,13 @@ class LoginTest(TestCase):
         response = self.client.get(reverse("login:logout"))
         self.assertEqual(response.headers["Location"], reverse("login:mitid:logout"))
 
+    @override_settings(PUBLIC=False)
     def test_django_logout_redirect(self):
         self.client.login(username="test", password="test")
         response = self.client.get(reverse("login:logout"))
         self.assertEqual(response.headers["Location"], settings.LOGOUT_REDIRECT_URL)
 
+    @override_settings(PUBLIC=False)
     def test_django_login_back(self):
         self.client.cookies["back"] = "/foobar"
         self.client.post(
@@ -118,6 +127,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], "/foobar")
 
+    @override_settings(PUBLIC=True)
     def test_saml_login_back(self):
         session = self.client.session
         session.update(
@@ -139,6 +149,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], "/foobar")
 
+    @override_settings(PUBLIC=False)
     def test_token_step(self):
         device = self.user.totpdevice_set.create(name="default", key=random_hex())
         data = {
@@ -191,6 +202,7 @@ class LoginTest(TestCase):
             response.headers["Location"], resolve_url(settings.LOGIN_REDIRECT_URL)
         )
 
+    @override_settings(PUBLIC=False)
     def test_two_factor_setup(self):
         self.client.login(username="test", password="test")
 
@@ -232,6 +244,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], success_url)
 
+    @override_settings(PUBLIC=False)
     def test_2fa_required(self):
         self.client.login(username="test", password="test")
         self.assertEqual(0, self.user.totpdevice_set.count())
@@ -241,6 +254,7 @@ class LoginTest(TestCase):
         self.assertTemplateUsed(response, "two_factor/core/otp_required.html")
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
+    @override_settings(PUBLIC=True)
     def test_saml_redirect(self):
         session = self.client.session
         session["saml"] = {"cpr": "1234567890"}
