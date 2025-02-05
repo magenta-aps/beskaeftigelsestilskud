@@ -35,10 +35,18 @@ class Command(SuilaBaseCommand):
         month: str | None = kwargs["month"]
         cpr: str | None = kwargs["cpr"]
         typ: str = kwargs["type"].lower()
+
+        self._write_verbose("EskatClient initializing...")
         client = EskatClient.from_settings()
+
+        self._write_verbose("Creating DataLoad instance in DB...")
         load = DataLoad.objects.create(
             source="eskat",
             parameters={"year": year, "month": month, "cpr": cpr, "typ": typ},
+        )
+
+        self._write_verbose(
+            f"Handling subcommand: {typ} (YEAR={year}, MONTH={month}, CPR={cpr})"
         )
         if typ == "annualincome":
             if month is not None:
@@ -58,9 +66,23 @@ class Command(SuilaBaseCommand):
             )
         if typ == "monthlyincome":
             for year_, month_kwargs in self._get_year_and_month_kwargs(year, month):
+                self._write_verbose(
+                    (
+                        "- Fetching monthly_income "
+                        f"from {month_kwargs["month_from"]}/{year_} "
+                        f"to {month_kwargs["month_to"]}/{year_}..."
+                    )
+                )
+                monthly_income_data = client.get_monthly_income(
+                    year_, cpr=cpr, **month_kwargs
+                )
+                self._write_verbose(
+                    f"\t- MonthlyIncome-entries fetched: {len(monthly_income_data)}"
+                )
+
                 MonthlyIncomeHandler.create_or_update_objects(
                     year_,
-                    client.get_monthly_income(year_, cpr=cpr, **month_kwargs),
+                    monthly_income_data,
                     load,
                     self.stdout,
                 )

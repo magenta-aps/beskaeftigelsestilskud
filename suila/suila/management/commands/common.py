@@ -5,6 +5,7 @@
 import logging
 import os
 from cProfile import Profile
+from datetime import datetime, timezone
 
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
@@ -51,4 +52,10 @@ class SuilaBaseCommand(BaseCommand):
             else:
                 raise CommandError() from exc
         finally:
-            job_log.save(update_fields=("status",))
+            job_log.runtime_end = datetime.now(tz=timezone.utc)
+            job_log.save(
+                update_fields=(
+                    "status",
+                    "runtime_end",
+                )
+            )
