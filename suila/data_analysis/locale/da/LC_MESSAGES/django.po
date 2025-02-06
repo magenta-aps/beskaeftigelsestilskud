@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-20 12:54-0200\n"
+"POT-Creation-Date: 2025-02-06 06:52-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,6 +43,14 @@ msgstr ""
 
 #: data_analysis/forms.py
 msgid "Estimeret årsindkomst"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/calculate.html
+msgid "Suilaberegneren"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/calculate.html
+msgid "Indlæs beregningsmotor"
 msgstr ""
 
 #: data_analysis/templates/data_analysis/calculate.html
