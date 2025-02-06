@@ -6,7 +6,6 @@
 {% load i18n %}
 {% load csp %}
 
-
 {% block extra_headers %}
     {% if result is not None %}
         <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
@@ -14,10 +13,12 @@
     {% endif %}
 {% endblock %}
 
+{% block title %}
+    {% translate "Suilaberegneren" %}
+{% endblock %}
+
 {% block content %}
-    <div class="row m-1">
-        <h1>Tilskudsberegner</h1>
-    </div>
+<div class="row mt-3">
     <form method="post">
         {% csrf_token %}
         <div class="row m-1">
@@ -30,27 +31,34 @@
                     <div class="col-6"><label for="{{ form.estimated_year_income.id_for_label }}">{{ form.estimated_year_income.label }}</label></div>
                     <div class="col-6">{{ form.estimated_year_income }}</div>
                 </div>
-                <div class="row align-items-center my-1">
-                    <div class="col-12">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#engine_modal">Indlæs beregningsmotor</button>
-                    </div>
-                </div>
 
-                {{ form.method }}
-                <div id="engine_parameters">
-                    {% for fieldname, field in engines.0.fields.items %}
-                        <div class="row align-items-center my-1">
-                            <div class="col-6">
-                                <label for="{{ fieldname }}">{{ field.label }}</label>
-                            </div>
-                            <div class="col-6">
-                                {% with form.errors|get:fieldname as errors %}
-                                <input type="number" name="{{ fieldname }}" value="{{ form.data|get:fieldname|default:field.value }}" class="form-control {% if errors %}is-invalid{% endif %}" step="0.01"/>
-                                {% if errors %}{{ errors }}{% endif %}
-                                {% endwith %}
-                            </div>
+                <div {% if not user|has_permissions:"change_calculation_parameters" %}class="d-none"{% endif %}>
+                    <div class="row align-items-center my-1">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#engine_modal">
+                                {% translate "Indlæs beregningsmotor" %}
+                            </button>
                         </div>
-                    {% endfor %}
+                    </div>
+                    {{ form.method }}
+                    <div id="engine_parameters">
+                        {% for fieldname, field in engines.0.fields.items %}
+                            <div class="row align-items-center my-1">
+                                <div class="col-6">
+                                    <label for="{{ fieldname }}">{{ field.label }}</label>
+                                </div>
+                                <div class="col-6">
+                                    {% with form.errors|get:fieldname as errors %}
+                                        <input type="number" name="{{ fieldname }}"
+                                               value="{{ form.data|get:fieldname|default:field.value }}"
+                                               class="form-control {% if errors %}is-invalid{% endif %}" step="0.01"/>
+                                        {% if errors %}{{ errors }}{% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
 
                 <div class="row">
@@ -82,11 +90,13 @@
                         <div id="graph"></div>
                         {{ form.estimated_year_income.value|json_script:"year_income" }}
                         {{ result|json_script:"result" }}
+                        {{ result_monthly|json_script:"result_monthly" }}
                         <script id="graph_points" type="application/json">{{graph_points|safe}}</script>
                         <script nonce="{{ request.csp_nonce }}">
                             let data = JSON.parse($("#graph_points").text());
                             const year_income = parseFloat(JSON.parse($("#year_income").text()));
                             const result = parseFloat(JSON.parse($("#result").text()));
+                            const result_monthly = parseFloat(JSON.parse($("#result_monthly").text()));
                             const graph = $("#graph");
                             if (year_income > data[data.length - 1][0]) {
                                 // result is greater than our current max point in the graph
@@ -113,26 +123,22 @@
                                     }
                                 },
                                 "annotations": {
-                                    "xaxis": [{
-                                        "x": year_income || 0,
-                                        "borderColor": '#FF4560',
-                                        "strokeDashArray": 0
-                                    }],
-                                    "yaxis": [{
-                                        "y": result || 0,
-                                        "borderColor": '#FF4560',
-                                        "strokeDashArray": 0
-                                    }],
                                     "points": [{
                                         "x": year_income || 0,
                                         "y": result || 0,
                                         "marker": {
                                             "size": 4,
-                                            "fillColor": "#FF4560",
-                                            "strokeColor": "#fff"
                                         },
                                         "label": {
-                                            "borderColor": '#FF4560',
+                                            "text": [
+                                                "Beregnet Suila for hele året: " + result,
+                                            ],
+                                            "style": {
+                                                "background": "#fff",
+                                                "color": "#333",
+                                                "fontSize": "1rem",
+                                                "textAnchor": "start",
+                                            }
                                         }
                                     }]
                                 },
@@ -164,9 +170,9 @@
                     <button id="engine_selected" class="btn btn-primary" data-bs-target="#engine_modal" data-bs-toggle="modal">Indlæs</button>
                 </div>
             </div>
-
         </div>
     </div>
+
     {{ engines|json_script:"engines" }}
     <script nonce="{{ request.csp_nonce }}">
         const month_field = $("[name={{ form.estimated_month_income.name }}]");
@@ -199,8 +205,6 @@
             method.val(engine["class"]);
         }
         $("#engine_selected").on("click", update_parameters);
-
-
     </script>
-
+</div>
 {% endblock %}
