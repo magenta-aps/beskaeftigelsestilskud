@@ -18,7 +18,14 @@ http:
       tls:
         options: clientcert
 
-    bf:
+    public:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`bf-traefik`)"
+      service: "bf"
+      tls: {}
+
+    private:
       entryPoints:
         - "websecure"
       rule: "Host(`bf-traefik`)"

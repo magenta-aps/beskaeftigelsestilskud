@@ -16,12 +16,15 @@ from project.util import strtobool
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 VERSION = os.environ.get("COMMIT_TAG", "")
 TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
+PUBLIC = bool(strtobool(os.environ.get("PUBLIC", "False")))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(strtobool(os.environ.get("DJANGO_DEBUG", "False")))
 HOST_DOMAIN = os.environ.get("HOST_DOMAIN", "http://suila.aka.gl")
 ALLOWED_HOSTS: List[str] = json.loads(os.environ.get("ALLOWED_HOSTS", "[]"))
-CSRF_TRUSTED_ORIGINS = [HOST_DOMAIN]
+CSRF_TRUSTED_ORIGINS = json.loads(os.environ.get("CSRF_TRUSTED_ORIGINS", "[]")) or [
+    HOST_DOMAIN
+]
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
