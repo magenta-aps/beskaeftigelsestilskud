@@ -402,6 +402,7 @@ class MonthlyIncomeHandler(Handler):
                             amount_sum=Decimal(0),
                         )
                         person_months.append(person_month)
+
                 PersonMonth.objects.bulk_create(
                     person_months,
                     update_conflicts=True,
@@ -409,16 +410,13 @@ class MonthlyIncomeHandler(Handler):
                     unique_fields=("person_year", "month"),
                     batch_size=500,
                 )
-                for person_month in person_months:
-                    person_month.update_amount_sum()
-                PersonMonth.objects.bulk_update(
-                    person_months,
-                    ["amount_sum"],
-                    batch_size=500,
-                )
-                out.write(
-                    f"Created or updated {len(person_months)} PersonMonth objects"
-                )
+                out.write(f"Created {len(person_months)} PersonMonth objects")
+
+                # Create IncomeReports
+                # OBS: Uses PersonMonth instances, which is why these are created
+                # before the IncomeReports.
+                # OBS2: IncomeReports are handled before update of "amount_sum" for
+                # PersonMonths, since this is based on the IncomeReports.
                 income_reports = cls._create_or_update_monthly_income_reports(
                     verified_monthly_income_reports,
                     load,
@@ -427,6 +425,17 @@ class MonthlyIncomeHandler(Handler):
                     f"Created or updated {len(income_reports)} MonthlyIncomeReport "
                     "objects"
                 )
+
+                # Finally, update the PersonMonth's after creating the IncomeReports
+                for person_month in person_months:
+                    person_month.update_amount_sum()
+
+                PersonMonth.objects.bulk_update(
+                    person_months,
+                    ["amount_sum"],
+                    batch_size=500,
+                )
+                out.write(f"Updated {len(person_months)} PersonMonth objects")
                 return person_months
 
         # Fall-through: return empty list (rather than None)
