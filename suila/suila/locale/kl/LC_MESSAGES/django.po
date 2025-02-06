@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-31 12:22-0200\n"
+"POT-Creation-Date: 2025-02-06 06:52-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -144,7 +144,7 @@ msgstr ""
 #: suila/templates/suila/person_detail_base.html
 #: suila/templates/suila/person_search.html
 msgid "Personer"
-msgstr ""
+msgstr "Inuit"
 
 #: suila/templates/suila/person_detail_base.html
 msgid "Vis"
@@ -248,23 +248,79 @@ msgid "Velkommen, %(name)s"
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "To-faktor-godkendelse er nu aktiv"
+msgid "Aktiveret"
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Velkommen"
+msgid "To-faktor-godkendelse er nu aktiv."
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Til beskæftigelsestilskud portalen."
+msgid "OK"
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Genveje"
+msgid "Beskrivelse af Suila (TBD)"
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Estimeringsoverblik"
+msgid "Borgersøgning"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Se liste over borgere og find detaljer"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Suilaberegneren"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Beregn beskæftigelsesfradrag"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Sammenhæng mellem årsindkomst og Suila"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Se hvordan vi udregner beskæftigelsesfradrag"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Borger har ikke modtaget Suila"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid ""
+"Find information her, hvis en borger ikke har modtaget beskæftigelsesfradrag"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Se mit overblik"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid ""
+"Overblik over dine udbetalinger af beskæftigelsesfradrag for indeværende år"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Beregningsgrundlag - Se mine signaler"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid ""
+"Overblik over de signaler, som Skattestyrelsen har modtaget om dine "
+"indkomster"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Jeg har ikke modtaget Suila"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Find information her, hvis du ikke har modtaget beskæftigelsesfradrag"
 msgstr ""
 
 #: suila/tests/test_views.py suila/views.py

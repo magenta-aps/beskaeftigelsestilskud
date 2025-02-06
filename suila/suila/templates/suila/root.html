@@ -5,6 +5,7 @@
 {% load i18n %}
 {% load static %}
 {% load suila_permissions %}
+{% load jumbo_link from element_tags %}
 
 {% block extra_headers %}
 <script src="{% static 'jquery/besk.js' %}" nonce="{{ request.csp_nonce }}"></script>
@@ -51,41 +52,45 @@ Velkommen, {{ name }}
 {% if user|has_permissions:"suila.view_person,suila.view_personyear" %}
 {# Borgerservice links #}
 <div class="row mt-3">
-    <div class="col-4">
-        <a href="{% url "suila:person_search" %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
-            <h1>{% translate "Personer" %}</h1>
-        </a>
+    <div class="col-6">
+        {% url "suila:person_search" as person_search_url %}
+        {% jumbo_link person_search_url _("Borgersøgning") "search" _("Se liste over borgere og find detaljer") %}
     </div>
-    <div class="col-4">
-        <a href="{% url "data_analysis:calculator" %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
-            <h1>{% translate "Suilaberegneren" %}</h1>
-        </a>
+    <div class="col-6">
+        {% url "data_analysis:calculator" as calculator_url %}
+        {% jumbo_link calculator_url _("Suilaberegneren") "calculate" _("Beregn beskæftigelsesfradrag") %}
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-6">
+        {# TODO: fix # url #}
+        {% jumbo_link "#" _("Sammenhæng mellem årsindkomst og Suila") "link" _("Se hvordan vi udregner beskæftigelsesfradrag") %}
+    </div>
+    <div class="col-6">
+        {# TODO: fix # url #}
+        {% jumbo_link "#" _("Borger har ikke modtaget Suila") "help" _("Find information her, hvis en borger ikke har modtaget beskæftigelsesfradrag") %}
     </div>
 </div>
 {% else %}
 {# Borger links #}
 <div class="row mt-3">
-    <div class="col-4">
-        <a href="{% url "suila:person_detail" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
-            <h1>{% translate "Se mit overblik" %}</h1>
-        </a>
+    <div class="col-6">
+        {% url "suila:person_detail" pk=person.pk as person_detail_url %}
+        {% jumbo_link person_detail_url _("Se mit overblik") "person" _("Overblik over dine udbetalinger af beskæftigelsesfradrag for indeværende år") %}
     </div>
-    <div class="col-4">
-        <a href="{% url "suila:person_detail_income" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
-            <h1>{% translate "Beregningsgrundlag - Se mine signaler" %}</h1>
-        </a>
+    <div class="col-6">
+        {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
+        {% jumbo_link person_income_url _("Beregningsgrundlag - Se mine signaler") "attach_money" _("Overblik over de signaler, som Skattestyrelsen har modtaget om dine indkomster") %}
     </div>
 </div>
 <div class="row mt-3">
-    <div class="col-4">
-        <a href="{% url "suila:person_detail" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
-            <h1>{% translate "Se sammenhæng mellem årsindkomst og udbetalinger" %}</h1>
-        </a>
+    <div class="col-6">
+        {# TODO: fix # url #}
+        {% jumbo_link "#" _("Sammenhæng mellem årsindkomst og Suila") "link" _("Se hvordan vi udregner beskæftigelsesfradrag") %}
     </div>
-    <div class="col-4">
-        <a href="{% url "suila:person_detail" pk=person.pk %}" class="jumbo d-flex align-items-center justify-content-center btn btn-primary">
-            <h1>{% translate "Jeg har ikke modtaget Suila" %}</h1>
-        </a>
+    <div class="col-6">
+        {# TODO: fix # url #}
+        {% jumbo_link "#" _("Jeg har ikke modtaget Suila") "help" _("Find information her, hvis du ikke har modtaget beskæftigelsesfradrag") %}
     </div>
 </div>
 {% endif %}
