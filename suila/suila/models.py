@@ -58,6 +58,9 @@ class StatusChoices(TextChoices):
 class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
     class Meta:
         abstract = True
+        permissions = (
+            ("change_calculation_parameters", "Can change calculation parameters"),
+        )
 
     def calculate(self, year_income: Decimal) -> Decimal:
         raise NotImplementedError  # pragma: no cover
@@ -302,6 +305,9 @@ class Year(PermissionsMixin, models.Model):
 
 
 class Person(PermissionsMixin, models.Model):
+    class Meta:
+        permissions = (("view_data_analysis", "Can view data analysis"),)
+
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
         related_name="history_entries",
