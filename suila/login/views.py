@@ -64,30 +64,49 @@ class BeskLoginView(LoginView):
         return self.back or reverse("suila:root")
 
     def get(self, request, *args, **kwargs):
-        if not self.request.user.is_authenticated:
-            user = authenticate(
-                request=self.request, saml_data=self.request.session.get("saml")
-            )
-            if user and user.is_authenticated:
-                login(
-                    request=self.request,
-                    user=user,
-                    backend="django_mitid_auth.saml.backend.Saml2Backend",
-                )
-            if not self.request.user.is_authenticated:
-                if self.request.session.get("saml"):
-                    response = redirect(reverse("login:mitid:login"))
-                else:
-                    response = super().get(request, *args, **kwargs)
+        if not request.user.is_authenticated:
+            if settings.PUBLIC:
+                # MitID login
+                response = self.login_mitid(request, *args, **kwargs)
+            else:
+                # django login
+                response = self.login_django(request, *args, **kwargs)
+            if response:
                 if self.back:
                     response.set_cookie(
-                        "back", self.back, secure=True, httponly=True, samesite="None"
+                        "back",
+                        self.back,
+                        secure=True,
+                        httponly=True,
+                        samesite="None",
                     )
                 return response
+
         backpage = self.request.COOKIES.get("back")
         if backpage:
             return redirect(backpage)
         return redirect("suila:root")
+
+    def login_mitid(self, request, *args, **kwargs) -> HttpResponse | None:
+        # Get user from auth data
+        user = authenticate(
+            request=request,
+            saml_data=request.session.get("saml"),
+        )
+        if user and user.is_authenticated:
+            # store user in session
+            login(
+                request=request,
+                user=user,
+                backend="django_mitid_auth.saml.backend.Saml2Backend",
+            )
+        if not request.user.is_authenticated:
+            # no user, redirect to login page
+            return redirect(reverse("login:mitid:login"))
+        return None
+
+    def login_django(self, request, *args, **kwargs) -> HttpResponse | None:
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **context):
         return super().get_context_data(
@@ -114,7 +133,7 @@ class TwoFactorSetup(SetupView):
 
 class LogoutView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
-        if (
+        if settings.PUBLIC and (
             self.request.session.get(BACKEND_SESSION_KEY)
             == "django_mitid_auth.saml.backend.Saml2Backend"
             or "saml" in self.request.session
