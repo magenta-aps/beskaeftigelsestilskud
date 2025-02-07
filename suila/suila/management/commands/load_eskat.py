@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
+from itertools import batched
 from typing import Iterator
 
 from suila.integrations.eskat.client import EskatClient
@@ -55,17 +56,21 @@ class Command(SuilaBaseCommand):
                 self.stdout.write(
                     "--month is not relevant when fetching expected income"
                 )
-            AnnualIncomeHandler.create_or_update_objects(
-                client.get_annual_income(year, cpr), load, self.stdout
-            )
+            annual_income_data = client.get_annual_income(year, cpr)
+            for chunk in batched(annual_income_data, 50):
+                print(f"Handling parsed chunk of size {len(chunk)}")
+                AnnualIncomeHandler.create_or_update_objects(chunk, load, self.stdout)
         if typ == "expectedincome":
             if month is not None:
                 self.stdout.write(
                     "--month is not relevant when fetching expected income"
                 )
-            ExpectedIncomeHandler.create_or_update_objects(
-                year, client.get_expected_income(year, cpr), load, self.stdout
-            )
+            expected_income_data = client.get_expected_income(year, cpr)
+            for chunk in batched(expected_income_data, 50):
+                print(f"Handling parsed chunk of size {len(chunk)}")
+                ExpectedIncomeHandler.create_or_update_objects(
+                    year, chunk, load, self.stdout
+                )
         if typ == "monthlyincome":
             if skew:
                 year_months = self._get_year_and_month_kwargs(year, month)
@@ -85,23 +90,31 @@ class Command(SuilaBaseCommand):
                 monthly_income_data = client.get_monthly_income(
                     year_, cpr=cpr, **month_kwargs
                 )
-                self._write_verbose(
-                    f"\t- MonthlyIncome-entries fetched: {len(monthly_income_data)}"
-                )
-
-                MonthlyIncomeHandler.create_or_update_objects(
-                    year_,
-                    monthly_income_data,
+                # monthly_income_data er en Generator der kommer med MonthlyIncome
+                # objekter fra eskat. Størrelsen af chunks vi vælger her er
+                # uafhængig af størrelsen på chunks vi henter fra eskat.
+                # (eskat fylder i en pulje med én skestørrelse,
+                # vi tager af puljen med en anden skestørrelse)
+                for chunk in batched(monthly_income_data, 50):
+                    # Spis af generatoren i chunks
+                    print(f"Handling parsed chunk of size {len(chunk)}")
+                    MonthlyIncomeHandler.create_or_update_objects(
+                        year_,
+                        chunk,
+                        load,
+                        self.stdout,
+                    )
+        if typ == "taxinformation":
+            tax_information_data = client.get_tax_information(year, cpr=cpr)
+            for chunk in batched(tax_information_data, 50):
+                # Spis af generatoren i chunks
+                print(f"Handling parsed chunk of size {len(chunk)}")
+                TaxInformationHandler.create_or_update_objects(
+                    year,
+                    chunk,
                     load,
                     self.stdout,
                 )
-        if typ == "taxinformation":
-            TaxInformationHandler.create_or_update_objects(
-                year,
-                client.get_tax_information(year, cpr=cpr),
-                load,
-                self.stdout,
-            )
 
     def _get_year_and_month_kwargs(
         self,
