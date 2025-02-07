@@ -102,6 +102,7 @@ class Command(BaseCommand):
                 month=None if typ == "expectedincome" else month,
                 verbosity=verbosity,
                 cpr=cpr,
+                skew=typ == "monthlyincome",
             )
 
         # Populate `Person.location_code` and `Person.civil_state` (requires Pitu/DAFO
