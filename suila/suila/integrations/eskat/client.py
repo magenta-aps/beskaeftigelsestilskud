@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from concurrent.futures import ThreadPoolExecutor, wait
 from threading import current_thread
 from typing import Any, Dict, Iterable, List
 
@@ -48,29 +47,42 @@ class EskatClient:
         response.raise_for_status()
         return response.json()
 
-    def get_many(self, paths: Iterable[str], threads: int = 8) -> List[Dict[str, Any]]:
+    """
+    def get_many_parallel(
+        self,
+        paths: Iterable[str],
+        threads: int = 8) -> Iterable[Dict[str, Any]]:
+        # Parallel implementation.
+        # Henter data, og fylder modtagerens buffer, ret hurtigt
         with ThreadPoolExecutor(max_workers=threads) as executor:
             futures = [executor.submit(self.get, path) for path in paths]
-            wait(futures)
-            results = [future.result() for future in futures]
+            for future in as_completed(futures):
+                yield future.result()
             self.sessions = {}
-            return results
+    """
 
-    def get_chunked(self, path: str, chunk_size: int = 20) -> List[Dict[str, Any]]:
+    def get_many(self, paths: Iterable[str]) -> Iterable[Dict[str, Any]]:
+        # Sekventiel implementation. Henter langsommere, så modtageren kan følge med
+        for path in paths:
+            yield self.get(path)
+        self.sessions = {}
+
+    def get_chunked(self, path: str, chunk_size: int = 20) -> Iterable[Dict[str, Any]]:
         chunk: int = 1
         first_response = self.get(path + f"?chunk={chunk}&chunkSize={chunk_size}")
         total_chunks = first_response["totalChunks"]
-        responses = [first_response]
+        print(f"total eskat chunks: {total_chunks} of size {chunk_size}")
+        yield first_response
         if total_chunks > 1:
             remaining_paths = [
                 path + f"?chunk={chunk}&chunkSize={chunk_size}"
                 for chunk in range(2, total_chunks + 1)
             ]
-            responses += self.get_many(remaining_paths)
-        return responses
+            for response in self.get_many(remaining_paths):
+                yield response
 
     @staticmethod
-    def unpack(responses: List[Dict[str, Any]]) -> Iterable[Dict[str, Any]]:
+    def unpack(responses: Iterable[Dict[str, Any]]) -> Iterable[Dict[str, Any]]:
         for response in responses:
             if response is not None:
                 data = response["data"]
@@ -94,39 +106,45 @@ class EskatClient:
         self,
         year: int | None = None,
         cpr: str | None = None,
-    ) -> List[AnnualIncome]:
+        chunk_size: int = 20,
+    ) -> Iterable[AnnualIncome]:
         if year is None:
             if cpr is None:
                 raise ValueError("Must specify either year or cpr (or both)")
-            responses = [self.get(f"/api/annualincome/get/{cpr}")]
+            responses: Iterable[Dict[str, Any]] = [
+                self.get(f"/api/annualincome/get/{cpr}")
+            ]
         else:
             if cpr is None:
-                responses = self.get_chunked(f"/api/annualincome/get/chunks/all/{year}")
+                responses = self.get_chunked(
+                    f"/api/annualincome/get/chunks/all/{year}", chunk_size
+                )
             else:
                 responses = [self.get(f"/api/annualincome/get/{cpr}/{year}")]
-        return [
-            AnnualIncomeHandler.from_api_dict(item) for item in self.unpack(responses)
-        ]
+        for item in self.unpack(responses):
+            yield AnnualIncomeHandler.from_api_dict(item)
 
     def get_expected_income(
         self,
         year: int | None = None,
         cpr: str | None = None,
-    ) -> List[ExpectedIncome]:
+        chunk_size: int = 20,
+    ) -> Iterable[ExpectedIncome]:
         if year is None:
             if cpr is None:
                 raise ValueError("Must specify either year or cpr (or both)")
-            responses = [self.get(f"/api/expectedincome/get/{cpr}")]
+            responses: Iterable[Dict[str, Any]] = [
+                self.get(f"/api/expectedincome/get/{cpr}")
+            ]
         else:
             if cpr is None:
                 responses = self.get_chunked(
-                    f"/api/expectedincome/get/chunks/all/{year}"
+                    f"/api/expectedincome/get/chunks/all/{year}", chunk_size
                 )
             else:
                 responses = [self.get(f"/api/expectedincome/get/{cpr}/{year}")]
-        return [
-            ExpectedIncomeHandler.from_api_dict(item) for item in self.unpack(responses)
-        ]
+        for item in self.unpack(responses):
+            yield ExpectedIncomeHandler.from_api_dict(item)
 
     def get_monthly_income(
         self,
@@ -134,7 +152,8 @@ class EskatClient:
         month_from: int | None = None,
         month_to: int | None = None,
         cpr: str | None = None,
-    ) -> List[MonthlyIncome]:
+        chunk_size: int = 20,
+    ) -> Iterable[MonthlyIncome]:
         if month_from == month_to:
             month_to = None
         if cpr is None:
@@ -147,7 +166,7 @@ class EskatClient:
                     f"/api/monthlyincome/get/chunks/all/{year}/"
                     f"{min(month_from, month_to)}/{max(month_from, month_to)}"
                 )
-            responses = self.get_chunked(url)
+            responses = self.get_chunked(url, chunk_size)
         else:
             if month_from is None:
                 urls = [f"/api/monthlyincome/get/{cpr}/{year}"]
@@ -161,27 +180,31 @@ class EskatClient:
                     )
                 ]
             responses = self.get_many(urls)
-        return [
-            MonthlyIncomeHandler.from_api_dict(item) for item in self.unpack(responses)
-        ]
+        for item in self.unpack(responses):
+            yield MonthlyIncomeHandler.from_api_dict(item)
 
     def get_tax_information(
-        self, year: int | None = None, cpr: str | None = None
-    ) -> List[TaxInformation]:
+        self,
+        year: int | None = None,
+        cpr: str | None = None,
+        chunk_size: int = 20,
+    ) -> Iterable[TaxInformation]:
         if year is None:
             if cpr is None:
                 raise ValueError("Must specify either year or cpr (or both)")
-            responses = [self.get(f"/api/taxinformation/get/{cpr}")]
+            responses: Iterable[Dict[str, Any]] = [
+                self.get(f"/api/taxinformation/get/{cpr}")
+            ]
         else:
             if cpr is None:
                 responses = self.get_chunked(
-                    f"/api/taxinformation/get/chunks/all/{year}"
+                    f"/api/taxinformation/get/chunks/all/{year}",
+                    chunk_size,
                 )
             else:
                 responses = [self.get(f"/api/taxinformation/get/{cpr}/{year}")]
-        return [
-            TaxInformationHandler.from_api_dict(item) for item in self.unpack(responses)
-        ]
+        for item in self.unpack(responses):
+            yield TaxInformationHandler.from_api_dict(item)
 
     def get_tax_scopes(self) -> List[str]:
         return self.get("/api/taxinformation/get/taxscopes")["data"]

@@ -40,4 +40,6 @@ class TestLoadEskatCommand(TestCase):
                     type=type,
                     cpr=None,
                     verbosity=2,
+                    fetch_chunk_size=20,
+                    insert_chunk_size=20,
                 )
