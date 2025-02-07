@@ -7,7 +7,7 @@ from collections import defaultdict
 from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
-from typing import Any, Dict, List, Set, TextIO
+from typing import Any, Dict, Iterable, List, Set, TextIO
 
 from common.utils import camelcase_to_snakecase, omit
 from django.core.exceptions import ValidationError
@@ -168,7 +168,7 @@ class AnnualIncomeHandler(Handler):
     @classmethod
     def create_or_update_objects(
         cls,
-        items: List[AnnualIncome],
+        items: Iterable[AnnualIncome],
         load: DataLoad,
         out: TextIO,
     ) -> list[AnnualIncomeModel]:
@@ -244,7 +244,7 @@ class ExpectedIncomeHandler(Handler):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, items: List["ExpectedIncome"], load: DataLoad, out: TextIO
+        cls, year: int, items: Iterable["ExpectedIncome"], load: DataLoad, out: TextIO
     ) -> list[PersonYearAssessment]:
         with transaction.atomic():
             year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
@@ -349,7 +349,7 @@ class MonthlyIncomeHandler(Handler):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, items: List["MonthlyIncome"], load: DataLoad, out: TextIO
+        cls, year: int, items: Iterable["MonthlyIncome"], load: DataLoad, out: TextIO
     ) -> list[PersonMonth]:
         data_months: Dict[int, Set[int]] = defaultdict(set)
         year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
@@ -444,7 +444,7 @@ class MonthlyIncomeHandler(Handler):
     @classmethod
     def _create_or_update_monthly_income_reports(
         cls,
-        items: list[MonthlyIncome],
+        items: Iterable[MonthlyIncome],
         load: DataLoad,
     ) -> list:
         objs_to_create = []
@@ -460,11 +460,6 @@ class MonthlyIncomeHandler(Handler):
                 field_values = cls.get_field_values(
                     item,
                     exclude={"cpr", "cvr", "tax_municipality_number", "month"},
-                )
-
-                print(
-                    f"Handling income data for {person_month!r}, year={item.year!r}, "
-                    f"month={item.month!r}"
                 )
 
                 try:
@@ -511,7 +506,7 @@ class TaxInformationHandler(Handler):
 
     @classmethod
     def create_or_update_objects(
-        cls, year: int, items: List["TaxInformation"], load: DataLoad, out: TextIO
+        cls, year: int, items: Iterable["TaxInformation"], load: DataLoad, out: TextIO
     ):
         year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
         for item in items:

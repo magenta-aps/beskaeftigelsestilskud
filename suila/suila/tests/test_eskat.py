@@ -300,14 +300,14 @@ class TestAnnualIncome(BaseTestCase):
     def test_get_annual_income_by_none(self):
         client = EskatClient.from_settings()
         with self.assertRaises(ValueError):
-            client.get_annual_income(None, None)
+            list(client.get_annual_income(None, None))
 
     def test_get_annual_income_by_year(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.annual_income_testdata
         ):
-            data = client.get_annual_income(2024)
+            data = list(client.get_annual_income(2024))
             self.assertEqual(len(data), 2)
             self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[0].year, 2024)
@@ -319,7 +319,7 @@ class TestAnnualIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.annual_income_testdata
         ):
-            data = client.get_annual_income(year=None, cpr="0000001234")
+            data = list(client.get_annual_income(year=None, cpr="0000001234"))
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].cpr, "0000001234")
 
@@ -328,7 +328,7 @@ class TestAnnualIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.annual_income_testdata
         ):
-            data = client.get_annual_income(2024, cpr="0000001234")
+            data = list(client.get_annual_income(2024, cpr="0000001234"))
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[0].year, 2024)
@@ -444,14 +444,14 @@ class TestExpectedIncome(BaseTestCase):
     def test_get_expected_income_by_none(self):
         client = EskatClient.from_settings()
         with self.assertRaises(ValueError):
-            client.get_expected_income(None, None)
+            list(client.get_expected_income(None, None))
 
     def test_get_expected_income_by_year(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.expected_income_testdata
         ):
-            data = client.get_expected_income(year=2024)
+            data = list(client.get_expected_income(year=2024))
             self.assertEqual(len(data), 2)
             self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[1].cpr, "0000005678")
@@ -461,7 +461,7 @@ class TestExpectedIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.expected_income_testdata
         ):
-            data = client.get_expected_income(cpr="0000001234")
+            data = list(client.get_expected_income(cpr="0000001234"))
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].cpr, "0000001234")
 
@@ -470,7 +470,7 @@ class TestExpectedIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.expected_income_testdata
         ):
-            data = client.get_expected_income(year=2024, cpr="0000001234")
+            data = list(client.get_expected_income(year=2024, cpr="0000001234"))
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].cpr, "0000001234")
 
@@ -613,7 +613,7 @@ class TestMonthlyIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024)
+            data = list(client.get_monthly_income(2024))
             self.assertEqual(len(data), 24)
             for m in range(0, 12):
                 self.assertEqual(data[m].cpr, "0000001234")
@@ -627,7 +627,7 @@ class TestMonthlyIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, 1)
+            data = list(client.get_monthly_income(2024, 1))
             self.assertEqual(len(data), 2)
             self.assertEqual(data[0].month, 1)
             self.assertEqual(data[0].cpr, "0000001234")
@@ -639,7 +639,7 @@ class TestMonthlyIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, 1, 6)
+            data = list(client.get_monthly_income(2024, 1, 6))
             self.assertEqual(len(data), 12)
             for m in range(0, 6):
                 self.assertEqual(data[m].month, m + 1)
@@ -653,7 +653,7 @@ class TestMonthlyIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, cpr="0000001234")
+            data = list(client.get_monthly_income(2024, cpr="0000001234"))
             self.assertEqual(len(data), 12)
             for m in range(0, 12):
                 self.assertEqual(data[m].cpr, "0000001234")
@@ -664,7 +664,7 @@ class TestMonthlyIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, 1, cpr="0000001234")
+            data = list(client.get_monthly_income(2024, 1, cpr="0000001234"))
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].month, 1)
             self.assertEqual(data[0].cpr, "0000001234")
@@ -674,7 +674,7 @@ class TestMonthlyIncome(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.monthly_income_testdata
         ):
-            data = client.get_monthly_income(2024, 1, 6, cpr="0000001234")
+            data = list(client.get_monthly_income(2024, 1, 6, cpr="0000001234"))
             self.assertEqual(len(data), 6)
             for m in range(0, 6):
                 self.assertEqual(data[m].month, m + 1)
@@ -878,20 +878,20 @@ class TestTaxInformation(BaseTestCase):
     def test_get_tax_information_by_none(self):
         client = EskatClient.from_settings()
         with self.assertRaises(ValueError):
-            client.get_tax_information(None, None)
+            list(client.get_tax_information(None, None))
 
     def test_get_tax_information_by_year(self):
         client = EskatClient.from_settings()
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
         ):
-            data = client.get_tax_information(year=2023)
+            data = list(client.get_tax_information(year=2023))
             self.assertEqual(len(data), 3)
             self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[1].cpr, "0000005678")
             self.assertEqual(data[2].cpr, "0000009012")
 
-            data = client.get_tax_information(year=2024)
+            data = list(client.get_tax_information(year=2024))
             self.assertEqual(len(data), 3)
             self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[1].cpr, "0000005678")
@@ -902,7 +902,7 @@ class TestTaxInformation(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
         ):
-            data = client.get_tax_information(cpr="0000001234")
+            data = list(client.get_tax_information(cpr="0000001234"))
             self.assertEqual(len(data), 2)
             self.assertEqual(data[0].cpr, "0000001234")
             self.assertEqual(data[0].year, 2023)
@@ -914,7 +914,7 @@ class TestTaxInformation(BaseTestCase):
         with patch.object(
             requests.sessions.Session, "get", side_effect=self.taxinfo_testdata
         ):
-            data = client.get_tax_information(year=2024, cpr="0000001234")
+            data = list(client.get_tax_information(year=2024, cpr="0000001234"))
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].cpr, "0000001234")
 
@@ -1087,6 +1087,8 @@ class TestLoadEskatCommand(BaseEnvMixin, TestCase):
                         cpr=None,
                         verbosity=1,
                         skew=True,
+                        fetch_chunk_size=20,
+                        insert_chunk_size=20,
                     )
                     # Assert: API data is fetched for the expected year and month range
                     self.assertListEqual(
