@@ -110,7 +110,9 @@ class EskatClient:
         if year is None:
             if cpr is None:
                 raise ValueError("Must specify either year or cpr (or both)")
-            responses = [self.get(f"/api/annualincome/get/{cpr}")]
+            responses: Iterable[Dict[str, Any]] = [
+                self.get(f"/api/annualincome/get/{cpr}")
+            ]
         else:
             if cpr is None:
                 responses = self.get_chunked(f"/api/annualincome/get/chunks/all/{year}")
@@ -127,7 +129,9 @@ class EskatClient:
         if year is None:
             if cpr is None:
                 raise ValueError("Must specify either year or cpr (or both)")
-            responses = [self.get(f"/api/expectedincome/get/{cpr}")]
+            responses: Iterable[Dict[str, Any]] = [
+                self.get(f"/api/expectedincome/get/{cpr}")
+            ]
         else:
             if cpr is None:
                 responses = self.get_chunked(
@@ -176,11 +180,13 @@ class EskatClient:
 
     def get_tax_information(
         self, year: int | None = None, cpr: str | None = None
-    ) -> List[TaxInformation]:
+    ) -> Iterable[TaxInformation]:
         if year is None:
             if cpr is None:
                 raise ValueError("Must specify either year or cpr (or both)")
-            responses = [self.get(f"/api/taxinformation/get/{cpr}")]
+            responses: Iterable[Dict[str, Any]] = [
+                self.get(f"/api/taxinformation/get/{cpr}")
+            ]
         else:
             if cpr is None:
                 responses = self.get_chunked(
