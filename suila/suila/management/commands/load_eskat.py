@@ -27,6 +27,7 @@ class Command(SuilaBaseCommand):
         parser.add_argument("type", type=str)
         parser.add_argument("--cpr", type=str)
         parser.add_argument("--month", type=int)
+        parser.add_argument("--skew", action="store_true")
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
@@ -35,6 +36,7 @@ class Command(SuilaBaseCommand):
         month: str | None = kwargs["month"]
         cpr: str | None = kwargs["cpr"]
         typ: str = kwargs["type"].lower()
+        skew: bool = kwargs.get("skew", False)
 
         self._write_verbose("EskatClient initializing...")
         client = EskatClient.from_settings()
@@ -65,14 +67,21 @@ class Command(SuilaBaseCommand):
                 year, client.get_expected_income(year, cpr), load, self.stdout
             )
         if typ == "monthlyincome":
-            for year_, month_kwargs in self._get_year_and_month_kwargs(year, month):
-                self._write_verbose(
-                    (
-                        "- Fetching monthly_income "
-                        f"from {month_kwargs["month_from"]}/{year_} "
-                        f"to {month_kwargs["month_to"]}/{year_}..."
+            if skew:
+                year_months = self._get_year_and_month_kwargs(year, month)
+            else:
+                year_months = [(year, {"month_from": None, "month_to": None})]
+            for year_, month_kwargs in year_months:
+                if month_kwargs["month_from"] is None:
+                    self._write_verbose(f"- Fetching monthly_income for {year_}")
+                else:
+                    self._write_verbose(
+                        (
+                            "- Fetching monthly_income "
+                            f'from {month_kwargs["month_from"]}/{year_} '
+                            f'to {month_kwargs["month_to"]}/{year_}...'
+                        )
                     )
-                )
                 monthly_income_data = client.get_monthly_income(
                     year_, cpr=cpr, **month_kwargs
                 )

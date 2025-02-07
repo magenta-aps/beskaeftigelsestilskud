@@ -35,5 +35,9 @@ class TestLoadEskatCommand(TestCase):
             with self.subTest(type=type):
                 # Act
                 self.command._handle(
-                    year=self.year.year, month=1, type=type, cpr=None, verbosity=2
+                    year=self.year.year,
+                    month=1,
+                    type=type,
+                    cpr=None,
+                    verbosity=2,
                 )

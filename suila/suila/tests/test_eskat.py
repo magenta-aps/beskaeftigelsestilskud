@@ -1086,6 +1086,7 @@ class TestLoadEskatCommand(BaseEnvMixin, TestCase):
                         month=input_month,
                         cpr=None,
                         verbosity=1,
+                        skew=True,
                     )
                     # Assert: API data is fetched for the expected year and month range
                     self.assertListEqual(
