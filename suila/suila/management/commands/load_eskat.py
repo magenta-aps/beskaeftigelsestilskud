@@ -40,8 +40,8 @@ class Command(SuilaBaseCommand):
         cpr: str | None = kwargs["cpr"]
         typ: str = kwargs["type"].lower()
         skew: bool = kwargs.get("skew", False)
-        fetch_chunk_size = kwargs["fetch_chunk_size"]
-        insert_chunk_size = kwargs["insert_chunk_size"]
+        fetch_chunk_size: int = kwargs["fetch_chunk_size"]
+        insert_chunk_size: int = kwargs["insert_chunk_size"]
 
         self._write_verbose("EskatClient initializing...")
         client = EskatClient.from_settings()
