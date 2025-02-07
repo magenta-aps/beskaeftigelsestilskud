@@ -29,6 +29,8 @@ class Command(SuilaBaseCommand):
         parser.add_argument("--cpr", type=str)
         parser.add_argument("--month", type=int)
         parser.add_argument("--skew", action="store_true")
+        parser.add_argument("--fetch_chunk_size", type=int, default=20)
+        parser.add_argument("--insert_chunk_size", type=int, default=50)
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
@@ -38,6 +40,8 @@ class Command(SuilaBaseCommand):
         cpr: str | None = kwargs["cpr"]
         typ: str = kwargs["type"].lower()
         skew: bool = kwargs.get("skew", False)
+        fetch_chunk_size = kwargs["fetch_chunk_size"]
+        insert_chunk_size = kwargs["insert_chunk_size"]
 
         self._write_verbose("EskatClient initializing...")
         client = EskatClient.from_settings()
@@ -56,8 +60,10 @@ class Command(SuilaBaseCommand):
                 self.stdout.write(
                     "--month is not relevant when fetching expected income"
                 )
-            annual_income_data = client.get_annual_income(year, cpr)
-            for chunk in batched(annual_income_data, 50):
+            annual_income_data = client.get_annual_income(
+                year, cpr, chunk_size=fetch_chunk_size
+            )
+            for chunk in batched(annual_income_data, insert_chunk_size):
                 print(f"Handling parsed chunk of size {len(chunk)}")
                 AnnualIncomeHandler.create_or_update_objects(chunk, load, self.stdout)
         if typ == "expectedincome":
@@ -65,8 +71,10 @@ class Command(SuilaBaseCommand):
                 self.stdout.write(
                     "--month is not relevant when fetching expected income"
                 )
-            expected_income_data = client.get_expected_income(year, cpr)
-            for chunk in batched(expected_income_data, 50):
+            expected_income_data = client.get_expected_income(
+                year, cpr, chunk_size=fetch_chunk_size
+            )
+            for chunk in batched(expected_income_data, insert_chunk_size):
                 print(f"Handling parsed chunk of size {len(chunk)}")
                 ExpectedIncomeHandler.create_or_update_objects(
                     year, chunk, load, self.stdout
@@ -88,14 +96,14 @@ class Command(SuilaBaseCommand):
                         )
                     )
                 monthly_income_data = client.get_monthly_income(
-                    year_, cpr=cpr, **month_kwargs
+                    year_, cpr=cpr, chunk_size=fetch_chunk_size, **month_kwargs
                 )
                 # monthly_income_data er en Generator der kommer med MonthlyIncome
                 # objekter fra eskat. Størrelsen af chunks vi vælger her er
                 # uafhængig af størrelsen på chunks vi henter fra eskat.
                 # (eskat fylder i en pulje med én skestørrelse,
                 # vi tager af puljen med en anden skestørrelse)
-                for chunk in batched(monthly_income_data, 50):
+                for chunk in batched(monthly_income_data, insert_chunk_size):
                     # Spis af generatoren i chunks
                     print(f"Handling parsed chunk of size {len(chunk)}")
                     MonthlyIncomeHandler.create_or_update_objects(
@@ -105,8 +113,10 @@ class Command(SuilaBaseCommand):
                         self.stdout,
                     )
         if typ == "taxinformation":
-            tax_information_data = client.get_tax_information(year, cpr=cpr)
-            for chunk in batched(tax_information_data, 50):
+            tax_information_data = client.get_tax_information(
+                year, cpr=cpr, chunk_size=fetch_chunk_size
+            )
+            for chunk in batched(tax_information_data, insert_chunk_size):
                 # Spis af generatoren i chunks
                 print(f"Handling parsed chunk of size {len(chunk)}")
                 TaxInformationHandler.create_or_update_objects(

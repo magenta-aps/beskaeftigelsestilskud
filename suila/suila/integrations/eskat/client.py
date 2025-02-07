@@ -106,6 +106,7 @@ class EskatClient:
         self,
         year: int | None = None,
         cpr: str | None = None,
+        chunk_size: int = 20,
     ) -> Iterable[AnnualIncome]:
         if year is None:
             if cpr is None:
@@ -115,7 +116,9 @@ class EskatClient:
             ]
         else:
             if cpr is None:
-                responses = self.get_chunked(f"/api/annualincome/get/chunks/all/{year}")
+                responses = self.get_chunked(
+                    f"/api/annualincome/get/chunks/all/{year}", chunk_size
+                )
             else:
                 responses = [self.get(f"/api/annualincome/get/{cpr}/{year}")]
         for item in self.unpack(responses):
@@ -125,6 +128,7 @@ class EskatClient:
         self,
         year: int | None = None,
         cpr: str | None = None,
+        chunk_size: int = 20,
     ) -> Iterable[ExpectedIncome]:
         if year is None:
             if cpr is None:
@@ -135,7 +139,7 @@ class EskatClient:
         else:
             if cpr is None:
                 responses = self.get_chunked(
-                    f"/api/expectedincome/get/chunks/all/{year}"
+                    f"/api/expectedincome/get/chunks/all/{year}", chunk_size
                 )
             else:
                 responses = [self.get(f"/api/expectedincome/get/{cpr}/{year}")]
@@ -148,6 +152,7 @@ class EskatClient:
         month_from: int | None = None,
         month_to: int | None = None,
         cpr: str | None = None,
+        chunk_size: int = 20,
     ) -> Iterable[MonthlyIncome]:
         if month_from == month_to:
             month_to = None
@@ -161,7 +166,7 @@ class EskatClient:
                     f"/api/monthlyincome/get/chunks/all/{year}/"
                     f"{min(month_from, month_to)}/{max(month_from, month_to)}"
                 )
-            responses = self.get_chunked(url)
+            responses = self.get_chunked(url, chunk_size)
         else:
             if month_from is None:
                 urls = [f"/api/monthlyincome/get/{cpr}/{year}"]
@@ -179,7 +184,10 @@ class EskatClient:
             yield MonthlyIncomeHandler.from_api_dict(item)
 
     def get_tax_information(
-        self, year: int | None = None, cpr: str | None = None
+        self,
+        year: int | None = None,
+        cpr: str | None = None,
+        chunk_size: int = 20,
     ) -> Iterable[TaxInformation]:
         if year is None:
             if cpr is None:
@@ -190,7 +198,8 @@ class EskatClient:
         else:
             if cpr is None:
                 responses = self.get_chunked(
-                    f"/api/taxinformation/get/chunks/all/{year}"
+                    f"/api/taxinformation/get/chunks/all/{year}",
+                    chunk_size,
                 )
             else:
                 responses = [self.get(f"/api/taxinformation/get/{cpr}/{year}")]
