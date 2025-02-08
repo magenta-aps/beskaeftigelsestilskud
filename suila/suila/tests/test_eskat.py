@@ -977,11 +977,11 @@ class TestTaxInformation(BaseTestCase):
             PersonYear.objects.filter(year__year=2024).first().tax_scope,
             TaxScope.DELVIST_SKATTEPLIGTIG,
         )
-        TaxInformationHandler.create_or_update_objects(
+
+        TaxInformationHandler.update_missing(
             2024,
             [],
             DataLoad.objects.create(source="test"),
-            self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
         self.assertEqual(
