@@ -7,6 +7,7 @@ from collections import defaultdict
 from dataclasses import asdict, fields
 from datetime import date
 from decimal import Decimal
+from itertools import batched
 from typing import Any, Dict, Iterable, List, Set, TextIO
 
 from common.utils import camelcase_to_snakecase, omit
@@ -44,7 +45,6 @@ class Handler:
         year_cpr_taxscopes: Dict[int, Dict[str, TaxScope | None]],
         load: DataLoad,
         out: TextIO,
-        set_taxscope_on_missing: int | None = None,
     ) -> Dict[str, PersonYear] | None:
         person_years_count = 0
         person_years = {}
@@ -102,23 +102,6 @@ class Handler:
                     person_years[cpr] = person_year_2
             created = bulk_create_with_history(to_create, PersonYear, batch_size=1000)
             person_years_count += len(created)
-
-        # Update existing items in DB that are not in the input
-        if set_taxscope_on_missing is not None:
-            year_obj = Year.objects.get(year=set_taxscope_on_missing)
-
-            to_update = list(
-                PersonYear.objects.filter(year=year_obj).exclude(
-                    person__cpr__in=person_years.keys()
-                )
-            )
-            for person_year_3 in to_update:
-                person_year_3.load = load
-                person_year_3.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
-            bulk_update_with_history(
-                to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
-            )
-
         out.write(f"Processed {len(person_years)} PersonYear objects")
         return person_years
 
@@ -519,8 +502,24 @@ class TaxInformationHandler(Handler):
                 year_cpr_tax_scopes,
                 load,
                 out,
-                # Sæt eksisterende objekter på dette år,
-                # som ikke er i year_cpr_tax_scopes, til forsvundet
-                set_taxscope_on_missing=year,
             )
             # TODO: Brug data i items til at populere databasen
+
+    @classmethod
+    def update_missing(cls, year: int, found_cprs: Iterable[str], load: DataLoad):
+        # Update existing items in DB that are not in the input
+        to_update = list(
+            PersonYear.objects.filter(year__year=year).exclude(
+                person__cpr__in=found_cprs
+            )
+        )
+        for chunk in batched(to_update, 1000):
+            for person_year_3 in chunk:
+                person_year_3.load = load
+                person_year_3.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
+            bulk_update_with_history(
+                chunk,
+                PersonYear,
+                fields=("load", "tax_scope"),
+                batch_size=1000,
+            )

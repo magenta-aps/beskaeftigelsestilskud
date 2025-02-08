@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
 from itertools import batched
-from typing import Iterator
+from typing import Iterator, List
 
 from suila.integrations.eskat.client import EskatClient
 from suila.integrations.eskat.load import (
@@ -116,6 +116,7 @@ class Command(SuilaBaseCommand):
             tax_information_data = client.get_tax_information(
                 year, cpr=cpr, chunk_size=fetch_chunk_size
             )
+            cprs: List[str] = []
             for chunk in batched(tax_information_data, insert_chunk_size):
                 # Spis af generatoren i chunks
                 print(f"Handling parsed chunk of size {len(chunk)}")
@@ -125,6 +126,10 @@ class Command(SuilaBaseCommand):
                     load,
                     self.stdout,
                 )
+                if cpr is None:
+                    cprs += [c.cpr for c in chunk]
+            if cpr is None:
+                TaxInformationHandler.update_missing(year, cprs, load)
 
     def _get_year_and_month_kwargs(
         self,
