@@ -26,4 +26,5 @@ INSTALLED_APPS = [
     "two_factor",
     "ninja_extra",
     "mitid_test",
+    "simple_history",
 ]
