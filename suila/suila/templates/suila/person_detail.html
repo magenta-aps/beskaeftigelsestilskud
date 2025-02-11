@@ -4,22 +4,73 @@
 {% extends "suila/person_detail_base.html" %}
 {% load i18n %}
 {% load static %}
-{% load date_tags %}
-
-{% block title %}
-{% translate "Nøgletal" %}
-{% endblock %}
+{% load render_table from django_tables2 %}
+{% load amount_tags %}
 
 {% block person_data %}
-{# Key figures #}
-<h2 id="keyfigures">{% translate "Nøgletal" %}</h2>
-<p>{{ month_name }} {{ year }}</p>
-<dl class="row">
-    <dt class="col-3">{% translate "Forventet samlet indtægt i indeværende år" %}</dt>
-    <dd class="col-9">{{ total_estimated_year_result }}</dd>
-    <dt class="col-3">{% translate "Faktisk samlet indtægt i indeværende år" %}</dt>
-    <dd class="col-9">{{ total_actual_year_result }}</dd>
-    <dt class="col-3">{% translate "Beskæftigelsesfradrag til dato i indeværende år" %}</dt>
-    <dd class="col-9">{{ benefit_paid }}</dd>
-</dl>
+<div class="row mt-5">
+    <div class="col-12">
+        <p>
+            {% blocktrans trimmed %}
+            Her kan du få et overblik over dine kommende og udførte udbetalinger af beskæftigelsesfradrag for
+            indeværende år.
+            {% endblocktrans %}
+            <br>
+            {% blocktrans trimmed %}
+            Bemærk at alle tal er vejledende indtil den endelige udbetaling, og blot vises for at give dig en ide om hvad
+            du vil få udbetalt.
+            {% endblocktrans %}
+        </p>
+    </div>
+</div>
+<div class="grid gap-3 mt-3">
+    <div class="g-col-3 emphasis">
+        <b>{% translate "Næste udbetalingsdato" %}</b>
+        <h1 class="mt-3">{{ next_payout_date|date }}</h1>
+    </div>
+    <div class="g-col-3 emphasis">
+        <b>{% translate "Næste beløb til udbetaling" %}</b>
+        <h1 class="mt-3">{{ benefit_paid|format_amount }}</h1>
+    </div>
+    <div class="g-col-3 emphasis">
+        <b>
+            {% blocktrans trimmed with year=year %}
+            Forventet beløb til udbetaling for hele {{ year }}
+            {% endblocktrans %}
+        </b>
+        <h1 class="mt-3">{{ estimated_year_benefit|format_amount }}</h1>
+    </div>
+    <div class="g-col-3 emphasis">
+        <b>{% translate "Forventet årsindkomst fra arbejde" %}<sup>*</sup></b>
+        <h1 class="mt-3">{{ estimated_year_result|format_amount }}</h1>
+    </div>
+</div>
+<div class="row mt-3 mb-5">
+    <div class="col-12">
+        <p>
+            {% blocktrans trimmed %}
+            (*) De indtægter der indgår i beregningsgrundlaget er overskud fra indhandling,
+            overskud som selvstændig erhvervsdrivende, lønindkomster samt udbytte.
+            {% endblocktrans %}
+        </p>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="jumbo">
+            {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
+            {% jumbo_link person_income_url _("Beregningsgrundlag - Se mine signaler") "attach_money" _("Overblik over de signaler, som Skattestyrelsen har modtaget om dine indkomster") %}
+        </div>
+    </div>
+</div>
+<div class="row my-5">
+    <h1>
+        {% blocktrans trimmed with year=year %}
+        Udbetalinger for {{ year }}
+        {% endblocktrans %}
+    </h1>
+    <div class="mt-3">
+        {% render_table table %}
+    </div>
+</div>
 {% endblock %}

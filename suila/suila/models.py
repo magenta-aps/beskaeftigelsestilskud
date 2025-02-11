@@ -1149,9 +1149,9 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
         unique_together = ("prisme_batch", "person_month")
 
     class PostingStatus(models.TextChoices):
-        Sent = "sent", _("Sent")
-        Posted = "posted", _("Posted")
-        Failed = "failed", _("Failed")
+        Sent = "sent", _("Sendt")
+        Posted = "posted", _("Bogført")
+        Failed = "failed", _("Fejlet")
 
     prisme_batch = models.ForeignKey(
         PrismeBatch,

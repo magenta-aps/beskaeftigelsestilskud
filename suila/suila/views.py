@@ -2,43 +2,48 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import itertools
-import json
+from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal
 from functools import cached_property
-from typing import Any, Callable
+from operator import attrgetter
+from typing import Any, Iterable
 from urllib.parse import urlencode
 
 from common.models import User
 from common.view_mixins import ViewLogMixin
-from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import CharField, Count, F, Field, Q, QuerySet, Sum, Value
+from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html
+from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.detail import BaseDetailView
-from django_filters import CharFilter, ChoiceFilter, FilterSet
+from django_filters import CharFilter, FilterSet
 from django_filters.views import FilterView
-from django_tables2 import Column, SingleTableMixin, Table
+from django_tables2 import Column, SingleTableMixin, Table, TemplateColumn
 from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
-from suila.forms import NoteAttachmentFormSet, NoteForm
+from suila.benefit import get_payout_date
+from suila.forms import CalculateBenefitForm, NoteAttachmentFormSet, NoteForm
 from suila.models import (
-    IncomeEstimate,
-    IncomeType,
+    BTaxPayment,
+    Employer,
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearU1AAssessment,
+    Year,
 )
-from suila.querysets import PersonKeyFigureQuerySet
-from suila.templatetags.date_tags import month_name
 from suila.view_mixins import PermissionsRequiredMixin
 
 
@@ -50,71 +55,28 @@ class RootView(LoginRequiredMixin, ViewLogMixin, TemplateView):
         return super().get(request, *args, **kwargs)
 
 
-class CPRColumn(BaseLinkColumn):
+class NameColumn(BaseLinkColumn):
     def __init__(self, *args, **kwargs):
         linkify = dict(viewname="suila:person_detail", args=[Accessor("pk")])
-        kwargs.setdefault("verbose_name", _("CPR-nummer"))
         kwargs.setdefault("linkify", linkify)
         super().__init__(*args, **kwargs)
 
 
 class PersonTable(Table):
-    cpr = CPRColumn(accessor=Accessor("_cpr"), order_by=Accessor("_cpr"))
-    name = Column(verbose_name=_("Navn"))
+    name = NameColumn(verbose_name=_("Navn"))
+    cpr = Column(
+        accessor=Accessor("_cpr"),
+        order_by=Accessor("_cpr"),
+        verbose_name=_("CPR-nummer"),
+    )
     full_address = Column(verbose_name=_("Adresse"))
-    location_code = Column(verbose_name=_("Stedkode"))
-    total_estimated_year_result = Column(
-        accessor=Accessor("_total_estimated_year_result"),
-        order_by=Accessor("_total_estimated_year_result"),
-        verbose_name=_("Forventet samlet indtægt i indeværende år"),
-    )
-    total_actual_year_result = Column(
-        accessor=Accessor("_total_actual_year_result"),
-        order_by=Accessor("_total_actual_year_result"),
-        verbose_name=_("Faktisk samlet indtægt i indeværende år"),
-    )
-    benefit_paid = Column(
-        accessor=Accessor("_benefit_paid"),
-        order_by=Accessor("_benefit_paid"),
-        verbose_name=_("Beskæftigelsesfradrag til dato i indeværende år"),
-    )
-
-
-class CategoryChoiceFilter(ChoiceFilter):
-    _isnull = "isnull"
-
-    def __init__(self, *args, **kwargs):
-        field = kwargs.pop("field")
-        super().__init__(*args, choices=self._get_choices(field.field), **kwargs)
-
-    def filter(self, qs, value):
-        if value == self._isnull:
-            return self.get_method(qs)(**{"%s__isnull" % self.field_name: True})
-        return super().filter(qs, value)  # pragma: no cover
-
-    def _get_choices(self, field: Field) -> Callable:
-        def _func():
-            return [
-                (
-                    val[field.name] or self._isnull,
-                    f"{val[field.name] or _('Ingen')} ({val['count']})",
-                )
-                for val in field.model.objects.values(field.name)
-                .annotate(count=Count("id"))
-                .order_by(field.name)
-            ]
-
-        return _func
 
 
 class PersonFilterSet(FilterSet):
-    cpr = CharFilter("_cpr", label=_("CPR-nummer"))
     name = CharFilter("name", lookup_expr="icontains", label=_("Navn"))
+    cpr = CharFilter("_cpr", label=_("CPR-nummer"))
     full_address = CharFilter(
         "full_address", lookup_expr="icontains", label=_("Adresse")
-    )
-    location_code = CategoryChoiceFilter(
-        field=Person.location_code, label=_("Stedkode")
     )
 
 
@@ -144,7 +106,6 @@ class YearMonthMixin:
 
 
 class PersonYearMonthMixin(YearMonthMixin):
-
     @cached_property
     def person_pk(self) -> int:
         return self.kwargs["pk"]  # type: ignore[attr-defined]
@@ -158,31 +119,9 @@ class PersonYearMonthMixin(YearMonthMixin):
         return personyear
 
 
-class ChartMixin:
-    def get_month_names(self) -> list[str]:
-        return [month_name(month) for month in range(1, 13)]
-
-    def to_json(self, obj: dict) -> str:
-        return json.dumps(obj, cls=DjangoJSONEncoder)
-
-
-class PersonKeyFigureViewMixin(PersonYearMonthMixin):
-    def get_key_figure_queryset(
-        self, person_qs: QuerySet[Person] | None = None
-    ) -> PersonKeyFigureQuerySet:
-        # Get "key figure" queryset for current year and month
-        if person_qs is None:
-            person_qs = super().get_queryset()  # type: ignore[misc]
-        qs = PersonKeyFigureQuerySet.from_queryset(
-            person_qs, year=self.year, month=self.month
-        )
-        return qs
-
-
 class PersonSearchView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
-    PersonKeyFigureViewMixin,
     SingleTableMixin,
     ViewLogMixin,
     FilterView,
@@ -193,12 +132,10 @@ class PersonSearchView(
     template_name = "suila/person_search.html"
 
     def get_queryset(self):
-        qs = self.get_key_figure_queryset(
-            Person.filter_user_permissions(
-                super().get_queryset(),
-                self.request.user,
-                "view",
-            )
+        qs = Person.filter_user_permissions(
+            super().get_queryset(),
+            self.request.user,  # type: ignore
+            "view",
         )
         # Add zero-padded text version of CPR to ensure proper display and sorting
         qs = qs.annotate(_cpr=LPad(Cast("cpr", CharField()), 10, Value("0")))
@@ -212,10 +149,53 @@ class PersonSearchView(
         return context
 
 
+def add_tooltip(name: str, tooltip: str) -> SafeString:
+    return format_html(
+        """
+        {name}
+        <a href="#" data-bs-toggle="tooltip" data-bs-title="{tooltip}" class="help">
+            <span class="material-icons">help</span>
+        </a>
+        """,
+        name=name,
+        tooltip=tooltip,
+    )
+
+
+class PersonMonthTable(Table):
+    month = TemplateColumn(
+        template_name="suila/table_columns/month.html",
+        verbose_name=_("Måned"),
+    )
+    payout_date = TemplateColumn(
+        template_name="suila/table_columns/payout_date.html",
+        verbose_name=add_tooltip(
+            _("Forventet udbetalingsdato"),
+            _("Hjælpetekst her (TBD)"),
+        ),
+    )
+    benefit = TemplateColumn(
+        template_name="suila/table_columns/amount.html",
+        accessor=Accessor("benefit_paid"),
+        verbose_name=add_tooltip(
+            _("Forventet beløb til udbetaling"),
+            _("Hjælpetekst her (TBD)"),
+        ),
+    )
+    status = TemplateColumn(
+        template_name="suila/table_columns/status.html",
+        verbose_name=add_tooltip(
+            _("Status"),
+            _("Hjælpetekst her (TBD)"),
+        ),
+    )
+
+
 class PersonDetailView(
     LoginRequiredMixin,
-    PersonKeyFigureViewMixin,
     PermissionsRequiredMixin,
+    PersonYearMonthMixin,
+    SingleTableMixin,
     ViewLogMixin,
     DetailView,
 ):
@@ -223,160 +203,118 @@ class PersonDetailView(
     context_object_name = "person"
     template_name = "suila/person_detail.html"
     required_object_permissions = ["view"]
-
-    def get_queryset(self):
-        return self.get_key_figure_queryset()
+    table_class = PersonMonthTable
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        # Add key figures as separate context variables
-        for annotation in (
-            "_total_estimated_year_result",
-            "_total_actual_year_result",
-            "_benefit_paid",
-        ):
-            # Strip leading underscore, which is not allowed in Django templates
-            context_data[annotation[1:]] = getattr(self.object, annotation)
+        person_month = PersonMonth.objects.get(
+            person_year=self.person_year,
+            month=self.month,
+        )
+
+        context_data["next_payout_date"] = get_payout_date(self.year, self.month)
+        context_data["benefit_paid"] = person_month.benefit_paid
+        context_data["estimated_year_benefit"] = person_month.estimated_year_benefit
+        context_data["estimated_year_result"] = person_month.estimated_year_result
 
         self.log_view(self.object)
         return context_data
 
+    def get_table_data(self):
+        return (
+            PersonMonth.objects.select_related(
+                "person_year__person", "person_year__year"
+            )
+            .filter(person_year=self.person_year)
+            .order_by("month")
+        )
 
-class PersonDetailBenefitView(
-    LoginRequiredMixin,
-    PersonYearMonthMixin,
-    ChartMixin,
-    PermissionsRequiredMixin,
-    ViewLogMixin,
-    DetailView,
-):
-    model = Person
-    context_object_name = "person"
-    template_name = "suila/person_detail_benefits.html"
-    required_object_permissions = ["view"]
+    def get_table_kwargs(self):
+        return {"orderable": False}
 
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
 
-        # Add table data: benefits per month
-        context_data["benefit_data"] = self.get_benefit_data()
-        # Add chart data: benefit chart
-        context_data["benefit_chart"] = self.to_json(self.get_benefit_chart())
+class IncomeSignalType(IntegerChoices):
+    Lønindkomst = (0, _("Lønindkomst"))
+    Indhandling = (1, _("Indhandling"))
+    BetaltBSkat = (2, _("Betalt B-skat"))
+    Udbytte = (3, _("Udbytte"))
 
-        self.log_view(self.object)
-        return context_data
 
-    def get_benefit_data(self):
-        benefit_series = self.get_benefit_series()
-        estimate_series = self.get_estimated_yearly_income_series()
-        return [
+@dataclass(frozen=True)
+class IncomeSignal:
+    signal_type: IncomeSignalType
+    source: str
+    amount: Decimal
+    date: date
+
+
+class IncomeSumsBySignalTypeTable(Table):
+    signal_type = TemplateColumn(
+        template_name="suila/table_columns/signal_type.html",
+        verbose_name=_("Signaltype"),
+    )
+    current_month_sum = TemplateColumn(
+        template_name="suila/table_columns/amount.html",
+        verbose_name=_("Indeværende måned"),
+    )
+    current_year_sum = TemplateColumn(
+        template_name="suila/table_columns/amount.html",
+        verbose_name=_("Samlet for året"),
+    )
+
+    def __init__(self, income_signals: list[IncomeSignal], month: int, *args, **kwargs):
+        signal_type = attrgetter("signal_type")
+
+        def sum_amounts(
+            signals: list[IncomeSignal],
+            month: int | None = None,
+        ) -> Decimal:
+            if month is None:
+                return sum(signal.amount for signal in signals)  # type: ignore
+            else:
+                return sum(  # type: ignore
+                    signal.amount for signal in signals if signal.date.month == month
+                )
+
+        data: list[dict] = [
             {
-                "benefit": benefit,
-                "estimate": estimate,
+                "signal_type": signal_type,
+                "current_month_sum": sum_amounts(items, month=month),
+                "current_year_sum": sum_amounts(items),
             }
-            for benefit, estimate in zip(
-                benefit_series["data"], estimate_series["data"]
+            for signal_type, items in (
+                (signal_type, list(items))
+                for signal_type, items in itertools.groupby(
+                    sorted(income_signals, key=signal_type),
+                    key=signal_type,
+                )
             )
         ]
 
-    def get_benefit_chart(self) -> dict:
-        return {
-            "chart": {
-                "type": "line",
-                "height": 600,
-                "animations": {"enabled": False},
-            },
-            "series": self.get_all_benefit_chart_series(),
-            "xaxis": {
-                "type": "category",
-                "categories": self.get_month_names(),
-            },
-            "yaxis": [
-                {
-                    "group": "benefit",
-                    "seriesName": _("Beregnet beskæftigelsesfradrag"),
-                    "type": "numeric",
-                    "min": 0,
-                    "axisBorder": {"show": True, "color": "#00E396"},
-                    "labels": {"style": {"colors": "#00E396"}},
-                },
-                {
-                    "group": "estimated_total_income",
-                    "seriesName": _("Estimeret total årsindkomst"),
-                    "type": "numeric",
-                    "opposite": True,
-                    "axisBorder": {"show": True, "color": "#008FFB"},
-                    "labels": {"style": {"colors": "#008FFB"}},
-                },
-            ],
-            "dataLabels": {"enabled": True},
-            "legend": {"show": True, "position": "left"},
-        }
+        super().__init__(data, *args, **kwargs)
 
-    def get_all_benefit_chart_series(self) -> list[dict]:
-        return [self.get_benefit_series(), self.get_estimated_yearly_income_series()]
 
-    def get_benefit_series(self) -> dict:
-        # Calculated benefit (based on monthly A and B income sums)
-        benefits = PersonMonth.objects.filter(
-            person_year__person=self.object,
-            person_year__year__year=self.year,
-        ).order_by("month")
-        return {
-            "data": [
-                float(val) if val is not None else 0
-                for val in benefits.values_list("benefit_paid", flat=True)
-            ],
-            "name": _("Beregnet beskæftigelsesfradrag"),
-            "group": "benefit",
-        }
-
-    def get_estimated_yearly_income_series(self) -> dict:
-        # Estimated total yearly income for each month
-        estimates = (
-            IncomeEstimate.objects.filter(
-                Q(
-                    Q(
-                        engine=F(
-                            "person_month__person_year__preferred_estimation_engine_a"
-                        ),
-                        income_type=IncomeType.A,
-                    )
-                    | Q(
-                        engine=F(
-                            "person_month__person_year__preferred_estimation_engine_b"
-                        ),
-                        income_type=IncomeType.B,
-                    )
-                ),
-                person_month__person_year__person=self.object,
-                person_month__person_year__year__year=self.year,
-            )
-            .order_by("person_month__month")
-            .values("person_month__month")
-            .annotate(
-                _total_estimated_year_result=Sum("estimated_year_result"),
-            )
-        )
-        return {
-            "data": [
-                float(val) if val is not None else 0
-                for val in estimates.values_list(
-                    "_total_estimated_year_result", flat=True
-                )
-            ],
-            "name": _("Estimeret samlet lønindkomst"),
-            "group": "estimated_total_income",
-            "type": "column",
-        }
+class IncomeSignalTable(Table):
+    date = TemplateColumn(
+        template_name="suila/table_columns/date.html",
+        verbose_name=_("Dato"),
+    )
+    amount = TemplateColumn(
+        template_name="suila/table_columns/amount.html",
+        verbose_name=_("Beløb"),
+    )
+    signal_type = TemplateColumn(
+        template_name="suila/table_columns/signal_type.html",
+        verbose_name=_("Signaltype"),
+    )
+    source = Column(verbose_name=_("Kilde"))
 
 
 class PersonDetailIncomeView(
     LoginRequiredMixin,
-    YearMonthMixin,
-    ChartMixin,
     PermissionsRequiredMixin,
+    PersonYearMonthMixin,
     ViewLogMixin,
     DetailView,
 ):
@@ -388,106 +326,114 @@ class PersonDetailIncomeView(
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        # Add table data: *total* income per employer and type (A and B)
-        context_data["income_per_employer_and_type"] = (
-            self.get_income_per_employer_and_type()
+        # Table summing income by signal type
+        context_data["sum_table"] = IncomeSumsBySignalTypeTable(
+            self.get_income_signals(),
+            self.month,
+            orderable=False,
         )
-        # Add table data: income per employer and type
-        context_data["income_data"] = self.get_income_chart_series()
-        # Add chart data: income chart (same data as "income per employer and type")
-        context_data["income_chart"] = self.to_json(self.get_income_chart())
+
+        # Table showing a row for each signal in this person year
+        context_data["detail_table"] = IncomeSignalTable(
+            self.get_income_signals(),
+            order_by=self.request.GET.get("sort"),
+        )
+
+        # Queryset of person years available for this person
+        context_data["available_person_years"] = PersonYear.objects.filter(
+            person=self.person_year.person
+        ).order_by("-year__year")
 
         self.log_view(self.object)
         return context_data
 
-    def get_income_chart_series(self) -> list[dict]:
-        result: list[dict] = []
-
-        # All income data (A and B, separate series for each employer/trader)
-        for name, data in self.get_income_by_source():
-            result.append(
-                {
-                    "data": data,
-                    "name": name,
-                    "group": "income",
-                    "type": "column",
-                }
-            )
-
-        return result
-
-    def get_income_chart(self) -> dict:
-        return {
-            "chart": {
-                "type": "bar",
-                "stacked": True,
-                "height": 600,
-                "animations": {"enabled": False},
-            },
-            "series": self.get_income_chart_series(),
-            "xaxis": {
-                "type": "category",
-                "categories": self.get_month_names(),
-            },
-            "yaxis": [
-                {
-                    "group": "income",
-                    "seriesName": [
-                        series["name"] for series in self.get_income_chart_series()
-                    ],
-                    "type": "numeric",
-                },
-            ],
-            "plotOptions": {
-                # Show totals for each month
-                "bar": {"dataLabels": {"total": {"enabled": True}}}
-            },
-            "dataLabels": {"enabled": True},
-            "legend": {"show": True, "position": "left"},
-        }
-
-    def get_income_per_employer_and_type(self) -> list[dict]:
-        qs = (
-            MonthlyIncomeReport.objects.filter(
-                person_month__person_year__person=self.object,
-                person_month__person_year__year__year=self.year,
-            )
-            .values("year")  # TODO: use employer as group-by key when we have it
-            .annotate(
-                total_a_income=Sum("a_income"),
-                total_b_income=Sum("b_income"),
-            )
+    def get_income_signals(self) -> list[IncomeSignal]:
+        return sorted(
+            itertools.chain(
+                self.get_monthly_income_signals(),
+                self.get_b_tax_payments(),
+                self.get_u1a_assessments(),
+            ),
+            # Default ordering: newest first, then by signal type, then by source
+            key=lambda signal: (
+                date.max - signal.date,
+                signal.signal_type,
+                signal.source,
+            ),
         )
 
-        return [
-            # TODO: yield a row for each employer when we have it
-            {
-                "source": _("A-indkomst") if field == "a_income" else _("B-indkomst"),
-                "total_amount": row[f"total_{field}"],
-            }
-            for field, row in itertools.product(["a_income", "b_income"], qs)
-        ]
+    def get_monthly_income_signals(self) -> Iterable[IncomeSignal]:
+        def format_employer(employer: Employer) -> str:
+            if employer.name is None:
+                return _("CVR: %(cvr)s") % {"cvr": employer.cvr}
+            else:
+                return employer.name
 
-    def get_income_by_source(self):
-        def zero_pad(qs: QuerySet, field: str) -> list[int]:
-            by_month = {row["month"]: row[field] for row in qs}
-            return [by_month.get(month, 0) for month in range(1, 13)]
-
-        qs = (
-            MonthlyIncomeReport.objects.filter(
-                person_month__person_year__person=self.object, year=self.year
-            )
-            .values("month")  # TODO: use employer as group-by key when we have it
-            .annotate(
-                _a_income=Sum("a_income"),
-                _b_income=Sum("b_income"),
-            )
-            .order_by("month")
+        qs = MonthlyIncomeReport.objects.filter(
+            person_month__person_year=self.person_year,
         )
+        for item in qs:
+            if item.salary_income > 0:
+                yield IncomeSignal(
+                    IncomeSignalType.Lønindkomst,
+                    format_employer(item.employer),
+                    item.salary_income,
+                    item.person_month.year_month,
+                )
+            if item.catchsale_income > 0:
+                yield IncomeSignal(
+                    IncomeSignalType.Indhandling,
+                    format_employer(item.employer),
+                    item.catchsale_income,
+                    item.person_month.year_month,
+                )
 
-        # TODO: yield a row for each employer when we have it
-        yield _("A-indkomst"), zero_pad(qs, "_a_income")
-        yield _("B-indkomst"), zero_pad(qs, "_b_income")
+    def get_b_tax_payments(self) -> Iterable[IncomeSignal]:
+        qs = BTaxPayment.objects.filter(person_month__person_year=self.person_year)
+        for item in qs:
+            if item.amount_paid > 0:
+                yield IncomeSignal(
+                    IncomeSignalType.BetaltBSkat,
+                    _("Rate: %(rate_number)s") % {"rate_number": item.rate_number},
+                    item.amount_paid,
+                    item.person_month.year_month,
+                )
+
+    def get_u1a_assessments(self) -> Iterable[IncomeSignal]:
+        qs = PersonYearU1AAssessment.objects.filter(person_year=self.person_year)
+        for item in qs:
+            if item.dividend_total > 0:
+                yield IncomeSignal(
+                    IncomeSignalType.Udbytte,
+                    item.u1a_ids,
+                    item.dividend_total,
+                    item.created.date(),
+                )
+
+
+class CalculateBenefitView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    YearMonthMixin,
+    ViewLogMixin,
+    FormView,
+):
+    form_class = CalculateBenefitForm
+    template_name = "suila/calculate_benefit.html"
+
+    def form_valid(self, form):
+        year = Year.objects.get(year=self.year)
+        calculation_method = year.calculation_method
+        yearly_benefit = calculation_method.calculate(
+            form.cleaned_data["estimated_year_income"]
+        )
+        monthly_benefit = Decimal(yearly_benefit / 12).quantize(Decimal(".01"))
+        return self.render_to_response(
+            self.get_context_data(
+                yearly_benefit=yearly_benefit,
+                monthly_benefit=monthly_benefit,
+            )
+        )
 
 
 class FormWithFormsetView(FormView):

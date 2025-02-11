@@ -35,8 +35,6 @@ from suila.models import (
 )
 from suila.view_mixins import PermissionsRequiredMixin
 from suila.views import (
-    CategoryChoiceFilter,
-    PersonDetailBenefitView,
     PersonDetailIncomeView,
     PersonDetailNotesAttachmentView,
     PersonDetailNotesView,
@@ -124,36 +122,6 @@ class PersonEnv(TestCase):
                 for idx, person_month in enumerate(person_months)
             ]
             IncomeEstimate.objects.bulk_create(income_estimates)
-
-
-class TestCategoryChoiceFilter(PersonEnv):
-    def setUp(self):
-        super().setUp()
-        self.instance = CategoryChoiceFilter(
-            field_name="location_code",
-            field=Person.location_code,
-        )
-
-    def test_choices(self):
-        self.assertListEqual(
-            # self.instance.extra["choices"] is a callable
-            self.instance.extra["choices"](),
-            [
-                # 2 persons have location code "1"
-                ("1", "1 (2)"),
-                # 1 person has no location code
-                (CategoryChoiceFilter._isnull, f"{_('Ingen')} (1)"),
-            ],
-        )
-
-    def test_filter_on_isnull(self):
-        filtered_qs = self.instance.filter(
-            Person.objects.all(), CategoryChoiceFilter._isnull
-        )
-        self.assertQuerySetEqual(
-            filtered_qs,
-            Person.objects.filter(location_code__isnull=True),
-        )
 
 
 class TestPersonSearchView(TestViewMixin, PersonEnv):
@@ -278,17 +246,12 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         # Act
         context = self._get_context_data(pk=self.person1.pk)
         # Assert: the context keys are present
-        self.assertIn("total_estimated_year_result", context)
-        self.assertIn("total_actual_year_result", context)
+        self.assertIn("estimated_year_result", context)
         self.assertIn("benefit_paid", context)
         # Assert: the key figures are correct
         self.assertEqual(
-            context["total_estimated_year_result"],
+            context["estimated_year_result"],
             self._get_income_estimate_attr_sum("estimated_year_result"),
-        )
-        self.assertEqual(
-            context["total_actual_year_result"],
-            self._get_income_estimate_attr_sum("actual_year_result"),
         )
         self.assertEqual(context["benefit_paid"], sum(range(1, 13)))
 
@@ -335,98 +298,6 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         self.assertEqual(logs.count(), 1)
         pageview = logs[0]
         self.assertEqual(pageview.class_name, "PersonDetailView")
-        self.assertEqual(pageview.user, self.admin_user)
-        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
-        self.assertEqual(pageview.params, {"year": "2020"})
-        itemviews = list(pageview.itemviews.all())
-        self.assertEqual(len(itemviews), 1)
-        self.assertEqual(itemviews[0].item, self.person1)
-
-
-class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
-    view_class = PersonDetailBenefitView
-
-    def test_context_includes_benefit_data(self):
-        """The context data must include the `benefit_data` table"""
-        # Act
-        context = self._get_context_data(pk=self.person1.pk)
-        # Assert: the context key is present
-        self.assertIn("benefit_data", context)
-        # Assert: the table data is correct (one figure for each month)
-        self.assertQuerySetEqual(
-            context["benefit_data"],
-            range(1, 13),
-            transform=lambda obj: obj["benefit"],
-            ordered=True,
-        )
-
-    def test_context_includes_benefit_chart(self):
-        """The context data must include the `benefit_chart` chart"""
-        self.assertIn("benefit_chart", self._get_context_data(pk=self.person1.pk))
-
-    def test_get_benefit_chart_series(self):
-        """The `benefit chart` must consist of the expected series
-        The "benefit chart" consists of two series:
-        1. The benefit figures themselves (`PersonMonth.benefit_paid`) for each month.
-        2. The estimated yearly income total (`IncomeEstimate.estimated_year_result`)
-           for each month.
-        """
-        # Act
-        with self._time_context():
-            view, response = self.request_get(pk=self.person1.pk)
-            benefit_chart_series = view.get_all_benefit_chart_series()
-        # Assert: verify the `benefit` series
-        self.assertDictEqual(
-            benefit_chart_series[0],
-            {
-                "data": [float(x) for x in range(1, 13)],
-                "name": _("Beregnet beskæftigelsesfradrag"),
-                "group": "benefit",
-            },
-        )
-        # Assert: verify the `estimated_total_income` series
-        self.assertDictEqual(
-            benefit_chart_series[1],
-            {
-                "data": [float(x * 2 * 100) for x in range(1, 13)],
-                "name": _("Estimeret samlet lønindkomst"),
-                "group": "estimated_total_income",
-                "type": "column",
-            },
-        )
-
-    def test_borger_see_only_self(self):
-        self.request_get(self.normal_user, pk=self.person1.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person2.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person3.pk)
-
-    def test_other_see_none(self):
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.other_user, pk=self.person1.pk)
-
-    def test_view_anonymous_denied(self):
-        view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["location"], "/login?next=/")
-        view, response = self.request_get(self.no_user, "", pk=self.person2.pk)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["location"], "/login?next=/")
-        view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["location"], "/login?next=/")
-
-    def test_view_log(self):
-        self.request_get(
-            self.admin_user,
-            f"/persons/{self.person1.pk}/benefits/?year=2020",
-            pk=self.person1.pk,
-        )
-        logs = PageView.objects.all()
-        self.assertEqual(logs.count(), 1)
-        pageview = logs[0]
-        self.assertEqual(pageview.class_name, "PersonDetailBenefitView")
         self.assertEqual(pageview.user, self.admin_user)
         self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
         self.assertEqual(pageview.params, {"year": "2020"})

@@ -60,7 +60,7 @@
 
                 {% if user.is_authenticated %}
                 <li class="nav-item ms-4">
-                    <a href="{% url 'data_analysis:calculator' %}" class="d-flex align-items-center">
+                    <a href="{% url 'suila:calculate_benefit' %}" class="d-flex align-items-center">
                         <span class="material-icons">calculate</span>
                         <span class="ms-1">{% translate "Suilaberegneren" %}</span>
                     </a>
@@ -164,4 +164,8 @@
     {% block modals %}
     {% endblock %}
 </body>
+<script nonce="{{ request.csp_nonce }}">
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+</script>
 </html>

@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from django.forms import ModelForm, Textarea
+from django.forms import DecimalField, Form, ModelForm, Textarea
 from django.forms.models import inlineformset_factory
+from django.utils.translation import gettext_lazy as _
 
 from suila.models import Note, NoteAttachment
 
@@ -30,3 +31,14 @@ NoteAttachmentFormSet = inlineformset_factory(
     fields=("file",),
     extra=1,
 )
+
+
+class CalculateBenefitForm(Form):
+    estimated_month_income = DecimalField(
+        required=False,
+        label=_("Estimeret månedsindkomst"),
+    )
+    estimated_year_income = DecimalField(
+        required=True,
+        label=_("Estimeret årsindkomst"),
+    )
