@@ -36,7 +36,9 @@
         {% endif %}
 
         <nav class="nav navbar navbar-expand py-3 my-3">
-            <h1 class="navbar-brand py-0 my-0"><a href="{% url 'suila:root' %}">Suila.gl</a></h1>
+            <h1 class="navbar-brand py-0 my-0">
+                <a href="{% url 'suila:root' %}" class="logo-suila">Suila.gl</a>
+            </h1>
             <ul class="navbar-nav d-flex align-items-center">
                 {% if user.is_authenticated and user.cpr is not None %}
                 <li class="nav-item ms-4">
@@ -107,8 +109,8 @@
                     <span class="material-icons dark-icon">language</span>
                     <form action="{% url 'set_language' %}" method="post" class="navbar-form navbar-right mx-1 my-2">
                         {% csrf_token %}
-                        <div class="form-group">
-                            <select name="language" class="form-select language-picker">
+                        <div class="form-group me-3">
+                            <select name="language" class="form-select">
                                 {% get_available_languages as LANGUAGES %}
                                 {% get_language_info_list for LANGUAGES as languages %}
                                 {% for language in languages %}
@@ -126,20 +128,16 @@
                 <li class="nav-item dropdown">
                     <a href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.is_authenticated %}
-                            <span class="material-icons dark-icon fs-3 d-flex">account_circle</span>
+                        <span class="material-icons dark-icon fs-3 d-flex">account_circle</span>
                         {% else %}
-                            <span class="material-icons dark-icon fs-3 d-flex">help</span>
+                        <span class="material-icons dark-icon fs-3 d-flex">help</span>
                         {% endif %}
                     </a>
                     <div id="settings" class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <h4>{{ user.get_full_name }}</h4>
-                        <h5>{% translate "Om Suila" %}</h5>
-                        <p>{% translate 'Version' %}: {{ version }}</p>
-                        <p>
-                            {% translate "Kildekode" %}:
-                            <a href="https://github.com/magenta-aps/beskaeftigelsestilskud/">{% translate "Github - Beskæftigelsestilskud" %}</a>
-                        </p>
-                        <p>{% translate 'Kontakt' %}: {{ contact_email }}</p>
+                        <div class="d-flex align-items-center">
+                            <span class="material-icons me-2">account_circle</span>
+                            <h4>{{ user.get_full_name }}</h4>
+                        </div>
                         {% if user.is_authenticated %}
                         <div class="d-flex">
                             <a href="{% url 'login:logout' %}" class="btn btn-primary d-flex align-items-center" id="logout-link">
@@ -158,6 +156,9 @@
     {% endblock %}
 
     {% block footer %}
+    <footer>
+        <a href="https://www.aka.gl/da">https://www.aka.gl/da</a>
+    </footer>
     {% endblock %}
 
     {% block modals %}
