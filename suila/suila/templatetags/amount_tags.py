@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from django.template.defaultfilters import register
 from django.utils.formats import number_format
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 
 
 @register.filter

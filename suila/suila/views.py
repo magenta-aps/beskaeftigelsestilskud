@@ -149,7 +149,7 @@ class PersonSearchView(
         return context
 
 
-def add_tooltip(name: str, tooltip: str) -> SafeString:
+def add_tooltip(name, tooltip) -> SafeString:
     return format_html(
         """
         {name}
@@ -363,7 +363,9 @@ class PersonDetailIncomeView(
         )
 
     def get_monthly_income_signals(self) -> Iterable[IncomeSignal]:
-        def format_employer(employer: Employer) -> str:
+        def format_employer(employer: Employer | None):
+            if employer is None:
+                return _("Ikke oplyst")
             if employer.name is None:
                 return _("CVR: %(cvr)s") % {"cvr": employer.cvr}
             else:
