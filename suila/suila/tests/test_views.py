@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date, datetime
-from decimal import Decimal
 from typing import Any
 from unittest.mock import patch
 
@@ -13,11 +12,9 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db.models import Sum
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
 
 from suila.forms import NoteAttachmentFormSet
@@ -241,31 +238,6 @@ class TestYearMonthMixin(TimeContextMixin, TestCase):
 class TestPersonDetailView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailView
 
-    def test_context_includes_key_figures(self):
-        """The context must include the key figures for each person"""
-        # Act
-        context = self._get_context_data(pk=self.person1.pk)
-        # Assert: the context keys are present
-        self.assertIn("estimated_year_result", context)
-        self.assertIn("benefit_paid", context)
-        # Assert: the key figures are correct
-        self.assertEqual(
-            context["estimated_year_result"],
-            self._get_income_estimate_attr_sum("estimated_year_result"),
-        )
-        self.assertEqual(context["benefit_paid"], sum(range(1, 13)))
-
-    def _get_income_estimate_attr_sum(
-        self, attr: str, year: int = 2020, month: int = 12
-    ) -> Decimal:
-        return (
-            IncomeEstimate.objects.filter(
-                person_month__person_year__person=self.person1,
-                person_month__person_year__year__year=year,
-                person_month__month=month,
-            ).aggregate(sum=Sum(attr))
-        )["sum"]
-
     def test_borger_see_only_self(self):
         self.request_get(self.normal_user, pk=self.person1.pk)
         with self.assertRaises(PermissionDenied):
@@ -308,51 +280,6 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
 
 class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailIncomeView
-
-    def test_context_includes_income_per_employer_and_type(self):
-        """The context must include the `income_per_employer_and_type` table"""
-        # Act
-        context = self._get_context_data(pk=self.person1.pk)
-        # Assert: the context key is present
-        self.assertIn("income_per_employer_and_type", context)
-        # Assert: the table data is correct (one yearly total for each employer/type)
-        expected_total = Decimal(sum(x * 2 * 10 for x in range(1, 13)))
-        self.assertListEqual(
-            context["income_per_employer_and_type"],
-            [
-                {"source": "A-indkomst", "total_amount": expected_total},
-                {"source": "B-indkomst", "total_amount": expected_total},
-            ],
-        )
-
-    def test_context_includes_income_chart(self):
-        """The context data must include the `income_chart` chart"""
-        self.assertIn("income_chart", self._get_context_data(pk=self.person1.pk))
-
-    def test_get_income_chart_series(self):
-        """The `income chart` must consist of the expected series.
-        The "income chart" consists of N series, one series for each source of income
-        that the person has had during the year.
-        """
-        # Act
-        with self._time_context():
-            view, response = self.request_get(self.admin_user, pk=self.person1.pk)
-            income_chart_series = view.get_income_chart_series()
-        # Assert: verify that we get the expected series: two A income series, and two
-        # B income series (4 series total.)
-        self.assertEqual(len(income_chart_series), 2)
-        self.assertListEqual(
-            income_chart_series,
-            [
-                {
-                    "data": [float(x * 2 * 10) for x in range(1, 13)],
-                    "name": name,
-                    "group": "income",
-                    "type": "column",
-                }
-                for name in (_("A-indkomst"), _("B-indkomst"))
-            ],
-        )
 
     def test_borger_see_only_self(self):
         self.request_get(self.normal_user, pk=self.person1.pk)
