@@ -100,7 +100,7 @@ class PersonEnv(TestCase):
                 for person_month in person_months:
                     income_report = MonthlyIncomeReport(
                         person_month=person_month,
-                        # employer=employer,
+                        employer=employer,
                         **{field: person_month.benefit_paid * 10},
                     )
                     income_report.update_amount()
