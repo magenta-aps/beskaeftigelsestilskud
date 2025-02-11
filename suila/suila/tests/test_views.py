@@ -121,8 +121,21 @@ class PersonEnv(TestCase):
             IncomeEstimate.objects.bulk_create(income_estimates)
 
 
-class TestPersonSearchView(TestViewMixin, PersonEnv):
+class TimeContextMixin(TestViewMixin):
+    def _time_context(self, year: int = 2020, month: int = 12):
+        return patch("suila.views.timezone.now", return_value=datetime(year, month, 1))
 
+    def _get_context_data(self, **params: Any):
+        with self._time_context():
+            view, response = self.request_get(self.admin_user, "", **params)
+            return view.get_context_data()
+
+    def view(self, user: User = None, path: str = "", **params: Any) -> TemplateView:
+        with self._time_context():
+            return super().view(user, path, **params)
+
+
+class TestPersonSearchView(TimeContextMixin, PersonEnv):
     view_class = PersonSearchView
 
     def test_get_queryset_includes_padded_cpr(self):
@@ -134,7 +147,8 @@ class TestPersonSearchView(TestViewMixin, PersonEnv):
         )
 
     def test_borger_see_only_self(self):
-        view, response = self.request_get(self.normal_user)
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.normal_user)
         qs = view.get_queryset()
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs.first(), self.person1)
@@ -170,21 +184,6 @@ class TestPersonSearchView(TestViewMixin, PersonEnv):
             {itemview.item for itemview in itemviews},
             {self.person1, self.person2, self.person3},
         )
-
-
-class TimeContextMixin(TestViewMixin):
-
-    def _time_context(self, year: int = 2020, month: int = 12):
-        return patch("suila.views.timezone.now", return_value=datetime(year, month, 1))
-
-    def _get_context_data(self, **params: Any):
-        with self._time_context():
-            view, response = self.request_get(self.admin_user, "", **params)
-            return view.get_context_data()
-
-    def view(self, user: User = None, path: str = "", **params: Any) -> TemplateView:
-        with self._time_context():
-            return super().view(user, path, **params)
 
 
 class TestYearMonthMixin(TimeContextMixin, TestCase):
@@ -239,11 +238,12 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailView
 
     def test_borger_see_only_self(self):
-        self.request_get(self.normal_user, pk=self.person1.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person2.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person3.pk)
+        with self._time_context(year=2020):
+            self.request_get(self.normal_user, pk=self.person1.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person2.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person3.pk)
 
     def test_other_see_none(self):
         with self.assertRaises(PermissionDenied):
@@ -282,11 +282,12 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailIncomeView
 
     def test_borger_see_only_self(self):
-        self.request_get(self.normal_user, pk=self.person1.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person2.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person3.pk)
+        with self._time_context(year=2020):
+            self.request_get(self.normal_user, pk=self.person1.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person2.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person3.pk)
 
     def test_other_see_none(self):
         with self.assertRaises(PermissionDenied):
