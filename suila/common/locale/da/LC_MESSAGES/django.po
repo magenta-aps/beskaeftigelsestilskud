@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-04 12:40-0200\n"
+"POT-Creation-Date: 2025-02-10 14:00-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -46,26 +46,6 @@ msgstr ""
 
 #: common/templates/common/_base.html
 msgid "Jobliste"
-msgstr ""
-
-#: common/templates/common/_base.html
-msgid "Om Suila"
-msgstr ""
-
-#: common/templates/common/_base.html
-msgid "Version"
-msgstr ""
-
-#: common/templates/common/_base.html
-msgid "Kildekode"
-msgstr ""
-
-#: common/templates/common/_base.html
-msgid "Github - Beskæftigelsestilskud"
-msgstr ""
-
-#: common/templates/common/_base.html
-msgid "Kontakt"
 msgstr ""
 
 #: common/templates/common/_base.html

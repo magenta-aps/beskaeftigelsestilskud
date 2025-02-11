@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-06 06:52-0200\n"
+"POT-Creation-Date: 2025-02-11 06:46-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,6 +15,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: suila/forms.py
+msgid "Estimeret månedsindkomst"
+msgstr ""
+
+#: suila/forms.py
+msgid "Estimeret årsindkomst"
+msgstr ""
 
 #: suila/models.py
 msgid "Benefit rate percent"
@@ -40,7 +48,7 @@ msgstr ""
 msgid "CPR nummer"
 msgstr ""
 
-#: suila/models.py
+#: suila/models.py suila/views.py
 msgid "Dato"
 msgstr ""
 
@@ -61,7 +69,15 @@ msgid "Failed"
 msgstr ""
 
 #: suila/models.py
-msgid "Posted"
+msgid "Sendt"
+msgstr ""
+
+#: suila/models.py
+msgid "Bogført"
+msgstr ""
+
+#: suila/models.py
+msgid "Fejlet"
 msgstr ""
 
 #: suila/models.py
@@ -124,113 +140,155 @@ msgstr ""
 msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
 msgstr ""
 
+#: suila/templates/suila/calculate_benefit.html suila/templates/suila/root.html
+msgid "Suilaberegneren"
+msgstr ""
+
+#: suila/templates/suila/calculate_benefit.html
+msgid ""
+"Suilaberegneren kan bruges til at beregne hvor meget beskæftigelsesfradrag "
+"du vil modtage. Bemærk at tallene er vejledende og ikke endelige."
+msgstr ""
+
+#: suila/templates/suila/calculate_benefit.html
+msgid "Beregn"
+msgstr ""
+
+#: suila/templates/suila/calculate_benefit.html
+msgid "Ryd"
+msgstr ""
+
+#: suila/templates/suila/calculate_benefit.html
+msgid "Beregnet beskæftigelsesfradrag pr. måned:"
+msgstr ""
+
+#: suila/templates/suila/calculate_benefit.html
+msgid "Beregnet beskæftigelsesfradrag for hele året:"
+msgstr ""
+
 #: suila/templates/suila/person_detail.html
+msgid ""
+"Her kan du få et overblik over dine kommende og udførte udbetalinger af "
+"beskæftigelsesfradrag for indeværende år."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Bemærk at alle tal er vejledende indtil den endelige udbetaling, og blot "
+"vises for at give dig en ide om hvad du vil få udbetalt."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Næste udbetalingsdato"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Næste beløb til udbetaling"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid "Forventet beløb til udbetaling for hele %(year)s"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Forventet årsindkomst fra arbejde"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"(*) De indtægter der indgår i beregningsgrundlaget er overskud fra "
+"indhandling, overskud som selvstændig erhvervsdrivende, lønindkomster samt "
+"udbytte."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html suila/templates/suila/root.html
+msgid "Beregningsgrundlag - Se mine signaler"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html suila/templates/suila/root.html
+msgid ""
+"Overblik over de signaler, som Skattestyrelsen har modtaget om dine "
+"indkomster"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid "Udbetalinger for %(year)s"
+msgstr ""
+
 #: suila/templates/suila/person_detail_base.html
-msgid "Nøgletal"
+msgid "Mit overblik"
 msgstr ""
 
-#: suila/templates/suila/person_detail.html suila/views.py
-msgid "Forventet samlet indtægt i indeværende år"
-msgstr ""
-
-#: suila/templates/suila/person_detail.html suila/views.py
-msgid "Faktisk samlet indtægt i indeværende år"
-msgstr ""
-
-#: suila/templates/suila/person_detail.html suila/views.py
-msgid "Beskæftigelsesfradrag til dato i indeværende år"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html
-#: suila/templates/suila/person_search.html
-msgid "Personer"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html
-msgid "Vis"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html
-#: suila/templates/suila/person_detail_benefits.html
-msgid "Udbetalinger"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html
 #: suila/templates/suila/person_detail_income.html
-msgid "Indkomst"
+msgid "Beregningsgrundlag"
 msgstr ""
 
-#: suila/templates/suila/person_detail_base.html
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Her kan du se de signaler Skattestyrelsen har modtaget om dine indkomster."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Suila udbetales til borgere med visse indkomster. Indkomster der medregnes, "
+"er lønindkomst, indhandling, indkomst som selvstændig erhvervsdrivende samt "
+"udbetaling af udbytter."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Her stammer oplysningerne fra:"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger og "
+"oplysninger om indhandling fra indhandlingssteder og til Skattestyrelsen. "
+"Hvis du mener, at oplysningerne er forkerte, så henvend dig til din "
+"arbejdsgiver eller dit indhandlingssted."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysning om betalt B-skat stammer fra din indbetaling af B-skat på baggrund "
+"af din forskudsregistrering. Du kan altid ændre din forskudsregistrering på "
+"Sullissivik.gl, hvis du mener at den er forkert."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysning om udbytte stammer fra selskabernes indberetning af udloddet "
+"udbytte til dig. Hvis du har modtaget udbytte sidste år, forventer "
+"Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker "
+"oplysninger om udbytte fra tidligere år beregningen af din forventede "
+"indkomst for i år."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Oversigt over signaler"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_search.html
+msgid "Filtre"
+msgstr ""
+
 #: suila/templates/suila/person_detail_notes.html
 msgid "Noter"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html
-msgid "Skatteår"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html suila/views.py
-msgid "Adresse"
-msgstr ""
-
-#: suila/templates/suila/person_detail_base.html suila/views.py
-msgid "Stedkode"
-msgstr ""
-
-#: suila/templates/suila/person_detail_benefits.html
-#, python-format
-msgid "Udbetalinger i %(year)s"
-msgstr ""
-
-#: suila/templates/suila/person_detail_benefits.html
-msgid "Tabel"
-msgstr ""
-
-#: suila/templates/suila/person_detail_benefits.html
-msgid "Graf"
-msgstr ""
-
-#: suila/templates/suila/person_detail_benefits.html
-#: suila/templates/suila/person_detail_income.html
-msgid "Måned"
-msgstr ""
-
-#: suila/templates/suila/person_detail_benefits.html
-msgid "Beløb"
-msgstr ""
-
-#: suila/templates/suila/person_detail_benefits.html
-msgid "Estimeret samlet årsindkomst"
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
-#, python-format
-msgid "Indkomst i %(year)s"
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
-msgid "Arbejdsgiver"
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
-msgid "Indkomst til dato"
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
-msgid "Vis på graf"
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
-msgid "Luk"
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
-msgid "Indkomst fordelt på måneder"
 msgstr ""
 
 #: suila/templates/suila/person_detail_notes.html
 #, python-format
 msgid "Noter i %(year)s"
+msgstr ""
+
+#: suila/templates/suila/person_search.html suila/templates/suila/root.html
+msgid "Borgersøgning"
+msgstr ""
+
+#: suila/templates/suila/person_search.html
+msgid "Liste over borgere"
 msgstr ""
 
 #: suila/templates/suila/person_search.html
@@ -264,15 +322,7 @@ msgid "Beskrivelse af Suila (TBD)"
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Borgersøgning"
-msgstr ""
-
-#: suila/templates/suila/root.html
 msgid "Se liste over borgere og find detaljer"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Suilaberegneren"
 msgstr ""
 
 #: suila/templates/suila/root.html
@@ -306,16 +356,6 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Beregningsgrundlag - Se mine signaler"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid ""
-"Overblik over de signaler, som Skattestyrelsen har modtaget om dine "
-"indkomster"
-msgstr ""
-
-#: suila/templates/suila/root.html
 msgid "Jeg har ikke modtaget Suila"
 msgstr ""
 
@@ -323,24 +363,29 @@ msgstr ""
 msgid "Find information her, hvis du ikke har modtaget beskæftigelsesfradrag"
 msgstr ""
 
-#: suila/tests/test_views.py suila/views.py
-msgid "Beregnet beskæftigelsesfradrag"
+#: suila/templatetags/amount_tags.py
+msgid "-"
 msgstr ""
 
-#: suila/tests/test_views.py suila/views.py
-msgid "Estimeret samlet lønindkomst"
+#: suila/templatetags/amount_tags.py
+#, python-format
+msgid "%(amount)s kr."
 msgstr ""
 
-#: suila/tests/test_views.py suila/views.py
+#: suila/templatetags/status_tags.py
+msgid "Afventer"
+msgstr ""
+
+#: suila/templatetags/status_tags.py
+msgid "Fastlagt"
+msgstr ""
+
+#: suila/tests/test_views.py
 msgid "A-indkomst"
 msgstr ""
 
-#: suila/tests/test_views.py suila/views.py
+#: suila/tests/test_views.py
 msgid "B-indkomst"
-msgstr ""
-
-#: suila/views.py
-msgid "CPR-nummer"
 msgstr ""
 
 #: suila/views.py
@@ -348,5 +393,75 @@ msgid "Navn"
 msgstr ""
 
 #: suila/views.py
-msgid "Estimeret total årsindkomst"
+msgid "CPR-nummer"
+msgstr ""
+
+#: suila/views.py
+msgid "Adresse"
+msgstr ""
+
+#: suila/views.py
+msgid "Måned"
+msgstr ""
+
+#: suila/views.py
+msgid "Forventet udbetalingsdato"
+msgstr ""
+
+#: suila/views.py
+msgid "Hjælpetekst her (TBD)"
+msgstr ""
+
+#: suila/views.py
+msgid "Forventet beløb til udbetaling"
+msgstr ""
+
+#: suila/views.py
+msgid "Status"
+msgstr ""
+
+#: suila/views.py
+msgid "Lønindkomst"
+msgstr ""
+
+#: suila/views.py
+msgid "Indhandling"
+msgstr ""
+
+#: suila/views.py
+msgid "Betalt B-skat"
+msgstr ""
+
+#: suila/views.py
+msgid "Udbytte"
+msgstr ""
+
+#: suila/views.py
+msgid "Signaltype"
+msgstr ""
+
+#: suila/views.py
+msgid "Indeværende måned"
+msgstr ""
+
+#: suila/views.py
+msgid "Samlet for året"
+msgstr ""
+
+#: suila/views.py
+msgid "Beløb"
+msgstr ""
+
+#: suila/views.py
+msgid "Kilde"
+msgstr ""
+
+#: suila/views.py
+#, python-format
+msgid "CVR: %(cvr)s"
+msgstr ""
+
+#: suila/views.py
+#, python-format
+msgid "Rate: %(rate_number)s"
 msgstr ""
