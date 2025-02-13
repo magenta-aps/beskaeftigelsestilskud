@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-11 06:46-0200\n"
+"POT-Creation-Date: 2025-02-13 12:28-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -372,20 +372,26 @@ msgstr ""
 msgid "%(amount)s kr."
 msgstr ""
 
-#: suila/templatetags/status_tags.py
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Afventer"
 msgstr ""
 
-#: suila/templatetags/status_tags.py
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Fastlagt"
 msgstr ""
 
-#: suila/tests/test_views.py
-msgid "A-indkomst"
+#: suila/tests/test_views.py suila/views.py
+#, python-format
+msgid "CVR: %(cvr)s"
 msgstr ""
 
-#: suila/tests/test_views.py
-msgid "B-indkomst"
+#: suila/tests/test_views.py suila/views.py
+msgid "Ikke oplyst"
+msgstr ""
+
+#: suila/tests/test_views.py suila/views.py
+#, python-format
+msgid "Rate: %(rate_number)s"
 msgstr ""
 
 #: suila/views.py
@@ -454,14 +460,4 @@ msgstr ""
 
 #: suila/views.py
 msgid "Kilde"
-msgstr ""
-
-#: suila/views.py
-#, python-format
-msgid "CVR: %(cvr)s"
-msgstr ""
-
-#: suila/views.py
-#, python-format
-msgid "Rate: %(rate_number)s"
 msgstr ""
