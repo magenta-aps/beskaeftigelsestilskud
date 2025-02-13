@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date
+import datetime
 
 from django.template.defaultfilters import register
 from django.utils.translation import gettext_lazy as _
@@ -16,7 +16,7 @@ def display_status(person_month: PersonMonth) -> dict:
             person_month.prismebatchitem.status  # type: ignore
         )
     except PrismeBatchItem.DoesNotExist:
-        if date.today() < person_month.year_month:
+        if datetime.date.today() < person_month.year_month:
             return {"name": _("Afventer"), "established": False}
         else:
             return {"name": _("Fastlagt"), "established": True}
