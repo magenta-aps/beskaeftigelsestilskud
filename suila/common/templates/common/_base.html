@@ -35,7 +35,7 @@
         </nav>
         {% endif %}
 
-        <nav class="nav navbar navbar-expand py-3 my-3">
+        <nav class="nav navbar navbar-expand">
             <h1 class="navbar-brand py-0 my-0">
                 <a href="{% url 'suila:root' %}" class="logo-suila">Suila.gl</a>
             </h1>
@@ -52,7 +52,7 @@
                 {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
                 <li class="nav-item ms-4">
                     <a href="{% url 'suila:person_search' %}" class="d-flex align-items-center">
-                        <span class="material-icons">groups</span>
+                        <span class="material-icons">search</span>
                         <span class="ms-1">{% translate "Borgersøgning" %}</span>
                     </a>
                 </li>
@@ -106,7 +106,7 @@
             </ul>
             <ul class="navbar-nav d-flex align-items-center ms-auto">
                 <div class="d-flex align-items-center ms-4">
-                    <span class="material-icons dark-icon">language</span>
+                    <span class="material-icons">language</span>
                     <form action="{% url 'set_language' %}" method="post" class="navbar-form navbar-right mx-1 my-2">
                         {% csrf_token %}
                         <div class="form-group me-3">
@@ -128,9 +128,9 @@
                 <li class="nav-item dropdown">
                     <a href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.is_authenticated %}
-                        <span class="material-icons dark-icon fs-3 d-flex">account_circle</span>
+                        <span class="material-icons fs-3 d-flex">account_circle</span>
                         {% else %}
-                        <span class="material-icons dark-icon fs-3 d-flex">help</span>
+                        <span class="material-icons fs-3 d-flex">help</span>
                         {% endif %}
                     </a>
                     <div id="settings" class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">

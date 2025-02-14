@@ -122,8 +122,17 @@ span.secondary {
 }
 
 header {
-  margin: 0 3rem;
+  background-color: $primary;
 }
+header nav.navbar {
+  margin: 0 3 * $spacer 3 * $spacer 3 * $spacer;
+  padding: $spacer 0;
+}
+header nav.navbar a,
+header nav.navbar span.material-icons {
+  color: $white;
+}
+
 .content {
   margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
   padding: 3 * $spacer;
@@ -166,7 +175,7 @@ select[name="language"] {
   border: 0;
   appearance: menulist-button;
   background: transparent;
-  color: $dark-primary;
+  color: $white;
 }
 select[name="language"]:focus {
   box-shadow: none;
@@ -270,10 +279,6 @@ table tbody > tr:last-child > td {
 
 .form-label {
   font-size: 13px;
-}
-
-.dark-icon {
-  color: $dark-primary;
 }
 
 // Tooltips on e.g. table columns
