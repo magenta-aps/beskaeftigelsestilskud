@@ -70,7 +70,7 @@
     <div class="col-12">
         <div class="jumbo">
             {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-            {% jumbo_link person_income_url _("Beregningsgrundlag - Se mine signaler") "attach_money" _("Overblik over de signaler, som Skattestyrelsen har modtaget om dine indkomster") %}
+            {% jumbo_link person_income_url _("Beregningsgrundlag - Se mine signaler") "assignment" %}
         </div>
     </div>
 </div>

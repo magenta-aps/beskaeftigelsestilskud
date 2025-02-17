@@ -5,10 +5,9 @@ from django.template.defaultfilters import register
 
 
 @register.inclusion_tag("suila/templatetags/jumbo_link.html")
-def jumbo_link(url, title, icon, text):
+def jumbo_link(url, title, icon):
     return {  # pragma: no cover
         "url": url,
         "title": title,
         "icon": icon,
-        "text": text,
     }

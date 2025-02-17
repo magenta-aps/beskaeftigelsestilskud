@@ -288,19 +288,17 @@ a.help span.material-icons {
 
 // Jumbo buttons on landing page, etc.
 .jumbo {
+  padding: 2 * $spacer 0;
   background-color: $primary;
   border-radius: $spacer;
 }
-.jumbo div {
-  color: $secondary;
-}
 .jumbo .material-icons {
   font-size: 2 * $spacer;
-  color: $light-primary;
+  color: $white;
 }
 .jumbo h1 {
   font-size: 1.5 * $spacer;
-  color: $light-primary;
+  color: $white;
 }
 
 // Emphasized pieces of content

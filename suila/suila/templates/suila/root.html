@@ -43,32 +43,26 @@ Velkommen, {{ name }}
     </div>
 </div>
 
-<div class="row mt-3">
-    <div class="col">
-        <p>{% translate "Beskrivelse af Suila (TBD)" %}</p>
-    </div>
-</div>
-
 {% if user|has_permissions:"suila.view_person,suila.view_personyear" %}
 {# Borgerservice links #}
 <div class="grid gap-5 mt-5">
     <div class="g-col-6 jumbo">
         {% url "suila:person_search" as person_search_url %}
-        {% jumbo_link person_search_url _("Borgersøgning") "search" _("Se liste over borgere og find detaljer") %}
+        {% jumbo_link person_search_url _("Borgersøgning") "search" %}
     </div>
     <div class="g-col-6 jumbo">
-        {% url "suila:calculate_benefit" as calculator_url %}
-        {% jumbo_link calculator_url _("Suilaberegneren") "calculate" _("Beregn beskæftigelsesfradrag") %}
+        {% url "suila:graph" as graph_url %}
+        {% jumbo_link graph_url _("Sammenhæng - Årsindkomst og Suila-tapit") "link" %}
     </div>
 </div>
 <div class="grid gap-5 mt-5">
     <div class="g-col-6 jumbo">
-        {# TODO: fix # url #}
-        {% jumbo_link "#" _("Sammenhæng mellem årsindkomst og Suila") "link" _("Se hvordan vi udregner beskæftigelsesfradrag") %}
+        {% url "suila:faq" as faq_url %}
+        {% jumbo_link faq_url _("Jeg har ikke modtaget Suila-tapit") "help" %}
     </div>
     <div class="g-col-6 jumbo">
-        {# TODO: fix # url #}
-        {% jumbo_link "#" _("Borger har ikke modtaget Suila") "help" _("Find information her, hvis en borger ikke har modtaget beskæftigelsesfradrag") %}
+        {% url "suila:calculate_benefit" as calculator_url %}
+        {% jumbo_link calculator_url _("Suilaberegneren") "calculate" %}
     </div>
 </div>
 {% else %}
@@ -76,21 +70,27 @@ Velkommen, {{ name }}
 <div class="grid gap-5 mt-5">
     <div class="g-col-6 jumbo">
         {% url "suila:person_detail" pk=person.pk as person_detail_url %}
-        {% jumbo_link person_detail_url _("Se mit overblik") "person" _("Overblik over dine udbetalinger af beskæftigelsesfradrag for indeværende år") %}
+        {% jumbo_link person_detail_url _("Mit overblik") "person" %}
     </div>
     <div class="g-col-6 jumbo">
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-        {% jumbo_link person_income_url _("Beregningsgrundlag - Se mine signaler") "attach_money" _("Overblik over de signaler, som Skattestyrelsen har modtaget om dine indkomster") %}
+        {% jumbo_link person_income_url _("Beregningsgrundlag - Mine signaler") "assignment" %}
     </div>
 </div>
 <div class="grid gap-5 mt-5">
     <div class="g-col-6 jumbo">
-        {# TODO: fix # url #}
-        {% jumbo_link "#" _("Sammenhæng mellem årsindkomst og Suila") "link" _("Se hvordan vi udregner beskæftigelsesfradrag") %}
+        {% url "suila:graph" as graph_url %}
+        {% jumbo_link graph_url _("Sammenhæng - Årsindkomst og Suila-tapit") "link" %}
     </div>
     <div class="g-col-6 jumbo">
-        {# TODO: fix # url #}
-        {% jumbo_link "#" _("Jeg har ikke modtaget Suila") "help" _("Find information her, hvis du ikke har modtaget beskæftigelsesfradrag") %}
+        {% url "suila:faq" as faq_url %}
+        {% jumbo_link faq_url _("Jeg har ikke modtaget Suila-tapit") "help" %}
+    </div>
+</div>
+<div class="grid gap-5 mt-5">
+    <div class="g-col-6 jumbo">
+        {% url "suila:calculate_benefit" as calculator_url %}
+        {% jumbo_link calculator_url _("Suilaberegneren") "calculate" %}
     </div>
 </div>
 {% endif %}
