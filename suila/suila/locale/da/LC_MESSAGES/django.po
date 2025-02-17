@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-13 12:28-0200\n"
+"POT-Creation-Date: 2025-02-14 09:57-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -164,6 +164,10 @@ msgstr ""
 
 #: suila/templates/suila/calculate_benefit.html
 msgid "Beregnet beskæftigelsesfradrag for hele året:"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Din Suila er endnu ikke blevet beregnet."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
