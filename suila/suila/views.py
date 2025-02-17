@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import itertools
 import json
+import logging
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -49,6 +50,8 @@ from suila.models import (
     Year,
 )
 from suila.view_mixins import PermissionsRequiredMixin
+
+logger = logging.getLogger(__name__)
 
 
 class RootView(LoginRequiredMixin, ViewLogMixin, TemplateView):
@@ -224,15 +227,23 @@ class PersonDetailView(
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        person_month = PersonMonth.objects.get(
-            person_year=self.person_year,
-            month=self.month,
-        )
-
-        context_data["next_payout_date"] = get_payout_date(self.year, self.month)
-        context_data["benefit_paid"] = person_month.benefit_paid
-        context_data["estimated_year_benefit"] = person_month.estimated_year_benefit
-        context_data["estimated_year_result"] = person_month.estimated_year_result
+        try:
+            person_month = PersonMonth.objects.get(
+                person_year=self.person_year,
+                month=self.month,
+            )
+        except PersonMonth.DoesNotExist:
+            logger.error(
+                "No current PersonMonth for %r (month=%r)",
+                self.person_year,
+                self.month,
+            )
+            context_data["no_current_month"] = True
+        else:
+            context_data["next_payout_date"] = get_payout_date(self.year, self.month)
+            context_data["benefit_paid"] = person_month.benefit_paid
+            context_data["estimated_year_benefit"] = person_month.estimated_year_benefit
+            context_data["estimated_year_result"] = person_month.estimated_year_result
 
         self.log_view(self.object)
         return context_data

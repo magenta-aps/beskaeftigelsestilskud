@@ -8,6 +8,17 @@
 {% load amount_tags %}
 
 {% block person_data %}
+{% if no_current_month %}
+<div class="row mt-5">
+    <div class="col-12">
+        <p>
+            {% blocktrans trimmed %}
+            Din Suila er endnu ikke blevet beregnet.
+            {% endblocktrans %}
+        </p>
+    </div>
+</div>
+{% else %}
 <div class="row mt-5">
     <div class="col-12">
         <p>
@@ -63,6 +74,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 <div class="row my-5">
     <h1>
         {% blocktrans trimmed with year=year %}
