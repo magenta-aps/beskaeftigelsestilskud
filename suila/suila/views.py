@@ -14,6 +14,7 @@ from common.models import User
 from common.view_mixins import ViewLogMixin
 from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
+from django.forms import RegexField
 from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -23,7 +24,7 @@ from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.detail import BaseDetailView
-from django_filters import CharFilter, FilterSet
+from django_filters import Filter, FilterSet
 from django_filters.views import FilterView
 from django_tables2 import Column, SingleTableMixin, Table, TemplateColumn
 from django_tables2.columns.linkcolumn import BaseLinkColumn
@@ -72,12 +73,24 @@ class PersonTable(Table):
     full_address = Column(verbose_name=_("Adresse"))
 
 
+class CPRField(RegexField):
+    def __init__(self, **kwargs):
+        super().__init__(r"^\d{6}-{0,1}\d{4}$", **kwargs)
+
+    def to_python(self, value):
+        value = super().to_python(value)
+        # Remove dash in CPR, if given
+        if isinstance(value, str) and "-" in value:
+            return value.replace("-", "")
+        return value
+
+
+class CPRFilter(Filter):
+    field_class = CPRField
+
+
 class PersonFilterSet(FilterSet):
-    name = CharFilter("name", lookup_expr="icontains", label=_("Navn"))
-    cpr = CharFilter("_cpr", label=_("CPR-nummer"))
-    full_address = CharFilter(
-        "full_address", lookup_expr="icontains", label=_("Adresse")
-    )
+    cpr = CPRFilter("_cpr", label=_("CPR-nummer"), required=True)
 
 
 class YearMonthMixin:
