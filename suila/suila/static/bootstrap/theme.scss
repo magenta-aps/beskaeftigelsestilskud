@@ -112,6 +112,10 @@ span.secondary {
   color: $label;
 }
 
+ol li {
+  line-height: 2 * $spacer;
+}
+
 .btn:disabled {
   background-color: $light-primary;
   color: $dark-grey;
@@ -219,6 +223,16 @@ footer a {
 // No underlines for links
 a {
   text-decoration: none;
+}
+
+// FAQ questions and answers
+a.faq {
+  padding: $spacer;
+  background: $light-grey;
+  border-radius: 0.5 * $spacer;
+}
+div.faq {
+  padding: $spacer;
 }
 
 // Badges
