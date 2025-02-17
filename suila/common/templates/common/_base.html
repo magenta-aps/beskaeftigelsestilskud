@@ -42,16 +42,25 @@
             <ul class="navbar-nav d-flex align-items-center">
                 {% if user.is_authenticated and user.cpr is not None %}
                 <li class="nav-item ms-4">
-                    <a href="{% url 'suila:person_detail' pk=person.pk %}" class="d-flex align-items-center">
+                    <a href="{% url 'suila:person_detail' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail' %}active{% endif %}">
                         <span class="material-icons">person</span>
                         <span class="ms-1">{% translate "Mit overblik" %}</span>
                     </a>
                 </li>
                 {% endif %}
 
+                {% if user.is_authenticated and user.cpr is not None %}
+                <li class="nav-item ms-4">
+                    <a href="{% url 'suila:person_detail_income' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail_income' %}active{% endif %}">
+                        <span class="material-icons">assignment</span>
+                        <span class="ms-1">{% translate "Mine signaler" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+
                 {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
                 <li class="nav-item ms-4">
-                    <a href="{% url 'suila:person_search' %}" class="d-flex align-items-center">
+                    <a href="{% url 'suila:person_search' %}" class="d-flex align-items-center {% if current_view == 'suila:person_search' %}active{% endif %}">
                         <span class="material-icons">search</span>
                         <span class="ms-1">{% translate "Borgersøgning" %}</span>
                     </a>
@@ -60,7 +69,25 @@
 
                 {% if user.is_authenticated %}
                 <li class="nav-item ms-4">
-                    <a href="{% url 'suila:calculate_benefit' %}" class="d-flex align-items-center">
+                    <a href="{% url 'suila:graph' %}" class="d-flex align-items-center {% if current_view == 'suila:graph' %}active{% endif %}">
+                        <span class="material-icons">link</span>
+                        <span class="ms-1">{% translate "Sammenhæng" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <li class="nav-item ms-4">
+                    <a href="{% url 'suila:faq' %}" class="d-flex align-items-center {% if current_view == 'suila:faq' %}active{% endif %}">
+                        <span class="material-icons">help</span>
+                        <span class="ms-1">{% translate "Ikke modtaget Suila-tapit" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <li class="nav-item ms-4">
+                    <a href="{% url 'suila:calculate_benefit' %}" class="d-flex align-items-center {% if current_view == 'suila:calculate_benefit' %}active{% endif %}">
                         <span class="material-icons">calculate</span>
                         <span class="ms-1">{% translate "Suilaberegneren" %}</span>
                     </a>

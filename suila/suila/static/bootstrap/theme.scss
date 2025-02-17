@@ -160,6 +160,9 @@ header nav.navbar span.material-icons {
 header nav .navbar-nav a {
   text-decoration: none;
 }
+header nav .navbar-nav a.active {
+  color: $secondary;
+}
 header .logo-suila {
   display: inline-block;
   width: 154px;

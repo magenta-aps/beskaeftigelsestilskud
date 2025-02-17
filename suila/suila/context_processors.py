@@ -4,6 +4,7 @@
 import datetime
 
 from django.conf import settings
+from django.http import HttpRequest
 
 from suila.models import Person, Year
 
@@ -30,3 +31,10 @@ def person_context(request):
         )
         return {"person": person}
     return {}
+
+
+def nav_context(request: HttpRequest):
+    try:
+        return {"current_view": request.resolver_match.view_name}
+    except Exception:
+        return {"current_view": None}
