@@ -2,9 +2,11 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory, TestCase
+from django.http import HttpRequest
+from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.urls import ResolverMatch
 
-from suila.context_processors import person_context
+from suila.context_processors import nav_context, person_context
 from suila.models import Person, User
 
 
@@ -35,3 +37,28 @@ class TestPersonContext(TestCase):
         request.user = user
         context = person_context(request)
         return context
+
+
+class TestNavContext(SimpleTestCase):
+    def test_returns_view_name(self):
+        # Arrange: provide `request` object with valid `.resolver_match` attribute
+        request = HttpRequest()
+        request.resolver_match = ResolverMatch(
+            None,  # type: ignore
+            None,  # type: ignore
+            None,  # type: ignore
+            url_name="root",
+            namespaces=["suila"],
+        )
+        # Act
+        context = nav_context(request)
+        # Assert
+        self.assertEqual(context["current_view"], "suila:root")
+
+    def test_returns_none(self):
+        # Arrange: provide `request` object where `.resolver_match` is None
+        request = HttpRequest()
+        # Act
+        context = nav_context(request)
+        # Assert
+        self.assertIsNone(context["current_view"])
