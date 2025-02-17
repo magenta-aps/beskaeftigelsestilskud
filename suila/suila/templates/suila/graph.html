@@ -1,0 +1,42 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">{% translate "Sammenhæng" %}</li>
+{% endblock %}
+
+{% block title %}
+{% translate "Sammenhængen mellem årsindkomst og Suila-tapit" %}
+{% endblock %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-7">
+        <p>
+            {% blocktrans trimmed %}
+            Her ser du sammenhængen mellem forventet årsindkomst og månedlig udbetaling af Suila-tapit.
+            De indtægter der indgår i beregningsgrundlaget er overskud fra indhandling, overskud som selvstændig
+            erhvervsdrivende, lønindkomster som udbytte.
+            {% endblocktrans %}
+        </p>
+        <p>
+            {% blocktrans trimmed %}
+            [Tekst om udbetaling i december for borgere med forventede årsindkomster fra 475-500 tkr.]
+            {% endblocktrans %}
+        </p>
+    </div>
+    <div class="col-5 emphasis">
+        <h1>{% translate "Kan du ikke se dine tal?" %}</h1>
+        <p class="mt-3">
+            {% blocktrans trimmed %}
+            Hvis din årsindkomst er 70.000 kr. eller 500.000 kr. vil du ikke modtage Suila-tapit, og dine tal vises
+            derfor ikke på grafen nedenunder.
+            {% endblocktrans %}
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -7,30 +7,48 @@
 {% load django_bootstrap5 %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">{% translate "Personer" %}</li>
+<li class="breadcrumb-item">{% translate "Borgersøgning" %}</li>
+{% endblock %}
+
+{% block title %}
+{% translate "Liste over borgere" %}
 {% endblock %}
 
 {% block content %}
-<div class="row mx-1 mt-3">
+<div class="row mt-5">
     {% if filter %}
-    <div class="col-6">
+    <b>{% translate "Filtre" %}</b>
+    <div>
         <form action="" method="get" class="form filter-form">
-            {% bootstrap_form filter.form layout="floating" %}
-            <div class="row">
-                <div class="col-9">
-                    {% bootstrap_button _("Søg") %}
+            <div class="row mt-3">
+                <div class="col-3">
+                    {% bootstrap_form filter.form %}
                 </div>
-                <div class="col-3 text-end">
-                    <span class="badge bg-secondary mt-2 mb-2">
+            </div>
+            <div class="row">
+                <div class="col">
+                    <button type="submit" class="btn btn-primary d-flex align-items-center">
+                        <span class="material-icons">search</span>
+                        <span class="text-nowrap ms-1">{% translate "Søg" %}</span>
+                    </button>
+                </div>
+            </div>
+            {% if filter.form.is_valid %}
+            <div class="row mt-3">
+                <div class="col">
+                    <p>
                         {% blocktrans trimmed with count=person_list.count %}
                         {{ count }} resultater
                         {% endblocktrans %}
-                    </span>
+                    </p>
                 </div>
             </div>
+            {% endif %}
         </form>
     </div>
-    {% endif %}
+    {% if filter.form.is_valid %}
     {% render_table table %}
+    {% endif %}
+    {% endif %}
 </div>
 {% endblock %}

@@ -1,26 +1,14 @@
-<!--
-SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
 
-SPDX-License-Identifier: MPL-2.0
--->
-
-{% extends "common/base.html" %}
+{% extends "common/card.html" %}
 {% load i18n %}
 
 {% block title %}
-{% translate "Logged out" %}
+{% translate "Logget ud" %}
 {% endblock %}
 
 {% block content %}
-<div class="justify-content-md-center d-flex align-items-center vh-100">
-    <div class="card">
-        <h5 class="card-header">{% translate "Logged out" %}</h5>
-        <div class="card-body">
-            <p>
-                {% translate "Du er nu logget ud. Vi anbefaler at du lukker denne tab for at fjerne tilbageværende cookie data" %}
-            </p>
-            <a href="{% url 'login:login' %}" class="btn btn-primary">{% translate "Log in" %}</a>
-        </div>
-    </div>
-</div>
+<p>{% translate "Du er nu logget ud. Vi anbefaler at du lukker denne tab for at fjerne tilbageværende cookie-data" %}</p>
+<a href="{% url 'login:login' %}" class="btn btn-primary">{% translate "Log in" %}</a>
 {% endblock %}

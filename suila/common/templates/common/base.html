@@ -1,149 +1,23 @@
 {# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
 {# SPDX-License-Identifier: MPL-2.0 #}
 
-{% load static %}
+{% extends "common/_base.html" %}
 {% load i18n %}
-{% load csp %}
-{% load cache %}
-<!doctype html>
-<html lang="da">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}"  nonce="{{request.csp_nonce}}">
-    <link rel="stylesheet" href="{% static 'suila/style.css' %}"  nonce="{{request.csp_nonce}}">
-    <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-    <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-    <title>{% translate "Beskæftigelsesfradrag" %}</title>
-    <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}" >
-    {% block extra_headers %}
-    {% endblock %}
-</head>
-<body>
-<header>
-    {% if environment != "production" %}
-        <nav class="bg-warning">
-            <p class="text-center fw-bold my-0">
-                {{environment|upper}}
-            </p>
-        </nav>
-    {% endif %}
-    <nav class="nav flex-column flex-sm-row p-1 bg-dark" data-bs-theme="dark">
-        <a href="{% url 'suila:root' %}">
-            <input style="padding-bottom: 0px; padding-right: 20px; padding-top: 5px" type="image" src="{% static 'suila/logo_transparent.png' %}" height="50" />
-        </a>
-        {% if user.is_authenticated %}
-        {% cache 500 navbar %}
-        <a class="btn btn-primary mx-1 my-2" href="{% url 'suila:person_search' %}">
-            {% translate "Personer" %}
-        </a>
-        <div class="dropdown p-2">
-            <a class="btn btn-primary dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                {% translate "Estimeringsoverblik for hver person" %}
-            </a>
-            <ul class="dropdown-menu">
-                {% for year in years %}
-                <li><a class="dropdown-item" href="{% url 'data_analysis:person_years' year=year %}">{{ year }}</a></li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="dropdown p-2">
-            <a class="btn btn-primary dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                {% translate "Histogrammer over estimeringernes afvigelse" %}
-            </a>
-            <ul class="dropdown-menu">
-                {% for year in years %}
-                <li><a class="dropdown-item" href="{% url 'data_analysis:histogram' year=year %}">{{ year }}</a></li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="p-2">
-            <a class="btn btn-primary" href="{% url 'data_analysis:calculator' %}" role="button">
-                {% translate "Tilskudsberegner" %}
-            </a>
-        </div>
-        {% endcache %}
-        <div class="p-2">
-            <a class="btn btn-primary" href="{% url 'data_analysis:job_log' %}" role="button" >
-                {% translate "Jobliste" %}
-            </a>
-        </div>
-        {% endif %}
 
-        <span class="m-2 pt-2 ms-auto">
-            {{user.first_name}} {{user.last_name}}
-        </span>
-        {% if user.is_authenticated %}
-            <div class="p-2">
-            <a href="{% url 'login:logout' %}" class="btn btn-primary" id="logout-link">
-                {% translate "Log out" %}
-            </a>
-            </div>
-        {% endif %}
-
-        <span class="locale-changer navbar-text">
-            <form action="{% url 'set_language' %}" method="post">
-                {% csrf_token %}
-                {% get_current_language as current_language %}
-                {% get_available_languages as languages %}
-                {% get_language_info_list for languages as languages %}
-                <select class="form-control form-select" name="language">
-                {% for language in languages %}
-                    <option value="{{ language.code }}"{% if language.code == current_language %} selected{% endif %}>
-                        {{ language.name_local|capfirst }}
-                    </option>
-                {% endfor %}
-                </select>
-            </form>
-        </span>
-
-        <button type="button" class="btn btn-outline-primary mx-1 my-2" data-bs-toggle="modal" data-bs-target="#about_modal">
-            Om
-        </button>
-    </nav>
-    <hr class="p-0 m-0"/>
-</header>
-
-<div class="row px-3 pt-1 bg-body-secondary">
-    <nav style="--bs-breadcrumb-divider: '&raquo;';" aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1">
-            <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
+{% block page %}
+<div class="content">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-3">
+            <li class="breadcrumb-item"><a href="/">{% translate "Forside" %}</a></li>
             {% block breadcrumb %}
             {% endblock %}
         </ol>
+        <h1>
+        {% block title %}
+        {% endblock %}
+        </h1>
     </nav>
+    {% block content %}
+    {% endblock %}
 </div>
-{% block content %}
 {% endblock %}
-{% block footer %}
-{% endblock %}
-{% block modals %}
-{% endblock %}
-
-<div id="about_modal" class="modal">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Suila</h5>
-            </div>
-            <div class="modal-body">
-                <table class="table table-sm table-borderless">
-                    <tr>
-                        <th>{% translate 'Version' %}:</th>
-                        <td>{{version}}</td>
-                    </tr>
-                    <tr>
-                        <th>{% translate 'Kildekode' %}:</th>
-                        <td>
-                            <a href="https://github.com/magenta-aps/beskaeftigelsestilskud/">
-                                https://github.com/magenta-aps/beskaeftigelsestilskud/
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-</body>
-</html>

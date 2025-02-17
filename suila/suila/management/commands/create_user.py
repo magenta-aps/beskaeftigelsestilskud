@@ -18,11 +18,14 @@ class Command(BaseCommand):
         parser.add_argument("-c", "--cert-subject", type=str)
 
     def handle(self, *args, **options):
+        name = options["username"].capitalize()
         user, _ = User.objects.update_or_create(
             username=options["username"],
             defaults={
                 "is_staff": options["is_staff"],
                 "is_superuser": options["is_superuser"],
+                "first_name": name,
+                "last_name": f"{name}sen",
             },
         )
         password = options["password"]

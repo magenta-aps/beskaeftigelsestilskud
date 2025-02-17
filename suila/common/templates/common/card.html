@@ -1,15 +1,21 @@
 {# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
 {# SPDX-License-Identifier: MPL-2.0 #}
 
-{% extends "common/base.html" %}
+{% extends "common/_base.html" %}
 {% load i18n %}
 
-{% block content %}
-<div class="justify-content-md-center d-flex align-items-center vh-100">
-    <div class="card col-4">
-        <h5 class="card-header">{% block card_title %}{% endblock %}</h5>
-        <div class="card-body">
-            {% block card_content %}{% endblock %}
+{% block page %}
+<div class="d-flex justify-content-center align-content-center">
+    <div class="card">
+        <div class="card-container">
+            <h5 class="card-header">
+                {% block title %}
+                {% endblock %}
+            </h5>
+            <div class="card-body">
+                {% block content %}
+                {% endblock %}
+            </div>
         </div>
     </div>
 </div>

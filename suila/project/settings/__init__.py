@@ -23,4 +23,5 @@ include(
     "eboks.py",
     "akap.py",
     "upload.py",
+    "compress.py",
 )
