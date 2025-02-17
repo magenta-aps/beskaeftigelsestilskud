@@ -85,4 +85,14 @@
         {% render_table table %}
     </div>
 </div>
+{% if user.is_authenticated and user|has_permissions:"suila.view_note" %}
+<div class="row my-5">
+    <div class="col-12">
+        <div class="jumbo">
+            {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}
+            {% jumbo_link person_notes_url _("Noter") "assignment" %}
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
