@@ -1,0 +1,5 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load date_tags %}
+{{ record|get_payout_date|date:"SHORT_DATE_FORMAT" }}

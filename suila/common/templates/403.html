@@ -1,7 +1,9 @@
 {# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
 {# SPDX-License-Identifier: MPL-2.0 #}
-{% extends "common/base.html" %}
+
+{% extends "common/card.html" %}
+{% load i18n %}
 
 {% block content %}
-    <h1>Du har ikke adgang til at se denne side</h1>
+<h1>{% translate "Du har ikke adgang til at se denne side" %}</h1>
 {% endblock %}

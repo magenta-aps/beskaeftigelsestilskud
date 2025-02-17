@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-05 11:12-0200\n"
+"POT-Creation-Date: 2025-02-13 12:28-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,15 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: login/forms.py
-msgid "Username"
+msgid "Brugernavn"
 msgstr ""
 
 #: login/forms.py
 msgid "Password"
+msgstr ""
+
+#: login/forms.py
+msgid "Kodeord"
 msgstr ""
 
 #: login/forms.py
@@ -30,18 +34,22 @@ msgid "Husk mig på denne maskine i {days} dage"
 msgstr ""
 
 #: login/templates/login/logged_out.html
-msgid "Logged out"
+msgid "Logget ud"
 msgstr ""
 
 #: login/templates/login/logged_out.html
 msgid ""
 "Du er nu logget ud. Vi anbefaler at du lukker denne tab for at fjerne "
-"tilbageværende cookie data"
+"tilbageværende cookie-data"
 msgstr ""
 
 #: login/templates/login/logged_out.html
 #: login/templates/two_factor/core/login.html
 msgid "Log in"
+msgstr ""
+
+#: login/templates/login/login_failed.html
+msgid "Login mislykkedes"
 msgstr ""
 
 #: login/templates/login/login_failed.html
@@ -70,6 +78,7 @@ msgstr ""
 
 #: login/templates/login/login_repeat.html
 #: login/templates/login/login_timeout.html
+#: login/templates/two_factor/_wizard_actions.html
 msgid "Log ind"
 msgstr ""
 
@@ -81,8 +90,8 @@ msgstr ""
 msgid "Fortsæt"
 msgstr ""
 
-#: login/templates/two_factor/_wizard_actions.html
-msgid "Login"
+#: login/templates/two_factor/core/login.html
+msgid "Indtast venligst koden, der er genereret af din token-generator."
 msgstr ""
 
 #: login/templates/two_factor/core/otp_required.html
@@ -94,11 +103,8 @@ msgid "Du skal logge ind med to-faktor-godkendelse for at kunne se denne side"
 msgstr ""
 
 #: login/templates/two_factor/core/otp_required.html
-msgid "Aktivér to-faktor-godkendelse"
-msgstr ""
-
 #: login/templates/two_factor/core/setup.html
-msgid "Aktivér To-faktor-godkendelse"
+msgid "Aktivér to-faktor-godkendelse"
 msgstr ""
 
 #: login/templates/two_factor/core/setup.html

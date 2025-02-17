@@ -1,0 +1,58 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">{% translate "Ikke modtaget Suila-tapit" %}</li>
+{% endblock %}
+
+{% block title %}
+{% translate "Jeg har ikke modtaget Suila-tapit" %}
+{% endblock %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-12">
+        <p>
+            {% blocktrans trimmed %}
+            Suila-tapit udbetales når systemet modtager signaler fra arbejdsmarkedet. De fire signaler er:
+            {% endblocktrans %}
+        </p>
+        <ol>
+            <li>{% translate "A-indkomst fra lønarbejde, som arbejdsgiverne indberetter i Sulinal." %}</li>
+            <li>{% translate "A-indkomst fra indhandling, som indhandlingsstederne indberetter i Sulinal." %}</li>
+            <li>{% translate "Betalte B-skatter. Hvis du har forskudsregistreret B-indkomst, vil du modtage en opkrævning af B-skatter. Når den betales, modtages signal." %}</li>
+            <li>{% translate "Udlodning af udbytte. Når selskaberne udlodder udbytte, giver dette signal om en indkomst." %}</li>
+        </ol>
+        <p class="mt-3">
+            {% blocktrans trimmed %}
+            Ud fra signalerne om indkomst beregnes en forventet årsindkomst. Suila-tapit udbetales til borgere med en
+            forventet årsindkomst på 70.000 - 500.000 kr.
+            {% endblocktrans %}
+            <br>
+            {% blocktrans trimmed %}
+            Bemærk at der går to måneder fra din indkomst til din udbetaling af Suila-tapit.
+            {% endblocktrans %}
+        </p>
+        <h2 class="my-5">
+            {% translate "Hvis du ikke har modtaget Suila-tapit, kan der være følgende forklaringer" %}
+        </h2>
+        <a class="faq d-flex" data-bs-toggle="collapse" href="#manglende-signal" role="button" aria-expanded="false" aria-controls="manglendeSignal">
+            <h3>{% translate "1. Manglende signal" %}</h3>
+        </a>
+        <div class="faq collapse" id="manglende-signal">
+            {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
+            {% blocktrans trimmed with url=person_income_url %}
+            Manglende signal. Din arbejdsgiver eller dit indhandlingssted har ikke indberettet din indkomst. Eller har
+            indberettet for sent eller forkert. Måske har de slet ikke indberettet. På siden med
+            <a href="{{ url }}">beregningsgrundlag</a> kan du se hvilke oplysninger Skattestyrelsen har om dine
+            indkomster. Hvis der mangler signal om indkomst fra arbejde og indhandling, så kontakt din arbejdsgiver
+            eller dit indhandlingssted.
+            {% endblocktrans %}
+        </div>
+    </div>
+</div>
+{% endblock %}

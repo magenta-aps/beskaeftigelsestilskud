@@ -51,15 +51,6 @@ USER suila
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /app
-RUN django-admin compilemessages
-
-# temporary use of dev env to make manage.py work
-COPY --chown=suila:suila ./dev-environment/suila.env suila.env
-# hadolint ignore=SC1091
-RUN set -a && \
-    source suila.env && \
-    set +a && \
-    python manage.py collectstatic --no-input --clear && \
-    rm suila.env
+RUN django-admin compilemessages --locale=da --locale=kl --verbosity=0
 
 CMD ["gunicorn","-b","0.0.0.0:8000","project.wsgi:application","-w","4","--timeout","120","--error-logfile","-","--capture-output"]

@@ -1,0 +1,371 @@
+$enable-cssgrid: true;
+
+// Basic color scheme
+$primary: #820041;
+$dark-primary: #530029;
+$secondary: #ffe169;
+$light-primary: #dacac4;
+$lightest-primary: #f9eff4;
+
+// Neutral colours
+$black: #000000;
+$dark-grey: #222222;
+$grey: #d7d7d2;
+$light-grey: #ebebe7;
+$lightest-grey: #f7f7f1;
+$white: #ffffff;
+$label: #6f7f88;
+
+// Accent colours
+$approved: #207255;
+$approved-light: #bdecdc;
+$waiting: #3157a1;
+$waiting-light: #bccded;
+$rejected: #af1d1d;
+$rejected-light: #f8cfcf;
+
+// Override Bootstrap defaults
+$primary: $primary;
+$secondary: $secondary;
+$success: $approved;
+$info: $waiting;
+$warning: $secondary;
+$danger: $rejected;
+$light: $lightest-grey;
+$dark: $dark-grey;
+
+$badge-font-size: 1em;
+$badge-font-weight: normal;
+
+$border-color: $grey;
+
+$link-color: $dark-primary;
+
+$breadcrumb-divider: quote("\203A");
+
+@import "./bootstrap/scss/bootstrap";
+
+// Figtree font
+@font-face {
+  font-family: "Figtree Normal";
+  font-weight: normal;
+  src: url("../figtree/Figtree-VariableFont_wght.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Figtree Italic";
+  font-weight: normal;
+  src: url("../figtree/Figtree-Italic-VariableFont_wght.ttf") format("truetype");
+}
+
+body {
+  font-family: "Figtree Normal", "Trebuchet MS", "Helvetica", sans-serif;
+}
+
+i {
+  font-family: "Figtree Italic", "Trebuchet MS", "Helvetica", sans-serif;
+  font-style: normal; /* avoid "double italicization" */
+}
+
+// Additional styling here
+h1 {
+  font-size: 32px;
+  color: $black;
+}
+
+h1 a {
+  color: $black;
+}
+
+h2 {
+  font-size: 22px;
+  color: $dark-primary;
+}
+
+h3 {
+  font-size: 20px;
+  color: $primary;
+}
+
+h4 {
+  font-size: 18px;
+  color: $primary;
+}
+
+// Makes it easier to align buttons with headers (default is 0.5rem)
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: 0;
+}
+
+body {
+  background-color: $light-primary;
+}
+
+h1.secondary,
+h2.secondary,
+div.secondary,
+span.secondary {
+  color: $label;
+}
+
+ol li {
+  line-height: 2 * $spacer;
+}
+
+.btn:disabled {
+  background-color: $light-primary;
+  color: $dark-grey;
+  border-color: transparent;
+}
+.btn.btn-transparent {
+  color: $dark-primary;
+}
+
+header {
+  background-color: $primary;
+}
+header nav.navbar {
+  margin: 0 3 * $spacer 3 * $spacer 3 * $spacer;
+  padding: $spacer 0;
+}
+header nav.navbar a,
+header nav.navbar span.material-icons {
+  color: $white;
+}
+
+.content {
+  margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+  padding: 3 * $spacer;
+  background-color: $lightest-grey;
+  border-radius: $spacer;
+  box-shadow: 0 0 $spacer $grey;
+}
+.card {
+  min-width: 35vw;
+  padding: 3 * $spacer;
+  border-color: transparent;
+  border-radius: $spacer;
+  box-shadow: 0 0 $spacer $grey;
+}
+.card-body {
+  padding: 0;
+}
+.card-header {
+  padding: 0 0 2 * $spacer 0;
+  background-color: transparent;
+  border: none;
+}
+
+// Nav
+header nav .navbar-nav a {
+  text-decoration: none;
+}
+header nav .navbar-nav a.active {
+  color: $secondary;
+}
+header .logo-suila {
+  display: inline-block;
+  width: 155px;
+  height: 60px;
+  background-image: url("../suila/logo_suila_white_large.png");
+  text-indent: -9999em;
+}
+
+// Language picker
+select[name="language"] {
+  width: auto;
+  padding: 0 0 0 0.5 * $spacer;
+  border: 0;
+  appearance: menulist-button;
+  background: transparent;
+  color: $white;
+}
+select[name="language"]:focus {
+  box-shadow: none;
+}
+
+// Settings ("wheel") menu
+#settings {
+  padding: $spacer;
+  margin-right: -$spacer;
+  min-width: 15vw;
+  border-color: transparent;
+  border-radius: 0.5 * $spacer;
+  box-shadow: 0 0 0.5 * $spacer $grey;
+}
+#settings div:first-child {
+  margin-bottom: 1.5 * $spacer;
+}
+#settings div:first-child h4 {
+  color: $dark-primary;
+  font-weight: bold;
+}
+#settings div:first-child span.material-icons {
+  font-size: 2.5 * $spacer;
+  color: $dark-primary;
+}
+
+// Footer
+footer {
+  margin: 6 * $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+}
+footer a {
+  display: inline-block;
+  height: 50px;
+  padding: 0 0 0 148px + 40px;
+  background: url("../suila/logo_aka_large.png") no-repeat;
+}
+
+// No underlines for links
+a {
+  text-decoration: none;
+}
+
+// FAQ questions and answers
+a.faq {
+  padding: $spacer;
+  background: $light-grey;
+  border-radius: 0.5 * $spacer;
+}
+div.faq {
+  padding: $spacer;
+}
+
+// Badges
+// The design guide's colour are "inverted" and using a non-standard colour scheme
+.badge-draft {
+  background-color: $light-grey;
+  color: $label;
+}
+.badge-waiting {
+  background-color: $waiting-light;
+  color: $waiting;
+}
+.badge-approved {
+  background-color: $approved-light;
+  color: $approved;
+}
+.badge-rejected {
+  background-color: $rejected-light;
+  color: $rejected;
+}
+
+// Tables
+// 0.625rem (10px) rounding of all tables
+.table {
+  overflow: hidden !important;
+  border-radius: 0.625 * $spacer;
+}
+.table th {
+  background-color: $light-grey;
+  border-bottom: 0;
+  padding: 10px 20px;
+}
+.table tbody tr {
+  padding: 20px;
+  vertical-align: middle;
+}
+.table tbody td {
+  padding: 20px;
+  vertical-align: middle;
+  background: transparent;
+}
+// Forces all table headers to be `dark-primary`
+.table > :not(caption) > * > th {
+  color: $dark-primary;
+}
+// ...and the headers that act as links (sorting)
+.table > :not(caption) > * > th > a {
+  color: $dark-primary;
+}
+table tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+// We want the headers of  sideways tables to have the same color as the background
+.table-sideways th {
+  background-color: $lightest-grey;
+}
+
+.form-select {
+  border-radius: 50 * $spacer;
+}
+
+.form-label {
+  font-size: 13px;
+}
+
+// Tooltips on e.g. table columns
+a.help span.material-icons {
+  vertical-align: text-top;
+}
+
+// Jumbo buttons on landing page, etc.
+.jumbo {
+  padding: 2 * $spacer 0;
+  background-color: $primary;
+  border-radius: $spacer;
+}
+.jumbo .material-icons {
+  font-size: 2 * $spacer;
+  color: $white;
+}
+.jumbo h1 {
+  font-size: 1.5 * $spacer;
+  color: $white;
+}
+
+// Emphasized pieces of content
+.emphasis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: $secondary;
+  border-radius: $spacer;
+  padding: 2 * $spacer;
+}
+.emphasis h1 {
+  font-size: 2rem;
+  color: $dark-primary;
+}
+.emphasis ul li {
+  line-height: 1.75rem;
+}
+
+// Detail table
+ul.nav.detail-table {
+  background: $primary;
+  border-radius: $spacer $spacer 0 0;
+}
+div.detail-table {
+  background: $light-primary;
+  border-radius: 0 0 $spacer $spacer;
+}
+ul.nav.detail-table a.nav-link {
+  color: $lightest-primary;
+  font-weight: bold;
+}
+ul.nav.detail-table a.nav-link.active {
+  color: $secondary;
+  text-decoration: underline;
+}
+div.detail-table table tbody td {
+  background: transparent;
+}
+
+// Table ordering
+table th.orderable.asc a::after {
+  font-family: "Material Icons";
+  content: "arrow_drop_up";
+  margin-left: 0.25 * $spacer;
+  vertical-align: bottom;
+}
+table th.orderable.desc a::after {
+  font-family: "Material Icons";
+  content: "arrow_drop_down";
+  margin-left: 0.25 * $spacer;
+  vertical-align: bottom;
+}

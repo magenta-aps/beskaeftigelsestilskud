@@ -20,6 +20,9 @@ LOAD_PRISME_ACCOUNT_ALIASES=${LOAD_PRISME_ACCOUNT_ALIASES:=false}
 
 python manage.py wait_for_db
 
+python manage.py collectstatic --no-input --clear
+python manage.py compress --force
+
 if [ "${MAKE_MIGRATIONS,,}" = true ]; then
   echo 'generating migrations'
   python manage.py makemigrations --no-input

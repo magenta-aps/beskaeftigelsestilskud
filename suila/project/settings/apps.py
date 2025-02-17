@@ -27,4 +27,5 @@ INSTALLED_APPS = [
     "ninja_extra",
     "mitid_test",
     "simple_history",
+    "compressor",
 ]

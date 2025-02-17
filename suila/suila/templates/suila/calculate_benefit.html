@@ -1,0 +1,173 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/base.html" %}
+{% load i18n %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% load amount_tags %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">{% translate "Suilaberegneren" %}</li>
+{% endblock %}
+
+{% block title %}
+{% translate "Suilaberegneren" %}
+{% endblock %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-12">
+        <p>
+            {% blocktrans trimmed %}
+            Suilaberegneren kan bruges til at beregne hvor meget beskæftigelsesfradrag du vil modtage.
+            Bemærk at tallene er vejledende og ikke endelige.
+            {% endblocktrans %}
+        </p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-5">
+        <form action="" method="post" class="form filter-form" novalidate>
+            {% csrf_token %}
+            {% bootstrap_form form layout="horizontal" horizontal_label_class="col-6" horizontal_field_class="col-6" %}
+            <button type="submit" class="btn btn-primary d-inline-flex align-items-center" disabled>
+                <span class="ms-1">{% translate "Beregn" %}</span>
+                <span class="material-icons">arrow_forward</span>
+            </button>
+            <button id="reset" class="btn btn-transparent d-inline-flex align-items-center">
+                <span class="material-icons">restart_alt</span>
+                <span class="ms-1">{% translate "Ryd" %}</span>
+            </button>
+        </form>
+        {% if monthly_benefit or yearly_benefit %}
+        <div class="emphasis mt-5">
+            <p>{% translate "Beregnet beskæftigelsesfradrag pr. måned:" %}</p>
+            <h1>{{ monthly_benefit|format_amount }}</h1>
+            <p class="mt-5">{% translate "Beregnet beskæftigelsesfradrag for hele året:" %}</p>
+            <h1>{{ yearly_benefit|format_amount }}</h1>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-7" id="graph">
+        {# Replaced by ApexChart graph at runtime #}
+    </div>
+</div>
+<script id="graph_points" type="application/json">{{ graph_points|safe }}</script>
+{% endblock %}
+
+{% block extra_headers %}
+<link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+<script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function () {
+    const monthField = $("[name={{ form.estimated_month_income.name }}]");
+    const yearField = $("[name={{ form.estimated_year_income.name }}]");
+    const submitButton = $("button[type=submit]");
+    const resetButton = $("button#reset");
+
+    const enableSubmitOnValidInput = function () {
+        // Either expected monthly income or expected yearly income must
+        // contain a nonzero value before the form can be submitted.
+        const valid = monthField.val() > 0 || yearField.val() > 0;
+        if (valid) {
+            submitButton.prop("disabled", null);
+        } else {
+            submitButton.prop("disabled", "disabled");
+        }
+    }
+
+    const renderChart = function () {
+        let data = JSON.parse($("#graph_points").text());
+        const graph = $("#graph");
+        const yearlyIncome = parseFloat(yearField.val());
+        const yearlyBenefit = parseFloat("{{ yearly_benefit }}");
+
+        if (yearlyIncome > data[data.length - 1][0]) {
+            // result is greater than our current max point in the graph
+            data = [...data, [yearlyIncome, 0]];  // Clone array
+        }
+
+        const chart = new ApexCharts(graph.get(0), {
+            "chart": {
+                "nonce": "{{ request.csp_nonce }}",
+                "type": "line",
+                "toolbar": {"show": false},
+                "animations": {"enabled": false},
+                "selection": {"enabled": false},
+                "fontFamily": "Figtree Normal, Trebuchet MS, Helvetica, sans-serif",
+            },
+            "tooltip": {"enabled": false},
+            "colors": ["#000000"],
+            "series": [{
+                "name": "Suila",
+                "data": data,
+            }],
+            "legend": {
+                "fontSize": "1.5rem"
+            },
+            "xaxis": {
+                "type": "numeric",
+                "title": {
+                    "text": "Estimeret årsindkomst",
+                    "style": {"fontSize": "1.5rem"},
+                },
+                "labels": {"style": {"fontSize": "1rem"}},
+            },
+            "yaxis": {
+                "title": {
+                    "text": "Beregnet beskæftigelsestilskud for hele året",
+                    "style": {"fontSize": "1.5rem"},
+                },
+                "labels": {"style": {"fontSize": "1rem"}},
+            },
+            "annotations": {
+                "points": [{
+                    "x": yearlyIncome || 0,
+                    "y": yearlyBenefit || 0,
+                    "marker": {
+                        "size": 4,
+                    },
+                    "label": {
+                        "text": [
+                            "Beregnet Suila for hele året: " + yearlyBenefit,
+                        ],
+                        "style": {
+                            "background": "#fff",
+                            "color": "#333",
+                            "fontSize": "1.5rem",
+                        }
+                    }
+                }]
+            },
+        });
+        chart.render();
+    }
+
+    resetButton.on("click", function (evt) {
+        // Reset the input fields to empty
+        monthField.val("");
+        yearField.val("");
+        // Disable the submit button until new values have been entered
+        enableSubmitOnValidInput();
+        // Update graph
+        renderChart();
+        // Prevent form submit
+        evt.preventDefault();
+    });
+
+    monthField.on("change keyup", function () {
+        yearField.val(12 * monthField.val());
+        enableSubmitOnValidInput();
+    });
+
+    yearField.on("change keyup", function () {
+        monthField.val(yearField.val() / 12)
+        enableSubmitOnValidInput();
+    });
+
+    enableSubmitOnValidInput();
+    renderChart();
+});
+</script>
+{% endblock %}

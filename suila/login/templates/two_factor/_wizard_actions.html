@@ -10,8 +10,10 @@ SPDX-License-Identifier: MPL-2.0
 {% if not wizard.steps.auth %}
     <button type="submit" class="btn btn-primary">{% trans "Fortsæt" %}</button>
 {% else %}
-    <button type="submit" class="btn btn-primary float-end">{% trans "Login" %}</button>
+    <button type="submit" class="btn btn-primary d-flex align-items-center">
+        <span class="material-icons">login</span>
+        <span class="text-nowrap ms-1">{% translate 'Log ind' %}</span>
+    </button>
 {% endif %}
 </div>
 </div>
-

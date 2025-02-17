@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import itertools
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
@@ -13,35 +14,44 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db.models import Sum
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
 
+from suila.benefit import get_payout_date
 from suila.forms import NoteAttachmentFormSet
 from suila.models import (
+    BTaxPayment,
     Employer,
-    IncomeEstimate,
-    IncomeType,
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearU1AAssessment,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 from suila.view_mixins import PermissionsRequiredMixin
 from suila.views import (
-    CategoryChoiceFilter,
-    PersonDetailBenefitView,
+    CalculateBenefitView,
+    CPRField,
+    IncomeSignal,
+    IncomeSignalTable,
+    IncomeSignalType,
+    IncomeSumsBySignalTypeTable,
     PersonDetailIncomeView,
     PersonDetailNotesAttachmentView,
     PersonDetailNotesView,
     PersonDetailView,
+    PersonFilterSet,
+    PersonMonthTable,
     PersonSearchView,
+    PersonTable,
     RootView,
     YearMonthMixin,
 )
@@ -77,15 +87,28 @@ class PersonEnv(TestCase):
         cls.person3, _ = Person.objects.update_or_create(
             cpr="0101013333", location_code=None
         )
-        # Add data to person 1
-        year, _ = Year.objects.update_or_create(year=2020)
+
+        # Set up calculation method and year
+        calc = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        year = Year.objects.create(year=2020, calculation_method=calc)
+        Year.objects.create(year=2021, calculation_method=calc)
+
+        # Add "signal" data to person 1
         cls.person_year, _ = PersonYear.objects.update_or_create(
             person=cls.person1,
             year=year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
             preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
-        # 12 PersonMonth objects where each month amount is equal to the month number
+        # Create 12 PersonMonth objects, where each month amount is equal to the month
+        # number.
         person_months = [
             PersonMonth(
                 person_year=cls.person_year,
@@ -96,68 +119,81 @@ class PersonEnv(TestCase):
             for i in range(1, 13)
         ]
         PersonMonth.objects.bulk_create(person_months)
-        # 2 * 2 * 12 MonthlyIncomeReport objects
+        # Create `MonthlyIncomeReport` objects (3 sets of 12 months)
         employer1, _ = Employer.objects.update_or_create(name="Employer 1", cvr=1)
-        employer2, _ = Employer.objects.update_or_create(name="Employer 2", cvr=2)
-        for employer in (employer1, employer2):
-            for field in ("salary_income", "disability_pension_income"):
-                income_reports = []
-                for person_month in person_months:
-                    income_report = MonthlyIncomeReport(
-                        person_month=person_month,
-                        # employer=employer,
-                        **{field: person_month.benefit_paid * 10},
-                    )
-                    income_report.update_amount()
-                    income_reports.append(income_report)
-                MonthlyIncomeReport.objects.bulk_create(income_reports)
-        # 2 * 12 IncomeEstimate objects
-        for income_type in IncomeType:
-            income_estimates = [
-                IncomeEstimate(
+        employer2, _ = Employer.objects.update_or_create(name=None, cvr=2)
+        income_reports = []
+        for employer in (employer1, employer2, None):
+            for person_month in person_months:
+                income_report = MonthlyIncomeReport(
                     person_month=person_month,
-                    income_type=income_type,
-                    engine="InYearExtrapolationEngine",
-                    estimated_year_result=(idx + 1) * 100,
-                    actual_year_result=(idx + 1) * 150,
+                    employer=employer,
+                    salary_income=(
+                        person_month.benefit_paid * 10
+                        if person_month.month > 1
+                        else Decimal("0")
+                    ),
+                    catchsale_income=(
+                        person_month.benefit_paid * 10
+                        if person_month.month > 1
+                        else Decimal("0")
+                    ),
                 )
-                for idx, person_month in enumerate(person_months)
-            ]
-            IncomeEstimate.objects.bulk_create(income_estimates)
+                income_report.update_amount()
+                income_reports.append(income_report)
+        MonthlyIncomeReport.objects.bulk_create(income_reports)
+        # Create `BTaxPayment` objects
+        b_tax_payments = [
+            BTaxPayment(
+                person_month=person_month,
+                amount_paid=(
+                    person_month.benefit_paid * 10
+                    if person_month.month > 1
+                    else Decimal("0")
+                ),
+                # Provide values for non-nullable fields (unused in test)
+                amount_charged=person_month.benefit_paid * 10,
+                date_charged=person_month.year_month,
+                rate_number=person_month.month,
+                filename="",
+                serial_number=0,
+            )
+            for person_month in person_months
+        ]
+        BTaxPayment.objects.bulk_create(b_tax_payments)
+        # Create `PersonYearU1AAssessment` objects
+        u1a_assessments = [
+            PersonYearU1AAssessment(
+                person_year=person_months[0].person_year, dividend_total=dividend_total
+            )
+            for dividend_total in (Decimal("0"), Decimal("10"))
+        ]
+        PersonYearU1AAssessment.objects.bulk_create(u1a_assessments)
 
 
-class TestCategoryChoiceFilter(PersonEnv):
-    def setUp(self):
-        super().setUp()
-        self.instance = CategoryChoiceFilter(
-            field_name="location_code",
-            field=Person.location_code,
-        )
+class TimeContextMixin(TestViewMixin):
+    def _time_context(self, year: int = 2020, month: int = 12):
+        return patch("suila.views.timezone.now", return_value=datetime(year, month, 1))
 
-    def test_choices(self):
-        self.assertListEqual(
-            # self.instance.extra["choices"] is a callable
-            self.instance.extra["choices"](),
-            [
-                # 2 persons have location code "1"
-                ("1", "1 (2)"),
-                # 1 person has no location code
-                (CategoryChoiceFilter._isnull, f"{_('Ingen')} (1)"),
-            ],
-        )
+    def _get_context_data(self, **params: Any):
+        with self._time_context():
+            view, response = self.request_get(self.admin_user, "", **params)
+            return view.get_context_data()
 
-    def test_filter_on_isnull(self):
-        filtered_qs = self.instance.filter(
-            Person.objects.all(), CategoryChoiceFilter._isnull
-        )
-        self.assertQuerySetEqual(
-            filtered_qs,
-            Person.objects.filter(location_code__isnull=True),
-        )
+    def view(self, user: User = None, path: str = "", **params: Any) -> TemplateView:
+        with self._time_context():
+            return super().view(user, path, **params)
 
 
-class TestPersonSearchView(TestViewMixin, PersonEnv):
+class TestCPRField(SimpleTestCase):
+    def test_accepts_cpr_variations(self):
+        instance = CPRField()
+        for variation in ("0101012222", "010101-2222"):
+            with self.subTest(variation):
+                self.assertEqual(instance.clean(variation), "0101012222")
 
+
+class TestPersonSearchView(TimeContextMixin, PersonEnv):
     view_class = PersonSearchView
 
     def test_get_queryset_includes_padded_cpr(self):
@@ -168,8 +204,22 @@ class TestPersonSearchView(TestViewMixin, PersonEnv):
             transform=lambda obj: obj._cpr,
         )
 
+    def test_get_context_data_includes_person_table(self):
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.admin_user)
+            context = view.get_context_data()
+            self.assertIn("table", context)
+            self.assertIsInstance(context["table"], PersonTable)
+
+    def test_get_context_data_includes_filterset(self):
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.admin_user)
+            self.assertIn("filter", response.context_data)
+            self.assertIsInstance(response.context_data["filter"], PersonFilterSet)
+
     def test_borger_see_only_self(self):
-        view, response = self.request_get(self.normal_user)
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.normal_user)
         qs = view.get_queryset()
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs.first(), self.person1)
@@ -205,21 +255,6 @@ class TestPersonSearchView(TestViewMixin, PersonEnv):
             {itemview.item for itemview in itemviews},
             {self.person1, self.person2, self.person3},
         )
-
-
-class TimeContextMixin(TestViewMixin):
-
-    def _time_context(self, year: int = 2020, month: int = 12):
-        return patch("suila.views.timezone.now", return_value=datetime(year, month, 1))
-
-    def _get_context_data(self, **params: Any):
-        with self._time_context():
-            view, response = self.request_get(self.admin_user, "", **params)
-            return view.get_context_data()
-
-    def view(self, user: User = None, path: str = "", **params: Any) -> TemplateView:
-        with self._time_context():
-            return super().view(user, path, **params)
 
 
 class TestYearMonthMixin(TimeContextMixin, TestCase):
@@ -273,42 +308,49 @@ class TestYearMonthMixin(TimeContextMixin, TestCase):
 class TestPersonDetailView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailView
 
-    def test_context_includes_key_figures(self):
-        """The context must include the key figures for each person"""
-        # Act
-        context = self._get_context_data(pk=self.person1.pk)
-        # Assert: the context keys are present
-        self.assertIn("total_estimated_year_result", context)
-        self.assertIn("total_actual_year_result", context)
-        self.assertIn("benefit_paid", context)
-        # Assert: the key figures are correct
-        self.assertEqual(
-            context["total_estimated_year_result"],
-            self._get_income_estimate_attr_sum("estimated_year_result"),
-        )
-        self.assertEqual(
-            context["total_actual_year_result"],
-            self._get_income_estimate_attr_sum("actual_year_result"),
-        )
-        self.assertEqual(context["benefit_paid"], sum(range(1, 13)))
+    def test_get_context_data(self):
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Verify that expected context variables are present
+            self.assertIn("next_payout_date", response.context_data)
+            self.assertIn("benefit_paid", response.context_data)
+            self.assertIn("estimated_year_benefit", response.context_data)
+            self.assertIn("estimated_year_result", response.context_data)
+            self.assertIn("table", response.context_data)
+            # Verify the values of the context variables
+            self.assertEqual(
+                response.context_data["next_payout_date"], get_payout_date(2020, 12)
+            )
+            self.assertEqual(response.context_data["benefit_paid"], Decimal("12.0"))
+            self.assertIsNone(response.context_data["estimated_year_benefit"])
+            self.assertIsNone(response.context_data["estimated_year_result"])
+            self.assertIsInstance(response.context_data["table"], PersonMonthTable)
+            self.assertFalse(response.context_data["table"].orderable)
 
-    def _get_income_estimate_attr_sum(
-        self, attr: str, year: int = 2020, month: int = 12
-    ) -> Decimal:
-        return (
-            IncomeEstimate.objects.filter(
-                person_month__person_year__person=self.person1,
-                person_month__person_year__year__year=year,
-                person_month__month=month,
-            ).aggregate(sum=Sum(attr))
-        )["sum"]
+    def test_get_context_data_handles_no_matching_person_month(self):
+        # Arrange: go to year without `PersonMonth` objects for `normal_user`
+        with self._time_context(year=2021):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertTrue(response.context_data["no_current_month"])
+
+    def test_get_table_data(self):
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            queryset = view.get_table_data()
+            self.assertQuerySetEqual(
+                queryset,
+                range(1, 13),
+                transform=lambda obj: obj.month,
+                ordered=True,
+            )
 
     def test_borger_see_only_self(self):
-        self.request_get(self.normal_user, pk=self.person1.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person2.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person3.pk)
+        with self._time_context(year=2020):
+            self.request_get(self.normal_user, pk=self.person1.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person2.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person3.pk)
 
     def test_other_see_none(self):
         with self.assertRaises(PermissionDenied):
@@ -343,152 +385,110 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         self.assertEqual(itemviews[0].item, self.person1)
 
 
-class TestPersonDetailBenefitView(TimeContextMixin, PersonEnv):
-    view_class = PersonDetailBenefitView
-
-    def test_context_includes_benefit_data(self):
-        """The context data must include the `benefit_data` table"""
-        # Act
-        context = self._get_context_data(pk=self.person1.pk)
-        # Assert: the context key is present
-        self.assertIn("benefit_data", context)
-        # Assert: the table data is correct (one figure for each month)
-        self.assertQuerySetEqual(
-            context["benefit_data"],
-            range(1, 13),
-            transform=lambda obj: obj["benefit"],
-            ordered=True,
-        )
-
-    def test_context_includes_benefit_chart(self):
-        """The context data must include the `benefit_chart` chart"""
-        self.assertIn("benefit_chart", self._get_context_data(pk=self.person1.pk))
-
-    def test_get_benefit_chart_series(self):
-        """The `benefit chart` must consist of the expected series
-        The "benefit chart" consists of two series:
-        1. The benefit figures themselves (`PersonMonth.benefit_paid`) for each month.
-        2. The estimated yearly income total (`IncomeEstimate.estimated_year_result`)
-           for each month.
-        """
-        # Act
-        with self._time_context():
-            view, response = self.request_get(pk=self.person1.pk)
-            benefit_chart_series = view.get_all_benefit_chart_series()
-        # Assert: verify the `benefit` series
-        self.assertDictEqual(
-            benefit_chart_series[0],
-            {
-                "data": [float(x) for x in range(1, 13)],
-                "name": _("Beregnet beskæftigelsesfradrag"),
-                "group": "benefit",
-            },
-        )
-        # Assert: verify the `estimated_total_income` series
-        self.assertDictEqual(
-            benefit_chart_series[1],
-            {
-                "data": [float(x * 2 * 100) for x in range(1, 13)],
-                "name": _("Estimeret samlet lønindkomst"),
-                "group": "estimated_total_income",
-                "type": "column",
-            },
-        )
-
-    def test_borger_see_only_self(self):
-        self.request_get(self.normal_user, pk=self.person1.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person2.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person3.pk)
-
-    def test_other_see_none(self):
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.other_user, pk=self.person1.pk)
-
-    def test_view_anonymous_denied(self):
-        view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["location"], "/login?next=/")
-        view, response = self.request_get(self.no_user, "", pk=self.person2.pk)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["location"], "/login?next=/")
-        view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["location"], "/login?next=/")
-
-    def test_view_log(self):
-        self.request_get(
-            self.admin_user,
-            f"/persons/{self.person1.pk}/benefits/?year=2020",
-            pk=self.person1.pk,
-        )
-        logs = PageView.objects.all()
-        self.assertEqual(logs.count(), 1)
-        pageview = logs[0]
-        self.assertEqual(pageview.class_name, "PersonDetailBenefitView")
-        self.assertEqual(pageview.user, self.admin_user)
-        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
-        self.assertEqual(pageview.params, {"year": "2020"})
-        itemviews = list(pageview.itemviews.all())
-        self.assertEqual(len(itemviews), 1)
-        self.assertEqual(itemviews[0].item, self.person1)
-
-
 class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
+    maxDiff = None
+
     view_class = PersonDetailIncomeView
 
-    def test_context_includes_income_per_employer_and_type(self):
-        """The context must include the `income_per_employer_and_type` table"""
-        # Act
-        context = self._get_context_data(pk=self.person1.pk)
-        # Assert: the context key is present
-        self.assertIn("income_per_employer_and_type", context)
-        # Assert: the table data is correct (one yearly total for each employer/type)
-        expected_total = Decimal(sum(x * 2 * 10 for x in range(1, 13)))
-        self.assertListEqual(
-            context["income_per_employer_and_type"],
-            [
-                {"source": "A-indkomst", "total_amount": expected_total},
-                {"source": "B-indkomst", "total_amount": expected_total},
-            ],
-        )
+    def test_get_context_data(self):
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Verify that expected context variables are present
+            self.assertIn("sum_table", response.context_data)
+            self.assertIn("detail_table", response.context_data)
+            self.assertIn("available_person_years", response.context_data)
+            # Verify the values of the context variables
+            self.assertIsInstance(
+                response.context_data["sum_table"], IncomeSumsBySignalTypeTable
+            )
+            self.assertIsInstance(
+                response.context_data["detail_table"], IncomeSignalTable
+            )
+            self.assertQuerySetEqual(
+                response.context_data["available_person_years"],
+                [self.person_year],
+            )
 
-    def test_context_includes_income_chart(self):
-        """The context data must include the `income_chart` chart"""
-        self.assertIn("income_chart", self._get_context_data(pk=self.person1.pk))
-
-    def test_get_income_chart_series(self):
-        """The `income chart` must consist of the expected series.
-        The "income chart" consists of N series, one series for each source of income
-        that the person has had during the year.
-        """
-        # Act
-        with self._time_context():
-            view, response = self.request_get(self.admin_user, pk=self.person1.pk)
-            income_chart_series = view.get_income_chart_series()
-        # Assert: verify that we get the expected series: two A income series, and two
-        # B income series (4 series total.)
-        self.assertEqual(len(income_chart_series), 2)
-        self.assertListEqual(
-            income_chart_series,
-            [
-                {
-                    "data": [float(x * 2 * 10) for x in range(1, 13)],
-                    "name": name,
-                    "group": "income",
-                    "type": "column",
-                }
-                for name in (_("A-indkomst"), _("B-indkomst"))
-            ],
-        )
+    def test_get_income_signals(self):
+        with self._time_context(year=2020):
+            # Act
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            result = view.get_income_signals()
+            # Assert: monthly income signals are as expected
+            self.assertListEqual(
+                [
+                    signal
+                    for signal in result
+                    if signal.signal_type
+                    in (IncomeSignalType.Lønindkomst, IncomeSignalType.Indhandling)
+                ],
+                [
+                    IncomeSignal(
+                        signal_type,
+                        employer,
+                        Decimal(month * 10),
+                        date(2020, month, 1),
+                    )
+                    for month, signal_type, employer in itertools.product(
+                        # 11 months in reverse order (January is exempt due to zero
+                        # income.)
+                        range(12, 1, -1),
+                        # Two types of signal
+                        (IncomeSignalType.Lønindkomst, IncomeSignalType.Indhandling),
+                        # 12 entries for employer 2 (who only has a CVR, no name),
+                        # 12 entries for employer 1 (whose name is "Employer 1"),
+                        # 12 entries without employer ("Ikke oplyst".)
+                        # Sorted alphabetically.
+                        (
+                            _("CVR: %(cvr)s") % {"cvr": 2},
+                            "Employer 1",
+                            _("Ikke oplyst"),
+                        ),
+                    )
+                ],
+            )
+            # Assert: B tax payment signals are as expected
+            self.assertListEqual(
+                [
+                    signal
+                    for signal in result
+                    if signal.signal_type == IncomeSignalType.BetaltBSkat
+                ],
+                [
+                    IncomeSignal(
+                        IncomeSignalType.BetaltBSkat,
+                        _("Rate: %(rate_number)s") % {"rate_number": month},
+                        Decimal(month * 10),
+                        date(2020, month, 1),
+                    )
+                    # 11 months in reverse order (January is exempt due to zero income)
+                    for month in range(12, 1, -1)
+                ],
+            )
+            # Assert: U1A signals are as expected
+            self.assertListEqual(
+                [
+                    signal
+                    for signal in result
+                    if signal.signal_type == IncomeSignalType.Udbytte
+                ],
+                [
+                    IncomeSignal(
+                        IncomeSignalType.Udbytte,
+                        "",
+                        Decimal("10"),
+                        date.today(),
+                    )
+                ],
+            )
 
     def test_borger_see_only_self(self):
-        self.request_get(self.normal_user, pk=self.person1.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person2.pk)
-        with self.assertRaises(PermissionDenied):
-            self.request_get(self.normal_user, pk=self.person3.pk)
+        with self._time_context(year=2020):
+            self.request_get(self.normal_user, pk=self.person1.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person2.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person3.pk)
 
     def test_other_see_none(self):
         with self.assertRaises(PermissionDenied):
@@ -521,6 +521,21 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
         itemviews = list(pageview.itemviews.all())
         self.assertEqual(len(itemviews), 1)
         self.assertEqual(itemviews[0].item, self.person1)
+
+
+class TestCalculateBenefitView(TimeContextMixin, PersonEnv):
+    view_class = CalculateBenefitView
+
+    def test_form_valid(self):
+        with self._time_context(year=2020):
+            view, response = self.request_post(
+                self.normal_user,
+                reverse("suila:calculate_benefit"),
+                {"estimated_year_income": "300000"},
+            )
+            context_data = response.context_data
+            self.assertEqual(context_data["yearly_benefit"], Decimal("12600.00"))
+            self.assertEqual(context_data["monthly_benefit"], Decimal("1050.00"))
 
 
 class TestNoteView(TimeContextMixin, PersonEnv):
