@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import itertools
+import json
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -11,6 +12,7 @@ from typing import Any, Iterable
 from urllib.parse import urlencode
 
 from common.models import User
+from common.utils import SuilaJSONEncoder
 from common.view_mixins import ViewLogMixin
 from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
@@ -23,6 +25,7 @@ from django.utils.html import format_html
 from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, TemplateView
+from django.views.generic.base import ContextMixin
 from django.views.generic.detail import BaseDetailView
 from django_filters import Filter, FilterSet
 from django_filters.views import FilterView
@@ -426,20 +429,47 @@ class PersonDetailIncomeView(
                 )
 
 
+class GraphViewMixin(ContextMixin):
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["graph_points"] = self.to_json(
+            self.calculation_method.graph_points
+        )
+        return context_data
+
+    @cached_property
+    def calculation_method(self):
+        year = Year.objects.get(year=self.year)
+        return year.calculation_method
+
+    def to_json(self, data: dict) -> str:
+        return json.dumps(data, cls=SuilaJSONEncoder)
+
+
+class GraphView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    YearMonthMixin,
+    ViewLogMixin,
+    GraphViewMixin,
+    TemplateView,
+):
+    template_name = "suila/graph.html"
+
+
 class CalculateBenefitView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
     YearMonthMixin,
     ViewLogMixin,
+    GraphViewMixin,
     FormView,
 ):
     form_class = CalculateBenefitForm
     template_name = "suila/calculate_benefit.html"
 
     def form_valid(self, form):
-        year = Year.objects.get(year=self.year)
-        calculation_method = year.calculation_method
-        yearly_benefit = calculation_method.calculate(
+        yearly_benefit = self.calculation_method.calculate(
             form.cleaned_data["estimated_year_income"]
         )
         monthly_benefit = Decimal(yearly_benefit / 12).quantize(Decimal(".01"))
@@ -447,6 +477,7 @@ class CalculateBenefitView(
             self.get_context_data(
                 yearly_benefit=yearly_benefit,
                 monthly_benefit=monthly_benefit,
+                graph_points=self.to_json(self.calculation_method.graph_points),
             )
         )
 

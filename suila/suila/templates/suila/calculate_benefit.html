@@ -3,6 +3,7 @@
 
 {% extends "common/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load django_bootstrap5 %}
 {% load amount_tags %}
 
@@ -39,23 +40,25 @@
                 <span class="ms-1">{% translate "Ryd" %}</span>
             </button>
         </form>
-    </div>
-</div>
-{% if monthly_benefit or yearly_benefit %}
-<div class="row mt-5">
-    <div class="col-5">
-        <div class="emphasis">
+        {% if monthly_benefit or yearly_benefit %}
+        <div class="emphasis mt-5">
             <p>{% translate "Beregnet beskæftigelsesfradrag pr. måned:" %}</p>
             <h1>{{ monthly_benefit|format_amount }}</h1>
             <p class="mt-5">{% translate "Beregnet beskæftigelsesfradrag for hele året:" %}</p>
             <h1>{{ yearly_benefit|format_amount }}</h1>
         </div>
+        {% endif %}
+    </div>
+    <div class="col-7" id="graph">
+        {# Replaced by ApexChart graph at runtime #}
     </div>
 </div>
-{% endif %}
+<script id="graph_points" type="application/json">{{ graph_points|safe }}</script>
 {% endblock %}
 
 {% block extra_headers %}
+<link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+<script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
 <script nonce="{{ request.csp_nonce }}">
 $(document).ready(function () {
     const monthField = $("[name={{ form.estimated_month_income.name }}]");
@@ -74,12 +77,81 @@ $(document).ready(function () {
         }
     }
 
+    const renderChart = function () {
+        let data = JSON.parse($("#graph_points").text());
+        const graph = $("#graph");
+        const yearlyIncome = parseFloat(yearField.val());
+        const yearlyBenefit = parseFloat("{{ yearly_benefit }}");
+
+        if (yearlyIncome > data[data.length - 1][0]) {
+            // result is greater than our current max point in the graph
+            data = [...data, [yearlyIncome, 0]];  // Clone array
+        }
+
+        const chart = new ApexCharts(graph.get(0), {
+            "chart": {
+                "nonce": "{{ request.csp_nonce }}",
+                "type": "line",
+                "toolbar": {"show": false},
+                "animations": {"enabled": false},
+                "selection": {"enabled": false},
+                "fontFamily": "Figtree Normal, Trebuchet MS, Helvetica, sans-serif",
+            },
+            "tooltip": {"enabled": false},
+            "colors": ["#000000"],
+            "series": [{
+                "name": "Suila",
+                "data": data,
+            }],
+            "legend": {
+                "fontSize": "1.5rem"
+            },
+            "xaxis": {
+                "type": "numeric",
+                "title": {
+                    "text": "Estimeret årsindkomst",
+                    "style": {"fontSize": "1.5rem"},
+                },
+                "labels": {"style": {"fontSize": "1rem"}},
+            },
+            "yaxis": {
+                "title": {
+                    "text": "Beregnet beskæftigelsestilskud for hele året",
+                    "style": {"fontSize": "1.5rem"},
+                },
+                "labels": {"style": {"fontSize": "1rem"}},
+            },
+            "annotations": {
+                "points": [{
+                    "x": yearlyIncome || 0,
+                    "y": yearlyBenefit || 0,
+                    "marker": {
+                        "size": 4,
+                    },
+                    "label": {
+                        "text": [
+                            "Beregnet Suila for hele året: " + yearlyBenefit,
+                        ],
+                        "style": {
+                            "background": "#fff",
+                            "color": "#333",
+                            "fontSize": "1.5rem",
+                        }
+                    }
+                }]
+            },
+        });
+        chart.render();
+    }
+
     resetButton.on("click", function (evt) {
         // Reset the input fields to empty
         monthField.val("");
         yearField.val("");
         // Disable the submit button until new values have been entered
         enableSubmitOnValidInput();
+        // Update graph
+        renderChart();
         // Prevent form submit
         evt.preventDefault();
     });
@@ -95,6 +167,7 @@ $(document).ready(function () {
     });
 
     enableSubmitOnValidInput();
+    renderChart();
 });
 </script>
 {% endblock %}
