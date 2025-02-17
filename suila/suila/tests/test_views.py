@@ -16,6 +16,7 @@ from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
@@ -38,6 +39,7 @@ from suila.models import (
 from suila.view_mixins import PermissionsRequiredMixin
 from suila.views import (
     CalculateBenefitView,
+    CPRField,
     IncomeSignal,
     IncomeSignalTable,
     IncomeSignalType,
@@ -180,6 +182,14 @@ class TimeContextMixin(TestViewMixin):
     def view(self, user: User = None, path: str = "", **params: Any) -> TemplateView:
         with self._time_context():
             return super().view(user, path, **params)
+
+
+class TestCPRField(SimpleTestCase):
+    def test_accepts_cpr_variations(self):
+        instance = CPRField()
+        for variation in ("0101012222", "010101-2222"):
+            with self.subTest(variation):
+                self.assertEqual(instance.clean(variation), "0101012222")
 
 
 class TestPersonSearchView(TimeContextMixin, PersonEnv):
