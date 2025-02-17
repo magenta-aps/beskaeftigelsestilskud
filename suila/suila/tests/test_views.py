@@ -98,6 +98,7 @@ class PersonEnv(TestCase):
             scaledown_ceiling=Decimal("250000.00"),
         )
         year = Year.objects.create(year=2020, calculation_method=calc)
+        Year.objects.create(year=2021, calculation_method=calc)
 
         # Add "signal" data to person 1
         cls.person_year, _ = PersonYear.objects.update_or_create(
@@ -325,6 +326,12 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertIsNone(response.context_data["estimated_year_result"])
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
             self.assertFalse(response.context_data["table"].orderable)
+
+    def test_get_context_data_handles_no_matching_person_month(self):
+        # Arrange: go to year without `PersonMonth` objects for `normal_user`
+        with self._time_context(year=2021):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertTrue(response.context_data["no_current_month"])
 
     def test_get_table_data(self):
         with self._time_context(year=2020):
