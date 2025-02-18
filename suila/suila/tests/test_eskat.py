@@ -11,7 +11,7 @@ from io import StringIO, TextIOBase
 from math import ceil
 from sys import stdout
 from threading import current_thread
-from typing import Any, List
+from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs
 
@@ -482,6 +482,7 @@ class TestExpectedIncome(BaseTestCase):
                     "0000001234",
                     2024,
                     other_b_income=2000.00,
+                    valid_from="2024-01-01T00:00:00",
                 ),
                 ExpectedIncome(None, 2024),  # shall be ignored
             ],
@@ -1122,6 +1123,22 @@ class TestUpdateMixin(BaseEnvMixin):
         self.handler.create_or_update_objects(*self.get_handler_args(response, load))
         return load
 
+    def create_or_update_multiple_objects(self, *items: Dict[str, Any]) -> DataLoad:
+        responses = []
+        for item in items:
+            responses.append(
+                self.response_model(
+                    cpr=self.person.cpr,
+                    year=self.year.year,
+                    **item,
+                )
+            )
+        load = DataLoad.objects.create(source="testing")
+        self.handler.create_or_update_objects(
+            self.year.year, responses, load, StringIO()
+        )
+        return load
+
     def get_handler_args(self, response, load: DataLoad) -> tuple:
         return self.year.year, [response], load, StringIO()
 
@@ -1238,16 +1255,24 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
 
     def test_subsequent_update(self):
         # Arrange: create an initial value for year
-        load1 = self.create_or_update_objects(capital_income=1000)
+        load1 = self.create_or_update_objects(
+            capital_income=1000, valid_from="2020-01-01T00:00:00"
+        )
         # Act: add an updated value for year
-        load2 = self.create_or_update_objects(capital_income=2000)
+        load2 = self.create_or_update_objects(
+            capital_income=2000, valid_from="2020-01-01T00:00:00"
+        )
+        # A second update - should not result in an extra history item
+        self.create_or_update_objects(
+            capital_income=2000, valid_from="2020-01-01T00:00:00"
+        )
         # Assert: two separate loads are recorded
         self.assertNotEqual(load1, load2)
         # Assert: there is only one `PersonYearAssessment` (with the latest value)
         assessments = PersonYearAssessment.objects.filter(
             person_year__person=self.person,
             person_year__year=self.year,
-        )
+        ).order_by("valid_from")
         self.assertQuerySetEqual(
             assessments.values_list("person_year__year__year", "capital_income"),
             [(self.year.year, 2000)],
@@ -1263,18 +1288,43 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
 
     def test_updated_data_affects_estimated_year_income(self):
         # Arrange: create an initial value for this year
-        self.create_or_update_objects(capital_income=120000)
+        self.create_or_update_objects(
+            capital_income=120000, valid_from="2020-01-01T00:00:00"
+        )
         # Act: run income estimation for month 1
         estimate_1 = self.estimate_income(month=1)
         # Assert: we expect a yearly income matching the self-reported expected income
         self.assertEqual(estimate_1, Decimal("120000"))
 
         # Arrange: update the previous value for this year
-        self.create_or_update_objects(capital_income=60000)
+        self.create_or_update_objects(
+            capital_income=60000, valid_from="2020-01-05T00:00:00"
+        )
         # Act: re-run income estimation for month 1
         estimate_2 = self.estimate_income(month=1)
         # Assert: we expect a yearly income matching the self-reported expected income
         self.assertEqual(estimate_2, Decimal("60000"))
+
+    def test_chunk_contains_same(self):
+        self.create_or_update_multiple_objects(
+            {"capital_income": 1300, "valid_from": "2020-07-01T00:00:00"},
+            {"capital_income": 1400, "valid_from": "2020-07-01T00:00:00"},
+            {"capital_income": 1200, "valid_from": "2020-01-01T00:00:00"},
+        )
+        assessments = PersonYearAssessment.objects.filter(
+            person_year__person=self.person,
+            person_year__year=self.year,
+        ).order_by("-valid_from")
+        self.assertQuerySetEqual(
+            assessments.values_list("person_year__year__year", "capital_income"),
+            [(self.year.year, 1400), (self.year.year, 1200)],
+        )
+        self.assertQuerySetEqual(
+            assessments[0]
+            .history.order_by("valid_from")
+            .values_list("capital_income", flat=True),
+            [Decimal(1300), Decimal(1400)],
+        )
 
 
 class TestAnnualIncomeUpdate(TestUpdateMixin, TestCase):

@@ -477,7 +477,11 @@ class SelfReportedEngine(EstimationEngine):
     ) -> IncomeEstimate | None:
         if income_type != IncomeType.B:
             raise IncomeTypeUnhandledByEngine(income_type, cls)
-        assessment = person_month.person_year.assessments.order_by("-created").first()
+
+        assessment = person_month.person_year.assessments.order_by(
+            "-valid_from",
+        ).first()
+
         if assessment is not None:
             if person_month.month == 12:
                 estimated_year_result = MonthlyIncomeReport.objects.filter(
