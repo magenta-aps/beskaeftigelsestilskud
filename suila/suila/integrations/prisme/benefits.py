@@ -140,7 +140,7 @@ class BatchExport:
         return f"SUILA-TAPIT-{cpr}-{date_formatted}"
 
     def get_transaction_text(self, person_month: PersonMonth) -> str:
-        fixed_part: str = _(
+        fixed_part = _(
             cleandoc(
                 """
                 Suila-tapit udbetales på baggrund af din forventede årsindkomst.
@@ -156,7 +156,7 @@ class BatchExport:
             )
         )
         # TODO: use actual figures
-        variable_part: str = _(
+        variable_part = _(
             cleandoc(
                 """
                                                 Marts 2025          Samlet 2025
