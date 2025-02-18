@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import base64
 import logging
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from functools import cached_property
 from os.path import basename
@@ -1075,6 +1075,11 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         DataLoad,
         null=True,
         on_delete=models.SET_NULL,
+    )
+    valid_from = models.DateTimeField(
+        default=datetime(1900, 1, 1, 0, 0, 0),
+        null=False,
+        blank=False,
     )
 
     capital_income = models.DecimalField(

@@ -5,7 +5,7 @@ import logging
 import re
 from collections import defaultdict
 from dataclasses import asdict, fields
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from itertools import batched
 from typing import Any, Dict, Iterable, List, Set, TextIO
@@ -13,6 +13,7 @@ from typing import Any, Dict, Iterable, List, Set, TextIO
 from common.utils import camelcase_to_snakecase, omit
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
 from suila.integrations.eskat.responses.data_models import (
@@ -116,15 +117,26 @@ class Handler:
         return person_month
 
     @classmethod
-    def get_person_year_assessment(cls, cpr: str, year: int) -> PersonYearAssessment:
+    def get_person_year_assessment(
+        cls, cpr: str, year: int, valid_from: datetime
+    ) -> PersonYearAssessment:
         qs = PersonYearAssessment.objects.select_related(
             "person_year__year", "person_year__person"
         )
         person_year = qs.get(
             person_year__person__cpr=cpr,
             person_year__year__year=year,
+            valid_from=valid_from,
         )
         return person_year
+
+    @classmethod
+    def parse_value(cls, name: str, value: Any) -> Any:
+        if name == "valid_from":
+            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").replace(
+                tzinfo=timezone.get_current_timezone()
+            )
+        return Decimal(value)
 
     @classmethod
     def get_field_values(
@@ -136,7 +148,7 @@ class Handler:
         if exclude is None:
             exclude = set()
         return {
-            f.name: Decimal(getattr(item, f.name) or default)
+            f.name: cls.parse_value(f.name, getattr(item, f.name) or default)
             for f in fields(item)
             if f.name not in exclude
         }
@@ -239,8 +251,9 @@ class ExpectedIncomeHandler(Handler):
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
 
             if person_years:
-                objs_to_create = []
+                objs_to_create = {}
                 objs_to_update = []
+                postponed = []
 
                 for item in items:
                     if item.cpr is None or item.year is None:
@@ -257,7 +270,6 @@ class ExpectedIncomeHandler(Handler):
                             "cpr",
                             "year",
                             # Exclude fields not defined on `PersonYearAssessment`
-                            "valid_from",
                             "do_expect_a_income",
                             "benefits_income",
                             "catch_sale_factory_income",
@@ -285,23 +297,40 @@ class ExpectedIncomeHandler(Handler):
 
                     try:
                         # Find existing assessment
-                        assessment = cls.get_person_year_assessment(item.cpr, item.year)
-                    except PersonYearAssessment.DoesNotExist:
-                        # An existing assessment does not exist for this person and year
-                        # - create it.
-                        assessment = PersonYearAssessment(
-                            person_year=person_years[item.cpr],
-                            load=load,
-                            brutto_b_income=brutto_b_income,
-                            **field_values,
+                        assessment = cls.get_person_year_assessment(
+                            item.cpr, item.year, field_values["valid_from"]
                         )
-                        objs_to_create.append(assessment)
+                    except PersonYearAssessment.DoesNotExist:
+                        # An existing assessment does not exist for this
+                        # person and year and valid_from
+                        key = (item.cpr, item.year)
+                        if key in objs_to_create:
+                            # We have an item in this chunk already
+                            # Current item will be handled in recursion
+                            postponed.append(item)
+                        else:
+                            objs_to_create[key] = PersonYearAssessment(
+                                person_year=person_years[item.cpr],
+                                load=load,
+                                brutto_b_income=brutto_b_income,
+                                **field_values,
+                            )
                     else:
-                        # An assessment exists for this person and year - update it.
+                        # An assessment exists for this
+                        # person and year and valid_from - update it.
+                        changed = False
                         for name, value in field_values.items():
-                            setattr(assessment, name, value)
-                        assessment.brutto_b_income = brutto_b_income
-                        objs_to_update.append(assessment)
+                            if getattr(assessment, name) != value:
+                                setattr(assessment, name, value)
+                                changed = True
+                        if assessment.brutto_b_income != brutto_b_income:
+                            assessment.brutto_b_income = brutto_b_income
+                            changed = True
+                        if changed:
+                            objs_to_update.append(assessment)
+
+                objs_to_create_list = list(objs_to_create.values())
+                bulk_create_with_history(objs_to_create_list, PersonYearAssessment)
 
                 bulk_update_with_history(
                     objs_to_update,
@@ -313,12 +342,17 @@ class ExpectedIncomeHandler(Handler):
                     ],
                 )
 
-                bulk_create_with_history(objs_to_create, PersonYearAssessment)
-
-                out.write(f"Created {len(objs_to_create)} PersonYearAssessment objects")
+                out.write(
+                    f"Created {len(objs_to_create_list)} PersonYearAssessment objects"
+                )
                 out.write(f"Updated {len(objs_to_update)} PersonYearAssessment objects")
 
-                return objs_to_create + objs_to_update
+                if postponed:
+                    objs_to_update += cls.create_or_update_objects(
+                        year, postponed, load, out
+                    )
+
+                return objs_to_create_list + objs_to_update
 
         # Fall-through: return empty list
         return []
