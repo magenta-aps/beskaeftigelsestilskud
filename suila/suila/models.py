@@ -1113,7 +1113,7 @@ class PrismeAccountAlias(PermissionsMixin, models.Model):
     """The account alias itself"""
 
     tax_municipality_location_code = models.TextField()
-    """The 'stedkode' of the municipality issuing the benefit"""
+    """The 'myndighedskode' of the municipality issuing the benefit"""
 
     tax_year = models.PositiveSmallIntegerField()
     """The 'skatteår' in which the Prisme postings should be made"""
