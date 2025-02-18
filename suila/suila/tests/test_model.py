@@ -4,7 +4,6 @@
 
 from datetime import date
 from decimal import Decimal
-from unittest.mock import MagicMock
 
 from common.tests.test_mixins import UserMixin
 from django.test import TestCase
@@ -302,13 +301,6 @@ class TestStandardWorkBenefitCalculationMethod(ModelTest):
                 (Decimal("160000.00"), Decimal("15750.00")),
             ],
         )
-
-
-pitu_client_mock = MagicMock()
-pitu_client_mock.get_person_info.return_value = {"civilstand": "G", "stedkode": "001"}
-
-PituClient_mock = MagicMock()
-PituClient_mock.from_settings.return_value = pitu_client_mock
 
 
 class UserModelTest(UserMixin, ModelTest):
