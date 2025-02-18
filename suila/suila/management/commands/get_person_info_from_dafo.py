@@ -48,8 +48,18 @@ class Command(SuilaBaseCommand):
                         f"{e.response.content}"
                     )
             else:
-                person.civil_state = person_data["civilstand"]
-                person.location_code = person_data["stedkode"]
+                if "civilstand" in person_data:
+                    person.civil_state = person_data["civilstand"]
+                else:
+                    self._write_verbose(
+                        f'no "civilstand" in person_data: {person_data}'
+                    )
+
+                if "stedkode" in person_data:
+                    person.location_code = person_data["stedkode"]
+                else:
+                    self._write_verbose(f'no "stedkode" in person_data: {person_data}')
+
                 person.save()
                 self._write_verbose(
                     f"Updated civil state and location code for {person.cpr}"
