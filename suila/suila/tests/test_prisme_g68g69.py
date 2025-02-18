@@ -70,6 +70,7 @@ class TestG68G69TransactionWriter(SimpleTestCase):
             1000,  # amount
             self.payment_date,
             self.posting_date,
+            "SUILA-TAPIT-3112700000-JAN25",
             "12345678",  # invoice number
             "Some descriptive text",
         )

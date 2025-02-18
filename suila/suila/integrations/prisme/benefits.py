@@ -4,6 +4,7 @@
 import logging
 from datetime import date
 from decimal import Decimal
+from inspect import cleandoc
 from io import BytesIO
 from typing import Generator
 
@@ -12,6 +13,7 @@ from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import CharField, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
+from django.utils.translation import gettext_lazy as _
 from tenQ.client import ClientException, put_file_in_prisme_folder
 from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
@@ -119,6 +121,7 @@ class BatchExport:
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),  # TODO: use calculated date
             date.today(),  # TODO: use calculated date
+            self.get_posting_text(person_month),
             invoice_no,
             self.get_transaction_text(person_month),
         )
@@ -131,13 +134,43 @@ class BatchExport:
             invoice_no=invoice_no,
         )
 
-    def get_transaction_text(self, person_month: PersonMonth) -> str:
+    def get_posting_text(self, person_month: PersonMonth) -> str:
         cpr: str = person_month.identifier  # type: ignore[attr-defined]
-        person_month_date: date = date(
-            year=person_month.person_year.year.year, month=person_month.month, day=1
+        date_formatted: str = person_month.year_month.strftime("%b%y").upper()
+        return f"SUILA-TAPIT-{cpr}-{date_formatted}"
+
+    def get_transaction_text(self, person_month: PersonMonth) -> str:
+        fixed_part: str = _(
+            cleandoc(
+                """
+                Suila-tapit udbetales på baggrund af din forventede årsindkomst.
+                Suila-tapit udbetales til borgere med indkomst fra arbejde på
+                70.000 – 500.000 kr. om året.
+                Bemærk, at der er tale om en foreløbig udbetaling.
+                Du vil modtage en endelig opgørelse over Suila-tapit sammen med din
+                slutopgørelse.
+                På http://www.sullissivik.gl kan du læse mere om Suila-tapit.
+                På Mit Suila kan du se hvilke oplysninger Skattestyrelsen har lagt til
+                grund for udbetalingen.
+                """
+            )
         )
-        date_formatted: str = person_month_date.strftime("%b%y").upper()
-        return f"SUILA{cpr}{date_formatted}"
+        # TODO: use actual figures
+        variable_part: str = _(
+            cleandoc(
+                """
+                                                Marts 2025          Samlet 2025
+                A-indkomst fra indhandling            0,00                 0,00
+                A-indkomst fra lønarbejde        28.468,00            87.412,00
+                Betalt B-skat                     7.299,00            15.788,00
+                Modtaget udbytte                      0,00                 0,00
+
+                Udbetaling for marts 2025                       kr.      976,00
+                Grundlag: Forventet årsindkomst fra arbejde     kr.  345.234,00
+                """
+            )
+        )
+        return f"{fixed_part}\n{variable_part}"
 
     def upload_batch(
         self,
