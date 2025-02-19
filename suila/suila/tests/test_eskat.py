@@ -1112,6 +1112,7 @@ class TestUpdateMixin(BaseEnvMixin):
 
     response_model: type | None = None
     handler: type[Handler] | None = None
+    handler_takes_year = True
 
     def create_or_update_objects(self, **kwargs) -> DataLoad:
         response = self.response_model(
@@ -1134,8 +1135,9 @@ class TestUpdateMixin(BaseEnvMixin):
                 )
             )
         load = DataLoad.objects.create(source="testing")
+        opt_args = {"year": self.year.year} if self.handler_takes_year else {}
         self.handler.create_or_update_objects(
-            self.year.year, responses, load, StringIO()
+            items=responses, load=load, out=StringIO(), **opt_args
         )
         return load
 
@@ -1231,6 +1233,24 @@ class TestMonthlyIncomeUpdate(TestUpdateMixin, TestCase):
         # Assert: we now expect 2 months of income 20,000 (January and December), and
         # 10 months of income 0 (the months inbetween), making a total of income 40,000.
         self.assertEqual(estimate_2, Decimal("40000"))
+
+    def test_chunk_contains_same(self):
+        self.create_or_update_multiple_objects(
+            {"month": 1, "salary_income": 10000},
+            {"month": 1, "salary_income": 11000},
+        )
+        monthly_income_reports = MonthlyIncomeReport.objects.filter(
+            person_month__person_year__person=self.person,
+            person_month__month=1,
+        )
+        self.assertQuerySetEqual(
+            monthly_income_reports.values_list("month", "salary_income"),
+            [(1, 11000)],
+        )
+        self.assertQuerySetEqual(
+            monthly_income_reports[0].history.values_list("salary_income", flat=True),
+            [Decimal(11000), Decimal(10000)],
+        )
 
 
 class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
@@ -1334,6 +1354,7 @@ class TestAnnualIncomeUpdate(TestUpdateMixin, TestCase):
 
     response_model = AnnualIncome
     handler = AnnualIncomeHandler
+    handler_takes_year = False
 
     def setUp(self):
         super().setUp()
@@ -1382,3 +1403,22 @@ class TestAnnualIncomeUpdate(TestUpdateMixin, TestCase):
 
     def get_handler_args(self, response, load: DataLoad) -> tuple:
         return [response], load, StringIO()
+
+    def test_chunk_contains_same(self):
+        self.create_or_update_multiple_objects(
+            {"salary": 100000},
+            {"salary": 100000},
+            {"salary": 110000},
+        )
+        annual_incomes = AnnualIncomeModel.objects.filter(
+            person_year__person=self.person,
+            person_year__year=self.year,
+        )
+        self.assertQuerySetEqual(
+            annual_incomes.values_list("person_year__year__year", "salary"),
+            [(self.year.year, 110000)],
+        )
+        self.assertQuerySetEqual(
+            annual_incomes[0].history.values_list("salary", flat=True),
+            [Decimal(110000), Decimal(100000)],
+        )

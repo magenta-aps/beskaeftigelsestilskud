@@ -200,7 +200,7 @@ class TestPersonSearchView(TimeContextMixin, PersonEnv):
         view = self.view(self.admin_user, "")
         self.assertQuerySetEqual(
             view.get_queryset(),
-            [person.cpr.zfill(10) for person in Person.objects.all()],
+            [person.cpr.zfill(10) for person in Person.objects.all().order_by("cpr")],
             transform=lambda obj: obj._cpr,
         )
 
