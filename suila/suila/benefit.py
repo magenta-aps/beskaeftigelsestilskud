@@ -305,8 +305,8 @@ def get_payout_date(year: int, month: int) -> date:
     """
     Returns the date of a given month's third tuesday.
     """
-    for day in range(1, 8):  # pragma: no branch
-        if date(year, month, day).weekday() == 1:
-            # 0 is monday, 1 is tuesday, and so on.
-            # Find first tuesday, and add two weeks
-            return date(year, month, day + 14)
+    weekday_of_first_day = date(year, month, 1).weekday()
+    first_tuesday = 9 - weekday_of_first_day
+    if first_tuesday > 7:
+        first_tuesday -= 7
+    return date(year, month, first_tuesday + 14)
