@@ -178,7 +178,7 @@ class AnnualIncomeHandler(Handler):
 
             if person_years:
                 objs_to_create = {}
-                objs_to_update = []
+                objs_to_update = {}
                 postponed = []
 
                 for item in items:
@@ -190,33 +190,44 @@ class AnnualIncomeHandler(Handler):
                         continue
 
                     field_values = omit(asdict(item), "cpr", "year")
-                    try:
-                        # Find existing `AnnualIncome` for this person year
-                        annual_income = AnnualIncomeModel.objects.get(
-                            person_year=person_years[item.cpr]
-                        )
-
-                    except AnnualIncomeModel.DoesNotExist:
-                        # An existing `AnnualIncome` does not exist for this person year
-                        # - create it.
-                        key = (item.cpr, item.year)
-                        if key in objs_to_create:
-                            postponed.append(item)
-                        else:
+                    key = (item.cpr, item.year)
+                    if key in objs_to_create:
+                        postponed.append(item)
+                    else:
+                        try:
+                            # Find existing `AnnualIncome` for this person year
+                            annual_income = AnnualIncomeModel.objects.get(
+                                person_year=person_years[item.cpr]
+                            )
+                        except AnnualIncomeModel.DoesNotExist:
+                            # An existing `AnnualIncome` does not exist
+                            # for this person year
+                            # - create it.
                             annual_income = AnnualIncomeModel(
                                 person_year=person_years[item.cpr],
                                 load=load,
                                 **field_values,
                             )
                             objs_to_create[key] = annual_income
-                    else:
-                        # An `AnnualIncome` exists for this person year - update it.
-                        for name, value in field_values.items():
-                            setattr(annual_income, name, value)
-                        objs_to_update.append(annual_income)
+                        else:
+                            # An `AnnualIncome` exists for this person year - update it.
+                            changed = False
+                            for name, value in field_values.items():
+                                if getattr(annual_income, name) != value:
+                                    setattr(annual_income, name, value)
+                                    changed = True
+                            if changed:
+                                objs_to_update[key] = annual_income
 
+                objs_to_create_list = list(objs_to_create.values())
+                objs_to_update_list = list(objs_to_update.values())
+
+                bulk_create_with_history(
+                    objs_to_create_list,
+                    AnnualIncomeModel,
+                )
                 bulk_update_with_history(
-                    objs_to_update,
+                    objs_to_update_list,
                     AnnualIncomeModel,
                     [
                         f.name
@@ -225,17 +236,15 @@ class AnnualIncomeHandler(Handler):
                     ],
                 )
 
-                objs_to_create_list = list(objs_to_create.values())
-
-                bulk_create_with_history(objs_to_create_list, AnnualIncomeModel)
-
                 out.write(f"Created {len(objs_to_create_list)} AnnualIncome objects")
-                out.write(f"Updated {len(objs_to_update)} AnnualIncome objects")
+                out.write(f"Updated {len(objs_to_update_list)} AnnualIncome objects")
 
                 if postponed:
-                    objs_to_update += cls.create_or_update_objects(postponed, load, out)
+                    objs_to_update_list += cls.create_or_update_objects(
+                        postponed, load, out
+                    )
 
-                return objs_to_create_list + objs_to_update
+                return objs_to_create_list + objs_to_update_list
 
         # Fall-through: return empty list
         return []
@@ -262,7 +271,7 @@ class ExpectedIncomeHandler(Handler):
 
             if person_years:
                 objs_to_create = {}
-                objs_to_update = []
+                objs_to_update = {}
                 postponed = []
 
                 for item in items:
@@ -305,48 +314,49 @@ class ExpectedIncomeHandler(Handler):
                         )
                     )
 
-                    try:
-                        # Find existing assessment
-                        assessment = cls.get_person_year_assessment(
-                            item.cpr, item.year, field_values["valid_from"]
-                        )
-                    except PersonYearAssessment.DoesNotExist:
-                        # An existing assessment does not exist for this
-                        # person and year and valid_from
-                        key = (item.cpr, item.year)
-                        if key in objs_to_create:
-                            # We have an item in this chunk already
-                            # Current item will be handled in recursion
-                            # This is done so that each postponed item
-                            # will discover an existing DB object and
-                            # update it (creating a history entry)
-                            postponed.append(item)
-                        else:
+                    key = (item.cpr, item.year)
+                    if key in objs_to_create:
+                        # We have an item in this chunk already
+                        # Current item will be handled in recursion
+                        # This is done so that each postponed item
+                        # will discover an existing DB object and
+                        # update it (creating a history entry)
+                        postponed.append(item)
+                    else:
+                        try:
+                            # Find existing assessment
+                            assessment = cls.get_person_year_assessment(
+                                item.cpr, item.year, field_values["valid_from"]
+                            )
+                        except PersonYearAssessment.DoesNotExist:
+                            # An existing assessment does not exist for this
+                            # person and year and valid_from
                             objs_to_create[key] = PersonYearAssessment(
                                 person_year=person_years[item.cpr],
                                 load=load,
                                 brutto_b_income=brutto_b_income,
                                 **field_values,
                             )
-                    else:
-                        # An assessment exists for this
-                        # person and year and valid_from - update it.
-                        changed = False
-                        for name, value in field_values.items():
-                            if getattr(assessment, name) != value:
-                                setattr(assessment, name, value)
+                        else:
+                            # An assessment exists for this
+                            # person and year and valid_from - update it.
+                            changed = False
+                            for name, value in field_values.items():
+                                if getattr(assessment, name) != value:
+                                    setattr(assessment, name, value)
+                                    changed = True
+                            if assessment.brutto_b_income != brutto_b_income:
+                                assessment.brutto_b_income = brutto_b_income
                                 changed = True
-                        if assessment.brutto_b_income != brutto_b_income:
-                            assessment.brutto_b_income = brutto_b_income
-                            changed = True
-                        if changed:
-                            objs_to_update.append(assessment)
+                            if changed:
+                                objs_to_update[key] = assessment
 
                 objs_to_create_list = list(objs_to_create.values())
-                bulk_create_with_history(objs_to_create_list, PersonYearAssessment)
+                objs_to_update_list = list(objs_to_update.values())
 
+                bulk_create_with_history(objs_to_create_list, PersonYearAssessment)
                 bulk_update_with_history(
-                    objs_to_update,
+                    objs_to_update_list,
                     PersonYearAssessment,
                     [
                         f.name
@@ -358,14 +368,16 @@ class ExpectedIncomeHandler(Handler):
                 out.write(
                     f"Created {len(objs_to_create_list)} PersonYearAssessment objects"
                 )
-                out.write(f"Updated {len(objs_to_update)} PersonYearAssessment objects")
+                out.write(
+                    f"Updated {len(objs_to_update_list)} PersonYearAssessment objects"
+                )
 
                 if postponed:
-                    objs_to_update += cls.create_or_update_objects(
+                    objs_to_update_list += cls.create_or_update_objects(
                         year, postponed, load, out
                     )
 
-                return objs_to_create_list + objs_to_update
+                return objs_to_create_list + objs_to_update_list
 
         # Fall-through: return empty list
         return []
@@ -478,7 +490,7 @@ class MonthlyIncomeHandler(Handler):
         load: DataLoad,
     ) -> list:
         objs_to_create = {}
-        objs_to_update = []
+        objs_to_update = {}
         postponed = []
 
         # Construct dictionary mapping employer CVRs to Employer objects
@@ -493,22 +505,22 @@ class MonthlyIncomeHandler(Handler):
                     exclude={"cpr", "cvr", "tax_municipality_number", "month"},
                 )
 
-                try:
-                    # Find existing monthly income report
-                    report = MonthlyIncomeReport.objects.get(
-                        person_month=person_month,
-                        employer=employer,
-                    )
-                except MonthlyIncomeReport.DoesNotExist:
-                    key = (item.cpr, item.year, item.month, item.cvr)
-                    if key in objs_to_create:
-                        # We have an item in this chunk already
-                        # Current item will be handled in recursion
-                        # This is done so that each postponed item
-                        # will discover an existing DB object and
-                        # update it (creating a history entry)
-                        postponed.append(item)
-                    else:
+                key = (item.cpr, item.year, item.month, item.cvr)
+                if key in objs_to_create or key in objs_to_update:
+                    # We have an item in this chunk already
+                    # Current item will be handled in recursion
+                    # This is done so that each postponed item
+                    # will discover an existing DB object and
+                    # update it (creating a history entry)
+                    postponed.append(item)
+                else:
+                    try:
+                        # Find existing monthly income report
+                        report = MonthlyIncomeReport.objects.get(
+                            person_month=person_month,
+                            employer=employer,
+                        )
+                    except MonthlyIncomeReport.DoesNotExist:
                         # An existing monthly income report does not exist
                         # for this person, month and employer - create it.
                         report = MonthlyIncomeReport(
@@ -519,30 +531,34 @@ class MonthlyIncomeHandler(Handler):
                         )
                         report.update_amount()
                         objs_to_create[key] = report
-                else:
-                    # An existing monthly income report exists for this person month and
-                    # employer - update it.
-                    changed = False
-                    for name, value in field_values.items():
-                        if getattr(report, name) != value:
-                            setattr(report, name, value)
-                            changed = True
-                    if changed:
-                        report.update_amount()
-                        objs_to_update.append(report)
+                    else:
+                        # An existing monthly income report exists
+                        # for this person month and employer - update it.
+                        changed = False
+                        for name, value in field_values.items():
+                            if getattr(report, name) != value:
+                                setattr(report, name, value)
+                                changed = True
+                        if changed:
+                            report.update_amount()
+                            objs_to_update[key] = report
         objs_to_create_list = list(objs_to_create.values())
-        bulk_create_with_history(objs_to_create_list, MonthlyIncomeReport)
+        objs_to_update_list = list(objs_to_update.values())
 
+        bulk_create_with_history(
+            objs_to_create_list,
+            MonthlyIncomeReport,
+        )
         bulk_update_with_history(
-            objs_to_update,
+            objs_to_update_list,
             MonthlyIncomeReport,
             [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
         )
         if postponed:
-            objs_to_update += cls._create_or_update_monthly_income_reports(
+            objs_to_update_list += cls._create_or_update_monthly_income_reports(
                 postponed, load
             )
-        return objs_to_create_list + objs_to_update
+        return objs_to_create_list + objs_to_update_list
 
 
 class TaxInformationHandler(Handler):

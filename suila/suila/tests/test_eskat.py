@@ -1407,6 +1407,7 @@ class TestAnnualIncomeUpdate(TestUpdateMixin, TestCase):
     def test_chunk_contains_same(self):
         self.create_or_update_multiple_objects(
             {"salary": 100000},
+            {"salary": 100000},
             {"salary": 110000},
         )
         annual_incomes = AnnualIncomeModel.objects.filter(
