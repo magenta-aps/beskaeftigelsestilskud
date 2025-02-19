@@ -177,8 +177,9 @@ class AnnualIncomeHandler(Handler):
             person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
 
             if person_years:
-                objs_to_create = []
+                objs_to_create = {}
                 objs_to_update = []
+                postponed = []
 
                 for item in items:
                     if item.cpr is None or item.year is None:
@@ -189,21 +190,25 @@ class AnnualIncomeHandler(Handler):
                         continue
 
                     field_values = omit(asdict(item), "cpr", "year")
-
                     try:
                         # Find existing `AnnualIncome` for this person year
                         annual_income = AnnualIncomeModel.objects.get(
                             person_year=person_years[item.cpr]
                         )
+
                     except AnnualIncomeModel.DoesNotExist:
                         # An existing `AnnualIncome` does not exist for this person year
                         # - create it.
-                        annual_income = AnnualIncomeModel(
-                            person_year=person_years[item.cpr],
-                            load=load,
-                            **field_values,
-                        )
-                        objs_to_create.append(annual_income)
+                        key = (item.cpr, item.year)
+                        if key in objs_to_create:
+                            postponed.append(item)
+                        else:
+                            annual_income = AnnualIncomeModel(
+                                person_year=person_years[item.cpr],
+                                load=load,
+                                **field_values,
+                            )
+                            objs_to_create[key] = annual_income
                     else:
                         # An `AnnualIncome` exists for this person year - update it.
                         for name, value in field_values.items():
@@ -220,12 +225,17 @@ class AnnualIncomeHandler(Handler):
                     ],
                 )
 
-                bulk_create_with_history(objs_to_create, AnnualIncomeModel)
+                objs_to_create_list = list(objs_to_create.values())
 
-                out.write(f"Created {len(objs_to_create)} AnnualIncome objects")
+                bulk_create_with_history(objs_to_create_list, AnnualIncomeModel)
+
+                out.write(f"Created {len(objs_to_create_list)} AnnualIncome objects")
                 out.write(f"Updated {len(objs_to_update)} AnnualIncome objects")
 
-                return objs_to_create + objs_to_update
+                if postponed:
+                    objs_to_update += cls.create_or_update_objects(postponed, load, out)
+
+                return objs_to_create_list + objs_to_update
 
         # Fall-through: return empty list
         return []
@@ -307,6 +317,9 @@ class ExpectedIncomeHandler(Handler):
                         if key in objs_to_create:
                             # We have an item in this chunk already
                             # Current item will be handled in recursion
+                            # This is done so that each postponed item
+                            # will discover an existing DB object and
+                            # update it (creating a history entry)
                             postponed.append(item)
                         else:
                             objs_to_create[key] = PersonYearAssessment(
@@ -464,8 +477,9 @@ class MonthlyIncomeHandler(Handler):
         items: Iterable[MonthlyIncome],
         load: DataLoad,
     ) -> list:
-        objs_to_create = []
+        objs_to_create = {}
         objs_to_update = []
+        postponed = []
 
         # Construct dictionary mapping employer CVRs to Employer objects
         employer_map = {employer.cvr: employer for employer in Employer.objects.all()}
@@ -486,33 +500,49 @@ class MonthlyIncomeHandler(Handler):
                         employer=employer,
                     )
                 except MonthlyIncomeReport.DoesNotExist:
-                    # An existing monthly income report does not exist for this person
-                    # month and employer - create it.
-                    report = MonthlyIncomeReport(
-                        person_month=person_month,
-                        load=load,
-                        employer=employer,
-                        **field_values,
-                    )
-                    report.update_amount()
-                    objs_to_create.append(report)
+                    key = (item.cpr, item.year, item.month, item.cvr)
+                    if key in objs_to_create:
+                        # We have an item in this chunk already
+                        # Current item will be handled in recursion
+                        # This is done so that each postponed item
+                        # will discover an existing DB object and
+                        # update it (creating a history entry)
+                        postponed.append(item)
+                    else:
+                        # An existing monthly income report does not exist
+                        # for this person, month and employer - create it.
+                        report = MonthlyIncomeReport(
+                            person_month=person_month,
+                            load=load,
+                            employer=employer,
+                            **field_values,
+                        )
+                        report.update_amount()
+                        objs_to_create[key] = report
                 else:
                     # An existing monthly income report exists for this person month and
                     # employer - update it.
+                    changed = False
                     for name, value in field_values.items():
-                        setattr(report, name, value)
-                    report.update_amount()
-                    objs_to_update.append(report)
+                        if getattr(report, name) != value:
+                            setattr(report, name, value)
+                            changed = True
+                    if changed:
+                        report.update_amount()
+                        objs_to_update.append(report)
+        objs_to_create_list = list(objs_to_create.values())
+        bulk_create_with_history(objs_to_create_list, MonthlyIncomeReport)
 
         bulk_update_with_history(
             objs_to_update,
             MonthlyIncomeReport,
             [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
         )
-
-        bulk_create_with_history(objs_to_create, MonthlyIncomeReport)
-
-        return objs_to_create + objs_to_update
+        if postponed:
+            objs_to_update += cls._create_or_update_monthly_income_reports(
+                postponed, load
+            )
+        return objs_to_create_list + objs_to_update
 
 
 class TaxInformationHandler(Handler):
