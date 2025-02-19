@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-14 09:57-0200\n"
+"POT-Creation-Date: 2025-02-19 06:36-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -166,6 +166,106 @@ msgstr ""
 msgid "Beregnet beskæftigelsesfradrag for hele året:"
 msgstr ""
 
+#: suila/templates/suila/faq.html
+msgid "Ikke modtaget Suila-tapit"
+msgstr ""
+
+#: suila/templates/suila/faq.html suila/templates/suila/root.html
+msgid "Jeg har ikke modtaget Suila-tapit"
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Suila-tapit udbetales når systemet modtager signaler fra arbejdsmarkedet. De "
+"fire signaler er:"
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid "A-indkomst fra lønarbejde, som arbejdsgiverne indberetter i Sulinal."
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"A-indkomst fra indhandling, som indhandlingsstederne indberetter i Sulinal."
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Betalte B-skatter. Hvis du har forskudsregistreret B-indkomst, vil du "
+"modtage en opkrævning af B-skatter. Når den betales, modtages signal."
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Udlodning af udbytte. Når selskaberne udlodder udbytte, giver dette signal "
+"om en indkomst."
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Ud fra signalerne om indkomst beregnes en forventet årsindkomst. Suila-tapit "
+"udbetales til borgere med en forventet årsindkomst på 70.000 - 500.000 kr."
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Bemærk at der går to måneder fra din indkomst til din udbetaling af Suila-"
+"tapit."
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Hvis du ikke har modtaget Suila-tapit, kan der være følgende forklaringer"
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid "1. Manglende signal"
+msgstr ""
+
+#: suila/templates/suila/faq.html
+#, python-format
+msgid ""
+"Manglende signal. Din arbejdsgiver eller dit indhandlingssted har ikke "
+"indberettet din indkomst. Eller har indberettet for sent eller forkert. "
+"Måske har de slet ikke indberettet. På siden med <a "
+"href=\"%(url)s\">beregningsgrundlag</a> kan du se hvilke oplysninger "
+"Skattestyrelsen har om dine indkomster. Hvis der mangler signal om indkomst "
+"fra arbejde og indhandling, så kontakt din arbejdsgiver eller dit "
+"indhandlingssted."
+msgstr ""
+
+#: suila/templates/suila/graph.html
+msgid "Sammenhæng"
+msgstr ""
+
+#: suila/templates/suila/graph.html
+msgid "Sammenhængen mellem årsindkomst og Suila-tapit"
+msgstr ""
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Her ser du sammenhængen mellem forventet årsindkomst og månedlig udbetaling "
+"af Suila-tapit. De indtægter der indgår i beregningsgrundlaget er overskud "
+"fra indhandling, overskud som selvstændig erhvervsdrivende, lønindkomster "
+"som udbytte."
+msgstr ""
+
+#: suila/templates/suila/graph.html
+msgid ""
+"[Tekst om udbetaling i december for borgere med forventede årsindkomster fra "
+"475-500 tkr.]"
+msgstr ""
+
+#: suila/templates/suila/graph.html
+msgid "Kan du ikke se dine tal?"
+msgstr ""
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Hvis din årsindkomst er 70.000 kr. eller 500.000 kr. vil du ikke modtage "
+"Suila-tapit, og dine tal vises derfor ikke på grafen nedenunder."
+msgstr ""
+
 #: suila/templates/suila/person_detail.html
 msgid "Din Suila er endnu ikke blevet beregnet."
 msgstr ""
@@ -206,14 +306,8 @@ msgid ""
 "udbytte."
 msgstr ""
 
-#: suila/templates/suila/person_detail.html suila/templates/suila/root.html
+#: suila/templates/suila/person_detail.html
 msgid "Beregningsgrundlag - Se mine signaler"
-msgstr ""
-
-#: suila/templates/suila/person_detail.html suila/templates/suila/root.html
-msgid ""
-"Overblik over de signaler, som Skattestyrelsen har modtaget om dine "
-"indkomster"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -221,7 +315,13 @@ msgstr ""
 msgid "Udbetalinger for %(year)s"
 msgstr ""
 
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_notes.html
+msgid "Noter"
+msgstr ""
+
 #: suila/templates/suila/person_detail_base.html
+#: suila/templates/suila/root.html
 msgid "Mit overblik"
 msgstr ""
 
@@ -279,10 +379,6 @@ msgid "Filtre"
 msgstr ""
 
 #: suila/templates/suila/person_detail_notes.html
-msgid "Noter"
-msgstr ""
-
-#: suila/templates/suila/person_detail_notes.html
 #, python-format
 msgid "Noter i %(year)s"
 msgstr ""
@@ -322,49 +418,11 @@ msgid "OK"
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Beskrivelse af Suila (TBD)"
+msgid "Sammenhæng - Årsindkomst og Suila-tapit"
 msgstr ""
 
 #: suila/templates/suila/root.html
-msgid "Se liste over borgere og find detaljer"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Beregn beskæftigelsesfradrag"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Sammenhæng mellem årsindkomst og Suila"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Se hvordan vi udregner beskæftigelsesfradrag"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Borger har ikke modtaget Suila"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid ""
-"Find information her, hvis en borger ikke har modtaget beskæftigelsesfradrag"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Se mit overblik"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid ""
-"Overblik over dine udbetalinger af beskæftigelsesfradrag for indeværende år"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Jeg har ikke modtaget Suila"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Find information her, hvis du ikke har modtaget beskæftigelsesfradrag"
+msgid "Beregningsgrundlag - Mine signaler"
 msgstr ""
 
 #: suila/templatetags/amount_tags.py
