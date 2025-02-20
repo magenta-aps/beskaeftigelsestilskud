@@ -10,7 +10,6 @@ from common.models import EngineViewPreferences, PageView, User
 from common.tests.test_mixins import TestViewMixin
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
-    CalculatorView,
     HistogramView,
     JobListView,
     PersonAnalysisView,
@@ -35,7 +34,6 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
-    StandardWorkBenefitCalculationMethod,
     Year,
 )
 from suila.simulation import IncomeItem, IncomeItemValuePart, Simulation
@@ -751,131 +749,3 @@ class TestUpdateEngineViewPreferences(TestCase):
         self.client.post(url, data=payload)
         self.user.refresh_from_db()
         self.assertTrue(self.user.engine_view_preferences.show_SameAsLastMonthEngine)
-
-
-class TestCalculator(TestViewMixin, TestCase):
-    view_class = CalculatorView
-
-    def request(self, amount):
-        view, response = self.request_post(
-            self.admin_user,
-            reverse("data_analysis:calculator"),
-            {
-                "estimated_year_income": amount,
-                "method": "StandardWorkBenefitCalculationMethod",
-                "benefit_rate_percent": "17.5",
-                "personal_allowance": "58000.00",
-                "standard_allowance": "10000",
-                "max_benefit": "15750.00",
-                "scaledown_rate_percent": "6.3",
-                "scaledown_ceiling": "250000.00",
-            },
-        )
-        return response
-
-    def test_calculator_zero(self):
-        response = self.request(0)
-        self.assertIsInstance(response, TemplateResponse)
-        self.assertTrue(response.context_data["form"].is_valid())
-        self.assertEqual(response.context_data["result"], "0.00")
-        self.assertEqual(response.context_data["result_monthly"], "0.00")
-        self.assertJSONEqual(
-            response.context_data["graph_points"],
-            [
-                [0.0, 0.0],
-                [68000.0, 0.0],
-                [158000.0, 15750.0],
-                [250000.0, 15750.0],
-                [500000.0, 0.0],
-            ],
-        )
-
-    def test_calculator_ramp_up(self):
-        response = self.request(100000)
-        self.assertIsInstance(response, TemplateResponse)
-        context = response.context_data
-        self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["result"], "5600.00")
-        self.assertEqual(context["result_monthly"], "466.67")
-
-    def test_calculator_ramp_plateau(self):
-        response = self.request(250000)
-        self.assertIsInstance(response, TemplateResponse)
-        context = response.context_data
-        self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["result"], "15750.00")
-        self.assertEqual(context["result_monthly"], "1312.50")
-
-    def test_calculator_ramp_down(self):
-        response = self.request(350000)
-        self.assertIsInstance(response, TemplateResponse)
-        context = response.context_data
-        self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["result"], "9450.00")
-        self.assertEqual(context["result_monthly"], "787.50")
-
-    def test_calculator_ramp_over(self):
-        response = self.request(500000)
-        self.assertIsInstance(response, TemplateResponse)
-        context = response.context_data
-        self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["result"], "0.00")
-        self.assertEqual(context["result_monthly"], "0.00")
-
-    def test_get_engines(self):
-        method = StandardWorkBenefitCalculationMethod.objects.create(
-            benefit_rate_percent=Decimal("17.50"),
-            personal_allowance=Decimal("60000.00"),
-            standard_allowance=Decimal("10000"),
-            max_benefit=Decimal("15750.00"),
-            scaledown_rate_percent=Decimal("6.30"),
-            scaledown_ceiling=Decimal("250000.00"),
-        )
-        Year.objects.create(year=2026, calculation_method=method)
-        view = self.view()
-        self.assertEqual(
-            view.engines,
-            [
-                {
-                    "name": "StandardWorkBenefitCalculationMethod for 2026",
-                    "class": "StandardWorkBenefitCalculationMethod",
-                    "fields": {
-                        "benefit_rate_percent": {
-                            "value": Decimal("17.500"),
-                            "label": "Benefit rate percent",
-                        },
-                        "personal_allowance": {
-                            "value": Decimal("60000.00"),
-                            "label": "Personal allowance",
-                        },
-                        "standard_allowance": {
-                            "value": Decimal("10000.00"),
-                            "label": "Standard allowance",
-                        },
-                        "max_benefit": {
-                            "value": Decimal("15750.00"),
-                            "label": "Max benefit",
-                        },
-                        "scaledown_rate_percent": {
-                            "value": Decimal("6.300"),
-                            "label": "Scaledown rate percent",
-                        },
-                        "scaledown_ceiling": {
-                            "value": Decimal("250000.00"),
-                            "label": "Scaledown ceiling",
-                        },
-                    },
-                }
-            ],
-        )
-
-    def test_view_log(self):
-        self.request_get(self.admin_user, "")
-        logs = PageView.objects.all()
-        self.assertEqual(logs.count(), 1)
-        pageview = logs[0]
-        self.assertEqual(pageview.class_name, "CalculatorView")
-        self.assertEqual(pageview.user, self.admin_user)
-        self.assertEqual(pageview.kwargs, {})
-        self.assertEqual(pageview.params, {})
-        self.assertEqual(pageview.itemviews.count(), 0)

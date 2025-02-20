@@ -1,11 +1,20 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from django.forms import DecimalField, Form, ModelForm, Textarea
+from decimal import Decimal
+
+from django.forms import (
+    ChoiceField,
+    DecimalField,
+    Form,
+    HiddenInput,
+    ModelForm,
+    Textarea,
+)
 from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
-from suila.models import Note, NoteAttachment
+from suila.models import Note, NoteAttachment, WorkingTaxCreditCalculationMethod
 
 
 class NoteForm(ModelForm):
@@ -33,12 +42,63 @@ NoteAttachmentFormSet = inlineformset_factory(
 )
 
 
-class CalculateBenefitForm(Form):
+class CalculatorForm(Form):
     estimated_month_income = DecimalField(
         required=False,
         label=_("Estimeret månedsindkomst"),
     )
     estimated_year_income = DecimalField(
-        required=True,
-        label=_("Estimeret årsindkomst"),
+        required=True, label=_("Estimeret årsindkomst")
+    )
+
+    method = ChoiceField(
+        choices=[
+            (cls.__name__, cls.__name__)
+            for cls in WorkingTaxCreditCalculationMethod.__subclasses__()
+        ],
+        widget=HiddenInput,
+        required=False,
+    )
+
+    benefit_rate_percent = DecimalField(
+        max_digits=5,
+        min_value=Decimal(0),
+        decimal_places=3,
+        required=False,
+        localize=True,
+    )
+    personal_allowance = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=False,
+        localize=True,
+    )
+    standard_allowance = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=False,
+        localize=True,
+    )
+    max_benefit = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=False,
+        localize=True,
+    )
+    scaledown_rate_percent = DecimalField(
+        max_digits=5,
+        min_value=Decimal(0),
+        decimal_places=3,
+        required=False,
+        localize=True,
+    )
+    scaledown_ceiling = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=False,
+        localize=True,
     )

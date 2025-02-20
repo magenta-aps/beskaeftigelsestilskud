@@ -7,7 +7,7 @@
 {% load csp %}
 
 {% block extra_headers %}
-    {% if result is not None %}
+    {% if yearly_benefit is not None %}
         <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
         <script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
     {% endif %}
@@ -32,7 +32,7 @@
                     <div class="col-6">{{ form.estimated_year_income }}</div>
                 </div>
 
-                <div {% if not user|has_permissions:"suila.use_adminsite_calculator_parameters" %}class="d-none"{% endif %}>
+                {% if user|has_permissions:"suila.use_adminsite_calculator_parameters" %}
                     <div class="row align-items-center my-1">
                         <div class="col-12">
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal"
@@ -59,7 +59,7 @@
                             </div>
                         {% endfor %}
                     </div>
-                </div>
+                {% endif %}
 
                 <div class="row">
                     <div class="col-12 clearfix">
@@ -68,13 +68,13 @@
                 </div>
             </div>
             <div class="col-md-6 col-12">
-                {% if result is not None %}
+                {% if yearly_benefit is not None %}
                     <div class="row py-2 my-1">
                         <div class="col-8">
                             {% translate "Beregnet beskæftigelsestilskud for hele året:" %}
                         </div>
                         <div class="col-4 text-end">
-                            {{ result }}
+                            {{ yearly_benefit }}
                         </div>
                     </div>
                     <div class="row py-2 my-1">
@@ -82,24 +82,24 @@
                             {% translate "Beregnet beskæftigelsestilskud pr. måned:" %}
                         </div>
                         <div class="col-4 text-end">
-                            {{ result_monthly }}
+                            {{ monthly_benefit }}
                         </div>
                     </div>
                     <div class="row">
                     <div class="col-12">
                         <div id="graph"></div>
                         {{ form.estimated_year_income.value|json_script:"year_income" }}
-                        {{ result|json_script:"result" }}
-                        {{ result_monthly|json_script:"result_monthly" }}
+                        {{ yearly_benefit|json_script:"yearly_benefit" }}
+                        {{ monthly_benefit|json_script:"monthly_benefit" }}
                         <script id="graph_points" type="application/json">{{graph_points|safe}}</script>
                         <script nonce="{{ request.csp_nonce }}">
                             let data = JSON.parse($("#graph_points").text());
                             const year_income = parseFloat(JSON.parse($("#year_income").text()));
-                            const result = parseFloat(JSON.parse($("#result").text()));
-                            const result_monthly = parseFloat(JSON.parse($("#result_monthly").text()));
+                            const yearly_benefit = parseFloat(JSON.parse($("#yearly_benefit").text()));
+                            const monthly_benefit = parseFloat(JSON.parse($("#monthly_benefit").text()));
                             const graph = $("#graph");
                             if (year_income > data[data.length - 1][0]) {
-                                // result is greater than our current max point in the graph
+                                // yearly_benefit is greater than our current max point in the graph
                                 data = [...data, [year_income, 0]];  // Clone array
                             }
 
@@ -125,13 +125,13 @@
                                 "annotations": {
                                     "points": [{
                                         "x": year_income || 0,
-                                        "y": result || 0,
+                                        "y": yearly_benefit || 0,
                                         "marker": {
                                             "size": 4,
                                         },
                                         "label": {
                                             "text": [
-                                                "Beregnet Suila for hele året: " + result,
+                                                "Beregnet Suila for hele året: " + yearly_benefit,
                                             ],
                                             "style": {
                                                 "background": "#fff",

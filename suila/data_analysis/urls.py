@@ -4,7 +4,6 @@
 
 
 from data_analysis.views import (
-    CalculatorView,
     HistogramView,
     JobListView,
     PersonAnalysisView,
@@ -30,5 +29,4 @@ urlpatterns: list[URLResolver | URLPattern] = [
         name="update_preferences",
     ),
     path("job_log", JobListView.as_view(), name="job_log"),
-    path("calculator", CalculatorView.as_view(), name="calculator"),
 ]

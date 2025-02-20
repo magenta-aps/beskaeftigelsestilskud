@@ -13,12 +13,12 @@ from typing import Any, Iterable
 from urllib.parse import urlencode
 
 from common.models import User
-from common.utils import SuilaJSONEncoder
+from common.utils import SuilaJSONEncoder, omit
 from common.view_mixins import ViewLogMixin
 from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms import RegexField
-from django.forms.models import BaseInlineFormSet
+from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
@@ -36,7 +36,7 @@ from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
 from suila.benefit import get_payout_date
-from suila.forms import CalculateBenefitForm, NoteAttachmentFormSet, NoteForm
+from suila.forms import CalculatorForm, NoteAttachmentFormSet, NoteForm
 from suila.models import (
     BTaxPayment,
     Employer,
@@ -47,6 +47,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearU1AAssessment,
+    WorkingTaxCreditCalculationMethod,
     Year,
 )
 from suila.view_mixins import PermissionsRequiredMixin
@@ -468,27 +469,83 @@ class GraphView(
     template_name = "suila/graph.html"
 
 
-class CalculateBenefitView(
-    LoginRequiredMixin,
-    PermissionsRequiredMixin,
-    YearMonthMixin,
-    ViewLogMixin,
-    GraphViewMixin,
-    FormView,
+class CalculatorView(
+    LoginRequiredMixin, YearMonthMixin, ViewLogMixin, GraphViewMixin, FormView
 ):
-    form_class = CalculateBenefitForm
-    template_name = "suila/calculate_benefit.html"
+    form_class = CalculatorForm
+    template_name = "data_analysis/calculate.html"
+
+    @cached_property
+    def is_advanced(self):
+        return self.request.user.has_perm("suila.use_adminsite_calculator_parameters")
+
+    def get_initial(self):
+        try:
+            year_object = Year.objects.get(year=timezone.now().year)
+            engine = year_object.calculation_method
+        except Year.DoesNotExist:
+            engine = None
+        return {
+            "calculation_engine": engine,
+            "method": engine.__class__.__name__,
+        }
+
+    @cached_property
+    def engines(self):
+        engines = []
+        for engine in WorkingTaxCreditCalculationMethod.subclass_instances():
+            values = omit(model_to_dict(engine), "id")
+            fields = omit(fields_for_model(engine.__class__), "id")
+            engines.append(
+                {
+                    "name": str(engine),
+                    "class": engine.__class__.__name__,
+                    "fields": {
+                        fieldname: {
+                            "value": values[fieldname],
+                            "label": field.label,
+                        }
+                        for fieldname, field in fields.items()
+                    },
+                }
+            )
+        return engines
+
+    def get_context_data(self, **kwargs):
+        self.log_view()
+        return super().get_context_data(**{**kwargs, "engines": self.engines})
 
     def form_valid(self, form):
-        yearly_benefit = self.calculation_method.calculate(
-            form.cleaned_data["estimated_year_income"]
-        )
-        monthly_benefit = Decimal(yearly_benefit / 12).quantize(Decimal(".01"))
+        if self.is_advanced:
+            method_name = form.cleaned_data["method"]
+            method_class = WorkingTaxCreditCalculationMethod.subclasses_by_name()[
+                method_name
+            ]
+            method = method_class(
+                **{
+                    key: value
+                    for key, value in form.cleaned_data.items()
+                    if key
+                    in {
+                        "benefit_rate_percent",
+                        "personal_allowance",
+                        "standard_allowance",
+                        "max_benefit",
+                        "scaledown_rate_percent",
+                        "scaledown_ceiling",
+                    }
+                }
+            )
+        else:
+            method = self.calculation_method
+
+        result = method.calculate(form.cleaned_data["estimated_year_income"])
         return self.render_to_response(
             self.get_context_data(
-                yearly_benefit=yearly_benefit,
-                monthly_benefit=monthly_benefit,
-                graph_points=self.to_json(self.calculation_method.graph_points),
+                form=form,
+                yearly_benefit=str(result),
+                monthly_benefit=str(Decimal(result / 12).quantize(Decimal(".01"))),
+                graph_points=self.to_json(method.graph_points),
             )
         )
 

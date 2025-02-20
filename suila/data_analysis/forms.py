@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from decimal import Decimal
 
 from common.form_mixins import BootstrapForm
 from django import forms
@@ -10,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from dynamic_forms import DynamicField, DynamicFormMixin
 
 from suila.data import engine_keys
-from suila.models import IncomeType, WorkingTaxCreditCalculationMethod, Year
+from suila.models import IncomeType, Year
 
 
 class PersonYearListOptionsForm(BootstrapForm):
@@ -192,65 +191,4 @@ class JobListOptionsForm(BootstrapForm):
             for prefix in ("", "-")
         ),
         required=False,
-    )
-
-
-class CalculatorForm(DynamicFormMixin, BootstrapForm):
-    estimated_month_income = forms.DecimalField(
-        required=False,
-        label=_("Estimeret månedsindkomst"),
-    )
-    estimated_year_income = forms.DecimalField(
-        required=True, label=_("Estimeret årsindkomst")
-    )
-
-    method = forms.ChoiceField(
-        choices=[
-            (cls.__name__, cls.__name__)
-            for cls in WorkingTaxCreditCalculationMethod.__subclasses__()
-        ],
-        widget=forms.HiddenInput,
-    )
-
-    benefit_rate_percent = forms.DecimalField(
-        max_digits=5,
-        min_value=Decimal(0),
-        decimal_places=3,
-        required=False,
-        localize=True,
-    )
-    personal_allowance = forms.DecimalField(
-        max_digits=12,
-        min_value=Decimal(0),
-        decimal_places=2,
-        required=False,
-        localize=True,
-    )
-    standard_allowance = forms.DecimalField(
-        max_digits=12,
-        min_value=Decimal(0),
-        decimal_places=2,
-        required=False,
-        localize=True,
-    )
-    max_benefit = forms.DecimalField(
-        max_digits=12,
-        min_value=Decimal(0),
-        decimal_places=2,
-        required=False,
-        localize=True,
-    )
-    scaledown_rate_percent = forms.DecimalField(
-        max_digits=5,
-        min_value=Decimal(0),
-        decimal_places=3,
-        required=False,
-        localize=True,
-    )
-    scaledown_ceiling = forms.DecimalField(
-        max_digits=12,
-        min_value=Decimal(0),
-        decimal_places=2,
-        required=False,
-        localize=True,
     )
