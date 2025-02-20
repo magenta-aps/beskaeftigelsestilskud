@@ -76,7 +76,6 @@ class Command(BaseCommand):
                 (PersonYearU1AAssessment, ("view",)),
                 (Note, ("view",)),
                 (NoteAttachment, ("view",)),
-                (StandardWorkBenefitCalculationMethod, ("use_adminsite_calculator",)),
             ),
         )
 
@@ -102,10 +101,7 @@ class Command(BaseCommand):
                 (NoteAttachment, ("view",)),
                 (
                     StandardWorkBenefitCalculationMethod,
-                    (
-                        "use_adminsite_calculator",
-                        "use_adminsite_calculator_parameters",
-                    ),
+                    ("use_adminsite_calculator_parameters",),
                 ),
             ),
         )

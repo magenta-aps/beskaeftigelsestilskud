@@ -59,7 +59,6 @@ class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
     class Meta:
         abstract = True
         permissions = (
-            ("use_adminsite_calculator", "Can use adminsite calculator"),
             ("use_adminsite_calculator_parameters", "Can use calculation parameters"),
         )
 
