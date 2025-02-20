@@ -480,11 +480,8 @@ class CalculatorView(
         return self.request.user.has_perm("suila.use_adminsite_calculator_parameters")
 
     def get_initial(self):
-        try:
-            year_object = Year.objects.get(year=timezone.now().year)
-            engine = year_object.calculation_method
-        except Year.DoesNotExist:
-            engine = None
+        year_object = Year.objects.get(year=timezone.now().year)
+        engine = year_object.calculation_method
         return {
             "calculation_engine": engine,
             "method": engine.__class__.__name__,
