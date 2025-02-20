@@ -25,7 +25,7 @@ urlpatterns: list[URLResolver | URLPattern] = [
     path("<int:year>/person/", PersonListView.as_view(), name="person_years"),
     path("<int:year>/histogram/", HistogramView.as_view(), name="histogram"),
     path(
-        "user/<int:pk>/preferences/update",
+        "user/preferences/update",
         UpdateEngineViewPreferences.as_view(),
         name="update_preferences",
     ),
