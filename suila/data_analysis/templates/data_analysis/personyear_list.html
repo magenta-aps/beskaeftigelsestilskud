@@ -309,7 +309,7 @@ function checkboxHandler(){
 
     $.ajax({
         type: 'POST',
-        url: '{% url "data_analysis:update_preferences" request.user.id %}',
+        url: '{% url "data_analysis:update_preferences" %}',
         data: data,
     });
 }
