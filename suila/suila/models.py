@@ -59,7 +59,8 @@ class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
     class Meta:
         abstract = True
         permissions = (
-            ("change_calculation_parameters", "Can change calculation parameters"),
+            ("use_adminsite_calculator", "Can use adminsite calculator"),
+            ("use_adminsite_calculator_parameters", "Can use calculation parameters"),
         )
 
     def calculate(self, year_income: Decimal) -> Decimal:

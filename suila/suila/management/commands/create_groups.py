@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 from typing import Iterable, Tuple, Type
 
-from common.models import User
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
@@ -23,6 +22,7 @@ from suila.models import (
     PersonYearAssessment,
     PersonYearEstimateSummary,
     PersonYearU1AAssessment,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 
@@ -36,26 +36,21 @@ class Command(BaseCommand):
                 model, for_concrete_model=False
             )
             for action in actions:
+                codename = (
+                    f"{action}_{content_type.model}"
+                    if action in ("view", "change", "add", "delete")
+                    else action
+                )
                 yield Permission.objects.get(
-                    codename=f"{action}_{content_type.model}",
+                    codename=codename,
                     content_type=content_type,
                 )
-
-    def create_nonmodel_permissions(self):
-        self.use_advanced_calculator, _ = Permission.objects.get_or_create(
-            name="Can use advanced calculator",
-            codename="use_advanced_calculator",
-            content_type=ContentType.objects.get_for_model(
-                User, for_concrete_model=False
-            ),
-        )
 
     def set_group_permissions(self, group: Group, *permissions: Permission):
         for permission in permissions:
             group.permissions.add(permission)
 
     def handle(self, *args, **options):
-        self.create_nonmodel_permissions()
         self.setup_borgerservice()
         self.setup_tax_officer()
 
@@ -81,8 +76,8 @@ class Command(BaseCommand):
                 (PersonYearU1AAssessment, ("view",)),
                 (Note, ("view",)),
                 (NoteAttachment, ("view",)),
+                (StandardWorkBenefitCalculationMethod, ("use_adminsite_calculator",)),
             ),
-            self.use_advanced_calculator,
         )
 
     def setup_tax_officer(self):
@@ -105,6 +100,12 @@ class Command(BaseCommand):
                 (PersonYearU1AAssessment, ("view",)),
                 (Note, ("view",)),
                 (NoteAttachment, ("view",)),
+                (
+                    StandardWorkBenefitCalculationMethod,
+                    (
+                        "use_adminsite_calculator",
+                        "use_adminsite_calculator_parameters",
+                    ),
+                ),
             ),
-            self.use_advanced_calculator,
         )

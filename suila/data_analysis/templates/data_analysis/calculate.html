@@ -32,7 +32,7 @@
                     <div class="col-6">{{ form.estimated_year_income }}</div>
                 </div>
 
-                <div {% if not user|has_permissions:"change_calculation_parameters" %}class="d-none"{% endif %}>
+                <div {% if not user|has_permissions:"suila.use_adminsite_calculator_parameters" %}class="d-none"{% endif %}>
                     <div class="row align-items-center my-1">
                         <div class="col-12">
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal"

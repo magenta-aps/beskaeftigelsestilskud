@@ -87,7 +87,11 @@
 
                 {% if user.is_authenticated %}
                 <li class="nav-item ms-4">
-                    <a href="{% url 'suila:calculate_benefit' %}" class="d-flex align-items-center {% if current_view == 'suila:calculate_benefit' %}active{% endif %}">
+                    {% if user|has_permissions:"suila.use_adminsite_calculator" %}
+                        <a href="{% url 'data_analysis:calculator' %}" class="d-flex align-items-center {% if current_view == 'data_analysis:calculator' %}active{% endif %}">
+                    {% else %}
+                        <a href="{% url 'suila:calculate_benefit' %}" class="d-flex align-items-center {% if current_view == 'suila:calculate_benefit' %}active{% endif %}">
+                    {% endif %}
                         <span class="material-icons">calculate</span>
                         <span class="ms-1">{% translate "Suilaberegneren" %}</span>
                     </a>

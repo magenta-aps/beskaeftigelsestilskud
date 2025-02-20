@@ -61,7 +61,11 @@ Velkommen, {{ name }}
         {% jumbo_link faq_url _("Jeg har ikke modtaget Suila-tapit") "help" %}
     </div>
     <div class="g-col-6 jumbo">
-        {% url "suila:calculate_benefit" as calculator_url %}
+        {% if user|has_permissions:"suila.use_adminsite_calculator" %}
+            {% url "data_analysis:calculator" as calculator_url %}
+        {% else %}
+            {% url "suila:calculate_benefit" as calculator_url %}
+        {% endif %}
         {% jumbo_link calculator_url _("Suilaberegneren") "calculate" %}
     </div>
 </div>
