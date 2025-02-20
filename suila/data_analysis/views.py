@@ -501,9 +501,12 @@ class JobListView(
         return context
 
 
-class CalculatorView(ViewLogMixin, FormView):
+class CalculatorView(
+    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, FormView
+):
     form_class = CalculatorForm
     template_name = "data_analysis/calculate.html"
+    required_model_permissions = ["common.use_advanced_calculator"]
 
     def get_initial(self):
         year_object = Year.objects.filter(year=timezone.now().year).first()

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from typing import Iterable, Tuple, Type
 
+from common.models import User
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
@@ -40,11 +41,21 @@ class Command(BaseCommand):
                     content_type=content_type,
                 )
 
+    def create_nonmodel_permissions(self):
+        self.use_advanced_calculator, _ = Permission.objects.get_or_create(
+            name="Can use advanced calculator",
+            codename="use_advanced_calculator",
+            content_type=ContentType.objects.get_for_model(
+                User, for_concrete_model=False
+            ),
+        )
+
     def set_group_permissions(self, group: Group, *permissions: Permission):
         for permission in permissions:
             group.permissions.add(permission)
 
     def handle(self, *args, **options):
+        self.create_nonmodel_permissions()
         self.setup_borgerservice()
         self.setup_tax_officer()
 
@@ -71,6 +82,7 @@ class Command(BaseCommand):
                 (Note, ("view",)),
                 (NoteAttachment, ("view",)),
             ),
+            self.use_advanced_calculator,
         )
 
     def setup_tax_officer(self):
@@ -94,4 +106,5 @@ class Command(BaseCommand):
                 (Note, ("view",)),
                 (NoteAttachment, ("view",)),
             ),
+            self.use_advanced_calculator,
         )
