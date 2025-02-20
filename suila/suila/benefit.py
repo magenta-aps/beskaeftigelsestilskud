@@ -303,17 +303,10 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
 
 def get_payout_date(year: int, month: int) -> date:
     """
-    Returns the date of a given months third tuesday.
+    Returns the date of a given month's third tuesday.
     """
-
-    tuesday_count = 0
-
-    for day in range(1, 32):  # pragma: no branch
-        d: date = date(year, month, day)
-        if d.weekday() == 1:  # 0 is monday, 1 is tuesday, and so on.
-            tuesday_count += 1
-
-        if tuesday_count == 3:
-            payout_date = d
-            break
-    return payout_date
+    weekday_of_first_day = date(year, month, 1).weekday()
+    first_tuesday = 9 - weekday_of_first_day
+    if first_tuesday > 7:
+        first_tuesday -= 7
+    return date(year, month, first_tuesday + 14)

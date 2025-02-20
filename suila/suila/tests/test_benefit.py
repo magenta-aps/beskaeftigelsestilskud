@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -179,10 +180,20 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertFalse(isnan(np.float64(42)))
 
     def test_get_payout_date(self):
-        payout_date = get_payout_date(2024, 11)
-        self.assertEqual(payout_date.day, 19)
-        self.assertEqual(payout_date.month, 11)
-        self.assertEqual(payout_date.year, 2024)
+        self.assertEqual(get_payout_date(2024, 11), date(2024, 11, 19))
+        self.assertEqual(get_payout_date(2024, 12), date(2024, 12, 17))
+        self.assertEqual(get_payout_date(2025, 1), date(2025, 1, 21))
+        self.assertEqual(get_payout_date(2025, 2), date(2025, 2, 18))
+        self.assertEqual(get_payout_date(2025, 3), date(2025, 3, 18))
+        self.assertEqual(get_payout_date(2025, 4), date(2025, 4, 15))
+        self.assertEqual(get_payout_date(2025, 5), date(2025, 5, 20))
+        self.assertEqual(get_payout_date(2025, 6), date(2025, 6, 17))
+        self.assertEqual(get_payout_date(2025, 7), date(2025, 7, 15))
+        self.assertEqual(get_payout_date(2025, 8), date(2025, 8, 19))
+        self.assertEqual(get_payout_date(2025, 9), date(2025, 9, 16))
+        self.assertEqual(get_payout_date(2025, 10), date(2025, 10, 21))
+        self.assertEqual(get_payout_date(2025, 11), date(2025, 11, 18))
+        self.assertEqual(get_payout_date(2025, 12), date(2025, 12, 16))
 
     def test_benefit_paid_ceil_rounding(self):
         df = calculate_benefit(1, self.year.year)
