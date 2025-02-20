@@ -3,17 +3,19 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
-from itertools import groupby
+from itertools import batched, groupby
 from operator import attrgetter
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from common import utils
 from dateutil.relativedelta import relativedelta
+from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import F, QuerySet, Sum
 from django.utils import timezone
+from pandas import DataFrame
 from project.util import mean_error, root_mean_sq_error, trim_list_first
 
 from suila import data
@@ -91,24 +93,29 @@ class EstimationEngine:
         person_pk: int | None,
         count: int | None,
         dry_run: bool = True,
-        output_stream=None,
-    ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
+        output_stream: Optional[OutputWrapper] = None,
+    ):
         now = timezone.now()
+
+        if output_stream is not None:
+            output_stream.write("Fetching person_year data ...\n")
+
         person_year_qs: QuerySet[PersonYear] = PersonYear.objects.filter(
             year__year=year
         ).select_related("person")
+
         if person_pk:
             person_year_qs = person_year_qs.filter(person=person_pk)
         if count:
             person_year_qs = person_year_qs[:count]
 
-        if output_stream is not None:
-            output_stream.write("Fetching income data ...\n")
-
         # Create queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
         # Each row also contains summed values for monthly reported A and B income, as
         # each person month can have one or more A or B incomes reported.
+        if output_stream is not None:
+            output_stream.write("Fetching person_month data ...\n")
+
         if person_pk:
             person_month_qs = PersonMonth.objects.filter(
                 person_year__year__year=year, person_year__person=person_pk
@@ -116,7 +123,7 @@ class EstimationEngine:
         else:
             person_month_qs = PersonMonth.objects.filter(person_year__year__year=year)
 
-        qs = (
+        qs: Iterable[PersonMonth] = (
             person_month_qs.select_related("person_year")
             .annotate(
                 person_pk=F("person_year__person__pk"),
@@ -135,152 +142,111 @@ class EstimationEngine:
                 "_year",
                 "month",
             )
+            .iterator()
         )
 
         # Get quarantined & excluded months
+        if output_stream is not None:
+            output_stream.write("Fetching people in quarantine ...\n")
+
         quarantine_df = utils.get_people_in_quarantine(
             year, {personyear.person.cpr for personyear in person_year_qs}
         )
+
         exclude_months = {
             (now.year, now.month),
             (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
         }
 
-        data_qs = [
-            data.MonthlyIncomeData(
-                month=person_month.month,
-                person_pk=person_month.person_pk,
-                person_month_pk=person_month.pk,
-                person_year_pk=person_month.person_year_pk,
-                year=person_month.year,
-                a_income=Decimal(person_month.a_income or 0),
-                b_income=Decimal(person_month.b_income or 0)
-                + Decimal(person_month.b_income_from_year or 0),
-                u_income=Decimal(person_month.u_income_from_year or 0),
-            )
-            for person_month in qs
-            if not (
-                quarantine_df.loc[person_month.person_cpr, "in_quarantine"]
-                and (person_month._year, person_month.month) in exclude_months
-            )
-        ]
+        if output_stream is not None:
+            output_stream.write("Fetching person_month_map ...\n")
 
         person_month_map = {
             pm.pk: pm for pm in PersonMonth.objects.all().select_related("person_year")
         }
 
+        # Process rows in batches
+        batch_size = 100
         if output_stream is not None:
-            output_stream.write("Computing estimates ...\n")
+            output_stream.write(
+                f"Processing batches with a batch-size of: {batch_size} ...\n"
+            )
+
+        final_results = []
+        final_summaries = []
+        for batch in batched(qs, batch_size):
+            batch_results, batch_summaries = EstimationEngine._process_batch(
+                year,
+                batch,
+                quarantine_df,
+                exclude_months,
+                person_month_map,
+                now,
+                person_year_qs,
+                dry_run,
+                output_stream=output_stream,
+            )
+
+            final_results.extend(batch_results)
+            final_summaries.extend(batch_summaries)
+
+        return final_results, final_summaries
+
+    @staticmethod
+    def _process_batch(
+        year: int,
+        batch: tuple[PersonMonth, ...],
+        quarantine_df: DataFrame,
+        exclude_months: set[tuple[int, int]],
+        person_month_map: dict[Any, PersonMonth],
+        timestamp: datetime,
+        person_year_qs: Any,
+        dry_run: bool = True,
+        output_stream: Optional[OutputWrapper] = None,
+    ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
+        data_qs = [
+            data.MonthlyIncomeData(
+                month=person_month.month,
+                person_pk=person_month.person_pk,  # type: ignore[attr-defined]  # noqa: E501
+                person_month_pk=person_month.pk,
+                person_year_pk=person_month.person_year_pk,  # type: ignore[attr-defined]  # noqa: E501
+                year=person_month.year,
+                a_income=Decimal(
+                    person_month.a_income or 0  # type: ignore[attr-defined]
+                ),
+                b_income=Decimal(
+                    person_month.b_income or 0  # type: ignore[attr-defined]
+                )
+                + Decimal(person_month.b_income_from_year or 0),
+                u_income=Decimal(person_month.u_income_from_year or 0),
+            )
+            for person_month in batch
+            if not (
+                quarantine_df.loc[person_month.person_cpr, "in_quarantine"]  # type: ignore[attr-defined]  # noqa: E501
+                and (person_month._year, person_month.month) in exclude_months  # type: ignore[attr-defined]  # noqa: E501
+            )
+        ]
 
         results = []
         summaries = []
         for idx, (key, items) in enumerate(
             groupby(data_qs, key=attrgetter("person_pk"))
         ):
-            subset = list(items)
-            person_pk = subset[0].person_pk
-
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
 
-            first_income_month = 1
-            for month_data in [  # pragma: no branch
-                s for s in subset if s.year == year
-            ]:
-                if not month_data.amount.is_zero():
-                    first_income_month = month_data.month
-                    break
+            group_results, group_summaries = (
+                EstimationEngine._process_person_monthly_income_data(
+                    year, list(items), person_month_map, timestamp
+                )
+            )
 
-            actual_year_sums: Dict[IncomeType, Dict[int, Decimal]] = {}
-            for income_type in IncomeType:
-                actual_year_sums[income_type] = {}
+            results.extend(group_results)
+            summaries.extend(group_summaries)
 
-                for month in range(first_income_month, 13):
-                    income_type_sum = Decimal("0.00")
-
-                    if income_type == "A":
-                        row_income_selector = "a_income"
-                    elif income_type == "U":
-                        row_income_selector = "u_income"
-                    else:
-                        # NOTE: Our old logic defaulted to b_income if it didn't "know"
-                        # the income_type, so we continue to do this here
-                        row_income_selector = "b_income"
-
-                    income_type_sum = sum(
-                        getattr(row, row_income_selector)
-                        for row in subset
-                        if row.year == year and row.year_month <= date(year, month, 1)
-                    )
-
-                    actual_year_sums[income_type][month] = income_type_sum
-
-            # Handle EstimationEngine instances
-            person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
-
-            for engine in EstimationEngine.instances():
-                for income_type in engine.valid_income_types:
-                    engine_results = []
-                    for month in range(first_income_month, 13):
-                        year_month = date(year, month, 1)
-
-                        person_month = None
-                        for item in subset:
-                            if item.year_month == year_month:
-                                person_month = person_month_map[item.person_month_pk]
-                                break
-
-                        actual_year_sum = actual_year_sums[income_type][month]
-
-                        if person_month is not None:
-                            result: IncomeEstimate | None = engine.estimate(
-                                person_month, subset, income_type
-                            )
-                            if result is not None:
-                                result.person_month = person_month
-                                result.actual_year_result = actual_year_sum
-                                result.timestamp = now
-                                engine_results.append(result)
-                                results.append(result)
-
-                    # If we do not have month 12 in the dataset we do not know
-                    # what the real income is and can therefore
-                    # not evaluate our estimations
-                    if (
-                        engine_results
-                        and actual_year_sum
-                        and engine_results[-1].person_month is not None
-                        and engine_results[-1].person_month.month == 12
-                    ):
-                        months_without_income = 12 - len(engine_results)
-
-                        monthly_estimates = [Decimal(0)] * months_without_income + [
-                            resultat.estimated_year_result
-                            for resultat in engine_results
-                        ]
-
-                        me = mean_error(actual_year_sum, monthly_estimates)
-                        rmse = root_mean_sq_error(actual_year_sum, monthly_estimates)
-
-                        mean_error_percent = 100 * me / actual_year_sum
-                        rmse_percent = 100 * rmse / actual_year_sum
-                    else:
-                        mean_error_percent = None
-                        rmse_percent = None
-
-                    summary = PersonYearEstimateSummary(
-                        person_year=person_year,
-                        estimation_engine=engine.__class__.__name__,
-                        income_type=income_type,
-                        mean_error_percent=mean_error_percent,
-                        rmse_percent=rmse_percent,
-                        timestamp=now,
-                    )
-                    summaries.append(summary)
-
+        # Finally commit the DB changes
         if not dry_run:
             with transaction.atomic():
-
                 if output_stream is not None:
                     output_stream.write(
                         "Removing current `IncomeEstimate` objects ...\n"
@@ -302,6 +268,7 @@ class EstimationEngine:
                         f"Writing {len(results)} `IncomeEstimate` objects ...\n"
                     )
                 IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+
                 if output_stream is not None:
                     output_stream.write(
                         f"Writing {len(summaries)} "
@@ -310,7 +277,125 @@ class EstimationEngine:
                 PersonYearEstimateSummary.objects.bulk_create(
                     summaries, batch_size=1000
                 )
+
         return results, summaries
+
+    @staticmethod
+    def _process_person_monthly_income_data(
+        year: int,
+        subset: List[MonthlyIncomeData],
+        person_month_map: dict[Any, PersonMonth],
+        timestamp: datetime,
+    ) -> Tuple[List, List]:
+        results = []
+        summaries = []
+
+        person_pk = subset[0].person_pk
+        first_income_month = EstimationEngine._get_first_income_month(year, subset)
+        actual_year_sums = EstimationEngine._get_actual_year_sum(
+            year, first_income_month, subset
+        )
+
+        # Handle EstimationEngine instances
+        person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
+        for engine in EstimationEngine.instances():
+            for income_type in engine.valid_income_types:
+                engine_results = []
+                for month in range(first_income_month, 13):
+                    year_month = date(year, month, 1)
+
+                    person_month = None
+                    for item in subset:
+                        if item.year_month == year_month:
+                            person_month = person_month_map[item.person_month_pk]
+                            break
+
+                    actual_year_sum = actual_year_sums[income_type][month]
+
+                    if person_month is not None:
+                        result: IncomeEstimate | None = engine.estimate(
+                            person_month, subset, income_type
+                        )
+                        if result is not None:
+                            result.person_month = person_month
+                            result.actual_year_result = actual_year_sum
+                            result.timestamp = timestamp
+                            engine_results.append(result)
+                            results.append(result)
+
+                # If we do not have month 12 in the dataset we do not know
+                # what the real income is and can therefore
+                # not evaluate our estimations
+                if (
+                    engine_results
+                    and actual_year_sum
+                    and engine_results[-1].person_month is not None
+                    and engine_results[-1].person_month.month == 12
+                ):
+                    months_without_income = 12 - len(engine_results)
+
+                    monthly_estimates = [Decimal(0)] * months_without_income + [
+                        resultat.estimated_year_result for resultat in engine_results
+                    ]
+
+                    me = mean_error(actual_year_sum, monthly_estimates)
+                    rmse = root_mean_sq_error(actual_year_sum, monthly_estimates)
+
+                    mean_error_percent = 100 * me / actual_year_sum
+                    rmse_percent = 100 * rmse / actual_year_sum
+                else:
+                    mean_error_percent = None
+                    rmse_percent = None
+
+                summary = PersonYearEstimateSummary(
+                    person_year=person_year,
+                    estimation_engine=engine.__class__.__name__,
+                    income_type=income_type,
+                    mean_error_percent=mean_error_percent,
+                    rmse_percent=rmse_percent,
+                    timestamp=timestamp,
+                )
+                summaries.append(summary)
+
+        return results, summaries
+
+    @staticmethod
+    def _get_first_income_month(year: int, subset: List[MonthlyIncomeData]) -> int:
+        for month_data in [s for s in subset if s.year == year]:  # pragma: no branch
+            if not month_data.amount.is_zero():
+                return month_data.month
+
+        return 1
+
+    @staticmethod
+    def _get_actual_year_sum(
+        year: int, first_income_month: int, subset: List[MonthlyIncomeData]
+    ) -> Dict[IncomeType, Dict[int, Decimal]]:
+        actual_year_sums: Dict[IncomeType, Dict[int, Decimal]] = {}
+        for income_type in IncomeType:
+            actual_year_sums[income_type] = {}
+
+            for month in range(first_income_month, 13):
+                income_type_sum = Decimal("0.00")
+
+                if income_type == "A":
+                    row_income_selector = "a_income"
+                elif income_type == "U":
+                    row_income_selector = "u_income"
+                else:
+                    # NOTE: Our old logic defaulted to b_income if it didn't "know"
+                    # the income_type, so we continue to do this here
+                    row_income_selector = "b_income"
+
+                income_type_sum = sum(
+                    getattr(row, row_income_selector)
+                    for row in subset
+                    if row.year == year and row.year_month <= date(year, month, 1)
+                )
+
+                actual_year_sums[income_type][month] = income_type_sum
+
+        return actual_year_sums
 
 
 """

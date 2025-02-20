@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-10 14:00-0200\n"
+"POT-Creation-Date: 2025-02-19 06:36-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,19 @@ msgid "Mit overblik"
 msgstr ""
 
 #: common/templates/common/_base.html
+msgid "Mine signaler"
+msgstr ""
+
+#: common/templates/common/_base.html
 msgid "Borgersøgning"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Sammenhæng"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Ikke modtaget Suila-tapit"
 msgstr ""
 
 #: common/templates/common/_base.html
