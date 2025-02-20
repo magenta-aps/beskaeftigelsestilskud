@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 # mypy: disable-error-code="call-arg, attr-defined"
+from datetime import date
 from decimal import Decimal
 from typing import Optional
 
@@ -14,6 +15,7 @@ from ninja_extra import ControllerBase, api_controller, paginate, permissions, r
 from ninja_extra.schemas import NinjaPaginationResponseSchema
 
 from suila.api.auth import RestPermission, get_auth_methods
+from suila.benefit import get_payout_date
 from suila.models import PersonMonth
 
 
@@ -25,6 +27,7 @@ class PersonMonthOut(ModelSchema):
     a_income: Optional[Decimal] = None
     b_income: Optional[Decimal] = None
     b_income_from_year: Decimal = Field(..., alias="b_income_from_year")
+    payout_date: date
 
     class Meta:
         model = PersonMonth
@@ -47,6 +50,10 @@ class PersonMonthOut(ModelSchema):
     @staticmethod
     def resolve_b_income(obj) -> Decimal | None:
         return obj.monthlyincomereport_set.aggregate(Sum("b_income"))["b_income__sum"]
+
+    @staticmethod
+    def resolve_payout_date(obj) -> date:
+        return get_payout_date(obj.year, obj.month)
 
 
 class PersonMonthFilterSchema(FilterSchema):

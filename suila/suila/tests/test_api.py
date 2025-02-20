@@ -424,6 +424,7 @@ class PersonMonthApiTest(ApiTestCase):
             "a_income": "10000.00",
             "b_income": "0.00",
             "b_income_from_year": "0",
+            "payout_date": "2024-12-17",
         }
         cls.expected1b = {
             "year": 2025,
@@ -441,6 +442,7 @@ class PersonMonthApiTest(ApiTestCase):
             "a_income": "11000.00",
             "b_income": "0.00",
             "b_income_from_year": "0",
+            "payout_date": "2025-01-21",
         }
         cls.expected1c = {
             "year": 2025,
@@ -458,6 +460,7 @@ class PersonMonthApiTest(ApiTestCase):
             "a_income": "12000.00",
             "b_income": "0.00",
             "b_income_from_year": "0",
+            "payout_date": "2025-02-18",
         }
 
         cls.person2 = Person.objects.create(
@@ -499,6 +502,7 @@ class PersonMonthApiTest(ApiTestCase):
             "a_income": None,
             "b_income": None,
             "b_income_from_year": "0",
+            "payout_date": "2024-12-17",
         }
 
     def test_get(self):
