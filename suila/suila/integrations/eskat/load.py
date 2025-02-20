@@ -57,7 +57,7 @@ class Handler:
             # Create or update Person objects
             persons: dict[str, Person] = {}
             for cpr in cpr_taxscopes.keys():
-                person = Person(cpr=cpr, name=cpr, load=load)
+                person = Person(cpr=cpr, load=load)
                 try:
                     # Validate CPR against custom validator
                     person.full_clean(validate_unique=False)

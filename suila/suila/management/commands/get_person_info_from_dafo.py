@@ -16,16 +16,11 @@ class Command(SuilaBaseCommand):
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
-        """
-        Loops over all persons and populates civil_state and location_code
-        """
+        """Updates all Person objects based on CPR data from DAFO/Pitu"""
         self._verbose = kwargs["verbosity"] > 1
-        self._write_verbose("Loading location code and civil state from DAFO")
+        self._write_verbose("Loading CPR data from DAFO")
         if kwargs["cpr"]:
-            persons = Person.objects.filter(
-                cpr=kwargs["cpr"],
-            )
-
+            persons = Person.objects.filter(cpr=kwargs["cpr"])
             if not persons:
                 self._write_verbose(
                     f"Could not find any persons with CPR={kwargs['cpr']}"
@@ -34,6 +29,7 @@ class Command(SuilaBaseCommand):
             persons = Person.objects.all()
 
         pitu_client = PituClient.from_settings()
+
         for person in persons:
             try:
                 person_data = pitu_client.get_person_info(person.cpr)
@@ -55,15 +51,30 @@ class Command(SuilaBaseCommand):
                         f'no "civilstand" in person_data: {person_data}'
                     )
 
-                if "stedkode" in person_data:
-                    person.location_code = person_data["stedkode"]
+                if "myndighedskode" in person_data:
+                    person.location_code = person_data["myndighedskode"]
                 else:
-                    self._write_verbose(f'no "stedkode" in person_data: {person_data}')
+                    self._write_verbose(
+                        f'no "myndighedskode" in person_data: {person_data}'
+                    )
+
+                if "fornavn" in person_data and "efternavn" in person_data:
+                    person.name = f"{person_data['fornavn']} {person_data['efternavn']}"
+                else:
+                    self._write_verbose(
+                        f'no "fornavn" and "efternavn" in person_data: {person_data}'
+                    )
+
+                address = person_data.get("adresse")
+                city = person_data.get("bynavn")
+                post_code = person_data.get("postnummer")
+                if all(val is not None for val in (address, city, post_code)):
+                    person.full_address = f"{address}, {post_code} {city}"
 
                 person.save()
+
                 self._write_verbose(
-                    f"Updated civil state and location code for {person.cpr}"
-                    f"(person data = {person_data})"
+                    f"Updated CPR data for {person.cpr} (person data = {person_data})"
                 )
 
         self._write_verbose("Done")
