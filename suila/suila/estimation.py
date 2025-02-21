@@ -136,8 +136,7 @@ class EstimationEngine:
             Person.objects.all()
             if person_pk is None
             else Person.objects.filter(pk=person_pk)
-        )
-        person_qs = person_qs.values_list("pk", flat=True)
+        ).values_list("pk", flat=True)
 
         exclude_months = {
             (now.year, now.month),
@@ -159,7 +158,6 @@ class EstimationEngine:
                 batch_results, batch_summaries = EstimationEngine._process_batch(
                     year,
                     person_pk_list,
-                    person_year_qs,
                     quarantine_df,
                     exclude_months,
                     person_month_map,
@@ -176,7 +174,6 @@ class EstimationEngine:
     def _process_batch(
         year: int,
         person_pk_list: Iterable[int],
-        person_year_qs: QuerySet[PersonYear],
         quarantine_df: DataFrame,
         exclude_months: set[tuple[int, int]],
         person_month_map: dict[Any, PersonMonth],
@@ -216,7 +213,7 @@ class EstimationEngine:
             if output_stream is not None:
                 output_stream.write("Removing current `IncomeEstimate` objects ...\n")
             IncomeEstimate.objects.filter(
-                person_month__person_year__in=person_year_qs,
+                person_month__person_year__year_id=year,
                 person_month__person_year__person_id__in=person_pk_list,
             ).delete()
             if output_stream is not None:
@@ -224,7 +221,7 @@ class EstimationEngine:
                     "Removing current `PersonYearEstimateSummary` objects ...\n"
                 )
             PersonYearEstimateSummary.objects.filter(
-                person_year__in=person_year_qs,
+                person_year__year_id=year,
                 person_year__person_id__in=person_pk_list,
             ).delete()
 
