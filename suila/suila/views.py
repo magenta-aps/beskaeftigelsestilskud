@@ -466,7 +466,7 @@ class CalculatorView(
     LoginRequiredMixin, YearMonthMixin, ViewLogMixin, GraphViewMixin, FormView
 ):
     form_class = CalculatorForm
-    template_name = "data_analysis/calculate.html"
+    template_name = "suila/calculate.html"
 
     @cached_property
     def is_advanced(self):
