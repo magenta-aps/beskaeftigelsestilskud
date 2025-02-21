@@ -55,6 +55,7 @@ class Command(SuilaBaseCommand):
         self._write_verbose(
             f"Handling subcommand: {typ} (YEAR={year}, MONTH={month}, CPR={cpr})"
         )
+        b = 3
         if typ == "annualincome":
             if month is not None:
                 self.stdout.write(
@@ -66,6 +67,9 @@ class Command(SuilaBaseCommand):
             for chunk in batched(annual_income_data, insert_chunk_size):
                 print(f"Handling parsed chunk of size {len(chunk)}")
                 AnnualIncomeHandler.create_or_update_objects(chunk, load, self.stdout)
+                b -= 1
+                if b <= 0:
+                    break
         if typ == "expectedincome":
             if month is not None:
                 self.stdout.write(
@@ -79,6 +83,9 @@ class Command(SuilaBaseCommand):
                 ExpectedIncomeHandler.create_or_update_objects(
                     year, chunk, load, self.stdout
                 )
+                b -= 1
+                if b <= 0:
+                    break
         if typ == "monthlyincome":
             if skew:
                 year_months = self._get_year_and_month_kwargs(year, month)
@@ -112,6 +119,9 @@ class Command(SuilaBaseCommand):
                         load,
                         self.stdout,
                     )
+                    b -= 1
+                    if b <= 0:
+                        break
         if typ == "taxinformation":
             tax_information_data = client.get_tax_information(
                 year, cpr=cpr, chunk_size=fetch_chunk_size
@@ -128,6 +138,9 @@ class Command(SuilaBaseCommand):
                 )
                 if cpr is None:
                     cprs += [c.cpr for c in chunk]
+                b -= 1
+                if b <= 0:
+                    break
             if cpr is None:
                 TaxInformationHandler.update_missing(year, cprs, load)
 
