@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: MPL-2.0
 from unittest.mock import Mock, patch
 
+from common.pitu import PituClient
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from suila.management.commands.get_employer_info_from_dafo import (
     Command as GetEmployerInfoFromDafoCommand,
@@ -34,6 +36,16 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
         "telefon": "123456",
     }
 
+    _mock_pitu_settings = {
+        "certificate": "test_cert",
+        "private_key": "test_key",
+        "root_ca": "test_ca",
+        "client_header": "test_header",
+        "base_url": "test_url",
+        "service": "test_cpr_service",
+        "cvr_service": "test_cvr_service",
+    }
+
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -57,6 +69,13 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
             Employer.objects.filter(cvr=self.cvr).values("cvr", "name"),
             [{"cvr": self.cvr, "name": "Firmanavn ApS"}],
         )
+
+    @override_settings(PITU=_mock_pitu_settings)
+    def test_pitu_client_initialization(self):
+        command = GetEmployerInfoFromDafoCommand()
+        client = command._get_pitu_client()
+        self.assertIsInstance(client, PituClient)
+        self.assertIn("cvr", client.service)
 
     def _run(self, **kwargs):
         # Arrange
