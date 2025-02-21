@@ -183,11 +183,33 @@ class EstimationEngine:
     ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
 
         # Det er vigtigt at vi behandler en persons data på én gang,
-        # og ikke splitter dem op
+        # og ikke splitter dem op over flere batches.
+        # Det er fordi estimatet skal køre på alle relevante måneder for personen,
+        # hvilket er op til 24 måneder tilbage i tid
 
+        # Fjern IncomeEstimate- og PersonYearEstimateSummary for
+        # personer i dette batch i dette år
+        if not dry_run:
+            if output_stream is not None:
+                output_stream.write("Removing current `IncomeEstimate` objects ...\n")
+            IncomeEstimate.objects.filter(
+                person_month__person_year__year_id=year,
+                person_month__person_year__person_id__in=person_pk_list,
+            ).delete()
+            if output_stream is not None:
+                output_stream.write(
+                    "Removing current `PersonYearEstimateSummary` objects ...\n"
+                )
+            PersonYearEstimateSummary.objects.filter(
+                person_year__year_id=year,
+                person_year__person_id__in=person_pk_list,
+            ).delete()
+
+        # Fremsøg relevante PersonMonths og annotér dem til estimeringen
         person_month_qs = (
             PersonMonth.objects.filter(
-                person_year__year__year=year,
+                person_year__year_id__lte=year,
+                person_year__year_id__gte=year - 2,
                 person_year__person_id__in=person_pk_list,
             )
             .select_related("person_year")
@@ -209,22 +231,9 @@ class EstimationEngine:
                 "month",
             )
         )
-        if not dry_run:
-            if output_stream is not None:
-                output_stream.write("Removing current `IncomeEstimate` objects ...\n")
-            IncomeEstimate.objects.filter(
-                person_month__person_year__year_id=year,
-                person_month__person_year__person_id__in=person_pk_list,
-            ).delete()
-            if output_stream is not None:
-                output_stream.write(
-                    "Removing current `PersonYearEstimateSummary` objects ...\n"
-                )
-            PersonYearEstimateSummary.objects.filter(
-                person_year__year_id=year,
-                person_year__person_id__in=person_pk_list,
-            ).delete()
 
+        # Frasortér karantæneramte personer og ekskluderede måneder
+        # Opbyg en liste af MonthlyIncomeData
         data_qs = [
             data.MonthlyIncomeData(
                 month=person_month.month,
@@ -255,13 +264,11 @@ class EstimationEngine:
         ):
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
-
             group_results, group_summaries = (
                 EstimationEngine._process_person_monthly_income_data(
                     year, list(items), person_month_map, timestamp
                 )
             )
-
             results.extend(group_results)
             summaries.extend(group_summaries)
 
