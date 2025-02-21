@@ -108,6 +108,7 @@ class TaxInformation:
     tax_scope: str | None = None
     start_date: str | None = None
     end_date: str | None = None
+    catch_sale_pct: float | None = None
     tax_municipality_number: str | None = None
     cpr_municipality_code: str | None = None
     region_number: str | None = None
