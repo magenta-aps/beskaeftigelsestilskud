@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import copy
+
 from django.conf import settings
 from requests import Session
 
@@ -31,7 +33,9 @@ class PituClient:
 
     @classmethod
     def from_settings(cls):
-        return cls(**settings.PITU)
+        pitu_settings: dict = copy.copy(settings.PITU)
+        del pitu_settings["cvr_service"]
+        return cls(**pitu_settings)
 
     def get(self, path, params={}):
         r = self.session.get(

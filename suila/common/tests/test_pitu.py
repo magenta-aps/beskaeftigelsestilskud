@@ -14,6 +14,7 @@ pitu_test_settings = {
     "client_header": "test_header",
     "base_url": "test_url",
     "service": "test_service",
+    "cvr_service": "test_cvr_service",
 }
 
 response_mock = MagicMock()

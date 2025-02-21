@@ -28,7 +28,7 @@ class Command(SuilaBaseCommand):
         else:
             persons = Person.objects.all()
 
-        pitu_client = PituClient.from_settings()
+        pitu_client = self._get_pitu_client()
 
         for person in persons:
             try:
@@ -79,6 +79,10 @@ class Command(SuilaBaseCommand):
 
         self._write_verbose("Done")
         pitu_client.close()
+
+    def _get_pitu_client(self) -> PituClient:
+        # Use default configuration (CPR service) for Pitu client
+        return PituClient.from_settings()
 
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:

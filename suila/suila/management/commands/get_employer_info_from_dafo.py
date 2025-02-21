@@ -66,10 +66,17 @@ class Command(SuilaBaseCommand):
         pitu_client.close()
 
     def _get_pitu_client(self) -> PituClient:
-        pitu_settings: dict = settings.PITU  # type: ignore[misc]
         # Use different value than `PITU_SERVICE` for the `service` kwarg, as
         # `PITU_SERVICE` specifies the CPR service (not CVR.)
-        return PituClient(**{**pitu_settings, "service": pitu_settings["cvr_service"]})
+        pitu_settings: dict = settings.PITU  # type: ignore[misc]
+        return PituClient(
+            base_url=pitu_settings["base_url"],
+            service=pitu_settings["cvr_service"],
+            client_header=pitu_settings["client_header"],
+            certificate=pitu_settings["certificate"],
+            private_key=pitu_settings["private_key"],
+            root_ca=pitu_settings["root_ca"],
+        )
 
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
