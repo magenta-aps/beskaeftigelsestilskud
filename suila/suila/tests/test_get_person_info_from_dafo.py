@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from unittest.mock import Mock, patch
 
+from common.pitu import PituClient
 from django.test import TestCase
 
 from suila.management.commands.get_person_info_from_dafo import (
@@ -73,6 +74,12 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
                 },
             ],
         )
+
+    def test_pitu_client_initialization(self):
+        command = GetPersonInfoFromDafoCommand()
+        client = command._get_pitu_client()
+        self.assertIsInstance(client, PituClient)
+        self.assertIn("DAFO-COMBINED", client.service)
 
     def _run(self, **kwargs):
         # Arrange
