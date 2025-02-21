@@ -31,6 +31,12 @@ class Command(SuilaBaseCommand):
 
         pitu_client = self._get_pitu_client()
 
+        # TODO: optimize this loop
+        # - only update `Employer` objects whose `name` is NULL,
+        # - only update `Employer` objects whose last update is older than X months,
+        # - parallelize requests to DAFO/Pitu,
+        # - look up more than one CVR in each API request, if possible.
+
         for employer in employers:
             try:
                 employer_data = pitu_client.get(f"/{employer.cvr}")
