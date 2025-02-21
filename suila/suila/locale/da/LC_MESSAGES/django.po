@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-19 06:36-0200\n"
+"POT-Creation-Date: 2025-02-21 09:04-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -140,30 +140,44 @@ msgstr ""
 msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
 msgstr ""
 
-#: suila/templates/suila/calculate_benefit.html suila/templates/suila/root.html
+#: suila/templates/suila/calculate.html suila/templates/suila/root.html
 msgid "Suilaberegneren"
 msgstr ""
 
-#: suila/templates/suila/calculate_benefit.html
-msgid ""
-"Suilaberegneren kan bruges til at beregne hvor meget beskæftigelsesfradrag "
-"du vil modtage. Bemærk at tallene er vejledende og ikke endelige."
+#: suila/templates/suila/calculate.html
+msgid "Indlæs beregningsmotor"
 msgstr ""
 
-#: suila/templates/suila/calculate_benefit.html
+#: suila/templates/suila/calculate.html
 msgid "Beregn"
 msgstr ""
 
-#: suila/templates/suila/calculate_benefit.html
+#: suila/templates/suila/calculate.html
 msgid "Ryd"
 msgstr ""
 
-#: suila/templates/suila/calculate_benefit.html
+#: suila/templates/suila/calculate.html
 msgid "Beregnet beskæftigelsesfradrag pr. måned:"
 msgstr ""
 
-#: suila/templates/suila/calculate_benefit.html
+#: suila/templates/suila/calculate.html
 msgid "Beregnet beskæftigelsesfradrag for hele året:"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+msgid "Indlæs"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+msgid "Årsindkomst i kr."
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+msgid "Suila-tapit i kr."
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+msgid "Beregnet Suila for hele året:"
 msgstr ""
 
 #: suila/templates/suila/faq.html
