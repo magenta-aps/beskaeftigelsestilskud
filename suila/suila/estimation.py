@@ -143,7 +143,6 @@ class EstimationEngine:
             (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
         }
         # # Process rows in batches
-        # batch_size = 100
         batch_size = 10  # 10 people, not 10 personmonths
         if output_stream is not None:
             output_stream.write(
