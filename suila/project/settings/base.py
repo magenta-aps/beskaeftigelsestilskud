@@ -102,6 +102,7 @@ PITU = {
     "client_header": os.environ.get("PITU_UXP_CLIENT"),
     "base_url": os.environ.get("PITU_URL"),
     "service": os.environ.get("PITU_SERVICE"),
+    "cvr_service": os.environ.get("PITU_CVR_SERVICE"),
 }
 
 if TESTING:
