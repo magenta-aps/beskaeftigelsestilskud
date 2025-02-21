@@ -61,7 +61,7 @@ Velkommen, {{ name }}
         {% jumbo_link faq_url _("Jeg har ikke modtaget Suila-tapit") "help" %}
     </div>
     <div class="g-col-6 jumbo">
-        {% url "suila:calculate_benefit" as calculator_url %}
+        {% url "suila:calculator" as calculator_url %}
         {% jumbo_link calculator_url _("Suilaberegneren") "calculate" %}
     </div>
 </div>
@@ -89,7 +89,7 @@ Velkommen, {{ name }}
 </div>
 <div class="grid gap-5 mt-5">
     <div class="g-col-6 jumbo">
-        {% url "suila:calculate_benefit" as calculator_url %}
+        {% url "suila:calculator" as calculator_url %}
         {% jumbo_link calculator_url _("Suilaberegneren") "calculate" %}
     </div>
 </div>

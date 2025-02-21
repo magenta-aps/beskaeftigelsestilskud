@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 
 from suila.api import api
 from suila.views import (
-    CalculateBenefitView,
+    CalculatorView,
     GraphView,
     PersonDetailIncomeView,
     PersonDetailNotesAttachmentView,
@@ -25,7 +25,7 @@ app_name = "suila"
 urlpatterns: List[URLResolver | URLPattern] = [
     path("api/", api.urls, name="api"),
     path("", RootView.as_view(), name="root"),
-    path("calculator/", CalculateBenefitView.as_view(), name="calculate_benefit"),
+    path("calculator/", CalculatorView.as_view(), name="calculator"),
     path("graph/", GraphView.as_view(), name="graph"),
     path("faq/", TemplateView.as_view(template_name="suila/faq.html"), name="faq"),
     path("persons/", PersonSearchView.as_view(), name="person_search"),

@@ -369,3 +369,11 @@ table th.orderable.desc a::after {
   margin-left: 0.25 * $spacer;
   vertical-align: bottom;
 }
+
+// Suila graph
+#graph {
+  height: 50rem;
+  padding: $spacer;
+  background: $light-grey;
+  border-radius: $spacer;
+}
