@@ -22,6 +22,7 @@ from suila.models import (
     PersonYearAssessment,
     PersonYearEstimateSummary,
     PersonYearU1AAssessment,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 
@@ -35,8 +36,13 @@ class Command(BaseCommand):
                 model, for_concrete_model=False
             )
             for action in actions:
+                codename = (
+                    f"{action}_{content_type.model}"
+                    if action in ("view", "change", "add", "delete")
+                    else action
+                )
                 yield Permission.objects.get(
-                    codename=f"{action}_{content_type.model}",
+                    codename=codename,
                     content_type=content_type,
                 )
 
@@ -93,5 +99,9 @@ class Command(BaseCommand):
                 (PersonYearU1AAssessment, ("view",)),
                 (Note, ("view",)),
                 (NoteAttachment, ("view",)),
+                (
+                    StandardWorkBenefitCalculationMethod,
+                    ("use_adminsite_calculator_parameters",),
+                ),
             ),
         )
