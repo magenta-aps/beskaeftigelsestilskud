@@ -442,13 +442,6 @@ class PersonDetailIncomeView(
 
 
 class GraphViewMixin(ContextMixin):
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["graph_points"] = self.to_json(
-            self.calculation_method.graph_points
-        )
-        return context_data
-
     @cached_property
     def calculation_method(self):
         year = Year.objects.get(year=self.year)
