@@ -133,8 +133,11 @@ header nav.navbar {
   padding: $spacer 0;
 }
 header nav.navbar a,
-header nav.navbar span.material-icons {
+header nav.navbar div > span.material-icons {
   color: $white;
+}
+header nav.navbar a:hover {
+  color: $secondary;
 }
 
 .content {
