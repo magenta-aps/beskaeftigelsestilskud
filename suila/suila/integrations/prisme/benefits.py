@@ -19,6 +19,7 @@ from suila.integrations.prisme.g68g69 import (
     G68G69TransactionPair,
     G68G69TransactionWriter,
 )
+from suila.integrations.prisme.mod11 import validate_mod11
 from suila.models import PersonMonth, PrismeAccountAlias, PrismeBatch, PrismeBatchItem
 
 logger = logging.getLogger(__name__)
@@ -64,13 +65,26 @@ class BatchExport:
     def get_batches(
         self, qs: QuerySet[PersonMonth]
     ) -> Generator[tuple[PrismeBatch, QuerySet[PersonMonth]], None, None]:
-        # Split `PersonMonth` queryset into batches, yielding one `PrismeBatch` and the
-        # matching `PersonMonth` objects for each `prefix` (== first two digits of CPR.)
-        current_batch: PrismeBatch | None = None
+        # Keep a separate set of all `PersonMonth` PKs where the CPR does not pass a
+        # modulus-11 test. (These will be yielded last.)
+        non_mod11_pks = set()
         for person_month in qs:
+            if not validate_mod11(
+                person_month.identifier  # type: ignore[attr-defined]
+            ):
+                non_mod11_pks.add(person_month.pk)
+
+        # Split the remaining `PersonMonth` queryset into batches, yielding one
+        # `PrismeBatch` and the matching `PersonMonth` objects for each `prefix`
+        # (== first two digits of CPR.)
+        remaining_qs: QuerySet[PersonMonth] = qs.exclude(pk__in=non_mod11_pks)
+        current_batch: PrismeBatch | None = None
+        for person_month in remaining_qs:
+            # Use default prefix (first two digits of CPR)
             person_month_prefix: int = int(
                 person_month.prefix  # type: ignore[attr-defined]
             )
+            # Start a new "normal" batch whenever the prefix changes
             if (current_batch is None) or (person_month_prefix != current_batch.prefix):
                 current_batch = PrismeBatch(
                     prefix=person_month_prefix,
@@ -78,8 +92,15 @@ class BatchExport:
                 )
                 yield (
                     current_batch,
-                    qs.filter(prefix=person_month.prefix),  # type: ignore[attr-defined]
+                    remaining_qs.filter(
+                        prefix=person_month.prefix  # type: ignore[attr-defined]
+                    ),
                 )
+
+        # Finally, yield the "special" batch of non-mod11 CPR items, if any exist
+        if non_mod11_pks:
+            non_mod11_batch = PrismeBatch(prefix=32, export_date=date.today())
+            yield non_mod11_batch, qs.filter(pk__in=non_mod11_pks)
 
     def get_prisme_batch_item(
         self,
