@@ -142,11 +142,29 @@ class BatchExport:
         # know the recipient user's preferred language.
         return "www.suila.gl takuuk"
 
+    def get_destination_folder(self, prisme_batch: PrismeBatch) -> str:
+        prisme: dict = settings.PRISME  # type: ignore[misc]
+        config_key = (
+            "g68g69_export_folder"
+            if prisme_batch.prefix < 32
+            else "g68g69_export_mod11_folder"
+        )
+        return prisme[config_key]
+
+    def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
+        return (
+            f"RES_G68_export_{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
+        )
+
     def upload_batch(
         self,
         prisme_batch: PrismeBatch,
         prisme_batch_items: list[PrismeBatchItem],
     ) -> None:
+        # Get destination folder and filename for this batch
+        destination_folder: str = self.get_destination_folder(prisme_batch)
+        filename: str = self.get_destination_filename(prisme_batch)
+
         # Export batch to Prisme
         buf: BytesIO = BytesIO()
         for prisme_batch_item in prisme_batch_items:
@@ -155,15 +173,6 @@ class BatchExport:
             buf.write(prisme_batch_item.g69_content.encode("utf-8"))
             buf.write(b"\r\n")
         buf.seek(0)
-
-        # TODO: use production or development folder depending on settings (or CLI args)
-        prisme: dict = settings.PRISME  # type: ignore[misc]
-        destination_folder = prisme["dirs"]["development"]
-
-        # TODO: revise filename based on customer input
-        filename = (
-            f"RES_G68_export_{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
-        )
 
         try:
             put_file_in_prisme_folder(
