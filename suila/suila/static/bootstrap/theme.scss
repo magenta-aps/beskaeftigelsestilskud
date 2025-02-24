@@ -143,6 +143,7 @@ header nav.navbar a:hover {
 .content {
   margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
   padding: 3 * $spacer;
+  min-height: 60vh;
   background-color: $lightest-grey;
   border-radius: $spacer;
   box-shadow: 0 0 $spacer $grey;
