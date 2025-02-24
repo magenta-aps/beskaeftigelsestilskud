@@ -25,6 +25,7 @@ from suila.models import (
     IncomeEstimate,
     IncomeType,
     MonthlyIncomeReport,
+    Person,
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
@@ -109,6 +110,21 @@ class EstimationEngine:
         if count:
             person_year_qs = person_year_qs[:count]
 
+        # Get quarantined & excluded months
+        if output_stream is not None:
+            output_stream.write("Fetching people in quarantine ...\n")
+
+        quarantine_df = utils.get_people_in_quarantine(
+            year, {personyear.person.cpr for personyear in person_year_qs}
+        )
+
+        if output_stream is not None:
+            output_stream.write("Fetching person_month_map ...\n")
+
+        person_month_map = {
+            pm.pk: pm for pm in PersonMonth.objects.all().select_related("person_year")
+        }
+
         # Create queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
         # Each row also contains summed values for monthly reported A and B income, as
@@ -116,15 +132,86 @@ class EstimationEngine:
         if output_stream is not None:
             output_stream.write("Fetching person_month data ...\n")
 
-        if person_pk:
-            person_month_qs = PersonMonth.objects.filter(
-                person_year__year__year=year, person_year__person=person_pk
-            )
-        else:
-            person_month_qs = PersonMonth.objects.filter(person_year__year__year=year)
+        person_qs = (
+            Person.objects.all()
+            if person_pk is None
+            else Person.objects.filter(pk=person_pk)
+        ).values_list("pk", flat=True)
 
-        qs: Iterable[PersonMonth] = (
-            person_month_qs.select_related("person_year")
+        exclude_months = {
+            (now.year, now.month),
+            (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
+        }
+        # # Process rows in batches
+        batch_size = 10  # 10 people, not 10 personmonths
+        if output_stream is not None:
+            output_stream.write(
+                f"Processing batches with a batch-size of: {batch_size} ...\n"
+            )
+
+        final_results = []
+        final_summaries = []
+
+        with transaction.atomic():
+            for person_pk_list in batched(person_qs.iterator(), batch_size):
+                batch_results, batch_summaries = EstimationEngine._process_batch(
+                    year,
+                    person_pk_list,
+                    quarantine_df,
+                    exclude_months,
+                    person_month_map,
+                    now,
+                    dry_run,
+                    output_stream,
+                )
+                final_results.extend(batch_results)
+                final_summaries.extend(batch_summaries)
+
+        return final_results, final_summaries
+
+    @staticmethod
+    def _process_batch(
+        year: int,
+        person_pk_list: Iterable[int],
+        quarantine_df: DataFrame,
+        exclude_months: set[tuple[int, int]],
+        person_month_map: dict[Any, PersonMonth],
+        timestamp: datetime,
+        dry_run: bool = True,
+        output_stream: Optional[OutputWrapper] = None,
+    ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
+
+        # Det er vigtigt at vi behandler en persons data på én gang,
+        # og ikke splitter dem op over flere batches.
+        # Det er fordi estimatet skal køre på alle relevante måneder for personen,
+        # hvilket er op til 24 måneder tilbage i tid
+
+        # Fjern IncomeEstimate- og PersonYearEstimateSummary for
+        # personer i dette batch i dette år
+        if not dry_run:
+            if output_stream is not None:
+                output_stream.write("Removing current `IncomeEstimate` objects ...\n")
+            IncomeEstimate.objects.filter(
+                person_month__person_year__year_id=year,
+                person_month__person_year__person_id__in=person_pk_list,
+            ).delete()
+            if output_stream is not None:
+                output_stream.write(
+                    "Removing current `PersonYearEstimateSummary` objects ...\n"
+                )
+            PersonYearEstimateSummary.objects.filter(
+                person_year__year_id=year,
+                person_year__person_id__in=person_pk_list,
+            ).delete()
+
+        # Fremsøg relevante PersonMonths og annotér dem til estimeringen
+        person_month_qs = (
+            PersonMonth.objects.filter(
+                person_year__year_id__lte=year,
+                person_year__year_id__gte=year - 2,
+                person_year__person_id__in=person_pk_list,
+            )
+            .select_related("person_year")
             .annotate(
                 person_pk=F("person_year__person__pk"),
                 person_cpr=F("person_year__person__cpr"),
@@ -142,68 +229,10 @@ class EstimationEngine:
                 "_year",
                 "month",
             )
-            .iterator()
         )
 
-        # Get quarantined & excluded months
-        if output_stream is not None:
-            output_stream.write("Fetching people in quarantine ...\n")
-
-        quarantine_df = utils.get_people_in_quarantine(
-            year, {personyear.person.cpr for personyear in person_year_qs}
-        )
-
-        exclude_months = {
-            (now.year, now.month),
-            (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
-        }
-
-        if output_stream is not None:
-            output_stream.write("Fetching person_month_map ...\n")
-
-        person_month_map = {
-            pm.pk: pm for pm in PersonMonth.objects.all().select_related("person_year")
-        }
-
-        # Process rows in batches
-        batch_size = 100
-        if output_stream is not None:
-            output_stream.write(
-                f"Processing batches with a batch-size of: {batch_size} ...\n"
-            )
-
-        final_results = []
-        final_summaries = []
-        for batch in batched(qs, batch_size):
-            batch_results, batch_summaries = EstimationEngine._process_batch(
-                year,
-                batch,
-                quarantine_df,
-                exclude_months,
-                person_month_map,
-                now,
-                person_year_qs,
-                dry_run,
-                output_stream=output_stream,
-            )
-
-            final_results.extend(batch_results)
-            final_summaries.extend(batch_summaries)
-
-        return final_results, final_summaries
-
-    @staticmethod
-    def _process_batch(
-        year: int,
-        batch: tuple[PersonMonth, ...],
-        quarantine_df: DataFrame,
-        exclude_months: set[tuple[int, int]],
-        person_month_map: dict[Any, PersonMonth],
-        timestamp: datetime,
-        person_year_qs: Any,
-        dry_run: bool = True,
-        output_stream: Optional[OutputWrapper] = None,
-    ) -> Tuple[List[IncomeEstimate], List[PersonYearEstimateSummary]]:
+        # Frasortér karantæneramte personer og ekskluderede måneder
+        # Opbyg en liste af MonthlyIncomeData
         data_qs = [
             data.MonthlyIncomeData(
                 month=person_month.month,
@@ -220,7 +249,7 @@ class EstimationEngine:
                 + Decimal(person_month.b_income_from_year or 0),
                 u_income=Decimal(person_month.u_income_from_year or 0),
             )
-            for person_month in batch
+            for person_month in person_month_qs
             if not (
                 quarantine_df.loc[person_month.person_cpr, "in_quarantine"]  # type: ignore[attr-defined]  # noqa: E501
                 and (person_month._year, person_month.month) in exclude_months  # type: ignore[attr-defined]  # noqa: E501
@@ -234,49 +263,27 @@ class EstimationEngine:
         ):
             if output_stream is not None:
                 output_stream.write(str(idx), ending="\r")
-
             group_results, group_summaries = (
                 EstimationEngine._process_person_monthly_income_data(
                     year, list(items), person_month_map, timestamp
                 )
             )
-
             results.extend(group_results)
             summaries.extend(group_summaries)
 
         # Finally commit the DB changes
         if not dry_run:
-            with transaction.atomic():
-                if output_stream is not None:
-                    output_stream.write(
-                        "Removing current `IncomeEstimate` objects ...\n"
-                    )
-                IncomeEstimate.objects.filter(
-                    person_month__person_year__in=person_year_qs
-                ).delete()
-
-                if output_stream is not None:
-                    output_stream.write(
-                        "Removing current `PersonYearEstimateSummary` objects ...\n"
-                    )
-                PersonYearEstimateSummary.objects.filter(
-                    person_year__in=person_year_qs
-                ).delete()
-
-                if output_stream is not None:
-                    output_stream.write(
-                        f"Writing {len(results)} `IncomeEstimate` objects ...\n"
-                    )
-                IncomeEstimate.objects.bulk_create(results, batch_size=1000)
-
-                if output_stream is not None:
-                    output_stream.write(
-                        f"Writing {len(summaries)} "
-                        f"`PersonYearEstimateSummary` objects ...\n"
-                    )
-                PersonYearEstimateSummary.objects.bulk_create(
-                    summaries, batch_size=1000
+            if output_stream is not None:
+                output_stream.write(
+                    f"Writing {len(results)} `IncomeEstimate` objects ...\n"
                 )
+            IncomeEstimate.objects.bulk_create(results, batch_size=1000)
+            if output_stream is not None:
+                output_stream.write(
+                    f"Writing {len(summaries)} "
+                    f"`PersonYearEstimateSummary` objects ...\n"
+                )
+            PersonYearEstimateSummary.objects.bulk_create(summaries, batch_size=1000)
 
         return results, summaries
 
