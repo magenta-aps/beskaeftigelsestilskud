@@ -200,6 +200,7 @@ select[name="language"]:focus {
   border-color: transparent;
   border-radius: 0.5 * $spacer;
   box-shadow: 0 0 0.5 * $spacer $grey;
+  background: $lightest-grey;
 }
 #settings div:first-child {
   margin-bottom: 1.5 * $spacer;
