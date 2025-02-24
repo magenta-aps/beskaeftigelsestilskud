@@ -4,7 +4,6 @@
 import re
 from datetime import date
 from decimal import Decimal
-from itertools import chain
 from unittest.mock import ANY, Mock, patch
 
 from django.conf import settings
@@ -120,23 +119,26 @@ class TestBatchExport(TestCase):
             prefix=0, export_date=date(2025, 1, 1)
         )
         export = self._get_instance()
+
         # Act
         prisme_batch_item, person_month = self._get_prisme_batch_item(
             export, prisme_batch
         )
-        # Assert
+
+        # Assert basic attributes are present
         self.assertEqual(prisme_batch_item.prisme_batch, prisme_batch)
         self.assertEqual(prisme_batch_item.person_month, person_month)
         self.assertIsInstance(prisme_batch_item.g68_content, str)
         self.assertIsInstance(prisme_batch_item.g69_content, str)
-        # Assert: the complete account alias (including CPR) is found in the G69
-        # transaction.
+
+        # Assert: the expected account alias is found in the G69 transaction
         account_alias = self._get_floating_field(prisme_batch_item.g69_content, 111)
         self.assertEqual(
             account_alias,
             # Root, tax municipality code, and tax year
             "100045240614101010000242040195" + "10400" + "25",
         )
+
         # Assert: G69 contains CPR in `Ydelsesmodtager` (field 133) and specifies CPR
         # (02) in `YdelsesmodtagerNrkode` (field 132)
         ydelsesmodtager_nrkode = self._get_floating_field(
@@ -145,35 +147,30 @@ class TestBatchExport(TestCase):
         ydelsesmodtager = self._get_floating_field(prisme_batch_item.g69_content, 133)
         self.assertEqual(ydelsesmodtager_nrkode, "02")
         self.assertEqual(ydelsesmodtager, "3112700000")
+
         # Assert: the field `Posteringstekst` is present and its value follows the
         # expected format.
         posting_text = self._get_floating_field(prisme_batch_item.g69_content, 153)
         self.assertEqual(posting_text, "SUILA-TAPIT-3112700000-JAN25")
-        # Assert: the field `BetalingstekstLinje` contains the expected text (across the
-        # floating fields 40-53 and 55-56.)
-        first_text_line = self._get_floating_field(
+
+        # Assert: the field `BetalingstekstLinje` contains the expected text in
+        # floating field 40 (which is the first `BetalingstekstLinje` field.)
+        payment_text = self._get_floating_field(
             prisme_batch_item.g68_content,
             BetalingstekstLinje._min_id,
             length=2,
         )
-        self.assertIn(
-            "Suila-tapit udbetales på baggrund af din forventede årsindkomst.",
-            first_text_line,
-        )
-        text_lines = [
-            self._get_floating_field(prisme_batch_item.g68_content, field_id, length=2)
-            for field_id in chain(range(40, 54), range(55, 57))
-        ]
-        self.assertTrue(all(text_line != "" for text_line in text_lines))
+        self.assertEqual("www.suila.gl takuuk", payment_text)
+
         # Assert: the field `Fakturanummer` is present and its value follows the
         # expected format.
+        # Format: Prisme batch ID (15 digits, zero padded), followed by line number
+        # (5 digits, zero padded.)
         invoice_no = self._get_floating_field(
             prisme_batch_item.g68_content,
             Fakturanummer.id,
             length=2,
         )
-        # Format: Prisme batch ID (15 digits, zero padded), followed by line number
-        # (5 digits, zero padded.)
         self.assertRegex(invoice_no, f"{prisme_batch.pk:015d}\\d{{5}}")
         self.assertEqual(invoice_no, prisme_batch_item.invoice_no)
 

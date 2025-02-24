@@ -4,7 +4,6 @@
 import logging
 from datetime import date
 from decimal import Decimal
-from inspect import cleandoc
 from io import BytesIO
 from typing import Generator
 
@@ -13,7 +12,6 @@ from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import CharField, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
-from django.utils.translation import gettext_lazy as _
 from tenQ.client import ClientException, put_file_in_prisme_folder
 from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
@@ -140,37 +138,9 @@ class BatchExport:
         return f"SUILA-TAPIT-{cpr}-{date_formatted}"
 
     def get_transaction_text(self, person_month: PersonMonth) -> str:
-        fixed_part = _(
-            cleandoc(
-                """
-                Suila-tapit udbetales på baggrund af din forventede årsindkomst.
-                Suila-tapit udbetales til borgere med indkomst fra arbejde på
-                70.000 – 500.000 kr. om året.
-                Bemærk, at der er tale om en foreløbig udbetaling.
-                Du vil modtage en endelig opgørelse over Suila-tapit sammen med din
-                slutopgørelse.
-                På http://www.sullissivik.gl kan du læse mere om Suila-tapit.
-                På Mit Suila kan du se hvilke oplysninger Skattestyrelsen har lagt til
-                grund for udbetalingen.
-                """
-            )
-        )
-        # TODO: use actual figures
-        variable_part = _(
-            cleandoc(
-                """
-                                                Marts 2025          Samlet 2025
-                A-indkomst fra indhandling            0,00                 0,00
-                A-indkomst fra lønarbejde        28.468,00            87.412,00
-                Betalt B-skat                     7.299,00            15.788,00
-                Modtaget udbytte                      0,00                 0,00
-
-                Udbetaling for marts 2025                       kr.      976,00
-                Grundlag: Forventet årsindkomst fra arbejde     kr.  345.234,00
-                """
-            )
-        )
-        return f"{fixed_part}\n{variable_part}"
+        # Note: this text is intentionally not marked for translation, as we do not
+        # know the recipient user's preferred language.
+        return "www.suila.gl takuuk"
 
     def upload_batch(
         self,
