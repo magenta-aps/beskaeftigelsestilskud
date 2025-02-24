@@ -46,6 +46,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
         amount: int,
         payment_date: date,
         posting_date: date,
+        posting_text: str,
         invoice_no: str,
         text: str,
     ) -> G68G69TransactionPair:
@@ -82,6 +83,7 @@ class G68G69TransactionWriter(G68TransactionWriter):
             deb_kred="D",
             beløb=amount,
             post_dato=posting_date,
+            posteringstekst=posting_text,
             ydelse_modtager=recipient,
             ydelse_modtager_nrkode=2,  # 02=CPR
         )

@@ -119,6 +119,7 @@ class BatchExport:
             person_month.benefit_paid,  # type: ignore[arg-type]
             date.today(),  # TODO: use calculated date
             date.today(),  # TODO: use calculated date
+            self.get_posting_text(person_month),
             invoice_no,
             self.get_transaction_text(person_month),
         )
@@ -131,13 +132,15 @@ class BatchExport:
             invoice_no=invoice_no,
         )
 
-    def get_transaction_text(self, person_month: PersonMonth) -> str:
+    def get_posting_text(self, person_month: PersonMonth) -> str:
         cpr: str = person_month.identifier  # type: ignore[attr-defined]
-        person_month_date: date = date(
-            year=person_month.person_year.year.year, month=person_month.month, day=1
-        )
-        date_formatted: str = person_month_date.strftime("%b%y").upper()
-        return f"SUILA{cpr}{date_formatted}"
+        date_formatted: str = person_month.year_month.strftime("%b%y").upper()
+        return f"SUILA-TAPIT-{cpr}-{date_formatted}"
+
+    def get_transaction_text(self, person_month: PersonMonth) -> str:
+        # Note: this text is intentionally not marked for translation, as we do not
+        # know the recipient user's preferred language.
+        return "www.suila.gl takuuk"
 
     def upload_batch(
         self,

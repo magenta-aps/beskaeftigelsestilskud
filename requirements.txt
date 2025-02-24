@@ -69,7 +69,7 @@ whitenoise==6.0.0
 xmlschema==2.5.1
 xmltodict==0.13.0
 tblib==3.0.0
-tenQ @ git+https://github.com/magenta-aps/10Q.git@0.6.0
+tenQ @ git+https://github.com/magenta-aps/10Q.git@0.7.0
 datamodel-code-generator==0.26.2
 django_compressor==4.5.1
 django-libsass==0.9
