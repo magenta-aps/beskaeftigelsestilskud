@@ -12,7 +12,6 @@ import pandas as pd
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model, QuerySet
-from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
 from suila.models import (
@@ -434,15 +433,3 @@ class SuilaJSONEncoder(DjangoJSONEncoder):
             }
 
         return super().default(obj)
-
-
-class language:
-    def __init__(self, new_lang):
-        self.new_lang = new_lang
-        self.old_lang = translation.get_language()
-
-    def __enter__(self):
-        translation.activate(self.new_lang)
-
-    def __exit__(self, type, value, tb):
-        translation.activate(self.old_lang)
