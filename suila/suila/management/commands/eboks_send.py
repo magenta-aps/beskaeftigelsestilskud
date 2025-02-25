@@ -27,7 +27,7 @@ class Command(SuilaBaseCommand):
 
     type_map = {
         "opgørelse": {
-            "content_type": 1234,
+            "content_type": 179343,
             "title": "Årsopgørelse",
             "template_folder": "suila/eboks/opgørelse",
         }
