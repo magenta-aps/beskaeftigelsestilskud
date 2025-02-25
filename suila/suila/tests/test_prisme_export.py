@@ -85,9 +85,12 @@ class TestBatchExport(TestCase):
         """
         # Arrange: ensure that we see more than one batch, and that the second batch has
         # more than one `PersonMonth`.
-        self._add_person_month(101700000, Decimal("1000"))  # batch 01
-        self._add_person_month(3112700000, Decimal("1000"))  # batch 31
-        self._add_person_month(3112710000, Decimal("1000"))  # batch 31
+        # Valid CPRs passing the modulus-11 test were generated using
+        # https://janosh.neocities.org/javascript-personal-id-check-and-generator/
+        self._add_person_month(101000028, Decimal("1000"))  # batch 01
+        self._add_person_month(3101000000, Decimal("1000"))  # batch 31
+        self._add_person_month(3101000078, Decimal("1000"))  # batch 31
+        self._add_person_month(3101000001, Decimal("1000"))  # batch 32 (non-mod11)
         # Arrange
         export = self._get_instance()
         queryset = export.get_person_month_queryset()
@@ -95,18 +98,31 @@ class TestBatchExport(TestCase):
         batches: list[tuple[PrismeBatch, QuerySet[PersonMonth]]] = list(
             export.get_batches(queryset)
         )
-        # Assert: we yield two batches: for prefix 01 and 31, respectively
-        self.assertEqual(len(batches), 2)
+        # Assert: we yield three batches: two for normal prefixes 01 and 31, and one for
+        # the non-mod11 batch (prefix 32.)
+        self.assertEqual(len(batches), 3)
         # Assert: first batch is for prefix 01 and contains one `PersonMonth` object
         batch_01_prisme_batch: PrismeBatch = batches[0][0]
         batch_01_person_months: QuerySet[PersonMonth] = batches[0][1]
         self.assertEqual(batch_01_prisme_batch.prefix, 1)
-        self.assertQuerySetEqual(batch_01_person_months, queryset.filter(prefix="01"))
+        self.assertQuerySetEqual(
+            batch_01_person_months, queryset.filter(identifier="0101000028")
+        )
         # Assert: second batch is for prefix 31 and contains two `PersonMonth` objects
         batch_31_prisme_batch: PrismeBatch = batches[1][0]
         batch_31_person_months: QuerySet[PersonMonth] = batches[1][1]
         self.assertEqual(batch_31_prisme_batch.prefix, 31)
-        self.assertQuerySetEqual(batch_31_person_months, queryset.filter(prefix="31"))
+        self.assertQuerySetEqual(
+            batch_31_person_months,
+            queryset.filter(identifier__in=("3101000000", "3101000078")),
+        )
+        # Assert: third batch is for prefix 32 and contains one `PersonMonth` object
+        batch_32_prisme_batch: PrismeBatch = batches[2][0]
+        batch_32_person_months: QuerySet[PersonMonth] = batches[2][1]
+        self.assertEqual(batch_32_prisme_batch.prefix, 32)
+        self.assertQuerySetEqual(
+            batch_32_person_months, queryset.filter(identifier="3101000001")
+        )
 
     def test_get_prisme_batch_item(self):
         """Given a `PrismeBatch` object, a `PersonMonth object, and a
@@ -257,42 +273,113 @@ class TestBatchExport(TestCase):
 
         self.assertEqual(stdout.write.call_count, 7)
 
-    def test_export_batches(self):
+    def test_export_batches_normal(self):
         """Given non-exported `PersonMonth` objects for this year and month, this method
         should export those `PersonMonth` objects as serialized G68/G69 transaction
         pairs in batches.
         """
         # Arrange
-        self._add_person_month(3112700000, Decimal("1000"))
+        # Valid CPR passing the modulus-11 test was generated using
+        # https://janosh.neocities.org/javascript-personal-id-check-and-generator/
+        self._add_person_month(3101000000, Decimal("1000"))
         export = self._get_instance()
         stdout = Mock()
-        with patch("suila.integrations.prisme.benefits.put_file_in_prisme_folder"):
+        with patch(
+            "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
+        ) as mock_put_file_in_prisme_folder:
             # Act
             export.export_batches(stdout, verbosity=2)
-            # Assert: `PrismeBatch` object(s) exist with the expected status
-            self.assertQuerySetEqual(
-                PrismeBatch.objects.all(),
-                [(31, PrismeBatch.Status.Sent.value)],
-                transform=lambda obj: (obj.prefix, obj.status),
+            # Assert
+            self._assert_prisme_batch_items_state(
+                export,
+                mock_put_file_in_prisme_folder,
+                stdout,
+                # Single batch with prefix 31
+                [31],
+                # Single batch item with prefix 31
+                [("3101000000", 31)],
+                # Single file in "normal" folder
+                [("g68g69", "RES_G68_export_31_2025_01.g68")],
             )
-            # Assert: `PrismeBatchItem` object(s) exist
-            self.assertQuerySetEqual(
-                PrismeBatchItem.objects.all(),
-                [("3112700000", 31)],
-                transform=lambda obj: (
-                    obj.person_month.person_year.person.cpr,
-                    obj.prisme_batch.prefix,
-                ),
+
+    def test_export_batches_normal_and_non_mod11(self):
+        # Arrange
+        # Valid CPR passing the modulus-11 test was generated using
+        # https://janosh.neocities.org/javascript-personal-id-check-and-generator/
+        self._add_person_month(3101000000, Decimal("1000"))
+        # Invalid CPR (valid CPR plus 1) - should go in its own batch and folder
+        self._add_person_month(3101000001, Decimal("1000"))
+        export = self._get_instance()
+        stdout = Mock()
+        with patch(
+            "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
+        ) as mock_put_file_in_prisme_folder:
+            # Act
+            export.export_batches(stdout, verbosity=2)
+            # Assert
+            self._assert_prisme_batch_items_state(
+                export,
+                mock_put_file_in_prisme_folder,
+                stdout,
+                # Two batches, prefixes 31 and 32
+                [31, 32],
+                # Two batch items, prefix 31 and 32
+                [
+                    ("3101000000", 31),  # valid CPR
+                    ("3101000001", 32),  # non mod11 CPR
+                ],
+                # Two files, one in normal folder, and one in non-mod11 folder
+                [
+                    ("g68g69", "RES_G68_export_31_2025_01.g68"),
+                    ("g68g69_mod11_cpr", "RES_G68_export_32_2025_01.g68"),
+                ],
             )
-            # Assert: all `PersonMonth` objects are now exported (= have a corresponding
-            # `PrismeBatchItem` object.) Thus, the batch export will not "see" them
-            # again.
-            self.assertQuerySetEqual(
-                export.get_person_month_queryset(),
-                PersonMonth.objects.none(),
-            )
-            # Assert: CLI output is written to `stdout`
-            stdout.write.assert_called()
+
+    def _assert_prisme_batch_items_state(
+        self,
+        export: BatchExport,
+        mock_put_file_in_prisme_folder,
+        stdout,
+        batch_prefixes: list[int],
+        items: list[tuple[str, int]],
+        file_paths: list[tuple[str, str]],
+    ):
+        # Assert: `PrismeBatch` object(s) exist with the expected status
+        self.assertQuerySetEqual(
+            PrismeBatch.objects.order_by("prefix").all(),
+            [
+                (batch_prefix, PrismeBatch.Status.Sent.value)
+                for batch_prefix in batch_prefixes
+            ],
+            transform=lambda obj: (obj.prefix, obj.status),
+        )
+        # Assert: `PrismeBatchItem` object(s) exist for the expected prefixes and CPRs
+        self.assertQuerySetEqual(
+            PrismeBatchItem.objects.order_by("prisme_batch__prefix").all(),
+            items,
+            transform=lambda obj: (
+                obj.person_month.person_year.person.cpr,
+                obj.prisme_batch.prefix,
+            ),
+        )
+        # Assert: the expected file(s) are uploaded to the expected folder(s)
+        self.assertListEqual(
+            [
+                # Get folder name and filename from call arguments
+                (call.args[2], call.args[3])
+                for call in mock_put_file_in_prisme_folder.call_args_list
+            ],
+            file_paths,
+        )
+        # Assert: all `PersonMonth` objects are now exported (= have a corresponding
+        # `PrismeBatchItem` object.) Thus, the batch export will not "see" them
+        # again.
+        self.assertQuerySetEqual(
+            export.get_person_month_queryset(),
+            PersonMonth.objects.none(),
+        )
+        # Assert: CLI output is written to `stdout`
+        stdout.write.assert_called()
 
     def _get_instance(self, year: int = 2025, month: int = 1) -> BatchExport:
         return BatchExport(year, month)

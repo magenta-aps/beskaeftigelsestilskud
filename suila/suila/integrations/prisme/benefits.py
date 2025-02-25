@@ -19,6 +19,7 @@ from suila.integrations.prisme.g68g69 import (
     G68G69TransactionPair,
     G68G69TransactionWriter,
 )
+from suila.integrations.prisme.mod11 import validate_mod11
 from suila.models import PersonMonth, PrismeAccountAlias, PrismeBatch, PrismeBatchItem
 
 logger = logging.getLogger(__name__)
@@ -64,13 +65,25 @@ class BatchExport:
     def get_batches(
         self, qs: QuerySet[PersonMonth]
     ) -> Generator[tuple[PrismeBatch, QuerySet[PersonMonth]], None, None]:
-        # Split `PersonMonth` queryset into batches, yielding one `PrismeBatch` and the
-        # matching `PersonMonth` objects for each `prefix` (== first two digits of CPR.)
+        # Keep a separate set of all `PersonMonth` PKs where the CPR does not pass a
+        # modulus-11 test. (These will be yielded last.)
+        non_mod11_pks: set[int] = {
+            person_month.pk
+            for person_month in qs
+            if not validate_mod11(person_month.identifier)  # type: ignore[attr-defined]
+        }
+
+        # Split the remaining `PersonMonth` queryset into batches, yielding one
+        # `PrismeBatch` and the matching `PersonMonth` objects for each `prefix`
+        # (== first two digits of CPR.)
+        remaining_qs: QuerySet[PersonMonth] = qs.exclude(pk__in=non_mod11_pks)
         current_batch: PrismeBatch | None = None
-        for person_month in qs:
+        for person_month in remaining_qs:
+            # Use default prefix (first two digits of CPR)
             person_month_prefix: int = int(
                 person_month.prefix  # type: ignore[attr-defined]
             )
+            # Start a new "normal" batch whenever the prefix changes
             if (current_batch is None) or (person_month_prefix != current_batch.prefix):
                 current_batch = PrismeBatch(
                     prefix=person_month_prefix,
@@ -78,8 +91,15 @@ class BatchExport:
                 )
                 yield (
                     current_batch,
-                    qs.filter(prefix=person_month.prefix),  # type: ignore[attr-defined]
+                    remaining_qs.filter(
+                        prefix=person_month.prefix  # type: ignore[attr-defined]
+                    ),
                 )
+
+        # Finally, yield the "special" batch of non-mod11 CPR items, if any exist
+        if non_mod11_pks:
+            non_mod11_batch = PrismeBatch(prefix=32, export_date=date.today())
+            yield non_mod11_batch, qs.filter(pk__in=non_mod11_pks)
 
     def get_prisme_batch_item(
         self,
@@ -142,11 +162,29 @@ class BatchExport:
         # know the recipient user's preferred language.
         return "www.suila.gl takuuk"
 
+    def get_destination_folder(self, prisme_batch: PrismeBatch) -> str:
+        prisme: dict = settings.PRISME  # type: ignore[misc]
+        config_key = (
+            "g68g69_export_folder"
+            if prisme_batch.prefix < 32
+            else "g68g69_export_mod11_folder"
+        )
+        return prisme[config_key]
+
+    def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
+        return (
+            f"RES_G68_export_{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
+        )
+
     def upload_batch(
         self,
         prisme_batch: PrismeBatch,
         prisme_batch_items: list[PrismeBatchItem],
     ) -> None:
+        # Get destination folder and filename for this batch
+        destination_folder: str = self.get_destination_folder(prisme_batch)
+        filename: str = self.get_destination_filename(prisme_batch)
+
         # Export batch to Prisme
         buf: BytesIO = BytesIO()
         for prisme_batch_item in prisme_batch_items:
@@ -155,15 +193,6 @@ class BatchExport:
             buf.write(prisme_batch_item.g69_content.encode("utf-8"))
             buf.write(b"\r\n")
         buf.seek(0)
-
-        # TODO: use production or development folder depending on settings (or CLI args)
-        prisme: dict = settings.PRISME  # type: ignore[misc]
-        destination_folder = prisme["dirs"]["development"]
-
-        # TODO: revise filename based on customer input
-        filename = (
-            f"RES_G68_export_{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
-        )
 
         try:
             put_file_in_prisme_folder(
