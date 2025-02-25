@@ -11,6 +11,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir /app && \
     mkdir -p /var/cache/suila && \
     mkdir -p /upload/note && \
+    mkdir -p /upload/eboks && \
     mkdir /static && \
     #gid/uid from salt
     groupadd -g 75180 -r suila && \

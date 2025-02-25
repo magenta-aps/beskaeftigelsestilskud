@@ -12,3 +12,6 @@ EBOKS = {
     "host": os.environ["EBOKS_HOST"],
     "timeout": int(os.environ.get("EBOKS_TIMEOUT") or 60),
 }
+
+# Relative to settings.MEDIA_ROOT
+LOCAL_PDF_STORAGE = "eboks"

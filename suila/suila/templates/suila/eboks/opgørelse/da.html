@@ -1,0 +1,123 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "suila/eboks/base.html" %}
+
+{% block content %}
+    <style>
+        table.bordered, table.bordered th, table.bordered td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+    </style>
+    <table style="width: 100%">
+        <tr>
+            <td><h3 class="left">Suila-tapit opgørelse</h3></td>
+            <td style="text-align: right">{{ person.cpr }}</td>
+        </tr>
+    </table>
+    <p>
+        Suila-tapit er navnet for udbetalt beskæftigelsesfradrag. Det blev vedtaget som en del af skattereformen med
+        virkning fra 1. januar 2025. Suila-tapit udbetales til borgere med indkomster i form af lønindkomst,
+        indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget udbyttebetaling. Den udbetaling af
+        Suila-tapit du modtager i marts 2025, er for indkomster optjent i januar 2025.
+    </p>
+    <p>
+        På baggrund af din indkomst i 2025 og sammenholdt med dine indkomster i 2024, har Skattestyrelsen beregnet en
+        forventet årsindkomst for 2025. Der udbetales Suila-tapit månedligt, hvis din forventede årsindkomst er mellem
+        70.000 kr. og 500.000 kr.
+    </p>
+
+    <table style="width: 100%">
+        <tr>
+            <td>Udbetaling for januar 2025</td>
+            <td style="text-align: right">Kr. {{ personmonth.benefit_paid|default_if_none:"0,00" }}</td>
+        </tr>
+        <tr>
+            <td>Grundlag: Forventet årsindkomst fra arbejde</td>
+            <td style="text-align: right">Kr. {{ personmonth.estimated_year_benefit|default_if_none:"0,00" }}</td>
+        </tr>
+    </table>
+
+    <p>
+        Udbetalingen sker til din NemKonto.
+    </p>
+    <p>
+        Bemærk: Suila-tapit udbetales kun til NemKonto. Hvis du ikke har NemKonto, vil du ikke modtage Suila-tapit.
+    </p>
+    <p>
+        Hvis du har gæld til det offentlige, kan der ske modregning af op til en tredjedel af beløbet inden udbetaling.
+        Modregning betyder, at du modtager et lavere beløb, fordi dele af beløbet er brugt til at afdrage på din gæld
+        til det offentlige.
+    </p>
+    <h3>
+        Oplysninger
+    </h3>
+    <p>
+        Her kan du læse, hvilke oplysninger der ligger til grund for den forventede årsindkomst og dermed for
+        udbetalingen.
+    </p>
+    <table class="bordered" style="width: 100%">
+        <thead>
+        <tr>
+            <td></td>
+            <th style="text-align: right">{{ month_name }} {{ year }}</th>
+            <th style="text-align: right">Samlet {{ year }}</th>
+            <th style="text-align: right">{{ year|add:"-1" }}</th>
+            <th style="text-align: right">{{ year|add:"-2" }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th>A-indkomst fra indhandling</th>
+            {% for amount in income.catchsale_income %}<td style="text-align: right">{{ amount }}</td>{% endfor %}
+        </tr>
+        <tr>
+            <th>A-indkomst fra lønarbejde</th>
+            {% for amount in income.salary_income %}<td style="text-align: right">{{ amount }}</td>{% endfor %}
+        </tr>
+        <tr>
+            <th>Betalt B-skat</th>
+            {% for amount in income.btax_paid %}<td style="text-align: right">{{ amount }}</td>{% endfor %}
+        </tr>
+        <tr>
+            <th>Modtaget udbytte</th>
+            {% for amount in income.capital_income %}<td style="text-align: right">{{ amount }}</td>{% endfor %}>
+        </tr>
+        </tbody>
+    </table>
+
+    <p>
+        Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger og oplysninger om indhandling fra
+        indhandlingssteder til Skattestyrelsen. Hvis du mener, at oplysningerne er forkerte, så henvend dig til din
+        arbejdsgiver eller dit indhandlingssted for nærmere afklaring.
+    </p>
+    <p>
+        Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på baggrund af din forskudsregistrering
+        for
+        2025. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener at den er forkert. Oplysning
+        om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har modtaget udbytte
+        sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker oplysninger om
+        udbytte fra tidligere år beregningen af din forventede årsindkomst for i år.
+    </p>
+
+    <h3>Månedlig udbetaling</h3>
+    <p>
+        Suila-tapit udbetales d. 3. tirsdag i måneden.
+    </p>
+    <p>
+        Du vil fremover modtage en opgørelse af Suila-tapit én gang om året. Hvis du ønsker at følge med i de
+        oplysninger der ligger til grund for den månedlige udbetaling, kan du logge ind på Sullissivik.gl og finde
+        oplysningerne under ’Beskæftigelsesfradrag’.
+    </p>
+
+    <h3>
+        Suila-tapit - Indkomster og udbetaling
+    </h3>
+    <p>
+        Suila-tapit - udbetalt beskæftigelsesfradrag - udbetales til borgere med indtægt fra arbejde i disse
+        indkomstgrupper.
+    </p>
+
+    <img src="/static/suila/graf_kl.png" width="100%" alt="graf"/>
+{% endblock %}
