@@ -1,0 +1,133 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "suila/eboks/base.html" %}
+
+{% block content %}
+    <style>
+        table.bordered, table.bordered th, table.bordered td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+    </style>
+    <table style="width: 100%">
+        <tr>
+            <td><h3 class="left">Suila-tapinik naatsorsuineq</h3></td>
+            <td style="text-align: right">{{ person.cpr }}</td>
+        </tr>
+    </table>
+    <p>
+        Suila-tapit tassaavoq sulinermut ilanngaat tunniunneqartoq. Akileraartarnermik aaqqissuusseqqinnerup ilaatut
+        akuersissutigineqarluni 1. januar 2025 aallarnerfigalugu atuutilerpoq. Suila-tapit tunniunneqartarpoq
+        innuttaasunut akissarsiortutut aningaasarsialinnut, tunisinikkut isertitalinnut, namminersorluni
+        inuussutissarsiummik ingerlataqarnikkut sinneqartoorutilinnut kiisalu iluanaarutisianik tunineqarsimasunut.
+        Suila-tapit 2025-mi martsimi ilinnut tunniunneqartussaq, 2025-mi januarimi aningaasarsiarisimasatit
+        tunngavigalugit naatsorsugaavoq.
+    </p>
+    <p>
+        2025-mi aningaasarsiatit tunngavigalugit, 2024-milu aningaasarsiannut sanilliussinikkut 2025-mi ukiumut
+        aningaasarsiariumaagassattut naatsorsuutigineqartut Akileraartarnermut Aqutsisoqarfiup naatsorsorpai. Ukiumut
+        aningaasarsiariumaagassattut naatsorsuutigineqartut 70.000 kr.-it 500.000 kr.-illu akornanniippata Suila-tapit
+        qaammatikkaartumik tunniunneqartassaaq.
+    </p>
+
+    <table style="width: 100%">
+        <tr>
+            <td>2025-mi januarimut tunngatillugu tunniunneqartussaq</td>
+            <td style="text-align: right">Kr. {{ personmonth.benefit_paid|default_if_none:"0,00" }}</td>
+        </tr>
+        <tr>
+            <td>Tunngavigineqartut: Sulinikkut ukiumut aningaasarsiariumaagassatut naatsorsuutigineqartut</td>
+            <td style="text-align: right">Kr. {{ personmonth.estimated_year_benefit|default_if_none:"0,00" }}</td>
+        </tr>
+    </table>
+
+    <p>
+        Tunniunneqartussat illit NemKontunnut ikineqassapput.
+    </p>
+    <p>
+        Malugiuk: Suila-tapit taamaallaat NemKonto aqqutigalugu tunniunneqartarpoq. NemKontoqanngikkuit Suila-tapinik
+        tunineqarsinnaanngilatit.
+    </p>
+    <p>
+        Pisortanut akiitsoqaruit aningaasat tunniunneqannginneranni taakku pingajorarterutaat tikillugit
+        ilanngaatigineqarsinnaapput. Ilanngaasoqarpat aningaasanik ikinnerusunik tunineqassaatit, aningaasammi ilaat
+        illit pisortanut akiitsuit akilersornerannut atorneqarmata.
+    </p>
+    <h3>
+        Paasissutissat
+    </h3>
+    <p>
+        Ukiumut aningaasarsiariumaagassatut naatsorsuutigineqartut, taamatullu aamma tunniunneqartussanut
+        tunngavigineqartut uani takusinnaavatit.
+    </p>
+    <table class="bordered" style="width: 100%">
+        <thead>
+        <tr>
+            <td></td>
+            <th style="text-align: right">{{ month_name }} {{ year }}</th>
+            <th style="text-align: right">Katillugit {{ year }}</th>
+            <th style="text-align: right">{{ year|add:"-1" }}</th>
+            <th style="text-align: right">{{ year|add:"-2" }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th>Tunisinikkut aningaasarsiat A-t</th>
+            {% for amount in income.catchsale_income %}
+                <td style="text-align: right">{{ amount }}</td>{% endfor %}
+        </tr>
+        <tr>
+            <th>Akissarsiortutut aningaasarsiat A-t</th>
+            {% for amount in income.salary_income %}
+                <td style="text-align: right">{{ amount }}</td>{% endfor %}
+        </tr>
+        <tr>
+            <th>Akileraarutit B-t akilersimasat</th>
+            {% for amount in income.btax_paid %}
+                <td style="text-align: right">{{ amount }}</td>{% endfor %}
+        </tr>
+        <tr>
+            <th>Iluanaarutisiatut pissarsiat</th>
+            {% for amount in income.capital_income %}
+                <td style="text-align: right">{{ amount }}</td>{% endfor %}>
+        </tr>
+        </tbody>
+    </table>
+
+    <p>
+        Aningaasarsiat A-t pillugit paasissutissat Akileraartarnermut Aqutsisoqarfiup, sulisitsisut akissarsiat pillugit
+        nalunaarutaannit, tunisallu pillugit paasissutissat tunitsiviit nalunaarutaannit pissarsiarai. Paasissutissat
+        eqqunngitsuusorigukkit, taava sulisitsisunnut tunitsivigisartakkannulluunniit erseqqinnerusumik
+        paasiniaassaatit.
+    </p>
+    <p>
+        Akileraarutit B-t akilersimasat pillugit paasissutissat illit 2025-mut siumoortumik nalunaarsukkatit
+        tunngavigalugit akileraarutinik B-nik akiliininneersuupput. Siumoortumik nalunaarsuineq eqqunngitsuusorigukku,
+        taanna Sullissivik.gl-ikkut sukkulluunniit allanngortissinnaavat. Iluanaarutisiat pillugit paasissutissat
+        selskabit ilinnut iluanaarutisiaqartitsisimanerminnik nalunaarutaanneersuupput. Iluanaarutisianik siorna
+        pissarsisimaguit, taava aamma ukioq manna pissarsinissat Akileraartarnermut Aqutsisoqarfiup ilimagaa. Ukiuni
+        siusinnerusuni iluanaarutisiaasimasut pillugit paasissutissat taamaalillutik ukioq manna illit ukiumut
+        aningaasarsiariumaagassattut naatsorsuutigisat naatsorsorneqarnerannut sunniuteqarput.
+    </p>
+
+    <h3>Qaammatikkaartumik tunniussisarneq</h3>
+    <p>
+        Suila-tapit qaammatit tamaasa marlunngornerit pingajuanni tunniunneqartassaaq.
+    </p>
+    <p>
+        Suila-tapinik naatsorsuinermik ukiumut ataasiarlutit nassinneqartassaatit. Qaammatikkaartumik
+        tunniunneqartartunut tunngavigineqartut pillugit paasissutissat malinnaaffigerusukkukkit, taakku
+        Sullissivik.gl-imi “Sulinermut ilanngaat” iserfigalugu takusinnaavatit.
+    </p>
+
+    <h3>
+        Suila-tapit – Aningaasarsiat aamma tunniussisarneq
+    </h3>
+    <p>
+        Suila-tapit – sulinermut ilanngaat tunniunneqartoq – innuttaasunut, sulinikkut imatut amerlassusilinnik
+        aningaasarsiaqartunut tunniunneqartarpoq.
+    </p>
+
+    <img src="suila/graf_kl.png"/>
+{% endblock %}

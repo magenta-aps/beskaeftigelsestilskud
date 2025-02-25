@@ -5,15 +5,19 @@ from __future__ import annotations
 
 import base64
 import logging
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from functools import cached_property
+from io import BytesIO
 from os.path import basename
 from typing import List, Sequence, Tuple
 
 from common.models import User
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.files import File
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import F, Index, QuerySet, Sum, TextChoices
@@ -1409,17 +1413,26 @@ class EboksMessage(PermissionsMixin, models.Model):
         default=False,
         db_index=True,
     )
+    contents = models.FileField(
+        null=True, upload_to=settings.LOCAL_PDF_STORAGE  # type: ignore
+    )
 
     @classmethod
     def dispatch(
-        cls, cpr_cvr: str, title: str, content_type: int, pdf_data: bytes
+        cls,
+        cpr_cvr: str,
+        title: str,
+        content_type: int,
+        pdf_data: bytes,
+        client: EboksClient | None = None,
     ) -> EboksMessage:
         message = cls(cpr_cvr=cpr_cvr, title=title, content_type=content_type)
         message.set_pdf_data(pdf_data)
-        message.send()
+        message.send(client=client)
         return message
 
     def set_pdf_data(self, pdf_data: bytes):
+        self.contents = File(BytesIO(pdf_data), f"{uuid.uuid4()}.pdf")
         self.xml = self.generate_xml(
             self.cpr_cvr, self.title, self.content_type, pdf_data
         )
