@@ -11,6 +11,7 @@ from tenQ.writer.g68 import (
     Posteringshenvisning,
     TransaktionstypeEnum,
     UdbetalingsberettigetIdentKodeEnum,
+    Udbetalingsdato,
 )
 from tenQ.writer.g69 import G69TransactionWriter
 
@@ -109,6 +110,14 @@ class TestG68G69TransactionWriter(SimpleTestCase):
         # 111.)
         registreringskontonummer = self._get_g69_floating_field(pair.g69, 111, 15)
         self.assertEqual(int(registreringskontonummer), self.account)
+
+        # Assert that G68 `Udbetalingsdato` (field 12) and G69 `Posteringsdato` have the
+        # correct values.
+        for field in G68Transaction.parse(pair.g68):
+            if isinstance(field, Udbetalingsdato):
+                self.assertEqual(field.val, self.payment_date)
+        posteringsdato = self._get_g69_floating_field(pair.g69, 110, 8)
+        self.assertEqual(posteringsdato, "20240127")
 
     def _get_g69_floating_field(
         self, g69: str, field_id: int, length: int

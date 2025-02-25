@@ -7,6 +7,7 @@ from decimal import Decimal
 from io import BytesIO
 from typing import Generator
 
+from dateutil.relativedelta import MO, TU, relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
@@ -137,8 +138,8 @@ class BatchExport:
             cpr,
             int(account_alias.alias),
             person_month.benefit_paid,  # type: ignore[arg-type]
-            date.today(),  # TODO: use calculated date
-            date.today(),  # TODO: use calculated date
+            self.get_payment_date(person_month),
+            self.get_posting_date(person_month),
             self.get_posting_text(person_month),
             invoice_no,
             self.get_transaction_text(person_month),
@@ -175,6 +176,16 @@ class BatchExport:
         return (
             f"RES_G68_export_{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
         )
+
+    def get_payment_date(self, person_month: PersonMonth) -> date:
+        # Payment date is the third Monday two months after the given `PersonMonth`.
+        # E.g. for a `PersonMonth` in January 2023, the payment date is March 20, 2023.
+        return person_month.year_month + relativedelta(months=2, weekday=MO(+3))
+
+    def get_posting_date(self, person_month: PersonMonth) -> date:
+        # Posting date is the second Tuesday two months after the given `PersonMonth`.
+        # E.g. for a `PersonMonth` in January 2023, the posting date is March 14, 2023.
+        return person_month.year_month + relativedelta(months=2, weekday=TU(+2))
 
     def upload_batch(
         self,
