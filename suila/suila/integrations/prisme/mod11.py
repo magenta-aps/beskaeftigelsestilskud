@@ -9,7 +9,7 @@ def validate_mod11(cpr: str) -> bool:
     # Note that the "modulus 11" test is no longer enforced by the CPR register.
     # But it is still enforced by older systems such as Prisme, and thus needs to be
     # handled when exporting data to Prisme.
-    factors: list[int] = [4, 3, 2, 7, 6, 5, 4, 3, 2, 1]
+    factors: tuple[int, ...] = (4, 3, 2, 7, 6, 5, 4, 3, 2, 1)
     total: int = 0
     idx: int
     for idx, factor in enumerate(factors):

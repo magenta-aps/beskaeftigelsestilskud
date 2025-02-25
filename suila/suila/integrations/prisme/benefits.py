@@ -67,12 +67,11 @@ class BatchExport:
     ) -> Generator[tuple[PrismeBatch, QuerySet[PersonMonth]], None, None]:
         # Keep a separate set of all `PersonMonth` PKs where the CPR does not pass a
         # modulus-11 test. (These will be yielded last.)
-        non_mod11_pks = set()
-        for person_month in qs:
-            if not validate_mod11(
-                person_month.identifier  # type: ignore[attr-defined]
-            ):
-                non_mod11_pks.add(person_month.pk)
+        non_mod11_pks: set[int] = {
+            person_month.pk
+            for person_month in qs
+            if not validate_mod11(person_month.identifier)  # type: ignore[attr-defined]
+        }
 
         # Split the remaining `PersonMonth` queryset into batches, yielding one
         # `PrismeBatch` and the matching `PersonMonth` objects for each `prefix`
