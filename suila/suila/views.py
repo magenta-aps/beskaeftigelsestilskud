@@ -76,6 +76,8 @@ class PersonTable(Table):
         accessor=Accessor("_cpr"),
         order_by=Accessor("_cpr"),
         verbose_name=_("CPR-nummer"),
+        orderable=False,
+        linkify=dict(viewname="suila:person_detail", args=[Accessor("pk")]),
     )
     full_address = Column(verbose_name=_("Adresse"))
 
