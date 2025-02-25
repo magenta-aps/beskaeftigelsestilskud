@@ -101,8 +101,17 @@ h6 {
   margin-bottom: 0;
 }
 
+html,
 body {
+  height: 100%;
+}
+body {
+  display: flex;
+  flex-direction: column;
   background-color: $light-primary;
+}
+.content-fluid {
+  flex: 1 0 auto;
 }
 
 h1.secondary,
@@ -126,11 +135,12 @@ ol li {
 }
 
 header {
+  margin: 0 0 2 * $spacer 0;
   background-color: $primary;
 }
 header nav.navbar {
-  margin: 0 3 * $spacer 3 * $spacer 3 * $spacer;
-  padding: $spacer 0;
+  margin: 0 3 * $spacer;
+  padding: 1.5 * $spacer 0;
 }
 header nav.navbar a,
 header nav.navbar div > span.material-icons {
@@ -216,13 +226,19 @@ select[name="language"]:focus {
 
 // Footer
 footer {
-  margin: 6 * $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+  flex-shrink: 0;
+  padding: 6 * $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+
 }
 footer a {
   display: inline-block;
   height: 50px;
   padding: 0 0 0 148px + 40px;
   background: url("../suila/logo_aka_large.png") no-repeat;
+  text-decoration: underline;
+}
+footer a:hover {
+  text-decoration: none;
 }
 
 // No underlines for links
