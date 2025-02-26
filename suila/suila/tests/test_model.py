@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from common.tests.test_mixins import UserMixin
 from django.test import TestCase
+from django.utils import timezone
 
 from suila.data import MonthlyIncomeData
 from suila.models import (
@@ -178,12 +179,22 @@ class ModelTest(TestCase):
         )
         cls.assessment1a = PersonYearAssessment.objects.create(
             person_year=cls.person_year,
-            valid_from=datetime(year=cls.person_year.year_id, month=1, day=1),
+            valid_from=datetime(
+                year=cls.person_year.year_id,
+                month=1,
+                day=1,
+                tzinfo=timezone.get_current_timezone(),
+            ),
             operating_costs_catch_sale=Decimal(10000),
         )
         cls.assessment1b = PersonYearAssessment.objects.create(
             person_year=cls.person_year,
-            valid_from=datetime(year=cls.person_year.year_id, month=7, day=1),
+            valid_from=datetime(
+                year=cls.person_year.year_id,
+                month=7,
+                day=1,
+                tzinfo=timezone.get_current_timezone(),
+            ),
             operating_costs_catch_sale=Decimal(12000),
         )
 
@@ -474,44 +485,67 @@ class TestPersonYear(UserModelTest):
 
     def test_current_assessment(self):
         self.assertEqual(
-            self.person_year.current_assessment(datetime(self.year.year, 3, 20)),
+            self.person_year.current_assessment(
+                datetime(self.year.year, 3, 20, tzinfo=timezone.get_current_timezone())
+            ),
             self.assessment1a,
         )
         self.assertEqual(
-            self.person_year.current_assessment(datetime(self.year.year, 10, 20)),
+            self.person_year.current_assessment(
+                datetime(self.year.year, 10, 20, tzinfo=timezone.get_current_timezone())
+            ),
             self.assessment1b,
         )
         self.assertEqual(
-            self.person_year.current_assessment(datetime(self.year.year + 1, 1, 1)),
+            self.person_year.current_assessment(
+                datetime(
+                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
+                )
+            ),
             self.assessment1b,
         )
 
     def test_expenses_sum(self):
         self.assertEqual(
             self.person_year.expenses_sum(
-                IncomeType.A, datetime(self.year.year - 1, 12, 31)
+                IncomeType.A,
+                datetime(
+                    self.year.year - 1, 12, 31, tzinfo=timezone.get_current_timezone()
+                ),
             ),
             Decimal(0),
         )
         self.assertEqual(
-            self.person_year.expenses_sum(IncomeType.A, datetime(self.year.year, 1, 1)),
+            self.person_year.expenses_sum(
+                IncomeType.A,
+                datetime(self.year.year, 1, 1, tzinfo=timezone.get_current_timezone()),
+            ),
             Decimal(10000),
         )
         self.assertEqual(
             self.person_year.expenses_sum(
-                IncomeType.A, datetime(self.year.year + 1, 1, 1)
+                IncomeType.A,
+                datetime(
+                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
+                ),
             ),
             Decimal(12000),
         )
         self.assertEqual(
             self.person_year.expenses_sum(
-                IncomeType.B, datetime(self.year.year + 1, 1, 1)
+                IncomeType.B,
+                datetime(
+                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
+                ),
             ),
             Decimal(0),
         )
         self.assertEqual(
             self.person_year.expenses_sum(
-                IncomeType.U, datetime(self.year.year + 1, 1, 1)
+                IncomeType.U,
+                datetime(
+                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
+                ),
             ),
             Decimal(0),
         )

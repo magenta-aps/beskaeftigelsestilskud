@@ -481,7 +481,7 @@ class PersonYear(PermissionsMixin, models.Model):
         expenses = Decimal(0)
         if assessment is not None:
             if income_type == IncomeType.A:
-                expenses += sum([assessment.operating_costs_catch_sale])
+                expenses += assessment.operating_costs_catch_sale
         return expenses
 
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:

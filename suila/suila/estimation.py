@@ -303,7 +303,8 @@ class EstimationEngine:
         # Handle EstimationEngine instances
         person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
         person_year_expenses = {
-            income_type: person_year.expenses_sum(income_type)
+            # Use most recent expenses data
+            income_type: person_year.expenses_sum(income_type, evaluation_date=None)
             for income_type in IncomeType
         }
         for engine in EstimationEngine.instances():
@@ -574,7 +575,7 @@ class SelfReportedEngine(EstimationEngine):
         if income_type != IncomeType.B:
             raise IncomeTypeUnhandledByEngine(income_type, cls)
 
-        assessment = person_month.person_year.current_assessment()
+        assessment = person_month.person_year.current_assessment(evaluation_date=None)
 
         if assessment is not None:
             if person_month.month == 12:
