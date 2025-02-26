@@ -254,7 +254,12 @@ class ExpectedIncomeHandler(Handler):
 
     @staticmethod
     def from_api_dict(data: Dict[str, str | int | bool | float]) -> ExpectedIncome:
-        return ExpectedIncome(**camelcase_to_snakecase(data))
+        data_dict = camelcase_to_snakecase(data)
+        valid_keys = {
+            field.name for field in ExpectedIncome.__dataclass_fields__.values()
+        }
+        filtered_data = {k: v for k, v in data_dict.items() if k in valid_keys}
+        return ExpectedIncome(**filtered_data)
 
     @classmethod
     def create_or_update_objects(
