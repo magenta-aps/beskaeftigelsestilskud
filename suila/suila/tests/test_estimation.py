@@ -260,12 +260,14 @@ class TestEstimationEngine(TestCase):
         self.assertIsNone(summary.rmse_percent)
 
     def test_estimate_all_None_inputs(self):
-        results, summaries = EstimationEngine.estimate_all(self.year.year, None, None)
-
+        EstimationEngine.estimate_all(self.year.year, None, None, False)
         # When person=None and count = None the PersonYear queryset contains
         # all personYears
         all_person_years = PersonYear.objects.filter(year=self.year.year)
-        result_person_years = [r.person_month.person_year for r in results]
+        result_person_years = [
+            estimate.person_month.person_year
+            for estimate in IncomeEstimate.objects.all()
+        ]
         for person_year in all_person_years:
             self.assertIn(person_year, result_person_years)
 
@@ -280,17 +282,13 @@ class TestEstimationEngine(TestCase):
             engine="InYearExtrapolationEngine",
         )
 
-        dry_results, dry_summaries = EstimationEngine.estimate_all(
-            self.year.year, None, None, dry_run=True
-        )
+        EstimationEngine.estimate_all(self.year.year, None, None, dry_run=True)
 
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 1
         )
 
-        results, summaries = EstimationEngine.estimate_all(
-            self.year.year, None, None, dry_run=False
-        )
+        EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
         self.assertEqual(IncomeEstimate.objects.all().count(), 156)
         self.assertEqual(
@@ -306,9 +304,8 @@ class TestEstimationEngine(TestCase):
 
         instances.return_value = [MockEngine]
 
-        results, summaries = EstimationEngine.estimate_all(self.year.year, None, None)
+        EstimationEngine.estimate_all(self.year.year, None, None)
         instances.assert_called()
-        self.assertEqual(len(results), 0)
 
     def test_b_income_from_year(self):
         for month in PersonMonth.objects.filter(person_year=self.person_year):
