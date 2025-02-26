@@ -158,7 +158,12 @@ class AnnualIncomeHandler(Handler):
 
     @staticmethod
     def from_api_dict(data: Dict[str, str | int | bool | float]) -> AnnualIncome:
-        return AnnualIncome(**camelcase_to_snakecase(data))
+        data_dict = camelcase_to_snakecase(data)
+        valid_keys = {
+            field.name for field in AnnualIncome.__dataclass_fields__.values()
+        }
+        filtered_data = {k: v for k, v in data_dict.items() if k in valid_keys}
+        return AnnualIncome(**filtered_data)
 
     @classmethod
     def create_or_update_objects(
