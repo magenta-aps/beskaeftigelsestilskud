@@ -149,12 +149,9 @@ class EstimationEngine:
                 f"Processing batches with a batch-size of: {batch_size} ...\n"
             )
 
-        final_results = []
-        final_summaries = []
-
         with transaction.atomic():
             for person_pk_list in batched(person_qs.iterator(), batch_size):
-                batch_results, batch_summaries = EstimationEngine._process_batch(
+                EstimationEngine._process_batch(
                     year,
                     person_pk_list,
                     quarantine_df,
@@ -164,10 +161,6 @@ class EstimationEngine:
                     dry_run,
                     output_stream,
                 )
-                final_results.extend(batch_results)
-                final_summaries.extend(batch_summaries)
-
-        return final_results, final_summaries
 
     @staticmethod
     def _process_batch(
