@@ -186,6 +186,8 @@ class ModelTest(TestCase):
                 tzinfo=timezone.get_current_timezone(),
             ),
             operating_costs_catch_sale=Decimal(10000),
+            catch_sale_market_income=Decimal(10000),
+            catch_sale_factory_income=Decimal(10000),
         )
         cls.assessment1b = PersonYearAssessment.objects.create(
             person_year=cls.person_year,
@@ -196,6 +198,8 @@ class ModelTest(TestCase):
                 tzinfo=timezone.get_current_timezone(),
             ),
             operating_costs_catch_sale=Decimal(12000),
+            catch_sale_market_income=Decimal(10000),
+            catch_sale_factory_income=Decimal(10000),
         )
 
 
