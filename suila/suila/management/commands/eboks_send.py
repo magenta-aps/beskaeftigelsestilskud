@@ -5,6 +5,7 @@ import os
 from decimal import Decimal
 from io import BytesIO
 
+from django.conf import settings
 from django.template.loader import get_template
 from pypdf import PdfWriter
 from weasyprint import HTML
@@ -27,7 +28,7 @@ class Command(SuilaBaseCommand):
 
     type_map = {
         "opgørelse": {
-            "content_type": 179343,
+            "content_type": settings.EBOKS["content_type_id"],  # type: ignore
             "title": "Årsopgørelse",
             "template_folder": "suila/eboks/opgørelse",
         }
