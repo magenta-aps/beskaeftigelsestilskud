@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from common.tests.test_mixins import UserMixin
@@ -19,6 +19,7 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearAssessment,
     PrismeAccountAlias,
     StandardWorkBenefitCalculationMethod,
     Year,
@@ -174,6 +175,16 @@ class ModelTest(TestCase):
         cls.final_settlement = AnnualIncome.objects.create(
             person_year=cls.person_year,
             account_tax_result=Decimal(13000),
+        )
+        cls.assessment1a = PersonYearAssessment.objects.create(
+            person_year=cls.person_year,
+            valid_from=datetime(year=cls.person_year.year_id, month=1, day=1),
+            operating_costs_catch_sale=Decimal(10000),
+        )
+        cls.assessment1b = PersonYearAssessment.objects.create(
+            person_year=cls.person_year,
+            valid_from=datetime(year=cls.person_year.year_id, month=7, day=1),
+            operating_costs_catch_sale=Decimal(12000),
         )
 
 
@@ -460,6 +471,50 @@ class TestPersonYear(UserModelTest):
         self.assertEqual(qs.count(), 0)
         self.assertNotIn(self.person_year, qs)
         self.assertFalse(PersonYear.has_model_permissions(self.no_user, "view"))
+
+    def test_current_assessment(self):
+        self.assertEqual(
+            self.person_year.current_assessment(datetime(self.year.year, 3, 20)),
+            self.assessment1a,
+        )
+        self.assertEqual(
+            self.person_year.current_assessment(datetime(self.year.year, 10, 20)),
+            self.assessment1b,
+        )
+        self.assertEqual(
+            self.person_year.current_assessment(datetime(self.year.year + 1, 1, 1)),
+            self.assessment1b,
+        )
+
+    def test_expenses_sum(self):
+        self.assertEqual(
+            self.person_year.expenses_sum(
+                IncomeType.A, datetime(self.year.year - 1, 12, 31)
+            ),
+            Decimal(0),
+        )
+        self.assertEqual(
+            self.person_year.expenses_sum(IncomeType.A, datetime(self.year.year, 1, 1)),
+            Decimal(10000),
+        )
+        self.assertEqual(
+            self.person_year.expenses_sum(
+                IncomeType.A, datetime(self.year.year + 1, 1, 1)
+            ),
+            Decimal(12000),
+        )
+        self.assertEqual(
+            self.person_year.expenses_sum(
+                IncomeType.B, datetime(self.year.year + 1, 1, 1)
+            ),
+            Decimal(0),
+        )
+        self.assertEqual(
+            self.person_year.expenses_sum(
+                IncomeType.U, datetime(self.year.year + 1, 1, 1)
+            ),
+            Decimal(0),
+        )
 
 
 class TestPersonMonth(UserModelTest):

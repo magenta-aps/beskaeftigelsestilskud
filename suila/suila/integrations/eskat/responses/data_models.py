@@ -66,10 +66,17 @@ class ExpectedIncome:
     benefits_income: float | None = None
     other_b_income: float | None = None
     gross_business_income: float | None = None
+    business_turnover: float | None = None
     catch_sale_factory_income: float | None = None
     catch_sale_market_income: float | None = None
+    goods_comsumption: float | None = None
+    operating_costs_catch_sale: float | None = None
+    operating_expenses_own_company: float | None = None
+    tax_depreciation: float | None = None
     bussiness_interest_income: float | None = None
+    bussiness_interest_expenses: float | None = None
     extraordinary_bussiness_income: float | None = None
+    extraordinary_bussiness_expenses: float | None = None
 
 
 @dataclass

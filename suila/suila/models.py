@@ -462,6 +462,28 @@ class PersonYear(PermissionsMixin, models.Model):
 
         return result or Decimal("0.00")
 
+    def current_assessment(
+        self, evaluation_date: datetime | None = None
+    ) -> PersonYearAssessment | None:
+        if evaluation_date is None:
+            evaluation_date = timezone.now()
+        return (
+            self.assessments.filter(valid_from__lte=evaluation_date)
+            .order_by("-valid_from")
+            .first()
+        )
+
+    def expenses_sum(
+        self, income_type: IncomeType, evaluation_date: datetime | None = None
+    ) -> Decimal:
+        # Sum of expenses that must be subtracted from every estimation
+        assessment = self.current_assessment(evaluation_date)
+        expenses = Decimal(0)
+        if assessment is not None:
+            if income_type == IncomeType.A:
+                expenses += sum([assessment.operating_costs_catch_sale])
+        return expenses
+
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):
@@ -1105,6 +1127,42 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         max_digits=12, decimal_places=2, default=Decimal(0), null=False
     )
     brutto_b_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    benefits_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    business_turnover = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    catch_sale_factory_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    catch_sale_market_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    goods_comsumption = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    operating_costs_catch_sale = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    operating_expenses_own_company = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    tax_depreciation = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    bussiness_interest_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    bussiness_interest_expenses = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    extraordinary_bussiness_income = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal(0), null=False
+    )
+    extraordinary_bussiness_expenses = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal(0), null=False
     )
 
