@@ -187,6 +187,7 @@ Lint REUSE compliance:
     EBOKS_CLIENT_ID: 99
     EBOKS_SYSTEM_ID: 3994
     EBOKS_HOST: https://eboxtest.nanoq.gl
+    EBOKS_CONTENT_TYPE_ID: 179343
 
 
   image: ${IMAGE_SHA}
