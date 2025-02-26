@@ -164,7 +164,7 @@ class EstimationEngine:
                     dry_run,
                     output_stream,
                 )
-                print(f"{counter}/{batches_count}")
+                print(f"Processed batch {counter}/{batches_count}")
 
     @staticmethod
     def _process_batch(
