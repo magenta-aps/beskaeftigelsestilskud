@@ -6,6 +6,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 from itertools import batched, groupby
+from math import ceil
 from operator import attrgetter
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -132,11 +133,9 @@ class EstimationEngine:
         if output_stream is not None:
             output_stream.write("Fetching person_month data ...\n")
 
-        person_qs = (
-            Person.objects.all()
-            if person_pk is None
-            else Person.objects.filter(pk=person_pk)
-        ).values_list("pk", flat=True)
+        person_qs = Person.objects.filter(personyear__in=person_year_qs).values_list(
+            "pk", flat=True
+        )
 
         exclude_months = {
             (now.year, now.month),
@@ -149,9 +148,13 @@ class EstimationEngine:
                 f"Processing batches with a batch-size of: {batch_size} ...\n"
             )
 
+        batches_count = ceil(person_qs.count() / batch_size)
+
         with transaction.atomic():
-            for person_pk_list in batched(person_qs.iterator(), batch_size):
-                EstimationEngine._process_batch(
+            for counter, person_pk_list in enumerate(
+                batched(person_qs.iterator(), batch_size), 1
+            ):
+                batch_results, batch_summaries = EstimationEngine._process_batch(
                     year,
                     person_pk_list,
                     quarantine_df,
@@ -161,6 +164,7 @@ class EstimationEngine:
                     dry_run,
                     output_stream,
                 )
+                print(f"Processed batch {counter}/{batches_count}")
 
     @staticmethod
     def _process_batch(
@@ -298,6 +302,11 @@ class EstimationEngine:
 
         # Handle EstimationEngine instances
         person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
+        person_year_expenses = {
+            # Use most recent expenses data
+            income_type: person_year.expenses_sum(income_type, evaluation_date=None)
+            for income_type in IncomeType
+        }
         for engine in EstimationEngine.instances():
             for income_type in engine.valid_income_types:
                 engine_results = []
@@ -317,6 +326,9 @@ class EstimationEngine:
                             person_month, subset, income_type
                         )
                         if result is not None:
+                            result.estimated_year_result -= person_year_expenses[
+                                income_type
+                            ]
                             result.person_month = person_month
                             result.actual_year_result = actual_year_sum
                             result.timestamp = timestamp
@@ -563,9 +575,7 @@ class SelfReportedEngine(EstimationEngine):
         if income_type != IncomeType.B:
             raise IncomeTypeUnhandledByEngine(income_type, cls)
 
-        assessment = person_month.person_year.assessments.order_by(
-            "-valid_from",
-        ).first()
+        assessment = person_month.person_year.current_assessment(evaluation_date=None)
 
         if assessment is not None:
             if person_month.month == 12:

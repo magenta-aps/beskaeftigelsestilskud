@@ -290,11 +290,6 @@ class ExpectedIncomeHandler(Handler):
                             "year",
                             # Exclude fields not defined on `PersonYearAssessment`
                             "do_expect_a_income",
-                            "benefits_income",
-                            "catch_sale_factory_income",
-                            "catch_sale_market_income",
-                            "bussiness_interest_income",
-                            "extraordinary_bussiness_income",
                         },
                     )
 
