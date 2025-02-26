@@ -153,12 +153,18 @@ class Handler:
             if f.name not in exclude
         }
 
+    @staticmethod
+    def sanitize_api_dict(dataclass, data: Dict[str, str | int | bool | float]):
+        data_dict = camelcase_to_snakecase(data)
+        valid_keys = {field.name for field in dataclass.__dataclass_fields__.values()}
+        return {k: v for k, v in data_dict.items() if k in valid_keys}
+
 
 class AnnualIncomeHandler(Handler):
 
     @staticmethod
     def from_api_dict(data: Dict[str, str | int | bool | float]) -> AnnualIncome:
-        return AnnualIncome(**camelcase_to_snakecase(data))
+        return AnnualIncome(**Handler.sanitize_api_dict(AnnualIncome, data))
 
     @classmethod
     def create_or_update_objects(
@@ -254,7 +260,7 @@ class ExpectedIncomeHandler(Handler):
 
     @staticmethod
     def from_api_dict(data: Dict[str, str | int | bool | float]) -> ExpectedIncome:
-        return ExpectedIncome(**camelcase_to_snakecase(data))
+        return ExpectedIncome(**Handler.sanitize_api_dict(ExpectedIncome, data))
 
     @classmethod
     def create_or_update_objects(
@@ -382,7 +388,7 @@ class MonthlyIncomeHandler(Handler):
 
     @staticmethod
     def from_api_dict(data: Dict[str, str | int | bool | float]) -> MonthlyIncome:
-        return MonthlyIncome(**camelcase_to_snakecase(data))
+        return MonthlyIncome(**Handler.sanitize_api_dict(MonthlyIncome, data))
 
     @classmethod
     def create_or_update_objects(
@@ -560,7 +566,7 @@ class TaxInformationHandler(Handler):
 
     @staticmethod
     def from_api_dict(data: Dict[str, str | int | bool | float]) -> TaxInformation:
-        return TaxInformation(**camelcase_to_snakecase(data))
+        return TaxInformation(**Handler.sanitize_api_dict(TaxInformation, data))
 
     @classmethod
     def create_or_update_objects(
