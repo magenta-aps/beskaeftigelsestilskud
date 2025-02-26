@@ -11,6 +11,7 @@ EBOKS = {
     "system_id": os.environ["EBOKS_SYSTEM_ID"],
     "host": os.environ["EBOKS_HOST"],
     "timeout": int(os.environ.get("EBOKS_TIMEOUT") or 60),
+    "content_type_id": os.environ["EBOKS_CONTENT_TYPE_ID"],
 }
 
 # Relative to settings.MEDIA_ROOT
