@@ -575,7 +575,12 @@ class TaxInformationHandler(Handler):
 
     @staticmethod
     def from_api_dict(data: Dict[str, str | int | bool | float]) -> TaxInformation:
-        return TaxInformation(**camelcase_to_snakecase(data))
+        data_dict = camelcase_to_snakecase(data)
+        valid_keys = {
+            field.name for field in TaxInformation.__dataclass_fields__.values()
+        }
+        filtered_data = {k: v for k, v in data_dict.items() if k in valid_keys}
+        return TaxInformation(**filtered_data)
 
     @classmethod
     def create_or_update_objects(
