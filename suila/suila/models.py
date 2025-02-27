@@ -312,6 +312,7 @@ class Person(PermissionsMixin, models.Model):
     class Meta:
         permissions = (("view_data_analysis", "Can view data analysis"),)
 
+    exclude_serialization = ("welcome_letter_id", "welcome_letter_sent_at")
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
         related_name="history_entries",
