@@ -83,8 +83,8 @@ class Command(SuilaBaseCommand):
         content_type = attrs["content_type"]
 
         templates = {
-            "da": get_template(os.path.join(attrs["template_folder"], "da.html")),
             "kl": get_template(os.path.join(attrs["template_folder"], "kl.html")),
+            "da": get_template(os.path.join(attrs["template_folder"], "da.html")),
         }
         for person in qs:
             try:
