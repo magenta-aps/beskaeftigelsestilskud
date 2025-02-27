@@ -151,6 +151,9 @@ header nav.navbar div > span.material-icons {
 header nav.navbar a:hover {
   color: $secondary;
 }
+header nav.navbar ul.dropdown-menu li a {
+  color: $black;
+}
 
 .content {
   margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
@@ -197,7 +200,7 @@ select[name="language"] {
   padding: 0 0 0 0.5 * $spacer;
   border: 0;
   appearance: menulist-button;
-  background: transparent;
+  background: $primary;
   color: $white;
 }
 select[name="language"]:focus {
@@ -209,6 +212,9 @@ select[name="language"]:hover {
 select[name="language"] option {
   appearance: none;
   background-color: $primary;
+}
+select[name="language"] option:hover {
+  color: $white;
 }
 
 // Settings ("wheel") menu
