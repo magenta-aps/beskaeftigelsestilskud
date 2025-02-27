@@ -201,6 +201,13 @@ select[name="language"] {
 select[name="language"]:focus {
   box-shadow: none;
 }
+select[name="language"]:hover {
+  color: $secondary;
+}
+select[name="language"] option {
+  appearance: none;
+  background-color: $primary;
+}
 
 // Settings ("wheel") menu
 #settings {
