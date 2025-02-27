@@ -151,8 +151,8 @@ class TestBatchExport(TestCase):
         account_alias = self._get_floating_field(prisme_batch_item.g69_content, 111)
         self.assertEqual(
             account_alias,
-            # Root, tax municipality code, and tax year
-            "100045240614101010000242040195" + "10400" + "25",
+            # Finanslov, art, kommunekode, skatteår
+            "240614" + "242040195" + "10400" + "25",
         )
 
         # Assert: G69 contains CPR in `Ydelsesmodtager` (field 133) and specifies CPR
