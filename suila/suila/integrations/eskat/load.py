@@ -299,22 +299,6 @@ class ExpectedIncomeHandler(Handler):
                         },
                     )
 
-                    # TODO: Tilret dette ud fra hvad Torben svarer når han vender
-                    # tilbage
-                    brutto_b_income = sum(
-                        filter(
-                            None,
-                            [
-                                item.capital_income,
-                                item.education_support_income,
-                                item.care_fee_income,
-                                item.alimony_income,
-                                item.other_b_income,
-                                item.gross_business_income,
-                            ],
-                        )
-                    )
-
                     key = (item.cpr, item.year)
                     if key in objs_to_create:
                         # We have an item in this chunk already
@@ -335,7 +319,6 @@ class ExpectedIncomeHandler(Handler):
                             objs_to_create[key] = PersonYearAssessment(
                                 person_year=person_years[item.cpr],
                                 load=load,
-                                brutto_b_income=brutto_b_income,
                                 **field_values,
                             )
                         else:
@@ -346,9 +329,6 @@ class ExpectedIncomeHandler(Handler):
                                 if getattr(assessment, name) != value:
                                     setattr(assessment, name, value)
                                     changed = True
-                            if assessment.brutto_b_income != brutto_b_income:
-                                assessment.brutto_b_income = brutto_b_income
-                                changed = True
                             if changed:
                                 objs_to_update[key] = assessment
 

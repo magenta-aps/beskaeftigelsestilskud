@@ -1133,9 +1133,6 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
     gross_business_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal(0), null=False
     )
-    brutto_b_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=Decimal(0), null=False
-    )
     benefits_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal(0), null=False
     )

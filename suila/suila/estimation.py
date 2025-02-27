@@ -587,7 +587,12 @@ class SelfReportedEngine(EstimationEngine):
                 estimated_year_result += person_month.person_year.b_income or 0
             else:
                 estimated_year_result = (
-                    assessment.brutto_b_income - assessment.gross_business_income
+                    assessment.business_turnover
+                    + assessment.catch_sale_market_income
+                    + assessment.capital_income
+                    + assessment.care_fee_income
+                    - assessment.goods_comsumption
+                    - assessment.operating_expenses_own_company
                 )
         else:
             estimated_year_result = Decimal(0)

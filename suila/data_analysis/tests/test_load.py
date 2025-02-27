@@ -321,7 +321,6 @@ class LoadAssessmentTest(BaseTestCase):
         self.assertEqual(assessment.alimony_income, Decimal("4000.00"))
         self.assertEqual(assessment.other_b_income, Decimal("5000.00"))
         self.assertEqual(assessment.gross_business_income, Decimal("6000.00"))
-        self.assertEqual(assessment.brutto_b_income, Decimal("9000.00"))
         self.assertEqual(assessment.load.source, "csv")
         self.assertEqual(assessment.load.parameters["filename"], "testdata")
 

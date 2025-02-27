@@ -1309,7 +1309,10 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
     def test_updated_data_affects_estimated_year_income(self):
         # Arrange: create an initial value for this year
         self.create_or_update_objects(
-            capital_income=120000, valid_from="2020-01-01T00:00:00"
+            business_turnover=120000,
+            goods_comsumption=0,
+            operating_expenses_own_company=0,
+            valid_from="2020-01-01T00:00:00",
         )
         # Act: run income estimation for month 1
         estimate_1 = self.estimate_income(month=1)
@@ -1318,12 +1321,12 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
 
         # Arrange: update the previous value for this year
         self.create_or_update_objects(
-            capital_income=60000, valid_from="2020-01-05T00:00:00"
+            business_turnover=0, valid_from="2020-01-05T00:00:00"
         )
         # Act: re-run income estimation for month 1
         estimate_2 = self.estimate_income(month=1)
         # Assert: we expect a yearly income matching the self-reported expected income
-        self.assertEqual(estimate_2, Decimal("60000"))
+        self.assertEqual(estimate_2, Decimal("0"))
 
     def test_chunk_contains_same(self):
         self.create_or_update_multiple_objects(

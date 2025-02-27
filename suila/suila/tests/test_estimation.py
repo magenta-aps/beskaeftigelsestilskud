@@ -812,8 +812,7 @@ class TestSelfReportedEngine(TestCase):
             care_fee_income=Decimal(0),
             alimony_income=Decimal(0),
             other_b_income=Decimal(0),
-            gross_business_income=Decimal(0),
-            brutto_b_income=Decimal(70000),
+            business_turnover=Decimal(70000),
         )
 
     def test_name(self):

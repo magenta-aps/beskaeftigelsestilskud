@@ -70,7 +70,6 @@ def asdict(item):
         "honorarer": "care_fee_income",
         "andre_b": "other_b_income",
         "brutto_b_før_erhvervsvirk_indhandling": "gross_business_income",
-        "brutto_b_indkomst": "brutto_b_income",
     }
 
     cols = [c for c in dir(item) if c in translation_dict]
