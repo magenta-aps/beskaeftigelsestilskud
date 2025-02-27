@@ -20,7 +20,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import F, Index, QuerySet, Sum, TextChoices
+from django.db.models import SET_NULL, F, Index, QuerySet, Sum, TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
@@ -341,6 +341,20 @@ class Person(PermissionsMixin, models.Model):
     full_address = models.TextField(blank=True, null=True)
     civil_state = models.TextField(blank=True, null=True)
     location_code = models.TextField(blank=True, null=True)
+
+    welcome_letter = models.ForeignKey(
+        "EboksMessage",
+        blank=True,
+        null=True,
+        on_delete=SET_NULL,
+    )
+    welcome_letter_sent_at = models.DateTimeField(
+        # In case the EboksMessage gets deleted, we want to keep
+        # the info that the Person has received a message
+        blank=True,
+        null=True,
+        default=None,
+    )
 
     def __str__(self):
         return str(self.name or self.cpr)

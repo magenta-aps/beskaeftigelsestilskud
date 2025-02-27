@@ -7,6 +7,7 @@ from io import BytesIO
 
 from django.conf import settings
 from django.template.loader import get_template
+from django.utils import timezone
 from pypdf import PdfWriter
 from weasyprint import HTML
 from weasyprint.text.fonts import FontConfiguration
@@ -38,6 +39,7 @@ class Command(SuilaBaseCommand):
             "template_folder": "suila/eboks/afventer",
         },
     }
+    welcome_letter = "opgørelse"
     month_names = {
         "da": [
             "januar",
@@ -76,6 +78,9 @@ class Command(SuilaBaseCommand):
         month = kwargs["month"]
         attrs = self.type_map[typ]
         qs = Person.objects.all()
+        if typ == self.welcome_letter:
+            qs = qs.filter(welcome_letter_sent_at__isnull=True)
+
         if kwargs.get("cpr"):
             qs = qs.filter(cpr=kwargs["cpr"])
 
@@ -86,6 +91,7 @@ class Command(SuilaBaseCommand):
             "kl": get_template(os.path.join(attrs["template_folder"], "kl.html")),
             "da": get_template(os.path.join(attrs["template_folder"], "da.html")),
         }
+        quant = Decimal("0.01")
         for person in qs:
             try:
                 personyear: PersonYear = person.personyear_set.get(year_id=year)
@@ -97,7 +103,6 @@ class Command(SuilaBaseCommand):
                     )
                     for y in year_range
                 ]
-                quant = Decimal("0.01")
                 context = {
                     "person": person,
                     "year": year,
@@ -165,9 +170,15 @@ class Command(SuilaBaseCommand):
                     writer.append(BytesIO(pdf_data))
                     writer.write_stream(data)
                 data.seek(0)
-                EboksMessage.dispatch(
+                message = EboksMessage.dispatch(
                     person.cpr, title, content_type, data.read(), client
                 )
+                if typ == self.welcome_letter:
+                    person.welcome_letter = message
+                    person.welcome_letter_sent_at = timezone.now()
+                    person.save(
+                        update_fields=("welcome_letter", "welcome_letter_sent_at")
+                    )
             except PersonYear.DoesNotExist:
                 pass
             except PersonMonth.DoesNotExist:
