@@ -4,6 +4,7 @@ $enable-cssgrid: true;
 $primary: #820041;
 $dark-primary: #530029;
 $secondary: #ffe169;
+$light-secondary: #bf0169;
 $light-primary: #dacac4;
 $lightest-primary: #f9eff4;
 
@@ -121,6 +122,14 @@ h2.secondary,
 div.secondary,
 span.secondary {
   color: $label;
+}
+
+a {
+  text-decoration: underline;
+  color: $light-secondary;
+}
+a:hover {
+  text-decoration: none;
 }
 
 ol li, ul li {
@@ -251,13 +260,9 @@ footer a {
   padding: 0 0 0 148px + 40px;
   background: url("../suila/logo_aka_large.png") no-repeat;
   text-decoration: underline;
+  color: $primary;
 }
 footer a:hover {
-  text-decoration: none;
-}
-
-// No underlines for links
-a {
   text-decoration: none;
 }
 
