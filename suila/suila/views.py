@@ -616,9 +616,9 @@ class PersonDetailNotesView(
         )
 
     def get_notes(self) -> QuerySet[Note]:
-        return Note.objects.filter(
-            personyear__year_id=self.year, personyear__person_id=self.person_pk
-        ).order_by("created")
+        return Note.objects.filter(personyear__person_id=self.person_pk).order_by(
+            "created"
+        )
 
     def get_context_data(self, **kwargs):
         notes = self.get_notes()
