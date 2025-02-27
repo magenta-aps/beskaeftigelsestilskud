@@ -588,6 +588,9 @@ class SelfReportedEngine(EstimationEngine):
             else:
                 estimated_year_result = (
                     assessment.business_turnover
+                    + assessment.catch_sale_market_income
+                    + assessment.capital_income
+                    + assessment.care_fee_income
                     - assessment.goods_comsumption
                     - assessment.operating_expenses_own_company
                 )
