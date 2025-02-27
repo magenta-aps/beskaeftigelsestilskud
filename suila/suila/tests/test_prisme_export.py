@@ -237,6 +237,22 @@ class TestBatchExport(TestCase):
         posteringsdato = self._get_floating_field(prisme_batch_item.g69_content, 110)
         self.assertEqual(posteringsdato, "20250311")  # March 11, 2025
 
+    def test_get_payment_date(self):
+        # Arrange
+        february = self._add_person_month(311270000, Decimal("1000"), month=2)
+        # Act
+        export = self._get_instance()
+        # Assert
+        self.assertEqual(export.get_payment_date(february), date(2025, 4, 14))
+
+    def test_get_posting_date(self):
+        # Arrange
+        february = self._add_person_month(311270000, Decimal("1000"), month=2)
+        # Act
+        export = self._get_instance()
+        # Assert
+        self.assertEqual(export.get_posting_date(february), date(2025, 4, 8))
+
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
         should upload the serialized G68/G69 transaction pairs using the

@@ -2,12 +2,12 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from io import BytesIO
 from typing import Generator
 
-from dateutil.relativedelta import MO, TU, relativedelta
+from dateutil.relativedelta import TU, relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
@@ -178,13 +178,19 @@ class BatchExport:
         )
 
     def get_payment_date(self, person_month: PersonMonth) -> date:
-        # Payment date is the third Monday two months after the given `PersonMonth`.
-        # E.g. for a `PersonMonth` in January 2023, the payment date is March 20, 2023.
-        return person_month.year_month + relativedelta(months=2, weekday=MO(+3))
+        # Payment date is the day before the third Tuesday, two months after the given
+        # `PersonMonth`. E.g. for a `PersonMonth` in February 2025, the payment date is
+        # April 14, 2025. Note, this is not necessarily the same as the third Monday in
+        # the month.
+        return (
+            person_month.year_month
+            + relativedelta(months=2, weekday=TU(+3))
+            - timedelta(days=1)
+        )
 
     def get_posting_date(self, person_month: PersonMonth) -> date:
         # Posting date is the second Tuesday two months after the given `PersonMonth`.
-        # E.g. for a `PersonMonth` in January 2023, the posting date is March 14, 2023.
+        # E.g. for a `PersonMonth` in February 2025, the posting date is April 8, 2025.
         return person_month.year_month + relativedelta(months=2, weekday=TU(+2))
 
     def upload_batch(
