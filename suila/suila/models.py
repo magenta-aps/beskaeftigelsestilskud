@@ -1178,7 +1178,7 @@ class PrismeAccountAlias(PermissionsMixin, models.Model):
     class Meta:
         unique_together = [("tax_municipality_location_code", "tax_year")]
 
-    alias = models.TextField(unique=True)
+    alias = models.TextField()
     """The account alias itself"""
 
     tax_municipality_location_code = models.TextField()

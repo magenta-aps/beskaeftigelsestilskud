@@ -4,17 +4,16 @@
 import itertools
 
 from django.core.management import BaseCommand
+from django.db import transaction
 
 from suila.models import PrismeAccountAlias
 
 
 class Command(BaseCommand):
 
+    @transaction.atomic
     def handle(self, *args, **kwargs):
-
-        AFDELING = "100045"
         FINANSLOV = "240614"
-        FORMAAL = "101010000"
         ART = "242040195"
 
         MUNICIPALITY_CODES = [
@@ -52,16 +51,23 @@ class Command(BaseCommand):
 
         # Currently, account aliases are defined for the years 2025, 2026, 2027, 2028,
         # 2029 and 2030.
-        TAX_YEARS = range(2025, 2031)
+        TAX_YEARS = range(2023, 2031)
 
-        for municipality_code, tax_year in itertools.product(
-            MUNICIPALITY_CODES, TAX_YEARS
-        ):
-            PrismeAccountAlias.objects.update_or_create(
+        def get_tax_year(tax_year: int):
+            if tax_year in (2023, 2024):
+                return 25
+            return tax_year - 2000
+
+        # Replace current aliases with new versions
+        PrismeAccountAlias.objects.all().delete()
+        aliases = [
+            PrismeAccountAlias(
                 tax_municipality_location_code=municipality_code[1],
                 tax_year=tax_year,
-                defaults={
-                    "alias": f"{AFDELING}{FINANSLOV}{FORMAAL}{ART}"
-                    f"{municipality_code[0]}{tax_year - 2000}",
-                },
+                alias=f"{FINANSLOV}{ART}{municipality_code[0]}{get_tax_year(tax_year)}",
             )
+            for municipality_code, tax_year in itertools.product(
+                MUNICIPALITY_CODES, TAX_YEARS
+            )
+        ]
+        PrismeAccountAlias.objects.bulk_create(aliases)

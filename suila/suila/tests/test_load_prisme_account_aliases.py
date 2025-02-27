@@ -21,12 +21,12 @@ class TestLoadPrismeAccountAliases(TestCase):
     def test_load_prisme_account_aliases(self):
         # Act
         call_command(self.command)
-        # Assert: there are aliases for six municipalities across six tax years
-        self.assertEqual(PrismeAccountAlias.objects.count(), 6 * 6)
-        # Assert: all aliases have the expected length (37 digits)
+        # Assert: there are aliases for six municipalities across eight tax years
+        self.assertEqual(PrismeAccountAlias.objects.count(), 6 * 8)
+        # Assert: all aliases have the expected length (22 digits)
         self.assertEqual(
             PrismeAccountAlias.objects.aggregate(
                 lengths=ArrayAgg(Length("alias"), distinct=True)
             ),
-            {"lengths": [37]},
+            {"lengths": [22]},
         )
