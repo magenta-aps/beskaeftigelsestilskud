@@ -31,22 +31,43 @@ class Command(SuilaBaseCommand):
             "content_type": settings.EBOKS["content_type_id"],  # type: ignore
             "title": "Årsopgørelse",
             "template_folder": "suila/eboks/opgørelse",
-        }
+        },
+        "afventer": {
+            "content_type": settings.EBOKS["content_type_id"],  # type: ignore
+            "title": "Årsopgørelse",
+            "template_folder": "suila/eboks/afventer",
+        },
     }
-    month_names = [
-        "januar",
-        "februar",
-        "marts",
-        "april",
-        "maj",
-        "juni",
-        "juli",
-        "august",
-        "september",
-        "oktober",
-        "november",
-        "december",
-    ]
+    month_names = {
+        "da": [
+            "januar",
+            "februar",
+            "marts",
+            "april",
+            "maj",
+            "juni",
+            "juli",
+            "august",
+            "september",
+            "oktober",
+            "november",
+            "december",
+        ],
+        "kl": [
+            "januaari",
+            "februaari",
+            "marsi",
+            "apriili",
+            "maaji",
+            "juuni",
+            "juuli",
+            "aggusti",
+            "septembari",
+            "oktobari",
+            "novembari",
+            "decembari",
+        ],
+    }
 
     def _handle(self, *args, **kwargs):
         client = EboksClient.from_settings()
@@ -61,10 +82,10 @@ class Command(SuilaBaseCommand):
         title = attrs["title"]
         content_type = attrs["content_type"]
 
-        templates = [
-            get_template(os.path.join(attrs["template_folder"], "da.html")),
-            get_template(os.path.join(attrs["template_folder"], "kl.html")),
-        ]
+        templates = {
+            "da": get_template(os.path.join(attrs["template_folder"], "da.html")),
+            "kl": get_template(os.path.join(attrs["template_folder"], "kl.html")),
+        }
         for person in qs:
             try:
                 personyear: PersonYear = person.personyear_set.get(year_id=year)
@@ -83,7 +104,6 @@ class Command(SuilaBaseCommand):
                     "month": month,
                     "personyear": personyear,
                     "personmonth": personmonth,
-                    "month_name": self.month_names[month - 1],
                     "income": {
                         "catchsale_income": [
                             Decimal(
@@ -137,7 +157,8 @@ class Command(SuilaBaseCommand):
                 }
                 writer = PdfWriter()
                 data = BytesIO()
-                for template in templates:
+                for language, template in templates.items():
+                    context["month_name"] = self.month_names[language][month - 1]
                     html = template.render(context)
                     font_config = FontConfiguration()
                     pdf_data = HTML(string=html).write_pdf(font_config=font_config)
