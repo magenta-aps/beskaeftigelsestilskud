@@ -139,7 +139,7 @@ def calculate_benefit(
     return df
 
 
-def calculate_payout_error_for_all_engine_combinations(year):
+def calculate_payout_error_for_all_engine_combinations(year, cpr: str | None = None):
     """
     Calculates payout error for all engine combinations
 
@@ -176,6 +176,7 @@ def calculate_payout_error_for_all_engine_combinations(year):
                 df_payout = calculate_benefit(
                     month,
                     year,
+                    cpr,
                     engine_a=engine_a.__name__,
                     engine_b=engine_b.__name__,
                 )
@@ -189,7 +190,7 @@ def calculate_payout_error_for_all_engine_combinations(year):
     return df_error
 
 
-def get_best_engine(year):
+def get_best_engine(year, cpr: str | None = None):
     """
     Get the best A and B estimation engines for a particular year
 
@@ -216,7 +217,7 @@ def get_best_engine(year):
         "preferred_estimation_engine_b"
     ).get_default()
 
-    df_error = calculate_payout_error_for_all_engine_combinations(year - 1)
+    df_error = calculate_payout_error_for_all_engine_combinations(year - 1, cpr)
 
     best_engine = pd.Series(
         [(default_engine_a, default_engine_b)] * len(df_error),

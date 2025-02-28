@@ -57,7 +57,6 @@ class Command(SuilaBaseCommand):
                             value = None
                         setattr(person_month, col, value)
                     person_months_to_update.append(person_month)
-
             bulk_update_with_history(
                 person_months_to_update,
                 PersonMonth,

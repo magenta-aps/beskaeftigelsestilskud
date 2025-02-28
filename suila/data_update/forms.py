@@ -8,12 +8,27 @@ from suila.models import (
     AnnualIncome,
     MonthlyIncomeReport,
     PersonMonth,
+    PersonYear,
     PersonYearAssessment,
 )
 
 
 class ActionForm(Form):
     action = CharField()
+
+
+class PersonYearCreateForm(ModelForm):
+    class Meta:
+        model = PersonYear
+        fields = ("year",)
+
+    def __init__(self, person, *args, **kwargs):
+        self.person = person
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        self.instance.person = self.person
+        return super().save(commit)
 
 
 class PersonMonthCreateForm(ModelForm):
