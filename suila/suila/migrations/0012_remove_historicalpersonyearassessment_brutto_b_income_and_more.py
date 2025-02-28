@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("suila", "0011_alter_prismeaccountalias_alias"),
+        ("suila", "0011_historicalperson_welcome_letter_and_more"),
     ]
 
     operations = [
