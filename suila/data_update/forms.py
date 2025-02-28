@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
 from django.forms import CharField, Form, ModelForm
 from django.utils import timezone
 
