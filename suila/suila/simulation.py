@@ -250,6 +250,9 @@ class Simulation:
                     a_income__gt=0,
                 )
             )
+        # TODO: B income doesn't come in monthly reports.
+        # Find out what to do instead.
+        """
         if income_type in (IncomeType.B, None):
             income += list(
                 MonthlyIncomeReport.objects.filter(
@@ -259,14 +262,12 @@ class Simulation:
                     b_income__gt=0,
                 )
             )
-
+        """
         income_series_build: Dict[Tuple[int, int], Decimal] = defaultdict(
             lambda: Decimal(0)
         )
         for item in income:
-            income_series_build[(item.year, item.month)] += (
-                item.a_income + item.b_income
-            )
+            income_series_build[(item.year, item.month)] += item.a_income
         income_series = [
             IncomeItem(year=year, month=month, value=amount, value_parts=[])
             for (year, month), amount in income_series_build.items()
@@ -348,22 +349,15 @@ class Simulation:
                 income_type=income_type, value=item.a_income
             )
 
-        if income_type == income_type.B and item.b_income:
-            value_part = IncomeItemValuePart(
-                income_type=income_type, value=item.b_income
-            )
-
         if (item.year, item.month) not in income_series:
             income_series[(item.year, item.month)] = IncomeItem(
                 year=item.year,
                 month=item.month,
-                value=item.a_income + item.b_income,
+                value=item.a_income,
                 value_parts=[value_part] if value_part else [],
             )
         else:
-            income_series[(item.year, item.month)].value += (
-                item.a_income + item.b_income
-            )
+            income_series[(item.year, item.month)].value += item.a_income
 
             if value_part:
                 income_series[(item.year, item.month)].value_parts.append(value_part)

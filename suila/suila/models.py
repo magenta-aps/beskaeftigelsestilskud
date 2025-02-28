@@ -541,8 +541,8 @@ class PersonYear(PermissionsMixin, models.Model):
         ).first()
         if annual_income is not None:
             return annual_income.account_tax_result
-        elif self.current_assessment:
-            return self.current_assessment.assessed_b_income
+        elif self.current_assessment():
+            return self.current_assessment().assessed_b_income
         return None
 
     @property
