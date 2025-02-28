@@ -527,7 +527,7 @@ class TwoYearSummationEngine(TwelveMonthsSummationEngine):
     description = "Summation af beløb for de seneste 24 måneder"
 
 
-class SameAsLastMonthEngine(EstimationEngine):
+class MonthlyContinuationEngine(EstimationEngine):
     description = "Ekstrapolation af beløb i indeværende måned, plus foregående beløb"
 
     @classmethod

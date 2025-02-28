@@ -45,7 +45,7 @@ engine_choices = (
         "Summation af beløb for de seneste 24 måneder",
     ),
     (
-        "SameAsLastMonthEngine",
+        "MonthlyContinuationEngine",
         "Ekstrapolation af beløb for den seneste måned",
     ),
     (
