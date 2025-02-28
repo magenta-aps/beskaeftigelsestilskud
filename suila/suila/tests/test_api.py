@@ -207,7 +207,7 @@ class PersonYearApiTest(ApiTestCase):
         cls.personyear1b = PersonYear.objects.create(
             person=cls.person1,
             year=cls.year2,
-            preferred_estimation_engine_a="SameAsLastMonthEngine",
+            preferred_estimation_engine_a="MonthlyContinuationEngine",
             preferred_estimation_engine_b="SelfReportedEngine",
             tax_scope="DELVIS",
         )
@@ -225,7 +225,7 @@ class PersonYearApiTest(ApiTestCase):
         cls.expected1b = {
             "year": 2025,
             "cpr": "1234567890",
-            "preferred_estimation_engine_a": "SameAsLastMonthEngine",
+            "preferred_estimation_engine_a": "MonthlyContinuationEngine",
             "preferred_estimation_engine_b": "SelfReportedEngine",
             "tax_scope": "DELVIS",
             "in_quarantine": False,
