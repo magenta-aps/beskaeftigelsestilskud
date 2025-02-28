@@ -11,7 +11,12 @@ from django.core.management import call_command
 from django.db.models import QuerySet
 from django.test import TestCase
 from tenQ.client import ClientException
-from tenQ.writer.g68 import BetalingstekstLinje, Fakturanummer
+from tenQ.writer.g68 import (
+    BetalingstekstLinje,
+    Fakturanummer,
+    G68Transaction,
+    Udbetalingsdato,
+)
 
 from suila.integrations.prisme.benefits import BatchExport, MissingAccountAliasException
 from suila.models import (
@@ -207,6 +212,46 @@ class TestBatchExport(TestCase):
         with self.assertRaises(MissingAccountAliasException):
             # Act
             self._get_prisme_batch_item(export, prisme_batch)
+
+    def test_get_prisme_batch_item_calculates_dates(self):
+        """The G68 `Betalingsdato` field should be the third Monday of the month that
+        is two months after the given `PersonMonth`.
+        """
+        # Arrange
+        self._add_person_month(3112700000, Decimal("1000"))
+        prisme_batch, _ = PrismeBatch.objects.get_or_create(
+            prefix=0, export_date=date(2025, 1, 1)
+        )
+        export = self._get_instance()
+        # Act
+        prisme_batch_item, person_month = self._get_prisme_batch_item(
+            export, prisme_batch
+        )
+        # Assert: the G68 `Udbetalingsdato` is third Monday of the month two months
+        # after the `PersonMonth` to export.
+        for field in G68Transaction.parse(prisme_batch_item.g68_content):
+            if isinstance(field, Udbetalingsdato):
+                self.assertEqual(field.val, date(2025, 3, 17))  # March 17, 2025
+        # Assert: the G68 "posteringsdato" (field 110) is the second Tuesday of the
+        # month two months after the `PersonMonth` to export.
+        posteringsdato = self._get_floating_field(prisme_batch_item.g69_content, 110)
+        self.assertEqual(posteringsdato, "20250311")  # March 11, 2025
+
+    def test_get_payment_date(self):
+        # Arrange
+        february = self._add_person_month(311270000, Decimal("1000"), month=2)
+        # Act
+        export = self._get_instance()
+        # Assert
+        self.assertEqual(export.get_payment_date(february), date(2025, 4, 14))
+
+    def test_get_posting_date(self):
+        # Arrange
+        february = self._add_person_month(311270000, Decimal("1000"), month=2)
+        # Act
+        export = self._get_instance()
+        # Assert
+        self.assertEqual(export.get_posting_date(february), date(2025, 4, 8))
 
     def test_upload_batch(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
