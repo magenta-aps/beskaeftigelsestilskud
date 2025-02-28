@@ -13,6 +13,7 @@ from data_update.views import (
     PersonView,
     PersonYearAssessmentCreateView,
     PersonYearAssessmentUpdateView,
+    PersonYearCreateView,
     PersonYearView,
 )
 from django.urls import URLPattern, URLResolver, path
@@ -26,6 +27,11 @@ urlpatterns: list[URLResolver | URLPattern] = [
         "person/<str:cpr>/<int:year>",
         PersonYearView.as_view(),
         name="personyear_view",
+    ),
+    path(
+        "person/<str:cpr>/create_year",
+        PersonYearCreateView.as_view(),
+        name="personyear_create",
     ),
     path(
         "person/<str:cpr>/<int:year>/<int:month>",
