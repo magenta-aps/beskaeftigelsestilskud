@@ -49,7 +49,7 @@ class PersonMonthOut(ModelSchema):
 
     @staticmethod
     def resolve_b_income(obj) -> Decimal | None:
-        return obj.monthlyincomereport_set.aggregate(Sum("b_income"))["b_income__sum"]
+        return obj.b_income_from_year
 
     @staticmethod
     def resolve_payout_date(obj) -> date:
