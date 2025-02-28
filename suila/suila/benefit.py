@@ -139,7 +139,7 @@ def calculate_benefit(
     return df
 
 
-def calculate_payout_error_for_all_engine_combinations(year, cpr: str = None):
+def calculate_payout_error_for_all_engine_combinations(year, cpr: str | None = None):
     """
     Calculates payout error for all engine combinations
 
@@ -190,7 +190,7 @@ def calculate_payout_error_for_all_engine_combinations(year, cpr: str = None):
     return df_error
 
 
-def get_best_engine(year, cpr: str = None):
+def get_best_engine(year, cpr: str | None = None):
     """
     Get the best A and B estimation engines for a particular year
 
