@@ -1,0 +1,21 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+{% load static %}
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+</head>
+<body>
+<a href="{% url 'data_update:person_view' cpr=person.cpr %}">{{ person.cpr }}</a> >
+<a href="{% url 'data_update:personyear_view' cpr=person.cpr year=personyear.year %}">{{ personyear.year }}</a> >
+<a href="{% url 'data_update:personmonth_view' cpr=person.cpr year=personyear.year month=personmonth.month %}">{{ personmonth.month }}</a> >
+Opret
+<form method="post" action="">
+    {% csrf_token %}
+    <table class="table">
+    {{ form.as_table }}
+    </table>
+    <button type="submit" class="btn btn-primary">Gem</button>
+</form>
+</body>
+</html>
