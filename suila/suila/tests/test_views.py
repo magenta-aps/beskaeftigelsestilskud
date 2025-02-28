@@ -412,6 +412,26 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 [self.person_year],
             )
 
+    def test_get_context_data_no_data(self):
+        with self._time_context(year=2021):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertIsInstance(
+                response.context_data["sum_table"], IncomeSumsBySignalTypeTable
+            )
+            # The sum table should contain lines for each signal type, where both the
+            # monthly and the yearly sums are zero for all lines.
+            self.assertEqual(
+                len(response.context_data["sum_table"].data), len(IncomeSignalType)
+            )
+            self.assertListEqual(
+                [
+                    (item["current_month_sum"], item["current_year_sum"])
+                    for item in response.context_data["sum_table"].data
+                ],
+                [(Decimal("0"), Decimal("0"))]
+                * len(response.context_data["sum_table"].data),
+            )
+
     def test_get_income_signals(self):
         with self._time_context(year=2020):
             # Act

@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
-from operator import attrgetter
 from typing import Any, Iterable
 from urllib.parse import urlencode
 
@@ -258,32 +257,37 @@ class IncomeSumsBySignalTypeTable(Table):
     )
 
     def __init__(self, income_signals: list[IncomeSignal], month: int, *args, **kwargs):
-        signal_type = attrgetter("signal_type")
-
         def sum_amounts(
+            signal_type: IncomeSignalType,
             signals: list[IncomeSignal],
             month: int | None = None,
         ) -> Decimal:
+            signals_of_type: list[IncomeSignal] = [
+                signal for signal in signals if signal.signal_type == signal_type
+            ]
             if month is None:
-                return sum(signal.amount for signal in signals)  # type: ignore
+                if len(signals_of_type) == 0:
+                    return Decimal("0")
+                return sum(signal.amount for signal in signals_of_type)  # type: ignore
             else:
+                signals_of_type_and_month: list[IncomeSignal] = [
+                    signal for signal in signals_of_type if signal.date.month == month
+                ]
+                if len(signals_of_type_and_month) == 0:
+                    return Decimal("0")
                 return sum(  # type: ignore
-                    signal.amount for signal in signals if signal.date.month == month
+                    signal.amount for signal in signals_of_type_and_month
                 )
 
         data: list[dict] = [
             {
                 "signal_type": signal_type,
-                "current_month_sum": sum_amounts(items, month=month),
-                "current_year_sum": sum_amounts(items),
+                "current_month_sum": sum_amounts(
+                    signal_type, income_signals, month=month
+                ),
+                "current_year_sum": sum_amounts(signal_type, income_signals),
             }
-            for signal_type, items in (
-                (signal_type, list(items))
-                for signal_type, items in itertools.groupby(
-                    sorted(income_signals, key=signal_type),
-                    key=signal_type,
-                )
-            )
+            for signal_type in IncomeSignalType
         ]
 
         super().__init__(data, *args, **kwargs)
