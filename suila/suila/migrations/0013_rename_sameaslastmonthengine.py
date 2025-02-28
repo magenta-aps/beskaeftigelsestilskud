@@ -16,14 +16,19 @@ def rename(apps, from_name, to_name):
     PersonYear.objects.filter(preferred_estimation_engine_b=from_name).update(preferred_estimation_engine_b=to_name)
     PersonYear.objects.filter(preferred_estimation_engine_u=from_name).update(preferred_estimation_engine_u=to_name)
 
-    PersonYear.history.filter(preferred_estimation_engine_a=from_name).update(preferred_estimation_engine_a=to_name)
-    PersonYear.history.filter(preferred_estimation_engine_b=from_name).update(preferred_estimation_engine_b=to_name)
-    PersonYear.history.filter(preferred_estimation_engine_u=from_name).update(preferred_estimation_engine_u=to_name)
+    HistoricalPersonYear = apps.get_model("suila", "HistoricalPersonYear")
+    HistoricalPersonYear.objects.filter(preferred_estimation_engine_a=from_name).update(preferred_estimation_engine_a=to_name)
+    HistoricalPersonYear.objects.filter(preferred_estimation_engine_b=from_name).update(preferred_estimation_engine_b=to_name)
+    HistoricalPersonYear.objects.filter(preferred_estimation_engine_u=from_name).update(preferred_estimation_engine_u=to_name)
 
 
 
 def apply(apps, schema_editor):
     rename(apps, "SameAsLastMonthEngine", "MonthlyContinuationEngine")
+
+
+def revert(apps, schema_editor):
+    rename(apps, "MonthlyContinuationEngine", "SameAsLastMonthEngine")
 
 class Migration(migrations.Migration):
 
@@ -256,7 +261,7 @@ class Migration(migrations.Migration):
             ),
         ),
 
-        migrations.RunPython(apply),
+        migrations.RunPython(apply, reverse_code=revert),
 
         migrations.AlterField(
             model_name="historicalpersonyear",
