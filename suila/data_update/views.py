@@ -10,7 +10,9 @@ from data_update.forms import (
     PersonMonthCreateForm,
     PersonYearAssessmentCreateForm,
     PersonYearAssessmentForm,
+    PersonYearCreateForm,
 )
+from django.core import management
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, FormView, UpdateView
@@ -47,6 +49,32 @@ class PersonView(LoginRequiredMixin, PermissionsRequiredMixin, DetailView):
                 "person": self.object,
                 "personyears": self.object.personyear_set.all(),
             }
+        )
+
+
+class PersonYearCreateView(LoginRequiredMixin, PermissionsRequiredMixin, CreateView):
+    model = PersonYear
+    form_class = PersonYearCreateForm
+    required_model_permissions = [
+        "suila.add_personyear",
+    ]
+    template_name = "data_update/personyear_create.html"
+
+    def get_person(self):
+        return Person.objects.get(cpr=self.kwargs["cpr"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["person"] = self.get_person()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(**{**kwargs, "person": self.get_person()})
+
+    def get_success_url(self):
+        return reverse(
+            "data_update:person_view",
+            kwargs={"cpr": self.kwargs["cpr"]},
         )
 
 
@@ -88,11 +116,20 @@ class PersonYearView(
             EstimationEngine.estimate_all(
                 self.object.year_id, self.object.person_id, count=None, dry_run=False
             )
-            return redirect(
-                "data_update:personyear_view",
+            management.call_command(
+                "autoselect_estimation_engine",
+                self.object.year_id,
                 cpr=self.object.person.cpr,
-                year=self.object.year_id,
             )
+        if action == "calculate":
+            management.call_command(
+                "calculate_benefit", self.object.year_id, cpr=self.object.person.cpr
+            )
+        return redirect(
+            "data_update:personyear_view",
+            cpr=self.object.person.cpr,
+            year=self.object.year_id,
+        )
 
 
 class PersonYearSubView:

@@ -69,6 +69,7 @@
 <form method="post">
     {% csrf_token %}
     <button class="btn btn-primary" type="submit" name="{{ form.action.name }}" value="estimate">Estimér</button>
+    <button class="btn btn-primary" type="submit" name="{{ form.action.name }}" value="calculate">Beregn tilskud</button>
 </form>
 </body>
 </html>
