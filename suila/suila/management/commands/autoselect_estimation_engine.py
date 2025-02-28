@@ -15,17 +15,22 @@ class Command(SuilaBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
+        parser.add_argument("--cpr", type=str)
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
         self._verbose = kwargs["verbosity"] > 1
         year = kwargs["year"]
+        cpr = kwargs["cpr"]
         self._write_verbose(f"Running autoselect algorithm for {year}")
-        best_engine = get_best_engine(year)
+        best_engine = get_best_engine(year, cpr)
 
         # Bulk update
         person_years_to_update = []
-        person_years = PersonYear.objects.filter(year=year).select_related("person")
+        filter = {"year": year}
+        if cpr is not None:
+            filter["person__cpr"] = cpr
+        person_years = PersonYear.objects.filter(**filter).select_related("person")
         for person_year in person_years:
             cpr = person_year.person.cpr
             if cpr in best_engine.index:

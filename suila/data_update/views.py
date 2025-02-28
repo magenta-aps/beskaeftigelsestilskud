@@ -116,6 +116,11 @@ class PersonYearView(
             EstimationEngine.estimate_all(
                 self.object.year_id, self.object.person_id, count=None, dry_run=False
             )
+            management.call_command(
+                "autoselect_estimation_engine",
+                self.object.year_id,
+                cpr=self.object.person.cpr,
+            )
         if action == "calculate":
             management.call_command(
                 "calculate_benefit", self.object.year_id, cpr=self.object.person.cpr
