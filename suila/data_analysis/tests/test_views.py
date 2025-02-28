@@ -742,10 +742,14 @@ class TestUpdateEngineViewPreferences(TestCase):
         cls.preferences.save()
 
     def test_preferences_updater(self):
-        payload = {"show_SameAsLastMonthEngine": True}
+        payload = {"show_MonthlyContinuationEngine": True}
         url = reverse("data_analysis:update_preferences")
-        self.assertFalse(self.user.engine_view_preferences.show_SameAsLastMonthEngine)
+        self.assertFalse(
+            self.user.engine_view_preferences.show_MonthlyContinuationEngine
+        )
         self.client.login(username="test", password="test")
         self.client.post(url, data=payload)
         self.user.refresh_from_db()
-        self.assertTrue(self.user.engine_view_preferences.show_SameAsLastMonthEngine)
+        self.assertTrue(
+            self.user.engine_view_preferences.show_MonthlyContinuationEngine
+        )

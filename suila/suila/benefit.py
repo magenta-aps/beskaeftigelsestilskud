@@ -11,7 +11,7 @@ from django.conf import settings
 from more_itertools import one
 from numpy import float64
 
-from suila.estimation import EstimationEngine, SameAsLastMonthEngine
+from suila.estimation import EstimationEngine, MonthlyContinuationEngine
 from suila.models import IncomeType, PersonMonth, PersonYear, Year
 
 
@@ -158,7 +158,7 @@ def calculate_payout_error_for_all_engine_combinations(year):
     engines = {
         engine_class
         for engine_class in EstimationEngine.classes()
-        if engine_class != SameAsLastMonthEngine
+        if engine_class != MonthlyContinuationEngine
     }
 
     a_engines = [

@@ -16,7 +16,7 @@ from suila.data import MonthlyIncomeData
 from suila.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
-    SameAsLastMonthEngine,
+    MonthlyContinuationEngine,
     SelfReportedEngine,
     TwelveMonthsSummationEngine,
     TwoYearSummationEngine,
@@ -138,7 +138,7 @@ class TestEstimationEngine(TestCase):
                 InYearExtrapolationEngine,
                 TwelveMonthsSummationEngine,
                 TwoYearSummationEngine,
-                SameAsLastMonthEngine,
+                MonthlyContinuationEngine,
             ],
         )
         self.assertEqual(
@@ -147,7 +147,7 @@ class TestEstimationEngine(TestCase):
                 InYearExtrapolationEngine,
                 TwelveMonthsSummationEngine,
                 TwoYearSummationEngine,
-                SameAsLastMonthEngine,
+                MonthlyContinuationEngine,
                 SelfReportedEngine,
             ],
         )

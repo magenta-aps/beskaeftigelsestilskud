@@ -527,8 +527,8 @@ class TwoYearSummationEngine(TwelveMonthsSummationEngine):
     description = "Summation af beløb for de seneste 24 måneder"
 
 
-class SameAsLastMonthEngine(EstimationEngine):
-    description = "Ekstrapolation af beløb baseret udelukkende på den foregående måned"
+class MonthlyContinuationEngine(EstimationEngine):
+    description = "Ekstrapolation af beløb i indeværende måned, plus foregående beløb"
 
     @classmethod
     def estimate(
@@ -537,9 +537,14 @@ class SameAsLastMonthEngine(EstimationEngine):
         subset: Sequence[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
-        relevant_items = cls.relevant(subset, person_month.year_month)
-        amount_sum = cls.subset_sum(relevant_items, income_type)
-        year_estimate = int(12 * amount_sum)
+        remaining_months = 12 - person_month.month + 1
+        sum_this_month = cls.subset_sum(
+            cls.relevant_current(subset, person_month.year_month), income_type
+        )
+        sum_prior_months = cls.subset_sum(
+            cls.relevant_prior(subset, person_month.year_month), income_type
+        )
+        year_estimate = int((remaining_months * sum_this_month) + sum_prior_months)
         return IncomeEstimate(
             estimated_year_result=year_estimate,
             engine=cls.__name__,
@@ -547,7 +552,20 @@ class SameAsLastMonthEngine(EstimationEngine):
         )
 
     @classmethod
-    def relevant(
+    def relevant_prior(
+        cls,
+        subset: Sequence[MonthlyIncomeData],
+        year_month: date,
+    ) -> Sequence[MonthlyIncomeData]:
+        return list(
+            filter(
+                lambda item: item.year_month < year_month,
+                subset,
+            )
+        )
+
+    @classmethod
+    def relevant_current(
         cls,
         subset: Sequence[MonthlyIncomeData],
         year_month: date,
