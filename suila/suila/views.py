@@ -22,8 +22,6 @@ from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_di
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.html import format_html
-from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.base import ContextMixin
@@ -76,6 +74,8 @@ class PersonTable(Table):
         accessor=Accessor("_cpr"),
         order_by=Accessor("_cpr"),
         verbose_name=_("CPR-nummer"),
+        orderable=False,
+        linkify=dict(viewname="suila:person_detail", args=[Accessor("pk")]),
     )
     full_address = Column(verbose_name=_("Adresse"))
 
@@ -169,19 +169,6 @@ class PersonSearchView(
         return context
 
 
-def add_tooltip(name, tooltip) -> SafeString:
-    return format_html(
-        """
-        {name}
-        <a href="#" data-bs-toggle="tooltip" data-bs-title="{tooltip}" class="help">
-            <span class="material-icons">help</span>
-        </a>
-        """,
-        name=name,
-        tooltip=tooltip,
-    )
-
-
 class PersonMonthTable(Table):
     month = TemplateColumn(
         template_name="suila/table_columns/month.html",
@@ -189,25 +176,16 @@ class PersonMonthTable(Table):
     )
     payout_date = TemplateColumn(
         template_name="suila/table_columns/payout_date.html",
-        verbose_name=add_tooltip(
-            _("Forventet udbetalingsdato"),
-            _("Hjælpetekst her (TBD)"),
-        ),
+        verbose_name=_("Forventet udbetalingsdato"),
     )
     benefit = TemplateColumn(
         template_name="suila/table_columns/amount.html",
         accessor=Accessor("benefit_paid"),
-        verbose_name=add_tooltip(
-            _("Forventet beløb til udbetaling"),
-            _("Hjælpetekst her (TBD)"),
-        ),
+        verbose_name=_("Forventet beløb til udbetaling"),
     )
     status = TemplateColumn(
         template_name="suila/table_columns/status.html",
-        verbose_name=add_tooltip(
-            _("Status"),
-            _("Hjælpetekst her (TBD)"),
-        ),
+        verbose_name=_("Status"),
     )
 
 
@@ -638,9 +616,9 @@ class PersonDetailNotesView(
         )
 
     def get_notes(self) -> QuerySet[Note]:
-        return Note.objects.filter(
-            personyear__year_id=self.year, personyear__person_id=self.person_pk
-        ).order_by("created")
+        return Note.objects.filter(personyear__person_id=self.person_pk).order_by(
+            "created"
+        )
 
     def get_context_data(self, **kwargs):
         notes = self.get_notes()

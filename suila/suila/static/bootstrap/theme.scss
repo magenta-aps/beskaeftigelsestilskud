@@ -4,6 +4,7 @@ $enable-cssgrid: true;
 $primary: #820041;
 $dark-primary: #530029;
 $secondary: #ffe169;
+$light-secondary: #bf0169;
 $light-primary: #dacac4;
 $lightest-primary: #f9eff4;
 
@@ -77,13 +78,15 @@ h1 a {
 }
 
 h2 {
-  font-size: 22px;
+  font-size: 1.5 * $spacer;
+  font-weight: bold;
   color: $dark-primary;
 }
 
 h3 {
-  font-size: 20px;
-  color: $primary;
+  font-size: 1.25 * $spacer;
+  font-weight: bold;
+  color: $black;
 }
 
 h4 {
@@ -101,8 +104,17 @@ h6 {
   margin-bottom: 0;
 }
 
+html,
 body {
+  height: 100%;
+}
+body {
+  display: flex;
+  flex-direction: column;
   background-color: $light-primary;
+}
+.content-fluid {
+  flex: 1 0 auto;
 }
 
 h1.secondary,
@@ -112,7 +124,15 @@ span.secondary {
   color: $label;
 }
 
-ol li {
+a {
+  text-decoration: underline;
+  color: $light-secondary;
+}
+a:hover {
+  text-decoration: none;
+}
+
+ol li, ul li {
   line-height: 2 * $spacer;
 }
 
@@ -126,20 +146,28 @@ ol li {
 }
 
 header {
+  margin: 0 0 2 * $spacer 0;
   background-color: $primary;
 }
 header nav.navbar {
-  margin: 0 3 * $spacer 3 * $spacer 3 * $spacer;
-  padding: $spacer 0;
+  margin: 0 3 * $spacer;
+  padding: 1.5 * $spacer 0;
 }
 header nav.navbar a,
-header nav.navbar span.material-icons {
+header nav.navbar div > span.material-icons {
   color: $white;
+}
+header nav.navbar a:hover {
+  color: $secondary;
+}
+header nav.navbar ul.dropdown-menu li a {
+  color: $black;
 }
 
 .content {
   margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
   padding: 3 * $spacer;
+  min-height: 60vh;
   background-color: $lightest-grey;
   border-radius: $spacer;
   box-shadow: 0 0 $spacer $grey;
@@ -181,11 +209,21 @@ select[name="language"] {
   padding: 0 0 0 0.5 * $spacer;
   border: 0;
   appearance: menulist-button;
-  background: transparent;
+  background: $primary;
   color: $white;
 }
 select[name="language"]:focus {
   box-shadow: none;
+}
+select[name="language"]:hover {
+  color: $secondary;
+}
+select[name="language"] option {
+  appearance: none;
+  background-color: $primary;
+}
+select[name="language"] option:hover {
+  color: $white;
 }
 
 // Settings ("wheel") menu
@@ -196,6 +234,7 @@ select[name="language"]:focus {
   border-color: transparent;
   border-radius: 0.5 * $spacer;
   box-shadow: 0 0 0.5 * $spacer $grey;
+  background: $lightest-grey;
 }
 #settings div:first-child {
   margin-bottom: 1.5 * $spacer;
@@ -211,17 +250,19 @@ select[name="language"]:focus {
 
 // Footer
 footer {
-  margin: 6 * $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+  flex-shrink: 0;
+  padding: 6 * $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+
 }
 footer a {
   display: inline-block;
   height: 50px;
   padding: 0 0 0 148px + 40px;
   background: url("../suila/logo_aka_large.png") no-repeat;
+  text-decoration: underline;
+  color: $primary;
 }
-
-// No underlines for links
-a {
+footer a:hover {
   text-decoration: none;
 }
 
@@ -305,9 +346,11 @@ a.help span.material-icons {
 
 // Jumbo buttons on landing page, etc.
 .jumbo {
-  padding: 2 * $spacer 0;
   background-color: $primary;
   border-radius: $spacer;
+}
+.jumbo a {
+  padding: 3 * $spacer 2 * $spacer;
 }
 .jumbo .material-icons {
   font-size: 2 * $spacer;
@@ -316,6 +359,14 @@ a.help span.material-icons {
 .jumbo h1 {
   font-size: 1.5 * $spacer;
   color: $white;
+}
+.jumbo:hover {
+  background: $dark-primary;
+  transition: background-color 0.25s;
+}
+.jumbo a:hover .material-icons,
+.jumbo a:hover h1 {
+  color: $secondary;
 }
 
 // Emphasized pieces of content
@@ -333,6 +384,17 @@ a.help span.material-icons {
 }
 .emphasis ul li {
   line-height: 1.75rem;
+}
+
+// Sidebar
+.sidebar {
+  background: $light-grey;
+  padding: 2 * $spacer;
+  border-radius: $spacer;
+
+}
+.sidebar p {
+  line-height: 2 * $spacer;
 }
 
 // Detail table

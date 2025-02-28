@@ -75,14 +75,69 @@
     </div>
 </div>
 {% endif %}
-<div class="row my-5">
-    <h1>
-        {% blocktrans trimmed with year=year %}
-        Udbetalinger for {{ year }}
-        {% endblocktrans %}
-    </h1>
-    <div class="mt-3">
-        {% render_table table %}
+<div class="grid gap-5 my-5">
+    <div class="g-col-9">
+        <h1>
+            {% blocktrans trimmed with year=year %}
+            Udbetalinger for {{ year }}
+            {% endblocktrans %}
+        </h1>
+        <div class="mt-3">
+            {% render_table table %}
+        </div>
+    </div>
+    <div class="g-col-3 sidebar">
+        <h2 class="mb-5">{% translate "Information" %}</h2>
+        <h3 class="my-3">{% translate "Forventet udbetalingsdato:" %}</h3>
+        <p class="mt-3">
+            {% blocktrans trimmed %}
+            Suila-tapit udbetales d. 3. tirsdag i måneden. Udbetalingen er altid for indkomster to måneder forinden.
+            Fx. er udbetalingen for maj for indkomster i marts.
+            {% endblocktrans  %}
+        </p>
+        <h3 class="mt-5 mb-3">{% translate "Forventet beløb til udbetaling:" %}</h3>
+        <p class="mt-3">
+            {% blocktrans trimmed %}
+            Det beløb som udbetales er baseret på din forventede årsindkomst. Hver gang systemet modtager signal,
+            genberegnes din forventede årsindkomst. Bemærk at der kan foretages modreging på op til 33,3% af beløbet.
+            {% endblocktrans %}
+        </p>
+        <h3 class="mt-5 mb-3">{% translate "Status:" %}</h3>
+        <ul>
+            <li>
+                {% blocktrans trimmed %}
+                Afventer signal: Der er ikke modtaget signal om indkomst for denne måned.
+                {% endblocktrans %}
+            </li>
+            <li>
+                {% blocktrans trimmed %}
+                Signal behandles: Der er modtaget et eller flere signaler for denne måned. Din forventede årsindkomst
+                beregnes.
+                {% endblocktrans %}
+            </li>
+            <li>
+                {% blocktrans trimmed %}
+                Beløb fastsat: Din forventede årsindkomst baseret på indkomstsignaler er modtaget og beløb til
+                udbetaling er fastsat.
+                {% endblocktrans %}
+            </li>
+            <li>
+                {% blocktrans trimmed %}
+                Midlertidlig udbetalingspause: Din forventede indkomst er 475.000 kr. – 500.000 kr. og udbetaling venter
+                til vi har flere oplysninger.
+                {% endblocktrans %}
+            </li>
+            <li>
+                {% blocktrans trimmed %}
+                Sendt til betaling: Beløbet er sendt fra Selvstyrets udbetalingssystemt til din NemKonto.
+                {% endblocktrans %}
+            </li>
+            <li>
+                {% blocktrans trimmed %}
+                År afsluttet: Du har modtaget årsopgørelse for Suila-tapit for dette år.
+                {% endblocktrans %}
+            </li>
+        </ul>
     </div>
 </div>
 {% if user.is_authenticated and user|has_permissions:"suila.view_note" %}
