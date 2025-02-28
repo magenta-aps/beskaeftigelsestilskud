@@ -19,31 +19,54 @@
     <p>
         Suila-tapit er navnet for udbetalt beskæftigelsesfradrag. Det blev vedtaget som en del af skattereformen med
         virkning fra 1. januar 2025. Suila-tapit udbetales til borgere med indkomster i form af lønindkomst,
-        indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget udbyttebetaling. Den udbetaling af
-        Suila-tapit du modtager i marts 2025, er for indkomster optjent i januar 2025.
+        indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget udbyttebetaling.
     </p>
     <p>
         På baggrund af din indkomst i 2025 og sammenholdt med dine indkomster i 2024, har Skattestyrelsen beregnet en
-        forventet årsindkomst for 2025. Der udbetales Suila-tapit månedligt, hvis din forventede årsindkomst er mellem
-        70.000 kr. og 500.000 kr.
+        forventet årsindkomst for 2025.
     </p>
 
     <table style="width: 100%">
         <tr>
-            <td>Udbetaling for januar 2025</td>
-            <td style="text-align: right; width: 25%">kr. {{ personmonth.benefit_paid|default_if_none:"0,00" }}</td>
+            <td>Udbetaling af Suila-tapit for januar 2025</td>
+            <td style="text-align: right">Afventer oplysninger</td>
         </tr>
         <tr>
             <td>Grundlag: Forventet årsindkomst fra arbejde</td>
-            <td style="text-align: right; width: 25%">kr. {{ personmonth.estimated_year_result|default_if_none:"0,00" }}</td>
+            <td style="text-align: right">kr. {{ personmonth.estimated_year_result|default_if_none:"0,00" }}</td>
         </tr>
     </table>
 
     <p>
-        Udbetalingen sker til din NemKonto.
+        Du modtager dette brev fordi Skattestyrelsen har registreret at din forventede indkomst i 2025 vil være tæt på
+        grænsen for at modtage Suila-tapit. Du kan være berettiget til Suila-tapit, men Skattestyrelsens oplysninger
+        herom er endnu usikre. Derfor afventer udbetaling af Suila-tapit yderligere oplysninger om dine indkomster.
     </p>
+
+    <img src="file:///static/suila/graf_grænse_da.png" style="width: 100%" alt="graf"/>
+
     <p>
-        Bemærk: Suila-tapit udbetales kun til NemKonto. Hvis du ikke har NemKonto, vil du ikke modtage Suila-tapit.
+        Da Skattestyrelsen har registeret at du har en forventet årsindkomst på 475.000 – 500.000 kr., udbetales beløbet
+        ikke endnu. Det betyder følgende:
+    </p>
+    <ul>
+        <li>
+            Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger der viser, at du forventer at have en
+            årsindkomst på 475.000-500.000 kr., vil du ikke modtage Suila-tapit en gang om måneden. Du modtager i stedet
+            én samlet udbetaling for månederne januar 2025 til november 2025 i januar 2026.
+        </li>
+        <li>
+            Hvis Skattestyrelsen i løbet at året modtager oplysninger der viser, at din forventede årsindkomst er under
+            475.000 kr., vil Skattestyrelsen igangsætte månedlige udbetalinger. Det sker den tredje tirsdag i hver
+            måned.
+        </li>
+        <li>
+            Hvis din samlede indkomst viser sig at være over 500.000 kr., er du ikke i målgruppen for Suila-tapit.
+        </li>
+    </ul>
+
+    <p>
+        Bemærk: Suila-tapit udbetales kun til NemKonto.
     </p>
     <p>
         Hvis du har gæld til det offentlige, kan der ske modregning af op til en tredjedel af beløbet inden udbetaling.
@@ -54,8 +77,8 @@
         Oplysninger
     </h3>
     <p>
-        Her kan du læse, hvilke oplysninger der ligger til grund for den forventede årsindkomst og dermed for
-        udbetalingen.
+        Her kan du læse, hvilke oplysninger ligger til grund for den forventede årsindkomst og dermed for at
+        udbetalingen afventer.
     </p>
     <table class="bordered" style="width: 100%">
         <thead>
@@ -81,7 +104,7 @@
             {% endfor %}
         </tr>
         <tr>
-            <th>Betalt B-skat</th>
+            <th>Betalte B-skatter</th>
             {% for amount in income.btax_paid %}
                 <td style="text-align: right">{{ amount }}</td>
             {% endfor %}
@@ -102,30 +125,16 @@
     </p>
     <p>
         Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på baggrund af din forskudsregistrering
-        for
-        2025. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener at den er forkert. Oplysning
-        om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har modtaget udbytte
-        sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker oplysninger om
-        udbytte fra tidligere år beregningen af din forventede årsindkomst for i år.
+        for 2025. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener at den er forkert.
+        Oplysning om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har modtaget
+        udbytte sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker oplysninger
+        om udbytte fra tidligere år beregningen af din forventede årsindkomst for i år.
     </p>
 
-    <h3>Månedlig udbetaling</h3>
-    <p>
-        Suila-tapit udbetales d. 3. tirsdag i måneden.
-    </p>
+    <h3>Følg med på Sullissivik.gl</h3>
     <p>
         Du vil fremover modtage en opgørelse af Suila-tapit én gang om året. Hvis du ønsker at følge med i de
-        oplysninger der ligger til grund for den månedlige udbetaling, kan du logge ind på Sullissivik.gl og finde
-        oplysningerne under ’Beskæftigelsesfradrag’.
+        oplysninger der ligger til grund for den månedlige udbetaling, kan du logge ind på Sullissivik.gl.
     </p>
 
-    <h3>
-        Suila-tapit - Indkomster og udbetaling
-    </h3>
-    <p>
-        Suila-tapit - udbetalt beskæftigelsesfradrag - udbetales til borgere med indtægt fra arbejde i disse
-        indkomstgrupper.
-    </p>
-
-    <img src="file:///static/suila/graf_da.png" style="width: 100%" alt="graf"/>
 {% endblock %}

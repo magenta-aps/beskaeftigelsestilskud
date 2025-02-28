@@ -45,7 +45,7 @@ class TestSimulationJSONEncoder(TestCase):
     def setUpTestData(cls):
         cls.person = Person.objects.create()
         cls.year, _ = Year.objects.get_or_create(year=2020)
-        PersonYear.objects.create(person=cls.person, year=cls.year)
+        cls.personyear = PersonYear.objects.create(person=cls.person, year=cls.year)
         cls.person_serialized = {
             "address_line_1": None,
             "address_line_2": None,
@@ -58,6 +58,17 @@ class TestSimulationJSONEncoder(TestCase):
             "name": None,
             "civil_state": None,
             "location_code": None,
+        }
+        cls.personyear_serialized = {
+            "id": cls.personyear.pk,
+            "person_id": cls.person.pk,
+            "preferred_estimation_engine_a": "InYearExtrapolationEngine",
+            "preferred_estimation_engine_b": "InYearExtrapolationEngine",
+            "preferred_estimation_engine_u": "InYearExtrapolationEngine",
+            "stability_score_a": None,
+            "stability_score_b": None,
+            "tax_scope": "FULD",
+            "year_id": 2020,
         }
 
     def test_can_serialize_dataclass(self):
@@ -90,6 +101,7 @@ class TestSimulationJSONEncoder(TestCase):
 
     def test_can_serialize_model(self):
         self._assert_json_equal(self.person, self.person_serialized)
+        self._assert_json_equal(self.personyear, self.personyear_serialized)
 
     def test_can_serialize_calculation_engine(self):
         engine = TwelveMonthsSummationEngine()

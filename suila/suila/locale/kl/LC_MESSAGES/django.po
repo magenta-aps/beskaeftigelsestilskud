@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-25 07:28-0200\n"
+"POT-Creation-Date: 2025-02-28 11:32-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -327,6 +327,71 @@ msgstr ""
 #: suila/templates/suila/person_detail.html
 #, python-format
 msgid "Udbetalinger for %(year)s"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Information"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Forventet udbetalingsdato:"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Suila-tapit udbetales d. 3. tirsdag i måneden. Udbetalingen er altid for "
+"indkomster to måneder forinden. Fx. er udbetalingen for maj for indkomster i "
+"marts."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Forventet beløb til udbetaling:"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid ""
+"Det beløb som udbetales er baseret på din forventede årsindkomst. Hver gang "
+"systemet modtager signal, genberegnes din forventede årsindkomst. Bemærk at "
+"der kan foretages modreging på op til 33,3%% af beløbet."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Status:"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Afventer signal: Der er ikke modtaget signal om indkomst for denne måned."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Signal behandles: Der er modtaget et eller flere signaler for denne måned. "
+"Din forventede årsindkomst beregnes."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Beløb fastsat: Din forventede årsindkomst baseret på indkomstsignaler er "
+"modtaget og beløb til udbetaling er fastsat."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Midlertidlig udbetalingspause: Din forventede indkomst er 475.000 kr. – "
+"500.000 kr. og udbetaling venter til vi har flere oplysninger."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Sendt til betaling: Beløbet er sendt fra Selvstyrets udbetalingssystemt til "
+"din NemKonto."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"År afsluttet: Du har modtaget årsopgørelse for Suila-tapit for dette år."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
