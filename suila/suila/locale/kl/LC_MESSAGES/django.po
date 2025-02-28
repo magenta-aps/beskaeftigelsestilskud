@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-21 09:04-0200\n"
+"POT-Creation-Date: 2025-02-25 07:28-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -409,11 +409,6 @@ msgstr ""
 msgid "Søg"
 msgstr ""
 
-#: suila/templates/suila/person_search.html
-#, python-format
-msgid "%(count)s resultater"
-msgstr ""
-
 #: suila/templates/suila/root.html
 #, python-format
 msgid "Velkommen, %(name)s"
@@ -488,10 +483,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "Forventet udbetalingsdato"
-msgstr ""
-
-#: suila/views.py
-msgid "Hjælpetekst her (TBD)"
 msgstr ""
 
 #: suila/views.py
