@@ -918,10 +918,9 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     @staticmethod
     def pre_save(sender, instance: MonthlyIncomeReport, *args, **kwargs):
-        if instance.person_month:
-            instance.month = instance.person_month.month
-            instance.year = instance.person_month.year
-            instance.person = instance.person_month.person
+        instance.month = instance.person_month.month
+        instance.year = instance.person_month.year
+        instance.person = instance.person_month.person
         instance.update_amount()
 
     @staticmethod
