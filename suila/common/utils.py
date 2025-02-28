@@ -421,10 +421,13 @@ class SuilaJSONEncoder(DjangoJSONEncoder):
         if isinstance(obj, Decimal):
             return float(obj)
         if isinstance(obj, Model):
+            exclude_keys = {"load_id", "exclude_serialization"}
+            if hasattr(obj, "exclude_serialization"):
+                exclude_keys.update(getattr(obj, "exclude_serialization"))
             return {
                 k: v
                 for k, v in obj.__dict__.items()
-                if not k.startswith("_") and k not in ("load_id",)
+                if not k.startswith("_") and k not in exclude_keys
             }
         if is_instance(obj, "EstimationEngine"):
             return {
