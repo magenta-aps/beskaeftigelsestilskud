@@ -49,6 +49,13 @@ urlpatterns = [
             namespace="data_analysis",
         ),
     ),
+    path(
+        "update/",
+        include(
+            "data_update.urls",
+            namespace="data_update",
+        ),
+    ),
     path("", include(tf_urls)),
 ] + debug_toolbar_urls()
 

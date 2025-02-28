@@ -1,0 +1,23 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+{% load static %}
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+</head>
+<body>
+{{ person.cpr }}
+<table class="table">
+    <tr>
+        <th>Year</th>
+        <th></th>
+    </tr>
+    {% for year in personyears %}
+    <tr>
+        <td>{{ year.year }}</td>
+        <td><a href="{% url 'data_update:personyear_view' cpr=object.cpr year=year.year %}">link</a></td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

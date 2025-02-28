@@ -649,6 +649,17 @@ class TestEmployer(ModelTest):
 
 class TestIncomeReport(ModelTest):
 
+    def test_constructor(self):
+        try:
+            m = MonthlyIncomeReport()
+        except Exception:
+            self.fail("Raised exception on constructor with no input")
+        try:
+            m.person_month = self.month1
+            m.save()
+        except Exception:
+            self.fail("Raised exception on constructor with no input")
+
     def test_shortcuts(self):
         self.assertEqual(self.report1.person_year, self.person_year)
         self.assertEqual(self.report1.person, self.person)
