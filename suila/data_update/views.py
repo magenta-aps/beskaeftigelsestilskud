@@ -96,7 +96,7 @@ class PersonYearView(
 
 
 class PersonYearSubView:
-    template_name = "data_update/personyear_sub.html"
+    template_name: str | None = "data_update/personyear_sub.html"
 
     def get_person_year(self):
         return PersonYear.objects.get(

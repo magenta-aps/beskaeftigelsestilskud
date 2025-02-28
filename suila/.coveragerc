@@ -20,5 +20,6 @@ omit =
     */suila/simulation.py
     */suila/integrations/eskat/responses/*
     */management/commands/*.py
+    */data_update/*
 parallel = true
 concurrency = multiprocessing
