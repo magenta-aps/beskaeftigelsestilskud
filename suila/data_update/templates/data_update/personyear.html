@@ -1,0 +1,72 @@
+{% load static %}
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+</head>
+<body>
+<p>
+<a href="{% url 'data_update:person_view' cpr=person.cpr %}">{{ person.cpr }}</a> >
+{{ object.year }}
+</p>
+
+<h3>Måneder</h3>
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>Month</th>
+        <th>amount_sum</th>
+        <th></th>
+    </tr>
+    </thead>
+<tbody>
+    {% for month in months %}
+    <tr>
+        <td>{{ month.month }}</td>
+        <td>{{ month.amount_sum }}</td>
+        <td><a href="{% url 'data_update:personmonth_view' cpr=person.cpr year=object.year month=month.month %}">link</a></td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+<a href="{% url 'data_update:personmonth_create' cpr=person.cpr year=object.year %}" class="btn btn-primary btn-sm">Opret ny</a>
+
+
+{#<hr/>#}
+{##}
+{#<h3>Årsindtægter</h3>#}
+{#<table class="table table-bordered">#}
+{#    <tr>#}
+{#        <th></th>#}
+{#    </tr>#}
+{#    {% for annualincome in annualincomes %}#}
+{#        <tr>#}
+{#            <td><a href="{% url 'data_update:annualincome_update' cpr=person.cpr year=object.year pk=annualincome.pk %}">link</a></td>#}
+{#        </tr>#}
+{#    {% endfor %}#}
+{#</table>#}
+{#<a href="{% url 'data_update:annualincome_create' cpr=person.cpr year=object.year %}" class="btn btn-primary btn-sm">Opret ny</a>#}
+
+<hr/>
+
+<h3>Forskudsopgørelser</h3>
+<table class="table table-bordered">
+    <tr>
+        <th>Valid_from</th>
+        <th></th>
+    </tr>
+    {% for assessment in assessments %}
+        <tr>
+            <td>{{ assessment.valid_from }}</td>
+            <td><a href="{% url 'data_update:personyear_assessment_update' cpr=person.cpr year=object.year pk=assessment.pk %}">link</a></td>
+        </tr>
+    {% endfor %}
+</table>
+<a href="{% url 'data_update:personyear_assessment_create' cpr=person.cpr year=object.year %}" class="btn btn-primary btn-sm">Opret ny</a>
+
+<hr/>
+<form method="post">
+    {% csrf_token %}
+    <button class="btn btn-primary" type="submit" name="{{ form.action.name }}" value="estimate">Estimér</button>
+</form>
+</body>
+</html>

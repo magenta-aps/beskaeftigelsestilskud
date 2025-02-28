@@ -1,0 +1,21 @@
+{% load static %}
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+</head>
+<body>
+<p>
+<a href="{% url 'data_update:person_view' cpr=person.cpr %}">{{ person.cpr }}</a> >
+<a href="{% url 'data_update:personyear_view' cpr=person.cpr year=personyear.year %}">{{ personyear.year }}</a> >
+Årsindkomst
+</p>
+
+<form method="post">
+    {% csrf_token %}
+    <table class="table">
+    {{ form.as_table }}
+    </table>
+    <button type="submit" class="btn btn-primary">Gem</button>
+</form>
+</body>
+</html>

@@ -722,9 +722,10 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.month = self.person_month.month
-        self.year = self.person_month.year
-        self.person = self.person_month.person
+        if hasattr(self, "person_month"):
+            self.month = self.person_month.month
+            self.year = self.person_month.year
+            self.person = self.person_month.person
 
     history = HistoricalRecords(
         history_change_reason_field=models.TextField(null=True),
@@ -917,6 +918,10 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     @staticmethod
     def pre_save(sender, instance: MonthlyIncomeReport, *args, **kwargs):
+        if instance.person_month:
+            instance.month = instance.person_month.month
+            instance.year = instance.person_month.year
+            instance.person = instance.person_month.person
         instance.update_amount()
 
     @staticmethod
@@ -1304,112 +1309,256 @@ class AnnualIncome(PermissionsMixin, models.Model):
         auto_now_add=True,
     )
     salary = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     public_assistance_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     retirement_pension_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     disability_pension_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     ignored_benefits = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     occupational_benefit = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     foreign_pension_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     subsidy_foreign_pension_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     dis_gis_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     other_a_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     deposit_interest_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     bond_interest_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     other_interest_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     education_support_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     care_fee_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     alimony_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     foreign_dividend_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     foreign_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_journey_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     group_life_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     rental_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     other_b_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_board_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_lodging_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_housing_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_phone_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_car_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_internet_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_boat_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     free_other_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     pension_payment_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     catch_sale_market_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     catch_sale_factory_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     account_tax_result = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     account_share_business_amount = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
     shareholder_dividend_income = models.DecimalField(
-        max_digits=12, decimal_places=2, default=None, null=True
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
     )
 
 

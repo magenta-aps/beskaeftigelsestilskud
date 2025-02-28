@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from common.form_mixins import BootstrapForm
 from django import forms
 from django.urls import reverse
