@@ -7,6 +7,13 @@
 {% load render_table from django_tables2 %}
 {% load amount_tags %}
 
+{% block breadcrumb %}
+{% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+<li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
+{% endif %}
+<li class="breadcrumb-item">{% translate "Mit overblik" %}</li>
+{% endblock %}
+
 {% block person_data %}
 {% if no_current_month %}
 <div class="row mt-5">

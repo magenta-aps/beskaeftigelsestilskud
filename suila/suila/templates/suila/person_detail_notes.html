@@ -10,14 +10,15 @@
 {% translate "Noter" %}
 {% endblock %}
 
-{% block person_data %}
-    {# Benefits #}
-    <h1 id="notes">
-        {% blocktrans trimmed with year=year %}
-            Noter i {{ year }}
-        {% endblocktrans %}
-    </h1>
+{% block breadcrumb %}
+{% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+<li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
+{% endif %}
+<li class="breadcrumb-item"><a href="{% url 'suila:person_detail' pk=person.pk %}">{% translate "Mit overblik" %}</a></li>
+<li class="breadcrumb-item">{% translate "Noter" %}</li>
+{% endblock %}
 
+{% block person_data %}
     {% if notes %}
     <div id="notater">
     <table class="table">
