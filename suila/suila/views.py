@@ -21,6 +21,7 @@ from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_di
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.base import ContextMixin
@@ -33,7 +34,12 @@ from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
 from suila.benefit import get_payout_date
-from suila.forms import CalculatorForm, NoteAttachmentFormSet, NoteForm
+from suila.forms import (
+    CalculatorForm,
+    IncomeSignalFilterForm,
+    NoteAttachmentFormSet,
+    NoteForm,
+)
 from suila.models import (
     BTaxPayment,
     Employer,
@@ -331,9 +337,27 @@ class PersonDetailIncomeView(
             orderable=False,
         )
 
+        # Filter for the detail table
+        context_data["detail_table_filter"] = filter_form = IncomeSignalFilterForm(
+            signals=self.get_income_signals(),
+            data=self.request.GET,
+        )
+
+        # Filter signal list in detail table based on filter form
+        signals: list[IncomeSignal]
+        if filter_form.is_valid() and filter_form.cleaned_data["source"] != "":
+            source: str = filter_form.cleaned_data["source"]
+            signals = [
+                signal
+                for signal in self.get_income_signals()
+                if signal.source == source
+            ]
+        else:
+            signals = self.get_income_signals()
+
         # Table showing a row for each signal in this person year
         context_data["detail_table"] = IncomeSignalTable(
-            self.get_income_signals(),
+            signals,
             order_by=self.request.GET.get("sort"),
         )
 
@@ -363,9 +387,9 @@ class PersonDetailIncomeView(
     def get_monthly_income_signals(self) -> Iterable[IncomeSignal]:
         def format_employer(employer: Employer | None):
             if employer is None:
-                return _("Ikke oplyst")
+                return gettext("Ikke oplyst")
             if employer.name is None:
-                return _("CVR: %(cvr)s") % {"cvr": employer.cvr}
+                return gettext("CVR: %(cvr)s") % {"cvr": employer.cvr}
             else:
                 return employer.name
 
@@ -396,7 +420,8 @@ class PersonDetailIncomeView(
             if item.amount_paid > 0:
                 yield IncomeSignal(
                     IncomeSignalType.BetaltBSkat,
-                    _("Rate: %(rate_number)s") % {"rate_number": item.rate_number},
+                    gettext("Rate: %(rate_number)s")
+                    % {"rate_number": item.rate_number},
                     item.amount_paid,
                     item.person_month.year_month,  # type: ignore[union-attr]
                 )
