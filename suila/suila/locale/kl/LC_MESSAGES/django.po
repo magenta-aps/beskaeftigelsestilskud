@@ -479,6 +479,35 @@ msgstr ""
 msgid "Oplysninger om udbytte kan som regel ses 15-30 dage efter udlodningen."
 msgstr ""
 
+#: suila/templates/suila/person_detail_income.html
+msgid "A-indkomst og indhandling"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Hvis din arbejdsgiver eller dit indhandlingssted indberetter korrekt, kan "
+"oplysningerne om din indtægt som regel ses 15-30 dage efter den måned du har "
+"arbejdet/indhandlet."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "B-indkomst"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter "
+"betalingsfristen."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html suila/views.py
+msgid "Udbytte"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Oplysninger om udbytte kan som regel ses 15-30 dage efter udlodningen."
+msgstr ""
+
 #: suila/templates/suila/person_search.html
 msgid "Liste over borgere"
 msgstr ""
