@@ -21,7 +21,11 @@
     <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <title>{% block title %}{% translate "Suila" %}{% endblock %}</title>
-    <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}" >
+    <link rel="icon" type="image/png" href="{% static 'suila/favicon-96x96.png' %}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'suila/favicon.svg' %}" />
+    <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'suila/apple-touch-icon.png' %}" />
+    <link rel="manifest" href="{% static 'suila/site.webmanifest' %}" />
     {% block extra_headers %}
     {% endblock %}
 </head>
