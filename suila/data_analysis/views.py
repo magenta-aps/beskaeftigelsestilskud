@@ -169,14 +169,6 @@ class PersonYearEstimationMixin:
             has_b = form.cleaned_data["has_b"]
             if has_b not in (None, ""):
                 qs = qs.annotate(
-                    # b_count=Subquery(
-                    #     MonthlyIncomeReport.objects.filter(
-                    #         person_month__person_year=OuterRef("pk"), b_income__gt=0
-                    #     )
-                    #     .order_by()
-                    #     .annotate(count=Func(F("id"), function="COUNT"))
-                    #     .values("count")
-                    # )
                     b_count=Subquery(
                         PersonYearAssessment.objects.filter(
                             person_year=OuterRef("pk"),
@@ -229,20 +221,11 @@ class PersonYearEstimationMixin:
         # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
         # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
-            # b_income_value=Coalesce(
-            #     Subquery(
-            #         AnnualIncome.objects.filter(person_year=OuterRef("pk"))
-            #         .order_by("-created")
-            #         .values("account_tax_result")[:1]
-            #     ),
-            #     Decimal("0.00"),
-            # )
             b_income_value=Coalesce(
                 Subquery(
                     PersonYearAssessment.objects.filter(
                         person_year=OuterRef("pk"),
                     )
-                    .order_by("-valid_from")[:1]
                     .annotate(
                         b_income=F("business_turnover")
                         + F("catch_sale_market_income")
@@ -250,7 +233,10 @@ class PersonYearEstimationMixin:
                         - F("goods_comsumption")
                         - F("operating_expenses_own_company")
                     )
-                )
+                    .order_by("-valid_from")
+                    .values("b_income")[:1]
+                ),
+                Decimal(0),
             )
         )
         qs = qs.annotate(

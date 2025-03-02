@@ -546,6 +546,12 @@ class PersonYear(PermissionsMixin, models.Model):
         return None
 
     @property
+    def assessed_b_income(self) -> Decimal | None:
+        if self.current_assessment():
+            return self.current_assessment().assessed_b_income
+        return None
+
+    @property
     def u_income(self) -> Decimal:
         return self.u1a_assessments_sum or Decimal("0")
 
@@ -677,7 +683,7 @@ class PersonMonth(PermissionsMixin, models.Model):
 
     @property
     def b_income_from_year(self) -> Decimal:
-        b_income = self.person_year.b_income
+        b_income = self.person_year.assessed_b_income
         if b_income is not None:
             return Decimal(int_divide_end(int(b_income), 12)[self.month - 1])
         return Decimal(0)
@@ -752,6 +758,12 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     # Autoupdated fields. Do not write into these.
     a_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=False,
+        blank=False,
+    )
+    b_income = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=False,
@@ -866,13 +878,14 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     def update_amount(self):
         # Define how A and B income is calculated here.
-        self.a_income = (
+        q = Decimal("0.01")
+        self.a_income = Decimal(
             self.salary_income
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
-        )
-
-        self.u_income = Decimal(self.person_month.u_income_from_year)
+        ).quantize(q)
+        self.b_income = Decimal(self.person_month.b_income_from_year).quantize(q)
+        self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
 
     @staticmethod
     def annotate_month(
@@ -1191,7 +1204,7 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
 
         result = incomes - expenses
 
-        return result
+        return Decimal(result).quantize(Decimal("0.01"))
 
 
 class PrismeAccountAlias(PermissionsMixin, models.Model):

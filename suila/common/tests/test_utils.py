@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from itertools import cycle
 
@@ -17,6 +17,7 @@ from common.utils import (
 )
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.utils.timezone import get_current_timezone
 
 from suila.models import (
     Employer,
@@ -26,6 +27,7 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearAssessment,
     StandardWorkBenefitCalculationMethod,
     Year,
 )
@@ -188,6 +190,15 @@ class BaseTestCase(TestCase):
         )
 
         for person_year in person_years:
+
+            PersonYearAssessment.objects.create(
+                person_year=person_year,
+                valid_from=datetime(
+                    person_year.year.year, 1, 1, 0, 0, 0, tzinfo=get_current_timezone()
+                ),
+                care_fee_income=Decimal(180000),
+            )
+
             for month_number in range(1, 13):
                 month = PersonMonth.objects.create(
                     person_year=person_year,
@@ -200,7 +211,7 @@ class BaseTestCase(TestCase):
                 income = MonthlyIncomeReport.objects.create(
                     person_month=month,
                     salary_income=Decimal(10000),
-                    disability_pension_income=Decimal(15000),
+                    # disability_pension_income=Decimal(15000),
                     month=month.month,
                     year=cls.year.year,
                 )
