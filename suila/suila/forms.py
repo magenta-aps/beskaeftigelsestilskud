@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
+from urllib.parse import quote_plus, unquote_plus
 
 from django.forms import (
     ChoiceField,
@@ -102,3 +103,21 @@ class CalculatorForm(Form):
         required=False,
         localize=True,
     )
+
+
+class IncomeSignalFilterForm(Form):
+    source = ChoiceField(label=_("Kilde"), required=False)
+
+    def __init__(self, *args, **kwargs):
+        signals = kwargs.pop("signals", [])
+        super().__init__(*args, **kwargs)
+        self.fields["source"].choices = [("", _("Alle"))] + [
+            (quote_plus(source), source)
+            for source in sorted(set(signal.source for signal in signals))
+        ]
+        self.fields["source"].initial = unquote_plus(
+            kwargs.get("data", {}).get("source", "")
+        )
+
+    def clean_source(self) -> str:
+        return unquote_plus(self.cleaned_data["source"])
