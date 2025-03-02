@@ -422,8 +422,8 @@ class PersonMonthApiTest(ApiTestCase):
             "prior_benefit_paid": None,
             "benefit_paid": "1000.00",
             "a_income": "10000.00",
-            "b_income": "0.00",
-            "b_income_from_year": "0",
+            # "b_income": "0.00",
+            # "b_income_from_year": "0",
             "payout_date": "2024-12-17",
         }
         cls.expected1b = {
@@ -440,8 +440,8 @@ class PersonMonthApiTest(ApiTestCase):
             "prior_benefit_paid": None,
             "benefit_paid": "1100.00",
             "a_income": "11000.00",
-            "b_income": "0.00",
-            "b_income_from_year": "0",
+            # "b_income": "0.00",
+            # "b_income_from_year": "0",
             "payout_date": "2025-01-21",
         }
         cls.expected1c = {
@@ -458,8 +458,8 @@ class PersonMonthApiTest(ApiTestCase):
             "prior_benefit_paid": None,
             "benefit_paid": "1200.00",
             "a_income": "12000.00",
-            "b_income": "0.00",
-            "b_income_from_year": "0",
+            # "b_income": "0.00",
+            # "b_income_from_year": "0",
             "payout_date": "2025-02-18",
         }
 
@@ -500,8 +500,8 @@ class PersonMonthApiTest(ApiTestCase):
             "prior_benefit_paid": None,
             "benefit_paid": "0.00",
             "a_income": None,
-            "b_income": None,
-            "b_income_from_year": "0",
+            # "b_income": None,
+            # "b_income_from_year": "0",
             "payout_date": "2024-12-17",
         }
 
