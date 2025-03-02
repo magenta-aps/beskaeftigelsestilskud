@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-28 14:02-0200\n"
+"POT-Creation-Date: 2025-03-02 12:16-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -409,18 +409,6 @@ msgid "Beregningsgrundlag"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
-msgid ""
-"Her kan du se de signaler Skattestyrelsen har modtaget om dine indkomster."
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
-msgid ""
-"Suila udbetales til borgere med visse indkomster. Indkomster der medregnes, "
-"er lønindkomst, indhandling, indkomst som selvstændig erhvervsdrivende samt "
-"udbetaling af udbytter."
-msgstr ""
-
-#: suila/templates/suila/person_detail_income.html
 msgid "Her stammer oplysningerne fra:"
 msgstr ""
 
@@ -436,7 +424,8 @@ msgstr ""
 msgid ""
 "Oplysning om betalt B-skat stammer fra din indbetaling af B-skat på baggrund "
 "af din forskudsregistrering. Du kan altid ændre din forskudsregistrering på "
-"Sullissivik.gl, hvis du mener at den er forkert."
+"<a href=\"https://sullissivik.gl\" target=\"_blank\">Sullissivik.gl</a>, "
+"hvis du mener at den er forkert."
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -453,8 +442,36 @@ msgid "Oversigt over signaler"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
-#: suila/templates/suila/person_search.html
-msgid "Filtre"
+msgid "Her ser du en liste med de signaler Skattestyrelsen har modtaget."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "A-indkomst og indhandling"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Hvis din arbejdsgiver eller dit indhandlingssted indberetter korrekt, kan "
+"oplysningerne om din indtægt som regel ses 15-30 dage efter den måned du har "
+"arbejdet/indhandlet."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "B-indkomst"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter "
+"betalingsfristen."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html suila/views.py
+msgid "Udbytte"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Oplysninger om udbytte kan som regel ses 15-30 dage efter udlodningen."
 msgstr ""
 
 #: suila/templates/suila/person_detail_notes.html
@@ -468,6 +485,10 @@ msgstr ""
 
 #: suila/templates/suila/person_search.html
 msgid "Liste over borgere"
+msgstr ""
+
+#: suila/templates/suila/person_search.html
+msgid "Filtre"
 msgstr ""
 
 #: suila/templates/suila/person_search.html
@@ -568,10 +589,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "Betalt B-skat"
-msgstr ""
-
-#: suila/views.py
-msgid "Udbytte"
 msgstr ""
 
 #: suila/views.py
