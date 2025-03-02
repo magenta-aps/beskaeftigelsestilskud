@@ -85,6 +85,8 @@ class TestStabilityScoreUtils(TestCase):
                     if counter < len(cls.reasonably_stable_income)
                     else 0
                 ),
+                # TODO: Justér denne ift. hvilke felter der
+                # indeholder medregnet B-indkomst
                 capital_income=(
                     cls.unstable_income[counter]
                     if counter < len(cls.unstable_income)
