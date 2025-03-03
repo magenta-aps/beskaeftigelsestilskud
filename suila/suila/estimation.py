@@ -220,7 +220,6 @@ class EstimationEngine:
             )
             .annotate(
                 a_income=Sum("monthlyincomereport__a_income"),
-                b_income=Sum("monthlyincomereport__b_income"),
             )
             .order_by(
                 "person_pk",

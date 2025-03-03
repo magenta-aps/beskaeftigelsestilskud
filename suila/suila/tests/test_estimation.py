@@ -165,16 +165,17 @@ class TestEstimationEngine(TestCase):
             output_stream,
         )
 
+        income_estimates = list(
+            IncomeEstimate.objects.filter(
+                person_month__person_year=self.person_year,
+                engine="InYearExtrapolationEngine",
+                income_type=IncomeType.A,
+            )
+            .order_by("person_month__month")
+            .values_list("person_month__month", "estimated_year_result")
+        )
         self.assertEqual(
-            list(
-                IncomeEstimate.objects.filter(
-                    person_month__person_year=self.person_year,
-                    engine="InYearExtrapolationEngine",
-                    income_type=IncomeType.A,
-                )
-                .order_by("person_month__month")
-                .values_list("person_month__month", "estimated_year_result")
-            ),
+            income_estimates,
             [
                 (3, Decimal("10000.00")),
                 (4, Decimal("10000.00")),
@@ -188,15 +189,15 @@ class TestEstimationEngine(TestCase):
                 (12, Decimal("10000.00")),
             ],
         )
-
+        income_estimates = list(
+            IncomeEstimate.objects.filter(
+                person_month__person_year=self.person_year,
+                engine="TwelveMonthsSummationEngine",
+                income_type=IncomeType.A,
+            ).values_list("person_month__month", "estimated_year_result")
+        )
         self.assertEqual(
-            list(
-                IncomeEstimate.objects.filter(
-                    person_month__person_year=self.person_year,
-                    engine="TwelveMonthsSummationEngine",
-                    income_type=IncomeType.A,
-                ).values_list("person_month__month", "estimated_year_result")
-            ),
+            income_estimates,
             [
                 (3, Decimal("0.00")),
                 (4, Decimal("0.00")),
@@ -305,11 +306,6 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None)
         instances.assert_called()
-
-    def test_b_income_from_year(self):
-        # TODO: Denne er vel ikke længere relevant?
-        for month in PersonMonth.objects.filter(person_year=self.person_year):
-            self.assertEqual(month.b_income_from_year, 100)
 
     def test_quarantined(self):
         # Indstil månedsindkomster, så:
@@ -832,7 +828,4 @@ class TestSelfReportedEngine(TestCase):
             self.assertEqual(income_estimate.engine, "SelfReportedEngine")
             self.assertEqual(income_estimate.income_type, IncomeType.B)
             self.assertEqual(income_estimate.person_month, person_month)
-            self.assertEqual(
-                income_estimate.estimated_year_result,
-                Decimal(70000) if person_month.month < 12 else Decimal(120000),
-            )
+            self.assertEqual(income_estimate.estimated_year_result, Decimal(70000))
