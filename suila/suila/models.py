@@ -541,14 +541,14 @@ class PersonYear(PermissionsMixin, models.Model):
         ).first()
         if annual_income is not None:
             return annual_income.account_tax_result
-        elif self.current_assessment():
-            return self.current_assessment().assessed_b_income
-        return None
+        else:
+            return self.assessed_b_income
 
     @property
     def assessed_b_income(self) -> Decimal | None:
-        if self.current_assessment():
-            return self.current_assessment().assessed_b_income
+        current_assessment = self.current_assessment()
+        if current_assessment is not None:
+            return current_assessment.assessed_b_income
         return None
 
     @property
@@ -1199,6 +1199,7 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
             self.business_turnover
             + self.catch_sale_market_income
             + self.care_fee_income
+            + self.capital_income
         )
         expenses = self.goods_comsumption + self.operating_expenses_own_company
 

@@ -290,7 +290,7 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
-        self.assertEqual(IncomeEstimate.objects.all().count(), 100)
+        self.assertEqual(IncomeEstimate.objects.all().count(), 90)
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
