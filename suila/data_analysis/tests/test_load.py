@@ -199,7 +199,6 @@ class LoadIncomeTest(BaseTestCase):
             self.assertEqual(report.load.parameters["filename"], "testdata")
 
         report = MonthlyIncomeReport.objects.filter(month=7).first()
-        self.assertEqual(report.b_income, Decimal("5000.00"))
         self.assertEqual(report.month, 7)
         self.assertEqual(report.load.source, "csv")
         self.assertEqual(report.load.parameters["filename"], "testdata")

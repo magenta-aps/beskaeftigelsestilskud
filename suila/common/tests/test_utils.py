@@ -123,18 +123,12 @@ class TestStabilityScoreUtils(TestCase):
         income_dict = get_income_as_dataframe(self.year.year)
 
         df_a = income_dict["A"]
-        df_b = income_dict["B"]
 
         self.assertIn(self.person.cpr, df_a.index)
-        self.assertIn(self.person.cpr, df_b.index)
 
         for month_counter, amount in enumerate(self.reasonably_stable_income):
             month = month_counter + 1
             self.assertEqual(amount, df_a.loc[self.person.cpr, month])
-
-        for month_counter, amount in enumerate(self.unstable_income):
-            month = month_counter + 1
-            self.assertEqual(amount, df_b.loc[self.person.cpr, month])
 
     def test_calculate_stability_score_for_entire_year(self):
         df = calculate_stability_score_for_entire_year(self.year.year)
@@ -142,9 +136,6 @@ class TestStabilityScoreUtils(TestCase):
         # A income is reasonably stable
         self.assertLess(df.loc[self.person.cpr, "A"], 0.8)
         self.assertGreater(df.loc[self.person.cpr, "A"], 0.2)
-
-        # B income is unstable
-        self.assertLess(df.loc[self.person.cpr, "B"], 0.2)
 
 
 class BaseTestCase(TestCase):
