@@ -192,7 +192,7 @@ def calculate_benefit(
 #
 #
 def get_best_engine(year, cpr: str | None = None):
-    pass
+    pass  # pragma: no cover
 
 
 #     """
