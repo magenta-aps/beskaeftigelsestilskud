@@ -927,6 +927,7 @@ class TestTaxInformation(BaseTestCase):
                     "0000001234",
                     2024,
                     tax_scope="FULL",
+                    cpr_municipality_code="956",
                 ),
                 TaxInformation(
                     None,
@@ -937,6 +938,7 @@ class TestTaxInformation(BaseTestCase):
             self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(Person.objects.first().location_code, "956")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
 
@@ -947,12 +949,14 @@ class TestTaxInformation(BaseTestCase):
                     "0000001234",
                     2024,
                     tax_scope="LIM",
+                    cpr_municipality_code="956",
                 )
             ],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(Person.objects.first().location_code, "956")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
         self.assertEqual(
@@ -966,12 +970,14 @@ class TestTaxInformation(BaseTestCase):
                 TaxInformation(
                     "0000001234",
                     2024,
+                    cpr_municipality_code="956",
                 )
             ],
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertEqual(Person.objects.first().load.source, "test")
+        self.assertEqual(Person.objects.first().location_code, "956")
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
         self.assertEqual(
