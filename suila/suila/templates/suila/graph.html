@@ -39,4 +39,25 @@
         </p>
     </div>
 </div>
+<div class="row mt-5">
+    <div class="col-12">
+        <div id="graph">
+            {# Replaced by ApexChart graph at runtime #}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_headers %}
+<link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+<script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% url 'javascript-catalog' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static "suila/graph.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script id="graph_points" type="application/json" nonce="{{ request.csp_nonce }}">{{ graph_points|safe }}</script>
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function () {
+    let data = JSON.parse($("#graph_points").text());
+    renderGraph("#graph", data);
+});
+</script>
 {% endblock %}

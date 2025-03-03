@@ -439,6 +439,13 @@ class PersonDetailIncomeView(
 
 
 class GraphViewMixin(ContextMixin):
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["graph_points"] = self.to_json(
+            self.calculation_method.graph_points
+        )
+        return context_data
+
     @cached_property
     def calculation_method(self):
         year = Year.objects.get(year=self.year)
@@ -448,14 +455,7 @@ class GraphViewMixin(ContextMixin):
         return json.dumps(data, cls=SuilaJSONEncoder)
 
 
-class GraphView(
-    LoginRequiredMixin,
-    PermissionsRequiredMixin,
-    YearMonthMixin,
-    ViewLogMixin,
-    GraphViewMixin,
-    TemplateView,
-):
+class GraphView(YearMonthMixin, ViewLogMixin, GraphViewMixin, TemplateView):
     template_name = "suila/graph.html"
 
 
@@ -500,7 +500,11 @@ class CalculatorView(
 
     def get_context_data(self, **kwargs):
         self.log_view()
-        return super().get_context_data(**{**kwargs, "engines": self.engines})
+        context_data = super().get_context_data(**kwargs)
+        context_data["engines"] = self.engines
+        if "graph_points" in kwargs:
+            context_data["graph_points"] = kwargs["graph_points"]
+        return context_data
 
     def form_valid(self, form):
         if self.is_advanced:
