@@ -102,18 +102,18 @@ year you want to export data to Prisme.
 ## Testing
 
 To run the tests run
-```
+```shell
 docker exec suila-web bash -c 'coverage run manage.py test ; coverage combine ; coverage report --show-missing'
 ```
 
 To run tests only in a specific file run
-```
+```shell
 docker exec suila-web bash -c 'coverage run manage.py test data_analysis.tests.test_views'
 ```
 
 To run type checks run:
 
-```
+```shell
 docker exec suila-web mypy --config ../mypy.ini suila/
 ```
 
