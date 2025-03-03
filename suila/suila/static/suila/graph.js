@@ -14,31 +14,90 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
             "animations": {"enabled": false},
             "selection": {"enabled": false},
             "fontFamily": "Figtree Normal, Trebuchet MS, Helvetica, sans-serif",
-            "height": "100%"
+            "height": "100%",
         },
         "tooltip": {"enabled": false},
-        "colors": ["#000000"],
-        "series": [{
-            "name": "Suila",
-            "data": data,
-        }],
+        "colors": ["#820041"], // $primary
+        "series": [
+            {
+                "name": "Suila",
+                "data": data,
+            },
+        ],
+        "grid": {
+            "padding": {
+                "top": 50,
+                "right": 200,
+                "bottom": 50,
+                "left": 50,
+            },
+        },
+        "markers": {
+            "size": 7,
+            "strokeWidth": 0,
+            "colors": ["#820041"], // $primary
+        },
+        "dataLabels": {
+            "enabled": true,
+            "textAnchor": "middle",
+            "offsetY": -35,
+            "formatter": function (val, opts) {
+                if (opts.dataPointIndex === 0) {
+                    return
+                }
+
+                const benefit = val;
+                const income = data[opts.dataPointIndex][0];
+                return [
+                    `Årsindkomst: ${income} kr`,
+                    `Suila-tapit: ${benefit} kr.`,
+                ]
+            },
+            "style": {
+                "fontSize": "17px",
+                "fontWeight": "normal",
+                "colors": ["#bf0169"], // $light-secondary
+            },
+            "background": {
+                "padding": 30,
+                "borderRadius": 10,
+            }
+        },
         "legend": {
-            "fontSize": "1.5rem"
+            "fontSize": "17px",
+            "color": "#820041", // $primary
         },
         "xaxis": {
             "type": "numeric",
             "title": {
                 "text": gettext("Årsindkomst i kr."),
-                "style": {"fontSize": "1.5rem"},
+                "style": {
+                    "fontSize": "17px",
+                    "color": "#820041", // $primary
+                },
             },
-            "labels": {"style": {"fontSize": "1rem"}},
+            "labels": {
+                "style": {
+                    "fontSize": "17px",
+                    "colors": ["#820041"], // $primary
+                },
+                "offsetY": -2,
+            },
         },
         "yaxis": {
             "title": {
                 "text": gettext("Suila-tapit i kr."),
-                "style": {"fontSize": "1.5rem"},
+                "style": {
+                    "fontSize": "17px",
+                    "color": "#820041", // $primary
+                },
             },
-            "labels": {"style": {"fontSize": "1rem"}},
+            "labels": {
+                "style": {
+                    "fontSize": "17px",
+                    "colors": ["#820041"], // $primary
+                }
+            },
         },
     };
 
@@ -52,13 +111,17 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                 },
                 "label": {
                     "text": [
-                        gettext("Beregnet Suila for hele året: ") + yearlyBenefit,
+                        gettext("Årsindkomst: ") + yearlyIncome,
+                        gettext("Suila-tapit: ") + yearlyBenefit,
                     ],
                     "style": {
-                        "background": "#fff",
-                        "color": "#333",
-                        "fontSize": "1.5rem",
-                    }
+                        "background": "#ffe169", // $secondary
+                        "color": "#820041", // $primary
+                        "fontSize": "17px",
+                    },
+                    "borderColor": "#ffe169", // $secondary
+                    "borderWidth": 20,
+                    "borderRadius": 5,
                 }
             }]
         }
