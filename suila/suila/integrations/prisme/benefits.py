@@ -26,10 +26,6 @@ from suila.models import PersonMonth, PrismeAccountAlias, PrismeBatch, PrismeBat
 logger = logging.getLogger(__name__)
 
 
-class MissingAccountAliasException(Exception):
-    pass
-
-
 class BatchExport:
     def __init__(self, year: int, month: int):
         self._year = year
@@ -107,7 +103,7 @@ class BatchExport:
         prisme_batch: PrismeBatch,
         person_month: PersonMonth,
         writer: G68G69TransactionWriter,
-    ) -> PrismeBatchItem:
+    ) -> PrismeBatchItem | None:
         # Find Prisme account alias for this municipality and tax year
         location_code: str | None = person_month.person_year.person.location_code
         tax_year: int = person_month.person_year.year.year
@@ -117,11 +113,14 @@ class BatchExport:
                 tax_year=tax_year,
             )
         except PrismeAccountAlias.DoesNotExist:
-            raise MissingAccountAliasException(
-                "No Prisme account alias found for tax municipality location code "
-                f"{location_code}, tax year {tax_year} "
-                f"(person: {person_month.person_year.person})"
+            logger.error(
+                "No Prisme account alias found for tax municipality location code %r,"
+                "tax year %r, person %r",
+                location_code,
+                tax_year,
+                person_month.person_year.person,
             )
+            return None
 
         # Zero-padded CPR (as string)
         cpr = person_month.identifier  # type: ignore[attr-defined]
@@ -265,18 +264,22 @@ class BatchExport:
             # Build all items for this batch
             prisme_batch_items: list[PrismeBatchItem] = []
             for person_month in person_months:
-                prisme_batch_item: PrismeBatchItem = self.get_prisme_batch_item(
+                prisme_batch_item: PrismeBatchItem | None = self.get_prisme_batch_item(
                     prisme_batch,
                     person_month,
                     writer,
                 )
-                prisme_batch_items.append(prisme_batch_item)
-
-                if verbosity >= 2:
-                    stdout.write(f"{person_month}")
-                    stdout.write(prisme_batch_item.g68_content)
-                    stdout.write(prisme_batch_item.g69_content)
-                    stdout.write()
+                if prisme_batch_item is not None:
+                    prisme_batch_items.append(prisme_batch_item)
+                    if verbosity >= 2:
+                        stdout.write(f"{person_month}")
+                        stdout.write(prisme_batch_item.g68_content)
+                        stdout.write(prisme_batch_item.g69_content)
+                        stdout.write()
+                else:
+                    stdout.write(
+                        f"Could not build Prisme batch item for {person_month}"
+                    )
 
             # Save all Prisme batch items belonging to the current batch
             PrismeBatchItem.objects.bulk_create(prisme_batch_items)
