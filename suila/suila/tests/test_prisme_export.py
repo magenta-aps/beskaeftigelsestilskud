@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 import re
 from datetime import date
 from decimal import Decimal
@@ -18,7 +19,7 @@ from tenQ.writer.g68 import (
     Udbetalingsdato,
 )
 
-from suila.integrations.prisme.benefits import BatchExport, MissingAccountAliasException
+from suila.integrations.prisme.benefits import BatchExport
 from suila.models import (
     Person,
     PersonMonth,
@@ -209,7 +210,8 @@ class TestBatchExport(TestCase):
             prefix=0, export_date=date(2025, 1, 1)
         )
         export = self._get_instance()
-        with self.assertRaises(MissingAccountAliasException):
+        # Assert: an error is logged (but does not prevent the export from continuing)
+        with self.assertLogs(level=logging.ERROR):
             # Act
             self._get_prisme_batch_item(export, prisme_batch)
 
@@ -378,6 +380,28 @@ class TestBatchExport(TestCase):
                     ("g68g69", "RES_G68_export_31_2025_01.g68"),
                     ("g68g69_mod11_cpr", "RES_G68_export_32_2025_01.g68"),
                 ],
+            )
+
+    def test_export_batches_handles_none(self):
+        """If `BatchExport.get_prisme_batch_item` returns None,
+        `BatchExport.export_batches` should handle this case.
+        """
+        # Arrange: test person with location code that cannot be used to look up a valid
+        # Prisme account alias
+        person_month = self._add_person_month(
+            3101000000, Decimal("1000"), municipality_code=0
+        )
+        export = self._get_instance()
+        stdout = Mock()
+        with patch("suila.integrations.prisme.benefits.put_file_in_prisme_folder"):
+            # Act
+            export.export_batches(stdout, verbosity=2)
+            # Assert: no Prisme batch items were created
+            self.assertQuerySetEqual(PrismeBatchItem.objects.all(), [])
+            # Assert: message is written to output
+            self.assertIn(
+                f"Could not build Prisme batch item for {person_month}",
+                [call.args[0] for call in stdout.write.call_args_list],
             )
 
     def _assert_prisme_batch_items_state(

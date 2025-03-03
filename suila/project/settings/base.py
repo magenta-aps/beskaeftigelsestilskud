@@ -106,9 +106,4 @@ PITU = {
 }
 
 if TESTING:
-    import logging
-
-    logging.disable(logging.CRITICAL)
-
-if TESTING:
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
