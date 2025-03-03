@@ -117,8 +117,9 @@ class PersonYearView(
                 self.object.year_id, self.object.person_id, count=None, dry_run=False
             )
             management.call_command(
-                "autoselect_estimation_engine",
-                self.object.year_id,
+                "autoselect_estimation_engine_legacy",
+                self.object.year_id
+                + 1,  # Will look at this year to set engine for next year
                 cpr=self.object.person.cpr,
             )
         if action == "calculate":

@@ -26,6 +26,7 @@ class Command(SuilaBaseCommand):
 
     @transaction.atomic
     def _handle(self, *args, **kwargs):
+        print("estimate")
         start = time.time()
 
         verbose = kwargs["verbosity"] > 1
