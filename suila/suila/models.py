@@ -970,8 +970,8 @@ class BTaxPayment(PermissionsMixin, models.Model):
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
     )
 
     amount_paid = models.DecimalField(
