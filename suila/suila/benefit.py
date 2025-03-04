@@ -95,6 +95,7 @@ def calculate_benefit(
         # Do not payout if the amount is below the trivial limit
         df.loc[df.benefit_this_month < trivial_limit, "benefit_this_month"] = 0
 
+    if threshold > 0 and month not in (1, 12):  # type: ignore
         # if the amount is very similar to last month's amount, use the same amount
         # as last month
         df["benefit_last_month"] = df.loc[:, f"benefit_paid_month_{month-1}"]
