@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -232,7 +231,6 @@ class Simulation:
 
     def prediction(self, engine: EstimationEngine):
 
-        income: List[MonthlyIncomeReport] = []
         income_type = self.income_type
 
         if income_type is None:  # None means to show both in view
@@ -241,47 +239,10 @@ class Simulation:
             elif IncomeType.B not in engine.valid_income_types:
                 income_type = IncomeType.A
 
-        if income_type in (IncomeType.A, None):
-            income += list(
-                MonthlyIncomeReport.objects.filter(
-                    person_month__person_year__person=self.person,
-                    person_month__person_year__year__gte=self.year_start,
-                    person_month__person_year__year__lte=self.year_end,
-                    a_income__gt=0,
-                )
-            )
-        if income_type in (IncomeType.B, None):
-            income += list(
-                MonthlyIncomeReport.objects.filter(
-                    person_month__person_year__person=self.person,
-                    person_month__person_year__year__gte=self.year_start,
-                    person_month__person_year__year__lte=self.year_end,
-                    b_income__gt=0,
-                )
-            )
-
-        income_series_build: Dict[Tuple[int, int], Decimal] = defaultdict(
-            lambda: Decimal(0)
-        )
-        for item in income:
-            income_series_build[(item.year, item.month)] += (
-                item.a_income + item.b_income
-            )
-        income_series = [
-            IncomeItem(year=year, month=month, value=amount, value_parts=[])
-            for (year, month), amount in income_series_build.items()
-        ]
         # NOTE: 'value_parts' is currently set to an empty array, since it was
         # implemented in `self.income()`. The fields purpose is to show all the
         # different values that make up the 'value'-field. It have just not been
         # implemented in this method yet.
-
-        income_series.sort(
-            key=lambda item: (
-                item.year,
-                item.month,
-            )
-        )
 
         estimates = []
         prediction_items = []
@@ -348,22 +309,15 @@ class Simulation:
                 income_type=income_type, value=item.a_income
             )
 
-        if income_type == income_type.B and item.b_income:
-            value_part = IncomeItemValuePart(
-                income_type=income_type, value=item.b_income
-            )
-
         if (item.year, item.month) not in income_series:
             income_series[(item.year, item.month)] = IncomeItem(
                 year=item.year,
                 month=item.month,
-                value=item.a_income + item.b_income,
+                value=item.a_income,
                 value_parts=[value_part] if value_part else [],
             )
         else:
-            income_series[(item.year, item.month)].value += (
-                item.a_income + item.b_income
-            )
+            income_series[(item.year, item.month)].value += item.a_income
 
             if value_part:
                 income_series[(item.year, item.month)].value_parts.append(value_part)

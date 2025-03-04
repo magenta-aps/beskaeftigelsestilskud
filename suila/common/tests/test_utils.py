@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from itertools import cycle
 
@@ -17,6 +17,7 @@ from common.utils import (
 )
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.utils.timezone import get_current_timezone
 
 from suila.models import (
     Employer,
@@ -26,6 +27,7 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearAssessment,
     StandardWorkBenefitCalculationMethod,
     Year,
 )
@@ -83,6 +85,8 @@ class TestStabilityScoreUtils(TestCase):
                     if counter < len(cls.reasonably_stable_income)
                     else 0
                 ),
+                # TODO: Justér denne ift. hvilke felter der
+                # indeholder medregnet B-indkomst
                 capital_income=(
                     cls.unstable_income[counter]
                     if counter < len(cls.unstable_income)
@@ -119,18 +123,12 @@ class TestStabilityScoreUtils(TestCase):
         income_dict = get_income_as_dataframe(self.year.year)
 
         df_a = income_dict["A"]
-        df_b = income_dict["B"]
 
         self.assertIn(self.person.cpr, df_a.index)
-        self.assertIn(self.person.cpr, df_b.index)
 
         for month_counter, amount in enumerate(self.reasonably_stable_income):
             month = month_counter + 1
             self.assertEqual(amount, df_a.loc[self.person.cpr, month])
-
-        for month_counter, amount in enumerate(self.unstable_income):
-            month = month_counter + 1
-            self.assertEqual(amount, df_b.loc[self.person.cpr, month])
 
     def test_calculate_stability_score_for_entire_year(self):
         df = calculate_stability_score_for_entire_year(self.year.year)
@@ -138,9 +136,6 @@ class TestStabilityScoreUtils(TestCase):
         # A income is reasonably stable
         self.assertLess(df.loc[self.person.cpr, "A"], 0.8)
         self.assertGreater(df.loc[self.person.cpr, "A"], 0.2)
-
-        # B income is unstable
-        self.assertLess(df.loc[self.person.cpr, "B"], 0.2)
 
 
 class BaseTestCase(TestCase):
@@ -188,6 +183,15 @@ class BaseTestCase(TestCase):
         )
 
         for person_year in person_years:
+
+            PersonYearAssessment.objects.create(
+                person_year=person_year,
+                valid_from=datetime(
+                    person_year.year.year, 1, 1, 0, 0, 0, tzinfo=get_current_timezone()
+                ),
+                care_fee_income=Decimal(180000),
+            )
+
             for month_number in range(1, 13):
                 month = PersonMonth.objects.create(
                     person_year=person_year,
@@ -200,7 +204,7 @@ class BaseTestCase(TestCase):
                 income = MonthlyIncomeReport.objects.create(
                     person_month=month,
                     salary_income=Decimal(10000),
-                    disability_pension_income=Decimal(15000),
+                    # disability_pension_income=Decimal(15000),
                     month=month.month,
                     year=cls.year.year,
                 )

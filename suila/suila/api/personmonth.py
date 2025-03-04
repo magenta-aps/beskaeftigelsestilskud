@@ -25,8 +25,7 @@ class PersonMonthOut(ModelSchema):
     year: int = Field(..., alias="person_year.year.year")
     income: Decimal = Field(..., alias="amount_sum")
     a_income: Optional[Decimal] = None
-    b_income: Optional[Decimal] = None
-    b_income_from_year: Decimal = Field(..., alias="b_income_from_year")
+    # b_income: Optional[Decimal] = None
     payout_date: date
 
     class Meta:
@@ -47,9 +46,9 @@ class PersonMonthOut(ModelSchema):
     def resolve_a_income(obj) -> Decimal | None:
         return obj.monthlyincomereport_set.aggregate(Sum("a_income"))["a_income__sum"]
 
-    @staticmethod
-    def resolve_b_income(obj) -> Decimal | None:
-        return obj.monthlyincomereport_set.aggregate(Sum("b_income"))["b_income__sum"]
+    # @staticmethod
+    # def resolve_b_income(obj) -> Decimal | None:
+    #     return obj.b_income_from_year
 
     @staticmethod
     def resolve_payout_date(obj) -> date:

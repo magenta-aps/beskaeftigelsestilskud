@@ -19,7 +19,7 @@ from data_analysis.forms import (
 )
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import F, Func, OuterRef, Subquery, Sum
+from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import DetailView, FormView, View
@@ -30,13 +30,13 @@ from project.util import params_no_none, strtobool
 from suila.data import engine_keys
 from suila.estimation import EstimationEngine
 from suila.models import (
-    AnnualIncome,
     IncomeType,
     JobLog,
     MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
+    PersonYearAssessment,
     PersonYearEstimateSummary,
     Year,
 )
@@ -170,10 +170,19 @@ class PersonYearEstimationMixin:
             if has_b not in (None, ""):
                 qs = qs.annotate(
                     b_count=Subquery(
-                        MonthlyIncomeReport.objects.filter(
-                            person_month__person_year=OuterRef("pk"), b_income__gt=0
+                        PersonYearAssessment.objects.filter(
+                            person_year=OuterRef("pk"),
                         )
-                        .order_by()
+                        .filter(
+                            Q(
+                                Q(business_turnover__gt=0)
+                                | Q(catch_sale_market_income__gt=0)
+                                | Q(care_fee_income__gt=0)
+                                | Q(capital_income__gt=0)
+                                | Q(goods_comsumption__gt=0)
+                                | Q(operating_expenses_own_company__gt=0)
+                            )
+                        )
                         .annotate(count=Func(F("id"), function="COUNT"))
                         .values("count")
                     )
@@ -215,11 +224,21 @@ class PersonYearEstimationMixin:
         qs = qs.annotate(
             b_income_value=Coalesce(
                 Subquery(
-                    AnnualIncome.objects.filter(person_year=OuterRef("pk"))
-                    .order_by("-created")
-                    .values("account_tax_result")[:1]
+                    PersonYearAssessment.objects.filter(
+                        person_year=OuterRef("pk"),
+                    )
+                    .annotate(
+                        b_income=F("business_turnover")
+                        + F("catch_sale_market_income")
+                        + F("care_fee_income")
+                        + F("capital_income")
+                        - F("goods_comsumption")
+                        - F("operating_expenses_own_company")
+                    )
+                    .order_by("-valid_from")
+                    .values("b_income")[:1]
                 ),
-                Decimal("0.00"),
+                Decimal(0),
             )
         )
         qs = qs.annotate(
