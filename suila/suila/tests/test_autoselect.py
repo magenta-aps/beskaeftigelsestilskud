@@ -1,18 +1,15 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+from decimal import Decimal
 from io import StringIO
-from unittest import mock
 
-import pandas as pd
 from django.core.management import call_command
 from django.test import TestCase
 
-from suila.models import Person, PersonMonth, PersonYear, Year
+from suila.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary, Year
 
 
-@mock.patch("suila.benefit.calculate_benefit")
 class AutoSelectEngineTests(TestCase):
 
     @classmethod
@@ -26,16 +23,34 @@ class AutoSelectEngineTests(TestCase):
         cls.person_year_2023 = PersonYear.objects.create(
             year=cls.year_2023, person=cls.person
         )
-
-        cls.person_months = [
-            PersonMonth.objects.create(
-                month=month,
-                person_year=cls.person_year_2022,
-                import_date="2022-01-01",
-                actual_year_benefit=1200,
-            )
-            for month in range(1, 13)
-        ]
+        PersonYearEstimateSummary.objects.create(
+            person_year=cls.person_year_2022,
+            estimation_engine="InYearExtrapolationEngine",
+            income_type=IncomeType.A,
+            mean_error_percent=Decimal(100),
+            rmse_percent=Decimal(50),
+        )
+        PersonYearEstimateSummary.objects.create(
+            person_year=cls.person_year_2022,
+            estimation_engine="InYearExtrapolationEngine",
+            income_type=IncomeType.B,
+            mean_error_percent=Decimal(100),
+            rmse_percent=Decimal(50),
+        )
+        PersonYearEstimateSummary.objects.create(
+            person_year=cls.person_year_2022,
+            estimation_engine="TwelveMonthsSummationEngine",
+            income_type=IncomeType.A,
+            mean_error_percent=Decimal(10),
+            rmse_percent=Decimal(10),
+        )
+        PersonYearEstimateSummary.objects.create(
+            person_year=cls.person_year_2022,
+            estimation_engine="TwelveMonthsSummationEngine",
+            income_type=IncomeType.B,
+            mean_error_percent=Decimal(200),
+            rmse_percent=Decimal(60),
+        )
 
     def call_command(self, *args, **kwargs):
         out = StringIO()
@@ -47,7 +62,7 @@ class AutoSelectEngineTests(TestCase):
             **kwargs,
         )
 
-    def test_autoselect(self, calculate_benefit):
+    def test_autoselect(self):
         # By default the engines for 2023 equal the default engine
         self.assertEqual(
             self.person_year_2023.preferred_estimation_engine_a,
@@ -57,31 +72,6 @@ class AutoSelectEngineTests(TestCase):
             self.person_year_2023.preferred_estimation_engine_b,
             "InYearExtrapolationEngine",
         )
-
-        # But in 2022 TwelveMonthsSummationEngine was better (for A income)
-        # And for B income the InYearExtrapolationEngine was best
-        #
-        # We simulate this by making all OTHER engines return zero-results.
-        def mess_other_engines_up(*args, **kwargs):
-
-            df = pd.DataFrame(index=[self.person.cpr])
-
-            if kwargs["engine_a"] != "TwelveMonthsSummationEngine":
-                df["estimated_year_benefit"] = 0
-                df["actual_year_benefit"] = 1200
-                df["benefit_paid"] = 0
-            elif kwargs["engine_b"] != "InYearExtrapolationEngine":
-                df["estimated_year_benefit"] = 0
-                df["actual_year_benefit"] = 1200
-                df["benefit_paid"] = 0
-            else:
-                df["estimated_year_benefit"] = 1200
-                df["actual_year_benefit"] = 1200
-                df["benefit_paid"] = 100
-
-            return df
-
-        calculate_benefit.side_effect = mess_other_engines_up
 
         # Now run the autoselect command
         self.call_command(2023)

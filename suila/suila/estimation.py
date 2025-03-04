@@ -321,7 +321,9 @@ class EstimationEngine:
 
                     actual_year_sum = actual_year_sums[income_type][month]
 
-                    if person_month is not None:
+                    if (
+                        person_month is not None
+                    ):  # TODO: skip hvis ingen indkomst i denne måned
                         result: IncomeEstimate | None = engine.estimate(
                             person_month, subset, income_type
                         )
