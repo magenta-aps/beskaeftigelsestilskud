@@ -17,6 +17,7 @@ from data_analysis.forms import (
     PersonAnalysisOptionsForm,
     PersonYearListOptionsForm,
 )
+from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
@@ -120,6 +121,9 @@ class PersonAnalysisView(
                 **kwargs,
                 "chart_data": chart_data,
                 "person_years": person_years,
+                "config": {
+                    "payout_trivial_limit": settings.CALCULATION_TRIVIAL_LIMIT,
+                },
             }
         )
 
