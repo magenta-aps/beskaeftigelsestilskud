@@ -14,7 +14,7 @@ from django.db import transaction
 from suila.integrations.prisme.csv_format import CSVFormat
 from suila.integrations.prisme.sftp_import import SFTPImport
 from suila.models import BTaxPayment as BTaxPaymentModel
-from suila.models import PersonMonth
+from suila.models import DataLoad, Person, PersonMonth, PersonYear, Year
 
 
 @dataclass(frozen=True)
@@ -45,41 +45,53 @@ class BTaxPayment(CSVFormat):
         )
 
 
+@dataclass(frozen=True)
+class BTaxPaymentImportResult:
+    """Represents the result of running a B tax import"""
+
+    objs: list[BTaxPaymentModel]
+    matched: list[BTaxPayment]
+    unmatched: list[BTaxPayment]
+
+
 class BTaxPaymentImport(SFTPImport):
     """Import one or more B tax CSV files from Prisme SFTP"""
 
     @transaction.atomic()
     def import_b_tax(
-        self, stdout: OutputWrapper, verbosity: int
-    ) -> tuple[list[BTaxPaymentModel], list[BTaxPayment]]:
-        created: list[BTaxPaymentModel] = []
-        skipped: list[BTaxPayment] = []
-
+        self,
+        stdout: OutputWrapper,
+        verbosity: int,
+    ) -> BTaxPaymentImportResult:
         new_filenames: set[str] = self.get_new_filenames()
+
+        all_objs: list[BTaxPaymentModel] = []
+        all_matched: list[BTaxPayment] = []
+        all_unmatched: list[BTaxPayment] = []
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
             # Split rows in CSV into `matched` and `unmatched` rows
-            all_rows: list[BTaxPayment] = self._parse(filename)
-            matched, unmatched = self._split_rows(all_rows)
+            rows: list[BTaxPayment] = self._parse(filename)
+            matched, unmatched = self._split_rows(rows)
+            # Add to lists
+            all_matched.extend(matched)
+            all_unmatched.extend(unmatched)
             # Create objects for matched rows
-            objs: list[BTaxPaymentModel] = self._create_objects(filename, matched)
-            # Update lists of created objects and skipped input rows
-            created.extend(objs)
-            skipped.extend(unmatched)
+            objs: list[BTaxPaymentModel] = self._create_objects(
+                filename, matched, unmatched
+            )
+            all_objs.extend(objs)
             # List processed data
             if verbosity >= 2:
-                for obj in created:
+                for obj in objs:
                     stdout.write(f"Created {obj}\n")
-                for row in unmatched:
-                    stdout.write(
-                        f"Could not import {row} (no matching `PersonMonth`)\n"
-                    )
-                stdout.write("\n")
 
         stdout.write("All done\n")
 
-        return created, skipped
+        return BTaxPaymentImportResult(
+            objs=all_objs, matched=all_matched, unmatched=all_unmatched
+        )
 
     def get_remote_folder_name(self) -> str:
         return settings.PRISME["b_tax_folder"]  # type: ignore[misc]
@@ -132,21 +144,83 @@ class BTaxPaymentImport(SFTPImport):
     def _create_objects(
         self,
         filename: str,
-        rows: list[BTaxPayment],
+        matched: list[BTaxPayment],
+        unmatched: list[BTaxPayment],
     ) -> list[BTaxPaymentModel]:
-        # Construct list of objects to insert
-        objs: list[BTaxPaymentModel] = [
+        result: list[BTaxPaymentModel] = []
+        objs: list[BTaxPaymentModel]
+
+        # Create `BTaxPayment` objects for input rows in `matched`
+        objs = [
             BTaxPaymentModel(
                 filename=filename,
                 person_month=self._get_person_month(
-                    row.cpr, row.tax_year, row.rate_number
+                    match.cpr, match.tax_year, match.rate_number
                 ),
-                amount_paid=abs(row.amount_paid),  # input value is always negative
-                amount_charged=row.amount_charged,
-                date_charged=row.date_charged,
-                rate_number=row.rate_number,
-                serial_number=row.serial_number,
+                amount_paid=abs(match.amount_paid),  # input value is always negative
+                amount_charged=match.amount_charged,
+                date_charged=match.date_charged,
+                rate_number=match.rate_number,
+                serial_number=match.serial_number,
             )
-            for row in rows
+            for match in matched
         ]
-        return BTaxPaymentModel.objects.bulk_create(objs)
+        result.extend(BTaxPaymentModel.objects.bulk_create(objs))
+
+        if len(unmatched) > 0:
+            # Create `PersonMonth` objects for input rows in `unmatched`
+            unmatched_person_months = self._create_person_months_for_unmatched(
+                unmatched
+            )
+            # Create `BTaxPayment` objects for input rows in `unmatched`
+            objs = [
+                BTaxPaymentModel(
+                    filename=filename,
+                    person_month=person_month,
+                    amount_paid=abs(unmatch.amount_paid),  # input value always negative
+                    amount_charged=unmatch.amount_charged,
+                    date_charged=unmatch.date_charged,
+                    rate_number=unmatch.rate_number,
+                    serial_number=unmatch.serial_number,
+                )
+                for unmatch, person_month in unmatched_person_months
+            ]
+            result.extend(BTaxPaymentModel.objects.bulk_create(objs))
+
+        return result
+
+    def _create_person_months_for_unmatched(
+        self,
+        unmatched: list[BTaxPayment],
+    ) -> list[tuple[BTaxPayment, PersonMonth | None]]:
+        if len(unmatched) == 0:
+            return []
+
+        result: list[tuple[BTaxPayment, PersonMonth | None]] = []
+        load = DataLoad.objects.create(source="btax")
+
+        for unmatch in unmatched:
+            # Only create `PersonMonth`, etc. if `BTaxPayment` indicates an actual
+            # rate payment.
+            if abs(unmatch.amount_paid) > 0:
+                year, _ = Year.objects.get_or_create(year=unmatch.tax_year)
+                person, _ = Person.objects.get_or_create(
+                    cpr=unmatch.cpr,
+                    defaults={"load": load},
+                )
+                person_year, _ = PersonYear.objects.get_or_create(
+                    year=year,
+                    person=person,
+                    defaults={"load": load},
+                )
+                person_month = PersonMonth.objects.create(
+                    load=load,
+                    person_year=person_year,
+                    import_date=date.today(),
+                    month=unmatch.rate_number,
+                )
+                result.append((unmatch, person_month))
+            else:
+                result.append((unmatch, None))
+
+        return result
