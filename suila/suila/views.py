@@ -12,12 +12,12 @@ from operator import attrgetter
 from typing import Any, Iterable
 from urllib.parse import urlencode
 
+from common.fields import CPRField
 from common.models import User
 from common.utils import SuilaJSONEncoder, omit
 from common.view_mixins import ViewLogMixin
 from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
-from django.forms import RegexField
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -78,18 +78,6 @@ class PersonTable(Table):
         linkify=dict(viewname="suila:person_detail", args=[Accessor("pk")]),
     )
     full_address = Column(verbose_name=_("Adresse"))
-
-
-class CPRField(RegexField):
-    def __init__(self, **kwargs):
-        super().__init__(r"^\d{6}-{0,1}\d{4}$", **kwargs)
-
-    def to_python(self, value):
-        value = super().to_python(value)
-        # Remove dash in CPR, if given
-        if isinstance(value, str) and "-" in value:
-            return value.replace("-", "")
-        return value
 
 
 class CPRFilter(Filter):

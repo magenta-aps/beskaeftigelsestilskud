@@ -326,6 +326,8 @@ class PersonListView(
             has_zero_income = form.cleaned_data["has_zero_income"]
             if not has_zero_income:
                 qs = qs.filter(actual_sum__gt=Decimal(0))
+        else:
+            qs = qs.none()
 
         qs = qs.order_by(*self.get_ordering())
         return qs
