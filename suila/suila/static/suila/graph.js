@@ -1,3 +1,9 @@
+/*
+SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
+SPDX-License-Identifier: MPL-2.0
+*/
+/* eslint-env jquery */
+/* global $ */
 const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
     const graph = $(selector);
 
