@@ -8,7 +8,7 @@ from decimal import Decimal
 from itertools import batched, groupby
 from math import ceil
 from operator import attrgetter
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from common import utils
 from dateutil.relativedelta import relativedelta
@@ -51,19 +51,21 @@ class EstimationEngine:
     ) -> IncomeEstimate | None:
         raise NotImplementedError
 
+    income_map: Dict[IncomeType, Callable[[MonthlyIncomeData], Decimal]] = {
+        IncomeType.A: lambda row: row.a_income,
+        IncomeType.B: lambda row: row.b_income,
+        IncomeType.U: lambda row: row.u_income,
+    }
+
     @classmethod
     def subset_sum(
         cls,
         relevant: Iterable[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> Decimal:
-        income_map = {
-            IncomeType.A: lambda row: row.a_income,
-            IncomeType.B: lambda row: row.b_income,
-            IncomeType.U: lambda row: row.u_income,
-        }
-
-        return Decimal(0) + sum(income_map[income_type](row) for row in relevant)
+        return Decimal(0) + sum(
+            EstimationEngine.income_map[income_type](row) for row in relevant
+        )
 
     @classmethod
     def classes(cls) -> List[type[EstimationEngine]]:
@@ -310,27 +312,30 @@ class EstimationEngine:
         for engine in EstimationEngine.instances():
             for income_type in engine.valid_income_types:
                 engine_results = []
+                income_extractor = EstimationEngine.income_map[income_type]
                 for month in range(first_income_month, 13):
                     year_month = date(year, month, 1)
 
                     person_month = None
                     for item in subset:
                         if item.year_month == year_month:
-                            person_month = person_month_map[item.person_month_pk]
+                            # Avoid estimating for months without data,
+                            # unless we're estimating B-income
+                            if (
+                                income_type == IncomeType.B
+                                or not income_extractor(item).is_zero()
+                            ):
+                                person_month = person_month_map[item.person_month_pk]
                             break
 
                     actual_year_sum = actual_year_sums[income_type][month]
-
-                    if (
-                        person_month is not None
-                    ):  # TODO: skip hvis ingen indkomst i denne måned
+                    if person_month is not None:
                         result: IncomeEstimate | None = engine.estimate(
                             person_month, subset, income_type
                         )
                         if result is not None:
-                            result.estimated_year_result -= person_year_expenses[
-                                income_type
-                            ]
+                            expenses = person_year_expenses[income_type]
+                            result.estimated_year_result -= expenses
                             result.person_month = person_month
                             result.actual_year_result = actual_year_sum
                             result.timestamp = timestamp
@@ -550,6 +555,7 @@ class MonthlyContinuationEngine(EstimationEngine):
         return IncomeEstimate(
             estimated_year_result=year_estimate,
             engine=cls.__name__,
+            person_month=person_month,
             income_type=income_type,
         )
 
