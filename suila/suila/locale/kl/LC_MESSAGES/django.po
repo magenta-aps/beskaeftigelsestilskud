@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-02 12:16-0200\n"
+"POT-Creation-Date: 2025-03-04 10:03-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,6 +22,14 @@ msgstr ""
 
 #: suila/forms.py
 msgid "Estimeret årsindkomst"
+msgstr ""
+
+#: suila/forms.py suila/views.py
+msgid "Kilde"
+msgstr ""
+
+#: suila/forms.py
+msgid "Alle"
 msgstr ""
 
 #: suila/models.py
@@ -168,18 +176,6 @@ msgstr ""
 msgid "Indlæs"
 msgstr ""
 
-#: suila/templates/suila/calculate.html
-msgid "Årsindkomst i kr."
-msgstr ""
-
-#: suila/templates/suila/calculate.html
-msgid "Suila-tapit i kr."
-msgstr ""
-
-#: suila/templates/suila/calculate.html
-msgid "Beregnet Suila for hele året:"
-msgstr ""
-
 #: suila/templates/suila/faq.html
 msgid "Ikke modtaget Suila-tapit"
 msgstr ""
@@ -278,6 +274,20 @@ msgstr ""
 msgid ""
 "Hvis din årsindkomst er 70.000 kr. eller 500.000 kr. vil du ikke modtage "
 "Suila-tapit, og dine tal vises derfor ikke på grafen nedenunder."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_search.html suila/templates/suila/root.html
+msgid "Borgersøgning"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/root.html
+msgid "Mit overblik"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -399,13 +409,8 @@ msgstr ""
 msgid "Noter"
 msgstr ""
 
-#: suila/templates/suila/person_detail_base.html
-#: suila/templates/suila/root.html
-msgid "Mit overblik"
-msgstr ""
-
 #: suila/templates/suila/person_detail_income.html
-msgid "Beregningsgrundlag"
+msgid "Mine signaler"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -472,15 +477,6 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
 msgid "Oplysninger om udbytte kan som regel ses 15-30 dage efter udlodningen."
-msgstr ""
-
-#: suila/templates/suila/person_detail_notes.html
-#, python-format
-msgid "Noter i %(year)s"
-msgstr ""
-
-#: suila/templates/suila/person_search.html suila/templates/suila/root.html
-msgid "Borgersøgning"
 msgstr ""
 
 #: suila/templates/suila/person_search.html
@@ -605,8 +601,4 @@ msgstr ""
 
 #: suila/views.py
 msgid "Beløb"
-msgstr ""
-
-#: suila/views.py
-msgid "Kilde"
 msgstr ""
