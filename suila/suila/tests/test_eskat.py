@@ -1363,6 +1363,7 @@ class TestAnnualIncomeUpdate(TestUpdateMixin, TestCase):
         super().setUp()
         # Create an "empty" `PersonMonth` for month 1 in 2020
         self.get_or_create_person_month(month=1, import_date=date(2020, 1, 1))
+        self.personyear.preferred_estimation_engine_b = "MonthlyContinuationEngine"
 
     def test_subsequent_update(self):
         # Arrange: create an initial value for year

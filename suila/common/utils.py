@@ -13,6 +13,7 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model, QuerySet
 from django.utils.translation import gettext_lazy as _
+from pandas import DataFrame
 
 from suila.models import (
     IncomeEstimate,
@@ -241,14 +242,16 @@ def get_income_estimates_df(
                 :, f"preferred_estimation_engine_{income_type.lower()}"
             ]
 
-    estimates_dfs = {}
+    estimates_dfs: Dict[IncomeType, DataFrame] = {}
     for income_type in IncomeType:
         estimates_dfs[income_type] = df.loc[
             (df.engine == engine_dict[income_type]) & (df.income_type == income_type),
             ["estimated_year_result", "actual_year_result"],
         ]
 
-    return estimates_dfs[IncomeType.A] + estimates_dfs[IncomeType.B]
+    # This is where we add together the estimates
+    # for A and B income before the benefit is calculated
+    return estimates_dfs[IncomeType.A].add(estimates_dfs[IncomeType.B], fill_value=0)
 
 
 def get_people_who_might_earn_too_much_or_little(

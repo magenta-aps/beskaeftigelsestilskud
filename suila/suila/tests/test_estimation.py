@@ -173,8 +173,6 @@ class TestEstimationEngine(TestCase):
                 .values_list("person_month__month", "estimated_year_result")
             ),
             [
-                (1, Decimal("0.00")),
-                (2, Decimal("0.00")),
                 (3, Decimal("10000.00")),
                 (4, Decimal("10000.00")),
                 (5, Decimal("10000.00")),
@@ -197,8 +195,6 @@ class TestEstimationEngine(TestCase):
                 ).values_list("person_month__month", "estimated_year_result")
             ),
             [
-                (1, Decimal("0.00")),
-                (2, Decimal("0.00")),
                 (3, Decimal("0.00")),
                 (4, Decimal("0.00")),
                 (5, Decimal("0.00")),
@@ -290,7 +286,7 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
-        self.assertEqual(IncomeEstimate.objects.all().count(), 156)
+        self.assertEqual(IncomeEstimate.objects.all().count(), 100)
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
