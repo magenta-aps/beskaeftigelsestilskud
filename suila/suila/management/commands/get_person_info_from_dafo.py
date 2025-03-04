@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 
 from requests.exceptions import HTTPError
 
@@ -61,58 +61,9 @@ class Command(SuilaBaseCommand):
             for future in as_completed(future_to_person):
                 try:
                     future_tuple = future.result()
-                    if not future_tuple:
-                        continue
-
-                    person_model, fetched_person_data = future_tuple
-
-                    if "civilstand" in fetched_person_data:
-                        person_model.civil_state = fetched_person_data["civilstand"]
-                    else:
-                        self._write_verbose(
-                            f'no "civilstand" in person_data: {fetched_person_data}'
-                        )
-
-                    if "myndighedskode" in fetched_person_data:
-                        person_model.location_code = fetched_person_data[
-                            "myndighedskode"
-                        ]
-                    else:
-                        self._write_verbose(
-                            f'no "myndighedskode" in person_data: {fetched_person_data}'
-                        )
-
-                    if (
-                        "fornavn" in fetched_person_data
-                        and "efternavn" in fetched_person_data
-                    ):
-                        person_model.name = (
-                            f"{fetched_person_data['fornavn']} "
-                            f"{fetched_person_data['efternavn']}"
-                        )
-                    else:
-                        self._write_verbose(
-                            (
-                                'no "fornavn" and "efternavn" in '
-                                f"person_data: {fetched_person_data}"
-                            )
-                        )
-
-                    address = fetched_person_data.get("adresse")
-                    city = fetched_person_data.get("bynavn")
-                    post_code = fetched_person_data.get("postnummer")
-
-                    if all(val is not None for val in (address, city, post_code)):
-                        person_model.full_address = f"{address}, {post_code} {city}"
-
-                    person_model.save()
-
-                    self._write_verbose(
-                        (
-                            f"Updated CPR data for {person_model.cpr} "
-                            f"(person data = {fetched_person_data})"
-                        )
-                    )
+                    if future_tuple:
+                        person_model, fetched_person_data = future_tuple
+                        self.update_person(person_model, fetched_person_data)
                 except Exception as e:
                     self._write_verbose(f"Error processing person: {e}")
 
@@ -126,3 +77,34 @@ class Command(SuilaBaseCommand):
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
             self.stdout.write(msg, **kwargs)
+
+    def update_person(self, person: Person, data: Dict[str, Any]):
+        if "civilstand" in data:
+            person.civil_state = data["civilstand"]
+        else:
+            self._write_verbose(f'no "civilstand" in person_data: {data}')
+
+        if "myndighedskode" in data:
+            person.location_code = data["myndighedskode"]
+        else:
+            self._write_verbose(f'no "myndighedskode" in person_data: {data}')
+
+        if "fornavn" in data and "efternavn" in data:
+            person.name = f"{data['fornavn']} " f"{data['efternavn']}"
+        else:
+            self._write_verbose(
+                ('no "fornavn" and "efternavn" in ' f"person_data: {data}")
+            )
+
+        address = data.get("adresse")
+        city = data.get("bynavn")
+        post_code = data.get("postnummer")
+
+        if all(val is not None for val in (address, city, post_code)):
+            person.full_address = f"{address}, {post_code} {city}"
+
+        person.save()
+
+        self._write_verbose(
+            (f"Updated CPR data for {person.cpr} " f"(person data = {data})")
+        )
