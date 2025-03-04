@@ -397,14 +397,16 @@ class PersonDetailIncomeView(
                 )
 
     def get_b_tax_payments(self) -> Iterable[IncomeSignal]:
-        qs = BTaxPayment.objects.filter(person_month__person_year=self.person_year)
+        qs = BTaxPayment.objects.filter(
+            person_month__isnull=False, person_month__person_year=self.person_year
+        )
         for item in qs:
             if item.amount_paid > 0:
                 yield IncomeSignal(
                     IncomeSignalType.BetaltBSkat,
                     _("Rate: %(rate_number)s") % {"rate_number": item.rate_number},
                     item.amount_paid,
-                    item.person_month.year_month,
+                    item.person_month.year_month,  # type: ignore[union-attr]
                 )
 
     def get_u1a_assessments(self) -> Iterable[IncomeSignal]:
