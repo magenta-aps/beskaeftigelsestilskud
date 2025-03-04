@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from common.pitu import PituClient
 from django.conf import settings
 from requests.exceptions import HTTPError
 
+from suila.integrations.pitu.client import PituClient
 from suila.management.commands.common import SuilaBaseCommand
 from suila.models import Employer
 
