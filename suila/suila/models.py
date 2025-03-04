@@ -423,7 +423,7 @@ class PersonYear(PermissionsMixin, models.Model):
         max_length=100,
         choices=engine_choices,
         null=True,
-        default="InYearExtrapolationEngine",
+        default="SelfReportedEngine",
     )
     preferred_estimation_engine_u = models.CharField(
         max_length=100,

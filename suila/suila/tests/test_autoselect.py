@@ -70,7 +70,7 @@ class AutoSelectEngineTests(TestCase):
         )
         self.assertEqual(
             self.person_year_2023.preferred_estimation_engine_b,
-            "InYearExtrapolationEngine",
+            "SelfReportedEngine",
         )
 
         # Now run the autoselect command
