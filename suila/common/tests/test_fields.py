@@ -12,4 +12,4 @@ class TestCPRField(TestCase):
         self.assertEqual(field.to_python("1234567890"), "1234567890")
         self.assertEqual(field.to_python("123456-7890"), "1234567890")
         self.assertEqual(field.to_python(" 123456-7890 "), "1234567890")
-        self.assertIsNone(field.to_python(None))
+        self.assertEqual(field.to_python(None), "")
