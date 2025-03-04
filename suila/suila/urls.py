@@ -28,6 +28,11 @@ urlpatterns: List[URLResolver | URLPattern] = [
     path("calculator/", CalculatorView.as_view(), name="calculator"),
     path("graph/", GraphView.as_view(), name="graph"),
     path("faq/", TemplateView.as_view(template_name="suila/faq.html"), name="faq"),
+    path(
+        "about/",
+        TemplateView.as_view(template_name="suila/about.html"),
+        name="about",
+    ),
     path("persons/", PersonSearchView.as_view(), name="person_search"),
     path("persons/<int:pk>/", PersonDetailView.as_view(), name="person_detail"),
     path(
