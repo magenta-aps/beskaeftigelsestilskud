@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: MPL-2.0
 from unittest.mock import Mock, patch
 
-from common.pitu import PituClient
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings
 
+from suila.integrations.pitu.client import PituClient
 from suila.management.commands.get_person_info_from_dafo import (
     Command as GetPersonInfoFromDafoCommand,
 )

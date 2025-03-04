@@ -4,9 +4,9 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Tuple
 
-from common.pitu import PituClient
 from requests.exceptions import HTTPError
 
+from suila.integrations.pitu.client import PituClient
 from suila.management.commands.common import SuilaBaseCommand
 from suila.models import Person
 
