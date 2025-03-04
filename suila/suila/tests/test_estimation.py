@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, call
 
 from common.utils import get_people_in_quarantine
 from django.test import TestCase
+from django.utils.timezone import get_current_timezone
 from pandas import DataFrame
 
 from suila.data import MonthlyIncomeData
@@ -23,7 +24,6 @@ from suila.estimation import (
 )
 from suila.exceptions import IncomeTypeUnhandledByEngine
 from suila.models import (
-    AnnualIncome,
     IncomeEstimate,
     IncomeType,
     MonthlyIncomeReport,
@@ -101,9 +101,12 @@ class TestEstimationEngine(TestCase):
                 person_month=person_month,
                 salary_income=Decimal(income),
             )
-        AnnualIncome.objects.create(
+        PersonYearAssessment.objects.create(
             person_year=cls.person_year,
-            account_tax_result=1200,
+            valid_from=datetime(
+                cls.person_year.year_id, 1, 1, 0, 0, 0, tzinfo=get_current_timezone()
+            ),
+            catch_sale_factory_income=1200,
         )
 
         for month, income in enumerate(
@@ -162,16 +165,17 @@ class TestEstimationEngine(TestCase):
             output_stream,
         )
 
+        income_estimates = list(
+            IncomeEstimate.objects.filter(
+                person_month__person_year=self.person_year,
+                engine="InYearExtrapolationEngine",
+                income_type=IncomeType.A,
+            )
+            .order_by("person_month__month")
+            .values_list("person_month__month", "estimated_year_result")
+        )
         self.assertEqual(
-            list(
-                IncomeEstimate.objects.filter(
-                    person_month__person_year=self.person_year,
-                    engine="InYearExtrapolationEngine",
-                    income_type=IncomeType.A,
-                )
-                .order_by("person_month__month")
-                .values_list("person_month__month", "estimated_year_result")
-            ),
+            income_estimates,
             [
                 (3, Decimal("10000.00")),
                 (4, Decimal("10000.00")),
@@ -185,15 +189,15 @@ class TestEstimationEngine(TestCase):
                 (12, Decimal("10000.00")),
             ],
         )
-
+        income_estimates = list(
+            IncomeEstimate.objects.filter(
+                person_month__person_year=self.person_year,
+                engine="TwelveMonthsSummationEngine",
+                income_type=IncomeType.A,
+            ).values_list("person_month__month", "estimated_year_result")
+        )
         self.assertEqual(
-            list(
-                IncomeEstimate.objects.filter(
-                    person_month__person_year=self.person_year,
-                    engine="TwelveMonthsSummationEngine",
-                    income_type=IncomeType.A,
-                ).values_list("person_month__month", "estimated_year_result")
-            ),
+            income_estimates,
             [
                 (3, Decimal("0.00")),
                 (4, Decimal("0.00")),
@@ -286,7 +290,7 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
-        self.assertEqual(IncomeEstimate.objects.all().count(), 100)
+        self.assertEqual(IncomeEstimate.objects.all().count(), 90)
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
@@ -302,10 +306,6 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None)
         instances.assert_called()
-
-    def test_b_income_from_year(self):
-        for month in PersonMonth.objects.filter(person_year=self.person_year):
-            self.assertEqual(month.b_income_from_year, 100)
 
     def test_quarantined(self):
         # Indstil månedsindkomster, så:
@@ -828,7 +828,4 @@ class TestSelfReportedEngine(TestCase):
             self.assertEqual(income_estimate.engine, "SelfReportedEngine")
             self.assertEqual(income_estimate.income_type, IncomeType.B)
             self.assertEqual(income_estimate.person_month, person_month)
-            self.assertEqual(
-                income_estimate.estimated_year_result,
-                Decimal(70000) if person_month.month < 12 else Decimal(120000),
-            )
+            self.assertEqual(income_estimate.estimated_year_result, Decimal(70000))

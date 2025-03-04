@@ -25,7 +25,6 @@ from suila.exceptions import IncomeTypeUnhandledByEngine
 from suila.models import (
     IncomeEstimate,
     IncomeType,
-    MonthlyIncomeReport,
     Person,
     PersonMonth,
     PersonYear,
@@ -221,7 +220,6 @@ class EstimationEngine:
             )
             .annotate(
                 a_income=Sum("monthlyincomereport__a_income"),
-                b_income=Sum("monthlyincomereport__b_income"),
             )
             .order_by(
                 "person_pk",
@@ -242,10 +240,7 @@ class EstimationEngine:
                 a_income=Decimal(
                     person_month.a_income or 0  # type: ignore[attr-defined]
                 ),
-                b_income=Decimal(
-                    person_month.b_income or 0  # type: ignore[attr-defined]
-                )
-                + Decimal(person_month.b_income_from_year or 0),
+                b_income=Decimal(person_month.b_income_from_year or 0),
                 u_income=Decimal(person_month.u_income_from_year or 0),
             )
             for person_month in person_month_qs
@@ -604,22 +599,7 @@ class SelfReportedEngine(EstimationEngine):
         assessment = person_month.person_year.current_assessment(evaluation_date=None)
 
         if assessment is not None:
-            if person_month.month == 12:
-                estimated_year_result = MonthlyIncomeReport.objects.filter(
-                    year=person_month.year,
-                    person_month__person_year__person=person_month.person,
-                ).aggregate(sum=Sum("b_income"))["sum"] or Decimal(0)
-                # Add any income from final settlement
-                estimated_year_result += person_month.person_year.b_income or 0
-            else:
-                estimated_year_result = (
-                    assessment.business_turnover
-                    + assessment.catch_sale_market_income
-                    + assessment.capital_income
-                    + assessment.care_fee_income
-                    - assessment.goods_comsumption
-                    - assessment.operating_expenses_own_company
-                )
+            estimated_year_result = assessment.assessed_b_income
         else:
             estimated_year_result = Decimal(0)
         return IncomeEstimate(

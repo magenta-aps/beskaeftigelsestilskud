@@ -515,11 +515,8 @@ class PersonYear(PermissionsMixin, models.Model):
                 )
             )
         if income_type in (IncomeType.B, None):
-            sum += MonthlyIncomeReport.sum_queryset(
-                MonthlyIncomeReport.objects.filter(
-                    person_month__person_year=self, b_income__gt=0
-                )
-            )
+            # Annual B income always originates from forskudsopgørelse or
+            # slutopgørelse.
             sum += self.b_income or 0
         return sum
 
@@ -544,6 +541,14 @@ class PersonYear(PermissionsMixin, models.Model):
         ).first()
         if annual_income is not None:
             return annual_income.account_tax_result
+        else:
+            return self.assessed_b_income
+
+    @property
+    def assessed_b_income(self) -> Decimal | None:
+        current_assessment = self.current_assessment()
+        if current_assessment is not None:
+            return current_assessment.assessed_b_income
         return None
 
     @property
@@ -678,7 +683,7 @@ class PersonMonth(PermissionsMixin, models.Model):
 
     @property
     def b_income_from_year(self) -> Decimal:
-        b_income = self.person_year.b_income
+        b_income = self.person_year.assessed_b_income
         if b_income is not None:
             return Decimal(int_divide_end(int(b_income), 12)[self.month - 1])
         return Decimal(0)
@@ -873,15 +878,14 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     def update_amount(self):
         # Define how A and B income is calculated here.
-        # TODO: Update as needed
-        self.a_income = (
+        q = Decimal("0.01")
+        self.a_income = Decimal(
             self.salary_income
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
-        )
-        self.b_income = self.disability_pension_income + self.capital_income
-
-        self.u_income = Decimal(self.person_month.u_income_from_year)
+        ).quantize(q)
+        self.b_income = Decimal(self.person_month.b_income_from_year).quantize(q)
+        self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
 
     @staticmethod
     def annotate_month(
@@ -912,9 +916,7 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
-        return qs.aggregate(
-            sum=Coalesce(Sum(F("a_income") + F("b_income")), Decimal(0))
-        )["sum"]
+        return qs.aggregate(sum=Coalesce(Sum(F("a_income")), Decimal(0)))["sum"]
 
     @staticmethod
     def pre_save(sender, instance: MonthlyIncomeReport, *args, **kwargs):
@@ -1188,6 +1190,22 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
     extraordinary_bussiness_expenses = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal(0), null=False
     )
+
+    @property
+    def assessed_b_income(self) -> Decimal:
+        # Incomes and expenses are listed separately to make the calculation
+        # more explicit.
+        incomes = (
+            self.business_turnover
+            + self.catch_sale_market_income
+            + self.care_fee_income
+            + self.capital_income
+        )
+        expenses = self.goods_comsumption + self.operating_expenses_own_company
+
+        result = incomes - expenses
+
+        return Decimal(result).quantize(Decimal("0.01"))
 
 
 class PrismeAccountAlias(PermissionsMixin, models.Model):

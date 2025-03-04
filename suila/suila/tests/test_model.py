@@ -56,6 +56,7 @@ class ModelTest(TestCase):
             preferred_estimation_engine_a="InYearExtrapolationEngine",
             preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
+
         cls.month1 = PersonMonth.objects.create(
             person_year=cls.person_year, month=1, import_date=date.today()
         )
@@ -88,7 +89,6 @@ class ModelTest(TestCase):
         cls.report1 = MonthlyIncomeReport.objects.create(
             person_month=cls.month1,
             salary_income=Decimal(10000),
-            capital_income=Decimal(15000),  # Any field that counts a B income
             month=cls.month1.month,
             year=cls.year.year,
         )
@@ -564,7 +564,7 @@ class TestPersonMonth(UserModelTest):
         self.assertEqual(str(self.month1), "Jens Hansen (2024/1)")
 
     def test_amount_sum(self):
-        self.assertEqual(self.month1.amount_sum, Decimal(10000 + 15000))
+        self.assertEqual(self.month1.amount_sum, Decimal(10000))
         self.assertEqual(self.month2.amount_sum, Decimal(11000 + 12000))
         self.assertEqual(self.month3.amount_sum, Decimal(12000 + 10000))
         self.assertEqual(self.month4.amount_sum, Decimal(13000 + 8000))
