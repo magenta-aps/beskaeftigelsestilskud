@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from common.fields import CPRField
 from common.form_mixins import BootstrapForm
 from django import forms
 from django.urls import reverse
@@ -96,7 +97,7 @@ class PersonYearListOptionsForm(BootstrapForm):
         + [("payout_offset", "Tilskudsafvigelse")],
         required=False,
     )
-    cpr = forms.Field(
+    cpr = CPRField(
         required=False,
         label="Cpr-nummer",
     )
