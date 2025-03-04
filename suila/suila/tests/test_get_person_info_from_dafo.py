@@ -73,13 +73,12 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
         # Assert that all relevant fields on `Person` are updated as expected
         self.assertQuerySetEqual(
             Person.objects.filter(cpr=self.cpr).values(
-                "cpr", "civil_state", "location_code", "name", "full_address"
+                "cpr", "civil_state", "name", "full_address"
             ),
             [
                 {
                     "cpr": self.cpr,
                     "civil_state": "U",
-                    "location_code": "959",
                     "name": "Fornavn Efternavn",
                     "full_address": "Testvej 123, 9999 Testby",
                 },

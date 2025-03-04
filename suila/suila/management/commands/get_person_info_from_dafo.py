@@ -51,13 +51,6 @@ class Command(SuilaBaseCommand):
                         f'no "civilstand" in person_data: {person_data}'
                     )
 
-                if "myndighedskode" in person_data:
-                    person.location_code = person_data["myndighedskode"]
-                else:
-                    self._write_verbose(
-                        f'no "myndighedskode" in person_data: {person_data}'
-                    )
-
                 if "fornavn" in person_data and "efternavn" in person_data:
                     person.name = f"{person_data['fornavn']} {person_data['efternavn']}"
                 else:
