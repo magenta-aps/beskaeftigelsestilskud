@@ -3,17 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
 from decimal import Decimal
-from operator import attrgetter
 from unittest.mock import MagicMock
 
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from suila.integrations.prisme.b_tax import (
-    BTaxPayment,
-    BTaxPaymentImport,
-    BTaxPaymentImportResult,
-)
+from suila.integrations.prisme.b_tax import BTaxPayment, BTaxPaymentImport
 from suila.models import BTaxPayment as BTaxPaymentModel
 from suila.models import PersonMonth
 from suila.tests.helpers import ImportTestCase
@@ -49,11 +44,12 @@ class TestBTaxPaymentImport(ImportTestCase):
         instance = BTaxPaymentImport()
         with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
             # Act
-            result: BTaxPaymentImportResult = instance.import_b_tax(MagicMock(), 1)
+            objs: list[BTaxPaymentModel] = instance.import_b_tax(MagicMock(), 1)
         # Assert: a `BTaxPayment` object is created for:
         # * `_EXAMPLE_1` (whose CPR, etc. match `self.person_month`)
-        # * `_EXAMPLE_2` and `_EXAMPLE_3` (whose CPR, etc. do not match a pre-existing
-        #   `PersonMonth`.)
+        # * `_EXAMPLE_2` (whose CPR, etc. does not match an existing `PersonMonth`)
+        # * `_EXAMPLE_3` (whose CPR, etc. does not match an existing `PersonMonth`, and
+        #   whose `amout_paid` is zero.)
         self.assertQuerySetEqual(
             BTaxPaymentModel.objects.order_by("pk").values(
                 "pk",
@@ -67,7 +63,7 @@ class TestBTaxPaymentImport(ImportTestCase):
             [
                 # `PersonMonth` already exists
                 {
-                    "pk": result.objs[0].pk,
+                    "pk": objs[0].pk,
                     "person_month": self.person_month.pk,
                     "amount_charged": Decimal(3439),
                     "amount_paid": Decimal(3439),
@@ -77,7 +73,7 @@ class TestBTaxPaymentImport(ImportTestCase):
                 },
                 # `PersonMonth` is created during `BTaxPayment` import
                 {
-                    "pk": result.objs[1].pk,
+                    "pk": objs[1].pk,
                     "person_month": PersonMonth.objects.get(
                         person_year__person__cpr="3112710000",
                         person_year__year__year=2021,
@@ -92,7 +88,7 @@ class TestBTaxPaymentImport(ImportTestCase):
                 # No `PersonMonth` is created during `BTaxPayment` import, as the
                 # `amount_paid` is zero.
                 {
-                    "pk": result.objs[2].pk,
+                    "pk": objs[2].pk,
                     "person_month": None,
                     "amount_charged": Decimal(3439),
                     "amount_paid": Decimal(0),
@@ -102,23 +98,14 @@ class TestBTaxPaymentImport(ImportTestCase):
                 },
             ],
         )
-        # Assert:
-        # `EXAMPLE_2` is unmatched (but a `PersonMonth` is created.)
-        # `EXAMPLE_3` is unmatched (but a `PersonMonth` is *not* created.)
-        self.assertQuerySetEqual(
-            result.unmatched,  # type: ignore
-            ["3112710000", "3112720000"],
-            transform=attrgetter("cpr"),
-            ordered=False,
-        )
 
-    def test_create_person_months_early_return(self):
+    def test_import_b_tax_is_idempotent(self):
         # Arrange
         instance = BTaxPaymentImport()
-        # Act
-        result = instance._create_person_months_for_unmatched([])
-        # Assert
-        self.assertListEqual(result, [])
+        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
+            # Act: import the same set of files twice
+            instance.import_b_tax(MagicMock(), 1)
+            instance.import_b_tax(MagicMock(), 1)
 
     def test_import_b_tax_verbosity_2(self):
         # Arrange
