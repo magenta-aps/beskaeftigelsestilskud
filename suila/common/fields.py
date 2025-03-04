@@ -10,7 +10,7 @@ class CPRField(RegexField):
     def __init__(self, **kwargs):
         super().__init__(r"^\d{6}-{0,1}\d{4}$", **kwargs)
 
-    def to_python(self, raw_value: Any) -> str:
+    def to_python(self, raw_value: Any) -> str | None:
         value: str | None = super().to_python(raw_value)
         if value is not None:
             # Remove dash in CPR, if given
