@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from common.tests.test_mixins import UserMixin
@@ -812,3 +812,19 @@ class TestBTaxPayment(ModelTest):
 
     def test_str(self):
         self.assertEqual(str(self.instance), f"{self.month1}: 900")
+
+
+class TestPersonYearAssessment(ModelTest):
+    def test_update_latest(self):
+        assessment1 = PersonYearAssessment.objects.create(
+            person_year=self.person_year, valid_from=timezone.now() - timedelta(days=30)
+        )
+        self.assertTrue(assessment1.latest)
+        assessment2 = PersonYearAssessment.objects.create(
+            person_year=self.person_year, valid_from=timezone.now() - timedelta(days=20)
+        )
+        self.assertTrue(assessment1.latest)
+        assessment1.refresh_from_db()
+        self.assertFalse(assessment1.latest)
+        assessment2.refresh_from_db()
+        self.assertTrue(assessment2.latest)

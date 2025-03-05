@@ -1229,11 +1229,22 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         update_fields: Sequence[str] | None,
         **kwargs,
     ):
-        qs = PersonYearAssessment.objects.filter(
-            person_year=instance.person_year
-        ).order_by("-valid_from")
-        qs[1:].update(latest=False)
-        qs[0:1].update(latest=True)
+        if update_fields is None or "latest" not in update_fields:
+            qs = PersonYearAssessment.objects.filter(
+                person_year=instance.person_year
+            ).order_by("-valid_from")
+            if qs.count() > 1:
+                qs.update(latest=False)
+            latest = qs[0]
+            latest.latest = True
+            latest.save(update_fields=("latest",))
+
+
+post_save.connect(
+    PersonYearAssessment.post_save,
+    PersonYearAssessment,
+    dispatch_uid="PersonYearAssessment_post_save",
+)
 
 
 class PrismeAccountAlias(PermissionsMixin, models.Model):
