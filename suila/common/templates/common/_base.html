@@ -21,7 +21,11 @@
     <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <title>{% block title %}{% translate "Suila" %}{% endblock %}</title>
-    <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}" >
+    <link rel="icon" type="image/png" href="{% static 'suila/favicon-96x96.png' %}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'suila/favicon.svg' %}" />
+    <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'suila/apple-touch-icon.png' %}" />
+    <link rel="manifest" href="{% static 'suila/site.webmanifest' %}" />
     {% block extra_headers %}
     {% endblock %}
 </head>
@@ -40,6 +44,13 @@
                 <a href="{% url 'suila:root' %}" class="logo-suila">Suila.gl</a>
             </h1>
             <ul class="navbar-nav d-flex align-items-center">
+                <li class="nav-item ms-4">
+                    <a href="{% url 'suila:root' %}" class="d-flex align-items-center {% if current_view == 'suila:root' %}active{% endif %}">
+                        <span class="material-icons">home</span>
+                        <span class="ms-1">{% translate "Forside" %}</span>
+                    </a>
+                </li>
+
                 {% if user.is_authenticated and user.cpr is not None %}
                 <li class="nav-item ms-4">
                     <a href="{% url 'suila:person_detail' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail' %}active{% endif %}">

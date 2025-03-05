@@ -135,6 +135,8 @@
 {% block extra_headers %}
 <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
 <script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% url 'javascript-catalog' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static "suila/graph.js" %}" nonce="{{ request.csp_nonce }}"></script>
 <script id="graph_points" type="application/json" nonce="{{ request.csp_nonce }}">{{ graph_points|safe }}</script>
 <script nonce="{{ request.csp_nonce }}">
 $(document).ready(function () {
@@ -155,77 +157,11 @@ $(document).ready(function () {
     }
 
     const renderChart = function () {
-        const graph = $("#graph");
-
         let data = JSON.parse($("#graph_points").text());
         let yearlyIncome = parseFloat(yearField.val());
         let yearlyBenefit = parseFloat("{{ yearly_benefit }}");
 
-        if (yearlyIncome > data[data.length - 1][0]) {
-            // result is greater than our current max point in the graph
-            data = [...data, [yearlyIncome, 0]];  // Clone array
-        }
-
-        let chartData = {
-            "chart": {
-                "nonce": "{{ request.csp_nonce }}",
-                "type": "line",
-                "toolbar": {"show": false},
-                "animations": {"enabled": false},
-                "selection": {"enabled": false},
-                "fontFamily": "Figtree Normal, Trebuchet MS, Helvetica, sans-serif",
-                "height": "100%"
-            },
-            "tooltip": {"enabled": false},
-            "colors": ["#000000"],
-            "series": [{
-                "name": "Suila",
-                "data": data,
-            }],
-            "legend": {
-                "fontSize": "1.5rem"
-            },
-            "xaxis": {
-                "type": "numeric",
-                "title": {
-                    "text": "{% translate 'Årsindkomst i kr.' %}",
-                    "style": {"fontSize": "1.5rem"},
-                },
-                "labels": {"style": {"fontSize": "1rem"}},
-            },
-            "yaxis": {
-                "title": {
-                    "text": "{% translate 'Suila-tapit i kr.' %}",
-                    "style": {"fontSize": "1.5rem"},
-                },
-                "labels": {"style": {"fontSize": "1rem"}},
-            },
-        };
-
-        if (!isNaN(yearlyIncome) && !isNaN(yearlyBenefit)) {
-            chartData["annotations"] = {
-                "points": [{
-                    "x": yearlyIncome,
-                    "y": yearlyBenefit,
-                    "marker": {
-                        "size": 4,
-                    },
-                    "label": {
-                        "text": [
-                            "{% translate 'Beregnet Suila for hele året:' %} " + yearlyBenefit,
-                        ],
-                        "style": {
-                            "background": "#fff",
-                            "color": "#333",
-                            "fontSize": "1.5rem",
-                        }
-                    }
-                }]
-            }
-        }
-
-        const chart = new ApexCharts(graph.get(0), chartData);
-        chart.render();
+        renderGraph("#graph", data, yearlyIncome, yearlyBenefit);
     }
 
     resetButton.on("click", function (evt) {

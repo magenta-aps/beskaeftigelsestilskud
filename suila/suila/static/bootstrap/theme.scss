@@ -302,7 +302,7 @@ div.faq {
   border-radius: 0.625 * $spacer;
 }
 .table th {
-  background-color: $light-grey;
+  background-color: $grey;
   border-bottom: 0;
   padding: 10px 20px;
 }
@@ -403,7 +403,7 @@ ul.nav.detail-table {
   border-radius: $spacer $spacer 0 0;
 }
 div.detail-table {
-  background: $light-primary;
+  background: $light-grey;
   border-radius: 0 0 $spacer $spacer;
 }
 ul.nav.detail-table a.nav-link {
@@ -414,8 +414,17 @@ ul.nav.detail-table a.nav-link.active {
   color: $secondary;
   text-decoration: underline;
 }
+div.detail-table table thead th {
+  background: $grey;
+}
 div.detail-table table tbody td {
   background: transparent;
+}
+div.detail-table div.sidebar {
+  background: $lightest-grey;
+}
+div.detail-table div.sidebar h3{
+  color: $primary;
 }
 
 // Table ordering
