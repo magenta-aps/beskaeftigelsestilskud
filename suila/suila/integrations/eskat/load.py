@@ -346,6 +346,12 @@ class ExpectedIncomeHandler(Handler):
                     ],
                 )
 
+                latest = PersonYearAssessment.objects.order_by(
+                    "person_year", "-valid_from"
+                ).distinct("person_year")
+                latest.update(latest=True)
+                PersonYearAssessment.objects.exclude(id__in=latest).update(latest=False)
+
                 out.write(
                     f"Created {len(objs_to_create_list)} PersonYearAssessment objects"
                 )

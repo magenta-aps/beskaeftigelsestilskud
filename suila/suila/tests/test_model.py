@@ -696,8 +696,7 @@ class TestIncomeReport(ModelTest):
             month=6,
             year=2024,
             a_income=Decimal(15000),
-            b_income=Decimal(5000),
-            u_income=Decimal(0),
+            u_income=Decimal(5000),
             person_pk=1,
             person_month_pk=1,
             person_year_pk=1,
@@ -740,7 +739,7 @@ class EstimationTest(ModelTest):
         cls.result2, _ = IncomeEstimate.objects.update_or_create(
             engine="InYearExtrapolationEngine",
             person_month=cls.month1,
-            income_type=IncomeType.B,
+            income_type=IncomeType.U,
             defaults={
                 "estimated_year_result": 150,
                 "actual_year_result": 200,

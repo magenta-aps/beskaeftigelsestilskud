@@ -258,7 +258,7 @@ class Simulation:
         # different values that make up the 'value'-field. It have just not been
         # implemented in this method yet.
 
-        estimates = []
+        estimates: List[Prediction] = []
         prediction_items = []
         actual_year_sums = self.actual_year_sum(income_type)
         engine_name = engine.__class__.__name__
@@ -298,9 +298,9 @@ class Simulation:
                     if estimate_qs.exists():
                         # Add Decimal(0) to shut MyPy up
                         estimated_year_result = Decimal(0) + sum(
-                            [estimate.estimated_year_result for estimate in estimates]
+                            [estimate.estimated_year_result for estimate in estimate_qs]
                         )
-                        offset = IncomeEstimate.qs_offset(estimates)
+                        offset = IncomeEstimate.qs_offset(estimate_qs)
                         prediction_items.append(
                             PredictionItem(
                                 year=year,

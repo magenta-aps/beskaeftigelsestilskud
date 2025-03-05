@@ -1135,6 +1135,7 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         null=False,
         blank=False,
     )
+    latest = models.BooleanField(default=True)
 
     capital_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal(0), null=False
@@ -1217,6 +1218,22 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
             - F("goods_comsumption")
             - F("operating_expenses_own_company")
         )
+
+    @staticmethod
+    def post_save(
+        sender,
+        instance: PersonYearAssessment,
+        created: bool,
+        raw: bool,
+        using: str,
+        update_fields: Sequence[str] | None,
+        **kwargs,
+    ):
+        qs = PersonYearAssessment.objects.filter(
+            person_year=instance.person_year
+        ).order_by("-valid_from")
+        qs[1:].update(latest=False)
+        qs[0:1].update(latest=True)
 
 
 class PrismeAccountAlias(PermissionsMixin, models.Model):

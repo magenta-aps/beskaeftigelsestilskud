@@ -71,7 +71,9 @@ def calculate_benefit(
     estimates_df = utils.get_income_estimates_df(month, year, cpr, engine_a=engine_a)
 
     # Læg B-indkomst fra forskudsopgørelse til
-    assessment_qs = PersonYearAssessment.objects.filter(person_year__year_id=year)
+    assessment_qs = PersonYearAssessment.objects.filter(
+        person_year__year_id=year, latest=True
+    )
     if cpr:
         assessment_qs = assessment_qs.filter(person_year__person__cpr=cpr)
     assessment_qs = PersonYearAssessment.annotate_assessed_b_income(assessment_qs)
