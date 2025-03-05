@@ -883,7 +883,10 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
         ).quantize(q)
-        self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
+        self.b_income = Decimal(self.person_month.b_income_from_year).quantize(q)
+
+        # self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
+        self.u_income = self.u_income.quantize(q)
 
     @staticmethod
     def annotate_month(
