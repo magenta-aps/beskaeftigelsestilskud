@@ -30,7 +30,6 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     PersonYearEstimateSummary,
-    PersonYearU1AAssessment,
     StandardWorkBenefitCalculationMethod,
     Year,
 )
@@ -409,12 +408,7 @@ class TestInYearExtrapolationEngine(TestCase):
             preferred_estimation_engine_a="InYearExtrapolationEngine",
         )
 
-        cls.person_year_u1a_assessment = PersonYearU1AAssessment.objects.create(
-            person_year=cls.person_year,
-            u1a_ids="1, 2, 3",
-            dividend_total=Decimal("1500.00"),
-        )
-
+        # Create A-income test-data
         cls.months = []
         cls.reports = []
         for month, income in enumerate(
@@ -430,6 +424,15 @@ class TestInYearExtrapolationEngine(TestCase):
                     salary_income=Decimal(income),
                 )
             )
+
+            # Create u_income on specific months (March)
+            if month in [3]:
+                cls.reports.append(
+                    MonthlyIncomeReport.objects.create(
+                        person_month=person_month,
+                        u_income=Decimal(income + 500),
+                    )
+                )
 
     def test_name(self):
         self.assertEqual(InYearExtrapolationEngine.name(), "InYearExtrapolationEngine")
@@ -473,24 +476,29 @@ class TestInYearExtrapolationEngine(TestCase):
                 data,
                 IncomeType.A,
             )
+
             self.assertEqual(
                 income_estimate.estimated_year_result.quantize(Decimal("0.01")),
                 expectation,
                 month,
             )
 
-            # Assert income estimate for IncomeType.U (year 2025)
-            income_estimate_u = InYearExtrapolationEngine.estimate(
-                person_month,
-                data,
-                IncomeType.U,
-            )
+        # Assert income estimate for IncomeType.U (year 2025)
+        person_month_u_income = PersonMonth.objects.get(
+            person_year=self.person_year, month=3
+        )
 
-            self.assertEqual(
-                income_estimate_u.estimated_year_result.quantize(Decimal("0.01")),
-                Decimal("1500.00"),
-                month,
-            )
+        income_estimate_u = InYearExtrapolationEngine.estimate(
+            person_month_u_income,
+            data,
+            IncomeType.U,
+        )
+
+        self.assertEqual(
+            income_estimate_u.estimated_year_result.quantize(Decimal("0.01")),
+            Decimal("15000.00"),
+            month,
+        )
 
 
 class TwelveMonthsSummationEngineTest(TestCase):
