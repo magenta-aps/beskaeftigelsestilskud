@@ -6,10 +6,6 @@
 {% load static %}
 {% load cpr_tags %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Mit overblik" %}</a></li>
-{% endblock %}
-
 {% block title %}
 {{ person.name }} ({{ person.cpr|format_cpr }})
 {% endblock %}

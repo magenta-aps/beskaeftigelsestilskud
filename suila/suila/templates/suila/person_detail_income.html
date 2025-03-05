@@ -9,29 +9,22 @@
 {% load date_tags %}
 
 {% block breadcrumb %}
-{{ block.super }}
-<li class="breadcrumb-item">{% translate "Beregningsgrundlag" %}</li>
+{% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+<li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
+{% endif %}
+<li class="breadcrumb-item"><a href="{% url 'suila:person_detail' pk=person.pk %}">{% translate "Mit overblik" %}</a></li>
+<li class="breadcrumb-item">{% translate "Mine signaler" %}</li>
 {% endblock %}
 
 {% block person_data %}
 <div class="row mt-5">
-    <div class="col-8">
-        <p>
-            {% blocktrans trimmed %}
-            Her kan du se de signaler Skattestyrelsen har modtaget om dine indkomster.
-            {% endblocktrans %}
-            <br>
-            {% blocktrans trimmed %}
-            Suila udbetales til borgere med visse indkomster. Indkomster der medregnes, er lønindkomst, indhandling,
-            indkomst som selvstændig erhvervsdrivende samt udbetaling af udbytter.
-            {% endblocktrans %}
-        </p>
-        <div class="mt-3">
+    <div class="col-6">
+        <div>
             {% render_table sum_table %}
         </div>
     </div>
-    <div class="col-4 emphasis">
-        <h1>{% translate "Her stammer oplysningerne fra:" %}</h1>
+    <div class="col-6 sidebar">
+        <h2>{% translate "Her stammer oplysningerne fra:" %}</h2>
         <ul>
             <li class="my-3">
                 {% blocktrans trimmed %}
@@ -43,8 +36,8 @@
             <li class="my-3">
                 {% blocktrans trimmed %}
                 Oplysning om betalt B-skat stammer fra din indbetaling af B-skat på baggrund af din
-                forskudsregistrering. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener at
-                den er forkert.
+                forskudsregistrering. Du kan altid ændre din forskudsregistrering på
+                <a href="https://sullissivik.gl" target="_blank">Sullissivik.gl</a>, hvis du mener at den er forkert.
                 {% endblocktrans %}
             </li>
             <li class="my-3">
@@ -58,7 +51,12 @@
     </div>
 </div>
 <div class="col-12">
-    <h1 class="mb-3">{% translate "Oversigt over signaler" %}</h1>
+    <h2 class="mb-3">{% translate "Oversigt over signaler" %}</h2>
+    <p>
+        {% blocktrans trimmed %}
+        Her ser du en liste med de signaler Skattestyrelsen har modtaget.
+        {% endblocktrans %}
+    </p>
     <ul class="detail-table nav">
         {% for person_year in available_person_years %}
         {% with current_year=person_year.year.year %}
@@ -73,17 +71,52 @@
         {% endfor %}
     </ul>
     <div class="detail-table p-5">
-        {% if filter %}
-        <b>{% translate "Filtre" %}</b>
-        <form action="" method="get" class="form filter-form">
-            <div class="row">
-                <div class="col-3">
-                    {% bootstrap_field filter.form.source %}
-                </div>
+        <div class="row">
+            <div class="col-3">
+                <form action="" method="get" class="form filter-form">
+                    {% bootstrap_form detail_table_filter %}
+                </form>
             </div>
-        </form>
-        {% endif %}
-        {% render_table detail_table %}
+        </div>
+        <div class="grid gap-5">
+            <div class="g-col-8">
+                {% render_table detail_table %}
+            </div>
+            <div class="g-col-4 sidebar">
+                <h3>{% translate "A-indkomst og indhandling" %}</h3>
+                <p>
+                    {% blocktrans trimmed %}
+                    Hvis din arbejdsgiver eller dit indhandlingssted indberetter korrekt, kan oplysningerne om din indtægt
+                    som regel ses 15-30 dage efter den måned du har arbejdet/indhandlet.
+                    {% endblocktrans %}
+                </p>
+                <h3>{% translate "B-indkomst" %}</h3>
+                <p>
+                    {% blocktrans trimmed %}
+                    Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter betalingsfristen.
+                    {% endblocktrans %}
+                </p>
+                <h3>{% translate "Udbytte" %}</h3>
+                <p>
+                    {% blocktrans trimmed %}
+                    Oplysninger om udbytte kan som regel ses 15-30 dage efter udlodningen.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_headers %}
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function () {
+    $("select#id_source").change(function (evt) {
+       const val = $(this).val();
+       let currentUrl = new URL(window.location);
+       currentUrl.searchParams.set("source", val);
+       window.location = currentUrl.href;
+    });
+});
+</script>
 {% endblock %}

@@ -6,6 +6,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 from unittest.mock import patch
+from urllib.parse import quote_plus
 
 from common.models import PageView, User
 from common.tests.test_mixins import TestViewMixin
@@ -412,6 +413,26 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 [self.person_year],
             )
 
+    def test_get_context_data_no_data(self):
+        with self._time_context(year=2021):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertIsInstance(
+                response.context_data["sum_table"], IncomeSumsBySignalTypeTable
+            )
+            # The sum table should contain lines for each signal type, where both the
+            # monthly and the yearly sums are zero for all lines.
+            self.assertEqual(
+                len(response.context_data["sum_table"].data), len(IncomeSignalType)
+            )
+            self.assertListEqual(
+                [
+                    (item["current_month_sum"], item["current_year_sum"])
+                    for item in response.context_data["sum_table"].data
+                ],
+                [(Decimal("0"), Decimal("0"))]
+                * len(response.context_data["sum_table"].data),
+            )
+
     def test_get_income_signals(self):
         with self._time_context(year=2020):
             # Act
@@ -483,6 +504,24 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                         date.today(),
                     )
                 ],
+            )
+
+    def test_source_query_parameter(self):
+        with self._time_context(year=2020):
+            # Act: perform GET request with `source` parameter set to valid value
+            request = self.request_factory.get(
+                "", data={"source": quote_plus("Employer 1")}
+            )
+            request.user = self.normal_user
+            view = self.view_class()
+            view.setup(request, pk=self.person1.pk)
+            response = view.get(request, pk=self.person1.pk)
+            # Assert: only signals matching the `source` parameter are displayed in the
+            # detail table.
+            filtered_signals = response.context_data["detail_table"].data.data
+            self.assertEqual(
+                [signal.source for signal in filtered_signals],
+                ["Employer 1"] * len(filtered_signals),
             )
 
     def test_borger_see_only_self(self):

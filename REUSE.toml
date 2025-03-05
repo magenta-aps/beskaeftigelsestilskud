@@ -3,7 +3,7 @@ SPDX-PackageName = "Beskæftigelsestilskud"
 SPDX-PackageSupplier = "Magenta ApS <info@magenta.dk>"
 
 [[annotations]]
-path = ["REUSE.toml", "**suila/logo**", "**suila/favicon.ico", "suila/**/migrations/**", "suila/suila/integrations/eskat/responses/*", "log/**", "dev-environment/**", "**README.md", "dev-idp/**", "rfc/**", "data/**", "suila/suila/tests/test.pdf", "suila/suila/static/bootstrap/theme.scss", "suila/suila/static/suila/*.png"]
+path = ["REUSE.toml", "**suila/logo**", "**suila/favicon.ico", "**suila/favicon.svg", "**suila/site.webmanifest", "suila/**/migrations/**", "suila/suila/integrations/eskat/responses/*", "log/**", "dev-environment/**", "**README.md", "dev-idp/**", "rfc/**", "data/**", "suila/suila/tests/test.pdf", "suila/suila/static/bootstrap/theme.scss", "suila/suila/static/suila/*.png"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2024 Magenta ApS <info@magenta.dk>"
 SPDX-License-Identifier = "MPL-2.0"
