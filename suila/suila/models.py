@@ -761,7 +761,7 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
         blank=True,
     )
 
-    # Autoupdated fields. Do not write into these.
+    # Autoupdated fields. Do not write into these (except U-income)
     a_income = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -884,8 +884,6 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
             + self.catchsale_income
         ).quantize(q)
         self.b_income = Decimal(self.person_month.b_income_from_year).quantize(q)
-
-        # self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
         self.u_income = self.u_income.quantize(q)
 
     @staticmethod
