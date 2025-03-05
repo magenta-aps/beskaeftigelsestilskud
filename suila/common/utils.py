@@ -235,15 +235,15 @@ def get_income_estimates_df(
     for income_type in IncomeType:
         if income_type == IncomeType.A and engine_a:
             engine_dict[income_type] = engine_a
-        elif income_type == IncomeType.B and engine_b:
-            engine_dict[income_type] = engine_b
+        # elif income_type == IncomeType.B and engine_b:
+        #     engine_dict[income_type] = engine_b
         else:
             engine_dict[income_type] = df.loc[
                 :, f"preferred_estimation_engine_{income_type.lower()}"
             ]
 
     estimates_dfs: Dict[IncomeType, DataFrame] = {}
-    for income_type in IncomeType:
+    for income_type in (IncomeType.A, IncomeType.U):
         estimates_dfs[income_type] = df.loc[
             (df.engine == engine_dict[income_type]) & (df.income_type == income_type),
             ["estimated_year_result", "actual_year_result"],
@@ -251,7 +251,7 @@ def get_income_estimates_df(
 
     # This is where we add together the estimates
     # for A and B income before the benefit is calculated
-    return estimates_dfs[IncomeType.A].add(estimates_dfs[IncomeType.B], fill_value=0)
+    return estimates_dfs[IncomeType.A].add(estimates_dfs[IncomeType.U], fill_value=0)
 
 
 def get_people_who_might_earn_too_much_or_little(

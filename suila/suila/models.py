@@ -11,7 +11,7 @@ from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
 from os.path import basename
-from typing import List, Sequence, Tuple
+from typing import Iterable, List, Sequence, Tuple
 
 from common.models import User
 from django.conf import settings
@@ -1072,7 +1072,7 @@ class IncomeEstimate(PermissionsMixin, models.Model):
         )
 
     @staticmethod
-    def qs_offset(qs: QuerySet[IncomeEstimate]) -> Decimal:
+    def qs_offset(qs: Iterable[IncomeEstimate]) -> Decimal:
         estimated_year_result = Decimal(0)
         actual_year_result = Decimal(0)
         for item in qs:
@@ -1206,6 +1206,17 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         result = incomes - expenses
 
         return Decimal(result).quantize(Decimal("0.01"))
+
+    @classmethod
+    def annotate_assessed_b_income(cls, qs: QuerySet[PersonYearAssessment]):
+        return qs.annotate(
+            assessed_b_income_sum=F("business_turnover")
+            + F("catch_sale_market_income")
+            + F("care_fee_income")
+            + F("capital_income")
+            - F("goods_comsumption")
+            - F("operating_expenses_own_company")
+        )
 
 
 class PrismeAccountAlias(PermissionsMixin, models.Model):

@@ -39,6 +39,7 @@ class Command(SuilaBaseCommand):
         else:
             month_range = range(1, 13)
 
+        print(PersonMonth.objects.all())
         for month_number in month_range:
             benefit = calculate_benefit(month_number, year, kwargs["cpr"])
 
@@ -48,6 +49,8 @@ class Command(SuilaBaseCommand):
 
             person_months_to_update = []
 
+            print(benefit.index)
+            print(person_month_qs)
             for person_month in person_month_qs:
                 cpr = person_month.person_year.person.cpr
                 if cpr in benefit.index:
@@ -55,6 +58,7 @@ class Command(SuilaBaseCommand):
                         value = benefit.loc[cpr, col]
                         if isnan(value):
                             value = None
+                        print(f"setattr({person_month}, {col}, {value})")
                         setattr(person_month, col, value)
                     person_months_to_update.append(person_month)
             bulk_update_with_history(
