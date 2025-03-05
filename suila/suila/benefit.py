@@ -155,9 +155,6 @@ def calculate_benefit(
 
     df["benefit_paid"] = np.ceil(df["benefit_this_month"])
 
-    print("-----------------")
-    print(cpr, year, month)
-    print(df.to_dict())
     return df
 
 
