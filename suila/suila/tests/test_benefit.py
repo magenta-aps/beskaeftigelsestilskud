@@ -199,11 +199,11 @@ class CalculateBenefitTest(BaseTestCase):
         df = calculate_benefit(1, self.year.year)
 
         # Assert the DataFrame "benefit_paid"-series have been rounded up
-        # OBS: if not, the value "1313.0" will be "1312.5"
+        # OBS: if not, the value "1056.0" will be "1055.61"
         pd.testing.assert_series_equal(
             df["benefit_paid"].astype(pd.Float64Dtype()),
             pd.Series(
-                [1050.0, 1313.0],
+                [1050.0, 1056.0],
                 name="benefit_paid",
                 dtype=pd.Float64Dtype(),
                 index=pd.Index(["1234567890", "1234567891"], dtype="object"),

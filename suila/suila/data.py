@@ -11,15 +11,15 @@ class MonthlyIncomeData:
     month: int
     year: int
     a_income: Decimal
-    b_income: Decimal
     u_income: Decimal
     person_pk: int
     person_month_pk: int
     person_year_pk: int
+    b_income: Decimal = Decimal(0)
 
     @property
     def amount(self) -> Decimal:
-        return Decimal(self.a_income + self.b_income)
+        return Decimal(self.a_income + self.u_income)
 
     @property
     def year_month(self) -> date:

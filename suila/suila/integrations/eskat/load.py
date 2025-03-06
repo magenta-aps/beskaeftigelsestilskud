@@ -159,6 +159,10 @@ class Handler:
         valid_keys = {field.name for field in dataclass.__dataclass_fields__.values()}
         return {k: v for k, v in data_dict.items() if k in valid_keys}
 
+    @classmethod
+    def finalize(cls):
+        pass  # pragma: no cover
+
 
 class AnnualIncomeHandler(Handler):
 
@@ -362,6 +366,14 @@ class ExpectedIncomeHandler(Handler):
 
         # Fall-through: return empty list
         return []
+
+    @classmethod
+    def finalize(cls):
+        latest = PersonYearAssessment.objects.order_by(
+            "person_year", "-valid_from"
+        ).distinct("person_year")
+        latest.update(latest=True)
+        PersonYearAssessment.objects.exclude(id__in=latest).update(latest=False)
 
 
 class MonthlyIncomeHandler(Handler):

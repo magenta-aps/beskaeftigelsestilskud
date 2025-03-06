@@ -217,13 +217,6 @@ class BaseTestCase(TestCase):
                     engine="InYearExtrapolationEngine",
                     income_type=IncomeType.A,
                 )
-                IncomeEstimate.objects.create(
-                    person_month=month,
-                    estimated_year_result=12 * income.b_income,
-                    actual_year_result=month_number * income.b_income,
-                    engine="InYearExtrapolationEngine",
-                    income_type=IncomeType.B,
-                )
 
                 # The TwelveMonthsSummationEngine does not estimate correctly
                 # (At least in this dummy-data)
@@ -233,13 +226,6 @@ class BaseTestCase(TestCase):
                     actual_year_result=month_number * income.a_income,
                     engine="TwelveMonthsSummationEngine",
                     income_type=IncomeType.A,
-                )
-                IncomeEstimate.objects.create(
-                    person_month=month,
-                    estimated_year_result=12 * 5522,
-                    actual_year_result=month_number * income.b_income,
-                    engine="TwelveMonthsSummationEngine",
-                    income_type=IncomeType.B,
                 )
 
 

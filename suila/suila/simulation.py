@@ -10,7 +10,7 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple
 from django.db.models import QuerySet
 from project.util import int_divide_end
 
-from suila.estimation import EstimationEngine
+from suila.estimation import EstimationEngine, SelfReportedEngine
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -213,18 +213,34 @@ class Simulation:
         payout_items = []
         for person_year in self.person_years:
             cumulative_payout = Decimal(0)
-            for person_month in person_year.personmonth_set.order_by("month"):
-                payout = person_month.benefit_paid or Decimal(0)
+            for month in range(1, 13):
+                estimated_year_result = person_year.assessed_b_income or Decimal(0)
+                try:
+                    person_month = person_year.personmonth_set.get(month=month)
+                    payout = person_month.benefit_paid or Decimal(0)
+                    actual_year_benefit = person_month.actual_year_benefit
+                    estimated_year_result += (
+                        person_month.estimated_year_result or Decimal(0)
+                    )
+                    estimated_year_benefit = person_month.estimated_year_benefit
+                except PersonMonth.DoesNotExist:
+                    payout = Decimal(0)
+                    actual_year_benefit = (
+                        person_year.year.calculation_method.calculate_float(
+                            estimated_year_result
+                        )
+                    )
+                    estimated_year_benefit = actual_year_benefit
                 cumulative_payout += payout
                 payout_items.append(
                     PayoutItem(
                         year=person_year.year.year,
-                        month=person_month.month,
+                        month=month,
                         payout=payout,
                         cumulative_payout=cumulative_payout,
-                        correct_payout=person_month.actual_year_benefit,
-                        estimated_year_result=person_month.estimated_year_result,
-                        estimated_year_benefit=person_month.estimated_year_benefit,
+                        correct_payout=actual_year_benefit,
+                        estimated_year_result=estimated_year_result,
+                        estimated_year_benefit=estimated_year_benefit,
                     )
                 )
         return PayoutRow(title="Månedlig udbetaling", payout=payout_items)
@@ -244,7 +260,7 @@ class Simulation:
         # different values that make up the 'value'-field. It have just not been
         # implemented in this method yet.
 
-        estimates = []
+        estimates: List[Prediction] = []
         prediction_items = []
         actual_year_sums = self.actual_year_sum(income_type)
         engine_name = engine.__class__.__name__
@@ -255,37 +271,55 @@ class Simulation:
                 continue
             actual_year_sum = actual_year_sums[year]
             for month in range(1, 13):
-                try:
-                    person_month = person_year.personmonth_set.get(month=month)
-                except PersonMonth.DoesNotExist:
-                    continue
-                estimate_qs = IncomeEstimate.objects.filter(
-                    person_month=person_month,
-                    engine=engine_name,
-                )
-                if income_type is not None:
-                    estimate_qs = estimate_qs.filter(
-                        income_type=income_type,
-                    )
-
-                if estimate_qs.exists():
-                    # Add Decimal(0) to shut MyPy up
-                    estimated_year_result = Decimal(0) + sum(
-                        [estimate.estimated_year_result for estimate in estimate_qs]
-                    )
-                    offset = IncomeEstimate.qs_offset(estimate_qs)
-                    prediction_items.append(
-                        PredictionItem(
-                            year=year,
-                            month=month,
-                            predicted_value=estimated_year_result,
-                            prediction_difference=estimated_year_result
-                            - actual_year_sum,
-                            prediction_difference_pct=(
-                                (offset * 100) if actual_year_sum != 0 else None
-                            ),
+                assessed_b_income = person_year.assessed_b_income
+                if isinstance(engine, SelfReportedEngine):
+                    if assessed_b_income is not None:
+                        prediction_items.append(
+                            PredictionItem(
+                                year=year,
+                                month=month,
+                                predicted_value=assessed_b_income,
+                                prediction_difference=Decimal(0),
+                                prediction_difference_pct=Decimal(0),
+                            )
                         )
+
+                else:
+                    try:
+                        person_month = person_year.personmonth_set.get(month=month)
+                    except PersonMonth.DoesNotExist:
+                        continue
+                    estimate_qs = IncomeEstimate.objects.filter(
+                        person_month=person_month,
+                        engine=engine_name,
                     )
+                    if income_type is not None:
+                        estimate_qs = estimate_qs.filter(
+                            income_type=income_type,
+                        )
+                    if estimate_qs.exists():
+                        # Add Decimal(0) to shut MyPy up
+                        estimated_year_result = Decimal(0) + sum(
+                            [estimate.estimated_year_result for estimate in estimate_qs]
+                        )
+                        if (
+                            income_type in (None, IncomeType.B)
+                            and assessed_b_income is not None
+                        ):
+                            estimated_year_result += assessed_b_income
+                        offset = IncomeEstimate.qs_offset(estimate_qs)
+                        prediction_items.append(
+                            PredictionItem(
+                                year=year,
+                                month=month,
+                                predicted_value=estimated_year_result,
+                                prediction_difference=estimated_year_result
+                                - actual_year_sum,
+                                prediction_difference_pct=(
+                                    (offset * 100) if actual_year_sum != 0 else None
+                                ),
+                            )
+                        )
 
         if prediction_items:
             estimates.append(Prediction(engine=engine, items=prediction_items))
