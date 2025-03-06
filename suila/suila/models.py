@@ -11,7 +11,7 @@ from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
 from os.path import basename
-from typing import List, Sequence, Tuple
+from typing import Iterable, List, Sequence, Tuple
 
 from common.models import User
 from django.conf import settings
@@ -20,7 +20,19 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import SET_NULL, F, Index, QuerySet, Sum, TextChoices
+from django.db.models import (
+    SET_NULL,
+    BooleanField,
+    Case,
+    F,
+    Index,
+    Q,
+    QuerySet,
+    Sum,
+    TextChoices,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
@@ -637,6 +649,10 @@ class PersonMonth(PermissionsMixin, models.Model):
         blank=True,
     )
 
+    has_paid_b_tax = models.BooleanField(
+        default=False,
+    )
+
     @property
     def person(self):
         return self.person_year.person
@@ -699,6 +715,33 @@ class PersonMonth(PermissionsMixin, models.Model):
         if action == "view":
             return qs.filter(person_year__person__cpr=user.cpr)
         return qs.none()
+
+    @property
+    def signal(self):
+        # TODO: U income from month, not year
+        return self.has_paid_b_tax or self.amount_sum > 0 or self.u_income_from_year > 0
+
+    @classmethod
+    def signal_qs(cls, qs: QuerySet[PersonMonth]) -> QuerySet[PersonMonth]:
+        return qs.annotate(
+            has_a_income=Case(
+                When(amount_sum__gt=Value(0), then=Value(True)),
+                default_value=Value(False),
+                output_field=BooleanField(),
+            ),
+            has_u_income=Value(False),  # TODO: Get U income
+        ).annotate(
+            signal=Case(
+                When(
+                    Q(has_paid_b_tax=True)
+                    | Q(has_a_income=True)
+                    | Q(has_u_income=True),
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
 
 
 class Employer(PermissionsMixin, models.Model):
@@ -1072,7 +1115,7 @@ class IncomeEstimate(PermissionsMixin, models.Model):
         )
 
     @staticmethod
-    def qs_offset(qs: QuerySet[IncomeEstimate]) -> Decimal:
+    def qs_offset(qs: Iterable[IncomeEstimate]) -> Decimal:
         estimated_year_result = Decimal(0)
         actual_year_result = Decimal(0)
         for item in qs:
@@ -1135,6 +1178,7 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         null=False,
         blank=False,
     )
+    latest = models.BooleanField(default=True)
 
     capital_income = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal(0), null=False
@@ -1206,6 +1250,44 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         result = incomes - expenses
 
         return Decimal(result).quantize(Decimal("0.01"))
+
+    @classmethod
+    def annotate_assessed_b_income(cls, qs: QuerySet[PersonYearAssessment]):
+        return qs.annotate(
+            assessed_b_income_sum=F("business_turnover")
+            + F("catch_sale_market_income")
+            + F("care_fee_income")
+            + F("capital_income")
+            - F("goods_comsumption")
+            - F("operating_expenses_own_company")
+        )
+
+    @staticmethod
+    def post_save(
+        sender,
+        instance: PersonYearAssessment,
+        created: bool,
+        raw: bool,
+        using: str,
+        update_fields: Sequence[str] | None,
+        **kwargs,
+    ):
+        if update_fields is None or "latest" not in update_fields:
+            qs = PersonYearAssessment.objects.filter(
+                person_year=instance.person_year
+            ).order_by("-valid_from")
+            if qs.count() > 1:
+                qs.update(latest=False)
+            latest = qs[0]
+            latest.latest = True
+            latest.save(update_fields=("latest",))
+
+
+post_save.connect(
+    PersonYearAssessment.post_save,
+    PersonYearAssessment,
+    dispatch_uid="PersonYearAssessment_post_save",
+)
 
 
 class PrismeAccountAlias(PermissionsMixin, models.Model):

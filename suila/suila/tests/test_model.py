@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from common.tests.test_mixins import UserMixin
@@ -640,6 +640,13 @@ class TestPersonMonth(UserModelTest):
         self.assertNotIn(self.month1, qs)
         self.assertFalse(PersonMonth.has_model_permissions(self.no_user, "view"))
 
+    def test_signal(self):
+        self.assertTrue(self.month1.signal)
+        self.assertTrue(self.month2.signal)
+        self.assertTrue(self.month3.signal)
+        self.assertTrue(self.month4.signal)
+        self.assertFalse(self.month12.signal)
+
 
 class TestEmployer(ModelTest):
 
@@ -696,8 +703,7 @@ class TestIncomeReport(ModelTest):
             month=6,
             year=2024,
             a_income=Decimal(15000),
-            b_income=Decimal(5000),
-            u_income=Decimal(0),
+            u_income=Decimal(5000),
             person_pk=1,
             person_month_pk=1,
             person_year_pk=1,
@@ -740,7 +746,7 @@ class EstimationTest(ModelTest):
         cls.result2, _ = IncomeEstimate.objects.update_or_create(
             engine="InYearExtrapolationEngine",
             person_month=cls.month1,
-            income_type=IncomeType.B,
+            income_type=IncomeType.U,
             defaults={
                 "estimated_year_result": 150,
                 "actual_year_result": 200,
@@ -813,3 +819,19 @@ class TestBTaxPayment(ModelTest):
 
     def test_str(self):
         self.assertEqual(str(self.instance), f"{self.month1}: 900")
+
+
+class TestPersonYearAssessment(ModelTest):
+    def test_update_latest(self):
+        assessment1 = PersonYearAssessment.objects.create(
+            person_year=self.person_year, valid_from=timezone.now() - timedelta(days=30)
+        )
+        self.assertTrue(assessment1.latest)
+        assessment2 = PersonYearAssessment.objects.create(
+            person_year=self.person_year, valid_from=timezone.now() - timedelta(days=20)
+        )
+        self.assertTrue(assessment1.latest)
+        assessment1.refresh_from_db()
+        self.assertFalse(assessment1.latest)
+        assessment2.refresh_from_db()
+        self.assertTrue(assessment2.latest)

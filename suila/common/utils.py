@@ -20,6 +20,7 @@ from suila.models import (
     IncomeType,
     MonthlyIncomeReport,
     PersonMonth,
+    PersonYear,
     Year,
 )
 
@@ -231,27 +232,50 @@ def get_income_estimates_df(
         },
     )
 
+    empty_estimate = get_empty_estimate_df(year, cpr)
+
     engine_dict: dict = {}
     for income_type in IncomeType:
         if income_type == IncomeType.A and engine_a:
             engine_dict[income_type] = engine_a
-        elif income_type == IncomeType.B and engine_b:
-            engine_dict[income_type] = engine_b
+        # elif income_type == IncomeType.B and engine_b:
+        #     engine_dict[income_type] = engine_b
         else:
             engine_dict[income_type] = df.loc[
                 :, f"preferred_estimation_engine_{income_type.lower()}"
             ]
 
     estimates_dfs: Dict[IncomeType, DataFrame] = {}
-    for income_type in IncomeType:
+    for income_type in (IncomeType.A, IncomeType.U):
         estimates_dfs[income_type] = df.loc[
             (df.engine == engine_dict[income_type]) & (df.income_type == income_type),
             ["estimated_year_result", "actual_year_result"],
         ]
 
     # This is where we add together the estimates
-    # for A and B income before the benefit is calculated
-    return estimates_dfs[IncomeType.A].add(estimates_dfs[IncomeType.B], fill_value=0)
+    # for A and U income before the benefit is calculated
+    # We prefix with an empty estimate, so that we never return an empty dataframe
+    return empty_estimate.add(estimates_dfs[IncomeType.A], fill_value=0).add(
+        estimates_dfs[IncomeType.U], fill_value=0
+    )
+
+
+def get_empty_estimate_df(year: int, cpr: str | None = None):
+    person_years = PersonYear.objects.filter(year__year=year)
+    if cpr:
+        person_years = person_years.filter(person__cpr=cpr)
+    empty_estimate = pd.DataFrame(
+        [[0.0, 0.0, personyear.person.cpr] for personyear in person_years],
+        columns=["estimated_year_result", "actual_year_result", "cpr"],
+    )
+    empty_estimate = empty_estimate.set_index("cpr")
+    empty_estimate = empty_estimate.astype(
+        {
+            "estimated_year_result": float,
+            "actual_year_result": float,
+        }
+    )
+    return empty_estimate
 
 
 def get_people_who_might_earn_too_much_or_little(
