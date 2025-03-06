@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-06 07:00-0200\n"
+"POT-Creation-Date: 2025-03-06 13:53-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,7 +56,8 @@ msgstr ""
 msgid "CPR nummer"
 msgstr ""
 
-#: suila/models.py suila/views.py
+#: suila/models.py suila/templates/suila/person_detail_notes.html
+#: suila/views.py
 msgid "Dato"
 msgstr ""
 
@@ -148,6 +149,37 @@ msgstr ""
 msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
 msgstr ""
 
+#: suila/templates/suila/about.html suila/templates/suila/root.html
+msgid "Hvad er Suila-tapit?"
+msgstr ""
+
+#: suila/templates/suila/about.html
+msgid "Se videoen om Suila-tapit"
+msgstr ""
+
+#: suila/templates/suila/about.html
+msgid "Få mere information om Suila-tapit"
+msgstr ""
+
+#: suila/templates/suila/about.html
+msgid ""
+"På <a href=\"https://www.sullissivik.gl/Emner/B_Skatter-afgifter-og-gaeld-"
+"til-det-offentlige/Skat/Beskaeftigelsesfradrag\" "
+"target=\"_blank\">Sullissivik.gl</a>"
+msgstr ""
+
+#: suila/templates/suila/about.html
+msgid ""
+"Hos <a href=\"https://aka.gl/emner/borger/skat/suila-tapit---"
+"beskaeftigelsesfradrag\" target=\"_blank\">Skattestyrelsen</a>"
+msgstr ""
+
+#: suila/templates/suila/about.html
+msgid ""
+"<a href=\"https://www.facebook.com/profile.php?id=61573559829551\" "
+"target=\"_blank\">Suila-tapit på Facebook</a>"
+msgstr ""
+
 #: suila/templates/suila/calculate.html suila/templates/suila/root.html
 msgid "Suilaberegneren"
 msgstr ""
@@ -165,11 +197,11 @@ msgid "Ryd"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
-msgid "Beregnet beskæftigelsesfradrag pr. måned:"
+msgid "Beregnet Suila-tapit pr. måned:"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
-msgid "Beregnet beskæftigelsesfradrag for hele året:"
+msgid "Beregnet Suila-tapit for hele året:"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
@@ -291,19 +323,41 @@ msgid "Mit overblik"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Din Suila er endnu ikke blevet beregnet."
+msgid ""
+"Her får du et overblik over dine kommende og udførte udbetalinger af Suila-"
+"tapit for indeværende år."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
 msgid ""
-"Her kan du få et overblik over dine kommende og udførte udbetalinger af "
-"beskæftigelsesfradrag for indeværende år."
+"Bemærk at beløbene er vejledende og kan ændre sig indtil den endelige "
+"udbetaling."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
 msgid ""
-"Bemærk at alle tal er vejledende indtil den endelige udbetaling, og blot "
-"vises for at give dig en ide om hvad du vil få udbetalt."
+"Her kan du få et overblik over dine udførte udbetalinger af Suila-tapit for "
+"forgangne år."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Modregning"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Hvis du har gæld til det offentlige, kan der ske modregning af op til en "
+"tredjedel af beløbet inden udbetaling. Modregning betyder, at du modtager et "
+"lavere beløb, fordi dele af beløbet er brugt til at afdrage på din gæld til "
+"det offentlige."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "NemKonto"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Suila-tapit udbetales kun til NemKonto."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -324,14 +378,24 @@ msgid "Forventet årsindkomst fra arbejde"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid ""
-"(*) De indtægter der indgår i beregningsgrundlaget er overskud fra "
-"indhandling, overskud som selvstændig erhvervsdrivende, lønindkomster samt "
-"udbytte."
+msgid "Bemærk!"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Beregningsgrundlag - Se mine signaler"
+msgid ""
+"Suila foretager kun udbetaling hvis systemet har modtaget signal fra "
+"arbejdsmarkedet i form af betalte B-skatter, indberetning af løn fra "
+"arbejdsgivere, indberetning af indhandling fra indhandlingssteder eller "
+"oplysning om udloddet udbytte fra selskaber."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_notes.html
+msgid "Noter"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html suila/templates/suila/root.html
+msgid "Beregningsgrundlag - Mine signaler"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -404,11 +468,6 @@ msgid ""
 "År afsluttet: Du har modtaget årsopgørelse for Suila-tapit for dette år."
 msgstr ""
 
-#: suila/templates/suila/person_detail.html
-#: suila/templates/suila/person_detail_notes.html
-msgid "Noter"
-msgstr ""
-
 #: suila/templates/suila/person_detail_income.html
 msgid "Mine signaler"
 msgstr ""
@@ -479,6 +538,26 @@ msgstr ""
 msgid "Oplysninger om udbytte kan som regel ses 15-30 dage efter udlodningen."
 msgstr ""
 
+#: suila/templates/suila/person_detail_notes.html
+msgid "Tilføj notat"
+msgstr ""
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Opret notat"
+msgstr ""
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Forfatter"
+msgstr ""
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Besked"
+msgstr ""
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Filer"
+msgstr ""
+
 #: suila/templates/suila/person_search.html
 msgid "Liste over borgere"
 msgstr ""
@@ -510,10 +589,6 @@ msgstr ""
 
 #: suila/templates/suila/root.html
 msgid "Sammenhæng - Årsindkomst og Suila-tapit"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Beregningsgrundlag - Mine signaler"
 msgstr ""
 
 #: suila/templatetags/amount_tags.py
