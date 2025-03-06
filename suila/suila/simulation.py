@@ -219,7 +219,9 @@ class Simulation:
                     person_month = person_year.personmonth_set.get(month=month)
                     payout = person_month.benefit_paid or Decimal(0)
                     actual_year_benefit = person_month.actual_year_benefit
-                    estimated_year_result += person_month.estimated_year_result
+                    estimated_year_result += (
+                        person_month.estimated_year_result or Decimal(0)
+                    )
                     estimated_year_benefit = person_month.estimated_year_benefit
                 except PersonMonth.DoesNotExist:
                     payout = Decimal(0)
