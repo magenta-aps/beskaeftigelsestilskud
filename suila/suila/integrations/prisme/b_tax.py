@@ -123,6 +123,18 @@ class BTaxPaymentImport(SFTPImport):
             else:
                 person_months.append((row, None))
 
+        # Update `PersonMonth.has_paid_b_tax` for all person months that were found or
+        # created.
+        person_month_list = [
+            person_month for row, person_month in person_months if person_month
+        ]
+        for person_month in person_month_list:
+            person_month.has_paid_b_tax = True
+        PersonMonth.objects.bulk_update(
+            person_month_list,
+            ["has_paid_b_tax"],
+            batch_size=1000,
+        )
         # Create `BTaxPayment` objects for input rows in `unmatched`
         objs: list[BTaxPaymentModel] = [
             BTaxPaymentModel(
