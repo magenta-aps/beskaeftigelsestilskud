@@ -20,6 +20,7 @@ from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template.defaultfilters import date as format_date
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext
@@ -273,7 +274,17 @@ class IncomeSumsBySignalTypeTable(Table):
         verbose_name=_("Samlet for året"),
     )
 
-    def __init__(self, income_signals: list[IncomeSignal], month: int, *args, **kwargs):
+    def __init__(
+        self,
+        income_signals: list[IncomeSignal],
+        year: int,
+        month: int,
+        *args,
+        **kwargs,
+    ):
+        self.year: int = year
+        self.month: int = month
+
         def sum_amounts(
             signal_type: IncomeSignalType,
             signals: list[IncomeSignal],
@@ -308,6 +319,13 @@ class IncomeSumsBySignalTypeTable(Table):
         ]
 
         super().__init__(data, *args, **kwargs)
+
+    def before_render(self, request):
+        # Create string such as "Marts 2025" from year and month
+        month: date = date(self.year, self.month, 1)
+        month_formatted: str = format_date(month, "F Y").capitalize()
+        # Use this string as the title of the month sum column
+        self.columns["current_month_sum"].column.verbose_name = month_formatted
 
 
 class IncomeSignalTable(Table):
@@ -344,6 +362,7 @@ class PersonDetailIncomeView(
         # Table summing income by signal type
         context_data["sum_table"] = IncomeSumsBySignalTypeTable(
             self.get_income_signals(),
+            self.year,
             self.month,
             orderable=False,
         )

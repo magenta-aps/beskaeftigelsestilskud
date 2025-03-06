@@ -20,6 +20,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
+from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
 
@@ -577,6 +578,23 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
         itemviews = list(pageview.itemviews.all())
         self.assertEqual(len(itemviews), 1)
         self.assertEqual(itemviews[0].item, self.person1)
+
+
+class TestIncomeSumsBySignalTypeTable(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        self.instance = IncomeSumsBySignalTypeTable([], 2025, 3)
+
+    def test_month_column_name(self):
+        # Arrange: ensure Danish locale is used
+        translation.activate("da")
+        # Act: call `before_render` with (irrelevant) `request` arg
+        self.instance.before_render(None)
+        # Assert
+        self.assertEqual(
+            self.instance.columns["current_month_sum"].column.verbose_name,
+            "Marts 2025",
+        )
 
 
 class TestNoteView(TimeContextMixin, PersonEnv):
