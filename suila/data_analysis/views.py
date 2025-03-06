@@ -20,7 +20,7 @@ from data_analysis.forms import (
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
-from django.db.models.functions import Coalesce, Least
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
@@ -36,7 +36,6 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
-    PersonYearAssessment,
     PersonYearEstimateSummary,
     Year,
 )
@@ -168,29 +167,10 @@ class PersonYearEstimationMixin:
 
             has_b = form.cleaned_data["has_b"]
             if has_b not in (None, ""):
-                qs = qs.annotate(
-                    b_count=Subquery(
-                        PersonYearAssessment.objects.filter(
-                            person_year=OuterRef("pk"),
-                        )
-                        .filter(
-                            Q(
-                                Q(business_turnover__gt=0)
-                                | Q(catch_sale_market_income__gt=0)
-                                | Q(care_fee_income__gt=0)
-                                | Q(capital_income__gt=0)
-                                | Q(goods_comsumption__gt=0)
-                                | Q(operating_expenses_own_company__gt=0)
-                            )
-                        )
-                        .annotate(count=Func(F("id"), function="COUNT"))
-                        .values("count")
-                    )
-                )
                 if strtobool(has_b):
-                    qs = qs.filter(b_count__gt=0)
+                    qs = qs.filter(Q(b_income__gt=0) | Q(b_expenses__gt=0))
                 else:
-                    qs = qs.filter(b_count=0)
+                    qs = qs.filter(b_income=0, b_expenses=0)
 
         for engine_class in EstimationEngine.classes():
             engine_name = engine_class.__name__
@@ -215,53 +195,13 @@ class PersonYearEstimationMixin:
                 )
 
         qs = qs.annotate(
-            b_income_value=Coalesce(
-                Subquery(
-                    PersonYearAssessment.objects.filter(
-                        person_year=OuterRef("pk"),
-                        latest=True,
-                    )
-                    .annotate(
-                        b_income=F("business_turnover")
-                        + F("catch_sale_market_income")
-                        + F("care_fee_income")
-                        + F("capital_income")
-                        - F("goods_comsumption")
-                        - F("operating_expenses_own_company")
-                    )
-                    .values("b_income")[:1]
-                ),
-                Decimal(0),
-            )
-        )
-
-        qs = qs.annotate(
-            indhandling_expenses_value=Coalesce(
-                Subquery(
-                    PersonYearAssessment.objects.filter(
-                        person_year=OuterRef("pk"),
-                    )
-                    .annotate(
-                        indhandling_expenses=Least(
-                            F("operating_costs_catch_sale"),
-                            F("catch_sale_market_income")
-                            + F("catch_sale_factory_income"),
-                        )
-                    )
-                    .order_by("-valid_from")
-                    .values("indhandling_expenses")[:1]
-                ),
-                Decimal(0),
-            )
-        )
-
-        qs = qs.annotate(
             month_income_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal("0.00"))
         )
         qs = qs.annotate(
             actual_sum=F("month_income_sum")
-            + F("b_income_value")
-            - F("indhandling_expenses_value")
+            + F("b_income")
+            - F("b_expenses")
+            - F("catchsale_expenses")
         )
 
         qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
@@ -275,11 +215,6 @@ class PersonYearEstimationMixin:
         )
         qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
 
-        print(
-            qs.values(
-                "month_income_sum", "b_income_value", "indhandling_expenses_value"
-            )
-        )
         if form.is_valid():
             selected_model = form.cleaned_data.get("selected_model", None)
             min_offset = form.cleaned_data.get("min_offset", None)

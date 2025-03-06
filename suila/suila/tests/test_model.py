@@ -511,46 +511,11 @@ class TestPersonYear(UserModelTest):
 
     def test_expenses_sum(self):
         self.assertEqual(
-            self.person_year.expenses_sum(
-                IncomeType.A,
-                datetime(
-                    self.year.year - 1, 12, 31, tzinfo=timezone.get_current_timezone()
-                ),
-            ),
-            Decimal(0),
-        )
-        self.assertEqual(
-            self.person_year.expenses_sum(
-                IncomeType.A,
-                datetime(self.year.year, 1, 1, tzinfo=timezone.get_current_timezone()),
-            ),
+            self.person_year.catchsale_expenses,
             Decimal(10000),
         )
         self.assertEqual(
-            self.person_year.expenses_sum(
-                IncomeType.A,
-                datetime(
-                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
-                ),
-            ),
-            Decimal(12000),
-        )
-        self.assertEqual(
-            self.person_year.expenses_sum(
-                IncomeType.B,
-                datetime(
-                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
-                ),
-            ),
-            Decimal(0),
-        )
-        self.assertEqual(
-            self.person_year.expenses_sum(
-                IncomeType.U,
-                datetime(
-                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
-                ),
-            ),
+            self.person_year.b_expenses,
             Decimal(0),
         )
 

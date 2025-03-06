@@ -214,7 +214,9 @@ class Simulation:
         for person_year in self.person_years:
             cumulative_payout = Decimal(0)
             for month in range(1, 13):
+                print(month)
                 estimated_year_result = person_year.assessed_b_income or Decimal(0)
+                print(f"estimated_year_result (from year): {estimated_year_result}")
                 try:
                     person_month = person_year.personmonth_set.get(month=month)
                     payout = person_month.benefit_paid or Decimal(0)
@@ -222,6 +224,8 @@ class Simulation:
                     estimated_year_result += (
                         person_month.estimated_year_result or Decimal(0)
                     )
+                    estimated_year_result -= person_year.b_expenses
+                    estimated_year_result -= person_year.catchsale_expenses
                     estimated_year_benefit = person_month.estimated_year_benefit
                 except PersonMonth.DoesNotExist:
                     payout = Decimal(0)
@@ -263,26 +267,30 @@ class Simulation:
         estimates: List[Prediction] = []
         prediction_items = []
         actual_year_sums = self.actual_year_sum(income_type)
+        actual_year_results = {}
         engine_name = engine.__class__.__name__
+        print(engine_name)
         for year in range(self.year_start, self.year_end + 1):
             try:
                 person_year = self.person_years.get(year=year)
             except PersonYear.DoesNotExist:
                 continue
             actual_year_sum = actual_year_sums[year]
+            actual_year_sum -= person_year.b_expenses
+            actual_year_sum -= person_year.catchsale_expenses
             for month in range(1, 13):
-                assessed_b_income = person_year.assessed_b_income
+                print(f"month: {month}")
                 if isinstance(engine, SelfReportedEngine):
-                    if assessed_b_income is not None:
-                        prediction_items.append(
-                            PredictionItem(
-                                year=year,
-                                month=month,
-                                predicted_value=assessed_b_income,
-                                prediction_difference=Decimal(0),
-                                prediction_difference_pct=Decimal(0),
-                            )
+                    prediction_items.append(
+                        PredictionItem(
+                            year=year,
+                            month=month,
+                            predicted_value=person_year.b_income
+                            - person_year.b_expenses,
+                            prediction_difference=Decimal(0),
+                            prediction_difference_pct=Decimal(0),
                         )
+                    )
 
                 else:
                     try:
@@ -302,11 +310,20 @@ class Simulation:
                         estimated_year_result = Decimal(0) + sum(
                             [estimate.estimated_year_result for estimate in estimate_qs]
                         )
-                        if (
-                            income_type in (None, IncomeType.B)
-                            and assessed_b_income is not None
-                        ):
-                            estimated_year_result += assessed_b_income
+                        print(f"estimated_year_result: {estimated_year_result}")
+                        print(f"person_year.b_income: {person_year.b_income}")
+                        print(f"person_year.b_expenses: {person_year.b_expenses}")
+                        print(
+                            f"person_year.catchsale_expenses: "
+                            f"{person_year.catchsale_expenses}"
+                        )
+                        print(f"actual_year_sum: {actual_year_sum}")
+                        if income_type in (None, IncomeType.B):
+                            estimated_year_result += (
+                                person_year.b_income
+                                - person_year.b_expenses
+                                - person_year.catchsale_expenses
+                            )
                         offset = IncomeEstimate.qs_offset(estimate_qs)
                         prediction_items.append(
                             PredictionItem(
@@ -320,13 +337,14 @@ class Simulation:
                                 ),
                             )
                         )
+            actual_year_results[year] = actual_year_sum
 
         if prediction_items:
             estimates.append(Prediction(engine=engine, items=prediction_items))
 
         return SimulationResultRow(
             title=engine.__class__.__name__ + " - " + engine.description,
-            income_sum=actual_year_sums,
+            income_sum=actual_year_results,
             predictions=estimates,
         )
 

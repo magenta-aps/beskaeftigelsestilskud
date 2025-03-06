@@ -83,17 +83,17 @@ def calculate_benefit(
     estimates_df = utils.get_income_estimates_df(month, year, cpr, engine_a=engine_a)
 
     # Læg B-indkomst fra forskudsopgørelse til
-    assessment_qs = PersonYearAssessment.objects.filter(
-        person_year__year_id=year, latest=True
-    )
+    person_year_qs = PersonYear.objects.filter(year_id=year)
     if cpr:
-        assessment_qs = assessment_qs.filter(person_year__person__cpr=cpr)
-    assessment_qs = PersonYearAssessment.annotate_assessed_b_income(assessment_qs)
+        person_year_qs = person_year_qs.filter(person__cpr=cpr)
+
     b_income_df = to_dataframe(
-        assessment_qs,
-        index="person_year__person__cpr",
+        person_year_qs,
+        index="person__cpr",
         dtypes={
-            "assessed_b_income_sum": float,
+            "b_income": float,
+            "b_expenses": float,
+            "catchsale_expenses": float,
         },
     )
 
@@ -106,8 +106,11 @@ def calculate_benefit(
     # Any months not found in concatenation have been set to NaN, replace with False
     df["signal"] = df["signal"].fillna(False)
 
-    df["calculation_basis"] = df["estimated_year_result"].add(
-        df["assessed_b_income_sum"], fill_value=0
+    df["calculation_basis"] = (
+        df["estimated_year_result"]
+        .add(df["b_income"], fill_value=0)
+        .sub(df["b_expenses"], fill_value=0)
+        .sub(df["catchsale_expenses"], fill_value=0)
     )
 
     # Only payout if we have a signal
@@ -118,7 +121,9 @@ def calculate_benefit(
         df.calculation_basis.fillna(0).map(calculate_benefit_func) * safety_factor
     )
     df["actual_year_benefit"] = (
-        df.actual_year_result.add(df["assessed_b_income_sum"], fill_value=0)
+        df.actual_year_result.add(df["b_income"], fill_value=0)
+        .sub(df["b_expenses"], fill_value=0)
+        .sub(df["catchsale_expenses"], fill_value=0)
         .fillna(0)
         .map(calculate_benefit_func)
     )
