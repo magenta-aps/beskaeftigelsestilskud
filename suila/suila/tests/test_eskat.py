@@ -1342,7 +1342,6 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
         self.create_or_update_objects(
             business_turnover=0, valid_from="2020-01-05T00:00:00"
         )
-        print("NU!")
         # Act: re-run income estimation for month 1
         estimate_2 = self.estimate_income(month=1)
         # Assert: we expect a yearly income matching the self-reported expected income
