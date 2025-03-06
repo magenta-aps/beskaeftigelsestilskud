@@ -240,7 +240,7 @@ class EstimationEngine:
                 a_income=Decimal(
                     person_month.a_income or 0  # type: ignore[attr-defined]
                 ),
-                b_income=Decimal(person_month.b_income_from_year or 0),
+                # b_income=Decimal(person_month.b_income_from_year or 0),
                 u_income=Decimal(person_month.u_income_from_year or 0),
             )
             for person_month in person_month_qs

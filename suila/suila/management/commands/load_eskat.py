@@ -79,6 +79,8 @@ class Command(SuilaBaseCommand):
                 ExpectedIncomeHandler.create_or_update_objects(
                     year, chunk, load, self.stdout
                 )
+            ExpectedIncomeHandler.finalize()
+
         if typ == "monthlyincome":
             if skew:
                 year_months = self._get_year_and_month_kwargs(year, month)

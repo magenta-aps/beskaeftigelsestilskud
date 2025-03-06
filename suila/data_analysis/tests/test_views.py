@@ -34,6 +34,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
+    StandardWorkBenefitCalculationMethod,
     Year,
 )
 from suila.simulation import IncomeItem, IncomeItemValuePart, Simulation
@@ -44,7 +45,18 @@ class TestSimulationJSONEncoder(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.person = Person.objects.create()
-        cls.year, _ = Year.objects.get_or_create(year=2020)
+        cls.calculation_method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+
+        cls.year = Year.objects.create(
+            year=2020, calculation_method=cls.calculation_method
+        )
         cls.personyear = PersonYear.objects.create(person=cls.person, year=cls.year)
         cls.person_serialized = {
             "address_line_1": None,
@@ -114,7 +126,7 @@ class TestSimulationJSONEncoder(TestCase):
         )
 
     def test_can_serialize_simulation(self):
-
+        self.maxDiff = None
         simulation = Simulation(
             [TwelveMonthsSummationEngine()],
             self.person,
@@ -133,7 +145,18 @@ class TestSimulationJSONEncoder(TestCase):
                         "chart_type": "bar",
                     },
                     {
-                        "payout": [],
+                        "payout": [
+                            {
+                                "correct_payout": 0.0,
+                                "cumulative_payout": 0.0,
+                                "estimated_year_benefit": 0.0,
+                                "estimated_year_result": 0.0,
+                                "month": m,
+                                "payout": 0.0,
+                                "year": 2020,
+                            }
+                            for m in range(1, 13)
+                        ],
                         "title": "Månedlig udbetaling",
                         "chart_type": "line",
                     },
@@ -177,10 +200,24 @@ class TestPersonAnalysisView(TestViewMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.person, _ = Person.objects.get_or_create(cpr="0101012222")
-        cls.year, _ = Year.objects.get_or_create(year=2020)
-        cls.middle_year, _ = Year.objects.get_or_create(year=2021)
-        cls.other_year, _ = Year.objects.get_or_create(year=2022)
+        cls.person = Person.objects.create(cpr="0101012222")
+        cls.calculation_method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.year = Year.objects.create(
+            year=2020, calculation_method=cls.calculation_method
+        )
+        cls.middle_year = Year.objects.create(
+            year=2021, calculation_method=cls.calculation_method
+        )
+        cls.other_year = Year.objects.create(
+            year=2022, calculation_method=cls.calculation_method
+        )
         cls.person_year, _ = PersonYear.objects.get_or_create(
             person=cls.person, year=cls.year
         )
