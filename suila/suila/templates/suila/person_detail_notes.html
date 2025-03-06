@@ -6,10 +6,6 @@
 {% load static %}
 {% load date_tags %}
 
-{% block title %}
-{% translate "Noter" %}
-{% endblock %}
-
 {% block breadcrumb %}
 {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
 <li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
@@ -19,138 +15,140 @@
 {% endblock %}
 
 {% block person_data %}
-    {% if notes %}
-    <div id="notater">
-    <table class="table">
-        <thead>
-        <tr>
-            <th class="col-2">Forfatter</th>
-            <th class="col-2">Dato</th>
-            <th class="col-6">Besked</th>
-            <th class="col-2">Filer</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for note in notes %}
-            <tr>
-            <td>{{ note.author.username }}</td>
-            <td>{{ note.created }}</td>
-            <td>{{ note.text|linebreaks }}</td>
-            <td>
-                {% for attachment in note.attachments.all %}
-                    <div><a href="{% url 'suila:note_attachment' pk=attachment.pk %}">{{ attachment.filename }}</a></div>
-                {% endfor %}
-            </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
-    {% endif %}
-
-    <form method="post" enctype="multipart/form-data" id="note-form">
+<form method="post" enctype="multipart/form-data" id="note-form">
     {% csrf_token %}
     {{ formset.management_form }}
-        <div class="row">
-        <label for="{{ form.text.id_for_label }}">Tilføj notat</label>
-        </div>
-        <div class="row">
-            <div class="col-12">{{ form.text }}</div>
-        </div>
-        <div class="row">
-            <div class="col-8">
-                {% for subform in formset %}
-                    <div id="formset_container">
-                        <div class="row">
-                            <div class="col-6">
-                                {{ subform.file }}
-                            </div>
-                            <div class="col-6">
-                                <button type="button" class="btn btn-outline-primary bi-x remove-row"></button>
-                            </div>
-                        </div>
+    <div class="row mt-5 mb-3">
+        <label for="{{ form.text.id_for_label }}">{% translate "Tilføj notat" %}</label>
+    </div>
+    <div class="row my-3">
+        <div class="col-12">{{ form.text }}</div>
+    </div>
+    <div class="row">
+        <div class="col-8">
+            {% for subform in formset %}
+            <div id="formset_container">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        {{ subform.file }}
                     </div>
-                {% endfor %}
-                <div id="formset_prototype" class="d-none">
-                    {% with formset.empty_form as subform %}
-                        <div class="row">
-                            <div class="col-6 file-input">
-                                {{ subform.file }}
-                            </div>
-                            <div class="col-6">
-                                <button type="button" class="btn btn-outline-primary bi-x remove-row"></button>
-                            </div>
-                        </div>
-                    {% endwith %}
+                    <div class="col-6">
+                        <button type="button" class="btn btn-outline-primary bi-x remove-row"></button>
+                    </div>
                 </div>
             </div>
-            <div class="col-4 d-flex justify-content-end align-items-start">
-                <button type="submit" class="btn btn-success">Opret notat</button>
+            {% endfor %}
+            <div id="formset_prototype" class="d-none">
+                {% with formset.empty_form as subform %}
+                <div class="row mb-3">
+                    <div class="col-6 file-input">
+                        {{ subform.file }}
+                    </div>
+                    <div class="col-6">
+                        <button type="button" class="btn btn-outline-primary bi-x remove-row"></button>
+                    </div>
+                </div>
+                {% endwith %}
             </div>
         </div>
+        <div class="col-4 d-flex justify-content-end align-items-start">
+            <button type="submit" class="btn btn-primary">{% translate "Opret notat" %}</button>
+        </div>
+    </div>
+</form>
 
-    </form>
-
+{% if notes %}
+<div id="notater" class="my-5">
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="col-2">{% translate "Forfatter" %}</th>
+                <th class="col-2">{% translate "Dato" %}</th>
+                <th class="col-4">{% translate "Besked" %}</th>
+                <th class="col-4">{% translate "Filer" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for note in notes %}
+            <tr>
+                <td>{{ note.author.get_full_name }}</td>
+                <td>{{ note.created }}</td>
+                <td>{{ note.text|linebreaks }}</td>
+                <td>
+                    {% for attachment in note.attachments.all %}
+                    <div>
+                        <a href="{% url 'suila:note_attachment' pk=attachment.pk %}">{{ attachment.filename }}</a>
+                    </div>
+                {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_headers %}
-    <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
-    <script src="{% static 'suila/formset.js' %}" nonce="{{ request.csp_nonce }}"></script>
-    <script src="{% static 'suila/fileinput.js' %}" nonce="{{ request.csp_nonce }}"></script>
-    <script nonce="{{ request.csp_nonce }}">
-        $(function (){
-            const container = $("#formset_container");
+<link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+<script src="{% static 'suila/formset.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'suila/fileinput.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+    $(function () {
+        const container = $("#formset_container");
 
-            // Formset
-            // -------
-            const formset = container.formset("attachments", $("#formset_prototype"), true);
-            const subformAdded = function(subform) {
-                if (!(subform instanceof $)) {
-                    subform = $(subform);
-                }
-                subform.find(".remove-row").click(removeForm.bind(subform, subform));
-                subformsUpdated();
-            };
-            const subformRemoved = function(subform) {
-                const rows = container.find(".row");
-                rows.each(function (index, element) {
-                    $(this).find("input[name],select[name]").each(function (){
-                        this.id = this.id.replace(/-\d+-/, "-"+index+"-");
-                        this.name = this.name.replace(/-\d+-/, "-"+index+"-");
-                    });
-                });
-                subformsUpdated();
-            };
-            const subformsUpdated = function () {
-                const rows = container.find(".row");
-                const lastRow = rows.last();
-                rows.find(".remove-row").show();
-                lastRow.find(".remove-row").hide();
+        // Formset
+        // -------
+        const formset = container.formset("attachments", $("#formset_prototype"), true);
+        const subformAdded = function (subform) {
+            if (!(subform instanceof $)) {
+                subform = $(subform);
             }
-
-            const removeForm = function(subform) {
-                subform.slideUp(400, () => {
-                    formset.removeForm(subform, true);
+            subform.find(".remove-row").click(removeForm.bind(subform, subform));
+            subformsUpdated();
+        };
+        const subformRemoved = function (subform) {
+            const rows = container.find(".row");
+            rows.each(function (index, element) {
+                $(this).find("input[name],select[name]").each(function () {
+                    this.id = this.id.replace(/-\d+-/, "-" + index + "-");
+                    this.name = this.name.replace(/-\d+-/, "-" + index + "-");
                 });
-            };
-            container.find(".row").each(function (){subformAdded(this)});
-            container.on("subform.post_add", function(event, row) {
-                subformAdded(row)
-                $(row).slideDown(400);
             });
-            container.on("subform.pre_add", function(event, row) {
-                $(row).hide();
+            subformsUpdated();
+        };
+        const subformsUpdated = function () {
+            const rows = container.find(".row");
+            const lastRow = rows.last();
+            rows.find(".remove-row").show();
+            lastRow.find(".remove-row").hide();
+        }
+
+        const removeForm = function (subform) {
+            subform.slideUp(400, () => {
+                formset.removeForm(subform, true);
             });
-            container.on("subform.post_remove", function(event, row) {
-                subformRemoved(row);
-            });
+        };
+        container.find(".row").each(function () {
+            subformAdded(this)
         });
-    </script>
-    <script nonce="{{ request.csp_nonce }}">
-    $(function(){
+        container.on("subform.post_add", function (event, row) {
+            subformAdded(row)
+            $(row).slideDown(400);
+        });
+        container.on("subform.pre_add", function (event, row) {
+            $(row).hide();
+        });
+        container.on("subform.post_remove", function (event, row) {
+            subformRemoved(row);
+        });
+    });
+</script>
+<script nonce="{{ request.csp_nonce }}">
+    $(function () {
         const form = $("#note-form");
         const selector = "input[type=file],textarea";
-        const updateSubmit = function() {
+        const updateSubmit = function () {
             let hasValue = false;
             form.find(selector).each((index, element) => {
                 if (element.value) {
@@ -164,5 +162,5 @@
         $("#formset_container").on("subform.post_remove", updateSubmit);
         updateSubmit();
     });
-    </script>
+</script>
 {% endblock %}

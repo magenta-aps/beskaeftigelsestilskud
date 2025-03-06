@@ -7,6 +7,7 @@ from urllib.parse import quote_plus, unquote_plus
 from django.forms import (
     ChoiceField,
     DecimalField,
+    FileInput,
     Form,
     HiddenInput,
     ModelForm,
@@ -26,6 +27,8 @@ class NoteForm(ModelForm):
 
 
 class NoteAttachmentForm(ModelForm):
+    class Meta:
+        widgets = {"file": FileInput(attrs={"class": "form-control"})}
 
     def save(self, commit=True):
         instance = super().save(False)
