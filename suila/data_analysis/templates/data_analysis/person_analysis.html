@@ -173,6 +173,18 @@ const getChartData = function (doc, row, rowId, options) {
                 show: true
             }
         }
+
+        chartData.colors = [
+            function ({ value, seriesIndex, dataPointIndex, w }) {
+                const sereis = w.config.series[seriesIndex]
+
+                if (sereis.name === "U indkomst") {
+                    return "#feb133"
+                }
+
+                return "#0c8ef8"
+            }
+        ]
     }
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
