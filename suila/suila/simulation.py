@@ -214,7 +214,7 @@ class Simulation:
         for person_year in self.person_years:
             cumulative_payout = Decimal(0)
             for month in range(1, 13):
-                estimated_year_result = person_year.assessed_b_income
+                estimated_year_result = person_year.assessed_b_income or Decimal(0)
                 try:
                     person_month = person_year.personmonth_set.get(month=month)
                     payout = person_month.benefit_paid or Decimal(0)
@@ -300,7 +300,10 @@ class Simulation:
                         estimated_year_result = Decimal(0) + sum(
                             [estimate.estimated_year_result for estimate in estimate_qs]
                         )
-                        if income_type in (None, IncomeType.B):
+                        if (
+                            income_type in (None, IncomeType.B)
+                            and assessed_b_income is not None
+                        ):
                             estimated_year_result += assessed_b_income
                         offset = IncomeEstimate.qs_offset(estimate_qs)
                         prediction_items.append(

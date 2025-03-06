@@ -20,7 +20,19 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import SET_NULL, F, Index, QuerySet, Sum, TextChoices
+from django.db.models import (
+    SET_NULL,
+    BooleanField,
+    Case,
+    F,
+    Index,
+    Q,
+    QuerySet,
+    Sum,
+    TextChoices,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
@@ -637,6 +649,10 @@ class PersonMonth(PermissionsMixin, models.Model):
         blank=True,
     )
 
+    has_paid_b_tax = models.BooleanField(
+        default=False,
+    )
+
     @property
     def person(self):
         return self.person_year.person
@@ -699,6 +715,33 @@ class PersonMonth(PermissionsMixin, models.Model):
         if action == "view":
             return qs.filter(person_year__person__cpr=user.cpr)
         return qs.none()
+
+    @property
+    def signal(self):
+        # TODO: U income from month, not year
+        return self.has_paid_b_tax or self.amount_sum > 0 or self.u_income_from_year > 0
+
+    @classmethod
+    def signal_qs(cls, qs: QuerySet[PersonMonth]) -> QuerySet[PersonMonth]:
+        return qs.annotate(
+            has_a_income=Case(
+                When(amount_sum__gt=Value(0), then=Value(True)),
+                default_value=Value(False),
+                output_field=BooleanField(),
+            ),
+            has_u_income=Value(False),  # TODO: Get U income
+        ).annotate(
+            signal=Case(
+                When(
+                    Q(has_paid_b_tax=True)
+                    | Q(has_a_income=True)
+                    | Q(has_u_income=True),
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
 
 
 class Employer(PermissionsMixin, models.Model):

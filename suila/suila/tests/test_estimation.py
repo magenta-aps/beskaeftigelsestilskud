@@ -390,12 +390,6 @@ class TestEstimationEngine(TestCase):
                         "a_income", flat=True
                     )
                 ),
-                "b_income": sum(
-                    person_month.monthlyincomereport_set.all().values_list(
-                        "b_income", flat=True
-                    )
-                )
-                + Decimal(person_month.b_income_from_year or 0),
                 "u_income": Decimal(person_month.u_income_from_year or 0),
             }
 

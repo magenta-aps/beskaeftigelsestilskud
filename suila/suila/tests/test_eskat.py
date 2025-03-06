@@ -18,6 +18,7 @@ from urllib.parse import parse_qs
 import requests
 from django.test import TestCase, override_settings
 from django.test.testcases import SimpleTestCase
+from django.utils import timezone
 from requests import HTTPError, Response
 
 from suila.integrations.eskat.client import EskatClient
@@ -1167,12 +1168,18 @@ class TestUpdateMixin(BaseEnvMixin):
             cpr=self.person.cpr,
             verbosity=0,
         )
+        person_year: PersonYear = PersonYear.objects.get(
+            year=self.year,
+            person=self.person,
+        )
         person_month: PersonMonth = PersonMonth.objects.get(
-            person_year__year=self.year,
-            person_year__person=self.person,
+            person_year=person_year,
             month=month,
         )
-        return person_month.estimated_year_result
+
+        return person_month.estimated_year_result + (
+            person_year.assessed_b_income or Decimal(0)
+        )
 
 
 class TestMonthlyIncomeUpdate(TestUpdateMixin, TestCase):
@@ -1320,6 +1327,9 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
             goods_comsumption=0,
             operating_expenses_own_company=0,
             valid_from="2020-01-01T00:00:00",
+        )
+        self.get_or_create_person_month(
+            month=1, import_date=timezone.now(), has_paid_b_tax=True
         )
         # Act: run income estimation for month 1
         estimate_1 = self.estimate_income(month=1)

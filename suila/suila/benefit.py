@@ -67,6 +67,18 @@ def calculate_benefit(
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
     benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]
 
+    month_qs = PersonMonth.objects.filter(person_year__year_id=year, month=month)
+    if cpr:
+        month_qs = month_qs.filter(person_year__person__cpr=cpr)
+    month_qs = PersonMonth.signal_qs(month_qs)
+    month_df = to_dataframe(
+        month_qs,
+        index="person_year__person__cpr",
+        dtypes={
+            "signal": bool,
+        },
+    )
+
     # Get income estimates for THIS month
     estimates_df = utils.get_income_estimates_df(month, year, cpr, engine_a=engine_a)
 
@@ -89,14 +101,17 @@ def calculate_benefit(
     payouts_df = get_payout_df(month, year, cpr=cpr)
 
     # Combine for ease-of-use
-    df = pd.concat([estimates_df, payouts_df, b_income_df], axis=1)
+    df = pd.concat([month_df, estimates_df, payouts_df, b_income_df], axis=1)
+
+    # Any months not found in concatenation have been set to NaN, replace with False
+    df["signal"] = df["signal"].fillna(False)
 
     df["calculation_basis"] = df["estimated_year_result"].add(
         df["assessed_b_income_sum"], fill_value=0
     )
-    # Do not payout if the A amount is below zero
-    # TODO: Skal signaler afgøre dette på en måde?
-    df.loc[df.estimated_year_result == 0, "calculation_basis"] = 0
+
+    # Only payout if we have a signal
+    df.loc[np.logical_not(df["signal"]), "calculation_basis"] = 0
 
     # Calculate benefit
     df["estimated_year_benefit"] = (
