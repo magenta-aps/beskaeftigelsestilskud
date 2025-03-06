@@ -26,6 +26,7 @@ from django.db.models import (
     Case,
     F,
     Index,
+    OuterRef,
     Q,
     QuerySet,
     Sum,
@@ -33,6 +34,7 @@ from django.db.models import (
     Value,
     When,
 )
+from django.db.models.expressions import Subquery
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
@@ -500,23 +502,24 @@ class PersonYear(PermissionsMixin, models.Model):
             .first()
         )
 
-    def expenses_sum(
-        self, income_type: IncomeType, evaluation_date: datetime | None = None
-    ) -> Decimal:
+    def expenses_sum(self, income_type: IncomeType) -> Decimal:
         # Sum of expenses that must be subtracted from every estimation
-        assessment = self.current_assessment(evaluation_date)
         expenses = Decimal(0)
+        assessment = self.current_assessment()
         if assessment is not None:
             if income_type == IncomeType.A:
-                expenses += max(
-                    min(
-                        assessment.operating_costs_catch_sale,
-                        assessment.catch_sale_market_income
-                        + assessment.catch_sale_factory_income,
-                    ),
-                    Decimal(0),
-                )
+                expenses += assessment.assessed_catchsale_expenses
         return expenses
+
+    @classmethod
+    def annotate_assessment(cls, qs: QuerySet[PersonYear]) -> QuerySet[PersonYear]:
+        return qs.annotate(
+            assessment=Subquery(
+                PersonYearAssessment.objects.filter(
+                    person_year=OuterRef("pk"), latest=True
+                )
+            )
+        )
 
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
@@ -1246,13 +1249,13 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
             + self.capital_income
         )
         expenses = self.goods_comsumption + self.operating_expenses_own_company
-
         result = incomes - expenses
-
         return Decimal(result).quantize(Decimal("0.01"))
 
     @classmethod
-    def annotate_assessed_b_income(cls, qs: QuerySet[PersonYearAssessment]):
+    def annotate_assessed_b_income(
+        cls, qs: QuerySet[PersonYearAssessment]
+    ) -> QuerySet[PersonYearAssessment]:
         return qs.annotate(
             assessed_b_income_sum=F("business_turnover")
             + F("catch_sale_market_income")
@@ -1260,6 +1263,17 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
             + F("capital_income")
             - F("goods_comsumption")
             - F("operating_expenses_own_company")
+        )
+
+    @property
+    def assessed_catchsale_expenses(self) -> Decimal:
+        # Sum of expenses that must be subtracted from every estimation
+        return max(
+            min(
+                self.operating_costs_catch_sale,
+                self.catch_sale_market_income + self.catch_sale_factory_income,
+            ),
+            Decimal(0),
         )
 
     @staticmethod

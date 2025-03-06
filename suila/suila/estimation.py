@@ -301,7 +301,7 @@ class EstimationEngine:
         person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
         person_year_expenses = {
             # Use most recent expenses data
-            income_type: person_year.expenses_sum(income_type, evaluation_date=None)
+            income_type: person_year.expenses_sum(income_type)
             for income_type in IncomeType
         }
         for engine in EstimationEngine.instances():

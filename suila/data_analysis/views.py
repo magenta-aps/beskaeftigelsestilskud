@@ -20,7 +20,7 @@ from data_analysis.forms import (
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Least
 from django.http import HttpResponse
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
@@ -214,18 +214,12 @@ class PersonYearEstimationMixin:
                     }
                 )
 
-        # Originally this annotated on the sum of
-        # personmonth__monthlyaincomereport__amount, but that produced weird
-        # results in other annotations, such as Sum("personmonth__benefit_paid")
-        # including two months twice for a few PersonYears
-        # Probably
-        # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
-        # Therefore we introduce this field instead, which is also quicker to sum over
         qs = qs.annotate(
             b_income_value=Coalesce(
                 Subquery(
                     PersonYearAssessment.objects.filter(
                         person_year=OuterRef("pk"),
+                        latest=True,
                     )
                     .annotate(
                         b_income=F("business_turnover")
@@ -235,27 +229,40 @@ class PersonYearEstimationMixin:
                         - F("goods_comsumption")
                         - F("operating_expenses_own_company")
                     )
-                    .order_by("-valid_from")
                     .values("b_income")[:1]
                 ),
                 Decimal(0),
             )
         )
+
+        qs = qs.annotate(
+            indhandling_expenses_value=Coalesce(
+                Subquery(
+                    PersonYearAssessment.objects.filter(
+                        person_year=OuterRef("pk"),
+                    )
+                    .annotate(
+                        indhandling_expenses=Least(
+                            F("operating_costs_catch_sale"),
+                            F("catch_sale_market_income")
+                            + F("catch_sale_factory_income"),
+                        )
+                    )
+                    .order_by("-valid_from")
+                    .values("indhandling_expenses")[:1]
+                ),
+                Decimal(0),
+            )
+        )
+
         qs = qs.annotate(
             month_income_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal("0.00"))
         )
-        qs = qs.annotate(actual_sum=F("month_income_sum") + F("b_income_value"))
-        # qs = qs.annotate(
-        #     actual_sum=Subquery(
-        #         PersonMonth.objects.filter(person_year=OuterRef("pk"))
-        #         .annotate(
-        #             actual_sum=Coalesce(
-        #                 Func("amount_sum", function="Sum"),
-        #                 Decimal(0)
-        #             )
-        #         ).values("actual_sum")
-        #     )
-        # )
+        qs = qs.annotate(
+            actual_sum=F("month_income_sum")
+            + F("b_income_value")
+            - F("indhandling_expenses_value")
+        )
 
         qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
 
@@ -268,6 +275,11 @@ class PersonYearEstimationMixin:
         )
         qs = qs.annotate(payout_offset=F("payout") - F("correct_payout"))
 
+        print(
+            qs.values(
+                "month_income_sum", "b_income_value", "indhandling_expenses_value"
+            )
+        )
         if form.is_valid():
             selected_model = form.cleaned_data.get("selected_model", None)
             min_offset = form.cleaned_data.get("min_offset", None)
