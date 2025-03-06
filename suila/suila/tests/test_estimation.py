@@ -746,31 +746,78 @@ class TwoYearSummationEngineTest(TestCase):
             preferred_estimation_engine_a="TwoYearSummationEngine",
             preferred_estimation_engine_b="TwoYearSummationEngine",
         )
+
         cls.months = []
         cls.reports = []
+
         for year, months in (
             (
                 cls.person_year0,
-                [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000],
+                [
+                    (0, 0, 0),
+                    (0, 0, 0),
+                    (1000, 0, 0),
+                    (1000, 0, 0),
+                    (1000, 0, 0),
+                    (900, 0, 0),
+                    (1100, 0, 0),
+                    (800, 0, 0),
+                    (1200, 0, 0),
+                    (1000, 0, 0),
+                    (1000, 0, 0),
+                    (1000, 0, 0),
+                ],
             ),
             (
                 cls.person_year1,
-                [1200, 1000, 900, 800, 1000, 1100, 1300, 1200, 1100, 1200, 1000, 900],
+                [
+                    (1200, 0, 0),
+                    (1000, 0, 0),
+                    (900, 0, 45000),
+                    (800, 0, 0),
+                    (1000, 0, 0),
+                    (1100, 0, 0),
+                    (1300, 0, 0),
+                    (1200, 0, 0),
+                    (1100, 0, 5000),
+                    (1200, 0, 0),
+                    (1000, 0, 0),
+                    (900, 0, 0),
+                ],
             ),
             (
                 cls.person_year2,
-                [1300, 1100, 800, 900, 1100, 1200, 1000, 1100, 1000, 1200, 1100, 1300],
+                [
+                    (1300, 0, 0),
+                    (1100, 0, 0),
+                    (800, 0, 0),
+                    (900, 0, 0),
+                    (1100, 0, 0),
+                    (1200, 0, 0),
+                    (1000, 0, 0),
+                    (1100, 0, 0),
+                    (1000, 0, 0),
+                    (1200, 0, 0),
+                    (1100, 0, 0),
+                    (1300, 0, 0),
+                ],
             ),
         ):
-            for month, income in enumerate(months, start=1):
+            for month, incomes in enumerate(months, start=1):
+                a_income, b_income, u_income = incomes
+
                 person_month = PersonMonth.objects.create(
                     person_year=year, month=month, import_date=date.today()
                 )
                 cls.months.append(person_month)
+
+                # Create MonthlyIncomeReport for all incomes
                 cls.reports.append(
                     MonthlyIncomeReport.objects.create(
                         person_month=person_month,
-                        salary_income=Decimal(income),
+                        salary_income=Decimal(a_income),
+                        b_income=Decimal(b_income),
+                        u_income=Decimal(u_income),
                     )
                 )
 
@@ -783,8 +830,8 @@ class TwoYearSummationEngineTest(TestCase):
                 month=report.person_month.month,
                 year=report.person_month.year,
                 a_income=report.a_income,
-                b_income=Decimal(0),
-                u_income=Decimal(0),
+                b_income=report.b_income,
+                u_income=report.u_income,
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
@@ -792,67 +839,99 @@ class TwoYearSummationEngineTest(TestCase):
             for report in self.reports
         ]
 
-        for month, expectation in enumerate(
+        # Year 1
+        for month, expectations in enumerate(
             [
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("12700.00"),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("12700.00"), Decimal("0.00"), Decimal("50000.00")),
             ],
             start=1,
         ):
             person_month = PersonMonth.objects.get(
                 person_year=self.person_year1, month=month
             )
-            income_estimate = TwoYearSummationEngine.estimate(
-                person_month,
-                data,
-                IncomeType.A,
-            )
-            self.assertEqual(
-                income_estimate.estimated_year_result.quantize(Decimal("0.01")),
-                expectation,
-                month,
-            )
 
-        for month, expectation in enumerate(
+            for idx, expected_income in enumerate(expectations):
+                income_type = None
+                match idx:
+                    case 0:
+                        income_type = IncomeType.A
+                    case 1:
+                        income_type = IncomeType.B
+                    case 2:
+                        income_type = IncomeType.U
+
+                if not income_type:
+                    raise Exception(f"unknown expected-income-index: {idx}")
+
+                income_estimate = TwoYearSummationEngine.estimate(
+                    person_month,
+                    data,
+                    income_type,
+                )
+
+                self.assertEqual(
+                    income_estimate.estimated_year_result.quantize(Decimal("0.01")),
+                    expected_income,
+                    month,
+                )
+
+        # Year 2
+        for month, expectations in enumerate(
             [
-                Decimal("12000.00"),
-                Decimal("12550.00"),
-                Decimal("12450.00"),
-                Decimal("12400.00"),
-                Decimal("12450.00"),
-                Decimal("12600.00"),
-                Decimal("12550.00"),
-                Decimal("12700.00"),
-                Decimal("12600.00"),
-                Decimal("12700.00"),
-                Decimal("12750.00"),
-                Decimal("13100.00"),
+                (Decimal("12000.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12550.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12450.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12400.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12450.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12600.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12550.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12700.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12600.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12700.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("12750.00"), Decimal("0.00"), Decimal("25000.00")),
+                (Decimal("13100.00"), Decimal("0.00"), Decimal("0.00")),
             ],
             start=1,
         ):
             person_month = PersonMonth.objects.get(
                 person_year=self.person_year2, month=month
             )
-            income_estimate = TwoYearSummationEngine.estimate(
-                person_month,
-                data,
-                IncomeType.A,
-            )
-            self.assertEqual(
-                income_estimate.estimated_year_result.quantize(Decimal("0.01")),
-                expectation,
-                month,
-            )
+
+            for idx, expected_income in enumerate(expectations):
+                income_type = None
+                match idx:
+                    case 0:
+                        income_type = IncomeType.A
+                    case 1:
+                        income_type = IncomeType.B
+                    case 2:
+                        income_type = IncomeType.U
+
+                if not income_type:
+                    raise Exception(f"unknown expected-income-index: {idx}")
+
+                income_estimate = TwoYearSummationEngine.estimate(
+                    person_month,
+                    data,
+                    income_type,
+                )
+
+                self.assertEqual(
+                    income_estimate.estimated_year_result.quantize(Decimal("0.01")),
+                    expected_income,
+                    month,
+                )
 
 
 class TestSelfReportedEngine(TestCase):
