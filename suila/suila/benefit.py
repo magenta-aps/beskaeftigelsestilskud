@@ -91,13 +91,16 @@ def calculate_benefit(
     # Combine for ease-of-use
     df = pd.concat([estimates_df, payouts_df, b_income_df], axis=1)
 
-    df["estimated_year_result"] = df["estimated_year_result"].add(
+    df["calculation_basis"] = df["estimated_year_result"].add(
         df["assessed_b_income_sum"], fill_value=0
     )
+    # Do not payout if the A amount is below zero
+    # TODO: Skal signaler afgøre dette på en måde?
+    df.loc[df.estimated_year_result == 0, "calculation_basis"] = 0
 
     # Calculate benefit
     df["estimated_year_benefit"] = (
-        df.estimated_year_result.fillna(0).map(calculate_benefit_func) * safety_factor
+        df.calculation_basis.fillna(0).map(calculate_benefit_func) * safety_factor
     )
     df["actual_year_benefit"] = (
         df.actual_year_result.add(df["assessed_b_income_sum"], fill_value=0)

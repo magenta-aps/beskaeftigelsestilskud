@@ -214,15 +214,15 @@ class Simulation:
         for person_year in self.person_years:
             cumulative_payout = Decimal(0)
             for month in range(1, 13):
+                estimated_year_result = person_year.assessed_b_income
                 try:
                     person_month = person_year.personmonth_set.get(month=month)
                     payout = person_month.benefit_paid or Decimal(0)
                     actual_year_benefit = person_month.actual_year_benefit
-                    estimated_year_result = person_month.estimated_year_result
+                    estimated_year_result += person_month.estimated_year_result
                     estimated_year_benefit = person_month.estimated_year_benefit
                 except PersonMonth.DoesNotExist:
                     payout = Decimal(0)
-                    estimated_year_result = person_year.assessed_b_income or Decimal(0)
                     actual_year_benefit = (
                         person_year.year.calculation_method.calculate_float(
                             estimated_year_result
@@ -269,8 +269,8 @@ class Simulation:
                 continue
             actual_year_sum = actual_year_sums[year]
             for month in range(1, 13):
+                assessed_b_income = person_year.assessed_b_income
                 if isinstance(engine, SelfReportedEngine):
-                    assessed_b_income = person_year.assessed_b_income
                     if assessed_b_income is not None:
                         prediction_items.append(
                             PredictionItem(
@@ -300,6 +300,8 @@ class Simulation:
                         estimated_year_result = Decimal(0) + sum(
                             [estimate.estimated_year_result for estimate in estimate_qs]
                         )
+                        if income_type in (None, IncomeType.B):
+                            estimated_year_result += assessed_b_income
                         offset = IncomeEstimate.qs_offset(estimate_qs)
                         prediction_items.append(
                             PredictionItem(
