@@ -16,6 +16,7 @@ from django.db.models.functions import Cast, LPad, Substr
 from tenQ.client import ClientException, put_file_in_prisme_folder
 from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
+from suila.dates import get_payment_date
 from suila.integrations.prisme.g68g69 import (
     G68G69TransactionPair,
     G68G69TransactionWriter,
@@ -177,14 +178,13 @@ class BatchExport:
         )
 
     def get_payment_date(self, person_month: PersonMonth) -> date:
-        # Payment date is the day before the third Tuesday, two months after the given
-        # `PersonMonth`. E.g. for a `PersonMonth` in February 2025, the payment date is
-        # April 14, 2025. Note, this is not necessarily the same as the third Monday in
-        # the month.
-        return (
-            person_month.year_month
-            + relativedelta(months=2, weekday=TU(+3))
-            - timedelta(days=1)
+        # Payment date in Prisme is one day before the "official" payment date.
+        # (The "official" payment date is the third Tuesday in the month two months
+        # after the month we are exporting.)
+        # Note, the payment date in Prisme not necessarily the same as the third Monday
+        # in the month.
+        return get_payment_date(person_month.year, person_month.month) - timedelta(
+            days=1
         )
 
     def get_posting_date(self, person_month: PersonMonth) -> date:

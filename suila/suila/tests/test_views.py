@@ -23,7 +23,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
 
-from suila.benefit import get_payout_date
 from suila.forms import NoteAttachmentFormSet
 from suila.models import (
     BTaxPayment,
@@ -313,7 +312,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailView
 
     def test_get_context_data(self):
-        with self._time_context(year=2020):
+        with self._time_context(year=2020):  # December 2020
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             # Verify that expected context variables are present
             self.assertIn("next_payout_date", response.context_data)
@@ -322,10 +321,10 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertIn("estimated_year_result", response.context_data)
             self.assertIn("table", response.context_data)
             # Verify the values of the context variables
-            self.assertEqual(
-                response.context_data["next_payout_date"], get_payout_date(2020, 12)
-            )
-            self.assertEqual(response.context_data["benefit_paid"], Decimal("12.0"))
+            self.assertIsNotNone(response.context_data["next_payout_date"])
+            # When looking at page in December 2020, the "focus date" is October 2020
+            # The mocked `benefit_paid` for October is 10 (= the month number.)
+            self.assertEqual(response.context_data["benefit_paid"], Decimal("10.0"))
             self.assertIsNone(response.context_data["estimated_year_benefit"])
             self.assertIsNone(response.context_data["estimated_year_result"])
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
@@ -335,7 +334,22 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         # Arrange: go to year without `PersonMonth` objects for `normal_user`
         with self._time_context(year=2021):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
-            self.assertTrue(response.context_data["no_current_month"])
+            self.assertFalse(response.context_data["show_next_payment"])
+
+    def test_get_context_data_calculates_next_payout_date(self):
+        # Arrange: add person month for person 1 in January 2025
+        person_year, _ = PersonYear.objects.get_or_create(
+            person=self.person1,
+            year=Year.objects.get(year=2025),
+        )
+        PersonMonth.objects.create(
+            person_year=person_year, month=1, import_date=date.today()
+        )
+        with self._time_context(year=2025, month=3):  # March 2025
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertEqual(
+                response.context_data["next_payout_date"], date(2025, 3, 18)
+            )
 
     def test_get_table_data(self):
         with self._time_context(year=2020):
