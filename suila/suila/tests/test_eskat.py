@@ -490,6 +490,7 @@ class TestExpectedIncome(BaseTestCase):
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
+        ExpectedIncomeHandler.finalize()
         self.assertEqual(
             PersonYearAssessment.objects.filter(person_year__year__year=2024).count(), 1
         )
@@ -514,6 +515,7 @@ class TestExpectedIncome(BaseTestCase):
             DataLoad.objects.create(source="test"),
             self.OutputWrapper(stdout, ending="\n"),
         )
+        ExpectedIncomeHandler.finalize()
         objects_after = len(PersonYearAssessment.objects.all())
         self.assertEqual(objects_before, objects_after)
 
