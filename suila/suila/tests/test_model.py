@@ -640,6 +640,13 @@ class TestPersonMonth(UserModelTest):
         self.assertNotIn(self.month1, qs)
         self.assertFalse(PersonMonth.has_model_permissions(self.no_user, "view"))
 
+    def test_signal(self):
+        self.assertTrue(self.month1.signal)
+        self.assertTrue(self.month2.signal)
+        self.assertTrue(self.month3.signal)
+        self.assertTrue(self.month4.signal)
+        self.assertFalse(self.month12.signal)
+
 
 class TestEmployer(ModelTest):
 
