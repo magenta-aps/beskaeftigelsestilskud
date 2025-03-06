@@ -65,9 +65,9 @@
     <div class="col-6">
         {% if monthly_benefit or yearly_benefit %}
         <div class="emphasis">
-            <p>{% translate "Beregnet beskæftigelsesfradrag pr. måned:" %}</p>
+            <p>{% translate "Beregnet Suila-tapit pr. måned:" %}</p>
             <h1>{{ monthly_benefit|format_amount }}</h1>
-            <p class="mt-5">{% translate "Beregnet beskæftigelsesfradrag for hele året:" %}</p>
+            <p class="mt-5">{% translate "Beregnet Suila-tapit for hele året:" %}</p>
             <h1>{{ yearly_benefit|format_amount }}</h1>
         </div>
         {% endif %}
