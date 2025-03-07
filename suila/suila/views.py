@@ -527,6 +527,7 @@ class PersonGraphView(
                 self.year,
                 self.month,
             )
+            return None
         else:
             return person_month.estimated_year_result
 
