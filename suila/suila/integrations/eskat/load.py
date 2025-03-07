@@ -581,7 +581,6 @@ class TaxInformationHandler(Handler):
     def update_person_location_code(
         cls, year: int, cpr_taxinfo_map: Dict[str, "TaxInformation"]
     ):
-        print(len(cpr_taxinfo_map))
         # Update `Person.location_code` using `TaxInformation.cpr_municipality_code`
         person_map: dict[str, Person] = {
             person.cpr: person
