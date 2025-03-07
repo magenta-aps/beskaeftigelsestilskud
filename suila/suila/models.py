@@ -10,6 +10,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
+from itertools import batched
 from os.path import basename
 from typing import Iterable, List, Sequence, Tuple
 
@@ -460,6 +461,30 @@ class PersonYear(PermissionsMixin, models.Model):
         on_delete=models.SET_NULL,
     )
 
+    # Beregnede felter, sæt kun med signaler
+    # Alle tre er fra PersonYearAssessment
+    b_income = models.DecimalField(
+        null=False,
+        blank=False,
+        default=Decimal(0),
+        max_digits=12,
+        decimal_places=2,
+    )
+    b_expenses = models.DecimalField(
+        null=False,
+        blank=False,
+        default=Decimal(0),
+        max_digits=12,
+        decimal_places=2,
+    )
+    catchsale_expenses = models.DecimalField(
+        null=False,
+        blank=False,
+        default=Decimal(0),
+        max_digits=12,
+        decimal_places=2,
+    )
+
     def __str__(self):
         return f"{self.person} ({self.year})"
 
@@ -500,24 +525,6 @@ class PersonYear(PermissionsMixin, models.Model):
             .first()
         )
 
-    def expenses_sum(
-        self, income_type: IncomeType, evaluation_date: datetime | None = None
-    ) -> Decimal:
-        # Sum of expenses that must be subtracted from every estimation
-        assessment = self.current_assessment(evaluation_date)
-        expenses = Decimal(0)
-        if assessment is not None:
-            if income_type == IncomeType.A:
-                expenses += max(
-                    min(
-                        assessment.operating_costs_catch_sale,
-                        assessment.catch_sale_market_income
-                        + assessment.catch_sale_factory_income,
-                    ),
-                    Decimal(0),
-                )
-        return expenses
-
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):
@@ -547,21 +554,8 @@ class PersonYear(PermissionsMixin, models.Model):
             return None
 
     @property
-    def b_income(self) -> Decimal | None:
-        annual_income: AnnualIncome | None = self.annual_income_statements.order_by(
-            "-created"
-        ).first()
-        if annual_income is not None:
-            return annual_income.account_tax_result
-        else:
-            return self.assessed_b_income
-
-    @property
     def assessed_b_income(self) -> Decimal | None:
-        current_assessment = self.current_assessment()
-        if current_assessment is not None:
-            return current_assessment.assessed_b_income
-        return None
+        return self.b_income - self.b_expenses
 
     @property
     def u_income(self) -> Decimal:
@@ -698,13 +692,6 @@ class PersonMonth(PermissionsMixin, models.Model):
         return date(self.year, self.month, 1)
 
     @property
-    def b_income_from_year(self) -> Decimal:
-        b_income = self.person_year.assessed_b_income
-        if b_income is not None:
-            return Decimal(int_divide_end(int(b_income), 12)[self.month - 1])
-        return Decimal(0)
-
-    @property
     def u_income_from_year(self) -> int:
         return int_divide_end(int(self.person_year.u_income), 12)[self.month - 1]
 
@@ -801,12 +788,6 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     # Autoupdated fields. Do not write into these.
     a_income = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=False,
-        blank=False,
-    )
-    b_income = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=False,
@@ -927,7 +908,6 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
         ).quantize(q)
-        self.b_income = Decimal(self.person_month.b_income_from_year).quantize(q)
         self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
 
     @staticmethod
@@ -1236,31 +1216,55 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
     )
 
     @property
-    def assessed_b_income(self) -> Decimal:
-        # Incomes and expenses are listed separately to make the calculation
-        # more explicit.
+    def assessed_b_incomes(self) -> Decimal:
         incomes = (
             self.business_turnover
             + self.catch_sale_market_income
             + self.care_fee_income
             + self.capital_income
         )
+        return Decimal(incomes).quantize(Decimal("0.01"))
+
+    @property
+    def assessed_b_expenses(self) -> Decimal:
         expenses = self.goods_comsumption + self.operating_expenses_own_company
+        return Decimal(expenses).quantize(Decimal("0.01"))
 
-        result = incomes - expenses
-
-        return Decimal(result).quantize(Decimal("0.01"))
-
-    @classmethod
-    def annotate_assessed_b_income(cls, qs: QuerySet[PersonYearAssessment]):
-        return qs.annotate(
-            assessed_b_income_sum=F("business_turnover")
-            + F("catch_sale_market_income")
-            + F("care_fee_income")
-            + F("capital_income")
-            - F("goods_comsumption")
-            - F("operating_expenses_own_company")
+    @property
+    def assessed_catchsale_expenses(self) -> Decimal:
+        # Sum of expenses that must be subtracted from every estimation
+        return max(
+            min(
+                self.operating_costs_catch_sale,
+                self.catch_sale_market_income + self.catch_sale_factory_income,
+            ),
+            Decimal(0),
         )
+
+    @staticmethod
+    def update_personyear_fields(qs: QuerySet[PersonYearAssessment] | None = None):
+        if qs is None:
+            qs = PersonYearAssessment.objects.all()
+        qs = qs.filter(latest=True).select_related("person_year")
+        for batch in batched(qs.iterator(2000), 2000):
+            to_update: List[PersonYear] = []
+            for assessment in batch:
+                person_year: PersonYear = assessment.person_year
+                person_year.b_income = assessment.assessed_b_incomes
+                person_year.b_expenses = assessment.assessed_b_expenses
+                person_year.catchsale_expenses = assessment.assessed_catchsale_expenses
+                to_update.append(person_year)
+            PersonYear.objects.bulk_update(
+                to_update, ("b_income", "b_expenses", "catchsale_expenses")
+            )
+
+    @staticmethod
+    def update_latest(qs: QuerySet[PersonYearAssessment] | None = None):
+        if qs is None:
+            qs = PersonYearAssessment.objects.all()
+        latest = qs.order_by("person_year", "-valid_from").distinct("person_year")
+        latest.update(latest=True)
+        PersonYearAssessment.objects.exclude(id__in=latest).update(latest=False)
 
     @staticmethod
     def post_save(
@@ -1272,15 +1276,9 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         update_fields: Sequence[str] | None,
         **kwargs,
     ):
-        if update_fields is None or "latest" not in update_fields:
-            qs = PersonYearAssessment.objects.filter(
-                person_year=instance.person_year
-            ).order_by("-valid_from")
-            if qs.count() > 1:
-                qs.update(latest=False)
-            latest = qs[0]
-            latest.latest = True
-            latest.save(update_fields=("latest",))
+        qs = PersonYearAssessment.objects.filter(person_year=instance.person_year)
+        PersonYearAssessment.update_latest(qs)
+        PersonYearAssessment.update_personyear_fields(qs)
 
 
 post_save.connect(

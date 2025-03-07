@@ -36,7 +36,6 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
-    PersonYearAssessment,
     PersonYearEstimateSummary,
     Year,
 )
@@ -168,29 +167,10 @@ class PersonYearEstimationMixin:
 
             has_b = form.cleaned_data["has_b"]
             if has_b not in (None, ""):
-                qs = qs.annotate(
-                    b_count=Subquery(
-                        PersonYearAssessment.objects.filter(
-                            person_year=OuterRef("pk"),
-                        )
-                        .filter(
-                            Q(
-                                Q(business_turnover__gt=0)
-                                | Q(catch_sale_market_income__gt=0)
-                                | Q(care_fee_income__gt=0)
-                                | Q(capital_income__gt=0)
-                                | Q(goods_comsumption__gt=0)
-                                | Q(operating_expenses_own_company__gt=0)
-                            )
-                        )
-                        .annotate(count=Func(F("id"), function="COUNT"))
-                        .values("count")
-                    )
-                )
                 if strtobool(has_b):
-                    qs = qs.filter(b_count__gt=0)
+                    qs = qs.filter(Q(b_income__gt=0) | Q(b_expenses__gt=0))
                 else:
-                    qs = qs.filter(b_count=0)
+                    qs = qs.filter(b_income=0, b_expenses=0)
 
         for engine_class in EstimationEngine.classes():
             engine_name = engine_class.__name__
@@ -214,48 +194,15 @@ class PersonYearEstimationMixin:
                     }
                 )
 
-        # Originally this annotated on the sum of
-        # personmonth__monthlyaincomereport__amount, but that produced weird
-        # results in other annotations, such as Sum("personmonth__benefit_paid")
-        # including two months twice for a few PersonYears
-        # Probably
-        # https://docs.djangoproject.com/en/5.0/topics/db/aggregation/#combining-multiple-aggregations
-        # Therefore we introduce this field instead, which is also quicker to sum over
-        qs = qs.annotate(
-            b_income_value=Coalesce(
-                Subquery(
-                    PersonYearAssessment.objects.filter(
-                        person_year=OuterRef("pk"),
-                    )
-                    .annotate(
-                        b_income=F("business_turnover")
-                        + F("catch_sale_market_income")
-                        + F("care_fee_income")
-                        + F("capital_income")
-                        - F("goods_comsumption")
-                        - F("operating_expenses_own_company")
-                    )
-                    .order_by("-valid_from")
-                    .values("b_income")[:1]
-                ),
-                Decimal(0),
-            )
-        )
         qs = qs.annotate(
             month_income_sum=Coalesce(Sum("personmonth__amount_sum"), Decimal("0.00"))
         )
-        qs = qs.annotate(actual_sum=F("month_income_sum") + F("b_income_value"))
-        # qs = qs.annotate(
-        #     actual_sum=Subquery(
-        #         PersonMonth.objects.filter(person_year=OuterRef("pk"))
-        #         .annotate(
-        #             actual_sum=Coalesce(
-        #                 Func("amount_sum", function="Sum"),
-        #                 Decimal(0)
-        #             )
-        #         ).values("actual_sum")
-        #     )
-        # )
+        qs = qs.annotate(
+            actual_sum=F("month_income_sum")
+            + F("b_income")
+            - F("b_expenses")
+            - F("catchsale_expenses")
+        )
 
         qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
 
