@@ -87,7 +87,7 @@ def calculate_benefit(
     if cpr:
         person_year_qs = person_year_qs.filter(person__cpr=cpr)
 
-    b_income_df = to_dataframe(
+    assessment_df = to_dataframe(
         person_year_qs,
         index="person__cpr",
         dtypes={
@@ -101,7 +101,7 @@ def calculate_benefit(
     payouts_df = get_payout_df(month, year, cpr=cpr)
 
     # Combine for ease-of-use
-    df = pd.concat([month_df, estimates_df, payouts_df, b_income_df], axis=1)
+    df = pd.concat([month_df, estimates_df, payouts_df, assessment_df], axis=1)
 
     # Any months not found in concatenation have been set to NaN, replace with False
     df["signal"] = df["signal"].fillna(False)
