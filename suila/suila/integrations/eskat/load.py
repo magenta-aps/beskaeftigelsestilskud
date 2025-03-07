@@ -564,11 +564,12 @@ class TaxInformationHandler(Handler):
         year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
         cpr_taxinfo_map: Dict[str, TaxInformation] = {}
         for item in items:
-            if item.year is not None and item.cpr is not None:
-                year_cpr_tax_scopes[item.year][item.cpr] = TaxScope.from_taxinformation(
-                    item
-                )
-            cpr_taxinfo_map[item.cpr] = item
+            if item.cpr is not None:
+                if item.year is not None:
+                    year_cpr_tax_scopes[item.year][item.cpr] = (
+                        TaxScope.from_taxinformation(item)
+                    )
+                cpr_taxinfo_map[item.cpr] = item
         with transaction.atomic():
             cls.create_person_years(
                 year_cpr_tax_scopes,
