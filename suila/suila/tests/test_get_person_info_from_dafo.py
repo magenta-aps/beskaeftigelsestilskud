@@ -86,6 +86,39 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
             ],
         )
 
+    def test_partial_address(self):
+        # Act: run with `cpr` parameter
+        self._run(mock_updates={"bynavn": None})
+        # Assert that address is created even with missing data
+        self.assertQuerySetEqual(
+            Person.objects.filter(cpr=self.cpr).values("full_address"),
+            [
+                {
+                    "full_address": "Testvej 123, 9999",
+                }
+            ],
+        )
+
+        self._run(mock_updates={"postnummer": None})
+        self.assertQuerySetEqual(
+            Person.objects.filter(cpr=self.cpr).values("full_address"),
+            [
+                {
+                    "full_address": "Testvej 123, Testby",
+                }
+            ],
+        )
+
+        self._run(mock_updates={"adresse": None})
+        self.assertQuerySetEqual(
+            Person.objects.filter(cpr=self.cpr).values("full_address"),
+            [
+                {
+                    "full_address": "9999 Testby",
+                }
+            ],
+        )
+
     @override_settings(PITU=_mock_pitu_settings)
     def test_pitu_client_initialization(self):
         command = GetPersonInfoFromDafoCommand()
@@ -93,13 +126,16 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
         self.assertIsInstance(client, PituClient)
         self.assertIn("cpr", client.service)
 
-    def _run(self, **kwargs):
+    def _run(self, mock_updates=None, **kwargs):
         # Arrange
-        kwargs.setdefault("verbosity", 0)
+        kwargs.setdefault("verbosity", 3)
         kwargs.setdefault("cpr", None)
         command = GetPersonInfoFromDafoCommand()
         mock_client = Mock()
-        mock_client.get_person_info.return_value = self._mock_result
+        mock_result = {**self._mock_result}
+        if mock_updates:
+            mock_result.update(mock_updates)
+        mock_client.get_person_info.return_value = mock_result
         with patch(
             "suila.management.commands.get_person_info_from_dafo."
             "PituClient.from_settings",
