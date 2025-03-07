@@ -81,6 +81,9 @@ class TestSimulationJSONEncoder(TestCase):
             "stability_score_b": None,
             "tax_scope": "FULD",
             "year_id": 2020,
+            "b_expenses": 0.0,
+            "b_income": 0.0,
+            "catchsale_expenses": 0.0,
         }
 
     def test_can_serialize_dataclass(self):

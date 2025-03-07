@@ -117,13 +117,13 @@ class ModelTest(TestCase):
             engine="InYearExtrapolationEngine",
             income_type=IncomeType.A,
         )
-        IncomeEstimate.objects.create(
-            person_month=cls.month1,
-            estimated_year_result=12 * 15000,
-            actual_year_result=12 * 15000,
-            engine="InYearExtrapolationEngine",
-            income_type=IncomeType.B,
-        )
+        # IncomeEstimate.objects.create(
+        #     person_month=cls.month1,
+        #     estimated_year_result=12 * 15000,
+        #     actual_year_result=12 * 15000,
+        #     engine="InYearExtrapolationEngine",
+        #     income_type=IncomeType.B,
+        # )
         cls.report6 = MonthlyIncomeReport.objects.create(
             person_month=cls.month2,
             salary_income=Decimal(12000),
@@ -185,6 +185,7 @@ class ModelTest(TestCase):
                 day=1,
                 tzinfo=timezone.get_current_timezone(),
             ),
+            goods_comsumption=Decimal(1000),
             operating_costs_catch_sale=Decimal(10000),
             catch_sale_market_income=Decimal(10000),
             catch_sale_factory_income=Decimal(10000),
@@ -197,10 +198,12 @@ class ModelTest(TestCase):
                 day=1,
                 tzinfo=timezone.get_current_timezone(),
             ),
+            goods_comsumption=Decimal(1200),
             operating_costs_catch_sale=Decimal(12000),
             catch_sale_market_income=Decimal(10000),
             catch_sale_factory_income=Decimal(10000),
         )
+        cls.person_year.refresh_from_db()
 
 
 class TestStandardWorkBenefitCalculationMethod(ModelTest):
@@ -412,8 +415,8 @@ class TestPersonYear(UserModelTest):
         self.assertIsNone(self.person_year.prev)
 
     def test_b_income(self):
-        self.assertEqual(self.person_year.b_income, Decimal(13000))
-        self.assertIsNone(self.person_year2.b_income)
+        self.assertEqual(self.person_year.b_income, Decimal(10000))
+        self.assertEqual(self.person_year2.b_income, Decimal(0))
 
     def test_borger_permissions(self):
         self.assertTrue(
@@ -512,11 +515,11 @@ class TestPersonYear(UserModelTest):
     def test_expenses_sum(self):
         self.assertEqual(
             self.person_year.catchsale_expenses,
-            Decimal(10000),
+            Decimal(12000),
         )
         self.assertEqual(
             self.person_year.b_expenses,
-            Decimal(0),
+            Decimal(1200),
         )
 
 
