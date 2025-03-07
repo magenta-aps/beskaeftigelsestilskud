@@ -13,7 +13,7 @@ from more_itertools import one
 from numpy import float64
 
 # from suila.estimation import EstimationEngine, MonthlyContinuationEngine
-from suila.models import PersonMonth, PersonYearAssessment, Year
+from suila.models import PersonMonth, PersonYear, Year
 
 
 def calculate_benefit(
