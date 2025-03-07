@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, TypeGuard
 
 from requests.exceptions import HTTPError
 
@@ -95,8 +95,8 @@ class Command(SuilaBaseCommand):
         city = data.get("bynavn")
         post_code = data.get("postnummer")
 
-        def not_empty(x):
-            return x and str(x).strip()
+        def not_empty(x: str | Any | None) -> TypeGuard[str]:
+            return x is not None and len(str(x).strip()) > 0
 
         post_code_city = " ".join([str(x) for x in (post_code, city) if not_empty(x)])
         person.full_address = ", ".join(filter(not_empty, [address, post_code_city]))
