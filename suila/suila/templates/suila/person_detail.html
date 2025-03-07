@@ -100,7 +100,7 @@
     {% if user|has_permissions:"suila.view_note" %}
     <div class="g-col-4 jumbo">
         {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}
-        {% jumbo_link person_notes_url _("Noter") "assignment" %}
+        {% jumbo_link person_notes_url _("Notater") "assignment" %}
     </div>
     <div class="g-col-4 jumbo">
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
