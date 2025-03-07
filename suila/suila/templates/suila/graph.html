@@ -6,11 +6,17 @@
 {% load static %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item">{% translate "Sammenhæng" %}</li>
+{% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+    {% if person %}
+    <li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'suila:person_detail' pk=person.pk %}">{% translate "Mit overblik" %}</a></li>
+    {% endif %}
+{% endif %}
+<li class="breadcrumb-item">{% translate "Mit estimerede Suila-tapit" %}</li>
 {% endblock %}
 
 {% block title %}
-{% translate "Sammenhængen mellem årsindkomst og Suila-tapit" %}
+{% translate "Mit estimerede Suila-tapit" %}
 {% endblock %}
 
 {% block content %}
@@ -23,12 +29,8 @@
             erhvervsdrivende, lønindkomster som udbytte.
             {% endblocktrans %}
         </p>
-        <p>
-            {% blocktrans trimmed %}
-            [Tekst om udbetaling i december for borgere med forventede årsindkomster fra 475-500 tkr.]
-            {% endblocktrans %}
-        </p>
     </div>
+    {% if yearly_benefit is None %}
     <div class="col-5 emphasis">
         <h1>{% translate "Kan du ikke se dine tal?" %}</h1>
         <p class="mt-3">
@@ -38,6 +40,7 @@
             {% endblocktrans %}
         </p>
     </div>
+    {% endif %}
 </div>
 <div class="row mt-5">
     <div class="col-12">
@@ -57,7 +60,9 @@
 <script nonce="{{ request.csp_nonce }}">
 $(document).ready(function () {
     let data = JSON.parse($("#graph_points").text());
-    renderGraph("#graph", data);
+    let yearlyIncome = parseFloat("{{ yearly_income }}");
+    let yearlyBenefit = parseFloat("{{ yearly_benefit }}");
+    renderGraph("#graph", data, yearlyIncome, yearlyBenefit);
 });
 </script>
 {% endblock %}
