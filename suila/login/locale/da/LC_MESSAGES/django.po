@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-13 12:28-0200\n"
+"POT-Creation-Date: 2025-03-07 11:30-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -44,7 +44,6 @@ msgid ""
 msgstr ""
 
 #: login/templates/login/logged_out.html
-#: login/templates/two_factor/core/login.html
 msgid "Log in"
 msgstr ""
 
@@ -88,6 +87,10 @@ msgstr ""
 
 #: login/templates/two_factor/_wizard_actions.html
 msgid "Fortsæt"
+msgstr ""
+
+#: login/templates/two_factor/core/login.html
+msgid "Log ind på Suila"
 msgstr ""
 
 #: login/templates/two_factor/core/login.html

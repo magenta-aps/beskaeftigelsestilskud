@@ -47,7 +47,9 @@ class TestDisplayStatus(TestCase):
         # Act
         result = display_status(self.person_month)
         # Assert
-        self.assertDictEqual(result, {"name": _("Afventer"), "established": False})
+        self.assertDictEqual(
+            result, {"name": _("Foreløbigt beløb"), "established": False}
+        )
 
     @patch("suila.templatetags.status_tags.datetime", wraps=datetime)
     def test_after_current_month(self, mock_datetime):
@@ -56,4 +58,4 @@ class TestDisplayStatus(TestCase):
         # Act
         result = display_status(self.person_month)
         # Assert
-        self.assertDictEqual(result, {"name": _("Fastlagt"), "established": True})
+        self.assertDictEqual(result, {"name": _("Beløb fastlagt"), "established": True})

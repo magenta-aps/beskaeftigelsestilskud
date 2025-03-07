@@ -20,26 +20,33 @@
         <div class="explainer">
             {% if not year_in_past %}
             {% blocktrans trimmed %}
-            Her får du et overblik over dine kommende og udførte udbetalinger af Suila-tapit for indeværende år.
+            "Mit overblik" er dit overblik over kommende og tidligere udbetalinger af Suila-tapit for indeværende år.
             {% endblocktrans %}
             <br>
             {% blocktrans trimmed %}
-            Bemærk at beløbene er vejledende og kan ændre sig indtil den endelige udbetaling.
+            Her får du et overblik over de vigtigste beløb og datoer, og en oversigt over dine forventede månedlige
+            Suila-tapit udbetalinger.
+            {% endblocktrans %}
+            <br>
+            {% blocktrans trimmed %}
+            Bemærk at beløbene er vejledende og kan ændre sig helt frem til den endelige udbetaling.
             {% endblocktrans %}
             {% else %}
             {% blocktrans trimmed %}
-            Her kan du få et overblik over dine udførte udbetalinger af Suila-tapit for forgangne år.
+            Her kan du få et overblik over dine udbetalinger af Suila-tapit for forgangne år.
             {% endblocktrans %}
             {% endif %}
             <p><b>{% translate "Modregning" %}</b></p>
             {% blocktrans trimmed %}
             Hvis du har gæld til det offentlige, kan der ske modregning af op til en tredjedel af beløbet inden
             udbetaling. Modregning betyder, at du modtager et lavere beløb, fordi dele af beløbet er brugt til at
-            afdrage på din gæld til det offentlige.
+            afdrage på din gæld til det offentlige. Eventuelle modregninger fremgår ikke af oplysningerne her på siden.
+            Er der sket modregning vil du modtage brev herom i din e-Boks.
             {% endblocktrans %}
             <p><b>{% translate "NemKonto" %}</b></p>
             {% blocktrans trimmed %}
-            Suila-tapit udbetales kun til NemKonto.
+            Suila-tapit udbetales kun til NemKonto. Hvis du ikke har en NemKonto, skal du oprette en før du kan få
+            udbetalt Suila-tapit. Har du ikke en NemKonto, skal du rette henvendelse til din bank herom.
             {% endblocktrans %}
         </div>
     </div>
@@ -52,7 +59,7 @@
         <h1 class="mt-3">{{ next_payout_date|date }}</h1>
     </div>
     <div class="g-col-3 emphasis">
-        <b>{% translate "Næste beløb til udbetaling" %}</b>
+        <b>{% translate "Næste forventede beløb til udbetaling" %}</b>
         <h1 class="mt-3">{{ benefit_paid|format_amount }}</h1>
     </div>
     <div class="g-col-3 emphasis">
@@ -75,9 +82,15 @@
         <h2 class="mb-3">{% translate "Bemærk!" %}</h2>
         <p>
             {% blocktrans trimmed %}
-            Suila foretager kun udbetaling hvis systemet har modtaget signal fra arbejdsmarkedet i form af betalte
-            B-skatter, indberetning af løn fra arbejdsgivere, indberetning af indhandling fra indhandlingssteder eller
+            Suila foretager kun udbetaling hvis systemet har modtaget signal fra arbejdsmarkedet i form af indberetning
+            af løn fra arbejdsgivere, betalte B-skatter, indberetning af indhandling fra indhandlingssteder eller
             oplysning om udloddet udbytte fra selskaber.
+            {% endblocktrans %}
+        </p>
+        <p>
+            {% blocktrans trimmed %}
+            Du modtager ikke en udbetaling, hvis næste udbetalingsbeløb er mindre end 100 kr. Beløbet vil blive overført
+            til næste måned.
             {% endblocktrans %}
         </p>
     </div>
@@ -87,11 +100,11 @@
     {% if user|has_permissions:"suila.view_note" %}
     <div class="g-col-4 jumbo">
         {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}
-        {% jumbo_link person_notes_url _("Noter") "assignment" %}
+        {% jumbo_link person_notes_url _("Notater") "assignment" %}
     </div>
     <div class="g-col-4 jumbo">
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-        {% jumbo_link person_income_url _("Beregningsgrundlag - Mine signaler") "assignment" %}
+        {% jumbo_link person_income_url _("Mine signaler") "assignment" %}
     </div>
     <div class="g-col-4 jumbo">
         {% url "suila:person_graph" pk=person.pk as person_income_url %}
@@ -100,7 +113,7 @@
     {% else %}
     <div class="g-col-12 jumbo">
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-        {% jumbo_link person_income_url _("Beregningsgrundlag - Mine signaler") "assignment" %}
+        {% jumbo_link person_income_url _("Mine signaler - få information om beregningsgrundlaget for dit Suila-tapit") "assignment" %}
     </div>
     {% endif %}
 </div>
@@ -122,49 +135,57 @@
         <p class="mt-3">
             {% blocktrans trimmed %}
             Suila-tapit udbetales d. 3. tirsdag i måneden. Udbetalingen er altid for indkomster to måneder forinden.
-            Fx. er udbetalingen for maj for indkomster i marts.
+            Fx får du kun udbetalt Suila-tapit den 3. tirsdag i maj, hvis systemet har modtaget signal fra
+            arbejdsmarkedet for marts måned.
             {% endblocktrans  %}
         </p>
         <h3 class="mt-5 mb-3">{% translate "Forventet beløb til udbetaling:" %}</h3>
         <p class="mt-3">
             {% blocktrans trimmed %}
-            Det beløb som udbetales er baseret på din forventede årsindkomst. Hver gang systemet modtager signal,
-            genberegnes din forventede årsindkomst. Bemærk at der kan foretages modreging på op til 33,3% af beløbet.
+            Det forventede beløb til udbetaling er baseret på din estimerede årsindkomst. Din estimerede årsindkomst
+            genberegnes hver dag, hvis systemet modtager nye oplysninger. Fx hvis en arbejdsgiver indsender
+            lønoplysninger. Bemærk, at Skattestyrelsen kan foretage modregning på op til en tredjedel af det udbetalte
+            beløb, hvis du har gæld til det offentlige.
             {% endblocktrans %}
         </p>
-        <h3 class="mt-5 mb-3">{% translate "Status:" %}</h3>
+        <h3 class="mt-5 mb-3">{% translate "Forklaring af statusbeskeder:" %}</h3>
         <ul>
             <li>
                 {% blocktrans trimmed %}
-                Afventer signal: Der er ikke modtaget signal om indkomst for denne måned.
+                Foreløbigt beløb. Din kommende Suila-tapit udbetaling er estimeret, men endnu ikke fastlagt.
                 {% endblocktrans %}
             </li>
             <li>
                 {% blocktrans trimmed %}
-                Signal behandles: Der er modtaget et eller flere signaler for denne måned. Din forventede årsindkomst
-                beregnes.
+                Beløb fastlagt. Din årsindkomst er estimeret, og der er fastlagt beløb for din kommende Suila-tapit
+                udbetaling.
                 {% endblocktrans %}
             </li>
             <li>
                 {% blocktrans trimmed %}
-                Beløb fastsat: Din forventede årsindkomst baseret på indkomstsignaler er modtaget og beløb til
-                udbetaling er fastsat.
+                Sendt til udbetaling: Din Suila-tapit udbetaling  er sendt til din NemKonto.
                 {% endblocktrans %}
             </li>
             <li>
                 {% blocktrans trimmed %}
-                Midlertidlig udbetalingspause: Din forventede indkomst er 475.000 kr. – 500.000 kr. og udbetaling venter
-                til vi har flere oplysninger.
+                Udbetaling gennemført: Udbetalingen af Suila-tapit for den pågældende måned er afsluttet.
                 {% endblocktrans %}
             </li>
             <li>
                 {% blocktrans trimmed %}
-                Sendt til betaling: Beløbet er sendt fra Selvstyrets udbetalingssystemt til din NemKonto.
+                Fejl i udbetaling: Der er opstået en fejl under udbetaling af din Suila-tapit. Kontakt Borgerservice
+                for yderligere information.
                 {% endblocktrans %}
             </li>
             <li>
                 {% blocktrans trimmed %}
-                År afsluttet: Du har modtaget årsopgørelse for Suila-tapit for dette år.
+                Afventer udbetaling: Din forventede årsindkomst er 475.000 kr. – 500.000 kr. Dine Suila-tapit
+                udbetalinger starter når systemet er mere sikker på om din årsindkomst berettiger dig til Suila-tapit.
+                {% endblocktrans %}
+            </li>
+            <li>
+                {% blocktrans trimmed %}
+                Årsopgørelse er sendt: Du har modtaget årsopgørelse for Suila-tapit for dette år.
                 {% endblocktrans %}
             </li>
         </ul>

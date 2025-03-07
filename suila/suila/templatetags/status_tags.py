@@ -16,9 +16,13 @@ def display_status(person_month: PersonMonth) -> dict:
             person_month.prismebatchitem.status  # type: ignore
         )
     except PrismeBatchItem.DoesNotExist:
+        # TODO: show "Afventer udbetaling" if estimated year result is between 475000
+        # and 500000 kr.
+        # TODO: show "Årsopgørelse er sendt" if a Suila-tapit "årsopgørelse" has been
+        # generated and sent to the person.
         if datetime.date.today() < person_month.year_month:
-            return {"name": _("Afventer"), "established": False}
+            return {"name": _("Foreløbigt beløb"), "established": False}
         else:
-            return {"name": _("Fastlagt"), "established": True}
+            return {"name": _("Beløb fastlagt"), "established": True}
     else:
         return {"name": posting_status.label, "established": True}
