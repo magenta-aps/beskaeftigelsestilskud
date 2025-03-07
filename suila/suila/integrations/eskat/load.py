@@ -562,32 +562,39 @@ class TaxInformationHandler(Handler):
         cls, year: int, items: Iterable["TaxInformation"], load: DataLoad, out: TextIO
     ):
         year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
+        cpr_taxinfo_map: Dict[str, TaxInformation] = {}
         for item in items:
             if item.year is not None and item.cpr is not None:
                 year_cpr_tax_scopes[item.year][item.cpr] = TaxScope.from_taxinformation(
                     item
                 )
+            if item.cpr is not None:
+                cpr_taxinfo_map[item.cpr] = item
         with transaction.atomic():
             cls.create_person_years(
                 year_cpr_tax_scopes,
                 load,
                 out,
             )
-            cls.update_person_location_code(year, items)
+            cls.update_person_location_code(year, cpr_taxinfo_map)
 
     @classmethod
-    def update_person_location_code(cls, year: int, items: Iterable["TaxInformation"]):
+    def update_person_location_code(
+        cls, year: int, cpr_taxinfo_map: Dict[str, "TaxInformation"]
+    ):
         # Update `Person.location_code` using `TaxInformation.cpr_municipality_code`
         person_map: dict[str, Person] = {
             person.cpr: person
             for person in Person.objects.filter(
-                personyear__year__year=year, cpr__iregex=r"\d{10}"
+                personyear__year__year=year,
+                cpr__iregex=r"\d{10}",
+                cpr__in=cpr_taxinfo_map.keys(),
             )
         }
 
-        for item in items:
-            if item.cpr in person_map:
-                person = person_map[item.cpr]
+        for cpr, item in cpr_taxinfo_map.items():
+            if cpr in person_map:
+                person = person_map[cpr]
                 person.location_code = item.cpr_municipality_code
                 logger.info(
                     "Updating location code for %r to %r", person, person.location_code
