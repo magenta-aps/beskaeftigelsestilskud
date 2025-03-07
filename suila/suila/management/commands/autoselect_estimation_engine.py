@@ -50,7 +50,13 @@ class Command(BaseCommand):
 
                     if rmses:
                         best_engine = min(rmses, key=rmses.get)
-                        person_year = PersonYear.objects.get(person=person, year=year)
+                        try:
+                            person_year = PersonYear.objects.get(
+                                person=person, year=year
+                            )
+                        except PersonYear.DoesNotExist:
+                            print(f"No PersonYear found for {person}")
+                            continue
                         setattr(
                             person_year,
                             preferred_estimation_engine_field,
