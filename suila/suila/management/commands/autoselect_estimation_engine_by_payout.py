@@ -35,12 +35,11 @@ class Command(SuilaBaseCommand):
             cpr = person_year.person.cpr
             if cpr in best_engine.index:
                 person_year.preferred_estimation_engine_a = best_engine.loc[cpr, "A"]
-                person_year.preferred_estimation_engine_b = best_engine.loc[cpr, "B"]
                 person_years_to_update.append(person_year)
 
         PersonYear.objects.bulk_update(
             person_years_to_update,
-            ["preferred_estimation_engine_a", "preferred_estimation_engine_b"],
+            ["preferred_estimation_engine_a"],
             batch_size=1000,
         )
         self._write_verbose("Done")

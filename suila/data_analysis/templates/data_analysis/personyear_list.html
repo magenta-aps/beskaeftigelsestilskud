@@ -202,12 +202,7 @@
                 {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine_a" %}
             </a>
         </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.preferred_estimation_engine_b }}" class="link-dark">
-                Estimeringsmotor (B)
-                {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine_b" %}
-            </a>
-        </th>
+
     </tr>
     </thead>
     <tbody>
@@ -259,7 +254,6 @@
         <td>{{ object.stability_score_a|default_if_none:"-" }}</td>
         <td>{{ object.stability_score_b|default_if_none:"-" }}</td>
         <td>{{ object.preferred_estimation_engine_a|default_if_none:"" }}</td>
-        <td>{{ object.preferred_estimation_engine_b|default_if_none:"" }}</td>
     </tr>
 {% endfor %}
     </tbody>

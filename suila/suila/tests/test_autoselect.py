@@ -68,10 +68,6 @@ class AutoSelectEngineTests(TestCase):
             self.person_year_2023.preferred_estimation_engine_a,
             "InYearExtrapolationEngine",
         )
-        self.assertEqual(
-            self.person_year_2023.preferred_estimation_engine_b,
-            "InYearExtrapolationEngine",
-        )
 
         # Now run the autoselect command
         self.call_command(2023)
@@ -81,8 +77,4 @@ class AutoSelectEngineTests(TestCase):
         self.assertEqual(
             self.person_year_2023.preferred_estimation_engine_a,
             "TwelveMonthsSummationEngine",
-        )
-        self.assertEqual(
-            self.person_year_2023.preferred_estimation_engine_b,
-            "InYearExtrapolationEngine",
         )

@@ -466,8 +466,7 @@ class InYearExtrapolationEngine(EstimationEngine):
                 return not item.a_income.is_zero()
             elif income_type == IncomeType.U:
                 return not item.u_income.is_zero()
-            else:
-                return not item.b_income.is_zero()
+            return False  # pragma: no cover
 
         return _filter
 
