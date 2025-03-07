@@ -80,19 +80,12 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_authenticated %}
+                {% if user.is_authenticated and user.cpr is not None %}
                 <li class="nav-item ms-4">
-                    {% if user.cpr is not None %}
                     <a href="{% url 'suila:person_graph' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_graph' %}active{% endif %}">
                         <span class="material-icons">link</span>
                         <span class="ms-1">{% translate "Mit estimerede Suila-tapit" %}</span>
                     </a>
-                    {% else %}
-                    <a href="{% url 'suila:graph' %}" class="d-flex align-items-center {% if current_view == 'suila:graph' %}active{% endif %}">
-                        <span class="material-icons">link</span>
-                        <span class="ms-1">{% translate "Mit estimerede Suila-tapit" %}</span>
-                    </a>
-                    {% endif %}
                 </li>
                 {% endif %}
 
