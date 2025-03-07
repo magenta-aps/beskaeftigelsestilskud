@@ -136,7 +136,31 @@
             {% endfor %}
         {% endfor %}
 
-        <th class="col-2">
+        <th class="col-1">
+            <a href="?{{ sort_params.month_income_sum }}" class="link-dark">
+                A-indkomst
+                {% include "data_analysis/sort_icon.html" with field="month_income_sum" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.catchsale_expenses }}" class="link-dark">
+                Indhandlings-udgifter
+                {% include "data_analysis/sort_icon.html" with field="catchsale_expenses" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.b_income }}" class="link-dark">
+                B-indtægt
+                {% include "data_analysis/sort_icon.html" with field="b_income" %}
+            </a>
+        </th>
+        <th class="col-1">
+            <a href="?{{ sort_params.b_expenses }}" class="link-dark">
+                B-udgift
+                {% include "data_analysis/sort_icon.html" with field="b_expenses" %}
+            </a>
+        </th>
+        <th class="col-1">
             <a href="?{{ sort_params.actual_sum }}" class="link-dark">
                 Actual year sum
                 {% include "data_analysis/sort_icon.html" with field="actual_sum" %}
@@ -221,6 +245,12 @@
             {% endfor %}
 
         {% endfor %}
+
+
+        <td>{{ object.month_income_sum }}</td>
+        <td>{{ object.catchsale_expenses }}</td>
+        <td>{{ object.b_income }}</td>
+        <td>{{ object.b_expenses }}</td>
 
         <td>{{ object.actual_sum }}</td>
         <td>{{ object.payout|default_if_none:"" }}</td>

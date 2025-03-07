@@ -54,6 +54,10 @@ class PersonYearListOptionsForm(BootstrapForm):
                 + tuple([ek + "_mean_error_B" for ek in engine_keys])
                 + tuple([ek + "_rmse_B" for ek in engine_keys])
                 + (
+                    "month_income_sum",
+                    "catchsale_expenses",
+                    "b_income",
+                    "b_expenses",
                     "actual_sum",
                     "payout",
                     "correct_payout",
