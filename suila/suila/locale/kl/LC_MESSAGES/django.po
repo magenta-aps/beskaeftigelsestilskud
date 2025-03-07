@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-06 13:53-0200\n"
+"POT-Creation-Date: 2025-03-07 10:18-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -181,7 +181,7 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/calculate.html suila/templates/suila/root.html
-msgid "Suilaberegneren"
+msgid "Suila-tapit-beregneren"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
@@ -276,12 +276,23 @@ msgid ""
 "indhandlingssted."
 msgstr ""
 
-#: suila/templates/suila/graph.html
-msgid "Sammenhæng"
+#: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_search.html suila/templates/suila/root.html
+msgid "Borgersøgning"
 msgstr ""
 
-#: suila/templates/suila/graph.html
-msgid "Sammenhængen mellem årsindkomst og Suila-tapit"
+#: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/root.html
+msgid "Mit overblik"
+msgstr ""
+
+#: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/root.html
+msgid "Mit estimerede Suila-tapit"
 msgstr ""
 
 #: suila/templates/suila/graph.html
@@ -293,12 +304,6 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/graph.html
-msgid ""
-"[Tekst om udbetaling i december for borgere med forventede årsindkomster fra "
-"475-500 tkr.]"
-msgstr ""
-
-#: suila/templates/suila/graph.html
 msgid "Kan du ikke se dine tal?"
 msgstr ""
 
@@ -306,20 +311,6 @@ msgstr ""
 msgid ""
 "Hvis din årsindkomst er 70.000 kr. eller 500.000 kr. vil du ikke modtage "
 "Suila-tapit, og dine tal vises derfor ikke på grafen nedenunder."
-msgstr ""
-
-#: suila/templates/suila/person_detail.html
-#: suila/templates/suila/person_detail_income.html
-#: suila/templates/suila/person_detail_notes.html
-#: suila/templates/suila/person_search.html suila/templates/suila/root.html
-msgid "Borgersøgning"
-msgstr ""
-
-#: suila/templates/suila/person_detail.html
-#: suila/templates/suila/person_detail_income.html
-#: suila/templates/suila/person_detail_notes.html
-#: suila/templates/suila/root.html
-msgid "Mit overblik"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -585,10 +576,6 @@ msgstr ""
 
 #: suila/templates/suila/root.html
 msgid "OK"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Sammenhæng - Årsindkomst og Suila-tapit"
 msgstr ""
 
 #: suila/templatetags/amount_tags.py
