@@ -85,13 +85,17 @@
 
 <div class="grid gap-3 mt-5">
     {% if user|has_permissions:"suila.view_note" %}
-    <div class="g-col-6 jumbo">
+    <div class="g-col-4 jumbo">
         {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}
         {% jumbo_link person_notes_url _("Noter") "assignment" %}
     </div>
-    <div class="g-col-6 jumbo">
+    <div class="g-col-4 jumbo">
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
         {% jumbo_link person_income_url _("Beregningsgrundlag - Mine signaler") "assignment" %}
+    </div>
+    <div class="g-col-4 jumbo">
+        {% url "suila:person_graph" pk=person.pk as person_income_url %}
+        {% jumbo_link person_income_url _("Mit estimerede Suila-tapit") "link" %}
     </div>
     {% else %}
     <div class="g-col-12 jumbo">
