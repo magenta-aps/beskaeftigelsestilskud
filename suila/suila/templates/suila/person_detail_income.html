@@ -27,6 +27,8 @@
         <h2>{% translate "Her stammer oplysningerne fra:" %}</h2>
         <ul>
             <li class="my-3">
+                <b>{% translate "A-indkomst og indhandling" %}</b>
+                <br>
                 {% blocktrans trimmed %}
                 Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger og oplysninger om indhandling
                 fra indhandlingssteder og til Skattestyrelsen. Hvis du mener, at oplysningerne er forkerte, så henvend
@@ -34,13 +36,17 @@
                 {% endblocktrans %}
             </li>
             <li class="my-3">
+                <b>{% translate "B-indkomst" %}</b>
+                <br>
                 {% blocktrans trimmed %}
-                Oplysning om betalt B-skat stammer fra din indbetaling af B-skat på baggrund af din
+                Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på baggrund af din
                 forskudsregistrering. Du kan altid ændre din forskudsregistrering på
                 <a href="https://sullissivik.gl" target="_blank">Sullissivik.gl</a>, hvis du mener at den er forkert.
                 {% endblocktrans %}
             </li>
             <li class="my-3">
+                <b>{% translate "Udbytte" %}</b>
+                <br>
                 {% blocktrans trimmed %}
                 Oplysning om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har
                 modtaget udbytte sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde
@@ -93,13 +99,14 @@
                 <h3>{% translate "B-indkomst" %}</h3>
                 <p>
                     {% blocktrans trimmed %}
-                    Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter betalingsfristen.
+                    Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter betalingen.
                     {% endblocktrans %}
                 </p>
                 <h3>{% translate "Udbytte" %}</h3>
                 <p>
                     {% blocktrans trimmed %}
-                    Oplysninger om udbytte kan som regel ses 15-30 dage efter udlodningen.
+                    Oplysninger om udbytte kan som regel ses 15-30 dage efter at selskabet har indsendt den lovpligtige
+                    udbytteblanket.
                     {% endblocktrans %}
                 </p>
             </div>
