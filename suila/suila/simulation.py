@@ -203,7 +203,11 @@ class Simulation:
         for person_year in self.person_years:
             cumulative_payout = Decimal(0)
             for month in range(1, 13):
-                estimated_year_result = person_year.assessed_b_income or Decimal(0)
+                estimated_year_result = (
+                    person_year.b_income
+                    - person_year.b_expenses
+                    - person_year.catchsale_expenses
+                )
                 try:
                     person_month = person_year.personmonth_set.get(month=month)
                     payout = person_month.benefit_paid or Decimal(0)
@@ -211,8 +215,6 @@ class Simulation:
                     estimated_year_result += (
                         person_month.estimated_year_result or Decimal(0)
                     )
-                    estimated_year_result -= person_year.b_expenses
-                    estimated_year_result -= person_year.catchsale_expenses
                     estimated_year_benefit = person_month.estimated_year_benefit
                 except PersonMonth.DoesNotExist:
                     payout = Decimal(0)

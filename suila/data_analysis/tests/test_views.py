@@ -473,7 +473,6 @@ class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person, self.person)
-        self.assertEqual(object_list[0].amount_sum, Decimal(42))
         self.assertEqual(
             object_list[0].TwelveMonthsSummationEngine_mean_error_A, Decimal(0)
         )
@@ -494,7 +493,6 @@ class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase
         object_list = response.context_data["object_list"]
         self.assertEqual(object_list.count(), 1)
         self.assertEqual(object_list[0].person, self.person)
-        self.assertEqual(object_list[0].amount_sum, Decimal("42.00"))
         self.assertEqual(
             object_list[0].TwelveMonthsSummationEngine_mean_error_A, Decimal(0)
         )

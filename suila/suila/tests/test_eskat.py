@@ -1179,7 +1179,7 @@ class TestUpdateMixin(BaseEnvMixin):
         )
 
         return person_month.estimated_year_result + (
-            person_year.assessed_b_income or Decimal(0)
+            person_year.b_income - person_year.b_expenses or Decimal(0)
         )
 
 

@@ -502,10 +502,6 @@ class PersonYear(PermissionsMixin, models.Model):
     def quarantine_reason(self) -> str:
         return self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
 
-    @property
-    def amount_sum(self) -> Decimal:
-        return self.amount_sum_by_type(None)
-
     @cached_property
     def u1a_assessments_sum(self) -> Decimal:
         result = PersonYearU1AAssessment.objects.filter(person_year=self).aggregate(
@@ -552,10 +548,6 @@ class PersonYear(PermissionsMixin, models.Model):
             return self.person.personyear_set.get(year__year=self.year.year + 1)
         except PersonYear.DoesNotExist:
             return None
-
-    @property
-    def assessed_b_income(self) -> Decimal | None:
-        return self.b_income - self.b_expenses
 
     @property
     def u_income(self) -> Decimal:
@@ -958,11 +950,7 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
         update_fields: Sequence[str] | None,
         **kwargs,
     ):
-        if (
-            update_fields is None
-            or "a_income" in update_fields
-            or "b_income" in update_fields
-        ):
+        if update_fields is None or "a_income" in update_fields:
             instance.person_month.update_amount_sum()
             instance.person_month.save(update_fields=["amount_sum"])
 
