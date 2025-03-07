@@ -10,7 +10,7 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple
 from django.db.models import QuerySet
 from project.util import int_divide_end
 
-from suila.estimation import EstimationEngine, SelfReportedEngine
+from suila.estimation import EstimationEngine
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -267,55 +267,42 @@ class Simulation:
             actual_year_sum -= person_year.b_expenses
             actual_year_sum -= person_year.catchsale_expenses
             for month in range(1, 13):
-                if isinstance(engine, SelfReportedEngine):
+                try:
+                    person_month = person_year.personmonth_set.get(month=month)
+                except PersonMonth.DoesNotExist:
+                    continue
+                estimate_qs = IncomeEstimate.objects.filter(
+                    person_month=person_month,
+                    engine=engine_name,
+                )
+                if income_type is not None:
+                    estimate_qs = estimate_qs.filter(
+                        income_type=income_type,
+                    )
+                if estimate_qs.exists():
+                    # Add Decimal(0) to shut MyPy up
+                    estimated_year_result = Decimal(0) + sum(
+                        [estimate.estimated_year_result for estimate in estimate_qs]
+                    )
+                    if income_type in (None, IncomeType.B):
+                        estimated_year_result += (
+                            person_year.b_income
+                            - person_year.b_expenses
+                            - person_year.catchsale_expenses
+                        )
+                    offset = IncomeEstimate.qs_offset(estimate_qs)
                     prediction_items.append(
                         PredictionItem(
                             year=year,
                             month=month,
-                            predicted_value=person_year.b_income
-                            - person_year.b_expenses,
-                            prediction_difference=Decimal(0),
-                            prediction_difference_pct=Decimal(0),
+                            predicted_value=estimated_year_result,
+                            prediction_difference=estimated_year_result
+                            - actual_year_sum,
+                            prediction_difference_pct=(
+                                (offset * 100) if actual_year_sum != 0 else None
+                            ),
                         )
                     )
-
-                else:
-                    try:
-                        person_month = person_year.personmonth_set.get(month=month)
-                    except PersonMonth.DoesNotExist:
-                        continue
-                    estimate_qs = IncomeEstimate.objects.filter(
-                        person_month=person_month,
-                        engine=engine_name,
-                    )
-                    if income_type is not None:
-                        estimate_qs = estimate_qs.filter(
-                            income_type=income_type,
-                        )
-                    if estimate_qs.exists():
-                        # Add Decimal(0) to shut MyPy up
-                        estimated_year_result = Decimal(0) + sum(
-                            [estimate.estimated_year_result for estimate in estimate_qs]
-                        )
-                        if income_type in (None, IncomeType.B):
-                            estimated_year_result += (
-                                person_year.b_income
-                                - person_year.b_expenses
-                                - person_year.catchsale_expenses
-                            )
-                        offset = IncomeEstimate.qs_offset(estimate_qs)
-                        prediction_items.append(
-                            PredictionItem(
-                                year=year,
-                                month=month,
-                                predicted_value=estimated_year_result,
-                                prediction_difference=estimated_year_result
-                                - actual_year_sum,
-                                prediction_difference_pct=(
-                                    (offset * 100) if actual_year_sum != 0 else None
-                                ),
-                            )
-                        )
             actual_year_results[year] = actual_year_sum
 
         if prediction_items:

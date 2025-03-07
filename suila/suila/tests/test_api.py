@@ -208,7 +208,7 @@ class PersonYearApiTest(ApiTestCase):
             person=cls.person1,
             year=cls.year2,
             preferred_estimation_engine_a="MonthlyContinuationEngine",
-            preferred_estimation_engine_b="SelfReportedEngine",
+            preferred_estimation_engine_b="MonthlyContinuationEngine",
             tax_scope="DELVIS",
         )
         cls.expected1a = {
@@ -226,7 +226,7 @@ class PersonYearApiTest(ApiTestCase):
             "year": 2025,
             "cpr": "1234567890",
             "preferred_estimation_engine_a": "MonthlyContinuationEngine",
-            "preferred_estimation_engine_b": "SelfReportedEngine",
+            "preferred_estimation_engine_b": "MonthlyContinuationEngine",
             "tax_scope": "DELVIS",
             "in_quarantine": False,
             "quarantine_reason": "",
