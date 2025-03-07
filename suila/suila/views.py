@@ -15,10 +15,12 @@ from common.fields import CPRField
 from common.models import User
 from common.utils import SuilaJSONEncoder, omit
 from common.view_mixins import ViewLogMixin
+from dateutil.relativedelta import relativedelta
 from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template.defaultfilters import date as format_date
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext
@@ -33,7 +35,7 @@ from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
-from suila.benefit import get_payout_date
+from suila.dates import get_payment_date
 from suila.forms import (
     CalculatorForm,
     IncomeSignalFilterForm,
@@ -199,20 +201,30 @@ class PersonDetailView(
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
+        # True if user is looking at a past year (usually not the case, as this is
+        # currently hidden from users.)
+        context_data["year_in_past"] = self.person_year.year.year < date.today().year
+
+        # Determine the "focus date", e.g. which `PersonMonth` to get next benefit, etc.
+        # from. If we are currently in March 2025, the "focus date" is January 2025, and
+        # so on.
+        focus_date: date = date(self.year, self.month, 1) - relativedelta(months=2)
+        context_data["focus_date"] = focus_date
+
         try:
             person_month = PersonMonth.objects.get(
-                person_year=self.person_year,
-                month=self.month,
+                person_year__person__pk=self.person_pk,
+                person_year__year__year=focus_date.year,
+                month=focus_date.month,
             )
         except PersonMonth.DoesNotExist:
-            logger.error(
-                "No current PersonMonth for %r (month=%r)",
-                self.person_year,
-                self.month,
-            )
-            context_data["no_current_month"] = True
+            logger.error("No PersonMonth found for focus date %r", focus_date)
+            context_data["show_next_payment"] = False
         else:
-            context_data["next_payout_date"] = get_payout_date(self.year, self.month)
+            context_data["show_next_payment"] = True
+            context_data["next_payout_date"] = get_payment_date(
+                focus_date.year, focus_date.month
+            )
             context_data["benefit_paid"] = person_month.benefit_paid
             context_data["estimated_year_benefit"] = person_month.estimated_year_benefit
             context_data["estimated_year_result"] = person_month.estimated_year_result
@@ -262,7 +274,17 @@ class IncomeSumsBySignalTypeTable(Table):
         verbose_name=_("Samlet for året"),
     )
 
-    def __init__(self, income_signals: list[IncomeSignal], month: int, *args, **kwargs):
+    def __init__(
+        self,
+        income_signals: list[IncomeSignal],
+        year: int,
+        month: int,
+        *args,
+        **kwargs,
+    ):
+        self.year: int = year
+        self.month: int = month
+
         def sum_amounts(
             signal_type: IncomeSignalType,
             signals: list[IncomeSignal],
@@ -297,6 +319,13 @@ class IncomeSumsBySignalTypeTable(Table):
         ]
 
         super().__init__(data, *args, **kwargs)
+
+    def before_render(self, request):
+        # Create string such as "Marts 2025" from year and month
+        month: date = date(self.year, self.month, 1)
+        month_formatted: str = format_date(month, "F Y").capitalize()
+        # Use this string as the title of the month sum column
+        self.columns["current_month_sum"].column.verbose_name = month_formatted
 
 
 class IncomeSignalTable(Table):
@@ -333,6 +362,7 @@ class PersonDetailIncomeView(
         # Table summing income by signal type
         context_data["sum_table"] = IncomeSumsBySignalTypeTable(
             self.get_income_signals(),
+            self.year,
             self.month,
             orderable=False,
         )

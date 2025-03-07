@@ -92,6 +92,10 @@ Velkommen, {{ name }}
         {% url "suila:calculator" as calculator_url %}
         {% jumbo_link calculator_url _("Suilaberegneren") "calculate" %}
     </div>
+    <div class="g-col-6 jumbo">
+        {% url "suila:about" as about_url %}
+        {% jumbo_link about_url _("Hvad er Suila-tapit?") "info" %}
+    </div>
 </div>
 {% endif %}
 {% endblock %}

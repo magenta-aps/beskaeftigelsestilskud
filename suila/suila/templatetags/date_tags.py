@@ -7,7 +7,7 @@ from datetime import date
 from django.template.defaultfilters import register
 from django.utils import dates
 
-from suila.benefit import get_payout_date as _get_payout_date
+from suila.dates import get_payment_date as _get_payment_date
 from suila.models import PersonMonth
 
 logger = logging.getLogger(__name__)
@@ -26,5 +26,5 @@ def month_name(month: int) -> str | None:
 
 
 @register.filter
-def get_payout_date(person_month: PersonMonth) -> date:
-    return _get_payout_date(person_month.person_year.year.year, person_month.month)
+def get_payment_date(person_month: PersonMonth) -> date:
+    return _get_payment_date(person_month.year, person_month.month)
