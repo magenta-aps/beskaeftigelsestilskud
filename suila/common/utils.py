@@ -182,7 +182,6 @@ def get_income_estimates_df(
     year: int,
     cpr: str | None = None,
     engine_a: str | None = None,
-    engine_b: str | None = None,
 ) -> pd.DataFrame:
     """
     Get income estimates as dataframe
@@ -224,7 +223,6 @@ def get_income_estimates_df(
         dtypes={
             "engine": str,
             "person_month__person_year__preferred_estimation_engine_a": str,
-            "person_month__person_year__preferred_estimation_engine_b": str,
             "person_month__person_year__preferred_estimation_engine_u": str,
             "income_type": str,
             "estimated_year_result": float,
@@ -235,11 +233,9 @@ def get_income_estimates_df(
     empty_estimate = get_empty_estimate_df(year, cpr)
 
     engine_dict: dict = {}
-    for income_type in IncomeType:
+    for income_type in (IncomeType.A, IncomeType.U):
         if income_type == IncomeType.A and engine_a:
             engine_dict[income_type] = engine_a
-        # elif income_type == IncomeType.B and engine_b:
-        #     engine_dict[income_type] = engine_b
         else:
             engine_dict[income_type] = df.loc[
                 :, f"preferred_estimation_engine_{income_type.lower()}"

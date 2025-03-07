@@ -201,21 +201,18 @@ class PersonYearApiTest(ApiTestCase):
             person=cls.person1,
             year=cls.year1,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="TwelveMonthsSummationEngine",
             tax_scope="FULD",
         )
         cls.personyear1b = PersonYear.objects.create(
             person=cls.person1,
             year=cls.year2,
             preferred_estimation_engine_a="MonthlyContinuationEngine",
-            preferred_estimation_engine_b="MonthlyContinuationEngine",
             tax_scope="DELVIS",
         )
         cls.expected1a = {
             "year": 2024,
             "cpr": "1234567890",
             "preferred_estimation_engine_a": "InYearExtrapolationEngine",
-            "preferred_estimation_engine_b": "TwelveMonthsSummationEngine",
             "tax_scope": "FULD",
             "in_quarantine": False,
             "quarantine_reason": "",
@@ -226,7 +223,6 @@ class PersonYearApiTest(ApiTestCase):
             "year": 2025,
             "cpr": "1234567890",
             "preferred_estimation_engine_a": "MonthlyContinuationEngine",
-            "preferred_estimation_engine_b": "MonthlyContinuationEngine",
             "tax_scope": "DELVIS",
             "in_quarantine": False,
             "quarantine_reason": "",
@@ -243,21 +239,18 @@ class PersonYearApiTest(ApiTestCase):
             person=cls.person2,
             year=cls.year1,
             preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
             tax_scope="DELVIS",
         )
         cls.personyear2b = PersonYear.objects.create(
             person=cls.person2,
             year=cls.year2,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
             tax_scope="FULD",
         )
         cls.expected2a = {
             "year": 2024,
             "cpr": "2233445566",
             "preferred_estimation_engine_a": "TwelveMonthsSummationEngine",
-            "preferred_estimation_engine_b": "InYearExtrapolationEngine",
             "tax_scope": "DELVIS",
             "in_quarantine": False,
             "quarantine_reason": "",
@@ -268,7 +261,6 @@ class PersonYearApiTest(ApiTestCase):
             "year": 2025,
             "cpr": "2233445566",
             "preferred_estimation_engine_a": "TwoYearSummationEngine",
-            "preferred_estimation_engine_b": "InYearExtrapolationEngine",
             "tax_scope": "FULD",
             "in_quarantine": False,
             "quarantine_reason": "",

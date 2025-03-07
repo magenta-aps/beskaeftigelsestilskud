@@ -61,7 +61,6 @@ class PersonYearListOptionsForm(BootstrapForm):
                     "stability_score_a",
                     "stability_score_b",
                     "preferred_estimation_engine_a",
-                    "preferred_estimation_engine_b",
                 )
             )
             for prefix in ("", "-")

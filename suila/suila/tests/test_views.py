@@ -110,7 +110,6 @@ class PersonEnv(TestCase):
             person=cls.person1,
             year=Year.objects.get(year=2020),
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         # Create 12 PersonMonth objects, where each month amount is equal to the month
         # number.

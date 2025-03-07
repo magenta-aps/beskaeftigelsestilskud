@@ -26,7 +26,6 @@ class PersonYearOut(ModelSchema):
         model = PersonYear
         fields = [
             "preferred_estimation_engine_a",
-            "preferred_estimation_engine_b",
             "stability_score_a",
             "stability_score_b",
             "tax_scope",

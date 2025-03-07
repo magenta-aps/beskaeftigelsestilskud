@@ -22,7 +22,7 @@ class Command(BaseCommand):
         if kwargs["cpr"]:
             person_qs = person_qs.filter(cpr=kwargs["cpr"])
         for person in person_qs:
-            for income_type in IncomeType:
+            for income_type in (IncomeType.A, IncomeType.U):
                 preferred_estimation_engine_field = (
                     f"preferred_estimation_engine_{income_type.value.lower()}"
                 )

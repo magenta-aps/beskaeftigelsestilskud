@@ -81,13 +81,11 @@ class TestEstimationEngine(TestCase):
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year2,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         for month, income in enumerate(
             [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
@@ -135,15 +133,6 @@ class TestEstimationEngine(TestCase):
     def test_valid_engines_for_incometype(self):
         self.assertEqual(
             EstimationEngine.valid_engines_for_incometype(IncomeType.A),
-            [
-                InYearExtrapolationEngine,
-                TwelveMonthsSummationEngine,
-                TwoYearSummationEngine,
-                MonthlyContinuationEngine,
-            ],
-        )
-        self.assertEqual(
-            EstimationEngine.valid_engines_for_incometype(IncomeType.B),
             [
                 InYearExtrapolationEngine,
                 TwelveMonthsSummationEngine,
@@ -287,7 +276,7 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
-        self.assertEqual(IncomeEstimate.objects.all().count(), 90)
+        self.assertEqual(IncomeEstimate.objects.all().count(), 40)
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
@@ -418,7 +407,6 @@ class TestInYearExtrapolationEngine(TestCase):
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
 
         cls.person_year_u1a_assessment = PersonYearU1AAssessment.objects.create(
@@ -519,13 +507,11 @@ class TwelveMonthsSummationEngineTest(TestCase):
             person=cls.person,
             year=cls.year0,
             preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-            preferred_estimation_engine_b="TwelveMonthsSummationEngine",
         )
         cls.person_year1 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year1,
             preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-            preferred_estimation_engine_b="TwelveMonthsSummationEngine",
         )
         cls.months = []
         cls.reports = []
@@ -643,19 +629,16 @@ class TwoYearSummationEngineTest(TestCase):
             person=cls.person,
             year=cls.year0,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            preferred_estimation_engine_b="TwoYearSummationEngine",
         )
         cls.person_year1 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year1,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            preferred_estimation_engine_b="TwoYearSummationEngine",
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year2,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            preferred_estimation_engine_b="TwoYearSummationEngine",
         )
         cls.months = []
         cls.reports = []

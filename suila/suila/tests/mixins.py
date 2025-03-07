@@ -33,7 +33,6 @@ class BaseEnvMixin:
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
 
     def get_or_create_person_month(self, month: int, **kwargs) -> PersonMonth:

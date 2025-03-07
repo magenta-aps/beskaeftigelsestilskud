@@ -48,13 +48,11 @@ class ModelTest(TestCase):
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year2,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
 
         cls.month1 = PersonMonth.objects.create(
@@ -482,28 +480,6 @@ class TestPersonYear(UserModelTest):
         self.assertEqual(qs.count(), 0)
         self.assertNotIn(self.person_year, qs)
         self.assertFalse(PersonYear.has_model_permissions(self.no_user, "view"))
-
-    def test_current_assessment(self):
-        self.assertEqual(
-            self.person_year.current_assessment(
-                datetime(self.year.year, 3, 20, tzinfo=timezone.get_current_timezone())
-            ),
-            self.assessment1a,
-        )
-        self.assertEqual(
-            self.person_year.current_assessment(
-                datetime(self.year.year, 10, 20, tzinfo=timezone.get_current_timezone())
-            ),
-            self.assessment1b,
-        )
-        self.assertEqual(
-            self.person_year.current_assessment(
-                datetime(
-                    self.year.year + 1, 1, 1, tzinfo=timezone.get_current_timezone()
-                )
-            ),
-            self.assessment1b,
-        )
 
     def test_expenses_sum(self):
         self.assertEqual(
