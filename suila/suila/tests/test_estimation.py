@@ -18,11 +18,9 @@ from suila.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
     MonthlyContinuationEngine,
-    SelfReportedEngine,
     TwelveMonthsSummationEngine,
     TwoYearSummationEngine,
 )
-from suila.exceptions import IncomeTypeUnhandledByEngine
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -83,13 +81,13 @@ class TestEstimationEngine(TestCase):
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="SelfReportedEngine",
+            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year2,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="SelfReportedEngine",
+            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
         for month, income in enumerate(
             [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
@@ -151,7 +149,6 @@ class TestEstimationEngine(TestCase):
                 TwelveMonthsSummationEngine,
                 TwoYearSummationEngine,
                 MonthlyContinuationEngine,
-                SelfReportedEngine,
             ],
         )
 
@@ -767,59 +764,3 @@ class TwoYearSummationEngineTest(TestCase):
                 expectation,
                 month,
             )
-
-
-class TestSelfReportedEngine(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.year = Year.objects.create(year=2024)
-        cls.person = Person.objects.create(
-            name="Jens Hansen",
-            cpr="1234567890",
-        )
-        cls.person_year = PersonYear.objects.create(
-            person=cls.person,
-            year=cls.year,
-            preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="SelfReportedEngine",
-        )
-
-        cls.person_months = []
-        for month in range(1, 13):
-            person_month = PersonMonth.objects.create(
-                person_year=cls.person_year, month=month, import_date=date.today()
-            )
-            cls.person_months.append(person_month)
-            MonthlyIncomeReport.objects.create(
-                person_month=person_month,
-                capital_income=Decimal(10000),
-            )
-        cls.assessment = PersonYearAssessment.objects.create(
-            person_year=cls.person_year,
-            capital_income=Decimal(0),
-            education_support_income=Decimal(0),
-            care_fee_income=Decimal(0),
-            alimony_income=Decimal(0),
-            other_b_income=Decimal(0),
-            business_turnover=Decimal(70000),
-        )
-
-    def test_name(self):
-        self.assertEqual(SelfReportedEngine.name(), "SelfReportedEngine")
-
-    def test_cannot_calculate_a(self):
-        for person_month in self.person_months:
-            with self.assertRaises(IncomeTypeUnhandledByEngine):
-                SelfReportedEngine.estimate(person_month, [], IncomeType.A)
-
-    def test_calculate_b(self):
-        for person_month in self.person_months:
-            income_estimate = SelfReportedEngine.estimate(
-                person_month, [], IncomeType.B
-            )
-            self.assertIsNotNone(income_estimate)
-            self.assertEqual(income_estimate.engine, "SelfReportedEngine")
-            self.assertEqual(income_estimate.income_type, IncomeType.B)
-            self.assertEqual(income_estimate.person_month, person_month)
-            self.assertEqual(income_estimate.estimated_year_result, Decimal(70000))

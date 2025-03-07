@@ -1280,7 +1280,7 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         cls.personyear.preferred_estimation_engine_a = "InYearExtrapolationEngine"
-        cls.personyear.preferred_estimation_engine_b = "SelfReportedEngine"
+        cls.personyear.preferred_estimation_engine_b = "InYearExtrapolationEngine"
         cls.personyear.save()
         cls.handler.finalize()
 
