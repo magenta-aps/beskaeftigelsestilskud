@@ -84,6 +84,8 @@ class Command(SuilaBaseCommand):
         if typ == "monthlyincome":
             if skew:
                 year_months = self._get_year_and_month_kwargs(year, month)
+            elif month is not None:
+                year_months = [(year, {"month_from": month, "month_to": None})]
             else:
                 year_months = [(year, {"month_from": None, "month_to": None})]
             for year_, month_kwargs in year_months:
