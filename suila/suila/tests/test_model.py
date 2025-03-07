@@ -117,13 +117,6 @@ class ModelTest(TestCase):
             engine="InYearExtrapolationEngine",
             income_type=IncomeType.A,
         )
-        # IncomeEstimate.objects.create(
-        #     person_month=cls.month1,
-        #     estimated_year_result=12 * 15000,
-        #     actual_year_result=12 * 15000,
-        #     engine="InYearExtrapolationEngine",
-        #     income_type=IncomeType.B,
-        # )
         cls.report6 = MonthlyIncomeReport.objects.create(
             person_month=cls.month2,
             salary_income=Decimal(12000),
