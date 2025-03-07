@@ -67,7 +67,9 @@ def calculate_benefit(
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
     benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]
 
-    month_qs = PersonMonth.objects.filter(person_year__year_id=year, month=month)
+    month_qs = PersonMonth.objects.filter(
+        person_year__year_id=year, month=month
+    ).order_by("person_year__person__cpr")
     if cpr:
         month_qs = month_qs.filter(person_year__person__cpr=cpr)
     month_qs = PersonMonth.signal_qs(month_qs)

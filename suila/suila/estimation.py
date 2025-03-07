@@ -52,7 +52,7 @@ class EstimationEngine:
 
     income_map: Dict[IncomeType, Callable[[MonthlyIncomeData], Decimal]] = {
         IncomeType.A: lambda row: row.a_income,
-        IncomeType.B: lambda row: row.b_income,
+        IncomeType.B: lambda row: Decimal(0),
         IncomeType.U: lambda row: row.u_income,
     }
 

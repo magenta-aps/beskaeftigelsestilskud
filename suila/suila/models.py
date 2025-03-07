@@ -692,13 +692,6 @@ class PersonMonth(PermissionsMixin, models.Model):
         return date(self.year, self.month, 1)
 
     @property
-    def b_income_from_year(self) -> Decimal:
-        b_income = self.person_year.assessed_b_income
-        if b_income is not None:
-            return Decimal(int_divide_end(int(b_income), 12)[self.month - 1])
-        return Decimal(0)
-
-    @property
     def u_income_from_year(self) -> int:
         return int_divide_end(int(self.person_year.u_income), 12)[self.month - 1]
 
@@ -795,12 +788,6 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     # Autoupdated fields. Do not write into these.
     a_income = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=False,
-        blank=False,
-    )
-    b_income = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=False,
@@ -921,7 +908,6 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
         ).quantize(q)
-        self.b_income = Decimal(self.person_month.b_income_from_year).quantize(q)
         self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
 
     @staticmethod
@@ -1290,10 +1276,9 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
         update_fields: Sequence[str] | None,
         **kwargs,
     ):
-        if update_fields is None or "latest" not in update_fields:
-            qs = PersonYearAssessment.objects.filter(person_year=instance.person_year)
-            PersonYearAssessment.update_latest(qs)
-            PersonYearAssessment.update_personyear_fields(qs)
+        qs = PersonYearAssessment.objects.filter(person_year=instance.person_year)
+        PersonYearAssessment.update_latest(qs)
+        PersonYearAssessment.update_personyear_fields(qs)
 
 
 post_save.connect(

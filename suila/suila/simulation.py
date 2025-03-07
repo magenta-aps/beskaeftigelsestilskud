@@ -160,19 +160,8 @@ class Simulation:
                 )
 
         if self.income_type in (IncomeType.B, None):
-            for item in list(
-                MonthlyIncomeReport.objects.filter(
-                    person_month__person_year__person=self.person,
-                    person_month__person_year__year__gte=self.year_start,
-                    person_month__person_year__year__lte=self.year_end,
-                    b_income__gt=0,
-                )
-            ):
-                income_series = self._monthly_income_report_to_income_series(
-                    income_series, IncomeType.B, item
-                )
 
-            # Add any income from final settlement
+            # Add any income from assessment
             for person_year in self.person_years:
                 year = person_year.year.year
 
