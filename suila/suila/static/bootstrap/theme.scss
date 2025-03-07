@@ -44,6 +44,8 @@ $link-color: $dark-primary;
 
 $breadcrumb-divider: quote("\203A");
 
+$accordion-bg: transparent;
+
 @import "./bootstrap/scss/bootstrap";
 
 // Figtree font
@@ -266,14 +268,22 @@ footer a:hover {
   text-decoration: none;
 }
 
-// FAQ questions and answers
-a.faq {
+// Accordion (FAQ)
+#faq .accordion-item {
+  margin: 0 0 $spacer 0;
+  border: none;
+}
+#faq .accordion-button {
+  appearance: none;
   padding: $spacer;
   background: $light-grey;
   border-radius: 0.5 * $spacer;
+  color: $primary;
+  font-size: 1.25 * $spacer;
+  font-weight: bold;
 }
-div.faq {
-  padding: $spacer;
+#faq ul li {
+  line-height: 1.5 * $spacer;
 }
 
 // Badges
