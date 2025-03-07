@@ -19,6 +19,25 @@
 {% block content %}
 <div class="row mt-5">
     <div class="col-6">
+        <p>
+            {% blocktrans trimmed %}
+            Indtast din forventede månedsløn eller din forventede årsindkomst for at få en vejledende beregning på,
+            hvor meget Suila-tapit du kan få udbetalt månedligt og årligt. Husk at arbejdsgiverbetalt pension også
+            regnes med til din indkomst.
+            {% endblocktrans %}
+        </p>
+        <p>
+            {% blocktrans trimmed %}
+            Grafen viser sammenhængen mellem de gennemsnitlige månedlige Suila-tapit udbetalinger, og den indkomst du
+            har angivet.
+            {% endblocktrans %}
+        </p>
+        <p>
+            {% blocktrans trimmed %}
+            Bemærk, at denne beregning kun er vejledende. Dine personlige indkomstforhold kan påvirke den endelige
+            beregning af din Suila-tapit.
+            {% endblocktrans %}
+        </p>
         <form action="" method="post" class="form filter-form" novalidate>
             {% csrf_token %}
             {# Show monthly and yearly income inputs #}

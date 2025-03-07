@@ -80,19 +80,12 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_authenticated %}
+                {% if user.is_authenticated and user.cpr is not None %}
                 <li class="nav-item ms-4">
-                    {% if user.cpr is not None %}
                     <a href="{% url 'suila:person_graph' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_graph' %}active{% endif %}">
                         <span class="material-icons">link</span>
                         <span class="ms-1">{% translate "Mit estimerede Suila-tapit" %}</span>
                     </a>
-                    {% else %}
-                    <a href="{% url 'suila:graph' %}" class="d-flex align-items-center {% if current_view == 'suila:graph' %}active{% endif %}">
-                        <span class="material-icons">link</span>
-                        <span class="ms-1">{% translate "Mit estimerede Suila-tapit" %}</span>
-                    </a>
-                    {% endif %}
                 </li>
                 {% endif %}
 
@@ -172,29 +165,25 @@
                         </div>
                     </form>
                 </div>
+                {% if user.is_authenticated %}
                 <li class="nav-item dropdown">
                     <a href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        {% if user.is_authenticated %}
                         <span class="material-icons fs-3 d-flex">account_circle</span>
-                        {% else %}
-                        <span class="material-icons fs-3 d-flex">help</span>
-                        {% endif %}
                     </a>
                     <div id="settings" class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                         <div class="d-flex align-items-center">
                             <span class="material-icons me-2">account_circle</span>
                             <h4>{{ user.get_full_name }}</h4>
                         </div>
-                        {% if user.is_authenticated %}
                         <div class="d-flex">
                             <a href="{% url 'login:logout' %}" class="btn btn-primary d-flex align-items-center" id="logout-link">
                                 <span class="material-icons me-1">login</span>
-                                {% translate "Log out" %}
+                                {% translate "Log ud" %}
                             </a>
                         </div>
-                        {% endif %}
                     </div>
                 </li>
+                {% endif %}
             </ul>
         </nav>
     </header>

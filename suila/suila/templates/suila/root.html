@@ -22,7 +22,7 @@ $(document).ready(function () {
 
 {% block title %}
 {% blocktrans trimmed with name=user.get_full_name %}
-Velkommen, {{ name }}
+Velkommen {{ name }}
 {% endblocktrans %}
 {% endblock %}
 
@@ -74,7 +74,7 @@ Velkommen, {{ name }}
     </div>
     <div class="g-col-6 jumbo">
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-        {% jumbo_link person_income_url _("Beregningsgrundlag - Mine signaler") "assignment" %}
+        {% jumbo_link person_income_url _("Mine signaler") "assignment" %}
     </div>
 </div>
 <div class="grid gap-5 mt-5">
