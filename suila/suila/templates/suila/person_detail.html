@@ -15,33 +15,38 @@
 {% endblock %}
 
 {% block person_data %}
-{% if no_current_month %}
 <div class="row mt-5">
     <div class="col-12">
-        <p>
+        <div class="explainer">
+            {% if not year_in_past %}
             {% blocktrans trimmed %}
-            Din Suila er endnu ikke blevet beregnet.
-            {% endblocktrans %}
-        </p>
-    </div>
-</div>
-{% else %}
-<div class="row mt-5">
-    <div class="col-12">
-        <p>
-            {% blocktrans trimmed %}
-            Her kan du få et overblik over dine kommende og udførte udbetalinger af beskæftigelsesfradrag for
-            indeværende år.
+            Her får du et overblik over dine kommende og udførte udbetalinger af Suila-tapit for indeværende år.
             {% endblocktrans %}
             <br>
             {% blocktrans trimmed %}
-            Bemærk at alle tal er vejledende indtil den endelige udbetaling, og blot vises for at give dig en ide om hvad
-            du vil få udbetalt.
+            Bemærk at beløbene er vejledende og kan ændre sig indtil den endelige udbetaling.
             {% endblocktrans %}
-        </p>
+            {% else %}
+            {% blocktrans trimmed %}
+            Her kan du få et overblik over dine udførte udbetalinger af Suila-tapit for forgangne år.
+            {% endblocktrans %}
+            {% endif %}
+            <p><b>{% translate "Modregning" %}</b></p>
+            {% blocktrans trimmed %}
+            Hvis du har gæld til det offentlige, kan der ske modregning af op til en tredjedel af beløbet inden
+            udbetaling. Modregning betyder, at du modtager et lavere beløb, fordi dele af beløbet er brugt til at
+            afdrage på din gæld til det offentlige.
+            {% endblocktrans %}
+            <p><b>{% translate "NemKonto" %}</b></p>
+            {% blocktrans trimmed %}
+            Suila-tapit udbetales kun til NemKonto.
+            {% endblocktrans %}
+        </div>
     </div>
 </div>
-<div class="grid gap-3 mt-3">
+
+{% if show_next_payment and not year_in_past %}
+<div class="grid gap-3 mt-5">
     <div class="g-col-3 emphasis">
         <b>{% translate "Næste udbetalingsdato" %}</b>
         <h1 class="mt-3">{{ next_payout_date|date }}</h1>
@@ -63,25 +68,39 @@
         <h1 class="mt-3">{{ estimated_year_result|format_amount }}</h1>
     </div>
 </div>
-<div class="row mt-3 mb-5">
-    <div class="col-12">
+{% endif %}
+
+<div class="grid gap-3 mt-5">
+    <div class="g-col-12 sidebar">
+        <h2 class="mb-3">{% translate "Bemærk!" %}</h2>
         <p>
             {% blocktrans trimmed %}
-            (*) De indtægter der indgår i beregningsgrundlaget er overskud fra indhandling,
-            overskud som selvstændig erhvervsdrivende, lønindkomster samt udbytte.
+            Suila foretager kun udbetaling hvis systemet har modtaget signal fra arbejdsmarkedet i form af betalte
+            B-skatter, indberetning af løn fra arbejdsgivere, indberetning af indhandling fra indhandlingssteder eller
+            oplysning om udloddet udbytte fra selskaber.
             {% endblocktrans %}
         </p>
     </div>
 </div>
-<div class="row mt-3">
-    <div class="col-12">
-        <div class="jumbo">
-            {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-            {% jumbo_link person_income_url _("Beregningsgrundlag - Se mine signaler") "assignment" %}
-        </div>
+
+<div class="grid gap-3 mt-5">
+    {% if user|has_permissions:"suila.view_note" %}
+    <div class="g-col-6 jumbo">
+        {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}
+        {% jumbo_link person_notes_url _("Noter") "assignment" %}
     </div>
+    <div class="g-col-6 jumbo">
+        {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
+        {% jumbo_link person_income_url _("Beregningsgrundlag - Mine signaler") "assignment" %}
+    </div>
+    {% else %}
+    <div class="g-col-12 jumbo">
+        {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
+        {% jumbo_link person_income_url _("Beregningsgrundlag - Mine signaler") "assignment" %}
+    </div>
+    {% endif %}
 </div>
-{% endif %}
+
 <div class="grid gap-5 my-5">
     <div class="g-col-9">
         <h1>
@@ -147,14 +166,4 @@
         </ul>
     </div>
 </div>
-{% if user.is_authenticated and user|has_permissions:"suila.view_note" %}
-<div class="row my-5">
-    <div class="col-12">
-        <div class="jumbo">
-            {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}
-            {% jumbo_link person_notes_url _("Noter") "assignment" %}
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}

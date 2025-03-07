@@ -26,3 +26,7 @@ CSP_IMG_SRC = (
     "data:",
     "django-ninja.dev",
 )
+CSP_FRAME_SRC = (
+    "'self'",
+    "https://www.youtube.com",
+)
