@@ -6,6 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 /* global $ */
 const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
     const graph = $(selector);
+    const formatter = new Intl.NumberFormat("da-DK", { style: "currency", currency: "DKK" });
 
     if (yearlyIncome > data[data.length - 1][0]) {
         // result is greater than our current max point in the graph
@@ -26,7 +27,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
         "colors": ["#820041"], // $primary
         "series": [
             {
-                "name": "Suila",
+                "name": gettext("Suila-tapit"),
                 "data": data,
             },
         ],
@@ -51,12 +52,11 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                 if (opts.dataPointIndex === 0) {
                     return
                 }
-
-                const benefit = val;
-                const income = data[opts.dataPointIndex][0];
+                const yearlyIncome = formatter.format(data[opts.dataPointIndex][0]);
+                const monthlyBenefit = formatter.format(Math.ceil(val / 12));
                 return [
-                    `Årsindkomst: ${income} kr`,
-                    `Suila-tapit: ${benefit} kr.`,
+                    interpolate(gettext("Årsindkomst: %s"), [yearlyIncome]),
+                    interpolate(gettext("Suila-tapit: %s"), [monthlyBenefit]),
                 ]
             },
             "style": {
@@ -108,6 +108,8 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
     };
 
     if (!isNaN(yearlyIncome) && !isNaN(yearlyBenefit)) {
+        const monthlyBenefit = Math.ceil(yearlyBenefit / 12);
+
         chartData["annotations"] = {
             "points": [{
                 "x": yearlyIncome,
@@ -117,8 +119,8 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                 },
                 "label": {
                     "text": [
-                        gettext("Årsindkomst: ") + yearlyIncome,
-                        gettext("Suila-tapit: ") + yearlyBenefit,
+                        interpolate(gettext("Årsindkomst: %s"), [formatter.format(yearlyIncome)]),
+                        interpolate(gettext("Suila-tapit: %s"), [formatter.format(monthlyBenefit)]),
                     ],
                     "style": {
                         "background": "#ffe169", // $secondary
