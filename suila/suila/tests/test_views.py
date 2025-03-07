@@ -51,6 +51,7 @@ from suila.views import (
     PersonDetailNotesView,
     PersonDetailView,
     PersonFilterSet,
+    PersonGraphView,
     PersonMonthTable,
     PersonSearchView,
     PersonTable,
@@ -595,6 +596,79 @@ class TestIncomeSumsBySignalTypeTable(SimpleTestCase):
             self.instance.columns["current_month_sum"].column.verbose_name,
             "Marts 2025",
         )
+
+
+class TestPersonGraphView(TimeContextMixin, PersonEnv):
+    view_class = PersonGraphView
+
+    def test_get_context_data_for_present_person_month(self):
+        # Arrange: create `PersonMonth` with estimated year result (used as input for
+        # calculating yearly benefit.)
+        PersonMonth.objects.update_or_create(
+            person_year=self.person_year,
+            month=1,
+            defaults={
+                "estimated_year_result": Decimal("288000"),
+                "import_date": date.today(),
+            },
+        )
+        with self._time_context(year=2020, month=1):
+            # Act
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Assert
+            self.assertEqual(response.context_data["yearly_income"], "288000.00")
+            self.assertEqual(response.context_data["yearly_benefit"], "13356")
+
+    def test_get_context_data_for_not_present_person_month(self):
+        # Arrange: request graph for year where no person months are available
+        with self._time_context(year=2021):
+            # Act
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Assert
+            self.assertNotIn("yearly_income", response.context_data)
+            self.assertNotIn("yearly_benefit", response.context_data)
+
+    # The tests below are copied from `TestPersonDetailView`
+
+    def test_borger_see_only_self(self):
+        with self._time_context(year=2020):
+            self.request_get(self.normal_user, pk=self.person1.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person2.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person3.pk)
+
+    def test_other_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.other_user, pk=self.person1.pk)
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person2.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/graph/?year=2020",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonGraphView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.person1)
 
 
 class TestNoteView(TimeContextMixin, PersonEnv):

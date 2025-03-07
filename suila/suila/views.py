@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from functools import cached_property
+from math import ceil
 from typing import Any, Iterable
 from urllib.parse import urlencode
 
@@ -487,6 +488,50 @@ class GraphViewMixin(ContextMixin):
 
 class GraphView(YearMonthMixin, ViewLogMixin, GraphViewMixin, TemplateView):
     template_name = "suila/graph.html"
+
+
+class PersonGraphView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    PersonYearMonthMixin,
+    ViewLogMixin,
+    GraphViewMixin,
+    DetailView,
+):
+    template_name = "suila/graph.html"
+    model = Person
+    required_object_permissions = ["view"]
+
+    def get_context_data(self, **kwargs):
+        self.log_view(self.object)
+        context_data = super().get_context_data(**kwargs)
+        yearly_income: Decimal | None = self.get_yearly_income()
+        if yearly_income is not None:
+            yearly_benefit: Decimal = self.get_yearly_benefit(yearly_income)
+            context_data["yearly_income"] = str(yearly_income)
+            context_data["yearly_benefit"] = str(yearly_benefit)
+        return context_data
+
+    def get_yearly_income(self) -> Decimal | None:
+        person: Person = self.get_object()
+        try:
+            person_month: PersonMonth = PersonMonth.objects.get(
+                person_year__person=person,
+                person_year__year__year=self.year,
+                month=self.month,
+            )
+        except PersonMonth.DoesNotExist:
+            logger.error(
+                "No person month for person=%r, year=%r, month=%r",
+                person,
+                self.year,
+                self.month,
+            )
+        else:
+            return person_month.estimated_year_result
+
+    def get_yearly_benefit(self, yearly_income: Decimal) -> Decimal:
+        return ceil(self.calculation_method.calculate(yearly_income))
 
 
 class CalculatorView(
