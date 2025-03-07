@@ -52,7 +52,7 @@ class EstimationEngine:
 
     income_map: Dict[IncomeType, Callable[[MonthlyIncomeData], Decimal]] = {
         IncomeType.A: lambda row: row.a_income,
-        IncomeType.B: lambda row: row.b_income,
+        IncomeType.B: lambda row: Decimal(0),
         IncomeType.U: lambda row: row.u_income,
     }
 
@@ -299,11 +299,6 @@ class EstimationEngine:
 
         # Handle EstimationEngine instances
         person_year = PersonYear.objects.get(person_id=person_pk, year__year=year)
-        person_year_expenses = {
-            # Use most recent expenses data
-            income_type: person_year.expenses_sum(income_type, evaluation_date=None)
-            for income_type in IncomeType
-        }
         for engine in EstimationEngine.instances():
             for income_type in engine.valid_income_types:
                 engine_results = []
@@ -329,8 +324,6 @@ class EstimationEngine:
                             person_month, subset, income_type
                         )
                         if result is not None:
-                            expenses = person_year_expenses[income_type]
-                            result.estimated_year_result -= expenses
                             result.person_month = person_month
                             result.actual_year_result = actual_year_sum
                             result.timestamp = timestamp
@@ -599,7 +592,9 @@ class SelfReportedEngine(EstimationEngine):
         assessment = person_month.person_year.current_assessment(evaluation_date=None)
 
         if assessment is not None:
-            estimated_year_result = assessment.assessed_b_income
+            estimated_year_result = (
+                assessment.assessed_b_incomes - assessment.assessed_b_expenses
+            )
         else:
             estimated_year_result = Decimal(0)
         return IncomeEstimate(

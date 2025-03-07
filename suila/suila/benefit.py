@@ -13,7 +13,7 @@ from more_itertools import one
 from numpy import float64
 
 # from suila.estimation import EstimationEngine, MonthlyContinuationEngine
-from suila.models import PersonMonth, PersonYearAssessment, Year
+from suila.models import PersonMonth, PersonYear, Year
 
 
 def calculate_benefit(
@@ -67,7 +67,9 @@ def calculate_benefit(
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
     benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]
 
-    month_qs = PersonMonth.objects.filter(person_year__year_id=year, month=month)
+    month_qs = PersonMonth.objects.filter(
+        person_year__year_id=year, month=month
+    ).order_by("person_year__person__cpr")
     if cpr:
         month_qs = month_qs.filter(person_year__person__cpr=cpr)
     month_qs = PersonMonth.signal_qs(month_qs)
@@ -83,17 +85,17 @@ def calculate_benefit(
     estimates_df = utils.get_income_estimates_df(month, year, cpr, engine_a=engine_a)
 
     # Læg B-indkomst fra forskudsopgørelse til
-    assessment_qs = PersonYearAssessment.objects.filter(
-        person_year__year_id=year, latest=True
-    )
+    person_year_qs = PersonYear.objects.filter(year_id=year)
     if cpr:
-        assessment_qs = assessment_qs.filter(person_year__person__cpr=cpr)
-    assessment_qs = PersonYearAssessment.annotate_assessed_b_income(assessment_qs)
-    b_income_df = to_dataframe(
-        assessment_qs,
-        index="person_year__person__cpr",
+        person_year_qs = person_year_qs.filter(person__cpr=cpr)
+
+    assessment_df = to_dataframe(
+        person_year_qs,
+        index="person__cpr",
         dtypes={
-            "assessed_b_income_sum": float,
+            "b_income": float,
+            "b_expenses": float,
+            "catchsale_expenses": float,
         },
     )
 
@@ -101,13 +103,16 @@ def calculate_benefit(
     payouts_df = get_payout_df(month, year, cpr=cpr)
 
     # Combine for ease-of-use
-    df = pd.concat([month_df, estimates_df, payouts_df, b_income_df], axis=1)
+    df = pd.concat([month_df, estimates_df, payouts_df, assessment_df], axis=1)
 
     # Any months not found in concatenation have been set to NaN, replace with False
     df["signal"] = df["signal"].fillna(False)
 
-    df["calculation_basis"] = df["estimated_year_result"].add(
-        df["assessed_b_income_sum"], fill_value=0
+    df["calculation_basis"] = (
+        df["estimated_year_result"]
+        .add(df["b_income"], fill_value=0)
+        .sub(df["b_expenses"], fill_value=0)
+        .sub(df["catchsale_expenses"], fill_value=0)
     )
 
     # Only payout if we have a signal
@@ -118,7 +123,9 @@ def calculate_benefit(
         df.calculation_basis.fillna(0).map(calculate_benefit_func) * safety_factor
     )
     df["actual_year_benefit"] = (
-        df.actual_year_result.add(df["assessed_b_income_sum"], fill_value=0)
+        df.actual_year_result.add(df["b_income"], fill_value=0)
+        .sub(df["b_expenses"], fill_value=0)
+        .sub(df["catchsale_expenses"], fill_value=0)
         .fillna(0)
         .map(calculate_benefit_func)
     )

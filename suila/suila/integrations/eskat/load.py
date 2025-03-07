@@ -369,11 +369,8 @@ class ExpectedIncomeHandler(Handler):
 
     @classmethod
     def finalize(cls):
-        latest = PersonYearAssessment.objects.order_by(
-            "person_year", "-valid_from"
-        ).distinct("person_year")
-        latest.update(latest=True)
-        PersonYearAssessment.objects.exclude(id__in=latest).update(latest=False)
+        PersonYearAssessment.update_latest()
+        PersonYearAssessment.update_personyear_fields()
 
 
 class MonthlyIncomeHandler(Handler):

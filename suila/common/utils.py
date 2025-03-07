@@ -134,7 +134,7 @@ def get_income_as_dataframe(
         )
 
     output_dict = {}
-    for income_type, amount_field in zip(IncomeType, ["a_income", "b_income"]):
+    for income_type, amount_field in zip(IncomeType, ["a_income", "u_income"]):
         df = to_dataframe(
             qs=income_qs,
             index="person_month__person_year__person__cpr",
