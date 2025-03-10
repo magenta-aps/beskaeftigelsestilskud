@@ -180,6 +180,9 @@ def calculate_benefit(
             df_quarantine.in_quarantine, "remaining_benefit_for_year"
         ] -= df.benefit_this_month
 
+    # Do not payout if the amount is negative
+    df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
+
     df["benefit_paid"] = np.ceil(df["benefit_this_month"])
 
     return df
