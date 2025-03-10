@@ -863,3 +863,7 @@ msgstr ""
 #: suila/views.py
 msgid "Beløb"
 msgstr ""
+
+#: suila/views.py
+msgid "Opgørelse"
+msgstr ""
