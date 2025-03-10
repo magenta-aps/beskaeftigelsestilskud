@@ -644,6 +644,7 @@ class TestIncomeReport(ModelTest):
             person_pk=1,
             person_month_pk=1,
             person_year_pk=1,
+            signal=True,
         )
         self.assertEqual(data.amount, Decimal(20000))
 

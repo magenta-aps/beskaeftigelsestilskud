@@ -15,6 +15,7 @@ class MonthlyIncomeData:
     person_pk: int
     person_month_pk: int
     person_year_pk: int
+    signal: bool
     b_income: Decimal = Decimal(0)
 
     @property
