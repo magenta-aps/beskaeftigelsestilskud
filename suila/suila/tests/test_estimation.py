@@ -185,15 +185,15 @@ class TestEstimationEngine(TestCase):
         self.assertEqual(
             income_estimates,
             [
-                (3, Decimal("0.00")),
-                (4, Decimal("0.00")),
-                (5, Decimal("0.00")),
-                (6, Decimal("0.00")),
-                (7, Decimal("0.00")),
-                (8, Decimal("0.00")),
-                (9, Decimal("0.00")),
-                (10, Decimal("0.00")),
-                (11, Decimal("0.00")),
+                (3, Decimal("1000.00")),
+                (4, Decimal("2000.00")),
+                (5, Decimal("3000.00")),
+                (6, Decimal("3900.00")),
+                (7, Decimal("5000.00")),
+                (8, Decimal("5800.00")),
+                (9, Decimal("7000.00")),
+                (10, Decimal("8000.00")),
+                (11, Decimal("9000.00")),
                 (12, Decimal("10000.00")),
             ],
         )
@@ -203,8 +203,8 @@ class TestEstimationEngine(TestCase):
             estimation_engine="TwelveMonthsSummationEngine",
             income_type=IncomeType.A,
         )
-        self.assertEqual(summary.mean_error_percent, Decimal("-91.67"))
-        self.assertEqual(summary.rmse_percent, Decimal("95.74"))
+        self.assertEqual(summary.mean_error_percent, Decimal("-54.42"))
+        self.assertEqual(summary.rmse_percent, Decimal("63.76"))
 
         EstimationEngine.estimate_all(
             self.year2.year,
@@ -555,15 +555,15 @@ class TwelveMonthsSummationEngineTest(TestCase):
             [
                 Decimal("0.00"),
                 Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
+                Decimal("1000.00"),
+                Decimal("2000.00"),
+                Decimal("3000.00"),
+                Decimal("3900.00"),
+                Decimal("5000.00"),
+                Decimal("5800.00"),
+                Decimal("7000.00"),
+                Decimal("8000.00"),
+                Decimal("9000.00"),
                 Decimal("10000.00"),
             ],
             start=1,
@@ -688,17 +688,17 @@ class TwoYearSummationEngineTest(TestCase):
 
         for month, expectation in enumerate(
             [
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("0.00"),
+                Decimal("5600.00"),
+                Decimal("6100.00"),
+                Decimal("6550.00"),
+                Decimal("6950.00"),
+                Decimal("7450.00"),
+                Decimal("8000.00"),
+                Decimal("8650.00"),
+                Decimal("9250.00"),
+                Decimal("9800.00"),
+                Decimal("10400.00"),
+                Decimal("10900.00"),
                 Decimal("12700.00"),
             ],
             start=1,
