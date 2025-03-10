@@ -18,15 +18,15 @@ msgstr ""
 
 #: login/forms.py
 msgid "Brugernavn"
-msgstr ""
+msgstr "Atuisup aqqa"
 
 #: login/forms.py
 msgid "Password"
-msgstr ""
+msgstr "Isissutissaq"
 
 #: login/forms.py
 msgid "Kodeord"
-msgstr ""
+msgstr "Isissutissaq"
 
 #: login/forms.py
 #, python-brace-format
@@ -35,7 +35,7 @@ msgstr ""
 
 #: login/templates/login/logged_out.html
 msgid "Logget ud"
-msgstr ""
+msgstr "Anivutit"
 
 #: login/templates/login/logged_out.html
 msgid ""
@@ -45,7 +45,7 @@ msgstr ""
 
 #: login/templates/login/logged_out.html
 msgid "Log in"
-msgstr ""
+msgstr "Iserfissaq"
 
 #: login/templates/login/login_failed.html
 msgid "Login mislykkedes"
@@ -91,7 +91,7 @@ msgstr ""
 
 #: login/templates/two_factor/core/login.html
 msgid "Log ind på Suila"
-msgstr ""
+msgstr "Suilamut iserit"
 
 #: login/templates/two_factor/core/login.html
 msgid "Indtast venligst koden, der er genereret af din token-generator."

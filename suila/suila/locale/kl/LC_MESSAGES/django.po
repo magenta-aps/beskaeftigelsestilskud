@@ -805,7 +805,7 @@ msgstr ""
 
 #: suila/templates/suila/person_search.html
 msgid "Søg"
-msgstr ""
+msgstr "Ujaasigit"
 
 #: suila/templates/suila/root.html
 #, python-format
