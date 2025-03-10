@@ -165,14 +165,12 @@ class BaseTestCase(TestCase):
                 person=cls.person1,
                 year=year,
                 preferred_estimation_engine_a="InYearExtrapolationEngine",
-                preferred_estimation_engine_b="InYearExtrapolationEngine",
             )
 
             person_year2 = PersonYear.objects.create(
                 person=cls.person2,
                 year=year,
                 preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-                preferred_estimation_engine_b="TwelveMonthsSummationEngine",
             )
             person_years.append(person_year1)
             person_years.append(person_year2)
@@ -263,14 +261,12 @@ class QuarantineTest(BaseTestCase):
                 person=cls.person3,
                 year=year,
                 preferred_estimation_engine_a="InYearExtrapolationEngine",
-                preferred_estimation_engine_b="InYearExtrapolationEngine",
             )
 
             cls.person_year4 = PersonYear.objects.create(
                 person=cls.person4,
                 year=year,
                 preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-                preferred_estimation_engine_b="TwelveMonthsSummationEngine",
             )
 
         offset_gen = cycle([0.6, 1.4])

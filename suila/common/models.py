@@ -48,7 +48,6 @@ class EngineViewPreferences(models.Model):
     show_TwelveMonthsSummationEngine = models.BooleanField(default=True)
     show_TwoYearSummationEngine = models.BooleanField(default=True)
     show_MonthlyContinuationEngine = models.BooleanField(default=False)
-    show_SelfReportedEngine = models.BooleanField(default=False)
 
 
 class PageView(models.Model):

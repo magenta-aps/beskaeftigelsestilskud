@@ -432,12 +432,6 @@ class PersonYear(PermissionsMixin, models.Model):
         null=True,
         default="InYearExtrapolationEngine",
     )
-    preferred_estimation_engine_b = models.CharField(
-        max_length=100,
-        choices=engine_choices,
-        null=True,
-        default="SelfReportedEngine",
-    )
     preferred_estimation_engine_u = models.CharField(
         max_length=100,
         choices=engine_choices,
@@ -509,17 +503,6 @@ class PersonYear(PermissionsMixin, models.Model):
         )["total"]
 
         return result or Decimal("0.00")
-
-    def current_assessment(
-        self, evaluation_date: datetime | None = None
-    ) -> PersonYearAssessment | None:
-        if evaluation_date is None:
-            evaluation_date = timezone.now()
-        return (
-            self.assessments.filter(valid_from__lte=evaluation_date)
-            .order_by("-valid_from")
-            .first()
-        )
 
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)

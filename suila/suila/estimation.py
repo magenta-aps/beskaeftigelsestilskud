@@ -21,7 +21,6 @@ from project.util import mean_error, root_mean_sq_error, trim_list_first
 
 from suila import data
 from suila.data import MonthlyIncomeData
-from suila.exceptions import IncomeTypeUnhandledByEngine
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -37,7 +36,6 @@ class EstimationEngine:
     description = "Tom superklasse"
     valid_income_types: List[IncomeType] = [
         IncomeType.A,
-        IncomeType.B,
         IncomeType.U,
     ]
 
@@ -52,7 +50,6 @@ class EstimationEngine:
 
     income_map: Dict[IncomeType, Callable[[MonthlyIncomeData], Decimal]] = {
         IncomeType.A: lambda row: row.a_income,
-        IncomeType.B: lambda row: Decimal(0),
         IncomeType.U: lambda row: row.u_income,
     }
 
@@ -469,8 +466,7 @@ class InYearExtrapolationEngine(EstimationEngine):
                 return not item.a_income.is_zero()
             elif income_type == IncomeType.U:
                 return not item.u_income.is_zero()
-            else:
-                return not item.b_income.is_zero()
+            return False  # pragma: no cover
 
         return _filter
 
@@ -571,35 +567,4 @@ class MonthlyContinuationEngine(EstimationEngine):
                 lambda item: item.year_month == year_month,
                 subset,
             )
-        )
-
-
-class SelfReportedEngine(EstimationEngine):
-    description = "Estimering udfra forskudsopgørelsen. Kun B-indkomst."
-
-    valid_income_types: List[IncomeType] = [IncomeType.B]
-
-    @classmethod
-    def estimate(
-        cls,
-        person_month: PersonMonth,
-        subset: Sequence[MonthlyIncomeData],
-        income_type: IncomeType,
-    ) -> IncomeEstimate | None:
-        if income_type != IncomeType.B:
-            raise IncomeTypeUnhandledByEngine(income_type, cls)
-
-        assessment = person_month.person_year.current_assessment(evaluation_date=None)
-
-        if assessment is not None:
-            estimated_year_result = (
-                assessment.assessed_b_incomes - assessment.assessed_b_expenses
-            )
-        else:
-            estimated_year_result = Decimal(0)
-        return IncomeEstimate(
-            estimated_year_result=estimated_year_result,
-            engine=cls.__name__,
-            person_month=person_month,
-            income_type=income_type,
         )
