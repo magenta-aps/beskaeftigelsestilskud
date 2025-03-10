@@ -276,7 +276,9 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
-        self.assertEqual(IncomeEstimate.objects.all().count(), 40)
+        self.assertEqual(
+            IncomeEstimate.objects.all().count(), 80
+        )  # One person * 10 months * 4 engines * 2 incometypes
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
@@ -378,6 +380,7 @@ class TestEstimationEngine(TestCase):
                 ),
                 "u_income": Decimal(person_month.u_income_from_year or 0),
             }
+            data["signal"] = data["a_income"] > 0 or data["u_income"]
 
             if (self.year.year, month) in exclude_months:
                 self.assertNotIn(
@@ -445,6 +448,7 @@ class TestInYearExtrapolationEngine(TestCase):
                 person_pk=self.person.pk,
                 person_year_pk=self.person_year.pk,
                 person_month_pk=report.person_month.pk,
+                signal=True,
             )
             for report in self.reports
         ]
@@ -547,6 +551,7 @@ class TwelveMonthsSummationEngineTest(TestCase):
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
+                signal=True,
             )
             for report in self.reports
         ]
@@ -682,6 +687,7 @@ class TwoYearSummationEngineTest(TestCase):
                 person_pk=self.person.pk,
                 person_year_pk=report.person_month.person_year.pk,
                 person_month_pk=report.person_month.pk,
+                signal=True,
             )
             for report in self.reports
         ]

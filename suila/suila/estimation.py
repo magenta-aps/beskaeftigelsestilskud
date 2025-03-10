@@ -239,6 +239,7 @@ class EstimationEngine:
                 ),
                 # b_income=Decimal(person_month.b_income_from_year or 0),
                 u_income=Decimal(person_month.u_income_from_year or 0),
+                signal=person_month.signal,
             )
             for person_month in person_month_qs
             if not (
@@ -299,7 +300,6 @@ class EstimationEngine:
         for engine in EstimationEngine.instances():
             for income_type in engine.valid_income_types:
                 engine_results = []
-                income_extractor = EstimationEngine.income_map[income_type]
                 for month in range(first_income_month, 13):
                     year_month = date(year, month, 1)
 
@@ -308,10 +308,7 @@ class EstimationEngine:
                         if item.year_month == year_month:
                             # Avoid estimating for months without data,
                             # unless we're estimating B-income
-                            if (
-                                income_type == IncomeType.B
-                                or not income_extractor(item).is_zero()
-                            ):
+                            if item.signal:
                                 person_month = person_month_map[item.person_month_pk]
                             break
 
