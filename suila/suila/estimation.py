@@ -423,20 +423,23 @@ class InYearExtrapolationEngine(EstimationEngine):
         subset: Sequence[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
+        # only handler MonthlyIncomeData for the specified IncomeType
+        income_type_filter = InYearExtrapolationEngine.filter_relevant_items(
+            income_type
+        )
+        relevant_items: Sequence[MonthlyIncomeData] = [
+            item for item in subset if income_type_filter(item)
+        ]
+
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
-        relevant_items = cls.relevant(subset, person_month.year_month)
+        relevant_items = cls.relevant(relevant_items, person_month.year_month)
 
         # Trim off items with no income from the beginning of the list
-        relevant_items = trim_list_first(
-            relevant_items,
-            InYearExtrapolationEngine.filter_relevant_items(income_type),
-        )
-
+        relevant_items = trim_list_first(relevant_items, income_type_filter)
         relevant_count = len(relevant_items)
         if relevant_count > 0:
             amount_sum = cls.subset_sum(relevant_items, income_type)
-
             omitted_count = person_month.month - relevant_count
             year_estimate = (12 - omitted_count) * amount_sum / relevant_count
             return IncomeEstimate(
@@ -444,6 +447,7 @@ class InYearExtrapolationEngine(EstimationEngine):
                 engine=cls.__name__,
                 income_type=income_type,
             )
+
         return IncomeEstimate(
             estimated_year_result=Decimal(0),
             engine=cls.__name__,
