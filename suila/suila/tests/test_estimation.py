@@ -30,7 +30,6 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     PersonYearEstimateSummary,
-    PersonYearU1AAssessment,
     StandardWorkBenefitCalculationMethod,
     TaxScope,
     Year,
@@ -432,27 +431,52 @@ class TestInYearExtrapolationEngine(TestCase):
             preferred_estimation_engine_a="InYearExtrapolationEngine",
         )
 
-        cls.person_year_u1a_assessment = PersonYearU1AAssessment.objects.create(
-            person_year=cls.person_year,
-            u1a_ids="1, 2, 3",
-            dividend_total=Decimal("1500.00"),
-        )
-
         cls.months = []
         cls.reports = []
-        for month, income in enumerate(
-            [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
+
+        # Create A-income test-data
+        for month, incomes in enumerate(
+            [
+                (0, 0, 0),
+                (0, 0, 0),
+                (1000, 0, 45000),
+                (1000, 0, 0),
+                (1000, 0, 0),
+                (900, 0, 0),
+                (1100, 0, 0),
+                (800, 0, 0),
+                (1200, 0, 0),
+                (1000, 0, 0),
+                (1000, 0, 0),
+                (1000, 0, 0),
+            ],
+            start=1,
         ):
+            a_income, b_income, u_income = incomes
+
+            # Create the month
             person_month = PersonMonth.objects.create(
                 person_year=cls.person_year, month=month, import_date=date.today()
             )
             cls.months.append(person_month)
-            cls.reports.append(
-                MonthlyIncomeReport.objects.create(
-                    person_month=person_month,
-                    salary_income=Decimal(income),
+
+            # Create A-income
+            if a_income > 0:
+                cls.reports.append(
+                    MonthlyIncomeReport.objects.create(
+                        person_month=person_month,
+                        salary_income=Decimal(a_income),
+                    )
                 )
-            )
+
+            # Create U-income
+            if u_income > 0:
+                cls.reports.append(
+                    MonthlyIncomeReport.objects.create(
+                        person_month=person_month,
+                        u_income=Decimal(u_income),
+                    )
+                )
 
     def test_name(self):
         self.assertEqual(InYearExtrapolationEngine.name(), "InYearExtrapolationEngine")
@@ -472,49 +496,50 @@ class TestInYearExtrapolationEngine(TestCase):
             )
             for report in self.reports
         ]
-        for month, expectation in enumerate(
+
+        for month, expectations in enumerate(
             [
-                Decimal("0.00"),
-                Decimal("0.00"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("9750.00"),
-                Decimal("10000.00"),
-                Decimal("9666.67"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
-                Decimal("10000.00"),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("450000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("405000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("360000.00")),
+                (Decimal("9750.00"), Decimal("0.00"), Decimal("315000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("270000.00")),
+                (Decimal("9666.67"), Decimal("0.00"), Decimal("225000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("180000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("135000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("90000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("45000.00")),
             ],
             start=1,
         ):
             person_month = PersonMonth.objects.get(
                 person_year=self.person_year, month=month
             )
-            income_estimate = InYearExtrapolationEngine.estimate(
-                person_month,
-                data,
-                IncomeType.A,
-            )
-            self.assertEqual(
-                income_estimate.estimated_year_result.quantize(Decimal("0.01")),
-                expectation,
-                month,
-            )
 
-            # Assert income estimate for IncomeType.U (year 2025)
-            income_estimate_u = InYearExtrapolationEngine.estimate(
-                person_month,
-                data,
-                IncomeType.U,
-            )
+            for idx, expected_income in enumerate(expectations):
+                income_type = None
+                match idx:
+                    case 0:
+                        income_type = IncomeType.A
+                    case 1:
+                        income_type = IncomeType.B
+                    case 2:
+                        income_type = IncomeType.U
 
-            self.assertEqual(
-                income_estimate_u.estimated_year_result.quantize(Decimal("0.01")),
-                Decimal("1500.00"),
-                month,
-            )
+                if not income_type:
+                    raise Exception(f"unknown expected-income-index: {idx}")
+
+                income_estimate = InYearExtrapolationEngine.estimate(
+                    person_month, data, income_type
+                )
+
+                self.assertEqual(
+                    income_estimate.estimated_year_result.quantize(Decimal("0.01")),
+                    expected_income,
+                    month,
+                )
 
 
 class TwelveMonthsSummationEngineTest(TestCase):
