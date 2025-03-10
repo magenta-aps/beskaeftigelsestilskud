@@ -486,12 +486,10 @@ class TwelveMonthsSummationEngine(EstimationEngine):
     ) -> IncomeEstimate | None:
         months = 12 if person_month.month == 12 else cls.months
         relevant_items = cls.relevant(subset, person_month.year_month, months)
-        if len(relevant_items) < months:
-            year_estimate = Decimal(0)
-        else:
-            year_estimate = cls.subset_sum(relevant_items, income_type)
-            if months != 12:
-                year_estimate *= 12 / Decimal(months)
+
+        year_estimate = cls.subset_sum(relevant_items, income_type)
+        if months != 12:
+            year_estimate *= 12 / Decimal(months)
 
         return IncomeEstimate(
             estimated_year_result=year_estimate,
