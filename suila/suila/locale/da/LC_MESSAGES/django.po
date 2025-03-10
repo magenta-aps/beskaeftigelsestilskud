@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-07 13:17-0200\n"
+"POT-Creation-Date: 2025-03-10 05:10-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -767,20 +767,12 @@ msgstr ""
 msgid "%(amount)s kr."
 msgstr ""
 
-#: suila/templatetags/status_tags.py
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Foreløbigt beløb"
 msgstr ""
 
-#: suila/templatetags/status_tags.py
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Beløb fastlagt"
-msgstr ""
-
-#: suila/tests/test_status_tags.py
-msgid "Afventer"
-msgstr ""
-
-#: suila/tests/test_status_tags.py
-msgid "Fastlagt"
 msgstr ""
 
 #: suila/tests/test_views.py suila/views.py
