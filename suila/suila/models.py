@@ -534,15 +534,20 @@ class PersonYear(PermissionsMixin, models.Model):
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):
-            sum += MonthlyIncomeReport.sum_queryset(
-                MonthlyIncomeReport.objects.filter(
-                    person_month__person_year=self, a_income__gt=0
-                )
-            )
+            sum += MonthlyIncomeReport.objects.filter(
+                person_month__person_year=self, a_income__gt=0
+            ).aggregate(sum=Coalesce(Sum(F("a_income")), Decimal(0)))["sum"]
+
         if income_type in (IncomeType.B, None):
             # Annual B income always originates from forskudsopgørelse or
             # slutopgørelse.
             sum += self.b_income or 0
+
+        if income_type in (IncomeType.U, None):
+            sum += MonthlyIncomeReport.objects.filter(
+                person_month__person_year=self, u_income__gt=0
+            ).aggregate(sum=Coalesce(Sum(F("u_income")), Decimal(0)))["sum"]
+
         return sum
 
     @cached_property
@@ -943,7 +948,9 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
-        return qs.aggregate(sum=Coalesce(Sum(F("a_income")), Decimal(0)))["sum"]
+        return qs.aggregate(
+            sum=Coalesce(Sum(F("a_income") + F("u_income")), Decimal(0))
+        )["sum"]
 
     @staticmethod
     def pre_save(sender, instance: MonthlyIncomeReport, *args, **kwargs):
