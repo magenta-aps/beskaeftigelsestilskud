@@ -176,15 +176,16 @@ class Simulation:
                 )
 
         if self.income_type in (IncomeType.U, None):
-            # Add any income from final settlement
-            for person_year in self.person_years:
-                year = person_year.year.year
-
-                if not person_year.u_income:
-                    continue
-
-                income_series = self._yearly_monthly_income_to_income_series(
-                    income_series, IncomeType.U, person_year.u_income, year
+            for item in list(
+                MonthlyIncomeReport.objects.filter(
+                    person_month__person_year__person=self.person,
+                    person_month__person_year__year__gte=self.year_start,
+                    person_month__person_year__year__lte=self.year_end,
+                    u_income__gt=0,
+                )
+            ):
+                income_series = self._monthly_income_report_to_income_series(
+                    income_series, IncomeType.U, item
                 )
 
         income_series_list = list(income_series.values())
@@ -325,20 +326,28 @@ class Simulation:
     ) -> Dict[tuple, IncomeItem]:
         value_part: Optional[IncomeItemValuePart] = None
 
-        if income_type == income_type.A and item.a_income:
-            value_part = IncomeItemValuePart(
-                income_type=income_type, value=item.a_income
-            )
+        income_value_attr = "a_income"
+        if income_type == IncomeType.B:
+            income_value_attr = "b_income"
+        elif income_type == IncomeType.U:
+            income_value_attr = "u_income"
 
+        if not hasattr(item, income_value_attr):
+            raise ValueError(
+                f"item does not have income_value_attr: {income_value_attr}"
+            )
+        income_value = getattr(item, income_value_attr)
+
+        value_part = IncomeItemValuePart(income_type=income_type, value=income_value)
         if (item.year, item.month) not in income_series:
             income_series[(item.year, item.month)] = IncomeItem(
                 year=item.year,
                 month=item.month,
-                value=item.a_income,
+                value=income_value,
                 value_parts=[value_part] if value_part else [],
             )
         else:
-            income_series[(item.year, item.month)].value += item.a_income
+            income_series[(item.year, item.month)].value += income_value
 
             if value_part:
                 income_series[(item.year, item.month)].value_parts.append(value_part)
