@@ -169,7 +169,10 @@ class Simulation:
                     continue
 
                 income_series = self._yearly_monthly_income_to_income_series(
-                    income_series, IncomeType.B, person_year.b_income, year
+                    income_series,
+                    IncomeType.B,
+                    person_year.b_income - person_year.b_expenses,
+                    year,
                 )
 
         if self.income_type in (IncomeType.U, None):
