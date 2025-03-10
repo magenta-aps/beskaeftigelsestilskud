@@ -551,7 +551,8 @@ class MonthlyContinuationEngine(EstimationEngine):
     ) -> Sequence[MonthlyIncomeData]:
         return list(
             filter(
-                lambda item: item.year_month < year_month,
+                lambda item: item.year == year_month.year
+                and item.year_month < year_month,
                 subset,
             )
         )
