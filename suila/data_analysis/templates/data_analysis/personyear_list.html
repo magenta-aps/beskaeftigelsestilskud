@@ -59,13 +59,13 @@
             </div>
         </div>
         <div class="row justify-content-start my-1">
-            <div class="col-2">
+            <div class="col-4">
                 <div class="input-group">
                     <div class="input-group-text">{{ form.cpr.label }}</div>
                     {{ form.cpr }}
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col-2">
                 <button class="btn btn-primary">{% translate 'Opdatér' %}</button>
             </div>
         </div>
@@ -190,24 +190,14 @@
                 {% include "data_analysis/sort_icon.html" with field="stability_score_a" %}
             </a>
         </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.stability_score_b }}" class="link-dark">
-                Stabilitets-score (B)
-                {% include "data_analysis/sort_icon.html" with field="stability_score_b" %}
-            </a>
-        </th>
+
         <th class="col-1">
             <a href="?{{ sort_params.preferred_estimation_engine_a }}" class="link-dark">
                 Estimeringsmotor (A)
                 {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine_a" %}
             </a>
         </th>
-        <th class="col-1">
-            <a href="?{{ sort_params.preferred_estimation_engine_b }}" class="link-dark">
-                Estimeringsmotor (B)
-                {% include "data_analysis/sort_icon.html" with field="preferred_estimation_engine_b" %}
-            </a>
-        </th>
+
     </tr>
     </thead>
     <tbody>
@@ -257,9 +247,7 @@
         <td>{{ object.correct_payout|default_if_none:"" }}</td>
         <td>{{ object.payout_offset|default_if_none:"" }}</td>
         <td>{{ object.stability_score_a|default_if_none:"-" }}</td>
-        <td>{{ object.stability_score_b|default_if_none:"-" }}</td>
         <td>{{ object.preferred_estimation_engine_a|default_if_none:"" }}</td>
-        <td>{{ object.preferred_estimation_engine_b|default_if_none:"" }}</td>
     </tr>
 {% endfor %}
     </tbody>

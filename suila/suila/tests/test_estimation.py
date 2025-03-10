@@ -18,11 +18,9 @@ from suila.estimation import (
     EstimationEngine,
     InYearExtrapolationEngine,
     MonthlyContinuationEngine,
-    SelfReportedEngine,
     TwelveMonthsSummationEngine,
     TwoYearSummationEngine,
 )
-from suila.exceptions import IncomeTypeUnhandledByEngine
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -83,13 +81,11 @@ class TestEstimationEngine(TestCase):
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="SelfReportedEngine",
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year2,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="SelfReportedEngine",
         )
         for month, income in enumerate(
             [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
@@ -142,16 +138,6 @@ class TestEstimationEngine(TestCase):
                 TwelveMonthsSummationEngine,
                 TwoYearSummationEngine,
                 MonthlyContinuationEngine,
-            ],
-        )
-        self.assertEqual(
-            EstimationEngine.valid_engines_for_incometype(IncomeType.B),
-            [
-                InYearExtrapolationEngine,
-                TwelveMonthsSummationEngine,
-                TwoYearSummationEngine,
-                MonthlyContinuationEngine,
-                SelfReportedEngine,
             ],
         )
 
@@ -290,7 +276,7 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
-        self.assertEqual(IncomeEstimate.objects.all().count(), 90)
+        self.assertEqual(IncomeEstimate.objects.all().count(), 40)
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
@@ -421,7 +407,6 @@ class TestInYearExtrapolationEngine(TestCase):
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="InYearExtrapolationEngine",
         )
 
         cls.person_year_u1a_assessment = PersonYearU1AAssessment.objects.create(
@@ -522,13 +507,11 @@ class TwelveMonthsSummationEngineTest(TestCase):
             person=cls.person,
             year=cls.year0,
             preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-            preferred_estimation_engine_b="TwelveMonthsSummationEngine",
         )
         cls.person_year1 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year1,
             preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-            preferred_estimation_engine_b="TwelveMonthsSummationEngine",
         )
         cls.months = []
         cls.reports = []
@@ -646,19 +629,16 @@ class TwoYearSummationEngineTest(TestCase):
             person=cls.person,
             year=cls.year0,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            preferred_estimation_engine_b="TwoYearSummationEngine",
         )
         cls.person_year1 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year1,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            preferred_estimation_engine_b="TwoYearSummationEngine",
         )
         cls.person_year2 = PersonYear.objects.create(
             person=cls.person,
             year=cls.year2,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            preferred_estimation_engine_b="TwoYearSummationEngine",
         )
         cls.months = []
         cls.reports = []
@@ -767,59 +747,3 @@ class TwoYearSummationEngineTest(TestCase):
                 expectation,
                 month,
             )
-
-
-class TestSelfReportedEngine(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.year = Year.objects.create(year=2024)
-        cls.person = Person.objects.create(
-            name="Jens Hansen",
-            cpr="1234567890",
-        )
-        cls.person_year = PersonYear.objects.create(
-            person=cls.person,
-            year=cls.year,
-            preferred_estimation_engine_a="InYearExtrapolationEngine",
-            preferred_estimation_engine_b="SelfReportedEngine",
-        )
-
-        cls.person_months = []
-        for month in range(1, 13):
-            person_month = PersonMonth.objects.create(
-                person_year=cls.person_year, month=month, import_date=date.today()
-            )
-            cls.person_months.append(person_month)
-            MonthlyIncomeReport.objects.create(
-                person_month=person_month,
-                capital_income=Decimal(10000),
-            )
-        cls.assessment = PersonYearAssessment.objects.create(
-            person_year=cls.person_year,
-            capital_income=Decimal(0),
-            education_support_income=Decimal(0),
-            care_fee_income=Decimal(0),
-            alimony_income=Decimal(0),
-            other_b_income=Decimal(0),
-            business_turnover=Decimal(70000),
-        )
-
-    def test_name(self):
-        self.assertEqual(SelfReportedEngine.name(), "SelfReportedEngine")
-
-    def test_cannot_calculate_a(self):
-        for person_month in self.person_months:
-            with self.assertRaises(IncomeTypeUnhandledByEngine):
-                SelfReportedEngine.estimate(person_month, [], IncomeType.A)
-
-    def test_calculate_b(self):
-        for person_month in self.person_months:
-            income_estimate = SelfReportedEngine.estimate(
-                person_month, [], IncomeType.B
-            )
-            self.assertIsNotNone(income_estimate)
-            self.assertEqual(income_estimate.engine, "SelfReportedEngine")
-            self.assertEqual(income_estimate.income_type, IncomeType.B)
-            self.assertEqual(income_estimate.person_month, person_month)
-            self.assertEqual(income_estimate.estimated_year_result, Decimal(70000))

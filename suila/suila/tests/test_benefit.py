@@ -54,7 +54,6 @@ class CalculateBenefitTest(BaseTestCase):
             12,
             self.year.year,
             engine_a="TwelveMonthsSummationEngine",
-            engine_b="TwelveMonthsSummationEngine",
         )
         error_person1 = (
             df.loc[self.person1.cpr, "actual_year_result"]
