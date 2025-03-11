@@ -15,7 +15,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http.response import Http404
+from django.http import Http404
 from django.template.response import TemplateResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -26,6 +26,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
 
 from suila.forms import NoteAttachmentFormSet
+from suila.integrations.eboks.message import SuilaEboksMessage
 from suila.models import (
     BTaxPayment,
     Employer,
@@ -43,10 +44,12 @@ from suila.view_mixins import PermissionsRequiredMixin
 from suila.views import (
     CalculatorView,
     CPRField,
+    EboksMessageView,
     IncomeSignal,
     IncomeSignalTable,
     IncomeSignalType,
     IncomeSumsBySignalTypeTable,
+    PersonDetailEboksView,
     PersonDetailIncomeView,
     PersonDetailNotesAttachmentView,
     PersonDetailNotesView,
@@ -1102,3 +1105,152 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
         self.assertEqual(pageview.kwargs, {})
         self.assertEqual(pageview.params, {})
         self.assertEqual(pageview.itemviews.count(), 0)
+
+
+class TestEboksView(TestViewMixin, PersonEnv, TestCase):
+
+    view_class = PersonDetailEboksView
+
+    def test_get_context_data(self):
+        view, response = self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/eboks/?year={self.person_year.year.year}",
+            pk=self.person1.pk,
+        )
+        context_data = view.get_context_data()
+        self.assertQuerySetEqual(
+            context_data["months"],
+            self.person_year.personmonth_set.all().order_by("month"),
+        )
+        self.assertQuerySetEqual(
+            context_data["available_person_years"],
+            PersonYear.objects.filter(person=self.person_year.person).order_by(
+                "-year__year"
+            ),
+        )
+
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/eboks/?year={self.person_year.year.year}",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailEboksView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.person_year)
+
+
+class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
+
+    view_class = EboksMessageView
+
+    def get(self, user, typ="opgørelse"):
+        return self.request_get(
+            user,
+            f"/person/{self.person1.pk}/msg/{self.person_year.year.year}/1/opgørelse/",
+            pk=self.person1.pk,
+            year=self.person_year.year.year,
+            month=1,
+            type=typ,
+        )
+
+    def test_borger_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.get(self.normal_user)
+
+    def test_admin_see_data(self):
+        self.get(self.admin_user)
+
+    def test_staff_see_data(self):
+        self.get(self.staff_user)
+
+    def test_other_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.get(self.other_user)
+
+    def test_anonymous_see_none(self):
+        view, response = self.get(self.no_user)
+        self.assertEqual(response.status_code, 302)
+
+    def test_header(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(
+            f"/person/{self.person1.pk}/msg/{self.person_year.year.year}/1/opgørelse/"
+        )
+        self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
+
+    def test_get_context_data(self):
+        view, response = self.get(self.admin_user)
+        context_data = view.get_context_data()
+        personmonth = self.person_year.personmonth_set.get(month=1)
+        message = context_data["message"]
+        self.assertIsNotNone(message)
+        self.assertTrue(isinstance(message, SuilaEboksMessage))
+        self.maxDiff = None
+        self.assertEqual(
+            message.context,
+            {
+                "person": self.person1,
+                "year": personmonth.year,
+                "month": personmonth.month,
+                "personyear": personmonth.person_year,
+                "personmonth": personmonth,
+                "income": {
+                    "catchsale_income": [
+                        Decimal("0.00"),
+                        Decimal("2310.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "salary_income": [
+                        Decimal("0.00"),
+                        Decimal("2310.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "btax_paid": [
+                        Decimal("0.00"),
+                        Decimal("770.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "capital_income": [
+                        Decimal("0.00"),
+                        Decimal("2310.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                },
+            },
+        )
+
+    def test_view_log(self):
+        self.get(self.admin_user)
+        personmonth = self.person_year.personmonth_set.get(month=1)
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "EboksMessageView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(
+            pageview.kwargs,
+            {"pk": self.person1.pk, "month": 1, "type": "opgørelse", "year": 2020},
+        )
+        self.assertEqual(pageview.params, {})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, personmonth)
+
+    def test_wrong_type(self):
+        with self.assertRaises(Http404):
+            self.get(
+                self.admin_user,
+                "foobar",
+            )

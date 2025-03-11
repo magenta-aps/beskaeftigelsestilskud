@@ -1,0 +1,83 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "suila/person_detail_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% load render_table from django_tables2 %}
+{% load date_tags %}
+
+{% block breadcrumb %}
+    {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+        <li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item"><a href="{% url 'suila:person_detail' pk=person.pk %}">{% translate "Mit overblik" %}</a></li>
+    <li class="breadcrumb-item">{% translate "Eboks-beskeder" %}</li>
+{% endblock %}
+
+{% block person_data %}
+    <div class="col-12">
+        <h2 class="mb-3">{% translate "Eboks-beskeder" %}</h2>
+        <p>
+            Her ser du en liste med de eboks-beskeder, vi kan sende til borgeren. Dette er for at vi kan verificere at de ser korrekte ud
+        </p>
+        <ul class="detail-table nav">
+            {% for person_year in available_person_years %}
+                {% with current_year=person_year.year.year %}
+                    <li class="nav-item mx-5">
+                        {% if current_year == year %}
+                            <a class="nav-link active" aria-current="page" href="{% querystring year=current_year %}">{{ current_year }}</a>
+                        {% else %}
+                            <a class="nav-link" href="{% querystring year=current_year %}">{{ current_year }}</a>
+                        {% endif %}
+                    </li>
+                {% endwith %}
+            {% endfor %}
+        </ul>
+        <div class="detail-table p-5">
+            <div class="grid gap-5">
+                <div class="g-col-4">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{% translate 'Måned' %}</th>
+                                <th>{% translate 'Type: opgørelse' %}</th>
+                                <th>{% translate 'Type: afventer' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for person_month in months %}
+                                <tr>
+                                    <td>{{ person_month.month|month_name }}</td>
+                                    <td>
+                                        <a href="{% url 'suila:person_message' pk=object.pk year=year month=person_month.month type='opgørelse' %}" class="btn btn-primary btm-sm" target="message_frame">
+                                            {% translate 'Åbn' %}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'suila:person_message' pk=object.pk year=year month=person_month.month type='afventer' %}" class="btn btn-primary btm-sm" target="message_frame">
+                                            {% translate 'Åbn' %}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="g-col-8 sidebar">
+                    <iframe name="message_frame" width="100%" height="100%"></iframe>
+
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_headers %}
+    <script nonce="{{ request.csp_nonce }}">
+
+    </script>
+{% endblock %}
+
+

@@ -116,6 +116,12 @@
         {% jumbo_link person_income_url _("Mine signaler - få information om beregningsgrundlaget for dit Suila-tapit") "assignment" %}
     </div>
     {% endif %}
+    {% if user|has_permissions:"suila.view_eboksmessage" %}
+        <div class="g-col-4 jumbo">
+            {% url "suila:person_detail_eboks" pk=person.pk as person_eboks_url %}
+            {% jumbo_link person_eboks_url _("Eboks-beskeder") "assignment" %}
+        </div>
+    {% endif %}
 </div>
 
 <div class="grid gap-5 my-5">

@@ -40,6 +40,16 @@ LOGGING: dict = {
             "level": "INFO",
             "propagate": False,
         },
+        "weasyprint": {
+            "handlers": ["gunicorn"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "fontTools": {
+            "handlers": ["gunicorn"],
+            "level": "ERROR",
+            "propagate": False,
+        },
     },
 }
 

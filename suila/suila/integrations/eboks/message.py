@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
@@ -75,6 +78,7 @@ class SuilaEboksMessage:
         self.month = personmonth.month
         self.year = personmonth.year
         self.person = personmonth.person
+        self.message: EboksMessage | None = None
         quant = Decimal("0.01")
         year_range = range(self.year, self.year - 3, -1)
         year_map = [[personmonth]] + [
@@ -178,12 +182,12 @@ class SuilaEboksMessage:
         return data.read()
 
     def send(self, client: EboksClient):
-        return EboksMessage.dispatch(
+        self.message = EboksMessage.dispatch(
             self.person.cpr, self.title, self.content_type, self.pdf, client
         )
 
-    def update_welcome_letter(self, message: EboksMessage):
-        if self.typ == self.welcome_letter:
-            self.person.welcome_letter = message
+    def update_welcome_letter(self):
+        if self.typ == self.welcome_letter and self.message is not None:
+            self.person.welcome_letter = self.message
             self.person.welcome_letter_sent_at = timezone.now()
             self.person.save(update_fields=("welcome_letter", "welcome_letter_sent_at"))
