@@ -188,7 +188,8 @@ class BatchExport:
 
     def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
         return (
-            f"RES_G68_export_{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
+            "SUILA_G68_export_"
+            f"{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
         )
 
     def get_payment_date(self, person_month: PersonMonth) -> date:

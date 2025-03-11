@@ -289,7 +289,7 @@ class TestBatchExport(TestCase):
                             settings.PRISME,
                             ANY,  # `buf`
                             ANY,  # `destination_folder`
-                            "RES_G68_export_"
+                            "SUILA_G68_export_"
                             f"{prisme_batch.prefix:02}_{export._year}_"
                             f"{export._month:02}"
                             ".g68",
@@ -304,7 +304,7 @@ class TestBatchExport(TestCase):
                             settings.PRISME,
                             ANY,  # `buf`
                             ANY,  # `destination_folder`
-                            "RES_G68_export_"
+                            "SUILA_G68_export_"
                             f"{prisme_batch.prefix:02}_{export._year}_"
                             f"{export._month:02}"
                             ".g68",
@@ -361,7 +361,7 @@ class TestBatchExport(TestCase):
                 # Single batch item with prefix 31
                 [("3101000000", 31)],
                 # Single file in "normal" folder
-                [("g68g69", "RES_G68_export_31_2025_01.g68")],
+                [("g68g69", "SUILA_G68_export_31_2025_01.g68")],
             )
 
     def test_export_batches_normal_and_non_mod11(self):
@@ -392,8 +392,8 @@ class TestBatchExport(TestCase):
                 ],
                 # Two files, one in normal folder, and one in non-mod11 folder
                 [
-                    ("g68g69", "RES_G68_export_31_2025_01.g68"),
-                    ("g68g69_mod11_cpr", "RES_G68_export_32_2025_01.g68"),
+                    ("g68g69", "SUILA_G68_export_31_2025_01.g68"),
+                    ("g68g69_mod11_cpr", "SUILA_G68_export_32_2025_01.g68"),
                 ],
             )
 
