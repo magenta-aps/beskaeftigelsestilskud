@@ -13,6 +13,13 @@ from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import CharField, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
+from tenacity import (
+    after_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 from tenQ.client import ClientException, put_file_in_prisme_folder
 from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
@@ -22,7 +29,13 @@ from suila.integrations.prisme.g68g69 import (
     G68G69TransactionWriter,
 )
 from suila.integrations.prisme.mod11 import validate_mod11
-from suila.models import PersonMonth, PrismeAccountAlias, PrismeBatch, PrismeBatchItem
+from suila.models import (
+    PersonMonth,
+    PrismeAccountAlias,
+    PrismeBatch,
+    PrismeBatchItem,
+    TaxScope,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +53,7 @@ class BatchExport:
             PersonMonth.objects.select_related("person_year__person", "prismebatchitem")
             .filter(
                 person_year__year=self._year,
+                person_year__tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
                 month=self._month,
                 prismebatchitem__isnull=True,
                 benefit_paid__isnull=False,
@@ -211,12 +225,7 @@ class BatchExport:
         buf.seek(0)
 
         try:
-            put_file_in_prisme_folder(
-                settings.PRISME,  # type: ignore[misc]
-                buf,
-                destination_folder,
-                filename,
-            )
+            self._put_file_in_prisme_folder(buf, destination_folder, filename)
         except ClientException as e:
             prisme_batch.status = PrismeBatch.Status.Failed
             prisme_batch.failed_message = str(e)
@@ -237,6 +246,26 @@ class BatchExport:
             0,
             settings.PRISME["user_number"],
             settings.PRISME["machine_id"],
+        )
+
+    @retry(
+        retry=retry_if_exception_type(ClientException),
+        reraise=True,  # raise `ClientException` if final retry attempt fails
+        stop=stop_after_attempt(10),
+        wait=wait_fixed(1),  # 1 second before retry
+        after=after_log(logger, logging.DEBUG),  # log all retry attempts
+    )
+    def _put_file_in_prisme_folder(
+        self,
+        buf: BytesIO,
+        destination_folder: str,
+        filename: str,
+    ):
+        put_file_in_prisme_folder(
+            settings.PRISME,  # type: ignore[misc]
+            buf,
+            destination_folder,
+            filename,
         )
 
     @transaction.atomic
