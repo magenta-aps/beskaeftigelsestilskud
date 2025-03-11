@@ -280,21 +280,36 @@ class TestBatchExport(TestCase):
                 ) as mock_put:
                     # Act
                     export.upload_batch(prisme_batch, [prisme_batch_item])
-                    # Assert: the upload function is called
-                    mock_put.assert_called_once_with(
-                        settings.PRISME,
-                        ANY,  # `buf`
-                        ANY,  # `destination_folder`
-                        "RES_G68_export_"
-                        f"{prisme_batch.prefix:02}_{export._year}_{export._month:02}"
-                        ".g68",
-                    )
-                    # Assert: the `PrismeBatch` object is updated
+                    # Assert
                     prisme_batch.refresh_from_db()
                     if test_upload_exception:
+                        # Assert: the upload function is called multiple times, until
+                        # giving up.
+                        mock_put.assert_called_with(
+                            settings.PRISME,
+                            ANY,  # `buf`
+                            ANY,  # `destination_folder`
+                            "RES_G68_export_"
+                            f"{prisme_batch.prefix:02}_{export._year}_"
+                            f"{export._month:02}"
+                            ".g68",
+                        )
+                        self.assertEqual(mock_put.call_count, 10)  # 10 retry attempts
+                        # Assert: the `PrismeBatch` object is updated
                         self.assertEqual(prisme_batch.status, PrismeBatch.Status.Failed)
                         self.assertEqual(prisme_batch.failed_message, "Uh-oh")
                     else:
+                        # Assert: the upload function is called once (succeeding)
+                        mock_put.assert_called_once_with(
+                            settings.PRISME,
+                            ANY,  # `buf`
+                            ANY,  # `destination_folder`
+                            "RES_G68_export_"
+                            f"{prisme_batch.prefix:02}_{export._year}_"
+                            f"{export._month:02}"
+                            ".g68",
+                        )
+                        # Assert: the `PrismeBatch` object is updated
                         self.assertEqual(prisme_batch.status, PrismeBatch.Status.Sent)
                         self.assertEqual(prisme_batch.failed_message, "")
 
