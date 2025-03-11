@@ -474,18 +474,6 @@ class PersonDetailIncomeView(
                 )
 
 
-class PersonEboksTable(Table):
-    month = TemplateColumn(
-        template_name="suila/table_columns/month.html",
-        verbose_name=_("Måned"),
-    )
-    messagetype1 = Column(
-        default="Åbn",
-        linkify=dict(viewname="suila:person_detail_eboks", args=[Accessor("pk")]),
-        verbose_name=_("Opgørelse"),
-    )
-
-
 class PersonDetailEboksView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
