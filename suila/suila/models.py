@@ -657,7 +657,9 @@ class PersonMonth(PermissionsMixin, models.Model):
         return None
 
     def update_amount_sum(self):
-        self.amount_sum = MonthlyIncomeReport.sum_queryset(self.monthlyincomereport_set)
+        self.amount_sum = MonthlyIncomeReport.sum_queryset(
+            self.monthlyincomereport_set.all()
+        )
 
     def __str__(self):
         return f"{self.person} ({self.year}/{self.month})"
