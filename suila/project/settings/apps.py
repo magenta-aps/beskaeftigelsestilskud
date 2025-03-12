@@ -29,4 +29,5 @@ INSTALLED_APPS = [
     "mitid_test",
     "simple_history",
     "compressor",
+    "crispy_forms",
 ]
