@@ -17,6 +17,7 @@ class Command(BaseCommand):
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
+        parameter = "mean_error_percent"  # "rmse_percent"
         person_qs = Person.objects.all()
         first_year = PersonYear.objects.order_by("year").values_list("year_id").first()
         if kwargs["cpr"]:
@@ -41,15 +42,15 @@ class Command(BaseCommand):
                     # Look for LAST year's results to find the best estimation
                     # engine for THIS year
                     relevant_summaries = summaries.filter(
-                        person_year__year_id=year - 1, rmse_percent__isnull=False
-                    )
-                    rmses = {
-                        summary.estimation_engine: summary.rmse_percent
+                        person_year__year_id=year - 1
+                    ).filter(**{f"{parameter}__isnull": False})
+                    offsets = {
+                        summary.estimation_engine: abs(getattr(summary, parameter))
                         for summary in relevant_summaries
                     }
 
-                    if rmses:
-                        best_engine = min(rmses, key=rmses.get)
+                    if offsets:
+                        best_engine = min(offsets, key=offsets.get)
                         try:
                             person_year = PersonYear.objects.get(
                                 person=person, year=year
