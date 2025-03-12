@@ -6,7 +6,14 @@ SPDX-License-Identifier: MPL-2.0
 /* global $ */
 const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
     const graph = $(selector);
-    const formatter = new Intl.NumberFormat("da-DK", { style: "currency", currency: "DKK" });
+    const formatter = new Intl.NumberFormat(
+        "da-DK",
+        {
+            style: "currency",
+            currency: "DKK",
+            maximumFractionDigits: 0,
+        }
+    );
 
     if (yearlyIncome > data[data.length - 1][0]) {
         // result is greater than our current max point in the graph
@@ -88,6 +95,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                     "colors": ["#820041"], // $primary
                 },
                 "offsetY": -2,
+                "formatter": formatter.format,
             },
         },
         "yaxis": {
@@ -102,7 +110,8 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                 "style": {
                     "fontSize": "17px",
                     "colors": ["#820041"], // $primary
-                }
+                },
+                "formatter": formatter.format,
             },
         },
     };
