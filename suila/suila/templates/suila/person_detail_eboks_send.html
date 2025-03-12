@@ -1,0 +1,77 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "suila/person_detail_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% load render_table from django_tables2 %}
+{% load date_tags %}
+
+{% block breadcrumb %}
+    {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+        <li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item"><a href="{% url 'suila:person_detail' pk=person.pk %}">{% translate "Mit overblik" %}</a></li>
+    <li class="breadcrumb-item">{% translate "Årsopgørelse" %}</li>
+{% endblock %}
+
+{% block person_data %}
+    <h2 class="mb-3">{% translate "Årsopgørelse" %}</h2>
+    <p>
+    {% if has_sent %}
+        {% blocktranslate trimmed with timestamp=person.welcome_letter_sent_at|date:"d.m.Y H:i:s" %}
+            Herunder vises den årsopgørelse som er sendt til borgeren. Beskeden er afsendt {{ timestamp }}.
+        {% endblocktranslate %}
+    {% else %}
+        {% blocktranslate trimmed %}
+            Herunder vises den årsopgørelse som kan sendes til borgeren. Tryk på knappen "Send" for at afsende årsopgørelsen med E-boks.
+        {% endblocktranslate %}
+    {% endif %}
+    </p>
+    {% if not has_sent %}
+    <ul class="detail-table nav d-flex">
+        <li class="nav-item">
+            <form method="post">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#send_confirm">{% translate 'Send' %}</button>
+            </form>
+        </li>
+    </ul>
+    {% endif %}
+    <div class="detail-table p-5">
+        {% if has_sent %}
+            <iframe name="eboks_preview" class="eboks" src="{% url 'suila:person_existing_message' pk=person.pk %}"></iframe>
+        {% else %}
+            <iframe name="eboks_preview" class="eboks" src="{% url 'suila:person_generated_message' pk=person.pk year=person_month.year month=person_month.month type='opgørelse' %}"></iframe>
+        {% endif %}
+    </div>
+
+    <div class="modal" id="send_confirm" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{% translate 'Bekræftelse' %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        {% blocktranslate trimmed %}
+                        Er du sikker på at du vil afsende eboks-beskeden?
+                        {% endblocktranslate %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate 'Nej' %}</button>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" name="{{ form.confirmed.name }}" value="True" class="btn btn-primary">{% translate 'Ja' %}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+

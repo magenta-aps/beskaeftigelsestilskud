@@ -51,12 +51,12 @@
                                 <tr>
                                     <td>{{ person_month.month|month_name }}</td>
                                     <td>
-                                        <a href="{% url 'suila:person_message' pk=object.pk year=year month=person_month.month type='opgørelse' %}" class="btn btn-primary btm-sm" target="message_frame">
+                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='opgørelse' %}" class="btn btn-primary btm-sm" target="message_frame">
                                             {% translate 'Åbn' %}
                                         </a>
                                     </td>
                                     <td>
-                                        <a href="{% url 'suila:person_message' pk=object.pk year=year month=person_month.month type='afventer' %}" class="btn btn-primary btm-sm" target="message_frame">
+                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='afventer' %}" class="btn btn-primary btm-sm" target="message_frame">
                                             {% translate 'Åbn' %}
                                         </a>
                                     </td>

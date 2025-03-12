@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-11 10:13-0200\n"
+"POT-Creation-Date: 2025-03-12 07:18-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -422,7 +422,8 @@ msgid "Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til Grønland.
 msgstr ""
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
-#: suila/templates/suila/person_detail_eboks.html
+#: suila/templates/suila/person_detail_eboks_preview.html
+#: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
 #: suila/templates/suila/person_search.html suila/templates/suila/root.html
@@ -430,7 +431,8 @@ msgid "Borgersøgning"
 msgstr ""
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
-#: suila/templates/suila/person_detail_eboks.html
+#: suila/templates/suila/person_detail_eboks_preview.html
+#: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
 #: suila/templates/suila/root.html
@@ -564,8 +566,12 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-#: suila/templates/suila/person_detail_eboks.html
-msgid "Eboks-beskeder"
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Årsopgørelse"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Eboks-beskeder preview"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -648,20 +654,57 @@ msgid ""
 "dette år."
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks.html suila/views.py
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "Eboks-beskeder"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
 msgid "Måned"
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks.html
+#: suila/templates/suila/person_detail_eboks_preview.html
 msgid "Type: opgørelse"
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks.html
+#: suila/templates/suila/person_detail_eboks_preview.html
 msgid "Type: afventer"
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks.html
+#: suila/templates/suila/person_detail_eboks_preview.html
 msgid "Åbn"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+#, python-format
+msgid ""
+"Herunder vises den årsopgørelse som er sendt til borgeren. Beskeden er "
+"afsendt %(timestamp)s."
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid ""
+"Herunder vises den årsopgørelse som kan sendes til borgeren. Tryk på knappen "
+"\"Send\" for at afsende årsopgørelsen med E-boks."
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Send"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Bekræftelse"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Er du sikker på at du vil afsende eboks-beskeden?"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Nej"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Ja"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -862,8 +905,4 @@ msgstr ""
 
 #: suila/views.py
 msgid "Beløb"
-msgstr ""
-
-#: suila/views.py
-msgid "Opgørelse"
 msgstr ""

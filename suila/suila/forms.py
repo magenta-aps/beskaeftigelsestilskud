@@ -13,6 +13,7 @@ from django.forms import (
     ModelForm,
     Textarea,
 )
+from django.forms.fields import BooleanField
 from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
@@ -124,3 +125,7 @@ class IncomeSignalFilterForm(Form):
 
     def clean_source(self) -> str:
         return unquote_plus(self.cleaned_data["source"])
+
+
+class ConfirmationForm(Form):
+    confirmed = BooleanField(required=False)

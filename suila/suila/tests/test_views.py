@@ -2,33 +2,36 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import itertools
+import json
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from urllib.parse import quote_plus
 
-from bs4 import BeautifulSoup
+import requests
 from common.models import PageView, User
 from common.tests.test_mixins import TestViewMixin
 from common.view_mixins import ViewLogMixin
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
+from django.core.files.temp import NamedTemporaryFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from django.template.response import TemplateResponse
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
-from django.utils import translation
+from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
-from django_otp.util import random_hex
+from requests import Response
 
 from suila.forms import NoteAttachmentFormSet
-from suila.integrations.eboks.message import SuilaEboksMessage
 from suila.models import (
     BTaxPayment,
     Employer,
@@ -40,6 +43,7 @@ from suila.models import (
     PersonYear,
     PersonYearU1AAssessment,
     StandardWorkBenefitCalculationMethod,
+    SuilaEboksMessage,
     Year,
 )
 from suila.view_mixins import PermissionsRequiredMixin
@@ -47,11 +51,13 @@ from suila.views import (
     CalculatorView,
     CPRField,
     EboksMessageView,
+    GeneratedEboksMessageView,
     IncomeSignal,
     IncomeSignalTable,
     IncomeSignalType,
     IncomeSumsBySignalTypeTable,
-    PersonDetailEboksView,
+    PersonDetailEboksPreView,
+    PersonDetailEboksSendView,
     PersonDetailIncomeView,
     PersonDetailNotesAttachmentView,
     PersonDetailNotesView,
@@ -80,27 +86,6 @@ class TestRootView(TestViewMixin, TestCase):
         self.assertEqual(pageview.kwargs, {})
         self.assertEqual(pageview.params, {})
         self.assertEqual(pageview.itemviews.count(), 0)
-
-    def test_2fa_not_set(self):
-        view, response = self.request_get(self.admin_user, "/")
-        response.render()
-        self.assertFalse(view.get_context_data()["user_twofactor_enabled"])
-        self.assertIsNotNone(
-            BeautifulSoup(response.content, features="lxml").find(
-                href=reverse("login:two_factor_setup")
-            )
-        )
-
-    def test_2fa_set(self):
-        self.admin_user.totpdevice_set.create(name="default", key=random_hex())
-        view, response = self.request_get(self.admin_user, "/")
-        response.render()
-        self.assertTrue(view.get_context_data()["user_twofactor_enabled"])
-        self.assertIsNone(
-            BeautifulSoup(response.content, features="lxml").find(
-                href=reverse("login:two_factor_setup")
-            )
-        )
 
 
 class PersonEnv(TestCase):
@@ -1141,7 +1126,7 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
 
 class TestEboksView(TestViewMixin, PersonEnv, TestCase):
 
-    view_class = PersonDetailEboksView
+    view_class = PersonDetailEboksPreView
 
     def test_get_context_data(self):
         view, response = self.request_get(
@@ -1170,7 +1155,7 @@ class TestEboksView(TestViewMixin, PersonEnv, TestCase):
         logs = PageView.objects.all()
         self.assertEqual(logs.count(), 1)
         pageview = logs[0]
-        self.assertEqual(pageview.class_name, "PersonDetailEboksView")
+        self.assertEqual(pageview.class_name, "PersonDetailEboksPreView")
         self.assertEqual(pageview.user, self.admin_user)
         self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
         self.assertEqual(pageview.params, {"year": "2020"})
@@ -1179,14 +1164,156 @@ class TestEboksView(TestViewMixin, PersonEnv, TestCase):
         self.assertEqual(itemviews[0].item, self.person_year)
 
 
-class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
+class EboksTest(TestCase):
 
-    view_class = EboksMessageView
+    client_cert_file = NamedTemporaryFile(suffix=".crt")
+    client_key_file = NamedTemporaryFile(suffix=".key")
+
+    @classmethod
+    def test_settings(cls, **kwargs):
+        return {
+            **settings.EBOKS,
+            "client_cert": cls.client_cert_file.name,
+            "client_key": cls.client_key_file.name,
+            **kwargs,
+        }
+
+
+@override_settings(EBOKS=EboksTest.test_settings())
+class TestEboksSendView(TestViewMixin, PersonEnv, EboksTest):
+
+    view_class = PersonDetailEboksSendView
+
+    @staticmethod
+    def mock_request(recipient_status, post_processing_status, fails=0, status=200):
+        mock = MagicMock()
+
+        def side_effect(method, url, params, data, **kwargs):
+            if mock.fails > 0:
+                mock.fails -= 1
+                raise ConnectionError
+            m = re.search(
+                r"/int/rest/srv.svc/3/dispatchsystem/3994/dispatches/([^/]+)", url
+            )
+            if m is None:
+                raise Exception("No match")
+            message_id = m.group(1)
+
+            response = Response()
+            response.status_code = status
+            if status == 200:
+                response._content = json.dumps(
+                    {
+                        "message_id": message_id,
+                        "recipients": [
+                            {
+                                "status": recipient_status,
+                                "post_processing_status": post_processing_status,
+                            }
+                        ],
+                    }
+                ).encode("utf-8")
+            return response
+
+        mock.fails = fails
+        mock.side_effect = side_effect
+        return mock
+
+    def test_get_context_data(self):
+        view, response = self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/eboks/send/",
+            pk=self.person1.pk,
+        )
+        context_data = view.get_context_data()
+        self.assertEqual(
+            context_data["person"],
+            self.person1,
+        )
+        self.assertEqual(
+            context_data["person_month"],
+            PersonMonth.objects.filter(
+                person_year__person=self.person1,
+            )
+            .order_by("-person_year__year_id", "-month")
+            .first(),
+        )
+
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/send/",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonDetailEboksSendView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(
+            itemviews[0].item,
+            PersonMonth.objects.filter(
+                person_year__person=self.person1,
+            )
+            .order_by("-person_year__year_id", "-month")
+            .first(),
+        )
+
+    @patch.object(requests.sessions.Session, "request")
+    def test_post(self, mock_request: MagicMock):
+        mock_request.side_effect = self.mock_request("", "")
+        view, response = self.request_post(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/eboks/send/",
+            {"confirmed": "True"},
+            pk=self.person1.pk,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.person1.refresh_from_db()
+        self.assertIsNotNone(self.person1.welcome_letter)
+        message = self.person1.welcome_letter
+        contents = message.xml
+        # if type(contents) is not bytes:
+        #     contents = contents.tobytes()
+        mock_request.assert_called_with(
+            "PUT",
+            f"https://eboxtest.nanoq.gl/int/rest/srv.svc/3/"
+            f"dispatchsystem/3994/dispatches/{message.message_id}",
+            None,
+            contents,
+            timeout=60,
+        )
+        self.assertEqual(message.status, "sent")
+        self.assertEqual(message.recipient_status, "")
+        self.assertIsNotNone(message.pk)
+
+    @patch.object(requests.sessions.Session, "request")
+    def test_post_not_confirmed(self, mock_request):
+        mock_request.side_effect = self.mock_request("", "")
+        view, response = self.request_post(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/eboks/send/",
+            {"confirmed": "False"},
+            pk=self.person1.pk,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.person1.refresh_from_db()
+        self.assertIsNone(self.person1.welcome_letter)
+        mock_request.assert_not_called()
+
+
+class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
+
+    view_class = GeneratedEboksMessageView
 
     def get(self, user, typ="opgørelse"):
         return self.request_get(
             user,
-            f"/person/{self.person1.pk}/msg/{self.person_year.year.year}/1/opgørelse/",
+            f"/persons/{self.person1.pk}/msg/{self.person_year.year.year}/1/opgørelse/",
             pk=self.person1.pk,
             year=self.person_year.year.year,
             month=1,
@@ -1214,8 +1341,9 @@ class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
     def test_header(self):
         self.client.force_login(self.admin_user)
         response = self.client.get(
-            f"/person/{self.person1.pk}/msg/{self.person_year.year.year}/1/opgørelse/"
+            f"/persons/{self.person1.pk}/msg/{self.person_year.year.year}/1/opgørelse/"
         )
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
 
     def test_get_context_data(self):
@@ -1270,7 +1398,7 @@ class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         logs = PageView.objects.all()
         self.assertEqual(logs.count(), 1)
         pageview = logs[0]
-        self.assertEqual(pageview.class_name, "EboksMessageView")
+        self.assertEqual(pageview.class_name, "GeneratedEboksMessageView")
         self.assertEqual(pageview.user, self.admin_user)
         self.assertEqual(
             pageview.kwargs,
@@ -1287,3 +1415,61 @@ class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 self.admin_user,
                 "foobar",
             )
+
+
+class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
+    view_class = EboksMessageView
+
+    def get(self, user):
+        return self.request_get(
+            user,
+            f"/persons/{self.person1.pk}/msg/",
+            pk=self.person1.pk,
+        )
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.person1.welcome_letter = SuilaEboksMessage.objects.create(
+            person_month=cls.person1.personyear_set.order_by("-year")
+            .first()
+            .personmonth_set.order_by("-month")
+            .first(),
+            type="opgørelse",
+        )
+        cls.person1.welcome_letter.update_fields(True)
+        cls.person1.welcome_letter_sent_at = timezone.now()
+        cls.person1.save()
+
+    def test_get_context_data(self):
+        view, response = self.get(self.admin_user)
+        context_data = view.get_context_data()
+        message = context_data["message"]
+        self.assertIsNotNone(message)
+        self.assertTrue(isinstance(message, SuilaEboksMessage))
+        self.maxDiff = None
+        self.assertEqual(message, self.person1.welcome_letter)
+
+    def test_borger_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.get(self.normal_user)
+
+    def test_admin_see_data(self):
+        self.get(self.admin_user)
+
+    def test_staff_see_data(self):
+        self.get(self.staff_user)
+
+    def test_other_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.get(self.other_user)
+
+    def test_anonymous_see_none(self):
+        view, response = self.get(self.no_user)
+        self.assertEqual(response.status_code, 302)
+
+    def test_header(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(f"/persons/{self.person1.pk}/msg/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")

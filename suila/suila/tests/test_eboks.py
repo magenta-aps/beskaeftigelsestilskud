@@ -21,8 +21,14 @@ from suila.integrations.eboks.client import (
     MessageCollisionException,
     MessageFailureException,
 )
-from suila.integrations.eboks.message import SuilaEboksMessage
-from suila.models import EboksMessage, Person, PersonMonth, PersonYear, Year
+from suila.models import (
+    EboksMessage,
+    Person,
+    PersonMonth,
+    PersonYear,
+    SuilaEboksMessage,
+    Year,
+)
 
 
 class EboksTest(TestCase):
@@ -496,8 +502,12 @@ class SuilaMessageTest(EboksTest):
             )
             for i in range(1, 13)
         ]
-        cls.message1 = SuilaEboksMessage(cls.person_months[0], "opgørelse")
-        cls.message2 = SuilaEboksMessage(cls.person_months[0], "afventer")
+        cls.message1 = SuilaEboksMessage(
+            person_month=cls.person_months[0], type="opgørelse"
+        )
+        cls.message2 = SuilaEboksMessage(
+            person_month=cls.person_months[0], type="afventer"
+        )
 
     def test_title(self):
         self.assertEqual(self.message1.title, "Årsopgørelse")
@@ -516,20 +526,19 @@ class SuilaMessageTest(EboksTest):
 
         with EboksClient.from_settings() as client:
             self.message1.send(client)
-        message = self.message1.message
-        self.assertIsNotNone(message)
+        self.assertIsNotNone(self.message1.sent)
 
         mock_request.assert_called_with(
             "PUT",
             f"https://eboxtest.nanoq.gl/int/rest/srv.svc/3/"
-            f"dispatchsystem/3994/dispatches/{message.message_id}",
+            f"dispatchsystem/3994/dispatches/{self.message1.message_id}",
             None,
-            message.xml,
+            self.message1.xml,
             timeout=60,
         )
-        self.assertEqual(message.status, "sent")
-        self.assertEqual(message.recipient_status, "")
-        self.assertIsNotNone(message.pk)
+        self.assertEqual(self.message1.status, "sent")
+        self.assertEqual(self.message1.recipient_status, "")
+        self.assertIsNotNone(self.message1.pk)
 
     @patch.object(requests.sessions.Session, "request")
     def test_update_welcome_letter(self, mock_request):
@@ -539,7 +548,7 @@ class SuilaMessageTest(EboksTest):
         with EboksClient.from_settings() as client:
             self.message1.send(client)
         self.message1.update_welcome_letter()
-        self.assertEqual(self.person.welcome_letter, self.message1.message)
+        self.assertEqual(self.person.welcome_letter, self.message1)
         self.assertTrue(
             self.person.welcome_letter_sent_at > timezone.now() - timedelta(seconds=1)
         )
