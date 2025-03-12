@@ -17,7 +17,7 @@ class Command(BaseCommand):
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
-        parameter = "mean_error_percent"  # "rmse_percent"
+        parameter = "mean_error_percent"  # eller "rmse_percent"
         person_qs = Person.objects.all()
         first_year = PersonYear.objects.order_by("year").values_list("year_id").first()
         if kwargs["cpr"]:
