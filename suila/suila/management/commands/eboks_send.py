@@ -95,10 +95,7 @@ class Command(SuilaBaseCommand):
         for person in qs:
             try:
                 personyear: PersonYear = person.personyear_set.filter(
-                    tax_scope__in=(
-                        TaxScope.FULDT_SKATTEPLIGTIG,
-                        TaxScope.DELVIST_SKATTEPLIGTIG,
-                    )
+                    tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
                 ).get(year_id=year)
                 personmonth: PersonMonth = personyear.personmonth_set.get(month=month)
                 year_range = range(year, year - 3, -1)
