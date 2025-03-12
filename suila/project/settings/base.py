@@ -107,3 +107,5 @@ PITU = {
 
 if TESTING:
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+CRISPY_TEMPLATE_PACK = "uni_form"
