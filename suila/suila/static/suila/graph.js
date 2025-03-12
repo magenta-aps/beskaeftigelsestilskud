@@ -10,7 +10,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
 
     if (yearlyIncome > data[data.length - 1][0]) {
         // result is greater than our current max point in the graph
-        data = [...data, [yearlyIncome, 0]];  // Clone array
+        data = [...data, [yearlyIncome, 0]];  // Clone array, and put point at the end
     }
 
     let chartData = {
@@ -52,11 +52,16 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                 if (opts.dataPointIndex === 0) {
                     return
                 }
-                const yearlyIncome = formatter.format(data[opts.dataPointIndex][0]);
-                const monthlyBenefit = formatter.format(Math.ceil(val / 12));
+                const x = data[opts.dataPointIndex][0]
+                if (x === yearlyIncome) {
+                    return []  // No label if point matches real income point
+                    // (to avoid two labels at the same coordinates)
+                }
+                const pointYearlyIncome = formatter.format(x);
+                const pointMonthlyBenefit = formatter.format(Math.ceil(val / 12));
                 return [
-                    interpolate(gettext("Årsindkomst: %s"), [yearlyIncome]),
-                    interpolate(gettext("Suila-tapit: %s"), [monthlyBenefit]),
+                    interpolate(gettext("Årsindkomst: %s"), [pointYearlyIncome]),
+                    interpolate(gettext("Suila-tapit: %s"), [pointMonthlyBenefit]),
                 ]
             },
             "style": {
