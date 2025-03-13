@@ -1,11 +1,12 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from django.conf import settings
 
 from suila.integrations.eboks.client import EboksClient
 from suila.integrations.eboks.message import SuilaEboksMessage
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import Person, PersonMonth, PersonYear
+from suila.models import PersonMonth, PersonYear, TaxScope
 
 
 class Command(SuilaBaseCommand):
@@ -23,7 +24,7 @@ class Command(SuilaBaseCommand):
         client = EboksClient.from_settings()
         year = kwargs["year"]
         month = kwargs["month"]
-        
+
         qs = PersonYear.objects.filter(
             year_id=year,
             person__welcome_letter_sent_at__isnull=True,
@@ -34,13 +35,11 @@ class Command(SuilaBaseCommand):
         qs = qs.select_related("person")
 
         for personyear in qs:
-            person = personyear.person
             typ = (
                 "afventer"
                 if settings.ENFORCE_QUARANTINE and personyear.in_quarantine
                 else "opgørelse"
             )
-
             try:
                 personmonth: PersonMonth = personyear.personmonth_set.get(month=month)
                 suilamessage = SuilaEboksMessage(personmonth, typ)
