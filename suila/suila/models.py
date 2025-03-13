@@ -1741,7 +1741,9 @@ class EboksMessage(PermissionsMixin, models.Model):
 
     def set_pdf_data(self, pdf_data: bytes):
         name = f"{uuid.uuid4()}.pdf"
-        self.contents.save(content=File(BytesIO(pdf_data), name=name), name=name)
+        self.contents.save(
+            content=File(BytesIO(pdf_data), name=name), name=name, save=False
+        )
         self.xml = self.generate_xml(
             self.cpr_cvr, self.title, self.content_type, pdf_data
         )
@@ -1922,10 +1924,6 @@ class SuilaEboksMessage(EboksMessage):
         blank=False,
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.update_fields()
-
     @property
     def attrs(self):
         return self.type_map[self.type]
@@ -2042,7 +2040,7 @@ class SuilaEboksMessage(EboksMessage):
         self.title = self.attrs["title"]
         self.content_type = self.attrs["content_type"]
         self.cpr_cvr = self.person_month.person.cpr
-        if self.contents is None or force_update:
+        if not self.contents or force_update:
             self.set_pdf_data(self.pdf)
 
     def send(self, client: EboksClient | None = None):
@@ -2054,6 +2052,17 @@ class SuilaEboksMessage(EboksMessage):
             self.person.welcome_letter = self
             self.person.welcome_letter_sent_at = self.sent
             self.person.save(update_fields=("welcome_letter", "welcome_letter_sent_at"))
+
+    @staticmethod
+    def pre_save(sender, instance: SuilaEboksMessage, *args, **kwargs):
+        instance.update_fields()
+
+
+pre_save.connect(
+    SuilaEboksMessage.pre_save,
+    SuilaEboksMessage,
+    dispatch_uid="SuilaEboksMessage_pre_save",
+)
 
 
 class PersonYearU1AAssessment(PermissionsMixin, models.Model):
