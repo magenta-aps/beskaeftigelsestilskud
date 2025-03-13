@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import os
 from decimal import Decimal
 from io import BytesIO
 
@@ -14,14 +13,13 @@ from weasyprint.text.fonts import FontConfiguration
 
 from suila.integrations.eboks.client import EboksClient
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import EboksMessage, Person, PersonMonth, PersonYear
+from suila.models import EboksMessage, PersonMonth, PersonYear
 
 
 class Command(SuilaBaseCommand):
     filename = __file__
 
     def add_arguments(self, parser):
-        parser.add_argument("type", type=str)
         parser.add_argument("year", type=int)
         parser.add_argument("month", type=int)
         parser.add_argument("--cpr", type=str)
@@ -32,11 +30,19 @@ class Command(SuilaBaseCommand):
             "content_type": settings.EBOKS["content_type_id"],  # type: ignore
             "title": "Årsopgørelse",
             "template_folder": "suila/eboks/opgørelse",
+            "templates": {
+                "kl": get_template("suila/eboks/opgørelse/kl.html"),
+                "da": get_template("suila/eboks/opgørelse/da.html"),
+            },
         },
         "afventer": {
             "content_type": settings.EBOKS["content_type_id"],  # type: ignore
             "title": "Årsopgørelse",
             "template_folder": "suila/eboks/afventer",
+            "templates": {
+                "kl": get_template("suila/eboks/afventer/kl.html"),
+                "da": get_template("suila/eboks/afventer/da.html"),
+            },
         },
     }
     welcome_letter = "opgørelse"
@@ -73,30 +79,32 @@ class Command(SuilaBaseCommand):
 
     def _handle(self, *args, **kwargs):
         client = EboksClient.from_settings()
-        typ = kwargs["type"]
         year = kwargs["year"]
         month = kwargs["month"]
-        attrs = self.type_map[typ]
-        qs = Person.objects.all()
-        if typ == self.welcome_letter:
-            qs = qs.filter(welcome_letter_sent_at__isnull=True)
-
-        if kwargs.get("cpr"):
-            qs = qs.filter(cpr=kwargs["cpr"])
-
-        title = attrs["title"]
-        content_type = attrs["content_type"]
-
-        templates = {
-            "kl": get_template(os.path.join(attrs["template_folder"], "kl.html")),
-            "da": get_template(os.path.join(attrs["template_folder"], "da.html")),
-        }
         quant = Decimal("0.01")
-        for person in qs:
+        year_range = range(year, year - 3, -1)
+
+        qs = PersonYear.objects.filter(
+            year_id=year, person__welcome_letter_sent_at__isnull=True
+        )
+        if kwargs.get("cpr"):
+            qs = qs.filter(person__cpr=kwargs["cpr"])
+        qs = qs.select_related("person")
+
+        for personyear in qs:
+            person = personyear.person
+            typ = (
+                "afventer"
+                if settings.ENFORCE_QUARANTINE and personyear.in_quarantine
+                else "opgørelse"
+            )
+            attrs = self.type_map[typ]
+            title = attrs["title"]
+            content_type = attrs["content_type"]
+            templates = attrs["templates"]
+
             try:
-                personyear: PersonYear = person.personyear_set.get(year_id=year)
                 personmonth: PersonMonth = personyear.personmonth_set.get(month=month)
-                year_range = range(year, year - 3, -1)
                 year_map = [[personmonth]] + [
                     PersonMonth.objects.filter(
                         person_year__person=person, person_year__year_id=y
