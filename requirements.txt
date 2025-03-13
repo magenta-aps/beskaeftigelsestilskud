@@ -76,3 +76,4 @@ tenQ @ git+https://github.com/magenta-aps/10Q.git@0.7.0
 datamodel-code-generator==0.26.2
 django_compressor==4.5.1
 django-libsass==0.9
+django-crispy-forms==2.3
