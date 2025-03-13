@@ -20,13 +20,15 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import CharField, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import date as format_date
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.base import ContextMixin
 from django.views.generic.detail import BaseDetailView
@@ -44,6 +46,7 @@ from suila.forms import (
     NoteAttachmentFormSet,
     NoteForm,
 )
+from suila.integrations.eboks.message import SuilaEboksMessage
 from suila.models import (
     BTaxPayment,
     Employer,
@@ -509,6 +512,32 @@ class PersonDetailIncomeView(
         )
 
 
+class PersonDetailEboksView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    PersonYearMonthMixin,
+    ViewLogMixin,
+    DetailView,
+):
+    model = Person
+    context_object_name = "person"
+    template_name = "suila/person_detail_eboks.html"
+    required_object_permissions = ["view"]
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data.update(
+            {
+                "months": self.person_year.personmonth_set.all().order_by("month"),
+                "available_person_years": PersonYear.objects.filter(
+                    person=self.person_year.person
+                ).order_by("-year__year"),
+            }
+        )
+        self.log_view(self.person_year)
+        return context_data
+
+
 class GraphViewMixin(ContextMixin):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -785,3 +814,34 @@ class PersonDetailNotesAttachmentView(
         )
         response["Content-Disposition"] = f"attachment; filename={self.object.filename}"
         return response
+
+
+@method_decorator(xframe_options_sameorigin, name="dispatch")
+class EboksMessageView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    BaseDetailView,
+):
+    model = Person
+    context_object_name = "person"
+    required_model_permissions = ["suila.view_eboksmessage"]
+
+    def get_context_data(self, **kwargs):
+        person_month = get_object_or_404(
+            PersonMonth,
+            person_year__person=self.object,
+            person_year__year_id=self.kwargs["year"],
+            month=self.kwargs["month"],
+        )
+        typ = self.kwargs["type"]
+        if typ not in ("opgørelse", "afventer"):
+            raise Http404
+        self.log_view(person_month)
+        return super().get_context_data(
+            **{**kwargs, "message": SuilaEboksMessage(person_month, typ)}
+        )
+
+    def render_to_response(self, context):
+        pdf_data = context["message"].pdf
+        return HttpResponse(content=pdf_data, content_type="application/pdf")

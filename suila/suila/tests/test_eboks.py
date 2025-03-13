@@ -5,6 +5,7 @@ import json
 import os.path
 import re
 import time
+from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
 import requests
@@ -20,7 +21,8 @@ from suila.integrations.eboks.client import (
     MessageCollisionException,
     MessageFailureException,
 )
-from suila.models import EboksMessage
+from suila.integrations.eboks.message import SuilaEboksMessage
+from suila.models import EboksMessage, Person, PersonMonth, PersonYear, Year
 
 
 class EboksTest(TestCase):
@@ -49,9 +51,6 @@ class EboksTest(TestCase):
             **kwargs,
         }
 
-
-@override_settings(EBOKS=EboksTest.test_settings())
-class SendTest(EboksTest):
     @staticmethod
     def mock_request(recipient_status, post_processing_status, fails=0, status=200):
         mock = MagicMock()
@@ -86,6 +85,10 @@ class SendTest(EboksTest):
         mock.fails = fails
         mock.side_effect = side_effect
         return mock
+
+
+@override_settings(EBOKS=EboksTest.test_settings())
+class SendTest(EboksTest):
 
     @patch.object(requests.sessions.Session, "request")
     def test_pre_saved(self, mock_request):
@@ -467,3 +470,76 @@ class ClientTest(EboksTest):
             client = EboksClient.from_settings()
             self.assertEqual(client.verify, "/server.crt")
             self.assertEqual(client.session.verify, "/server.crt")
+
+
+@override_settings(EBOKS=EboksTest.test_settings())
+class SuilaMessageTest(EboksTest):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.person, _ = Person.objects.update_or_create(
+            cpr="0101011111", location_code=1
+        )
+        cls.year = Year.objects.create(year=2020)
+        cls.person_year, _ = PersonYear.objects.update_or_create(
+            person=cls.person,
+            year=Year.objects.get(year=2020),
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+        cls.person_months = [
+            PersonMonth.objects.create(
+                person_year=cls.person_year,
+                month=i,
+                benefit_paid=i,
+                import_date=date(2020, 1, 1),
+            )
+            for i in range(1, 13)
+        ]
+        cls.message1 = SuilaEboksMessage(cls.person_months[0], "opgørelse")
+        cls.message2 = SuilaEboksMessage(cls.person_months[0], "afventer")
+
+    def test_title(self):
+        self.assertEqual(self.message1.title, "Årsopgørelse")
+        self.assertEqual(self.message2.title, "Årsopgørelse")
+
+    def test_content_type(self):
+        self.assertEqual(self.message1.content_type, settings.EBOKS["content_type_id"])
+        self.assertEqual(self.message2.content_type, settings.EBOKS["content_type_id"])
+
+    def test_pdf(self):
+        self.assertTrue(len(self.message1.pdf) > 0)
+
+    @patch.object(requests.sessions.Session, "request")
+    def test_send(self, mock_request):
+        mock_request.side_effect = self.mock_request("", "")
+
+        with EboksClient.from_settings() as client:
+            self.message1.send(client)
+        message = self.message1.message
+        self.assertIsNotNone(message)
+
+        mock_request.assert_called_with(
+            "PUT",
+            f"https://eboxtest.nanoq.gl/int/rest/srv.svc/3/"
+            f"dispatchsystem/3994/dispatches/{message.message_id}",
+            None,
+            message.xml,
+            timeout=60,
+        )
+        self.assertEqual(message.status, "sent")
+        self.assertEqual(message.recipient_status, "")
+        self.assertIsNotNone(message.pk)
+
+    @patch.object(requests.sessions.Session, "request")
+    def test_update_welcome_letter(self, mock_request):
+        self.message1.update_welcome_letter()
+        self.assertIsNone(self.person.welcome_letter)
+        mock_request.side_effect = self.mock_request("", "")
+        with EboksClient.from_settings() as client:
+            self.message1.send(client)
+        self.message1.update_welcome_letter()
+        self.assertEqual(self.person.welcome_letter, self.message1.message)
+        self.assertTrue(
+            self.person.welcome_letter_sent_at > timezone.now() - timedelta(seconds=1)
+        )
