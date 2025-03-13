@@ -51,8 +51,8 @@ class PersonYearListOptionsForm(BootstrapForm):
                 ("person__cpr",)
                 + tuple([ek + "_mean_error_A" for ek in engine_keys])
                 + tuple([ek + "_rmse_A" for ek in engine_keys])
-                + tuple([ek + "_mean_error_B" for ek in engine_keys])
-                + tuple([ek + "_rmse_B" for ek in engine_keys])
+                + tuple([ek + "_mean_error_U" for ek in engine_keys])
+                + tuple([ek + "_rmse_U" for ek in engine_keys])
                 + (
                     "month_income_sum",
                     "catchsale_expenses",
@@ -90,12 +90,12 @@ class PersonYearListOptionsForm(BootstrapForm):
         + [
             (f"{engine}_mean_error_{income_type}", f"{engine} (ME) ({income_type})")
             for engine in engine_keys
-            for income_type in IncomeType
+            for income_type in (IncomeType.A, IncomeType.U)
         ]
         + [
             (f"{engine}_rmse_{income_type}", f"{engine} (RMSE) ({income_type})")
             for engine in engine_keys
-            for income_type in IncomeType
+            for income_type in (IncomeType.A, IncomeType.U)
         ]
         + [("payout_offset", "Tilskudsafvigelse")],
         required=False,
