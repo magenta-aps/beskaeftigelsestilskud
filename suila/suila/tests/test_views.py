@@ -1265,7 +1265,6 @@ class TestEboksSendView(TestViewMixin, PersonEnv, EboksTest):
 
     @patch.object(requests.sessions.Session, "request")
     def test_post(self, mock_request: MagicMock):
-        print("TEST_POST")
         mock_request.side_effect = self.mock_request("", "")
         view, response = self.request_post(
             self.admin_user,
@@ -1273,7 +1272,6 @@ class TestEboksSendView(TestViewMixin, PersonEnv, EboksTest):
             {"confirmed": "True"},
             pk=self.person1.pk,
         )
-        print("posted")
         self.assertEqual(response.status_code, 302)
         self.person1.refresh_from_db()
         self.assertIsNotNone(self.person1.welcome_letter)

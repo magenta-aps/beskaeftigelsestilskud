@@ -514,32 +514,6 @@ class PersonDetailIncomeView(
         )
 
 
-class PersonDetailEboksView(
-    LoginRequiredMixin,
-    PermissionsRequiredMixin,
-    PersonYearMonthMixin,
-    ViewLogMixin,
-    DetailView,
-):
-    model = Person
-    context_object_name = "person"
-    template_name = "suila/person_detail_eboks.html"
-    required_object_permissions = ["view"]
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data.update(
-            {
-                "months": self.person_year.personmonth_set.all().order_by("month"),
-                "available_person_years": PersonYear.objects.filter(
-                    person=self.person_year.person
-                ).order_by("-year__year"),
-            }
-        )
-        self.log_view(self.person_year)
-        return context_data
-
-
 class PersonDetailEboksPreView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
