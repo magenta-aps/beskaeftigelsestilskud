@@ -316,6 +316,11 @@ class QuarantineTest(BaseTestCase):
         self.assertIn("for tæt på bundgrænsen", person_year_3.quarantine_reason)
         self.assertIn("for tæt på øverste grænse", person_year_4.quarantine_reason)
 
+    @override_settings(ENFORCE_QUARANTINE=False)
+    def test_no_people_in_quarantine(self):
+        df = get_people_in_quarantine(self.year.year, [])
+        self.assertTrue(df.empty)
+
     @override_settings(QUARANTINE_IF_EARNS_TOO_LITTLE=False)
     @override_settings(QUARANTINE_IF_EARNS_TOO_MUCH=False)
     @override_settings(QUARANTINE_IF_WRONG_PAYOUT=False)

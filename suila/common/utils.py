@@ -352,6 +352,10 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
     People who are in quarantine get all their money paid out in December. They
     get nothing in Jan-Nov.
     """
+
+    if not settings.ENFORCE_QUARANTINE:  # type: ignore
+        return pd.DataFrame()
+
     quarantine_limit = settings.CALCULATION_QUARANTINE_LIMIT  # type: ignore
 
     quarantine_if_wrong_payout = settings.QUARANTINE_IF_WRONG_PAYOUT  # type: ignore
