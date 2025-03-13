@@ -10,7 +10,9 @@ from django.views.generic import TemplateView
 from suila.api import api
 from suila.views import (
     CalculatorView,
+    EboksMessageView,
     GraphView,
+    PersonDetailEboksView,
     PersonDetailIncomeView,
     PersonDetailNotesAttachmentView,
     PersonDetailNotesView,
@@ -51,5 +53,15 @@ urlpatterns: List[URLResolver | URLPattern] = [
         "note_attachments/<int:pk>/",
         PersonDetailNotesAttachmentView.as_view(),
         name="note_attachment",
+    ),
+    path(
+        "persons/<int:pk>/eboks/",
+        PersonDetailEboksView.as_view(),
+        name="person_detail_eboks",
+    ),
+    path(
+        "person/<int:pk>/msg/<int:year>/<int:month>/<str:type>/",
+        EboksMessageView.as_view(),
+        name="person_message",
     ),
 ]

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-10 05:10-0200\n"
+"POT-Creation-Date: 2025-03-13 08:10-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -422,6 +422,7 @@ msgid "Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til Grønland.
 msgstr ""
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_eboks.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
 #: suila/templates/suila/person_search.html suila/templates/suila/root.html
@@ -429,6 +430,7 @@ msgid "Borgersøgning"
 msgstr ""
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_eboks.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
 #: suila/templates/suila/root.html
@@ -562,6 +564,11 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_eboks.html
+msgid "Eboks-beskeder"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
 #, python-format
 msgid "Udbetalinger for %(year)s"
 msgstr ""
@@ -639,6 +646,22 @@ msgstr ""
 msgid ""
 "Årsopgørelse er sendt: Du har modtaget årsopgørelse for Suila-tapit for "
 "dette år."
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks.html suila/views.py
+msgid "Måned"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks.html
+msgid "Type: opgørelse"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks.html
+msgid "Type: afventer"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks.html
+msgid "Åbn"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -799,10 +822,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "Adresse"
-msgstr ""
-
-#: suila/views.py
-msgid "Måned"
 msgstr ""
 
 #: suila/views.py

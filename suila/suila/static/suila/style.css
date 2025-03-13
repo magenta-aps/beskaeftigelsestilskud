@@ -32,3 +32,8 @@ form.filter-form .is-valid:focus {
     /* Use default Bootstrap blue focus border rather than a green focus border */
     box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
 }
+
+iframe.eboks {
+    width: 100%;
+    min-height: 600pt;
+}
