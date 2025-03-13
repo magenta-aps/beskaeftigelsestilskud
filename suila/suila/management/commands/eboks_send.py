@@ -93,7 +93,11 @@ class Command(SuilaBaseCommand):
 
         for personyear in qs:
             person = personyear.person
-            typ = "afventer" if personyear.in_quarantine else "opgørelse"
+            typ = (
+                "afventer"
+                if settings.ENFORCE_QUARANTINE and personyear.in_quarantine
+                else "opgørelse"
+            )
             attrs = self.type_map[typ]
             title = attrs["title"]
             content_type = attrs["content_type"]
