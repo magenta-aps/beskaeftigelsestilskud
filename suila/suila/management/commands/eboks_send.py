@@ -152,7 +152,7 @@ class Command(SuilaBaseCommand):
                             Decimal(
                                 sum(
                                     [
-                                        report.capital_income
+                                        report.u_income
                                         for pm in months
                                         for report in pm.monthlyincomereport_set.all()
                                     ]
