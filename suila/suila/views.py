@@ -21,6 +21,7 @@ from django.db.models import CharField, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import date as format_date
 from django.urls import reverse
 from django.utils import timezone
@@ -128,7 +129,8 @@ class PersonYearMonthMixin(YearMonthMixin):
 
     @cached_property
     def person_year(self):
-        personyear, _ = PersonYear.objects.get_or_create(
+        personyear = get_object_or_404(
+            PersonYear,
             year_id=self.year,
             person_id=self.person_pk,
         )

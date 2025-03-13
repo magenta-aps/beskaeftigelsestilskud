@@ -15,6 +15,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http.response import Http404
 from django.template.response import TemplateResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -333,6 +334,11 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
 
     def test_get_context_data_handles_no_matching_person_month(self):
         # Arrange: go to year without `PersonMonth` objects for `normal_user`
+        PersonYear.objects.update_or_create(
+            person=self.person1,
+            year=Year.objects.get(year=2021),
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
         with self._time_context(year=2021):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             self.assertFalse(response.context_data["show_next_payment"])
@@ -428,7 +434,16 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 [self.person_year],
             )
 
+    def test_no_personyear(self):
+        with self._time_context(year=2021), self.assertRaises(Http404):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+
     def test_get_context_data_no_data(self):
+        PersonYear.objects.update_or_create(
+            person=self.person1,
+            year=Year.objects.get(year=2021),
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
         with self._time_context(year=2021):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             self.assertIsInstance(
