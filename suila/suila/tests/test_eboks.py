@@ -502,10 +502,10 @@ class SuilaMessageTest(EboksTest):
             )
             for i in range(1, 13)
         ]
-        cls.message1 = SuilaEboksMessage(
+        cls.message1 = SuilaEboksMessage.objects.create(
             person_month=cls.person_months[0], type="opgørelse"
         )
-        cls.message2 = SuilaEboksMessage(
+        cls.message2 = SuilaEboksMessage.objects.create(
             person_month=cls.person_months[0], type="afventer"
         )
 

@@ -1740,10 +1740,12 @@ class EboksMessage(PermissionsMixin, models.Model):
         return message
 
     def set_pdf_data(self, pdf_data: bytes):
+        print("set_pdf_data")
         name = f"{uuid.uuid4()}.pdf"
         self.contents.save(
             content=File(BytesIO(pdf_data), name=name), name=name, save=False
         )
+        print("contents set")
         self.xml = self.generate_xml(
             self.cpr_cvr, self.title, self.content_type, pdf_data
         )
