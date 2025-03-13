@@ -433,10 +433,19 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 response.context_data["available_person_years"],
                 [self.person_year],
             )
+            self.assertEqual(response.context_data["sum_table"].month, 12)
 
     def test_no_personyear(self):
         with self._time_context(year=2021), self.assertRaises(Http404):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+
+    def test_get_context_data_sum_table_for_january(self):
+        # Even if there are income signals in December (which there are in this test),
+        # the sum table should consider the current calendar month to be the latest
+        # displayable month for the `current_month_sum` column.
+        with self._time_context(year=2020, month=1):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertEqual(response.context_data["sum_table"].month, 1)
 
     def test_get_context_data_no_data(self):
         PersonYear.objects.update_or_create(

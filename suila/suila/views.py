@@ -17,7 +17,7 @@ from common.models import User
 from common.utils import SuilaJSONEncoder, omit
 from common.view_mixins import ViewLogMixin
 from dateutil.relativedelta import relativedelta
-from django.db.models import CharField, IntegerChoices, QuerySet, Value
+from django.db.models import CharField, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
@@ -362,11 +362,14 @@ class PersonDetailIncomeView(
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
+        # Determine which month is the latest month containing income signals.
+        latest_income_month = self._get_latest_income_month()
+
         # Table summing income by signal type
         context_data["sum_table"] = IncomeSumsBySignalTypeTable(
             self.get_income_signals(),
             self.year,
-            self.month,
+            latest_income_month,
             orderable=False,
         )
 
@@ -469,6 +472,41 @@ class PersonDetailIncomeView(
                     item.dividend_total,
                     item.created.date(),
                 )
+
+    def _get_latest_income_month(self) -> int:
+        def month(qs: QuerySet, default: int = 1) -> int:
+            return qs.aggregate(month=Max("person_month__month"))["month"] or default
+
+        latest_monthly_income_report_month: int = month(
+            MonthlyIncomeReport.objects.filter(
+                Q(person_month__person_year=self.person_year),
+                Q(a_income__gt=0) | Q(u_income__gt=0),
+            )
+        )
+
+        latest_b_tax_payment_month: int = month(
+            BTaxPayment.objects.filter(
+                person_month__isnull=False,
+                person_month__person_year=self.person_year,
+                amount_paid__gt=0,
+            )
+        )
+
+        # `PersonYearU1AAssessment` do not reference `PersonMonth` but only `PersonYear`
+        # For now, we assume that they "belong" to January.
+        # TODO: revisit when/if `PersonYearU1AAssessment` refer to a `PersonMonth`.
+        latest_u1a_assessment_month = 1
+
+        return min(
+            self.month,  # never use a later month than the current calendar month
+            max(
+                [
+                    latest_monthly_income_report_month,
+                    latest_b_tax_payment_month,
+                    latest_u1a_assessment_month,
+                ]
+            ),
+        )
 
 
 class GraphViewMixin(ContextMixin):
