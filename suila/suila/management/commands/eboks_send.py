@@ -13,7 +13,7 @@ from weasyprint.text.fonts import FontConfiguration
 
 from suila.integrations.eboks.client import EboksClient
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import EboksMessage, PersonMonth, PersonYear
+from suila.models import EboksMessage, PersonMonth, PersonYear, TaxScope
 
 
 class Command(SuilaBaseCommand):
@@ -85,7 +85,9 @@ class Command(SuilaBaseCommand):
         year_range = range(year, year - 3, -1)
 
         qs = PersonYear.objects.filter(
-            year_id=year, person__welcome_letter_sent_at__isnull=True
+            year_id=year,
+            person__welcome_letter_sent_at__isnull=True,
+            tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
         )
         if kwargs.get("cpr"):
             qs = qs.filter(person__cpr=kwargs["cpr"])
@@ -158,7 +160,7 @@ class Command(SuilaBaseCommand):
                             Decimal(
                                 sum(
                                     [
-                                        report.salary_income
+                                        report.u_income
                                         for pm in months
                                         for report in pm.monthlyincomereport_set.all()
                                     ]
