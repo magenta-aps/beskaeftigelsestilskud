@@ -500,7 +500,7 @@ class PersonYear(PermissionsMixin, models.Model):
     def quarantine_reason(self) -> str:
         return (
             ""
-            if settings.ENFORCE_QUARANTINE  # type: ignore
+            if not settings.ENFORCE_QUARANTINE  # type: ignore
             else self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
         )
 
