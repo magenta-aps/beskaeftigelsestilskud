@@ -44,7 +44,7 @@ SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 TWO_FACTOR_LOGIN_TIMEOUT = 0  # Never timeout
 TWO_FACTOR_REMEMBER_COOKIE_AGE = 30 * 24 * 60 * 60  # Re-authenticate once per month
 BYPASS_2FA = bool(strtobool(os.environ.get("BYPASS_2FA", "False")))
-REQUIRE_2FA = bool(strtobool(os.environ.get("REQUIRE_2FA", "False")))
+REQUIRE_2FA = bool(strtobool(os.environ.get("REQUIRE_2FA", "True")))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOGIN_NAMESPACE = "login:mitid"
