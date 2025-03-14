@@ -29,7 +29,7 @@ msgid "Kilde"
 msgstr ""
 
 #: suila/forms.py
-msgid "Vælg kilde ..."
+msgid "Alle"
 msgstr ""
 
 #: suila/models.py
@@ -265,8 +265,8 @@ msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid ""
-"Udlodning af udbytte. Når selskaberne udlodder udbytte, giver dette signal "
-"om en indkomst."
+"Indberetning af udbytte. Når selskaberne indberetter udbytte, giver dette "
+"signal om en indkomst."
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -298,9 +298,9 @@ msgstr ""
 msgid ""
 "Din arbejdsgiver eller dit indhandlingssted har ikke indberettet din "
 "indkomst. Eller har indberettet for sent eller forkert. Måske har de slet "
-"ikke indberettet. På siden med <a href=\"%(url)s\">beregningsgrundlag</a> "
-"kan du se hvilke oplysninger Skattestyrelsen har om dine indkomster. Hvis "
-"der mangler signal om indkomst fra arbejde og indhandling, så kontakt din "
+"ikke indberettet. På siden <a href=\"%(url)s\">\"Mine signaler\"</a> kan du "
+"se hvilke oplysninger Skattestyrelsen har om dine indkomster. Hvis der "
+"mangler signal om indkomst fra arbejde og indhandling, så kontakt din "
 "arbejdsgiver eller dit indhandlingssted."
 msgstr ""
 
@@ -537,10 +537,10 @@ msgstr ""
 
 #: suila/templates/suila/person_detail.html
 msgid ""
-"Suila foretager kun udbetaling hvis systemet har modtaget signal fra "
-"arbejdsmarkedet i form af indberetning af løn fra arbejdsgivere, betalte B-"
-"skatter, indberetning af indhandling fra indhandlingssteder eller oplysning "
-"om udloddet udbytte fra selskaber."
+"Der bliver kun foretaget udbetalinger, hvis Skattestyrelsen har modtaget "
+"signal fra arbejdsmarkedet i form af indberetning af løn fra arbejdsgivere, "
+"betalte B-skatter, indberetning af indhandling fra indhandlingssteder eller "
+"oplysning om udloddet udbytte fra selskaber."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -591,8 +591,8 @@ msgstr ""
 msgid ""
 "Suila-tapit udbetales d. 3. tirsdag i måneden. Udbetalingen er altid for "
 "indkomster to måneder forinden. Fx får du kun udbetalt Suila-tapit den 3. "
-"tirsdag i maj, hvis systemet har modtaget signal fra arbejdsmarkedet for "
-"marts måned."
+"tirsdag i maj, hvis Skattestyrelsen har modtaget signal fra arbejdsmarkedet "
+"for marts måned."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -602,10 +602,10 @@ msgstr ""
 #: suila/templates/suila/person_detail.html
 msgid ""
 "Det forventede beløb til udbetaling er baseret på din estimerede "
-"årsindkomst. Din estimerede årsindkomst genberegnes hver dag, hvis systemet "
-"modtager nye oplysninger. Fx hvis en arbejdsgiver indsender lønoplysninger. "
-"Bemærk, at Skattestyrelsen kan foretage modregning på op til en tredjedel af "
-"det udbetalte beløb, hvis du har gæld til det offentlige."
+"årsindkomst. Din estimerede årsindkomst genberegnes hver gang, "
+"Skattestyrelsen modtager nye oplysninger. Fx hvis en arbejdsgiver indsender "
+"lønoplysninger. Bemærk, at Skattestyrelsen kan foretage modregning på op til "
+"en tredjedel af det udbetalte beløb, hvis du har gæld til det offentlige."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html

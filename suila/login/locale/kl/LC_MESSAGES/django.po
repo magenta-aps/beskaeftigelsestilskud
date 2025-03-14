@@ -18,15 +18,15 @@ msgstr ""
 
 #: login/forms.py
 msgid "Brugernavn"
-msgstr ""
+msgstr "Atuisup aqqa"
 
 #: login/forms.py
 msgid "Password"
-msgstr ""
+msgstr "Isissutissaq"
 
 #: login/forms.py
 msgid "Kodeord"
-msgstr ""
+msgstr "Isissutissaq"
 
 #: login/forms.py
 #, python-brace-format
@@ -35,7 +35,7 @@ msgstr ""
 
 #: login/templates/login/logged_out.html
 msgid "Logget ud"
-msgstr ""
+msgstr "Anivutit"
 
 #: login/templates/login/logged_out.html
 msgid ""
@@ -45,7 +45,7 @@ msgstr ""
 
 #: login/templates/login/logged_out.html
 msgid "Log in"
-msgstr ""
+msgstr "Iserfissaq"
 
 #: login/templates/login/login_failed.html
 msgid "Login mislykkedes"
@@ -56,7 +56,7 @@ msgstr ""
 #: login/templates/login/login_repeat.html
 #: login/templates/login/login_timeout.html
 msgid "Adgang nægtet"
-msgstr ""
+msgstr "Iserfigisinnaanngilat"
 
 #: login/templates/login/login_failed.html
 msgid "Der kunne ikke logges ind med den angivne bruger."
@@ -65,7 +65,7 @@ msgstr ""
 #: login/templates/login/login_failed.html
 #: login/templates/login/login_no_cpr.html
 msgid "Log ud"
-msgstr ""
+msgstr "Anigit"
 
 #: login/templates/login/login_no_cpr.html
 msgid "Det anvendte login har ikke et CPR-nummer tilknyttet."
@@ -79,7 +79,7 @@ msgstr ""
 #: login/templates/login/login_timeout.html
 #: login/templates/two_factor/_wizard_actions.html
 msgid "Log ind"
-msgstr ""
+msgstr "Iserit"
 
 #: login/templates/login/login_timeout.html
 msgid "Det anvendte login er timet ud. Prøv at logge ind igen."
@@ -87,11 +87,11 @@ msgstr ""
 
 #: login/templates/two_factor/_wizard_actions.html
 msgid "Fortsæt"
-msgstr ""
+msgstr "Ingerlaqqigit"
 
 #: login/templates/two_factor/core/login.html
 msgid "Log ind på Suila"
-msgstr ""
+msgstr "Suilamut iserit"
 
 #: login/templates/two_factor/core/login.html
 msgid "Indtast venligst koden, der er genereret af din token-generator."
@@ -99,7 +99,7 @@ msgstr ""
 
 #: login/templates/two_factor/core/otp_required.html
 msgid "Ingen adgang"
-msgstr ""
+msgstr "Iserfigisinnaanngilat"
 
 #: login/templates/two_factor/core/otp_required.html
 msgid "Du skal logge ind med to-faktor-godkendelse for at kunne se denne side"

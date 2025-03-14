@@ -115,7 +115,7 @@ class IncomeSignalFilterForm(Form):
     def __init__(self, *args, **kwargs):
         signals = kwargs.pop("signals", [])
         super().__init__(*args, **kwargs)
-        self.fields["source"].choices = [("", _("Vælg kilde ..."))] + [
+        self.fields["source"].choices = [("", _("Alle"))] + [
             (quote_plus(source), source)
             for source in sorted(set(signal.source for signal in signals))
         ]
