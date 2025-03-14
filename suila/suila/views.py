@@ -17,6 +17,7 @@ from common.models import User
 from common.utils import SuilaJSONEncoder, omit
 from common.view_mixins import ViewLogMixin
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.db.models import CharField, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
@@ -42,11 +43,12 @@ from login.view_mixins import LoginRequiredMixin
 from suila.dates import get_payment_date
 from suila.forms import (
     CalculatorForm,
+    ConfirmationForm,
     IncomeSignalFilterForm,
     NoteAttachmentFormSet,
     NoteForm,
 )
-from suila.integrations.eboks.message import SuilaEboksMessage
+from suila.integrations.eboks.client import EboksClient
 from suila.models import (
     BTaxPayment,
     Employer,
@@ -57,6 +59,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearU1AAssessment,
+    SuilaEboksMessage,
     WorkingTaxCreditCalculationMethod,
     Year,
 )
@@ -512,7 +515,7 @@ class PersonDetailIncomeView(
         )
 
 
-class PersonDetailEboksView(
+class PersonDetailEboksPreView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
     PersonYearMonthMixin,
@@ -521,7 +524,7 @@ class PersonDetailEboksView(
 ):
     model = Person
     context_object_name = "person"
-    template_name = "suila/person_detail_eboks.html"
+    template_name = "suila/person_detail_eboks_preview.html"
     required_object_permissions = ["view"]
 
     def get_context_data(self, **kwargs):
@@ -536,6 +539,87 @@ class PersonDetailEboksView(
         )
         self.log_view(self.person_year)
         return context_data
+
+
+class PersonDetailEboksSendView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    PersonYearMonthMixin,
+    ViewLogMixin,
+    DetailView,
+    FormView,
+):
+    model = Person
+    context_object_name = "person"
+    template_name = "suila/person_detail_eboks_send.html"
+    required_object_permissions = ["view"]
+    form_class = ConfirmationForm
+
+    def get_success_url(self):
+        return reverse("suila:person_detail", kwargs={"pk": self.object.pk})
+
+    @cached_property
+    def type(self):
+        return (
+            "afventer"
+            if settings.ENFORCE_QUARANTINE and self.person_year.in_quarantine
+            else "opgørelse"
+        )
+
+    @property
+    def person_year(self):
+        return self.person_month.person_year
+
+    @property
+    def person_month(self):
+        return (
+            PersonMonth.objects.filter(
+                person_year__person=self.object,
+            )
+            .order_by("-person_year__year_id", "-month")
+            .first()
+        )
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        person_month = (
+            PersonMonth.objects.filter(
+                person_year__person=self.object,
+            )
+            .order_by("-person_year__year_id", "-month")
+            .first()
+        )
+        context_data.update(
+            {
+                "person": self.object,
+                "person_month": self.person_month,
+                "has_sent": self.object.welcome_letter is not None,
+                "type": self.type,
+                "existing_pdf": (
+                    reverse(
+                        "suila:person_existing_message", kwargs={"pk": self.object.pk}
+                    )
+                    if self.object.welcome_letter
+                    else None
+                ),
+            }
+        )
+        self.log_view(person_month)
+        return context_data
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if form.cleaned_data["confirmed"]:
+            with EboksClient.from_settings() as client:
+                suilamessage = SuilaEboksMessage.objects.create(
+                    person_month=self.person_month, type=self.type
+                )
+                suilamessage.send(client)
+                suilamessage.update_welcome_letter()
+        return super().form_valid(form)
 
 
 class GraphViewMixin(ContextMixin):
@@ -817,7 +901,7 @@ class PersonDetailNotesAttachmentView(
 
 
 @method_decorator(xframe_options_sameorigin, name="dispatch")
-class EboksMessageView(
+class GeneratedEboksMessageView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
     ViewLogMixin,
@@ -839,9 +923,34 @@ class EboksMessageView(
             raise Http404
         self.log_view(person_month)
         return super().get_context_data(
-            **{**kwargs, "message": SuilaEboksMessage(person_month, typ)}
+            **{
+                **kwargs,
+                "message": SuilaEboksMessage(person_month=person_month, type=typ),
+            }
         )
 
     def render_to_response(self, context):
         pdf_data = context["message"].pdf
+        return HttpResponse(content=pdf_data, content_type="application/pdf")
+
+
+@method_decorator(xframe_options_sameorigin, name="dispatch")
+class EboksMessageView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    BaseDetailView,
+):
+    model = Person
+    context_object_name = "person"
+    required_model_permissions = ["suila.view_eboksmessage"]
+
+    def get_context_data(self, **kwargs):
+        self.log_view(self.object)
+        return super().get_context_data(
+            **{**kwargs, "message": self.object.welcome_letter}
+        )
+
+    def render_to_response(self, context):
+        pdf_data = context["message"].contents
         return HttpResponse(content=pdf_data, content_type="application/pdf")
