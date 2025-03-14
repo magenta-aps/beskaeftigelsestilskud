@@ -13,7 +13,7 @@ from more_itertools import one
 from numpy import float64
 
 # from suila.estimation import EstimationEngine, MonthlyContinuationEngine
-from suila.models import PersonMonth, PersonYear, Year
+from suila.models import PersonMonth, PersonYear, TaxScope, Year
 
 
 def calculate_benefit(
@@ -72,6 +72,8 @@ def calculate_benefit(
     ).order_by("person_year__person__cpr")
     if cpr:
         month_qs = month_qs.filter(person_year__person__cpr=cpr)
+    # Only consider people who are FULDT_SKATTEPLIGTIG
+    month_qs.filter(person_year__tax_scope=TaxScope.FULDT_SKATTEPLIGTIG)
     month_qs = PersonMonth.signal_qs(month_qs)
     month_df = to_dataframe(
         month_qs,

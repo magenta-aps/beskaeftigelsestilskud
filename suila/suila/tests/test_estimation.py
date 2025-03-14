@@ -32,6 +32,7 @@ from suila.models import (
     PersonYearEstimateSummary,
     PersonYearU1AAssessment,
     StandardWorkBenefitCalculationMethod,
+    TaxScope,
     Year,
 )
 
@@ -244,6 +245,25 @@ class TestEstimationEngine(TestCase):
         )
         self.assertIsNone(summary.mean_error_percent)
         self.assertIsNone(summary.rmse_percent)
+
+    def test_estimate_all_not_taxable(self):
+        output_stream = self.OutputWrapper(sys.stdout, ending="\n")
+        self.person_year.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
+        self.person_year.save()
+        EstimationEngine.estimate_all(
+            self.year.year,
+            self.person.pk,
+            1,
+            False,
+            output_stream,
+        )
+
+        income_estimates = IncomeEstimate.objects.filter(
+            person_month__person_year=self.person_year,
+            engine="InYearExtrapolationEngine",
+            income_type=IncomeType.A,
+        ).count()
+        self.assertEqual(income_estimates, 0)
 
     def test_estimate_all_None_inputs(self):
         EstimationEngine.estimate_all(self.year.year, None, None, False)

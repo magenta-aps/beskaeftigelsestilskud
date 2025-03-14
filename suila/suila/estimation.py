@@ -28,6 +28,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
+    TaxScope,
 )
 
 
@@ -242,9 +243,12 @@ class EstimationEngine:
                 signal=person_month.signal,
             )
             for person_month in person_month_qs
-            if not (
-                quarantine_df.loc[person_month.person_cpr, "in_quarantine"]  # type: ignore[attr-defined]  # noqa: E501
-                and (person_month._year, person_month.month) in exclude_months  # type: ignore[attr-defined]  # noqa: E501
+            if (
+                not (
+                    quarantine_df.loc[person_month.person_cpr, "in_quarantine"]
+                    and (person_month._year, person_month.month) in exclude_months
+                )
+                and person_month.person_year.tax_scope == TaxScope.FULDT_SKATTEPLIGTIG
             )
         ]
 
