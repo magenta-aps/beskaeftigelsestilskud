@@ -26,7 +26,7 @@ def totp_str(key):
     return str(totp(key)).zfill(totp_digits())
 
 
-@override_settings(BYPASS_2FA=False)
+@override_settings(BYPASS_2FA=False, REQUIRE_2FA=True)
 class LoginTest(TestCase):
     @classmethod
     def setUpClass(cls):
