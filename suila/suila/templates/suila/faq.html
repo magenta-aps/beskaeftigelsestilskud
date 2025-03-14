@@ -30,7 +30,7 @@
             <li>{% translate "A-indkomst fra lønarbejde, som arbejdsgiverne indberetter i Sulinal." %}</li>
             <li>{% translate "A-indkomst fra indhandling, som indhandlingsstederne indberetter i Sulinal." %}</li>
             <li>{% translate "Betalte B-skatter. Hvis du har forskudsregistreret B-indkomst, vil du modtage en opkrævning af B-skatter. Når den betales, modtages signal." %}</li>
-            <li>{% translate "Udlodning af udbytte. Når selskaberne udlodder udbytte, giver dette signal om en indkomst." %}</li>
+            <li>{% translate "Indberetning af udbytte. Når selskaberne indberetter udbytte, giver dette signal om en indkomst." %}</li>
         </ol>
         <p class="mt-3">
             {% blocktrans trimmed %}
@@ -60,10 +60,11 @@
                         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
                         {% blocktrans trimmed with url=person_income_url %}
                         Din arbejdsgiver eller dit indhandlingssted har ikke indberettet din indkomst.
-                        Eller har indberettet for sent eller forkert. Måske har de slet ikke indberettet. På siden med
-                        <a href="{{ url }}">beregningsgrundlag</a> kan du se hvilke oplysninger Skattestyrelsen har om
-                        dine indkomster. Hvis der mangler signal om indkomst fra arbejde og indhandling, så kontakt din
-                        arbejdsgiver eller dit indhandlingssted.
+                        Eller har indberettet for sent eller forkert. Måske har de slet ikke indberettet.
+                        På siden <a href="{{ url }}">"Mine signaler"</a> kan du se hvilke oplysninger Skattestyrelsen
+                        har om dine indkomster.
+                        Hvis der mangler signal om indkomst fra arbejde og indhandling, så kontakt din arbejdsgiver
+                        eller dit indhandlingssted.
                         {% endblocktrans %}
                     </div>
                 </div>

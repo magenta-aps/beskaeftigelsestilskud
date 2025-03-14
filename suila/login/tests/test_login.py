@@ -75,7 +75,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], "/")
 
-    @override_settings(PUBLIC=False)
+    @override_settings(PUBLIC=False, LANGUAGE_CODE="da-dk")
     def test_django_login_form_incorrect(self):
         self.client.get(reverse("login:login"))
         response = self.client.post(
@@ -149,7 +149,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], "/foobar")
 
-    @override_settings(PUBLIC=False)
+    @override_settings(PUBLIC=False, LANGUAGE_CODE="da-dk")
     def test_token_step(self):
         device = self.user.totpdevice_set.create(name="default", key=random_hex())
         data = {
@@ -202,7 +202,7 @@ class LoginTest(TestCase):
             response.headers["Location"], resolve_url(settings.LOGIN_REDIRECT_URL)
         )
 
-    @override_settings(PUBLIC=False)
+    @override_settings(PUBLIC=False, LANGUAGE_CODE="da-dk")
     def test_two_factor_setup(self):
         self.client.login(username="test", password="test")
 
