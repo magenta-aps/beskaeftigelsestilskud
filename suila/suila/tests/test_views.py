@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 from urllib.parse import quote_plus
 
 import requests
+from bs4 import BeautifulSoup
 from common.models import PageView, User
 from common.tests.test_mixins import TestViewMixin
 from common.view_mixins import ViewLogMixin
@@ -29,6 +30,7 @@ from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import ContextMixin, TemplateView, View
+from django_otp.util import random_hex
 from requests import Response
 
 from suila.forms import NoteAttachmentFormSet
@@ -86,6 +88,27 @@ class TestRootView(TestViewMixin, TestCase):
         self.assertEqual(pageview.kwargs, {})
         self.assertEqual(pageview.params, {})
         self.assertEqual(pageview.itemviews.count(), 0)
+
+    def test_2fa_not_set(self):
+        view, response = self.request_get(self.admin_user, "/")
+        response.render()
+        self.assertFalse(view.get_context_data()["user_twofactor_enabled"])
+        self.assertIsNotNone(
+            BeautifulSoup(response.content, features="lxml").find(
+                href=reverse("login:two_factor_setup")
+            )
+        )
+
+    def test_2fa_set(self):
+        self.admin_user.totpdevice_set.create(name="default", key=random_hex())
+        view, response = self.request_get(self.admin_user, "/")
+        response.render()
+        self.assertTrue(view.get_context_data()["user_twofactor_enabled"])
+        self.assertIsNone(
+            BeautifulSoup(response.content, features="lxml").find(
+                href=reverse("login:two_factor_setup")
+            )
+        )
 
 
 class PersonEnv(TestCase):
