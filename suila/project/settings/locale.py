@@ -7,7 +7,7 @@ import django.conf.locale
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = "kl"
+LANGUAGE_CODE = "da"
 LANGUAGES = [
     ("kl", "Kalaallisut"),
     ("da", "Dansk"),
