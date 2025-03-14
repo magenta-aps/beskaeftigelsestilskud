@@ -11,8 +11,10 @@ from suila.api import api
 from suila.views import (
     CalculatorView,
     EboksMessageView,
+    GeneratedEboksMessageView,
     GraphView,
-    PersonDetailEboksView,
+    PersonDetailEboksPreView,
+    PersonDetailEboksSendView,
     PersonDetailIncomeView,
     PersonDetailNotesAttachmentView,
     PersonDetailNotesView,
@@ -56,12 +58,22 @@ urlpatterns: List[URLResolver | URLPattern] = [
     ),
     path(
         "persons/<int:pk>/eboks/",
-        PersonDetailEboksView.as_view(),
-        name="person_detail_eboks",
+        PersonDetailEboksPreView.as_view(),
+        name="person_detail_eboks_preview",
     ),
     path(
-        "person/<int:pk>/msg/<int:year>/<int:month>/<str:type>/",
+        "persons/<int:pk>/eboks/send/",
+        PersonDetailEboksSendView.as_view(),
+        name="person_detail_eboks_send",
+    ),
+    path(
+        "persons/<int:pk>/msg/<int:year>/<int:month>/<str:type>/",
+        GeneratedEboksMessageView.as_view(),
+        name="person_generated_message",
+    ),
+    path(
+        "persons/<int:pk>/msg/",
         EboksMessageView.as_view(),
-        name="person_message",
+        name="person_existing_message",
     ),
 ]

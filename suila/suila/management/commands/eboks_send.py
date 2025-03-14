@@ -42,7 +42,9 @@ class Command(SuilaBaseCommand):
             )
             try:
                 personmonth: PersonMonth = personyear.personmonth_set.get(month=month)
-                suilamessage = SuilaEboksMessage(personmonth, typ)
+                suilamessage = SuilaEboksMessage.objects.create(
+                    person_month=personmonth, type=typ
+                )
                 suilamessage.send(client)
                 suilamessage.update_welcome_letter()
             except PersonMonth.DoesNotExist:

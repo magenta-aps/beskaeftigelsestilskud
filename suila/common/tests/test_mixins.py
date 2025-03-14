@@ -58,7 +58,11 @@ class TestViewMixin(UserMixin):
         return view, response
 
     def request_post(
-        self, user: User = None, path: str = "", data: Dict[str, Any] | None = None
+        self,
+        user: User = None,
+        path: str = "",
+        data: Dict[str, Any] | None = None,
+        **params: Any,
     ) -> Tuple[TemplateView, TemplateResponse]:
         if user is None:
             user = self.admin_user
@@ -67,6 +71,6 @@ class TestViewMixin(UserMixin):
         request = self.request_factory.post(path, data)
         request.user = user
         view = self.view_class()
-        view.setup(request)
+        view.setup(request, **params)
         response = view.dispatch(request, **data)
         return view, response

@@ -37,11 +37,15 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
+from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from lxml import etree
 from project.util import int_divide_end
+from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
+from weasyprint import HTML
+from weasyprint.text.fonts import FontConfiguration
 
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
@@ -358,7 +362,7 @@ class Person(PermissionsMixin, models.Model):
     location_code = models.TextField(blank=True, null=True)
 
     welcome_letter = models.ForeignKey(
-        "EboksMessage",
+        "SuilaEboksMessage",
         blank=True,
         null=True,
         on_delete=SET_NULL,
@@ -1736,7 +1740,10 @@ class EboksMessage(PermissionsMixin, models.Model):
         return message
 
     def set_pdf_data(self, pdf_data: bytes):
-        self.contents = File(BytesIO(pdf_data), f"{uuid.uuid4()}.pdf")
+        name = f"{uuid.uuid4()}.pdf"
+        self.contents.save(
+            content=File(BytesIO(pdf_data), name=name), name=name, save=False
+        )
         self.xml = self.generate_xml(
             self.cpr_cvr, self.title, self.content_type, pdf_data
         )
@@ -1846,6 +1853,216 @@ class EboksMessage(PermissionsMixin, models.Model):
                             "is_postprocessing",
                         ]
                     )
+
+
+class SuilaEboksMessage(EboksMessage):
+
+    type_map = {
+        "opgørelse": {
+            "content_type": settings.EBOKS["content_type_id"],  # type: ignore
+            "title": "Årsopgørelse",
+            "template_folder": "suila/eboks/opgørelse",
+            "templates": {
+                "kl": get_template("suila/eboks/opgørelse/kl.html"),
+                "da": get_template("suila/eboks/opgørelse/da.html"),
+            },
+        },
+        "afventer": {
+            "content_type": settings.EBOKS["content_type_id"],  # type: ignore
+            "title": "Årsopgørelse",
+            "template_folder": "suila/eboks/afventer",
+            "templates": {
+                "kl": get_template("suila/eboks/afventer/kl.html"),
+                "da": get_template("suila/eboks/afventer/da.html"),
+            },
+        },
+    }
+
+    welcome_letter = "opgørelse"
+    month_names = {
+        "da": [
+            "januar",
+            "februar",
+            "marts",
+            "april",
+            "maj",
+            "juni",
+            "juli",
+            "august",
+            "september",
+            "oktober",
+            "november",
+            "december",
+        ],
+        "kl": [
+            "januaari",
+            "februaari",
+            "marsi",
+            "apriili",
+            "maaji",
+            "juuni",
+            "juuli",
+            "aggusti",
+            "septembari",
+            "oktobari",
+            "novembari",
+            "decembari",
+        ],
+    }
+
+    person_month = models.ForeignKey(
+        PersonMonth, null=False, blank=False, on_delete=models.CASCADE
+    )
+
+    type = models.CharField(
+        max_length=10,
+        choices=(
+            ("opgørelse", "Opgørelse"),
+            ("afventer", "Afventer"),
+        ),
+        null=False,
+        blank=False,
+    )
+
+    @property
+    def attrs(self):
+        return self.type_map[self.type]
+
+    @property
+    def month(self):
+        return self.person_month.month
+
+    @property
+    def year(self):
+        return self.person_month.year
+
+    @property
+    def person(self):
+        return self.person_month.person
+
+    @cached_property
+    def context(self):
+        quant = Decimal("0.01")
+        year_range = range(self.year, self.year - 3, -1)
+        year_map = [[self.person_month]] + [
+            PersonMonth.objects.filter(
+                person_year__person=self.person, person_year__year_id=y
+            )
+            for y in year_range
+        ]
+        return {
+            "person": self.person,
+            "year": self.year,
+            "month": self.month,
+            "personyear": self.person_month.person_year,
+            "personmonth": self.person_month,
+            "income": {
+                "catchsale_income": [
+                    Decimal(
+                        sum(
+                            [
+                                report.catchsale_income
+                                for pm in months
+                                for report in pm.monthlyincomereport_set.all()
+                            ]
+                        )
+                    ).quantize(quant)
+                    for months in year_map
+                ],
+                "salary_income": [
+                    Decimal(
+                        sum(
+                            [
+                                report.salary_income
+                                for pm in months
+                                for report in pm.monthlyincomereport_set.all()
+                            ]
+                        )
+                    ).quantize(quant)
+                    for months in year_map
+                ],
+                "btax_paid": [
+                    Decimal(
+                        sum(
+                            [
+                                payment.amount_paid
+                                for pm in months
+                                for payment in pm.btaxpayment_set.all()
+                            ]
+                        )
+                    ).quantize(quant)
+                    for months in year_map
+                ],
+                "capital_income": [
+                    Decimal(
+                        sum(
+                            [
+                                report.salary_income
+                                for pm in months
+                                for report in pm.monthlyincomereport_set.all()
+                            ]
+                        )
+                    ).quantize(quant)
+                    for months in year_map
+                ],
+            },
+        }
+
+    def html(self, language: str):
+        template = self.attrs["templates"][language]
+        context = {
+            **self.context,
+            "month_name": self.month_names[language][self.month - 1],
+        }
+        return template.render(context)
+
+    @cached_property
+    def html_kl(self):
+        return self.html("kl")
+
+    @cached_property
+    def html_da(self):
+        return self.html("da")
+
+    @cached_property
+    def pdf(self) -> bytes:
+        font_config = FontConfiguration()
+        writer = PdfWriter()
+        data = BytesIO()
+        for html in (self.html_kl, self.html_da):
+            pdf_data = HTML(string=html).write_pdf(font_config=font_config)
+            writer.append(BytesIO(pdf_data))
+            writer.write_stream(data)
+        data.seek(0)
+        return data.read()
+
+    def update_fields(self, force_update=False):
+        self.title = self.attrs["title"]
+        self.content_type = self.attrs["content_type"]
+        self.cpr_cvr = self.person_month.person.cpr
+        if not self.contents or force_update:
+            self.set_pdf_data(self.pdf)
+
+    def send(self, client: EboksClient | None = None):
+        self.update_fields()
+        super().send(client)
+
+    def update_welcome_letter(self):
+        if self.type == self.welcome_letter and self.sent is not None:
+            self.person.welcome_letter = self
+            self.person.welcome_letter_sent_at = self.sent
+            self.person.save(update_fields=("welcome_letter", "welcome_letter_sent_at"))
+
+    @staticmethod
+    def pre_save(sender, instance: SuilaEboksMessage, *args, **kwargs):
+        instance.update_fields()
+
+
+pre_save.connect(
+    SuilaEboksMessage.pre_save,
+    SuilaEboksMessage,
+    dispatch_uid="SuilaEboksMessage_pre_save",
+)
 
 
 class PersonYearU1AAssessment(PermissionsMixin, models.Model):
