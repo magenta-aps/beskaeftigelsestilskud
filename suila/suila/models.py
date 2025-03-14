@@ -14,6 +14,7 @@ from itertools import batched
 from os.path import basename
 from typing import Iterable, List, Sequence, Tuple
 
+import pandas as pd
 from common.models import User
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -483,18 +484,25 @@ class PersonYear(PermissionsMixin, models.Model):
         return f"{self.person} ({self.year})"
 
     @cached_property
-    def quarantine_df(self):
+    def quarantine_df(self) -> pd.DataFrame:
         from common.utils import get_people_in_quarantine
 
         return get_people_in_quarantine(self.year.year, [self.person.cpr])
 
     @property
     def in_quarantine(self) -> bool:
-        return self.quarantine_df.loc[self.person.cpr, "in_quarantine"]
+        return (
+            settings.ENFORCE_QUARANTINE  # type: ignore
+            and self.quarantine_df.loc[self.person.cpr, "in_quarantine"]
+        )
 
     @property
     def quarantine_reason(self) -> str:
-        return self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
+        return (
+            ""
+            if settings.ENFORCE_QUARANTINE  # type: ignore
+            else self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
+        )
 
     @cached_property
     def u1a_assessments_sum(self) -> Decimal:
