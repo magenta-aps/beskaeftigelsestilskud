@@ -17,6 +17,7 @@ from common.models import User
 from common.utils import SuilaJSONEncoder, omit
 from common.view_mixins import ViewLogMixin
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.db.models import CharField, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
@@ -557,6 +558,18 @@ class PersonDetailEboksSendView(
     def get_success_url(self):
         return reverse("suila:person_detail", kwargs={"pk": self.object.pk})
 
+    @cached_property
+    def type(self):
+        return (
+            "afventer"
+            if settings.ENFORCE_QUARANTINE and self.person_year.in_quarantine
+            else "opgørelse"
+        )
+
+    @property
+    def person_year(self):
+        return self.person_month.person_year
+
     @property
     def person_month(self):
         return (
@@ -581,6 +594,7 @@ class PersonDetailEboksSendView(
                 "person": self.object,
                 "person_month": self.person_month,
                 "has_sent": self.object.welcome_letter is not None,
+                "type": self.type,
                 "existing_pdf": (
                     reverse(
                         "suila:person_existing_message", kwargs={"pk": self.object.pk}
@@ -601,7 +615,7 @@ class PersonDetailEboksSendView(
         if form.cleaned_data["confirmed"]:
             with EboksClient.from_settings() as client:
                 suilamessage = SuilaEboksMessage.objects.create(
-                    person_month=self.person_month, type="opgørelse"
+                    person_month=self.person_month, type=self.type
                 )
                 suilamessage.send(client)
                 suilamessage.update_welcome_letter()

@@ -42,7 +42,7 @@
         {% if has_sent %}
             <iframe name="eboks_preview" class="eboks" src="{% url 'suila:person_existing_message' pk=person.pk %}"></iframe>
         {% else %}
-            <iframe name="eboks_preview" class="eboks" src="{% url 'suila:person_generated_message' pk=person.pk year=person_month.year month=person_month.month type='opgørelse' %}"></iframe>
+            <iframe name="eboks_preview" class="eboks" src="{% url 'suila:person_generated_message' pk=person.pk year=person_month.year month=person_month.month type=type %}"></iframe>
         {% endif %}
     </div>
 
