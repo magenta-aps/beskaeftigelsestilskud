@@ -258,16 +258,13 @@ class TestEstimationEngine(TestCase):
             output_stream,
         )
 
-        income_estimates = list(
+        income_estimates = 
             IncomeEstimate.objects.filter(
                 person_month__person_year=self.person_year,
                 engine="InYearExtrapolationEngine",
                 income_type=IncomeType.A,
-            )
-            .order_by("person_month__month")
-            .values_list("person_month__month", "estimated_year_result")
-        )
-        self.assertEqual(income_estimates, [])
+            ).count()
+        self.assertEqual(income_estimates, 0)
 
     def test_estimate_all_None_inputs(self):
         EstimationEngine.estimate_all(self.year.year, None, None, False)
