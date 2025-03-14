@@ -18,11 +18,11 @@ msgstr ""
 
 #: common/templates/403.html
 msgid "Du har ikke adgang til at se denne side"
-msgstr ""
+msgstr "Iserfigisinnaanngilat"
 
 #: common/templates/common/_base.html
 msgid "Suila"
-msgstr ""
+msgstr "Suila"
 
 #: common/templates/common/_base.html common/templates/common/base.html
 msgid "Forside"
@@ -30,27 +30,27 @@ msgstr "Saaqaa"
 
 #: common/templates/common/_base.html
 msgid "Mit overblik"
-msgstr ""
+msgstr "Tamaasa isigalugit"
 
 #: common/templates/common/_base.html
 msgid "Mine signaler"
-msgstr ""
+msgstr "Nalunaarutikka"
 
 #: common/templates/common/_base.html
 msgid "Borgersøgning"
-msgstr ""
+msgstr "Innutaasumik ujaasigit"
 
 #: common/templates/common/_base.html
 msgid "Mit estimerede Suila-tapit"
-msgstr ""
+msgstr "Suila-tapisiassatut naatsorsuutigisinnaasakka"
 
 #: common/templates/common/_base.html
 msgid "Ikke modtaget Suila-tapit"
-msgstr ""
+msgstr "Suila-tapit tunniunneqanngillat"
 
 #: common/templates/common/_base.html
 msgid "Suila-tapit-beregneren"
-msgstr ""
+msgstr "Suila-tapinik naatsorsuivik"
 
 #: common/templates/common/_base.html
 msgid "Estimeringsoverblik for hver person"
@@ -70,7 +70,7 @@ msgstr ""
 
 #: common/templates/common/_base.html
 msgid "Log ud"
-msgstr ""
+msgstr "Anigit"
 
 #: common/utils.py
 #, python-brace-format

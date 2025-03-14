@@ -18,7 +18,7 @@ msgstr ""
 
 #: suila/static/suila/graph.js
 msgid "Suila-tapit"
-msgstr ""
+msgstr "Suila-tapit"
 
 #: suila/static/suila/graph.js
 #, javascript-format
@@ -28,12 +28,12 @@ msgstr "Ukiumut isertitat: %s"
 #: suila/static/suila/graph.js
 #, javascript-format
 msgid "Suila-tapit: %s"
-msgstr ""
+msgstr "Suila-tapit: %s"
 
 #: suila/static/suila/graph.js
 msgid "Årsindkomst i kr."
-msgstr ""
+msgstr "Ukiumut isertitat koruuninngorlugit"
 
 #: suila/static/suila/graph.js
 msgid "Suila-tapit i kr."
-msgstr ""
+msgstr "Suila-tapit kornuuninngorlugit"
