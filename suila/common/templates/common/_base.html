@@ -175,9 +175,17 @@
                             <span class="material-icons me-2">account_circle</span>
                             <h4>{{ user.get_full_name }}</h4>
                         </div>
+                        {% if not user_twofactor_enabled %}
+                        <div class="d-flex">
+                            <a href="{% url 'login:two_factor_setup' %}" class="btn btn-primary d-flex align-items-center" id="logout-link">
+                                <span class="material-icons me-1">devices</span>
+                                {% translate "Aktivér to-faktor-godkendelse" %}
+                            </a>
+                        </div>
+                        {% endif %}
                         <div class="d-flex">
                             <a href="{% url 'login:logout' %}" class="btn btn-primary d-flex align-items-center" id="logout-link">
-                                <span class="material-icons me-1">login</span>
+                                <span class="material-icons me-1">logout</span>
                                 {% translate "Log ud" %}
                             </a>
                         </div>
