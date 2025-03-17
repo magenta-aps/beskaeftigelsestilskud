@@ -4,9 +4,8 @@
 from django.conf import settings
 
 from suila.integrations.eboks.client import EboksClient
-from suila.integrations.eboks.message import SuilaEboksMessage
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import PersonMonth, PersonYear, TaxScope
+from suila.models import PersonMonth, PersonYear, SuilaEboksMessage, TaxScope
 
 
 class Command(SuilaBaseCommand):
@@ -16,6 +15,7 @@ class Command(SuilaBaseCommand):
         parser.add_argument("year", type=int)
         parser.add_argument("month", type=int)
         parser.add_argument("--cpr", type=str)
+        parser.add_argument("--only-save", action="store_true")
         super().add_arguments(parser)
 
     welcome_letter = "opgørelse"
@@ -33,7 +33,6 @@ class Command(SuilaBaseCommand):
         if kwargs.get("cpr"):
             qs = qs.filter(person__cpr=kwargs["cpr"])
         qs = qs.select_related("person")
-
         for personyear in qs:
             typ = (
                 "afventer"
@@ -45,7 +44,11 @@ class Command(SuilaBaseCommand):
                 suilamessage = SuilaEboksMessage.objects.create(
                     person_month=personmonth, type=typ
                 )
-                suilamessage.send(client)
+                if kwargs["only-save"]:
+                    with open(f"{personyear.person.cpr}.pdf", "wb") as fp:
+                        fp.write(suilamessage.pdf)
+                else:
+                    suilamessage.send(client)
                 suilamessage.update_welcome_letter()
             except PersonMonth.DoesNotExist:
                 pass
