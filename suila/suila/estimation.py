@@ -217,6 +217,7 @@ class EstimationEngine:
             )
             .annotate(
                 a_income=Sum("monthlyincomereport__a_income"),
+                u_income=Sum("monthlyincomereport__u_income"),
             )
             .order_by(
                 "person_pk",
@@ -237,8 +238,10 @@ class EstimationEngine:
                 a_income=Decimal(
                     person_month.a_income or 0  # type: ignore[attr-defined]
                 ),
+                u_income=Decimal(
+                    person_month.u_income or 0  # type: ignore[attr-defined]
+                ),
                 # b_income=Decimal(person_month.b_income_from_year or 0),
-                u_income=Decimal(person_month.u_income_from_year or 0),
                 signal=person_month.signal,
             )
             for person_month in person_month_qs

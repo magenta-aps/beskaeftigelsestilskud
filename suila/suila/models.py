@@ -41,7 +41,6 @@ from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from lxml import etree
-from project.util import int_divide_end
 from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
 from weasyprint import HTML
@@ -700,10 +699,6 @@ class PersonMonth(PermissionsMixin, models.Model):
     def year_month(self) -> date:
         return date(self.year, self.month, 1)
 
-    @property
-    def u_income_from_year(self) -> int:
-        return int_divide_end(int(self.person_year.u_income), 12)[self.month - 1]
-
     @classmethod
     def filter_user_instance_permissions(
         cls, qs: QuerySet[PersonMonth], user: User, action: str
@@ -714,8 +709,7 @@ class PersonMonth(PermissionsMixin, models.Model):
 
     @property
     def signal(self):
-        # TODO: U income from month, not year
-        return self.has_paid_b_tax or self.amount_sum > 0 or self.u_income_from_year > 0
+        return self.has_paid_b_tax or self.amount_sum > 0
 
     @classmethod
     def signal_qs(cls, qs: QuerySet[PersonMonth]) -> QuerySet[PersonMonth]:

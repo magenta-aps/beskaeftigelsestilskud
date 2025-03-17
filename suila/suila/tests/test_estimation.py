@@ -397,7 +397,11 @@ class TestEstimationEngine(TestCase):
                         "a_income", flat=True
                     )
                 ),
-                "u_income": Decimal(person_month.u_income_from_year or 0),
+                "u_income": sum(
+                    person_month.monthlyincomereport_set.all().values_list(
+                        "u_income", flat=True
+                    )
+                ),
             }
             data["signal"] = data["a_income"] > 0 or data["u_income"]
 
