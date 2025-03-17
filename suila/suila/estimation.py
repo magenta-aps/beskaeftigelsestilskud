@@ -122,9 +122,7 @@ class EstimationEngine:
         if output_stream is not None:
             output_stream.write("Fetching person_month_map ...\n")
 
-        person_month_map = {
-            pm.pk: pm for pm in PersonMonth.objects.all().select_related("person_year")
-        }
+        person_month_map = {pm.pk: pm for pm in PersonMonth.objects.all()}
 
         # Create queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
