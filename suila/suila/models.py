@@ -364,6 +364,8 @@ class Person(PermissionsMixin, models.Model):
     address_line_4 = models.TextField(blank=True, null=True)
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
+    foreign_address = models.TextField(blank=True, null=True)
+    country_code = models.CharField(blank=True, null=True, max_length=2)
     civil_state = models.TextField(blank=True, null=True)
     location_code = models.TextField(blank=True, null=True)
 
@@ -395,6 +397,12 @@ class Person(PermissionsMixin, models.Model):
         if action == "view":
             return qs.filter(cpr=user.cpr)
         return qs.none()
+
+    @property
+    def full_address_splitted(self) -> List[str]:
+        if not self.full_address:
+            return []
+        return self.full_address.split(", ")
 
 
 class TaxScope(models.TextChoices):
