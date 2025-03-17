@@ -43,7 +43,8 @@ class Command(SuilaBaseCommand):
         def handle_person_year(personyear: PersonYear):
             typ = (
                 "afventer"
-                if settings.ENFORCE_QUARANTINE and personyear.in_quarantine
+                if settings.ENFORCE_QUARANTINE  # type: ignore
+                and personyear.in_quarantine
                 else "opgørelse"
             )
             try:
