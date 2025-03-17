@@ -28,7 +28,7 @@ class Command(BaseCommand):
         with open(options["file"], "r") as fp:
             user_dicts = json.load(fp, object_hook=custom_decoder)
             for user_dict in user_dicts:
-                flat_dict = omit(user_dict, "groups", "user_permissions")
+                flat_dict = omit(user_dict, "groups", "user_permissions", "username")
                 u, _ = User.objects.update_or_create(
                     username=user_dict["username"], defaults=flat_dict
                 )
