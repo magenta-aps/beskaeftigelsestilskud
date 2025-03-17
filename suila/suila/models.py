@@ -176,7 +176,10 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
     def calculate(self, year_income: Decimal) -> Decimal:
         zero = Decimal(0)
         rateable_amount = max(  # max A
-            year_income - self.personal_allowance - self.standard_allowance, zero
+            year_income
+            - (self.personal_allowance or 0)
+            - (self.standard_allowance or 0),
+            zero,
         )
         scaledown_amount = max(year_income - self.scaledown_ceiling, zero)  # max B
         risen_benefit = min(  # min A
@@ -196,7 +199,7 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
 
     @cached_property
     def graph_points(self) -> Sequence[Tuple[int | Decimal, int | Decimal]]:
-        allowance = self.personal_allowance + self.standard_allowance
+        allowance = (self.personal_allowance or 0) + (self.standard_allowance or 0)
         # Calculate breakpoints in graph, by identifying points where the
         # contents of the min() and max() terms are identical,
         # then isolating year_income
