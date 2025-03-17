@@ -230,13 +230,20 @@ class PersonDetailView(
             logger.error("No PersonMonth found for focus date %r", focus_date)
             context_data["show_next_payment"] = False
         else:
-            context_data["show_next_payment"] = True
-            context_data["next_payout_date"] = get_payment_date(
-                focus_date.year, focus_date.month
+            person_year = person_month.person_year
+            context_data.update(
+                {
+                    "show_next_payment": True,
+                    "next_payout_date": get_payment_date(
+                        focus_date.year, focus_date.month
+                    ),
+                    "benefit_paid": person_month.benefit_paid,
+                    "estimated_year_benefit": person_month.estimated_year_benefit,
+                    "estimated_year_result": person_month.estimated_year_result
+                    - person_year.catchsale_expenses,
+                    "assessed_b_result": person_year.b_income - person_year.b_expenses,
+                }
             )
-            context_data["benefit_paid"] = person_month.benefit_paid
-            context_data["estimated_year_benefit"] = person_month.estimated_year_benefit
-            context_data["estimated_year_result"] = person_month.estimated_year_result
 
         self.log_view(self.object)
         return context_data
