@@ -34,7 +34,8 @@ class Command(SuilaBaseCommand):
             year_id=year,
             person__welcome_letter_sent_at__isnull=True,
             tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
-        )
+            person__full_address__isnull=False,
+        ).exclude(person__full_address="")
         if kwargs.get("cpr"):
             qs = qs.filter(person__cpr=kwargs["cpr"])
         qs = qs.select_related("person")
