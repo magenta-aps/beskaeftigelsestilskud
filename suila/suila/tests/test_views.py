@@ -362,7 +362,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             # The mocked `benefit_paid` for October is 10 (= the month number.)
             self.assertEqual(response.context_data["benefit_paid"], Decimal("10.0"))
             self.assertIsNone(response.context_data["estimated_year_benefit"])
-            self.assertIsNone(response.context_data["estimated_year_result"])
+            self.assertEqual(response.context_data["estimated_year_result"], Decimal(0))
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
             self.assertFalse(response.context_data["table"].orderable)
 
