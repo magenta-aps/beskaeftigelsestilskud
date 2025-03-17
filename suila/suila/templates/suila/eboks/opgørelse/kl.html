@@ -9,13 +9,47 @@
             border: 1px solid black;
             border-collapse: collapse;
         }
+        div.cpr {
+            vertical-align: top;
+            text-align: right;
+        }
+        div.address {
+            font-size: 0.8rem;
+            padding-left: 20pt;
+            font-family: calibri, sans-serif;
+            margin-bottom: 2cm;
+            margin-top: 2cm;
+
+            min-height: 4cm;
+            padding-top: 0.5cm;
+            padding-bottom: 0.5cm;
+        }
     </style>
+
     <table style="width: 100%">
         <tr>
-            <td><h3 class="left">Suila-tapinik naatsorsuineq</h3></td>
-            <td style="text-align: right">{{ person.cpr }}</td>
+            <td style="vertical-align: top">
+                <div class="address">
+                    {{ person.name }}<br/>
+                    {% if person.full_address %}
+                        {% for line in person.full_address_splitted %}
+                            {{ line }}<br/>
+                        {% endfor %}
+                    {% elif person.foreign_address %}
+                        {{ person.foreign_address }}
+                    {% endif %}
+                </div>
+            </td>
+            <td style="text-align: right; vertical-align: top">
+                <div class="cpr">
+                    {{ person.cpr }}
+                </div>
+            </td>
         </tr>
     </table>
+
+    <h3 class="left">Suila-tapinik naatsorsuineq</h3>
+
     <p>
         Suila-tapit tassaavoq sulinermut ilanngaat tunniunneqartoq. Akileraartarnermik aaqqissuusseqqinnerup ilaatut
         akuersissutigineqarluni 1. januar 2025 aallarnerfigalugu atuutilerpoq. Suila-tapit tunniunneqartarpoq
