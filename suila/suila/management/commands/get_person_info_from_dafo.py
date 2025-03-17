@@ -100,6 +100,7 @@ class Command(SuilaBaseCommand):
 
         post_code_city = " ".join([str(x) for x in (post_code, city) if not_empty(x)])
         person.full_address = ", ".join(filter(not_empty, [address, post_code_city]))
+        person.foreign_address = data.get("udlandsadresse")
 
         person.save()
 
