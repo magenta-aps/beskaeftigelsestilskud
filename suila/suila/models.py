@@ -365,6 +365,7 @@ class Person(PermissionsMixin, models.Model):
     address_line_5 = models.TextField(blank=True, null=True)
     full_address = models.TextField(blank=True, null=True)
     foreign_address = models.TextField(blank=True, null=True)
+    country_code = models.CharField(blank=True, null=True, max_length=2)
     civil_state = models.TextField(blank=True, null=True)
     location_code = models.TextField(blank=True, null=True)
 

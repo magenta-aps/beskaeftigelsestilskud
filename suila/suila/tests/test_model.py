@@ -40,10 +40,7 @@ class ModelTest(TestCase):
         )
         cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
         cls.year2 = Year.objects.create(year=2025)
-        cls.person = Person.objects.create(
-            name="Jens Hansen",
-            cpr="1234567890",
-        )
+        cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
@@ -390,6 +387,11 @@ class TestPerson(UserModelTest):
         self.assertEqual(qs.count(), 0)
         self.assertNotIn(self.person, qs)
         self.assertFalse(Person.has_model_permissions(self.no_user, "view"))
+
+    def test_full_address_splitted(self):
+        self.assertEqual(self.person.full_address_splitted, [])
+        self.person.full_address = "Imaneq 32, 3900 Nuuk"
+        self.assertEqual(self.person.full_address_splitted, ["Imaneq 32", "3900 Nuuk"])
 
 
 class TestPersonYear(UserModelTest):

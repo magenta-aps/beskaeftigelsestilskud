@@ -70,6 +70,8 @@ class TestSimulationJSONEncoder(TestCase):
             "name": None,
             "civil_state": None,
             "location_code": None,
+            "foreign_address": None,
+            "country_code": None,
         }
         cls.personyear_serialized = {
             "id": cls.personyear.pk,
