@@ -522,14 +522,6 @@ class PersonYear(PermissionsMixin, models.Model):
             else self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
         )
 
-    @cached_property
-    def u1a_assessments_sum(self) -> Decimal:
-        result = PersonYearU1AAssessment.objects.filter(person_year=self).aggregate(
-            total=Sum("dividend_total")
-        )["total"]
-
-        return result or Decimal("0.00")
-
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):
@@ -562,10 +554,6 @@ class PersonYear(PermissionsMixin, models.Model):
             return self.person.personyear_set.get(year__year=self.year.year + 1)
         except PersonYear.DoesNotExist:
             return None
-
-    @property
-    def u_income(self) -> Decimal:
-        return self.u1a_assessments_sum or Decimal("0")
 
     @classmethod
     def filter_user_instance_permissions(
