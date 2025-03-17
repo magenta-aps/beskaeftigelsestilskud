@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 from common import utils
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import F, QuerySet, Sum
@@ -245,13 +246,15 @@ class EstimationEngine:
             for person_month in person_month_qs
             if (
                 not (
-                    quarantine_df.loc[person_month.person_cpr, "in_quarantine"]
+                    (
+                        settings.ENFORCE_QUARANTINE  # type: ignore
+                        and quarantine_df.loc[person_month.person_cpr, "in_quarantine"]
+                    )
                     and (person_month._year, person_month.month) in exclude_months
                 )
                 and person_month.person_year.tax_scope == TaxScope.FULDT_SKATTEPLIGTIG
             )
         ]
-
         results = []
         summaries = []
         for idx, (key, items) in enumerate(
