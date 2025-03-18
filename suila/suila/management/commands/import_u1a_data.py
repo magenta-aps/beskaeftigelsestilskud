@@ -151,8 +151,9 @@ class Command(SuilaBaseCommand):
             return result
 
         # Go through each person and create & create MonthlyIncomeReports
-        objs_to_create = {}
-        objs_to_update = {}
+        reports_to_create = {}
+        reports_to_update = {}
+        person_months_to_update: Dict[int, PersonMonth] = {}
 
         for person in persons:
             self._write_verbose(
@@ -241,7 +242,7 @@ class Command(SuilaBaseCommand):
                         **field_values,
                     )
                     report.update_amount()
-                    objs_to_create[key] = report
+                    reports_to_create[key] = report
                 else:
                     # An existing monthly income report exists
                     # for this person month and employer - update it.
@@ -253,27 +254,34 @@ class Command(SuilaBaseCommand):
 
                     if changed:
                         report.update_amount()
-                        objs_to_update[key] = report
+                        reports_to_update[key] = report
 
-                # Finally update the PersonMonth amount sums which sets amount_sum
-                # based on the "monthlyincomereport_set"
-                u1a_person_month.update_amount_sum()
+                # Lastly, set the related PersonMonth model to be updated
+                # NOTE: This will occur after MonthlyIncomeReports have been created,
+                # or updated.
+                person_months_to_update[u1a_person_month.id] = u1a_person_month
 
             result.cprs_handled += 1
 
-        # Finally, Create & update models with history & in bulk
-        objs_to_create_list = list(objs_to_create.values())
-        objs_to_update_list = list(objs_to_update.values())
-
+        # Create & update models with history & in bulk
+        reports_to_create_list = list(reports_to_create.values())
         bulk_create_with_history(
-            objs_to_create_list,
+            reports_to_create_list,
             MonthlyIncomeReport,
         )
 
+        reports_to_update_list = list(reports_to_update.values())
         bulk_update_with_history(
-            objs_to_update_list,
+            reports_to_update_list,
             MonthlyIncomeReport,
             [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
         )
+
+        # Final, update PersonMonth.amount_sum's
+        # NOTE: This can only occur after create/update of MonthlyIncomeReports,
+        # since ."update_amount_sum()" uses a MonthlyIncomeReports-queryset.
+        for pm in list(person_months_to_update.values()):
+            pm.update_amount_sum()
+            pm.save()
 
         return result
