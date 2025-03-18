@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 from django.conf import settings
 from django.db import transaction
 from pydantic import BaseModel
+from simple_history.utils import bulk_create_with_history, bulk_update_with_history
 
 from suila.integrations.akap.u1a import (
     AKAPU1AItem,
@@ -259,5 +260,20 @@ class Command(SuilaBaseCommand):
                 u1a_person_month.update_amount_sum()
 
             result.cprs_handled += 1
+
+        # Finally, Create & update models with history & in bulk
+        objs_to_create_list = list(objs_to_create.values())
+        objs_to_update_list = list(objs_to_update.values())
+
+        bulk_create_with_history(
+            objs_to_create_list,
+            MonthlyIncomeReport,
+        )
+
+        bulk_update_with_history(
+            objs_to_update_list,
+            MonthlyIncomeReport,
+            [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
+        )
 
         return result
