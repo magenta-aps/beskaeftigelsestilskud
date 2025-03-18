@@ -1947,8 +1947,12 @@ class SuilaEboksMessage(EboksMessage):
         return self.person_month.month
 
     @property
-    def year(self):
-        return self.person_month.year
+    def year(self) -> int:
+        return self.person_year.year_id
+
+    @cached_property
+    def person_year(self) -> PersonYear:
+        return self.person_month.person_year
 
     @property
     def person(self):
@@ -1970,6 +1974,10 @@ class SuilaEboksMessage(EboksMessage):
             "month": self.month,
             "personyear": self.person_month.person_year,
             "personmonth": self.person_month,
+            "sum_income": (self.person_month.estimated_year_result or Decimal(0))
+            + self.person_year.b_income
+            - self.person_year.b_expenses
+            - self.person_year.catchsale_expenses,
             "income": {
                 "catchsale_income": [
                     Decimal(

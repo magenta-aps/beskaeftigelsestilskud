@@ -1385,6 +1385,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 "month": personmonth.month,
                 "personyear": personmonth.person_year,
                 "personmonth": personmonth,
+                "sum_income": Decimal("0.00"),
                 "income": {
                     # Passer med indkomster der sættes op i PersonEnv.setUpTestData
                     "catchsale_income": [
