@@ -18,17 +18,16 @@ class Command(SuilaBaseCommand):
         parser.add_argument("year", type=int)
         parser.add_argument("month", type=int)
         parser.add_argument("--cpr", type=str)
-        parser.add_argument("--only-save", action="store_true")
+        parser.add_argument("--save", action="store_true")
+        parser.add_argument("--send", action="store_true")
         super().add_arguments(parser)
-
-    welcome_letter = "opgørelse"
 
     def _handle(self, *args, **kwargs):
         client = EboksClient.from_settings()
         year = kwargs["year"]
         month = kwargs["month"]
-        save = kwargs["only_save"]
-        send = not kwargs["only_save"]
+        save = kwargs["save"]
+        send = kwargs["send"]
 
         qs = PersonYear.objects.filter(
             year_id=year,
