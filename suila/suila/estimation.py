@@ -426,7 +426,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         subset: Sequence[MonthlyIncomeData],
         income_type: IncomeType,
     ) -> IncomeEstimate | None:
-        # only handler MonthlyIncomeData for the specified IncomeType
+        # only handle MonthlyIncomeData for the specified IncomeType
         income_type_filter = InYearExtrapolationEngine.filter_relevant_items(
             income_type
         )
