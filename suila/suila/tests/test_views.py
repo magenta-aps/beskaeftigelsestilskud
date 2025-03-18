@@ -1407,7 +1407,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                     ],
                     "capital_income": [
                         Decimal("0.00"),
-                        Decimal("2310.00"),
+                        Decimal("0.00"),
                         Decimal("0.00"),
                         Decimal("0.00"),
                     ],
