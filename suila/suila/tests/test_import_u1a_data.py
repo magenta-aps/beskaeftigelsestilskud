@@ -167,7 +167,7 @@ class TestImportU1ADataCommand(TestCase):
                 "load": ANY,
                 "import_date": ANY,
                 "actual_year_benefit": None,
-                "amount_sum": Decimal("0.00"),
+                "amount_sum": Decimal("1337.00"),
                 "benefit_paid": None,
                 "estimated_year_benefit": None,
                 "estimated_year_result": None,
@@ -215,4 +215,106 @@ class TestImportU1ADataCommand(TestCase):
                     "salary_income": Decimal("0.00"),
                 }
             ],
+        )
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_modal_updates(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        # Test specific data
+        existing_person_year = PersonYear.objects.create(
+            person=self.person1,
+            year=self.year,
+        )
+
+        existing_person_month = PersonMonth.objects.create(
+            person_year=existing_person_year, month=3, import_date=datetime.now().date()
+        )
+
+        u1a_employer = Employer.objects.create(
+            cvr=self.u1a_1.cvr,
+            name=self.u1a_1.virksomhedsnavn,
+        )
+
+        existing_monthly_income_report = MonthlyIncomeReport.objects.create(
+            employer=u1a_employer,
+            person_month=existing_person_month,
+            salary_income=Decimal("1234.00"),
+        )
+
+        # Mocking
+        mock_get_akap_u1a_items_unique_cprs.return_value = [self.person1.cpr]
+        mock_get_akap_u1a_items.return_value = [
+            AKAPU1AItem(
+                id=1,
+                u1a=self.u1a_1,
+                cpr_cvr_tin="1234567891",
+                navn="Test Person",
+                adresse="Testvej 1337",
+                postnummer="8000",
+                by="Aarhus",
+                land="Danmark",
+                udbytte=Decimal("1337.00"),
+                oprettet=datetime.now(),
+            )
+        ]
+
+        # Invoke
+        call_command(self.command)
+
+        # Asserts MonthlyIncomeReport got updated correctly
+        updated_monthly_income_reports = MonthlyIncomeReport.objects.get(
+            pk=existing_monthly_income_report.id
+        )
+        self.assertEqual(
+            model_to_dict(updated_monthly_income_reports),
+            {
+                "id": ANY,
+                "load": ANY,
+                "employer": u1a_employer.id,
+                "person_month": existing_person_month.id,
+                "year": existing_person_year.year.year,
+                "month": existing_person_month.month,
+                "a_income": Decimal("1234.00"),
+                "u_income": Decimal("1337.00"),
+                "alimony_income": Decimal("0.00"),
+                "capital_income": Decimal("0.00"),
+                "catchsale_income": Decimal("0.00"),
+                "civil_servant_pension_income": Decimal("0.00"),
+                "dis_gis_income": Decimal("0.00"),
+                "disability_pension_income": Decimal("0.00"),
+                "employer_paid_gl_pension_income": Decimal("0.00"),
+                "foreign_pension_income": Decimal("0.00"),
+                "ignored_benefits_income": Decimal("0.00"),
+                "other_pension_income": Decimal("0.00"),
+                "public_assistance_income": Decimal("0.00"),
+                "retirement_pension_income": Decimal("0.00"),
+                "salary_income": Decimal("1234.00"),
+            },
+        )
+
+        # Assert PersonMonth.amount_sum changes
+        updated_person_month = PersonMonth.objects.get(pk=existing_person_month.id)
+        self.assertEqual(
+            model_to_dict(updated_person_month),
+            {
+                "id": updated_person_month.id,
+                "person_year": existing_person_year.id,
+                "month": existing_person_month.month,
+                "load": ANY,
+                "import_date": ANY,
+                "actual_year_benefit": None,
+                "amount_sum": Decimal("2571.00"),
+                "benefit_paid": None,
+                "estimated_year_benefit": None,
+                "estimated_year_result": None,
+                "fully_tax_liable": None,
+                "has_paid_b_tax": False,
+                "municipality_code": None,
+                "municipality_name": None,
+                "prior_benefit_paid": None,
+            },
         )
