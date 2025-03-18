@@ -49,7 +49,7 @@ class AKAPU1A(BaseModel):
     noter: Optional[str] = None
     by: str
     dato: date
-    dato_udbetaling: date
+    dato_vedtagelse: date
     underskriftsberettiget: str
     oprettet: datetime
     oprettet_af_cpr: str

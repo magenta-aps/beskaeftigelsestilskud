@@ -53,7 +53,7 @@ class TestImportU1ADataCommand(TestCase):
             udbytte=Decimal("1337.0"),
             by="Aarhus",
             dato=datetime.now().date(),
-            dato_udbetaling=datetime.now().date() + timedelta(days=1),
+            dato_vedtagelse=datetime.now().date() + timedelta(days=1),
             underskriftsberettiget="Test Berettiget",
             oprettet=datetime.now() - timedelta(days=7),
             oprettet_af_cpr=cls.person1.cpr,
@@ -157,7 +157,7 @@ class TestImportU1ADataCommand(TestCase):
 
         # Assert PersonMonth creation
         person_month = PersonMonth.objects.get(
-            person_year=person_year, month=self.u1a_1.dato_udbetaling.month
+            person_year=person_year, month=self.u1a_1.dato_vedtagelse.month
         )
 
         self.assertEqual(

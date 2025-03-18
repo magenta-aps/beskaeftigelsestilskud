@@ -182,7 +182,7 @@ class Command(SuilaBaseCommand):
             # Update, or create, MonthlyIncomeReports for each U1A
             for _, u1a_items in u1a_items_dict.items():
                 u1a = u1a_items[0].u1a
-                u1a_month = u1a.dato_udbetaling.month
+                u1a_month = u1a.dato_vedtagelse.month
 
                 # Get U1A Employer & PersonMonth (or create them)
                 u1a_employer, created = Employer.objects.get_or_create(
