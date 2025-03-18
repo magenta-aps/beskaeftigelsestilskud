@@ -171,7 +171,11 @@ class Command(SuilaBaseCommand):
                 u1a_items_dict[item.u1a.id].append(item)
 
             # Get, or create, PersonYear
-            person_year, _ = PersonYear.objects.get_or_create(person=person, year=year)
+            person_year, _ = PersonYear.objects.get_or_create(
+                person=person,
+                year=year,
+                defaults={"load": data_load},
+            )
 
             # Update, or create, MonthlyIncomeReports for each U1A
             for _, u1a_items in u1a_items_dict.items():
@@ -180,7 +184,8 @@ class Command(SuilaBaseCommand):
 
                 # Get U1A Employer & PersonMonth (or create them)
                 u1a_employer, created = Employer.objects.get_or_create(
-                    cvr=u1a.cvr, defaults={"load": data_load}
+                    cvr=u1a.cvr,
+                    defaults={"load": data_load, "name": u1a.virksomhedsnavn},
                 )
                 if created:
                     self._write_verbose("\t- Created 1 Employer object")
