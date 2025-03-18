@@ -15,10 +15,9 @@
         }
         div.address {
             font-size: 0.8rem;
-            padding-left: 20pt;
             font-family: calibri, sans-serif;
             margin-bottom: 2cm;
-            margin-top: 2cm;
+            margin-top: 1.5cm;
 
             min-height: 4cm;
             padding-top: 0.5cm;
@@ -30,14 +29,17 @@
         <tr>
             <td style="vertical-align: top">
                 <div class="address">
-                    {{ person.name }}<br/>
-                    {% if person.full_address %}
-                        {% for line in person.full_address_splitted %}
-                            {{ line }}<br/>
-                        {% endfor %}
-                    {% elif person.foreign_address %}
-                        {{ person.foreign_address }}
-                    {% endif %}
+                    <div style="padding-left: 20pt">
+                        {{ person.name }}<br/>
+                        {% if person.full_address %}
+                            {% for line in person.full_address_splitted %}
+                                {{ line }}<br/>
+                            {% endfor %}
+                        {% elif person.foreign_address %}
+                            {{ person.foreign_address }}
+                        {% endif %}
+                    </div>
+                    <img src="file:///static/suila/afsender.png" style="width: 192px;" alt="afsender"/>
                 </div>
             </td>
             <td style="text-align: right; vertical-align: top">
