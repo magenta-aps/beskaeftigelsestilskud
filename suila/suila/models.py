@@ -402,7 +402,7 @@ class Person(PermissionsMixin, models.Model):
     def full_address_splitted(self) -> List[str]:
         if not self.full_address:
             return []
-        return self.full_address.split(", ")
+        return self.full_address.rsplit(", ", 1)
 
 
 class TaxScope(models.TextChoices):
@@ -2011,7 +2011,7 @@ class SuilaEboksMessage(EboksMessage):
                     Decimal(
                         sum(
                             [
-                                report.salary_income
+                                report.u_income
                                 for pm in months
                                 for report in pm.monthlyincomereport_set.all()
                             ]
