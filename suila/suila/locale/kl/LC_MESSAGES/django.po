@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-17 14:29-0200\n"
+"POT-Creation-Date: 2025-03-18 07:35-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -654,12 +654,8 @@ msgid "Forventet beløb til udbetaling for hele %(year)s"
 msgstr "%(year)s-mi Suila-tapit tunniunneqartussatut naatsorsuutigineqartut"
 
 #: suila/templates/suila/person_detail.html
-msgid "Forventet årsindkomst fra arbejde og indhandling"
-msgstr ""
-
-#: suila/templates/suila/person_detail.html
-msgid "Forventet B-indkomst"
-msgstr ""
+msgid "Forventet årsindkomst fra arbejde"
+msgstr "Ukiumut isertitariumaagassatut naatsorsuutigisat"
 
 #: suila/templates/suila/person_detail.html
 msgid "Bemærk!"

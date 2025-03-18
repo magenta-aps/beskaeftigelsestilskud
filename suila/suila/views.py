@@ -231,6 +231,11 @@ class PersonDetailView(
             context_data["show_next_payment"] = False
         else:
             person_year = person_month.person_year
+            estimated_year_result = (
+                (person_month.estimated_year_result or Decimal(0))
+                - person_year.catchsale_expenses
+                + (person_year.b_income - person_year.b_expenses)
+            )
             context_data.update(
                 {
                     "show_next_payment": True,
@@ -239,11 +244,7 @@ class PersonDetailView(
                     ),
                     "benefit_paid": person_month.benefit_paid,
                     "estimated_year_benefit": person_month.estimated_year_benefit,
-                    "estimated_year_result": (
-                        person_month.estimated_year_result or Decimal(0)
-                    )
-                    - person_year.catchsale_expenses,
-                    "assessed_b_result": person_year.b_income - person_year.b_expenses,
+                    "estimated_year_result": estimated_year_result,
                 }
             )
 
