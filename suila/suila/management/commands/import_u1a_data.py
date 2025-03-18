@@ -188,7 +188,7 @@ class Command(SuilaBaseCommand):
                 u1a_person_month, created = PersonMonth.objects.get_or_create(
                     person_year=person_year,
                     month=u1a_month,
-                    defaults={"load": data_load},
+                    defaults={"load": data_load, "import_date": data_load.timestamp},
                 )
                 if created:
                     self._write_verbose("\t- Created 1 PersonMonth object(s)")
