@@ -131,7 +131,8 @@ class TestSimulationJSONEncoder(TestCase):
 
     def test_can_serialize_simulation(self):
         self.maxDiff = None
-        simulation = Simulation(
+
+        a_income_simulation = Simulation(
             [TwelveMonthsSummationEngine()],
             self.person,
             year_start=2020,
@@ -139,7 +140,54 @@ class TestSimulationJSONEncoder(TestCase):
             income_type=IncomeType.A,
         )
         self._assert_json_equal(
-            simulation,
+            a_income_simulation,
+            {
+                "person": self.person_serialized,
+                "rows": [
+                    {
+                        "income_series": [],
+                        "title": "Månedlig indkomst",
+                        "chart_type": "bar",
+                    },
+                    {
+                        "payout": [
+                            {
+                                "correct_payout": 0.0,
+                                "cumulative_payout": 0.0,
+                                "estimated_year_benefit": 0.0,
+                                "estimated_year_result": 0.0,
+                                "month": m,
+                                "payout": 0.0,
+                                "year": 2020,
+                            }
+                            for m in range(1, 13)
+                        ],
+                        "title": "Månedlig udbetaling",
+                        "chart_type": "line",
+                    },
+                    {
+                        "income_sum": {"2020": 0.0},
+                        "predictions": [],
+                        "title": "TwelveMonthsSummationEngine"
+                        " - Summation af beløb for de seneste 12 måneder",
+                        "chart_type": "line",
+                    },
+                ],
+                "year_start": 2020,
+                "year_end": 2020,
+                "calculation_methods": None,
+            },
+        )
+
+        u_income_simulation = Simulation(
+            [TwelveMonthsSummationEngine()],
+            self.person,
+            year_start=2020,
+            year_end=2020,
+            income_type=IncomeType.U,
+        )
+        self._assert_json_equal(
+            u_income_simulation,
             {
                 "person": self.person_serialized,
                 "rows": [

@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ URL_U1A_ITEMS_UNIQUE_CPRS = "/udbytte/api/u1a-items/unique/cprs"
 
 class AKAPU1AItem(BaseModel):
     id: int
-    u1a_id: int = Field(alias="u1a")
+    u1a: "AKAPU1A"
     cpr_cvr_tin: str
     navn: str
     adresse: str
@@ -49,6 +49,7 @@ class AKAPU1A(BaseModel):
     noter: Optional[str] = None
     by: str
     dato: date
+    dato_vedtagelse: date
     underskriftsberettiget: str
     oprettet: datetime
     oprettet_af_cpr: str

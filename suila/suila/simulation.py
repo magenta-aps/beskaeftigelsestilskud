@@ -176,15 +176,16 @@ class Simulation:
                 )
 
         if self.income_type in (IncomeType.U, None):
-            # Add any income from final settlement
-            for person_year in self.person_years:
-                year = person_year.year.year
-
-                if not person_year.u_income:
-                    continue
-
-                income_series = self._yearly_monthly_income_to_income_series(
-                    income_series, IncomeType.U, person_year.u_income, year
+            for item in list(
+                MonthlyIncomeReport.objects.filter(
+                    person_month__person_year__person=self.person,
+                    person_month__person_year__year__gte=self.year_start,
+                    person_month__person_year__year__lte=self.year_end,
+                    u_income__gt=0,
+                )
+            ):
+                income_series = self._monthly_income_report_to_income_series(
+                    income_series, IncomeType.U, item
                 )
 
         income_series_list = list(income_series.values())
@@ -205,9 +206,11 @@ class Simulation:
         payout_items = []
         for person_year in self.person_years:
             cumulative_payout = Decimal(0)
+            u_result = person_year.amount_sum_by_type(IncomeType.U)
             for month in range(1, 13):
                 b_result = person_year.b_income - person_year.b_expenses
                 a_result = Decimal(0)
+
                 try:
                     person_month = person_year.personmonth_set.get(month=month)
                     payout = person_month.benefit_paid or Decimal(0)
@@ -215,18 +218,18 @@ class Simulation:
                     a_result = (
                         person_month.estimated_year_result or Decimal(0)
                     ) - person_year.catchsale_expenses
-                    estimated_year_result = a_result + b_result
+                    estimated_year_result = a_result + b_result + u_result
                     estimated_year_benefit = person_month.estimated_year_benefit
-
                 except PersonMonth.DoesNotExist:
                     payout = Decimal(0)
-                    estimated_year_result = a_result + b_result
+                    estimated_year_result = a_result + b_result + u_result
                     actual_year_benefit = (
                         person_year.year.calculation_method.calculate_float(
                             estimated_year_result
                         )
                     )
                     estimated_year_benefit = actual_year_benefit
+
                 cumulative_payout += payout
                 payout_items.append(
                     PayoutItem(
@@ -325,20 +328,23 @@ class Simulation:
     ) -> Dict[tuple, IncomeItem]:
         value_part: Optional[IncomeItemValuePart] = None
 
-        if income_type == income_type.A and item.a_income:
-            value_part = IncomeItemValuePart(
-                income_type=income_type, value=item.a_income
+        income_value_attr = "u_income" if income_type == IncomeType.U else "a_income"
+        if not hasattr(item, income_value_attr):
+            raise ValueError(
+                f"item does not have income_value_attr: {income_value_attr}"
             )
+        income_value = getattr(item, income_value_attr)
 
+        value_part = IncomeItemValuePart(income_type=income_type, value=income_value)
         if (item.year, item.month) not in income_series:
             income_series[(item.year, item.month)] = IncomeItem(
                 year=item.year,
                 month=item.month,
-                value=item.a_income,
+                value=income_value,
                 value_parts=[value_part] if value_part else [],
             )
         else:
-            income_series[(item.year, item.month)].value += item.a_income
+            income_series[(item.year, item.month)].value += income_value
 
             if value_part:
                 income_series[(item.year, item.month)].value_parts.append(value_part)

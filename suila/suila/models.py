@@ -41,7 +41,6 @@ from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from lxml import etree
-from project.util import int_divide_end
 from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
 from weasyprint import HTML
@@ -523,26 +522,23 @@ class PersonYear(PermissionsMixin, models.Model):
             else self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
         )
 
-    @cached_property
-    def u1a_assessments_sum(self) -> Decimal:
-        result = PersonYearU1AAssessment.objects.filter(person_year=self).aggregate(
-            total=Sum("dividend_total")
-        )["total"]
-
-        return result or Decimal("0.00")
-
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):
-            sum += MonthlyIncomeReport.sum_queryset(
-                MonthlyIncomeReport.objects.filter(
-                    person_month__person_year=self, a_income__gt=0
-                )
-            )
+            sum += MonthlyIncomeReport.objects.filter(
+                person_month__person_year=self, a_income__gt=0
+            ).aggregate(sum=Coalesce(Sum(F("a_income")), Decimal(0)))["sum"]
+
         if income_type in (IncomeType.B, None):
             # Annual B income always originates from forskudsopgørelse or
             # slutopgørelse.
             sum += self.b_income or 0
+
+        if income_type in (IncomeType.U, None):
+            sum += MonthlyIncomeReport.objects.filter(
+                person_month__person_year=self, u_income__gt=0
+            ).aggregate(sum=Coalesce(Sum(F("u_income")), Decimal(0)))["sum"]
+
         return sum
 
     @cached_property
@@ -558,10 +554,6 @@ class PersonYear(PermissionsMixin, models.Model):
             return self.person.personyear_set.get(year__year=self.year.year + 1)
         except PersonYear.DoesNotExist:
             return None
-
-    @property
-    def u_income(self) -> Decimal:
-        return self.u1a_assessments_sum or Decimal("0")
 
     @classmethod
     def filter_user_instance_permissions(
@@ -695,10 +687,6 @@ class PersonMonth(PermissionsMixin, models.Model):
     def year_month(self) -> date:
         return date(self.year, self.month, 1)
 
-    @property
-    def u_income_from_year(self) -> int:
-        return int_divide_end(int(self.person_year.u_income), 12)[self.month - 1]
-
     @classmethod
     def filter_user_instance_permissions(
         cls, qs: QuerySet[PersonMonth], user: User, action: str
@@ -709,8 +697,7 @@ class PersonMonth(PermissionsMixin, models.Model):
 
     @property
     def signal(self):
-        # TODO: U income from month, not year
-        return self.has_paid_b_tax or self.amount_sum > 0 or self.u_income_from_year > 0
+        return self.has_paid_b_tax or self.amount_sum > 0
 
     @classmethod
     def signal_qs(cls, qs: QuerySet[PersonMonth]) -> QuerySet[PersonMonth]:
@@ -912,7 +899,7 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
         ).quantize(q)
-        self.u_income = Decimal(self.person_month.u_income_from_year).quantize(q)
+        self.u_income = self.u_income.quantize(q)
 
     @staticmethod
     def annotate_month(
@@ -943,7 +930,9 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
 
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
-        return qs.aggregate(sum=Coalesce(Sum(F("a_income")), Decimal(0)))["sum"]
+        return qs.aggregate(
+            sum=Coalesce(Sum(F("a_income") + F("u_income")), Decimal(0))
+        )["sum"]
 
     @staticmethod
     def pre_save(sender, instance: MonthlyIncomeReport, *args, **kwargs):
