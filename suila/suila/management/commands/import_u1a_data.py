@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import logging
 from collections import defaultdict
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
@@ -28,14 +27,17 @@ from suila.models import (
     Year,
 )
 
-logger = logging.getLogger(__name__)
-
 
 class ImportResult(BaseModel):
     import_year: int
     cprs_handled: int = 0
-    monthly_income_reports_created: int = 0
-    monthly_income_reports_updated: int = 0
+
+    employers_created: List[int] = []
+    person_years_created: List[int] = []
+    person_months_created: List[int] = []
+    person_months_updated: List[int] = []
+    monthly_income_reports_created: List[int] = []
+    monthly_income_reports_updated: List[int] = []
 
 
 class Command(SuilaBaseCommand):
@@ -49,7 +51,7 @@ class Command(SuilaBaseCommand):
 
     def _write_verbose(self, message: str):
         if self._verbose:
-            logger.info(message)
+            self.stdout.write(message)
 
     @transaction.atomic
     def _handle(self, *args, **kwargs):
@@ -75,8 +77,8 @@ class Command(SuilaBaseCommand):
         self._write_verbose("Running AKAP U1A data import:")
         self._write_verbose(f"- Host: {settings.AKAP_HOST}")
         self._write_verbose(f"- year(s): {[y.year for y in years]}")
-        self._write_verbose(f"- CPR: {cpr}\n")
-        self._write_verbose(f"- DataLoad: {data_load.id}\n")
+        self._write_verbose(f"- CPR: {cpr}")
+        self._write_verbose(f"- DataLoad: {data_load.id}\n\n")
 
         # Import data for each year
         results: List[ImportResult] = []
@@ -97,15 +99,35 @@ class Command(SuilaBaseCommand):
         for idx, result in enumerate(results):
             self.stdout.write(f"Year: {result.import_year}")
             self.stdout.write(f"CPRs handled: {result.cprs_handled}")
+
+            self.stdout.write(f"Employers created: {len(result.employers_created)}")
             self.stdout.write(
-                f"MonthlyIncomeReports created: {result.monthly_income_reports_created}"
+                f"PersonYears created: {len(result.person_years_created)}"
+            )
+
+            self.stdout.write(
+                f"PersonMonths created: {len(result.person_months_created)}"
             )
             self.stdout.write(
-                f"MonthlyIncomeReports updated: {result.monthly_income_reports_updated}"
+                f"PersonMonths updated: {len(result.person_months_updated)}"
+            )
+
+            self.stdout.write(
+                (
+                    "MonthlyIncomeReports created: "
+                    f"{len(result.monthly_income_reports_created)}"
+                )
+            )
+            self.stdout.write(
+                (
+                    "MonthlyIncomeReports updated: "
+                    f"{len(result.monthly_income_reports_updated)}"
+                )
             )
 
             if idx < len(results) - 1:
                 self.stdout.write("")
+
         self.stdout.write("------------------------------------------------")
         self.stdout.write("DONE!")
 
@@ -121,7 +143,7 @@ class Command(SuilaBaseCommand):
         u1a_cprs: List[str] = [cpr] if cpr else []
         if len(u1a_cprs) == 0:
             # Get all unique CPRs in that year (from AKAP api)
-            self._write_verbose(f"- No CPR specified, fetching all for year: {year}")
+            self._write_verbose(f"- No CPR(s) specified, fetching all for year: {year}")
             u1a_cprs = get_akap_u1a_items_unique_cprs(
                 settings.AKAP_HOST,  # type: ignore[misc]
                 settings.AKAP_API_SECRET,  # type: ignore[misc]
@@ -129,9 +151,11 @@ class Command(SuilaBaseCommand):
                 fetch_all=True,
             )
 
-            self._write_verbose(f"- Fetched CPRs: {u1a_cprs}")
+            if len(u1a_cprs) > 0:
+                self._write_verbose(f"- Fetched CPRs: {u1a_cprs}")
 
         if len(u1a_cprs) < 1:
+            self.stdout.write("- No CPR numbers found. Stopping import...")
             return result
 
         # Get Person objects for the CPR
@@ -173,11 +197,14 @@ class Command(SuilaBaseCommand):
                 u1a_items_dict[item.u1a.id].append(item)
 
             # Get, or create, PersonYear
-            person_year, _ = PersonYear.objects.get_or_create(
+            person_year, created = PersonYear.objects.get_or_create(
                 person=person,
                 year=year,
                 defaults={"load": data_load},
             )
+
+            if created:
+                result.person_years_created.append(person_year.id)
 
             # Update, or create, MonthlyIncomeReports for each U1A
             for _, u1a_items in u1a_items_dict.items():
@@ -190,7 +217,7 @@ class Command(SuilaBaseCommand):
                     defaults={"load": data_load, "name": u1a.virksomhedsnavn},
                 )
                 if created:
-                    self._write_verbose("\t- Created 1 Employer object")
+                    result.employers_created.append(u1a_employer.id)
 
                 u1a_person_month, created = PersonMonth.objects.get_or_create(
                     person_year=person_year,
@@ -198,7 +225,7 @@ class Command(SuilaBaseCommand):
                     defaults={"load": data_load, "import_date": data_load.timestamp},
                 )
                 if created:
-                    self._write_verbose("\t- Created 1 PersonMonth object(s)")
+                    result.person_months_created.append(u1a_person_month.id)
 
                 # Reset existing MonthlyIncomeReport, with U-income,
                 # and update related PersonMonth.amount_sum
@@ -265,10 +292,13 @@ class Command(SuilaBaseCommand):
 
         # Create & update models with history & in bulk
         reports_to_create_list = list(reports_to_create.values())
-        bulk_create_with_history(
+        created_reports = bulk_create_with_history(
             reports_to_create_list,
             MonthlyIncomeReport,
         )
+        result.monthly_income_reports_created = [
+            report.id for report in created_reports
+        ]
 
         reports_to_update_list = list(reports_to_update.values())
         bulk_update_with_history(
@@ -276,6 +306,9 @@ class Command(SuilaBaseCommand):
             MonthlyIncomeReport,
             [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
         )
+        result.monthly_income_reports_updated = [
+            report.id for report in reports_to_update_list
+        ]
 
         # Final, update PersonMonth.amount_sums
         # NOTE: This can only occur after create/update of MonthlyIncomeReports,
@@ -283,5 +316,8 @@ class Command(SuilaBaseCommand):
         for pm in list(person_months_to_update.values()):
             pm.update_amount_sum()
             pm.save()
+
+            if pm.id not in result.person_months_created:
+                result.person_months_updated.append(pm.id)
 
         return result
