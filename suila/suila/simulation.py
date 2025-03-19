@@ -206,9 +206,11 @@ class Simulation:
         payout_items = []
         for person_year in self.person_years:
             cumulative_payout = Decimal(0)
+            u_result = person_year.amount_sum_by_type(IncomeType.U)
             for month in range(1, 13):
                 b_result = person_year.b_income - person_year.b_expenses
                 a_result = Decimal(0)
+
                 try:
                     person_month = person_year.personmonth_set.get(month=month)
                     payout = person_month.benefit_paid or Decimal(0)
@@ -216,18 +218,18 @@ class Simulation:
                     a_result = (
                         person_month.estimated_year_result or Decimal(0)
                     ) - person_year.catchsale_expenses
-                    estimated_year_result = a_result + b_result
+                    estimated_year_result = a_result + b_result + u_result
                     estimated_year_benefit = person_month.estimated_year_benefit
-
                 except PersonMonth.DoesNotExist:
                     payout = Decimal(0)
-                    estimated_year_result = a_result + b_result
+                    estimated_year_result = a_result + b_result + u_result
                     actual_year_benefit = (
                         person_year.year.calculation_method.calculate_float(
                             estimated_year_result
                         )
                     )
                     estimated_year_benefit = actual_year_benefit
+
                 cumulative_payout += payout
                 payout_items.append(
                     PayoutItem(
