@@ -1692,7 +1692,6 @@ class JobLog(PermissionsMixin, models.Model):
 class EboksMessage(PermissionsMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     sent = models.DateTimeField(null=True)
-    xml = models.BinaryField()
     cpr_cvr = models.CharField(validators=[RegexValidator(r"\d{8,10}")])
     title = models.CharField(max_length=255)
     content_type = models.IntegerField()
@@ -1758,9 +1757,11 @@ class EboksMessage(PermissionsMixin, models.Model):
         self.contents.save(
             content=File(BytesIO(pdf_data), name=name), name=name, save=False
         )
-        self.xml = self.generate_xml(
-            self.cpr_cvr, self.title, self.content_type, pdf_data
-        )
+
+    @cached_property
+    def xml(self):
+        pdf_data = self.contents.read()
+        return self.generate_xml(self.cpr_cvr, self.title, self.content_type, pdf_data)
 
     def send(self, client: EboksClient | None = None) -> None:
         self.sent = timezone.now()
