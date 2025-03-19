@@ -174,7 +174,7 @@ class Command(SuilaBaseCommand):
         if len(persons) < 1:
             return result
 
-        # Go through each person and create & create MonthlyIncomeReports
+        # Go through each person and create/update MonthlyIncomeReports
         reports_to_create = {}
         reports_to_update = {}
         person_months_to_update: Dict[int, PersonMonth] = {}
