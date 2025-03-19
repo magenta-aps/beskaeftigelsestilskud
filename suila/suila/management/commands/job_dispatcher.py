@@ -138,6 +138,14 @@ class Command(BaseCommand):
             verbosity=verbosity,
         )
 
+        # Send eboks messages
+        job_dispatcher.call_job(
+            "eboks_send",
+            year=year,
+            month=month,
+            verbosity=verbosity,
+        )
+
         self._write_verbose("Done")
 
     def _write_verbose(self, msg, **kwargs):

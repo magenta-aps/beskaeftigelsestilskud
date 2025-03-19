@@ -55,6 +55,9 @@ class JobDispatcher:
             # ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [
             #     ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             # ],
+            ManagementCommands.SEND_EBOKS: [
+                ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+            ],
         }
 
     def job_ran_this_month(self, name):
