@@ -277,7 +277,7 @@ class Command(SuilaBaseCommand):
             [f.name for f in MonthlyIncomeReport._meta.fields if not f.primary_key],
         )
 
-        # Final, update PersonMonth.amount_sum's
+        # Final, update PersonMonth.amount_sums
         # NOTE: This can only occur after create/update of MonthlyIncomeReports,
         # since ."update_amount_sum()" uses a MonthlyIncomeReports-queryset.
         for pm in list(person_months_to_update.values()):
