@@ -326,12 +326,7 @@ class Simulation:
     ) -> Dict[tuple, IncomeItem]:
         value_part: Optional[IncomeItemValuePart] = None
 
-        income_value_attr = "a_income"
-        if income_type == IncomeType.B:
-            income_value_attr = "b_income"
-        elif income_type == IncomeType.U:
-            income_value_attr = "u_income"
-
+        income_value_attr = "u_income" if income_type == IncomeType.U else "a_income"
         if not hasattr(item, income_value_attr):
             raise ValueError(
                 f"item does not have income_value_attr: {income_value_attr}"
