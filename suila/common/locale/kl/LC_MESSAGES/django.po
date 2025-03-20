@@ -26,7 +26,7 @@ msgstr "Suila"
 
 #: common/templates/common/_base.html common/templates/common/base.html
 msgid "Forside"
-msgstr "Saaqaa"
+msgstr "Saqqaa"
 
 #: common/templates/common/_base.html
 msgid "Mit overblik"
