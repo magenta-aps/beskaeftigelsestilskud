@@ -1112,62 +1112,62 @@ msgstr "Decembari"
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "January"
-msgstr "januaari"
+msgstr "Januaarip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "February"
-msgstr "februaari"
+msgstr "Februaarip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "March"
-msgstr "marsi"
+msgstr "Marsip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "April"
-msgstr "apriili"
+msgstr "Apriilip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "May"
-msgstr "maaji"
+msgstr "Maajip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "June"
-msgstr "juuni"
+msgstr "Juunip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "July"
-msgstr "juuli"
+msgstr "Juulip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "August"
-msgstr "aggusti"
+msgstr "Aggustip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "September"
-msgstr "septembari"
+msgstr "Septembarip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "October"
-msgstr "oktobari"
+msgstr "Oktobarip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "November"
-msgstr "novembari"
+msgstr "Novembarip"
 
 #: suila/templatetags/date_tags.py
 msgctxt "alt. month"
 msgid "December"
-msgstr "decembari"
+msgstr "Decembarip"
 
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Foreløbigt beløb"
