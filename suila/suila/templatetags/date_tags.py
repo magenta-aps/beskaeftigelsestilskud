@@ -6,11 +6,28 @@ from datetime import date
 
 from django.template.defaultfilters import register
 from django.utils import dates
+from django.utils.translation import gettext_lazy as _
 
 from suila.dates import get_payment_date as _get_payment_date
 from suila.models import PersonMonth
 
 logger = logging.getLogger(__name__)
+
+# Include the English month names in the Suila source code to make them available for
+# translating into Greenlandic (`django.utils.dates.MONTHS` uses the English names as
+# source texts.)
+_("January")
+_("February")
+_("March")
+_("April")
+_("May")
+_("June")
+_("July")
+_("August")
+_("September")
+_("October")
+_("November")
+_("December")
 
 
 @register.filter

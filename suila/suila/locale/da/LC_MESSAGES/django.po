@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-18 07:35-0200\n"
+"POT-Creation-Date: 2025-03-20 08:01-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -832,6 +832,54 @@ msgstr ""
 #, python-format
 msgid "%(amount)s kr."
 msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "January"
+msgstr "Januar"
+
+#: suila/templatetags/date_tags.py
+msgid "February"
+msgstr "Februar"
+
+#: suila/templatetags/date_tags.py
+msgid "March"
+msgstr "Marts"
+
+#: suila/templatetags/date_tags.py
+msgid "April"
+msgstr "April"
+
+#: suila/templatetags/date_tags.py
+msgid "May"
+msgstr "Maj"
+
+#: suila/templatetags/date_tags.py
+msgid "June"
+msgstr "Juni"
+
+#: suila/templatetags/date_tags.py
+msgid "July"
+msgstr "Juli"
+
+#: suila/templatetags/date_tags.py
+msgid "August"
+msgstr "August"
+
+#: suila/templatetags/date_tags.py
+msgid "September"
+msgstr "September"
+
+#: suila/templatetags/date_tags.py
+msgid "October"
+msgstr "Oktober"
+
+#: suila/templatetags/date_tags.py
+msgid "November"
+msgstr "November"
+
+#: suila/templatetags/date_tags.py
+msgid "December"
+msgstr "December"
 
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Foreløbigt beløb"
