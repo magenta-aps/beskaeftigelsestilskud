@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 10:05-0200\n"
+"POT-Creation-Date: 2025-03-20 10:46-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -967,6 +967,21 @@ msgstr ""
 "Iluanaarutisiat, ingerlatseqatigiiffiit inatsit malillugit "
 "nalunaaruteqareernerisa kingorna naliginnaasumik ullut 15-it aamma 30-it "
 "missaanni qaangiukkaangata takuneqarsinnaalertarput."
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Pension"
+msgstr "Soraarnerussutisiassat"
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Arbejdsgiverindbetalt pension vises ikke på listen over signaler. Beløbet "
+"indgår i beregningen af Suila-tapit. <a href=\"https://suila.gl\">Suila.gl</"
+"a> vil vise dette på et senere tidspunkt."
+msgstr ""
+"Sulisitsisuit soraarnerussutisiaqalernissannut katersannut "
+"tapiissutigisartagai Suila-tapisinissannut immikkut nalunaarnertut "
+"allaqqaneq ajorput, isertitannut ilaammata. <a href=\"https://suila."
+"gl\">Suila.gl-imi</a> kingusinerusukkut takuneqarsinnaalerumaarput."
 
 #: suila/templates/suila/person_detail_notes.html
 msgid "Tilføj notat"

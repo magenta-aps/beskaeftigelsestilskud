@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 10:05-0200\n"
+"POT-Creation-Date: 2025-03-20 10:46-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -773,6 +773,17 @@ msgstr ""
 msgid ""
 "Oplysninger om udbytte kan som regel ses 15-30 dage efter at selskabet har "
 "indsendt den lovpligtige udbytteblanket."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Pension"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Arbejdsgiverindbetalt pension vises ikke på listen over signaler. Beløbet "
+"indgår i beregningen af Suila-tapit. <a href=\"https://suila.gl\">Suila.gl</"
+"a> vil vise dette på et senere tidspunkt."
 msgstr ""
 
 #: suila/templates/suila/person_detail_notes.html
