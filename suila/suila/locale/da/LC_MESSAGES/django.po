@@ -29,6 +29,13 @@ msgid "Kilde"
 msgstr ""
 
 #: suila/forms.py
+#, python-format
+msgid ""
+"Marker en gyldig valgmulighed. %(value)s er ikke en af de tilgængelige "
+"valgmuligheder"
+msgstr ""
+
+#: suila/forms.py
 msgid "Alle"
 msgstr ""
 

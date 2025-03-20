@@ -29,6 +29,16 @@ msgid "Kilde"
 msgstr "Paasissutissanik pissarsiffik"
 
 #: suila/forms.py
+#, python-format
+msgid ""
+"Marker en gyldig valgmulighed. %(value)s er ikke en af de tilgængelige "
+"valgmuligheder"
+msgstr ""
+"Paasissutissanik pissarsiffissatut allassimasat %(value)s "
+"allattorsimaffianni ilaanngilaq. Paasissutissanik pissarsiffigisimasat "
+"iluamik allassimaviuk?"
+
+#: suila/forms.py
 msgid "Alle"
 msgstr "Tamaasa"
 
