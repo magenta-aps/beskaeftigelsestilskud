@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 11:14-0200\n"
+"POT-Creation-Date: 2025-03-20 12:49-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 
 #: suila/forms.py
 msgid "Estimeret månedsindkomst"
-msgstr "Ukiut isertitat"
+msgstr "Qaammammut isertitariumaagassatut naatsorsuutigisat"
 
 #: suila/forms.py
 msgid "Estimeret årsindkomst"
@@ -206,13 +206,23 @@ msgstr "Suila-tapinik naatsorsuivik"
 msgid ""
 "Indtast din forventede månedsløn eller din forventede årsindkomst for at få "
 "en vejledende beregning på, hvor meget Suila-tapit du kan få udbetalt "
-"månedligt og årligt. Husk at arbejdsgiverbetalt pension også regnes med til "
-"din indkomst."
+"månedligt og årligt."
 msgstr ""
 "Qaammammut ukiumullu Suila-tapinik qanoq amerlatigisunik pisinnaanerlutit "
 "takuniarlugu qammammut ukiumulluunniit isertitariumaagassatut "
-"naatsorsuutigisatit allakkit. Eqqaamajuk utoqqalinersiassatit suliffinnit "
-"tapiissuutigineqartartut ilanngutissagakkit."
+"naatsorsuutigisatit allakkit."
+
+#: suila/templates/suila/calculate.html
+msgid "Husk arbejdsgiverbetalt pension."
+msgstr ""
+"Eqqaamajuk utoqqalinersiassatit sulisitsisunnit tapiissuutigineqartartut "
+"ilanngutissagakkit."
+
+#: suila/templates/suila/calculate.html
+msgid "Arbejdsgiverbetalt pension regnes også med til din indkomst."
+msgstr ""
+"Utoqqalinersiaqalernissannut sulisitsisunnit tapiissutigineqartartut "
+"isertitatunnut ilaapput."
 
 #: suila/templates/suila/calculate.html
 msgid ""
