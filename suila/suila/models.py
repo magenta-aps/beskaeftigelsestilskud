@@ -1865,7 +1865,7 @@ class SuilaEboksMessage(EboksMessage):
     type_map = {
         "opgørelse": {
             "content_type": settings.EBOKS["content_type_id"],  # type: ignore
-            "title": "Årsopgørelse",
+            "title": "Suila-tapit udbetaling for {month}",
             "template_folder": "suila/eboks/opgørelse",
             "templates": {
                 "kl": get_template("suila/eboks/opgørelse/kl.html"),
@@ -1874,7 +1874,7 @@ class SuilaEboksMessage(EboksMessage):
         },
         "afventer": {
             "content_type": settings.EBOKS["content_type_id"],  # type: ignore
-            "title": "Årsopgørelse",
+            "title": "Suila-tapit udbetaling for {month}",
             "template_folder": "suila/eboks/afventer",
             "templates": {
                 "kl": get_template("suila/eboks/afventer/kl.html"),
@@ -2050,7 +2050,8 @@ class SuilaEboksMessage(EboksMessage):
         return data.read()
 
     def update_fields(self, force_update=False):
-        self.title = self.attrs["title"]
+        month_name = self.month_names["da"][self.month - 1]
+        self.title = self.attrs["title"].format(month=month_name)
         self.content_type = self.attrs["content_type"]
         self.cpr_cvr = self.person_month.person.cpr
         if not self.contents or force_update:

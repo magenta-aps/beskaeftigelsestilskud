@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
+from itertools import batched
 
 from django.conf import settings
 
@@ -58,16 +59,18 @@ class Command(SuilaBaseCommand):
             except PersonMonth.DoesNotExist:
                 pass
 
-        with ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(handle_person_year, personyear)
-                for personyear in qs.iterator()
-            ]
-
-            for i, future in enumerate(as_completed(futures)):
-                suilamessage = future.result()
-                if suilamessage:
-                    if send:
-                        suilamessage.send(client)
-                    suilamessage.update_welcome_letter()
-                print(i)
+        i = 0
+        for batch in batched(qs.iterator(), 100):
+            with ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(handle_person_year, personyear)
+                    for personyear in batch
+                ]
+                for future in as_completed(futures):
+                    suilamessage = future.result()
+                    if suilamessage:
+                        if send:
+                            suilamessage.send(client)
+                        suilamessage.update_welcome_letter()
+                    i += 1
+                    print(i)
