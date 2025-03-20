@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-14 11:48-0200\n"
+"POT-Creation-Date: 2025-03-20 11:43-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,6 +15,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: common/fields.py
+msgid "Dette felt er påkrævet"
+msgstr ""
+
+#: common/fields.py
+msgid "Har du indtastet et korrekt CPR-nr.?"
+msgstr "CPR-normu ujakkat eqqortumik allassimava?"
 
 #: common/templates/403.html
 msgid "Du har ikke adgang til at se denne side"
