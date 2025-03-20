@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 12:49-0200\n"
+"POT-Creation-Date: 2025-03-20 13:04-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -213,16 +213,13 @@ msgstr ""
 "naatsorsuutigisatit allakkit."
 
 #: suila/templates/suila/calculate.html
-msgid "Husk arbejdsgiverbetalt pension."
+msgid ""
+"Husk arbejdsgiverbetalt pension. Arbejdsgiverbetalt pension regnes også med "
+"til din indkomst."
 msgstr ""
 "Eqqaamajuk utoqqalinersiassatit sulisitsisunnit tapiissuutigineqartartut "
-"ilanngutissagakkit."
-
-#: suila/templates/suila/calculate.html
-msgid "Arbejdsgiverbetalt pension regnes også med til din indkomst."
-msgstr ""
-"Utoqqalinersiaqalernissannut sulisitsisunnit tapiissutigineqartartut "
-"isertitatunnut ilaapput."
+"ilanngutissagakkit. Utoqqalinersiaqalernissannut sulisitsisunnit "
+"tapiissutigineqartartut isertitatunnut ilaapput."
 
 #: suila/templates/suila/calculate.html
 msgid ""
@@ -578,7 +575,7 @@ msgstr ""
 
 #: suila/templates/suila/graph.html
 msgid "Kan du ikke se dine tal?"
-msgstr ""
+msgstr "Suila-tapisiassatit takusinnaanngiligit?"
 
 #: suila/templates/suila/graph.html
 msgid ""
@@ -596,6 +593,15 @@ msgstr ""
 "killigitinneqarmata. Tassunga taarsiullugu ukioq 2025-mi qaammatini "
 "januarimiit novemberip tungaanut tapisiassatit ukioq 2026-mi januarimi "
 "tunniunneqarumaarput."
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke "
+"modtage Suila-tapit, og dine tal vises derfor ikke på grafen."
+msgstr ""
+"Isertitavit 70.000 koruunit ataappagit 500.000 koruunilluunniit qaangerpagit "
+"Suila-tapisisassanngilatit. Taammammat titartakkami Suila-tapisiassarnik "
+"ersitsoqanngilaq."
 
 #: suila/templates/suila/person_detail.html
 msgid ""

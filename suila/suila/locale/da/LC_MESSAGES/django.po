@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 12:49-0200\n"
+"POT-Creation-Date: 2025-03-20 13:04-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -199,11 +199,9 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/calculate.html
-msgid "Husk arbejdsgiverbetalt pension."
-msgstr ""
-
-#: suila/templates/suila/calculate.html
-msgid "Arbejdsgiverbetalt pension regnes også med til din indkomst."
+msgid ""
+"Husk arbejdsgiverbetalt pension. Arbejdsgiverbetalt pension regnes også med "
+"til din indkomst."
 msgstr ""
 
 #: suila/templates/suila/calculate.html
@@ -482,6 +480,12 @@ msgid ""
 "tæt på den øvre grænse på 500.000 kr. for at være berettiget til Suila-"
 "tapit. Du modtager i stedet én samlet udbetaling for månederne januar 2025 "
 "til november 2025 i januar 2026."
+msgstr ""
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke "
+"modtage Suila-tapit, og dine tal vises derfor ikke på grafen."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
