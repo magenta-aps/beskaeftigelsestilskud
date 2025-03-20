@@ -22,6 +22,10 @@ RUN mkdir /app && \
     chown -R suila:suila /upload && \
     chmod a+w /var/cache/suila
 
+# Font cache for pdf generation
+RUN mkdir -p /home/suila/.cache/fontconfig && \
+    chown -R suila /home/suila/.cache/fontconfig
+
 # supercronic
 RUN curl -fsSLO "$SUPERCRONIC_URL" && \
     echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - && \
