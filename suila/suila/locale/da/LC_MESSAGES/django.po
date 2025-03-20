@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 10:46-0200\n"
+"POT-Creation-Date: 2025-03-20 11:14-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -233,6 +233,10 @@ msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs"
+msgstr ""
+
+#: suila/templates/suila/eboks/base.html
+msgid "e-Boks-besked"
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -578,7 +582,7 @@ msgid "Årsopgørelse"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Eboks-beskeder preview"
+msgid "e-Boks-beskeder preview"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -662,7 +666,13 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html
-msgid "Eboks-beskeder"
+msgid "e-Boks-beskeder"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid ""
+"Her ser du en liste med de e-Boks-beskeder, vi kan sende til borgeren. Dette "
+"er for at vi kan verificere at de ser korrekte ud."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
@@ -691,7 +701,7 @@ msgstr ""
 #: suila/templates/suila/person_detail_eboks_send.html
 msgid ""
 "Herunder vises den årsopgørelse som kan sendes til borgeren. Tryk på knappen "
-"\"Send\" for at afsende årsopgørelsen med E-boks."
+"\"Send\" for at afsende årsopgørelsen med e-Boks."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -703,7 +713,7 @@ msgid "Bekræftelse"
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
-msgid "Er du sikker på at du vil afsende eboks-beskeden?"
+msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html

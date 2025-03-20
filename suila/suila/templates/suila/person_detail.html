@@ -116,19 +116,17 @@
         {% jumbo_link person_income_url _("Mine signaler - få information om beregningsgrundlaget for dit Suila-tapit") "assignment" %}
     </div>
     {% endif %}
-
     {% if user|has_permissions:"suila.view_eboksmessage" and user|has_permissions:"suila.create_eboksmessage" %}
-        <div class="g-col-4 jumbo">
-            {% url "suila:person_detail_eboks_send" pk=person.pk as person_eboks_url %}
-            {% jumbo_link person_eboks_url _("Årsopgørelse") "assignment" %}
-        </div>
+    <div class="g-col-4 jumbo">
+        {% url "suila:person_detail_eboks_send" pk=person.pk as person_eboks_url %}
+        {% jumbo_link person_eboks_url _("Årsopgørelse") "assignment" %}
+    </div>
     {% endif %}
-
     {% if user|has_permissions:"suila.view_eboksmessage" %}
-        <div class="g-col-4 jumbo">
-            {% url "suila:person_detail_eboks_preview" pk=person.pk as person_eboks_preview_url %}
-            {% jumbo_link person_eboks_preview_url _("Eboks-beskeder preview") "assignment" %}
-        </div>
+    <div class="g-col-4 jumbo">
+        {% url "suila:person_detail_eboks_preview" pk=person.pk as person_eboks_preview_url %}
+        {% jumbo_link person_eboks_preview_url _("e-Boks-beskeder preview") "assignment" %}
+    </div>
     {% endif %}
 </div>
 
