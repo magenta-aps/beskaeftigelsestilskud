@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: MPL-2.0
 import logging
 import re
+from csv import DictReader
 from datetime import date
 from decimal import Decimal
+from io import BytesIO, TextIOWrapper
 from unittest.mock import ANY, Mock, patch
 
 from django.conf import settings
@@ -322,7 +324,7 @@ class TestBatchExport(TestCase):
             # Act
             export.export_batches(stdout, verbosity=1)
 
-        self.assertEqual(stdout.write.call_count, 2)
+        self.assertEqual(stdout.write.call_count, 3)
 
     def test_export_batches_verbosity_2(self):
         # Arrange
@@ -333,7 +335,7 @@ class TestBatchExport(TestCase):
             # Act
             export.export_batches(stdout, verbosity=2)
 
-        self.assertEqual(stdout.write.call_count, 7)
+        self.assertEqual(stdout.write.call_count, 8)
 
     def test_export_batches_normal(self):
         """Given non-exported `PersonMonth` objects for this year and month, this method
@@ -419,6 +421,36 @@ class TestBatchExport(TestCase):
                 [call.args[0] for call in stdout.write.call_args_list],
             )
 
+    def test_export_batches_uploads_csv_report(self):
+        # Arrange
+        self._add_person_month(3101000000, Decimal("1000"))
+        export = self._get_instance()
+        stdout = Mock()
+        with patch(
+            "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
+        ) as mock_put:
+            # Act
+            export.export_batches(stdout, verbosity=2)
+            # Assert: final call to `put_file_in_prisme_folder` is the CSV report
+            last_call = mock_put.call_args_list[-1]
+            self.assertEqual(last_call.args[3], "SUILA_kontrolliste_2025_01.csv")
+            # Arrange: get CSV output
+            output = export.get_control_list(TextIOWrapper(BytesIO()))
+            # Act
+            output = export.get_control_list(output)
+            # Assert
+            rows: list[dict] = list(DictReader(output, delimiter=";"))
+            self.assertListEqual(
+                rows,
+                [
+                    {
+                        "filnavn": "SUILA_G68_export_31_2025_01.g68",
+                        "cpr": "3101000000",
+                        "beløb": "1000.00",
+                    }
+                ],
+            )
+
     def _assert_prisme_batch_items_state(
         self,
         export: BatchExport,
@@ -453,7 +485,7 @@ class TestBatchExport(TestCase):
                 (call.args[2], call.args[3])
                 for call in mock_put_file_in_prisme_folder.call_args_list
             ],
-            file_paths,
+            file_paths + [("kontrolliste", "SUILA_kontrolliste_2025_01.csv")],
         )
         # Assert: all `PersonMonth` objects are now exported (= have a corresponding
         # `PrismeBatchItem` object.) Thus, the batch export will not "see" them

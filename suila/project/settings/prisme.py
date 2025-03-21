@@ -19,4 +19,5 @@ PRISME = {
     "g68g69_export_mod11_folder": os.environ["PRISME_G68G69_EXPORT_MOD11_FOLDER"],
     "posting_status_folder": os.environ["PRISME_POSTING_STATUS_FOLDER"],
     "b_tax_folder": os.environ["PRISME_B_TAX_FOLDER"],
+    "control_folder": os.environ["PRISME_CONTROL_FOLDER"],
 }
