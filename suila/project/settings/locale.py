@@ -30,3 +30,5 @@ USE_L10N = True
 USE_TZ = True
 THOUSAND_SEPARATOR = "."
 DECIMAL_SEPARATOR = ","
+
+FORMAT_MODULE_PATH = ["suila.formats"]

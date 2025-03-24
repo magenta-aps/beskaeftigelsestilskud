@@ -73,7 +73,7 @@ msgstr ""
 
 #: login/templates/login/login_repeat.html
 msgid "Det anvendte login er allerede anvendt. Prøv at logge ind igen."
-msgstr ""
+msgstr "Isissutissaq atorneqareerpoq. Misileqqiguk."
 
 #: login/templates/login/login_repeat.html
 #: login/templates/login/login_timeout.html
