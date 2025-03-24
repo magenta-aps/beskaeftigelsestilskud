@@ -13,14 +13,17 @@
         <li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
     {% endif %}
     <li class="breadcrumb-item"><a href="{% url 'suila:person_detail' pk=person.pk %}">{% translate "Mit overblik" %}</a></li>
-    <li class="breadcrumb-item">{% translate "Eboks-beskeder" %}</li>
+    <li class="breadcrumb-item">{% translate "e-Boks-beskeder" %}</li>
 {% endblock %}
 
 {% block person_data %}
     <div class="col-12">
-        <h2 class="mb-3">{% translate "Eboks-beskeder" %}</h2>
+        <h2 class="mb-3">{% translate "e-Boks-beskeder" %}</h2>
         <p>
-            Her ser du en liste med de eboks-beskeder, vi kan sende til borgeren. Dette er for at vi kan verificere at de ser korrekte ud
+            {% blocktrans trimmed %}
+            Her ser du en liste med de e-Boks-beskeder, vi kan sende til borgeren.
+            Dette er for at vi kan verificere at de ser korrekte ud.
+            {% endblocktrans %}
         </p>
         <ul class="detail-table nav">
             {% for person_year in available_person_years %}
@@ -72,4 +75,3 @@
         </div>
     </div>
 {% endblock %}
-

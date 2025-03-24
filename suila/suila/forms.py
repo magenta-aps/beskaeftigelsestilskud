@@ -110,7 +110,16 @@ class CalculatorForm(Form):
 
 
 class IncomeSignalFilterForm(Form):
-    source = ChoiceField(label=_("Kilde"), required=False)
+    source = ChoiceField(
+        label=_("Kilde"),
+        error_messages={
+            "invalid_choice": _(
+                "Marker en gyldig valgmulighed. %(value)s er ikke en af de "
+                "tilgængelige valgmuligheder",
+            ),
+        },
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         signals = kwargs.pop("signals", [])

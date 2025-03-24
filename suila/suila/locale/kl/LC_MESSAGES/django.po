@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-18 07:35-0200\n"
+"POT-Creation-Date: 2025-03-20 13:04-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 
 #: suila/forms.py
 msgid "Estimeret månedsindkomst"
-msgstr "Ukiut isertitat"
+msgstr "Qaammammut isertitariumaagassatut naatsorsuutigisat"
 
 #: suila/forms.py
 msgid "Estimeret årsindkomst"
@@ -27,6 +27,16 @@ msgstr "Ukiumut isertitariumaagassatut naatsorsuutigisat"
 #: suila/forms.py suila/views.py
 msgid "Kilde"
 msgstr "Paasissutissanik pissarsiffik"
+
+#: suila/forms.py
+#, python-format
+msgid ""
+"Marker en gyldig valgmulighed. %(value)s er ikke en af de tilgængelige "
+"valgmuligheder"
+msgstr ""
+"Paasissutissanik pissarsiffissatut allassimasat %(value)s "
+"allattorsimaffianni ilaanngilaq. Paasissutissanik pissarsiffigisimasat "
+"iluamik allassimaviuk?"
 
 #: suila/forms.py
 msgid "Alle"
@@ -196,13 +206,20 @@ msgstr "Suila-tapinik naatsorsuivik"
 msgid ""
 "Indtast din forventede månedsløn eller din forventede årsindkomst for at få "
 "en vejledende beregning på, hvor meget Suila-tapit du kan få udbetalt "
-"månedligt og årligt. Husk at arbejdsgiverbetalt pension også regnes med til "
-"din indkomst."
+"månedligt og årligt."
 msgstr ""
 "Qaammammut ukiumullu Suila-tapinik qanoq amerlatigisunik pisinnaanerlutit "
 "takuniarlugu qammammut ukiumulluunniit isertitariumaagassatut "
-"naatsorsuutigisatit allakkit. Eqqaamajuk utoqqalinersiassatit suliffinnit "
-"tapiissuutigineqartartut ilanngutissagakkit."
+"naatsorsuutigisatit allakkit."
+
+#: suila/templates/suila/calculate.html
+msgid ""
+"Husk arbejdsgiverbetalt pension. Arbejdsgiverbetalt pension regnes også med "
+"til din indkomst."
+msgstr ""
+"Eqqaamajuk utoqqalinersiassatit sulisitsisunnit tapiissuutigineqartartut "
+"ilanngutissagakkit. Utoqqalinersiaqalernissannut sulisitsisunnit "
+"tapiissutigineqartartut isertitatunnut ilaapput."
 
 #: suila/templates/suila/calculate.html
 msgid ""
@@ -242,6 +259,10 @@ msgstr "Ukiumut Suila-tapisiassat naatsorsorneqarsimasut:"
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs"
+msgstr ""
+
+#: suila/templates/suila/eboks/base.html
+msgid "e-Boks-besked"
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -554,7 +575,7 @@ msgstr ""
 
 #: suila/templates/suila/graph.html
 msgid "Kan du ikke se dine tal?"
-msgstr ""
+msgstr "Suila-tapisiassatit takusinnaanngiligit?"
 
 #: suila/templates/suila/graph.html
 msgid ""
@@ -572,6 +593,15 @@ msgstr ""
 "killigitinneqarmata. Tassunga taarsiullugu ukioq 2025-mi qaammatini "
 "januarimiit novemberip tungaanut tapisiassatit ukioq 2026-mi januarimi "
 "tunniunneqarumaarput."
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke "
+"modtage Suila-tapit, og dine tal vises derfor ikke på grafen."
+msgstr ""
+"Isertitavit 70.000 koruunit ataappagit 500.000 koruunilluunniit qaangerpagit "
+"Suila-tapisisassanngilatit. Taammammat titartakkami Suila-tapisiassarnik "
+"ersitsoqanngilaq."
 
 #: suila/templates/suila/person_detail.html
 msgid ""
@@ -703,10 +733,10 @@ msgstr ""
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_send.html
 msgid "Årsopgørelse"
-msgstr ""
+msgstr "Ukiumoortumik naatsorsuineq"
 
 #: suila/templates/suila/person_detail.html
-msgid "Eboks-beskeder preview"
+msgid "e-Boks-beskeder preview"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -821,8 +851,14 @@ msgstr ""
 "naatsorsuutit ilinnut nassiunneqarput."
 
 #: suila/templates/suila/person_detail_eboks_preview.html
-msgid "Eboks-beskeder"
-msgstr ""
+msgid "e-Boks-beskeder"
+msgstr "e-Boksimukartut"
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid ""
+"Her ser du en liste med de e-Boks-beskeder, vi kan sende til borgeren. Dette "
+"er for at vi kan verificere at de ser korrekte ud."
+msgstr "Uani e-Boksimut nassiunneqartussat eqqortuunersut takusinnaavatit."
 
 #: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
 msgid "Måned"
@@ -830,15 +866,15 @@ msgstr "Qaammat"
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid "Type: opgørelse"
-msgstr ""
+msgstr "Suussusaa: Naatsorsuineq"
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid "Type: afventer"
-msgstr ""
+msgstr "Suussusaa: Utaqqisinneqartoq"
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid "Åbn"
-msgstr ""
+msgstr "Ammasoq"
 
 #: suila/templates/suila/person_detail_eboks_send.html
 #, python-format
@@ -850,7 +886,7 @@ msgstr ""
 #: suila/templates/suila/person_detail_eboks_send.html
 msgid ""
 "Herunder vises den årsopgørelse som kan sendes til borgeren. Tryk på knappen "
-"\"Send\" for at afsende årsopgørelsen med E-boks."
+"\"Send\" for at afsende årsopgørelsen med e-Boks."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -862,7 +898,7 @@ msgid "Bekræftelse"
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
-msgid "Er du sikker på at du vil afsende eboks-beskeden?"
+msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -968,6 +1004,21 @@ msgstr ""
 "nalunaaruteqareernerisa kingorna naliginnaasumik ullut 15-it aamma 30-it "
 "missaanni qaangiukkaangata takuneqarsinnaalertarput."
 
+#: suila/templates/suila/person_detail_income.html
+msgid "Pension"
+msgstr "Soraarnerussutisiassat"
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Arbejdsgiverindbetalt pension vises ikke på listen over signaler. Beløbet "
+"indgår i beregningen af Suila-tapit. <a href=\"https://suila.gl\">Suila.gl</"
+"a> vil vise dette på et senere tidspunkt."
+msgstr ""
+"Sulisitsisuit soraarnerussutisiaqalernissannut katersannut "
+"tapiissutigisartagai Suila-tapisinissannut immikkut nalunaarnertut "
+"allaqqaneq ajorput, isertitannut ilaammata. <a href=\"https://suila."
+"gl\">Suila.gl-imi</a> kingusinerusukkut takuneqarsinnaalerumaarput."
+
 #: suila/templates/suila/person_detail_notes.html
 msgid "Tilføj notat"
 msgstr "Nalunaarsukkamik ilanngussigit"
@@ -1025,6 +1076,114 @@ msgstr "-"
 #, python-format
 msgid "%(amount)s kr."
 msgstr "%(amount)s koruunit"
+
+#: suila/templatetags/date_tags.py
+msgid "January"
+msgstr "Januaari"
+
+#: suila/templatetags/date_tags.py
+msgid "February"
+msgstr "Februaari"
+
+#: suila/templatetags/date_tags.py
+msgid "March"
+msgstr "Marsi"
+
+#: suila/templatetags/date_tags.py
+msgid "April"
+msgstr "Apriili"
+
+#: suila/templatetags/date_tags.py
+msgid "May"
+msgstr "Maaji"
+
+#: suila/templatetags/date_tags.py
+msgid "June"
+msgstr "Juuni"
+
+#: suila/templatetags/date_tags.py
+msgid "July"
+msgstr "Juuli"
+
+#: suila/templatetags/date_tags.py
+msgid "August"
+msgstr "Aggusti"
+
+#: suila/templatetags/date_tags.py
+msgid "September"
+msgstr "Septembari"
+
+#: suila/templatetags/date_tags.py
+msgid "October"
+msgstr "Oktobari"
+
+#: suila/templatetags/date_tags.py
+msgid "November"
+msgstr "Novembari"
+
+#: suila/templatetags/date_tags.py
+msgid "December"
+msgstr "Decembari"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "January"
+msgstr "Januaarip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "February"
+msgstr "Februaarip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "March"
+msgstr "Marsip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "April"
+msgstr "Apriilip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "May"
+msgstr "Maajip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "June"
+msgstr "Juunip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "July"
+msgstr "Juulip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "August"
+msgstr "Aggustip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "September"
+msgstr "Septembarip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "October"
+msgstr "Oktobarip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "November"
+msgstr "Novembarip"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "December"
+msgstr "Decembarip"
 
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Foreløbigt beløb"

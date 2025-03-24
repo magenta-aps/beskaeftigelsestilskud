@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-18 07:35-0200\n"
+"POT-Creation-Date: 2025-03-20 13:04-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,6 +26,13 @@ msgstr ""
 
 #: suila/forms.py suila/views.py
 msgid "Kilde"
+msgstr ""
+
+#: suila/forms.py
+#, python-format
+msgid ""
+"Marker en gyldig valgmulighed. %(value)s er ikke en af de tilgængelige "
+"valgmuligheder"
 msgstr ""
 
 #: suila/forms.py
@@ -188,8 +195,13 @@ msgstr ""
 msgid ""
 "Indtast din forventede månedsløn eller din forventede årsindkomst for at få "
 "en vejledende beregning på, hvor meget Suila-tapit du kan få udbetalt "
-"månedligt og årligt. Husk at arbejdsgiverbetalt pension også regnes med til "
-"din indkomst."
+"månedligt og årligt."
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+msgid ""
+"Husk arbejdsgiverbetalt pension. Arbejdsgiverbetalt pension regnes også med "
+"til din indkomst."
 msgstr ""
 
 #: suila/templates/suila/calculate.html
@@ -226,6 +238,10 @@ msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs"
+msgstr ""
+
+#: suila/templates/suila/eboks/base.html
+msgid "e-Boks-besked"
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -466,6 +482,12 @@ msgid ""
 "til november 2025 i januar 2026."
 msgstr ""
 
+#: suila/templates/suila/graph.html
+msgid ""
+"Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke "
+"modtage Suila-tapit, og dine tal vises derfor ikke på grafen."
+msgstr ""
+
 #: suila/templates/suila/person_detail.html
 msgid ""
 "\"Mit overblik\" er dit overblik over kommende og tidligere udbetalinger af "
@@ -571,7 +593,7 @@ msgid "Årsopgørelse"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Eboks-beskeder preview"
+msgid "e-Boks-beskeder preview"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -655,7 +677,13 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html
-msgid "Eboks-beskeder"
+msgid "e-Boks-beskeder"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid ""
+"Her ser du en liste med de e-Boks-beskeder, vi kan sende til borgeren. Dette "
+"er for at vi kan verificere at de ser korrekte ud."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
@@ -684,7 +712,7 @@ msgstr ""
 #: suila/templates/suila/person_detail_eboks_send.html
 msgid ""
 "Herunder vises den årsopgørelse som kan sendes til borgeren. Tryk på knappen "
-"\"Send\" for at afsende årsopgørelsen med E-boks."
+"\"Send\" for at afsende årsopgørelsen med e-Boks."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -696,7 +724,7 @@ msgid "Bekræftelse"
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
-msgid "Er du sikker på at du vil afsende eboks-beskeden?"
+msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -775,6 +803,17 @@ msgid ""
 "indsendt den lovpligtige udbytteblanket."
 msgstr ""
 
+#: suila/templates/suila/person_detail_income.html
+msgid "Pension"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Arbejdsgiverindbetalt pension vises ikke på listen over signaler. Beløbet "
+"indgår i beregningen af Suila-tapit. <a href=\"https://suila.gl\">Suila.gl</"
+"a> vil vise dette på et senere tidspunkt."
+msgstr ""
+
 #: suila/templates/suila/person_detail_notes.html
 msgid "Tilføj notat"
 msgstr ""
@@ -832,6 +871,114 @@ msgstr ""
 #, python-format
 msgid "%(amount)s kr."
 msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "January"
+msgstr "Januar"
+
+#: suila/templatetags/date_tags.py
+msgid "February"
+msgstr "Februar"
+
+#: suila/templatetags/date_tags.py
+msgid "March"
+msgstr "Marts"
+
+#: suila/templatetags/date_tags.py
+msgid "April"
+msgstr "April"
+
+#: suila/templatetags/date_tags.py
+msgid "May"
+msgstr "Maj"
+
+#: suila/templatetags/date_tags.py
+msgid "June"
+msgstr "Juni"
+
+#: suila/templatetags/date_tags.py
+msgid "July"
+msgstr "Juli"
+
+#: suila/templatetags/date_tags.py
+msgid "August"
+msgstr "August"
+
+#: suila/templatetags/date_tags.py
+msgid "September"
+msgstr "September"
+
+#: suila/templatetags/date_tags.py
+msgid "October"
+msgstr "Oktober"
+
+#: suila/templatetags/date_tags.py
+msgid "November"
+msgstr "November"
+
+#: suila/templatetags/date_tags.py
+msgid "December"
+msgstr "December"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "January"
+msgstr "januar"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "February"
+msgstr "februar"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "March"
+msgstr "marts"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "April"
+msgstr "april"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "May"
+msgstr "maj"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "June"
+msgstr "juni"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "July"
+msgstr "juli"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "August"
+msgstr "august"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "September"
+msgstr "september"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "October"
+msgstr "oktober"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "November"
+msgstr "november"
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "December"
+msgstr "december"
 
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Foreløbigt beløb"
