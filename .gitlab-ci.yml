@@ -180,6 +180,7 @@ Lint REUSE compliance:
     PRISME_G68G69_EXPORT_MOD11_FOLDER: g68g69_mod11_cpr
     PRISME_POSTING_STATUS_FOLDER: posting_status
     PRISME_B_TAX_FOLDER: btax
+    PRISME_CONTROL_FOLDER: kontrolliste
     BYPASS_2FA: 'True'
     EBOKS_CLIENT_CERT: /ssl/eboks/client.crt
     EBOKS_CLIENT_KEY: /ssl/eboks/client.key
