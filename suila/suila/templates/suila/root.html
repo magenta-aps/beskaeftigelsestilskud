@@ -44,6 +44,7 @@ Velkommen {{ name }}
 </div>
 
 {% if user|has_permissions:"suila.view_person,suila.view_personyear" %}
+
 {# Borgerservice links #}
 <div class="grid gap-5 mt-5">
     <div class="g-col-6 jumbo">
@@ -65,37 +66,63 @@ Velkommen {{ name }}
         {% jumbo_link calculator_url _("Suila-tapit-beregneren") "calculate" %}
     </div>
 </div>
+
 {% else %}
+
 {# Borger links #}
-<div class="grid gap-5 mt-5">
-    <div class="g-col-6 jumbo">
-        {% url "suila:person_detail" pk=person.pk as person_detail_url %}
-        {% jumbo_link person_detail_url _("Mit overblik") "person" %}
+    {% if has_personyears %}
+
+    <div class="grid gap-5 mt-5">
+        <div class="g-col-6 jumbo">
+            {% url "suila:person_detail" pk=person.pk as person_detail_url %}
+            {% jumbo_link person_detail_url _("Mit overblik") "person" %}
+        </div>
+        <div class="g-col-6 jumbo">
+            {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
+            {% jumbo_link person_income_url _("Mine signaler") "assignment" %}
+        </div>
     </div>
-    <div class="g-col-6 jumbo">
-        {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-        {% jumbo_link person_income_url _("Mine signaler") "assignment" %}
+    <div class="grid gap-5 mt-5">
+        <div class="g-col-6 jumbo">
+            {% url "suila:person_graph" pk=person.pk as person_graph_url %}
+            {% jumbo_link person_graph_url _("Mit estimerede Suila-tapit") "link" %}
+        </div>
+        <div class="g-col-6 jumbo">
+            {% url "suila:faq" as faq_url %}
+            {% jumbo_link faq_url _("Jeg har ikke modtaget Suila-tapit") "help" %}
+        </div>
     </div>
-</div>
-<div class="grid gap-5 mt-5">
-    <div class="g-col-6 jumbo">
-        {% url "suila:person_graph" pk=person.pk as person_graph_url %}
-        {% jumbo_link person_graph_url _("Mit estimerede Suila-tapit") "link" %}
+    <div class="grid gap-5 mt-5">
+        <div class="g-col-6 jumbo">
+            {% url "suila:calculator" as calculator_url %}
+            {% jumbo_link calculator_url _("Suila-tapit-beregneren") "calculate" %}
+        </div>
+        <div class="g-col-6 jumbo">
+            {% url "suila:about" as about_url %}
+            {% jumbo_link about_url _("Hvad er Suila-tapit?") "info" %}
+        </div>
     </div>
-    <div class="g-col-6 jumbo">
-        {% url "suila:faq" as faq_url %}
-        {% jumbo_link faq_url _("Jeg har ikke modtaget Suila-tapit") "help" %}
+
+    {% else %}
+
+    <div class="grid gap-5 mt-5">
+        <div class="g-col-6 jumbo">
+            {% url "suila:faq" as faq_url %}
+            {% jumbo_link faq_url _("Jeg har ikke modtaget Suila-tapit") "help" %}
+        </div>
+        <div class="g-col-6 jumbo">
+            {% url "suila:calculator" as calculator_url %}
+            {% jumbo_link calculator_url _("Suila-tapit-beregneren") "calculate" %}
+        </div>
     </div>
-</div>
-<div class="grid gap-5 mt-5">
-    <div class="g-col-6 jumbo">
-        {% url "suila:calculator" as calculator_url %}
-        {% jumbo_link calculator_url _("Suila-tapit-beregneren") "calculate" %}
+    <div class="grid gap-5 mt-5">
+        <div class="g-col-6 jumbo">
+            {% url "suila:about" as about_url %}
+            {% jumbo_link about_url _("Hvad er Suila-tapit?") "info" %}
+        </div>
     </div>
-    <div class="g-col-6 jumbo">
-        {% url "suila:about" as about_url %}
-        {% jumbo_link about_url _("Hvad er Suila-tapit?") "info" %}
-    </div>
-</div>
+    {% endif %}
+
 {% endif %}
+
 {% endblock %}

@@ -1,0 +1,44 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "suila/person_detail_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load suila_permissions %}
+
+{% block title %}
+    <h1>
+        {% if user|has_permissions:"suila.view_person" %}
+            {% blocktrans trimmed %}
+                Denne person har ikke nogen data
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans trimmed %}
+                Du har ikke en profil på Suila.gl
+            {% endblocktrans %}
+        {% endif %}
+    </h1>
+{% endblock %}
+
+{% block content %}
+    <div class="row mt-5">
+        {% if user|has_permissions:"suila.view_person" %}
+            <div class="col-12">
+                <p>
+                {% blocktrans trimmed %}
+                Der findes ingen indkomstdata for denne person
+                {% endblocktrans %}
+                </p>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <p>
+                {% blocktrans trimmed %}
+                    Noget tekst her
+                {% endblocktrans %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

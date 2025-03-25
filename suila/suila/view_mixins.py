@@ -1,12 +1,13 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from functools import cached_property
 from typing import Iterable, List, Optional
 
 from common.models import User
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 
 from suila.model_mixins import PermissionsMixin
 
@@ -46,3 +47,20 @@ class PermissionsRequiredMixin:
         if required_permissions is None:
             required_permissions = cls.required_model_permissions
         return PermissionsMixin.has_model_permissions(user, required_permissions)
+
+
+class MustHavePersonYearMixin:
+
+    @cached_property
+    def must_show_no_year_message(self):
+        return not self.get_object().personyear_set.exists()
+
+    def get_template_names(self):
+        if self.must_show_no_year_message:
+            return ["suila/person_no_year.html"]
+        return super().get_template_names()
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        if self.must_show_no_year_message:
+            return self.render_to_response({})
+        return super().get(request, *args, **kwargs)

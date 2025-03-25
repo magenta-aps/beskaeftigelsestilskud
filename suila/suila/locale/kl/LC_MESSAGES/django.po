@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 13:04-0200\n"
+"POT-Creation-Date: 2025-03-25 13:14-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1038,6 +1038,22 @@ msgstr "Nalunaarut"
 #: suila/templates/suila/person_detail_notes.html
 msgid "Filer"
 msgstr "Filit"
+
+#: suila/templates/suila/person_no_year.html
+msgid "Denne person har ikke nogen data"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "Du har ikke en profil på Suila.gl"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "Der findes ingen indkomstdata for denne person"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "Noget tekst her"
+msgstr ""
 
 #: suila/templates/suila/person_search.html
 msgid "Liste over borgere"

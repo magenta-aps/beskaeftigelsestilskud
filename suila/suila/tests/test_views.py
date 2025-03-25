@@ -443,6 +443,22 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         self.assertEqual(len(itemviews), 1)
         self.assertEqual(itemviews[0].item, self.person1)
 
+    def test_no_personyears(self):
+        view, response = self.request_get(
+            self.admin_user,
+            f"/persons/{self.person2.pk}/?year=2020",
+            pk=self.person2.pk,
+        )
+        self.assertEqual(view.get_template_names(), ["suila/person_no_year.html"])
+
+        self.person1.personyear_set.all().delete()
+        view, response = self.request_get(
+            self.normal_user,
+            f"/persons/{self.person1.pk}/?year=2020",
+            pk=self.person1.pk,
+        )
+        self.assertEqual(view.get_template_names(), ["suila/person_no_year.html"])
+
 
 class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     maxDiff = None

@@ -53,7 +53,7 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_authenticated and user.cpr is not None %}
+                {% if user.is_authenticated and user.cpr is not None and has_personyears %}
                 <li class="nav-item ms-4">
                     <a href="{% url 'suila:person_detail' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail' %}active{% endif %}">
                         <span class="material-icons">person</span>
@@ -62,7 +62,7 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_authenticated and user.cpr is not None %}
+                {% if user.is_authenticated and user.cpr is not None and has_personyears %}
                 <li class="nav-item ms-4">
                     <a href="{% url 'suila:person_detail_income' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail_income' %}active{% endif %}">
                         <span class="material-icons">assignment</span>
@@ -80,7 +80,7 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_authenticated and user.cpr is not None %}
+                {% if user.is_authenticated and user.cpr is not None and has_personyears %}
                 <li class="nav-item ms-4">
                     <a href="{% url 'suila:person_graph' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_graph' %}active{% endif %}">
                         <span class="material-icons">link</span>

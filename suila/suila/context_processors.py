@@ -29,7 +29,10 @@ def person_context(request):
             cpr=request.user.cpr,
             defaults={"name": f"{request.user.first_name} {request.user.last_name}"},
         )
-        return {"person": person}
+        return {
+            "person": person,
+            "has_personyears": person.personyear_set.exists(),
+        }
     return {}
 
 
