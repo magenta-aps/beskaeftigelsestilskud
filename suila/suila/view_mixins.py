@@ -53,14 +53,14 @@ class MustHavePersonYearMixin:
 
     @cached_property
     def must_show_no_year_message(self):
-        return not self.get_object().personyear_set.exists()
+        return not self.get_object().personyear_set.exists()  # type: ignore
 
     def get_template_names(self):
         if self.must_show_no_year_message:
             return ["suila/person_no_year.html"]
-        return super().get_template_names()
+        return super().get_template_names()  # type: ignore
 
     def get(self, request, *args, **kwargs) -> HttpResponse:
         if self.must_show_no_year_message:
-            return self.render_to_response({})
-        return super().get(request, *args, **kwargs)
+            return self.render_to_response({})  # type: ignore
+        return super().get(request, *args, **kwargs)  # type: ignore
