@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-25 13:14-0200\n"
+"POT-Creation-Date: 2025-03-25 15:59-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -847,7 +847,44 @@ msgid "Der findes ingen indkomstdata for denne person"
 msgstr ""
 
 #: suila/templates/suila/person_no_year.html
-msgid "Noget tekst her"
+msgid ""
+"Du er logget ind på Suila.gl med MitID, men du har ikke en profil tilknyttet "
+"dit CPR-nr. De mest sandsynlige årsager til, at du ikke har en profil er, at:"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid ""
+"Du ikke har indkomst i Grønland eller at du ikke er fuldt skattepligtig til "
+"Grønland. Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til "
+"Grønland."
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid ""
+"Suila endnu ikke har modtaget dine indkomstinformationer. Hvis du netop er "
+"begyndt at arbejde i Grønland, kan der gå en kortere periode, før du får en "
+"profil på Suila.gl."
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "Her kan du finde mere information om Suila-tapit:"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "På <a href=\"https://sullissivik.gl\">Sullissivik.gl</a>"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "Hos Skattestyrelsen"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "Suila-tapit på Facebook"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid ""
+"Du kan kontakte Borgerservice hos Skattestyrelsen, hvis du har spørgsmål."
 msgstr ""
 
 #: suila/templates/suila/person_search.html

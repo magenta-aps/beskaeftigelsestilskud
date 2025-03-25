@@ -9,13 +9,13 @@
 {% block title %}
     <h1>
         {% if user|has_permissions:"suila.view_person" %}
-            {% blocktrans trimmed %}
+            {% blocktranslate trimmed %}
                 Denne person har ikke nogen data
-            {% endblocktrans %}
+            {% endblocktranslate %}
         {% else %}
-            {% blocktrans trimmed %}
+            {% blocktranslate trimmed %}
                 Du har ikke en profil på Suila.gl
-            {% endblocktrans %}
+            {% endblocktranslate %}
         {% endif %}
     </h1>
 {% endblock %}
@@ -25,17 +25,38 @@
         {% if user|has_permissions:"suila.view_person" %}
             <div class="col-12">
                 <p>
-                {% blocktrans trimmed %}
+                {% blocktranslate trimmed %}
                 Der findes ingen indkomstdata for denne person
-                {% endblocktrans %}
+                {% endblocktranslate %}
                 </p>
             </div>
         {% else %}
             <div class="col-12">
                 <p>
-                {% blocktrans trimmed %}
-                    Noget tekst her
-                {% endblocktrans %}
+                    {% blocktranslate trimmed %}
+                        Du er logget ind på Suila.gl med MitID, men du har ikke en profil tilknyttet dit CPR-nr. De mest sandsynlige årsager til, at du ikke har en profil er, at:
+                    {% endblocktranslate %}
+                    <ul>
+                        <li>{% blocktranslate trimmed %}Du ikke har indkomst i Grønland eller at du ikke er fuldt skattepligtig til Grønland. Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til Grønland.{% endblocktranslate %}</li>
+                        <li>{% blocktranslate trimmed %}Suila endnu ikke har modtaget dine indkomstinformationer. Hvis du netop er begyndt at arbejde i Grønland, kan der gå en kortere periode, før du får en profil på Suila.gl.{% endblocktranslate %}</li>
+                    </ul>
+                </p>
+
+                <p>
+                    {% blocktranslate trimmed %}
+                    Her kan du finde mere information om Suila-tapit:
+                    {% endblocktranslate %}
+                    <ul>
+                        <li>{% blocktranslate trimmed %}På <a href="https://sullissivik.gl">Sullissivik.gl</a>{% endblocktranslate %}</li>
+                        <li>{% blocktranslate trimmed %}Hos Skattestyrelsen{% endblocktranslate %}</li>
+                        <li>{% blocktranslate trimmed %}Suila-tapit på Facebook{% endblocktranslate %}</li>
+                    </ul>
+                </p>
+
+                <p>
+                    {% blocktranslate trimmed %}
+                    Du kan kontakte Borgerservice hos Skattestyrelsen, hvis du har spørgsmål.
+                    {% endblocktranslate %}
                 </p>
             </div>
         {% endif %}
