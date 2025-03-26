@@ -296,7 +296,11 @@ class Command(SuilaBaseCommand):
                     )
                 )
 
-                field_values: Dict[str, Any] = {"u_income": u1a.udbytte}
+                field_values: Dict[str, Any] = {
+                    "u_income": sum(
+                        (u1a_item.udbytte for u1a_item in u1a_items), Decimal("0")
+                    )
+                }
                 key = (
                     person.cpr,
                     person_year.year.year,
