@@ -4,7 +4,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from io import StringIO
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 from django.conf import settings
 from django.core.management import call_command
@@ -37,8 +37,13 @@ class TestImportU1ADataCommand(TestCase):
         cls.year, _ = Year.objects.get_or_create(year=2025)
 
         cls.person1 = Person.objects.create(
-            name="Jens Hansen-1",
+            name="Jens Hansen",
             cpr="1234567890",
+        )
+
+        cls.person2 = Person.objects.create(
+            name="Hans Jensen",
+            cpr="1234567892",
         )
 
         cls.u1a_1 = AKAPU1A(
@@ -56,6 +61,24 @@ class TestImportU1ADataCommand(TestCase):
             dato_vedtagelse=datetime.now().date() + timedelta(days=1),
             underskriftsberettiget="Test Berettiget",
             oprettet=datetime.now() - timedelta(days=7),
+            oprettet_af_cpr=cls.person1.cpr,
+        )
+
+        cls.u1a_2 = AKAPU1A(
+            id=2,
+            navn="Test U1A 2",
+            revisionsfirma="Test Reivisions Firma",
+            virksomhedsnavn="Test virksomhed2",
+            cvr="22345678",
+            email="test2@example.com",
+            regnskabsår=cls.year.year,
+            u1_udfyldt=False,
+            udbytte=Decimal("2337.0"),
+            by="Aarhus",
+            dato=datetime.now().date(),
+            dato_vedtagelse=datetime.now().date() + timedelta(days=1),
+            underskriftsberettiget="Test Berettiget",
+            oprettet=datetime.now() - timedelta(days=5),
             oprettet_af_cpr=cls.person1.cpr,
         )
 
@@ -97,7 +120,7 @@ class TestImportU1ADataCommand(TestCase):
             AKAPU1AItem(
                 id=1,
                 u1a=self.u1a_1,
-                cpr_cvr_tin="1234567891",
+                cpr_cvr_tin=self.person1.cpr,
                 navn="Test Person",
                 adresse="Testvej 1337",
                 postnummer="8000",
@@ -253,7 +276,7 @@ class TestImportU1ADataCommand(TestCase):
             AKAPU1AItem(
                 id=1,
                 u1a=self.u1a_1,
-                cpr_cvr_tin="1234567891",
+                cpr_cvr_tin=self.person1.cpr,
                 navn="Test Person",
                 adresse="Testvej 1337",
                 postnummer="8000",
@@ -319,4 +342,147 @@ class TestImportU1ADataCommand(TestCase):
                 "municipality_name": None,
                 "prior_benefit_paid": None,
             },
+        )
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_u1a_items_multiple_people(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        mock_get_akap_u1a_items_unique_cprs.return_value = [
+            self.person1.cpr,
+            self.person2.cpr,
+        ]
+
+        def _mock_get_akap_u1a_items(*args, **kwargs):
+            if kwargs["cpr"] == self.person1.cpr:
+                return [
+                    AKAPU1AItem(
+                        id=1,
+                        u1a=self.u1a_2,
+                        cpr_cvr_tin=self.person1.cpr,
+                        navn="Test Person",
+                        adresse="Testvej 1337",
+                        postnummer="8000",
+                        by="Aarhus",
+                        land="Danmark",
+                        udbytte=Decimal("1337.00"),
+                        oprettet=datetime.now(),
+                    ),
+                ]
+
+            if kwargs["cpr"] == self.person2.cpr:
+                return [
+                    AKAPU1AItem(
+                        id=2,
+                        u1a=self.u1a_2,
+                        cpr_cvr_tin=self.person2.cpr,
+                        navn="Test Person2",
+                        adresse="Testvej 1338",
+                        postnummer="8000",
+                        by="Aarhus",
+                        land="Danmark",
+                        udbytte=Decimal("1000.00"),
+                        oprettet=datetime.now(),
+                    ),
+                ]
+
+            return []
+
+        mock_get_akap_u1a_items.side_effect = _mock_get_akap_u1a_items
+
+        # Invoke
+        call_command(self.command)
+
+        # Assert fetch mocking methods was called
+        mock_get_akap_u1a_items_unique_cprs.assert_called_once_with(
+            settings.AKAP_HOST, settings.AKAP_API_SECRET, self.year.year, fetch_all=True
+        )
+
+        mock_get_akap_u1a_items.assert_has_calls(
+            [
+                call(
+                    settings.AKAP_HOST,
+                    settings.AKAP_API_SECRET,
+                    year=self.year.year,
+                    cpr=self.person1.cpr,
+                    fetch_all=True,
+                ),
+                call(
+                    settings.AKAP_HOST,
+                    settings.AKAP_API_SECRET,
+                    year=self.year.year,
+                    cpr=self.person2.cpr,
+                    fetch_all=True,
+                ),
+            ]
+        )
+
+        # Assert MonthlyIncomeReport's
+        monthly_income_reports = MonthlyIncomeReport.objects.filter(
+            u_income__gt=Decimal(0),
+        )
+
+        employer = Employer.objects.get(cvr=self.u1a_2.cvr)
+        person1_year = PersonYear.objects.get(person=self.person1, year=self.year)
+        person1_month = PersonMonth.objects.get(
+            person_year=person1_year, month=self.u1a_1.dato_vedtagelse.month
+        )
+        person2_year = PersonYear.objects.get(person=self.person2, year=self.year)
+        person2_month = PersonMonth.objects.get(
+            person_year=person2_year, month=self.u1a_1.dato_vedtagelse.month
+        )
+
+        self.assertEqual(
+            [model_to_dict(model) for model in monthly_income_reports],
+            [
+                {
+                    "id": ANY,
+                    "load": ANY,
+                    "employer": employer.id,
+                    "month": self.u1a_1.dato_vedtagelse.month,
+                    "person_month": person1_month.id,
+                    "year": self.year.year,
+                    "a_income": Decimal("0.00"),
+                    "alimony_income": Decimal("0.00"),
+                    "capital_income": Decimal("0.00"),
+                    "catchsale_income": Decimal("0.00"),
+                    "civil_servant_pension_income": Decimal("0.00"),
+                    "dis_gis_income": Decimal("0.00"),
+                    "disability_pension_income": Decimal("0.00"),
+                    "employer_paid_gl_pension_income": Decimal("0.00"),
+                    "foreign_pension_income": Decimal("0.00"),
+                    "ignored_benefits_income": Decimal("0.00"),
+                    "other_pension_income": Decimal("0.00"),
+                    "public_assistance_income": Decimal("0.00"),
+                    "retirement_pension_income": Decimal("0.00"),
+                    "salary_income": Decimal("0.00"),
+                    "u_income": Decimal("1337.00"),
+                },
+                {
+                    "id": ANY,
+                    "load": ANY,
+                    "employer": employer.id,
+                    "month": self.u1a_1.dato_vedtagelse.month,
+                    "person_month": person2_month.id,
+                    "year": self.year.year,
+                    "a_income": Decimal("0.00"),
+                    "alimony_income": Decimal("0.00"),
+                    "capital_income": Decimal("0.00"),
+                    "catchsale_income": Decimal("0.00"),
+                    "civil_servant_pension_income": Decimal("0.00"),
+                    "dis_gis_income": Decimal("0.00"),
+                    "disability_pension_income": Decimal("0.00"),
+                    "employer_paid_gl_pension_income": Decimal("0.00"),
+                    "foreign_pension_income": Decimal("0.00"),
+                    "ignored_benefits_income": Decimal("0.00"),
+                    "other_pension_income": Decimal("0.00"),
+                    "public_assistance_income": Decimal("0.00"),
+                    "retirement_pension_income": Decimal("0.00"),
+                    "salary_income": Decimal("0.00"),
+                    "u_income": Decimal("1000.00"),
+                },
+            ],
         )
