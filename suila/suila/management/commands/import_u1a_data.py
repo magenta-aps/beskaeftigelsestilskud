@@ -30,7 +30,8 @@ from suila.models import (
 
 class ImportResult(BaseModel):
     import_year: int
-    cprs_handled: int = 0
+    cprs_handled: List[str] = []
+    cprs_skipped: List[str] = []
 
     employers_created: List[int] = []
     person_years_created: List[int] = []
@@ -98,7 +99,12 @@ class Command(SuilaBaseCommand):
         self.stdout.write("-------------------- REPORT --------------------")
         for idx, result in enumerate(results):
             self.stdout.write(f"Year: {result.import_year}")
-            self.stdout.write(f"CPRs handled: {result.cprs_handled}")
+            self.stdout.write(
+                (
+                    "CPRs handled/skipped: "
+                    f"{len(result.cprs_handled)}/{len(result.cprs_skipped)}"
+                )
+            )
 
             self.stdout.write(f"Employers created: {len(result.employers_created)}")
             self.stdout.write(
@@ -136,13 +142,12 @@ class Command(SuilaBaseCommand):
         data_load: DataLoad,
         year: Year,
         cpr: Optional[str] = None,
-        verbose: Optional[bool] = None,
     ) -> ImportResult:
         result = ImportResult(import_year=year.year)
 
         u1a_cprs: List[str] = [cpr] if cpr else []
         if len(u1a_cprs) == 0:
-            # Get all unique CPRs in that year (from AKAP api)
+            # Get all unique CPRs in that year from AKAP
             self._write_verbose(f"- No CPR(s) specified, fetching all for year: {year}")
             u1a_cprs = get_akap_u1a_items_unique_cprs(
                 settings.AKAP_HOST,  # type: ignore[misc]
@@ -155,23 +160,29 @@ class Command(SuilaBaseCommand):
                 self._write_verbose(f"- Fetched CPRs: {u1a_cprs}")
 
         if len(u1a_cprs) < 1:
-            self.stdout.write("- No CPR numbers found. Stopping import...")
+            self.stdout.write("- No CPR numbers found.")
+            self.stdout.write("Stopping import!")
             return result
 
         # Get Person objects for the CPR
         self._write_verbose(f"- Fetching persons from CPRs: {u1a_cprs}")
-        persons: List[Person] = []
-        for u1a_cpr in u1a_cprs:
-            try:
-                person = Person.objects.get(cpr=u1a_cpr)
-                persons.append(person)
-            except Person.DoesNotExist:
-                self.stdout.write(
-                    f"WARNING: Could not find Person with CPR: {u1a_cpr}, skipping!"
-                )
-                continue
+        persons_qs = Person.objects.filter(cpr__in=u1a_cprs)
+        persons_map = {p.cpr: p for p in persons_qs}
 
-        if len(persons) < 1:
+        persons: List[Person] = []
+        for cpr in u1a_cprs:
+            person = persons_map.get(cpr)
+            if person:
+                persons.append(person)
+            else:
+                result.cprs_skipped.append(cpr)
+                self.stdout.write(
+                    f"- WARNING: Could not find Person with CPR: {cpr}, skipping!"
+                )
+
+        if not persons:
+            self.stdout.write("- Unable to find Persons from CPR(s).")
+            self.stdout.write("Stopping import!")
             return result
 
         # Go through each person and create/update MonthlyIncomeReports
@@ -180,10 +191,9 @@ class Command(SuilaBaseCommand):
         person_months_to_update: Dict[int, PersonMonth] = {}
 
         for person in persons:
-            self._write_verbose(
-                f"- Fetching U1A items for person: {person} ({person.cpr})"
+            self.stdout.write(
+                f"- Fetching AKAP U1A data for person: {person} ({person.cpr})..."
             )
-
             person_akap_u1a_items = get_akap_u1a_items(
                 settings.AKAP_HOST,  # type: ignore[misc]
                 settings.AKAP_API_SECRET,  # type: ignore[misc]
@@ -191,12 +201,21 @@ class Command(SuilaBaseCommand):
                 cpr=person.cpr,
                 fetch_all=True,
             )
+            self._write_verbose(f"\t- Fetched U1A-items: {len(person_akap_u1a_items)}")
+
+            if len(person_akap_u1a_items) < 1:
+                self._write_verbose(
+                    f"\t- Person, {person}, does not have any U1AItems.. Skipping!"
+                )
+                result.cprs_skipped.append(person.cpr)
+                continue
 
             u1a_items_dict: Dict[int, List[AKAPU1AItem]] = defaultdict(list)
             for item in person_akap_u1a_items:
                 u1a_items_dict[item.u1a.id].append(item)
 
             # Get, or create, PersonYear
+            self._write_verbose(f"\t- Fetching/creating PersonYear: {year}")
             person_year, created = PersonYear.objects.get_or_create(
                 person=person,
                 year=year,
@@ -211,7 +230,15 @@ class Command(SuilaBaseCommand):
                 u1a = u1a_items[0].u1a
                 u1a_month = u1a.dato_vedtagelse.month
 
+                self.stdout.write(f"\t- Handling data for U1A: {u1a}...")
+
                 # Get U1A Employer & PersonMonth (or create them)
+                self._write_verbose(
+                    (
+                        "\t\t- Fetching/creating Employer: "
+                        f"{u1a.virksomhedsnavn} ({u1a.cvr})"
+                    )
+                )
                 u1a_employer, created = Employer.objects.get_or_create(
                     cvr=u1a.cvr,
                     defaults={"load": data_load, "name": u1a.virksomhedsnavn},
@@ -219,6 +246,12 @@ class Command(SuilaBaseCommand):
                 if created:
                     result.employers_created.append(u1a_employer.id)
 
+                self._write_verbose(
+                    (
+                        "\t\t- Fetching/creating PersonMonth: "
+                        f"{person_year.year.year}/{u1a_month}"
+                    )
+                )
                 u1a_person_month, created = PersonMonth.objects.get_or_create(
                     person_year=person_year,
                     month=u1a_month,
@@ -229,6 +262,12 @@ class Command(SuilaBaseCommand):
 
                 # Reset existing MonthlyIncomeReport, with U-income,
                 # and update related PersonMonth.amount_sum
+                self._write_verbose(
+                    (
+                        "\t\t- Resetting MonthlyIncomeReports with u_income for "
+                        f"PersonMonth: {u1a_person_month} ({u1a_employer})"
+                    )
+                )
                 existing_u1a_reports = MonthlyIncomeReport.objects.filter(
                     employer=u1a_employer,
                     person_month=u1a_person_month,
@@ -238,16 +277,25 @@ class Command(SuilaBaseCommand):
                 if len(existing_u1a_reports) > 0:
                     for existing_report in existing_u1a_reports:
                         existing_report.u_income = Decimal("0.00")
+                        existing_report.update_amount()
                         existing_report.save()
 
                     self._write_verbose(
                         (
-                            f"\t- Removed U-income from {len(existing_u1a_reports)} "
-                            "existing MonthlyIncomeReport(s)"
+                            "\t\t\t- Removed U-income from "
+                            f"{len(existing_u1a_reports)} existing "
+                            "MonthlyIncomeReport(s)"
                         )
                     )
 
                 # Add U-income to MonthlyIncomeReport (or create it)
+                self.stdout.write(
+                    (
+                        "\t\t- Updating MonthlyIncomeReports for PersonMonth: "
+                        f"{u1a_person_month} ({u1a_employer})..."
+                    )
+                )
+
                 field_values: Dict[str, Any] = {"u_income": u1a.udbytte}
                 key = (
                     person.cpr,
@@ -255,6 +303,7 @@ class Command(SuilaBaseCommand):
                     u1a_person_month.month,
                     u1a.cvr,
                 )
+                self._write_verbose(f"\t\t\t- MonthlyIncomeReport key: {key}")
 
                 try:
                     report = MonthlyIncomeReport.objects.get(
@@ -270,6 +319,9 @@ class Command(SuilaBaseCommand):
                     )
                     report.update_amount()
                     reports_to_create[key] = report
+                    self._write_verbose(
+                        f"\t\t\t- CREATED MonthlyIncomeReport: {report}"
+                    )
                 else:
                     # An existing monthly income report exists
                     # for this person month and employer - update it.
@@ -282,13 +334,18 @@ class Command(SuilaBaseCommand):
                     if changed:
                         report.update_amount()
                         reports_to_update[key] = report
+                        self._write_verbose(
+                            f"\t\t\t- UPDATED MonthlyIncomeReport: {report}"
+                        )
 
                 # Lastly, set the related PersonMonth model to be updated
                 # NOTE: This will occur after MonthlyIncomeReports have been created,
                 # or updated.
                 person_months_to_update[u1a_person_month.id] = u1a_person_month
 
-            result.cprs_handled += 1
+            result.cprs_handled.append(person.cpr)
+
+        self.stdout.write("- Comitting database changes...")
 
         # Create & update models with history & in bulk
         reports_to_create_list = list(reports_to_create.values())
@@ -299,6 +356,12 @@ class Command(SuilaBaseCommand):
         result.monthly_income_reports_created = [
             report.id for report in created_reports
         ]
+        self._write_verbose(
+            (
+                "\t- (Database) MonthlyIncomeReport created: "
+                f"{len(result.monthly_income_reports_created)}"
+            )
+        )
 
         reports_to_update_list = list(reports_to_update.values())
         bulk_update_with_history(
@@ -309,10 +372,23 @@ class Command(SuilaBaseCommand):
         result.monthly_income_reports_updated = [
             report.id for report in reports_to_update_list
         ]
+        self._write_verbose(
+            (
+                "\t- (Database) MonthlyIncomeReport updated: "
+                f"{len(result.monthly_income_reports_updated)}"
+            )
+        )
 
         # Final, update PersonMonth.amount_sums
         # NOTE: This can only occur after create/update of MonthlyIncomeReports,
         # since ."update_amount_sum()" uses a MonthlyIncomeReports-queryset.
+        self.stdout.write(
+            (
+                "- Updating existing PersonMonths, "
+                f"{len(person_months_to_update.keys())}, after MonthlyIncomeReport "
+                "changes..."
+            )
+        )
         for pm in list(person_months_to_update.values()):
             pm.update_amount_sum()
             pm.save()
