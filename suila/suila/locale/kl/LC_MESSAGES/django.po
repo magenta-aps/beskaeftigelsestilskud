@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-25 15:59-0200\n"
+"POT-Creation-Date: 2025-03-26 05:47-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1076,15 +1076,18 @@ msgid "Her kan du finde mere information om Suila-tapit:"
 msgstr ""
 
 #: suila/templates/suila/person_no_year.html
-msgid "På <a href=\"https://sullissivik.gl\">Sullissivik.gl</a>"
+#, python-format
+msgid "På <a href=\"%(link)s\">Sullissivik.gl</a>"
 msgstr ""
 
 #: suila/templates/suila/person_no_year.html
-msgid "Hos Skattestyrelsen"
+#, python-format
+msgid "Hos <a href=\"%(link)s\">Skattestyrelsen</a>"
 msgstr ""
 
 #: suila/templates/suila/person_no_year.html
-msgid "Suila-tapit på Facebook"
+#, python-format
+msgid "<a href=\"%(link)s\">Suila-tapit på Facebook</a>"
 msgstr ""
 
 #: suila/templates/suila/person_no_year.html

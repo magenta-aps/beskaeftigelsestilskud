@@ -105,6 +105,10 @@ Velkommen {{ name }}
 
     {% else %}
 
+    <div class="col-12">
+    {% include "suila/person_no_year_text.html" %}
+    </div>
+
     <div class="grid gap-5 mt-5">
         <div class="g-col-6 jumbo">
             {% url "suila:faq" as faq_url %}
