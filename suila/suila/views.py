@@ -63,7 +63,7 @@ from suila.models import (
     WorkingTaxCreditCalculationMethod,
     Year,
 )
-from suila.view_mixins import PermissionsRequiredMixin
+from suila.view_mixins import MustHavePersonYearMixin, PermissionsRequiredMixin
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +199,7 @@ class PersonDetailView(
     PersonYearMonthMixin,
     SingleTableMixin,
     ViewLogMixin,
+    MustHavePersonYearMixin,
     DetailView,
 ):
     model = Person
@@ -368,6 +369,7 @@ class PersonDetailIncomeView(
     PermissionsRequiredMixin,
     PersonYearMonthMixin,
     ViewLogMixin,
+    MustHavePersonYearMixin,
     DetailView,
 ):
     model = Person
@@ -535,7 +537,9 @@ class PersonDetailEboksPreView(
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_eboks_preview.html"
-    required_object_permissions = ["view"]
+    required_model_permissions = [
+        "suila.view_person",
+    ]
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -562,7 +566,9 @@ class PersonDetailEboksSendView(
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_eboks_send.html"
-    required_object_permissions = ["view"]
+    required_model_permissions = [
+        "suila.add_eboksmessage",
+    ]
     form_class = ConfirmationForm
 
     def get_success_url(self):
@@ -649,7 +655,9 @@ class GraphViewMixin(ContextMixin):
         return json.dumps(data, cls=SuilaJSONEncoder)
 
 
-class GraphView(YearMonthMixin, ViewLogMixin, GraphViewMixin, TemplateView):
+class GraphView(
+    YearMonthMixin, ViewLogMixin, GraphViewMixin, MustHavePersonYearMixin, TemplateView
+):
     template_name = "suila/graph.html"
 
 
@@ -659,6 +667,7 @@ class PersonGraphView(
     PersonYearMonthMixin,
     ViewLogMixin,
     GraphViewMixin,
+    MustHavePersonYearMixin,
     DetailView,
 ):
     template_name = "suila/graph.html"
@@ -842,6 +851,7 @@ class PersonDetailNotesView(
     FormWithFormsetView,
     PermissionsRequiredMixin,
     ViewLogMixin,
+    MustHavePersonYearMixin,
     DetailView,
 ):
 
@@ -850,7 +860,9 @@ class PersonDetailNotesView(
     template_name = "suila/person_detail_notes.html"
     form_class = NoteForm
     formset_class = NoteAttachmentFormSet
-    required_object_permissions = ["view"]
+    required_model_permissions = [
+        "suila.view_note",
+    ]
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -894,7 +906,11 @@ class PersonDetailNotesView(
 
 
 class PersonDetailNotesAttachmentView(
-    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, BaseDetailView
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    MustHavePersonYearMixin,
+    BaseDetailView,
 ):
 
     model = NoteAttachment
