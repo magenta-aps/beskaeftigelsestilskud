@@ -385,7 +385,7 @@ class Person(PermissionsMixin, models.Model):
 
     def __str__(self):
         return (
-            f"{self.name} ({self.cpr})"
+            f"{self.name} / {self.cpr}"
             if self.name and self.cpr
             else str(self.name or self.cpr)
         )
@@ -930,7 +930,7 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
         return qs.annotate(f_person=F("person_month__person_year__person"))
 
     def __str__(self):
-        return f"MonthlyIncomeReport {self.id} ({self.person_month} / {self.employer})"
+        return f"MonthlyIncomeReport for {self.person_month} ({self.employer})"
 
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
