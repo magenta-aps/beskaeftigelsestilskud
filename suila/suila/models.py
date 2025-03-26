@@ -384,7 +384,11 @@ class Person(PermissionsMixin, models.Model):
     )
 
     def __str__(self):
-        return str(self.name or self.cpr)
+        return (
+            f"{self.name} ({self.cpr})"
+            if self.name and self.cpr
+            else str(self.name or self.cpr)
+        )
 
     @property
     def last_year(self) -> PersonYear:
@@ -681,7 +685,7 @@ class PersonMonth(PermissionsMixin, models.Model):
         )
 
     def __str__(self):
-        return f"{self.person} ({self.year}/{self.month})"
+        return f"{self.year}/{self.month} ({self.person})"
 
     @property
     def year_month(self) -> date:
@@ -741,7 +745,7 @@ class Employer(PermissionsMixin, models.Model):
     load = models.ForeignKey(DataLoad, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f"{self.name} ({self.cvr})"
+        return f"{self.name} ({self.cvr})" if self.name else f"Employer {self.cvr}"
 
 
 class MonthlyIncomeReport(PermissionsMixin, models.Model):
@@ -926,7 +930,7 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
         return qs.annotate(f_person=F("person_month__person_year__person"))
 
     def __str__(self):
-        return f"Indkomst for {self.person_month}"
+        return f"MonthlyIncomeReport {self.id} ({self.person_month} / {self.employer})"
 
     @classmethod
     def sum_queryset(cls, qs: QuerySet["MonthlyIncomeReport"]):
