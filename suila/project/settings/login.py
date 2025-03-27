@@ -67,6 +67,9 @@ LOGIN_WHITELISTED_URLS = [
     LOGIN_REDIRECT_URL,
     LOGOUT_REDIRECT_URL,
     re.compile("^/api.*"),
+    # Whitelist the Django "set_language" view, so it works even outside
+    # authenticated contexts.
+    reverse_lazy("set_language"),
 ]
 MITID_TEST_ENABLED = bool(strtobool(os.environ.get("MITID_TEST_ENABLED", "False")))
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
