@@ -6,6 +6,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from itertools import batched
 
 from django.conf import settings
+from django.db.models import Q
 
 from suila.integrations.eboks.client import EboksClient
 from suila.management.commands.common import SuilaBaseCommand
@@ -30,12 +31,23 @@ class Command(SuilaBaseCommand):
         save = kwargs["save"]
         send = kwargs["send"]
 
-        qs = PersonYear.objects.filter(
-            year_id=year,
-            person__welcome_letter_sent_at__isnull=True,
-            tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
-            person__full_address__isnull=False,
-        ).exclude(person__full_address="")
+        qs = (
+            PersonYear.objects.filter(
+                year_id=year,
+                person__welcome_letter_sent_at__isnull=True,
+                tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
+                person__full_address__isnull=False,
+            )
+            .exclude(
+                person__full_address="",
+            )
+            .exclude(
+                Q(person__full_address="0")
+                | Q(person__full_address__contains="9999")
+                | Q(person__full_address__contains="Ukendt")
+                | Q(person__full_address__contains="Administrativ")
+            )
+        )
         if kwargs.get("cpr"):
             qs = qs.filter(person__cpr=kwargs["cpr"])
         qs = qs.select_related("person")
