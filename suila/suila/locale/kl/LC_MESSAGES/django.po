@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-26 05:47-0200\n"
+"POT-Creation-Date: 2025-03-26 08:56-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1051,48 +1051,50 @@ msgstr ""
 msgid "Der findes ingen indkomstdata for denne person"
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 msgid ""
 "Du er logget ind på Suila.gl med MitID, men du har ikke en profil tilknyttet "
 "dit CPR-nr. De mest sandsynlige årsager til, at du ikke har en profil er, at:"
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 msgid ""
 "Du ikke har indkomst i Grønland eller at du ikke er fuldt skattepligtig til "
 "Grønland. Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til "
 "Grønland."
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 msgid ""
 "Suila endnu ikke har modtaget dine indkomstinformationer. Hvis du netop er "
 "begyndt at arbejde i Grønland, kan der gå en kortere periode, før du får en "
 "profil på Suila.gl."
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 msgid "Her kan du finde mere information om Suila-tapit:"
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 #, python-format
 msgid "På <a href=\"%(link)s\">Sullissivik.gl</a>"
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 #, python-format
 msgid "Hos <a href=\"%(link)s\">Skattestyrelsen</a>"
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 #, python-format
 msgid "<a href=\"%(link)s\">Suila-tapit på Facebook</a>"
 msgstr ""
 
-#: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
+#, python-format
 msgid ""
-"Du kan kontakte Borgerservice hos Skattestyrelsen, hvis du har spørgsmål."
+"Du kan kontakte Borgerservice hos Skattestyrelsen, hvis du har spørgsmål. "
+"Find mere information på <a href=\"%(link)s\">aka.gl</a>"
 msgstr ""
 
 #: suila/templates/suila/person_search.html
