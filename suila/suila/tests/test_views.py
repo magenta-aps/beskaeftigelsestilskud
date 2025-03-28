@@ -13,7 +13,7 @@ from urllib.parse import quote_plus
 import requests
 from bs4 import BeautifulSoup
 from common.models import PageView, User
-from common.tests.test_mixins import TestViewMixin
+from common.tests.test_mixins import TestViewMixin, honeypot_fail_form_data
 from common.view_mixins import ViewLogMixin
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -937,6 +937,22 @@ class TestNoteView(TimeContextMixin, PersonEnv):
         self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
         self.assertEqual(pageview.params, {"year": "2020"})
         self.assertEqual(pageview.itemviews.count(), 0)
+
+    def test_honeypot(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            reverse("suila:person_detail_notes", kwargs={"pk": self.person1.pk}),
+            {
+                "text": "Test tekst",
+                "attachments-TOTAL_FORMS": 0,
+                "attachments-INITIAL_FORMS": 0,
+                "attachments-MIN_NUM_FORMS": 0,
+                "attachments-MAX_NUM_FORMS": 1000,
+                **honeypot_fail_form_data,
+            },
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 403)
 
 
 class TestNoteAttachmentView(TimeContextMixin, PersonEnv):
