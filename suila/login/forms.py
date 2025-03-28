@@ -14,13 +14,14 @@ from two_factor.forms import AuthenticationTokenForm
 
 class AuthenticationForm(BootstrapForm, DjangoAuthenticationForm):
     username = UsernameField(
+        label=_("Brugernavn"),
         widget=TextInput(
             attrs={
                 "autofocus": True,
                 "class": "form-control",
                 "placeholder": _("Brugernavn"),
             }
-        )
+        ),
     )
     password = CharField(
         label=_("Password"),
