@@ -7,7 +7,11 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from common.models import EngineViewPreferences, PageView, User
-from common.tests.test_mixins import TestViewMixin
+from common.tests.test_mixins import (
+    TestViewMixin,
+    common_form_data,
+    honeypot_fail_form_data,
+)
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
     HistogramView,
@@ -841,7 +845,10 @@ class TestUpdateEngineViewPreferences(TestCase):
         cls.preferences.save()
 
     def test_preferences_updater(self):
-        payload = {"show_MonthlyContinuationEngine": True}
+        payload = {
+            "show_MonthlyContinuationEngine": True,
+            **common_form_data,
+        }
         url = reverse("data_analysis:update_preferences")
         self.assertFalse(
             self.user.engine_view_preferences.show_MonthlyContinuationEngine
@@ -852,3 +859,13 @@ class TestUpdateEngineViewPreferences(TestCase):
         self.assertTrue(
             self.user.engine_view_preferences.show_MonthlyContinuationEngine
         )
+
+    def test_honeypot(self):
+        payload = {
+            "show_MonthlyContinuationEngine": True,
+            **honeypot_fail_form_data,
+        }
+        url = reverse("data_analysis:update_preferences")
+        self.client.login(username="test", password="test")
+        response = self.client.post(url, data=payload)
+        self.assertEqual(response.status_code, 403)
