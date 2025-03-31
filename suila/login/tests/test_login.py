@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from bs4 import BeautifulSoup
 from common.models import User
+from common.tests.test_mixins import common_form_data, honeypot_fail_form_data
 from django.conf import settings
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.contrib.auth.models import Group
@@ -46,6 +47,7 @@ class LoginTest(TestCase):
                 "auth-username": "test",
                 "auth-password": "test",
                 "besk_login_view-current_step": "auth",
+                **common_form_data,
             },
         )
         self.assertEqual(response.status_code, 302)
@@ -84,6 +86,7 @@ class LoginTest(TestCase):
                 "auth-username": "test",
                 "auth-password": "incorrect",
                 "besk_login_view-current_step": "auth",
+                **common_form_data,
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -91,6 +94,20 @@ class LoginTest(TestCase):
         alert = soup.find(class_="errorlist")
         self.assertIsNotNone(alert)
         self.assertIn("Indtast venligst korrekt brugernavn og adgangskode", str(alert))
+
+    @override_settings(PUBLIC=False, LANGUAGE_CODE="da-dk")
+    def test_honeypot(self):
+        self.client.get(reverse("login:login"))
+        response = self.client.post(
+            reverse("login:login"),
+            {
+                "auth-username": "test",
+                "auth-password": "incorrect",
+                "besk_login_view-current_step": "auth",
+                **honeypot_fail_form_data,
+            },
+        )
+        self.assertEqual(response.status_code, 403)
 
     @override_settings(PUBLIC=True)
     def test_saml_logout_redirect(self):
@@ -121,6 +138,7 @@ class LoginTest(TestCase):
                 "auth-username": "test",
                 "auth-password": "test",
                 "besk_login_view-current_step": "auth",
+                **common_form_data,
             },
         )
         response = self.client.get(reverse("login:login"))
@@ -156,6 +174,7 @@ class LoginTest(TestCase):
             "auth-username": "test",
             "auth-password": "test",
             "besk_login_view-current_step": "auth",
+            **common_form_data,
         }
         response = self.client.post(reverse("login:login"), data)
         self.assertContains(response, "Kode:")
@@ -163,6 +182,7 @@ class LoginTest(TestCase):
         data = {
             "token-otp_token": "123456",
             "besk_login_view-current_step": "token",
+            **common_form_data,
         }
         response = self.client.post(reverse("login:login"), data)
         self.assertEqual(
@@ -177,6 +197,7 @@ class LoginTest(TestCase):
         data = {
             "token-otp_token": totp_str(device.bin_key),
             "besk_login_view-current_step": "token",
+            **common_form_data,
         }
         device.throttle_reset()
 
@@ -194,6 +215,7 @@ class LoginTest(TestCase):
             "auth-username": "test",
             "auth-password": "test",
             "besk_login_view-current_step": "auth",
+            **common_form_data,
         }
         response = self.client.post(reverse("login:login"), data)
 
@@ -208,7 +230,10 @@ class LoginTest(TestCase):
 
         response = self.client.post(
             reverse("login:two_factor_setup"),
-            data={"two_factor_setup-current_step": "generator"},
+            data={
+                "two_factor_setup-current_step": "generator",
+                **common_form_data,
+            },
         )
 
         self.assertEqual(
@@ -221,6 +246,7 @@ class LoginTest(TestCase):
             data={
                 "two_factor_setup-current_step": "generator",
                 "generator-token": "123456",
+                **common_form_data,
             },
         )
         self.assertEqual(
@@ -235,6 +261,7 @@ class LoginTest(TestCase):
             data={
                 "two_factor_setup-current_step": "generator",
                 "generator-token": totp(bin_key),
+                **common_form_data,
             },
         )
 
@@ -243,6 +270,17 @@ class LoginTest(TestCase):
         self.assertEqual(1, self.user.totpdevice_set.count())
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], success_url)
+
+    def test_2fa_honeypot(self):
+        self.client.login(username="test", password="test")
+        response = self.client.post(
+            reverse("login:two_factor_setup"),
+            data={
+                "two_factor_setup-current_step": "generator",
+                **honeypot_fail_form_data,
+            },
+        )
+        self.assertEqual(response.status_code, 403)
 
     @override_settings(PUBLIC=False)
     def test_2fa_required(self):
