@@ -231,7 +231,9 @@ class TestImportU1ADataCommand(TestCase):
         )
 
         existing_person_month = PersonMonth.objects.create(
-            person_year=existing_person_year, month=3, import_date=datetime.now().date()
+            person_year=existing_person_year,
+            month=self.u1a_1.dato_vedtagelse.month,
+            import_date=datetime.now().date(),
         )
 
         u1a_employer = Employer.objects.create(
