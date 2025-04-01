@@ -8,14 +8,15 @@ To start the project, `up` the docker containers using compose:
 docker compose up -d
 ```
 
-The system will start out empty. To load test-data into the database, make sure you have the test-data CSV files in the folder `./suila/data`, then run the `load_data.sh`-script command:
+The system will start out empty. To load test-data into the database, you can use
+the eskat-api:
 
-```bash
-./bin/load_data.sh 200
+```
+docker exec -it suila-web-private python manage.py load_eskat 2025 monthlyincome
 ```
 
-**NOTE:** The `200`-argument is how many lines from the CSV files are loaded into the database.
-If none is specified, all lines will be loaded, which can take awhile.
+See `suila/suila/integrations/eskat/README.md` for details regarding the eskat
+integration.
 
 You can now access the web-ui at: http://localhost:8120/
 
