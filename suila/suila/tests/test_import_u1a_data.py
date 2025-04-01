@@ -173,7 +173,7 @@ class TestImportU1ADataCommand(TestCase):
                 "estimated_year_result": None,
                 "fully_tax_liable": None,
                 "has_paid_b_tax": False,
-                "month": 3,
+                "month": self.u1a_1.dato_vedtagelse.month,
                 "municipality_code": None,
                 "municipality_name": None,
                 "person_year": person_year.id,
@@ -196,8 +196,8 @@ class TestImportU1ADataCommand(TestCase):
                     "load": ANY,
                     "employer": employer.id,
                     "person_month": person_month.id,
-                    "year": 2025,
-                    "month": 3,
+                    "year": person_year.year.year,
+                    "month": person_month.month,
                     "a_income": Decimal("0.00"),
                     "u_income": Decimal("1337.00"),
                     "alimony_income": Decimal("0.00"),
@@ -231,7 +231,9 @@ class TestImportU1ADataCommand(TestCase):
         )
 
         existing_person_month = PersonMonth.objects.create(
-            person_year=existing_person_year, month=3, import_date=datetime.now().date()
+            person_year=existing_person_year,
+            month=self.u1a_1.dato_vedtagelse.month,
+            import_date=datetime.now().date(),
         )
 
         u1a_employer = Employer.objects.create(
