@@ -260,35 +260,7 @@ class Command(SuilaBaseCommand):
                 if created:
                     result.person_months_created.append(u1a_person_month.id)
 
-                # Reset existing MonthlyIncomeReport, with U-income,
-                # and update related PersonMonth.amount_sum
-                self._write_verbose(
-                    (
-                        "\t\t- Resetting MonthlyIncomeReports with u_income for "
-                        f"PersonMonth: {u1a_person_month} ({u1a_employer})"
-                    )
-                )
-                existing_u1a_reports = MonthlyIncomeReport.objects.filter(
-                    employer=u1a_employer,
-                    person_month=u1a_person_month,
-                    u_income__gt=Decimal(0),
-                )
-
-                if len(existing_u1a_reports) > 0:
-                    for existing_report in existing_u1a_reports:
-                        existing_report.u_income = Decimal("0.00")
-                        existing_report.update_amount()
-                        existing_report.save()
-
-                    self._write_verbose(
-                        (
-                            "\t\t\t- Removed U-income from "
-                            f"{len(existing_u1a_reports)} existing "
-                            "MonthlyIncomeReport(s)"
-                        )
-                    )
-
-                # Add U-income to MonthlyIncomeReport (or create it)
+                # Add/update U-income to MonthlyIncomeReport
                 self.stdout.write(
                     (
                         "\t\t- Updating MonthlyIncomeReports for PersonMonth: "
