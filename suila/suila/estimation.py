@@ -122,24 +122,30 @@ class EstimationEngine:
         if output_stream is not None:
             output_stream.write("Fetching person_month_map ...\n")
 
-        person_month_map = {pm.pk: pm for pm in PersonMonth.objects.all()}
+        person_month_qs = (
+            PersonMonth.objects.filter(person_year__person__id=person_pk)
+            if person_pk
+            else PersonMonth.objects.all()
+        )
+        person_month_map = {pm.pk: pm for pm in person_month_qs}
 
         # Create queryset with one row for each `PersonMonth`.
         # Each row contains PKs for person, person month, and values for year and month.
         # Each row also contains summed values for monthly reported A and B income, as
         # each person month can have one or more A or B incomes reported.
         if output_stream is not None:
-            output_stream.write("Fetching person_month data ...\n")
+            output_stream.write("Fetching Person data ...\n")
 
         person_qs = Person.objects.filter(personyear__in=person_year_qs).values_list(
             "pk", flat=True
         )
 
+        # Process rows in batches
         exclude_months = {
             (now.year, now.month),
             (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
         }
-        # # Process rows in batches
+
         batch_size = 10  # 10 people, not 10 personmonths
         if output_stream is not None:
             output_stream.write(
