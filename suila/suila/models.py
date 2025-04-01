@@ -459,7 +459,7 @@ class PersonYear(PermissionsMixin, models.Model):
         max_length=100,
         choices=engine_choices,
         null=True,
-        default="InYearExtrapolationEngine",
+        default="TwelveMonthsSummationEngine",
     )
     stability_score_a = models.DecimalField(
         decimal_places=1, default=None, null=True, max_digits=2

@@ -158,7 +158,7 @@ class TestImportU1ADataCommand(TestCase):
                 "catchsale_expenses": Decimal("0.00"),
                 "person": self.person1.id,
                 "preferred_estimation_engine_a": "InYearExtrapolationEngine",
-                "preferred_estimation_engine_u": "InYearExtrapolationEngine",
+                "preferred_estimation_engine_u": "TwelveMonthsSummationEngine",
                 "stability_score_a": None,
                 "stability_score_b": None,
                 "tax_scope": "FULD",
