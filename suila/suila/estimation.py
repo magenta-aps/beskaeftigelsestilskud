@@ -424,6 +424,7 @@ Forslag til beregningsmetoder:
 
 class InYearExtrapolationEngine(EstimationEngine):
     description = "Ekstrapolation af beløb for måneder i indeværende år"
+    valid_income_types: List[IncomeType] = [IncomeType.A]
 
     @classmethod
     def estimate(
@@ -479,8 +480,6 @@ class InYearExtrapolationEngine(EstimationEngine):
         def _filter(item):
             if income_type == IncomeType.A:
                 return not item.a_income.is_zero()
-            elif income_type == IncomeType.U:
-                return not item.u_income.is_zero()
             return False  # pragma: no cover
 
         return _filter

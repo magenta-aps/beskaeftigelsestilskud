@@ -295,9 +295,10 @@ class TestEstimationEngine(TestCase):
 
         EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
 
-        self.assertEqual(
-            IncomeEstimate.objects.all().count(), 80
-        )  # One person * 10 months * 4 engines * 2 incometypes
+        # One person * 10 months * 4 engines * 2 incometypes
+        # NOTE: InYearExtrapolationEngine only handles A-IncomeType
+        self.assertEqual(IncomeEstimate.objects.all().count(), 70)
+
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 0
         )
@@ -505,16 +506,16 @@ class TestInYearExtrapolationEngine(TestCase):
             [
                 (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
                 (Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("450000.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("405000.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("360000.00")),
-                (Decimal("9750.00"), Decimal("0.00"), Decimal("315000.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("270000.00")),
-                (Decimal("9666.67"), Decimal("0.00"), Decimal("225000.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("180000.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("135000.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("90000.00")),
-                (Decimal("10000.00"), Decimal("0.00"), Decimal("45000.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("9750.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("9666.67"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
+                (Decimal("10000.00"), Decimal("0.00"), Decimal("0.00")),
             ],
             start=1,
         ):
