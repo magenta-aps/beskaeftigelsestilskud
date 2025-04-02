@@ -132,6 +132,33 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
 
     @patch("common.utils.get_people_in_quarantine")
+    def test_calculate_benefit_quarantine_default_settings(
+        self, get_people_in_quarantine: MagicMock
+    ):
+        """
+        Bekræft, at der er 10 måneders udbetalingspause med de nuværende karantæne
+        settings. Således at der udbetales i januar, baseret på beregningen for
+        november.
+
+        https://redmine.magenta.dk/issues/64313
+        """
+
+        get_people_in_quarantine.return_value = pd.DataFrame(
+            [[True, "foo"], [True, "bar"]],
+            index=[self.person1.cpr, self.person2.cpr],
+            columns=["in_quarantine", "quarantine_reason"],
+        )
+
+        for month in range(1, 13):
+            df = calculate_benefit(month, self.year.year)
+            benefit_paid = df.loc[self.person1.cpr, "benefit_paid"]
+
+            if month <= 10:
+                self.assertEqual(benefit_paid, 0)
+            else:
+                self.assertGreater(benefit_paid, 0)
+
+    @patch("common.utils.get_people_in_quarantine")
     def test_calculate_benefit_quarantine(self, get_people_in_quarantine: MagicMock):
 
         get_people_in_quarantine.return_value = pd.DataFrame(
