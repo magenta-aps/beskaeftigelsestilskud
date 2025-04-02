@@ -332,7 +332,7 @@ class UserModelTest(UserMixin, ModelTest):
 class TestPerson(UserModelTest):
 
     def test_string_methods(self):
-        self.assertEqual(str(self.person), "Jens Hansen")
+        self.assertEqual(str(self.person), "Jens Hansen / 1234567890")
 
     def test_borger_permissions(self):
         self.assertTrue(self.person.has_object_permissions(self.normal_user, ["view"]))
@@ -397,7 +397,7 @@ class TestPerson(UserModelTest):
 class TestPersonYear(UserModelTest):
 
     def test_string_methods(self):
-        self.assertEqual(str(self.person_year), "Jens Hansen (2024)")
+        self.assertEqual(str(self.person_year), "Jens Hansen / 1234567890 (2024)")
 
     def test_next(self):
         self.assertEqual(self.person_year.next, self.person_year2)
@@ -500,7 +500,7 @@ class TestPersonMonth(UserModelTest):
         self.assertEqual(self.month1.year, 2024)
 
     def test_string_methods(self):
-        self.assertEqual(str(self.month1), "Jens Hansen (2024/1)")
+        self.assertEqual(str(self.month1), "2024/1 (Jens Hansen / 1234567890)")
 
     def test_amount_sum(self):
         self.assertEqual(self.month1.amount_sum, Decimal(10000))
@@ -613,7 +613,10 @@ class TestIncomeReport(ModelTest):
         self.assertEqual(self.report1.month, 1)
 
     def test_string_methods(self):
-        self.assertEqual(str(self.report1), "Indkomst for Jens Hansen (2024/1)")
+        self.assertEqual(
+            str(self.report1),
+            "MonthlyIncomeReport for 2024/1 (Jens Hansen / 1234567890) (None)",
+        )
 
     def test_annotate_month(self):
         qs = MonthlyIncomeReport.objects.filter(pk=self.report1.pk)
@@ -695,7 +698,8 @@ class EstimationTest(ModelTest):
 
     def test_str(self):
         self.assertEqual(
-            str(self.result1), "InYearExtrapolationEngine (Jens Hansen (2024/1)) (A)"
+            str(self.result1),
+            "InYearExtrapolationEngine (2024/1 (Jens Hansen / 1234567890)) (A)",
         )
 
     def test_annotate_month(self):

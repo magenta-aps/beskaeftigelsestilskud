@@ -57,7 +57,7 @@ class AKAPU1A(BaseModel):
     items: Optional[List[AKAPU1AItem]] = None
 
     def __str__(self):
-        return f"{self.navn} - {self.cvr} - {self.email} - {self.regnskabsår}"
+        return f"{self.navn} - {self.cvr} - {self.email} - {self.dato_vedtagelse.year}"
 
 
 class AKAPAPIPaginatedResponse(BaseModel):

@@ -81,7 +81,7 @@ class TestSimulationJSONEncoder(TestCase):
             "id": cls.personyear.pk,
             "person_id": cls.person.pk,
             "preferred_estimation_engine_a": "InYearExtrapolationEngine",
-            "preferred_estimation_engine_u": "InYearExtrapolationEngine",
+            "preferred_estimation_engine_u": "TwelveMonthsSummationEngine",
             "stability_score_a": None,
             "stability_score_b": None,
             "tax_scope": "FULD",
