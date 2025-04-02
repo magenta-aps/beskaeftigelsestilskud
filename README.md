@@ -18,6 +18,17 @@ docker exec -it suila-web-private python manage.py load_eskat 2025 monthlyincome
 See `suila/suila/integrations/eskat/README.md` for details regarding the eskat
 integration.
 
+You can now estimate annual income for the data which you loaded from eskat:
+
+```bash
+docker exec suila-web-private python manage.py estimate_income
+```
+
+And calculate Suila tapit according to the estimated incomes:
+```bash
+docker exec suila-web-private python manage.py calculate_benefit 2025
+```
+
 You can now access the web-ui at: http://localhost:8120/
 
 ### Accessing the database
@@ -68,9 +79,9 @@ Now run the `import_u1a_data`-command:
 docker exec suila-web python manage.py import_u1a_data --verbose
 ```
 
-**IMPORTANT:** U1A data is used when running the `estimate_income`-command, which is done through the `load_data.sh`-script.
-This means that if the `import_u1a_data`-command is executed after the `load_data.sh`-script, we need to run the
-`estimate_income`-command again, or just run the `load_data.sh`-script again.
+**IMPORTANT:** U1A data is used when running the `estimate_income`-command.
+This means that if the `import_u1a_data`-command is executed after the `estimate_income`-command, we need to run the
+`estimate_income`-command again.
 
 ### Export to Prisme
 
