@@ -437,9 +437,7 @@ class InYearExtrapolationEngine(EstimationEngine):
         income_type_filter = InYearExtrapolationEngine.filter_relevant_items(
             income_type
         )
-        relevant_items: Sequence[MonthlyIncomeData] = [
-            item for item in subset if income_type_filter(item)
-        ]
+        relevant_items = subset
 
         # Cut off initial months with no income, and only extrapolate
         # on months after income begins
@@ -450,8 +448,27 @@ class InYearExtrapolationEngine(EstimationEngine):
         relevant_count = len(relevant_items)
         if relevant_count > 0:
             amount_sum = cls.subset_sum(relevant_items, income_type)
-            omitted_count = person_month.month - relevant_count
-            year_estimate = (12 - omitted_count) * amount_sum / relevant_count
+
+            # Ekstrapolér summen af årets kendte måneder til alle ukendte måneder
+            # dvs. "huller" i sekvensen antages at være 0
+            # og årets resterende måneder antages at have gennemsnittet af
+            # de måneder der har indtægt over 0
+            # omitted_count = person_month.month - relevant_count
+            # year_estimate = (12 - omitted_count) * amount_sum / relevant_count
+
+            # f.eks. antag at januar og maj er 0,
+            # og feb, mar, apr, jun, jul, aug er 10000
+            # year_estimate = (12 - 2) * 60000 / 6 = 100000
+
+            # Ekstrapolér summen af årets kendte måneder til resten af året
+            # dvs. "huller" i sekvensen antages at være 0
+            # og årets resterende måneder antages at have gennemsnittet af
+            # alle foregående måneder (inkl. dem der er 0)
+            year_estimate = 12 * amount_sum / person_month.month
+
+            # f.eks.:
+            # year_estimate = 12 * 60000 / 8 = 90000
+
             return IncomeEstimate(
                 estimated_year_result=year_estimate,
                 engine=cls.__name__,
