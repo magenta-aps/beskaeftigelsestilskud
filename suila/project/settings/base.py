@@ -65,7 +65,7 @@ QUARANTINE_IF_WRONG_PAYOUT = bool(
     strtobool(os.environ.get("QUARANTINE_IF_WRONG_PAYOUT", "True"))
 )
 QUARANTINE_WEIGHTS = json.loads(
-    os.environ.get("QUARANTINE_WEIGHTS", "[0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 1]")
+    os.environ.get("QUARANTINE_WEIGHTS", "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 1]")
 )
 
 if len(QUARANTINE_WEIGHTS) != 12:
