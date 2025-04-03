@@ -30,5 +30,4 @@ INSTALLED_APPS = [
     "simple_history",
     "compressor",
     "crispy_forms",
-    "honeypot",
 ]

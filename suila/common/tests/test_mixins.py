@@ -4,18 +4,10 @@
 from typing import Any, Dict, Tuple
 
 from common.models import User
-from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, Group, Permission
 from django.template.response import TemplateResponse
 from django.test import RequestFactory
 from django.views.generic import TemplateView
-
-common_form_data = {
-    settings.HONEYPOT_FIELD_NAME: "",
-}
-honeypot_fail_form_data = {
-    settings.HONEYPOT_FIELD_NAME: "foobar",
-}
 
 
 class UserMixin:

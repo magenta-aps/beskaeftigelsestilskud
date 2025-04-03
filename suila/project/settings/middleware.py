@@ -17,5 +17,4 @@ MIDDLEWARE = [
     "django_session_timeout.middleware.SessionTimeoutMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django_otp.middleware.OTPMiddleware",
-    "honeypot.middleware.HoneypotMiddleware",
 ]
