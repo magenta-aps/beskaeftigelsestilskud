@@ -7,6 +7,7 @@ from django.template.defaultfilters import date as format_date
 from django.test import SimpleTestCase
 from django.utils import translation
 from django.utils.formats import number_format as format_number
+from django.utils.translation import get_language
 
 
 class TestFormatDate(SimpleTestCase):
@@ -35,6 +36,7 @@ class TestFormatNumber(SimpleTestCase):
         for locale, expected_value in self.cases:
             with self.subTest(locale=locale):
                 translation.activate(locale)
+                self.assertEqual(get_language(), locale)
                 actual_value = format_number(
                     self.value,
                     use_l10n=True,
