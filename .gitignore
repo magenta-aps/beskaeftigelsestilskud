@@ -41,3 +41,4 @@ suila/data/
 *.swp
 
 ssl/
+/suila/.mypy_cache/**
