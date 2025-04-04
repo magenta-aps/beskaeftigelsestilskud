@@ -24,7 +24,7 @@ from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_di
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import date as format_date
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext
@@ -33,6 +33,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.base import ContextMixin
 from django.views.generic.detail import BaseDetailView
+from django.views.generic.edit import UpdateView
 from django_filters import Filter, FilterSet
 from django_filters.views import FilterView
 from django_tables2 import Column, SingleTableMixin, Table, TemplateColumn
@@ -246,6 +247,9 @@ class PersonDetailView(
                     "benefit_paid": person_month.benefit_paid,
                     "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
+                    "paused": person_year.paused,
+                    "person_year_id": person_year.pk,
+                    "next_year": person_year.year.year + 1,
                 }
             )
 
@@ -980,3 +984,17 @@ class EboksMessageView(
     def render_to_response(self, context):
         pdf_data = context["message"].contents
         return HttpResponse(content=pdf_data, content_type="application/pdf")
+
+
+class PersonYearPauseUpdateView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    UpdateView,
+):
+    model = PersonYear
+    required_model_permissions = ["suila.change_personyear"]
+    fields = ["paused"]
+
+    def get_success_url(self):
+        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.person.pk})

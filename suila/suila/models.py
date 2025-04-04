@@ -437,6 +437,13 @@ class PersonYear(PermissionsMixin, models.Model):
         history_change_reason_field=models.TextField(null=True),
         related_name="history_entries",
     )
+
+    # Når en person er på pause udbetaler vi ved årsopgørelsen (dvs. December).
+    paused = models.BooleanField(
+        default=False,
+        null=False,
+        blank=False,
+    )
     person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,

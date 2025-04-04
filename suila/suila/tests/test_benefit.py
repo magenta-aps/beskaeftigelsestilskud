@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
+from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -12,7 +13,7 @@ from django.conf import settings
 from django.test import override_settings
 
 from suila.benefit import calculate_benefit, get_payout_date, get_payout_df
-from suila.models import PersonMonth
+from suila.models import PersonMonth, PersonYear
 
 
 class CalculateBenefitTest(BaseTestCase):
@@ -200,6 +201,79 @@ class CalculateBenefitTest(BaseTestCase):
                     )
                     person_month.benefit_paid = benefit_paid
                     person_month.save()
+
+    def test_calculate_benefit_pause(self):
+        yearly_salary = 10000 * 12 + 15000 * 12
+        correct_year_benefit = self.year.calculation_method.calculate(yearly_salary)
+
+        person_year = PersonYear.objects.get(person=self.person1, year=self.year.year)
+
+        test_cases = [
+            # person1 is never paused.
+            {
+                "pause_month": None,
+                "unpause_month": None,
+            },
+            # person1 is paused in January and remains paused for the rest of the year.
+            {
+                "pause_month": 1,
+                "unpause_month": None,
+            },
+            # person1 is paused in June and remains paused for the rest of the year.
+            {
+                "pause_month": 6,
+                "unpause_month": None,
+            },
+            # person1 is paused in June and unpaused in august.
+            {
+                "pause_month": 6,
+                "unpause_month": 8,
+            },
+        ]
+
+        for test_case in test_cases:
+
+            # Reset person1s "pause" attribute for each test case
+            person_year.paused = False
+            person_year.save()
+            self.assertFalse(person_year.paused)
+
+            remaining_year_benefit = correct_year_benefit
+            for month in range(1, 13):
+                months_remaining = 13 - month
+
+                # Pause all payouts for person1
+                if month == test_case["pause_month"]:
+                    person_year.paused = True
+                    person_year.save()
+                    self.assertTrue(person_year.paused)
+
+                # Resume payouts for person1
+                if month == test_case["unpause_month"]:
+                    person_year.paused = False
+                    person_year.save()
+                    self.assertFalse(person_year.paused)
+
+                if person_year.paused:
+                    correct_month_benefit = 0
+                else:
+                    correct_month_benefit = remaining_year_benefit / months_remaining
+
+                benefit_paid = calculate_benefit(month, self.year.year).loc[
+                    self.person1.cpr,
+                    "benefit_paid",
+                ]
+
+                self.assertEqual(benefit_paid, correct_month_benefit)
+                remaining_year_benefit -= Decimal(benefit_paid)
+
+                person_month = PersonMonth.objects.get(
+                    person_year__person__cpr=self.person1.cpr,
+                    month=month,
+                    person_year__year__year=self.year.year,
+                )
+                person_month.benefit_paid = benefit_paid
+                person_month.save()
 
     def test_isnan(self):
         self.assertTrue(isnan(np.float64(None)))

@@ -85,6 +85,7 @@ class TestSimulationJSONEncoder(TestCase):
             "b_expenses": 0.0,
             "b_income": 0.0,
             "catchsale_expenses": 0.0,
+            "paused": False,
         }
 
     def test_can_serialize_dataclass(self):
