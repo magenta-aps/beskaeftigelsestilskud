@@ -997,4 +997,4 @@ class PersonYearPauseUpdateView(
     fields = ["paused"]
 
     def get_success_url(self):
-        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
+        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.person.pk})
