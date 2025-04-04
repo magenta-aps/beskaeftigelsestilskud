@@ -26,6 +26,9 @@ class UserMixin:
         cls.staff_group.permissions.add(
             *Permission.objects.filter(codename__startswith="view")
         )
+        cls.staff_group.permissions.add(
+            Permission.objects.get(codename="change_personyear")
+        )
         cls.staff_user.groups.add(cls.staff_group)
 
         # Bruger der matcher et CPR-nummer i databasen

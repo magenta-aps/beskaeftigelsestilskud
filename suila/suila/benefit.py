@@ -98,6 +98,7 @@ def calculate_benefit(
             "b_income": float,
             "b_expenses": float,
             "catchsale_expenses": float,
+            "paused": bool,
         },
     )
 
@@ -154,6 +155,10 @@ def calculate_benefit(
         df.loc[small_diffs, "benefit_this_month"] = df.loc[
             small_diffs, "benefit_last_month"
         ]
+
+    # If you are on pause you get nothing (also not in December)
+    # Man får pengene på kontoen når årsopgørelsen er færdig (august året efter).
+    df.loc[df.paused, "benefit_this_month"] = 0
 
     # If you are in quarantine you get nothing (unless it's for october)
     if enforce_quarantine:
