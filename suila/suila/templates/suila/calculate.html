@@ -18,7 +18,7 @@
 
 {% block content %}
 <div class="row mt-5">
-    <div class="col-6">
+    <div class="col-xl-6">
         <p>
             {% blocktrans trimmed %}
             Indtast din forventede månedsløn eller din forventede årsindkomst for at få en vejledende beregning på,
@@ -50,7 +50,7 @@
             {% if user|has_permissions:"suila.use_adminsite_calculator_parameters" %}
             {# Show engine selector #}
             <div class="row align-items-center my-1">
-                <div class="col-12">
+                <div class="col-md-12">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#engine_modal">
                         {% translate "Indlæs beregningsmotor" %}
                     </button>
@@ -60,10 +60,10 @@
             <div id="engine_parameters">
                 {% for fieldname, field in engines.0.fields.items %}
                 <div class="row align-items-center my-1">
-                    <div class="col-6">
+                    <div class="col-md-6">
                         <label for="{{ fieldname }}">{{ field.label }}</label>
                     </div>
-                    <div class="col-6">
+                    <div class="col-md-6">
                         {% with form.errors|get:fieldname as errors %}
                             <input type="number" name="{{ fieldname }}"
                                    value="{{ form.data|get:fieldname|default:field.value }}"
@@ -85,7 +85,7 @@
             </button>
         </form>
     </div>
-    <div class="col-6">
+    <div class="col-xl-6 mt-xl-0 mt-5">
         {% if monthly_benefit or yearly_benefit %}
         <div class="emphasis">
             <p>{% translate "Beregnet Suila-tapit pr. måned:" %}</p>
@@ -96,8 +96,8 @@
         {% endif %}
     </div>
 </div>
-<div class="row mt-5">
-    <div class="col-12">
+<div class="row">
+    <div class="col-xl-12 mt-5">
         <div id="graph">
             {# Replaced by ApexChart graph at runtime #}
         </div>

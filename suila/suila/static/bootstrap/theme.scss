@@ -46,6 +46,9 @@ $breadcrumb-divider: quote("\203A");
 
 $accordion-bg: transparent;
 
+$offcanvas-color: $white;
+$offcanvas-bg-color: $primary;
+
 @import "./bootstrap/scss/bootstrap";
 
 // Figtree font
@@ -69,9 +72,8 @@ i {
   font-style: normal; /* avoid "double italicization" */
 }
 
-// Additional styling here
 h1 {
-  font-size: 32px;
+  font-size: 2 * $spacer;
   color: $black;
 }
 
@@ -92,7 +94,7 @@ h3 {
 }
 
 h4 {
-  font-size: 18px;
+  font-size: $spacer;
   color: $primary;
 }
 
@@ -168,11 +170,20 @@ header nav.navbar ul li {
 header nav.navbar ul.dropdown-menu li a {
   color: $black;
 }
+header nav.navbar .navbar-toggler {
+  color: $white;
+  border-color: $white;
+}
+
+// Navbar when shown in "offcanvas" container (e.g. on smaller screens)
+.offcanvas-xl.show ul.navbar-nav li.nav-item,
+.offcanvas-xl.showing ul.navbar-nav li.nav-item {
+  margin: $spacer 0;
+}
 
 .content {
-  margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
-  padding: 3 * $spacer;
-  min-height: 60vh;
+  margin: 0;
+  padding: $spacer;
   background-color: $lightest-grey;
   border-radius: $spacer;
   box-shadow: 0 0 $spacer $grey;
@@ -257,7 +268,6 @@ select[name="language"] option:hover {
 footer {
   flex-shrink: 0;
   padding: 6 * $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
-
 }
 footer a {
   display: inline-block;
@@ -309,22 +319,20 @@ footer a:hover {
 }
 
 // Tables
-// 0.625rem (10px) rounding of all tables
 .table {
   overflow: hidden !important;
-  border-radius: 0.625 * $spacer;
+  border-radius: $spacer;
 }
 .table th {
   background-color: $grey;
   border-bottom: 0;
-  padding: 10px 20px;
+  padding: 0.5 * $spacer $spacer;
 }
 .table tbody tr {
-  padding: 20px;
   vertical-align: middle;
 }
 .table tbody td {
-  padding: 20px;
+  padding: $spacer;
   vertical-align: middle;
   background: transparent;
 }
@@ -339,17 +347,13 @@ footer a:hover {
 table tbody > tr:last-child > td {
   border-bottom: 0;
 }
-// We want the headers of  sideways tables to have the same color as the background
+// We want the headers of sideways tables to have the same color as the background
 .table-sideways th {
   background-color: $lightest-grey;
 }
 
 .form-select {
   border-radius: 50 * $spacer;
-}
-
-.form-label {
-  font-size: 13px;
 }
 
 // Tooltips on e.g. table columns
@@ -467,4 +471,79 @@ table th.orderable.desc a::after {
 // Misc
 div.explainer p {
   margin: $spacer 0 0 0;
+}
+
+// "Extra large" (or larger)
+@include media-breakpoint-up(xxl) {
+  header nav.navbar .offcanvas-xl {
+    display: flex;
+    flex-direction: row;
+  }
+}
+
+// "Large" (or bigger)
+@include media-breakpoint-up(lg) {
+  .content {
+    margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
+    padding: 3 * $spacer;
+    min-height: 60vh;
+  }
+}
+
+// "Medium" (or smaller)
+@include media-breakpoint-down(md) {
+  .grid {
+    display: block;
+  }
+  .grid.mt-5 {
+    margin: $spacer 0 !important;
+  }
+  .grid .g-col-3,
+  .grid .g-col-4,
+  .grid .g-col-6,
+  .grid .g-col-8,
+  .grid .g-col-9,
+  .grid .g-col-12 {
+    margin: 0 0 $spacer 0;
+  }
+  .grid .jumbo a {
+    margin: auto 0;
+    padding: 1.5 * $spacer $spacer;
+  }
+  .grid .jumbo a div {
+    min-height: 4.5 * $spacer;
+  }
+  .grid .jumbo a div span.material-icons {
+    align-content: center;
+  }
+
+  .table {
+    border-radius: 0.5 * $spacer;
+  }
+  .table th,
+  .table tbody td {
+    padding: 0.5 * $spacer;
+  }
+
+  header nav.navbar {
+    margin: 0 $spacer;
+  }
+
+  .sidebar {
+    padding: $spacer;
+  }
+
+  ul.detail-table li.nav-item.mx-5 {
+    margin: 0 $spacer !important;
+  }
+  div.detail-table.p-5 {
+    padding: $spacer !important;
+  }
+}
+
+// "Small" (or smaller)
+@include media-breakpoint-down(sm) {
+  #graph {
+    display: none;
+  }
 }
