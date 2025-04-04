@@ -47,7 +47,7 @@
                 <span class="material-icons">menu</span>
             </button>
             <div class="offcanvas-xl offcanvas-end" tabindex="-1" id="navbarOffcanvasLg" aria-labelledby="navbarOffcanvasLgLabel">
-                <ul class="navbar-nav d-flex align-items-xl-center">
+                <ul class="navbar-nav d-flex align-items-xl-center align-content-stretch flex-wrap flex-fill">
                     {% if user.is_authenticated %}
                     <li class="nav-item ms-4">
                         <a href="{% url 'suila:root' %}" class="d-flex align-items-center {% if current_view == 'suila:root' %}active{% endif %}">
@@ -148,10 +148,10 @@
                     </li>
                     {% endif %}
                 </ul>
-                <ul class="navbar-nav d-flex align-items-xl-center ms-xl-auto">
-                    <div class="d-flex align-items-center ms-4">
+                <ul class="navbar-nav d-flex align-items-xl-center align-self-xl-start flex-no-wrap ms-4 me-auto">
+                    <div class="nav-item d-flex align-items-center">
                         <span class="material-icons">language</span>
-                        <form action="{% url 'set_language' %}" method="post" class="navbar-form navbar-right mx-1 my-2">
+                        <form action="{% url 'set_language' %}" method="post" class="navbar-form navbar-right">
                             {% csrf_token %}
                             <div class="form-group me-3">
                                 <select name="language" class="form-select">
