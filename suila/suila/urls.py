@@ -21,6 +21,7 @@ from suila.views import (
     PersonDetailView,
     PersonGraphView,
     PersonSearchView,
+    PersonYearPauseUpdateView,
     RootView,
 )
 
@@ -50,6 +51,11 @@ urlpatterns: List[URLResolver | URLPattern] = [
         "persons/<int:pk>/notes/",
         PersonDetailNotesView.as_view(),
         name="person_detail_notes",
+    ),
+    path(
+        "person_year/<int:pk>/pause/",
+        PersonYearPauseUpdateView.as_view(),
+        name="pause_person_year",
     ),
     path(
         "note_attachments/<int:pk>/",

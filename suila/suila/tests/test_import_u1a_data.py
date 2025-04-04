@@ -163,6 +163,7 @@ class TestImportU1ADataCommand(TestCase):
                 "stability_score_b": None,
                 "tax_scope": "FULD",
                 "year": self.year.year,
+                "paused": False,
             },
         )
 

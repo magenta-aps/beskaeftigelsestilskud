@@ -14,6 +14,10 @@
 <li class="breadcrumb-item">{% translate "Mit overblik" %}</li>
 {% endblock %}
 
+{% block extra_headers %}
+<link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+{% endblock %}
+
 {% block person_data %}
 <div class="row mt-5">
     <div class="col-12">
@@ -60,7 +64,13 @@
     </div>
     <div class="g-col-3 emphasis">
         <b>{% translate "Næste forventede beløb til udbetaling" %}</b>
-        <h1 class="mt-3">{{ benefit_paid|format_amount }}</h1>
+        <h1 class="mt-3">
+            {% if paused %}
+                0 <i class="bi bi-exclamation-triangle-fill"></i>
+            {% else %}
+                {{ benefit_paid|format_amount }}
+            {% endif %}
+        </h1>
     </div>
     <div class="g-col-3 emphasis">
         <b>
@@ -76,6 +86,26 @@
     </div>
 </div>
 {% endif %}
+
+{% if paused %}
+<div class="grid gap-3 mt-5">
+    <div class="g-col-12 sidebar">
+        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i></h2>
+        <p>
+            {% blocktrans trimmed  with year=next_year %}
+            Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit
+            til årsopgørelsen slut {{ year }}.
+            {% endblocktrans %}
+        </p>
+        <p>
+            {% blocktrans trimmed %}
+            Kontakt venligst borgerservice hvis du ønsker at udbetalingerne genoptages.
+            {% endblocktrans %}
+        </p>
+    </div>
+</div>
+{% endif %}
+
 
 <div class="grid gap-3 mt-5">
     <div class="g-col-12 sidebar">
@@ -127,6 +157,19 @@
         {% url "suila:person_detail_eboks_preview" pk=person.pk as person_eboks_preview_url %}
         {% jumbo_link person_eboks_preview_url _("e-Boks-beskeder preview") "assignment" %}
     </div>
+    {% endif %}
+    {% if user|has_permissions:"suila.change_personyear" %}
+        <div class="g-col-4 jumbo d-grid gap-3">
+        <form method="post" action="{% url 'suila:pause_person_year' pk=person_year_id %}">
+            {% csrf_token %}
+            <input type="hidden" name="person_year" value="{{person_year_id}}"/>
+            {% if paused %}
+                {% jumbo_button "paused" "false" _("Genoptag udbetalinger") "play_arrow" %}
+            {% else %}
+                {% jumbo_button "paused" "true" _("Sæt udbetalinger i bero") "pause" %}
+            {% endif %}
+        </form>
+        </div>
     {% endif %}
 </div>
 

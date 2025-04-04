@@ -11,3 +11,13 @@ def jumbo_link(url, title, icon):
         "title": title,
         "icon": icon,
     }
+
+
+@register.inclusion_tag("suila/templatetags/jumbo_button.html")
+def jumbo_button(name, value, title, icon):
+    return {  # pragma: no cover
+        "name": name,
+        "value": value,
+        "title": title,
+        "icon": icon,
+    }
