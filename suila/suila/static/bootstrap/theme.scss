@@ -488,6 +488,10 @@ div.explainer p {
     padding: 3 * $spacer;
     min-height: 60vh;
   }
+
+  header nav.navbar .nav-item {
+    margin-bottom: $spacer;
+  }
 }
 
 // "Medium" (or smaller)
