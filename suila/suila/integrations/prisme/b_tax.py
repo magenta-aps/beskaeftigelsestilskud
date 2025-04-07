@@ -1,18 +1,23 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from dataclasses import dataclass
 from datetime import date
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import OutputWrapper
 from django.db import transaction
+from tenQ.client import ClientException
 
 from suila.integrations.prisme.csv_format import CSVFormat
 from suila.integrations.prisme.sftp_import import SFTPImport
 from suila.models import BTaxPayment as BTaxPaymentModel
 from suila.models import DataLoad, Person, PersonMonth, PersonYear, Year
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -57,13 +62,18 @@ class BTaxPaymentImport(SFTPImport):
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
-            rows: list[BTaxPayment] = self._parse(filename)
-            objs: list[BTaxPaymentModel] = self._create_objects(filename, rows)
-            all_objs.extend(objs)
-            # List processed data
-            if verbosity >= 2:
-                for obj in objs:
-                    stdout.write(f"Created {obj}\n")
+            rows: list[BTaxPayment] | None = self._parse(filename)
+            if rows is not None:
+                objs: list[BTaxPaymentModel] = self._create_objects(filename, rows)
+                all_objs.extend(objs)
+                # List processed data
+                if verbosity >= 2:
+                    for obj in objs:
+                        stdout.write(f"Created {obj}\n")
+            else:
+                stdout.write(
+                    f"Failed to load new file {filename}\n"
+                )  # pragma: no cover
 
         stdout.write("All done\n")
 
@@ -81,8 +91,14 @@ class BTaxPaymentImport(SFTPImport):
         )
         return known_filenames
 
-    def _parse(self, filename: str) -> list[BTaxPayment]:
-        return BTaxPayment.from_csv_buf(self.get_file(filename))
+    def _parse(self, filename: str) -> list[BTaxPayment] | None:
+        try:
+            buf: BytesIO = self.get_file(filename)
+        except ClientException:
+            logger.exception("encountered error when retrieving file %r", filename)
+            return None
+        else:
+            return BTaxPayment.from_csv_buf(buf)
 
     def _create_objects(
         self,

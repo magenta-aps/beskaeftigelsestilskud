@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
 from decimal import Decimal
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from tenQ.client import ClientException
 
 from suila.integrations.prisme.b_tax import BTaxPayment, BTaxPaymentImport
 from suila.models import BTaxPayment as BTaxPaymentModel
@@ -107,6 +108,12 @@ class TestBTaxPaymentImport(ImportTestCase):
             instance.import_b_tax(MagicMock(), 1)
             instance.import_b_tax(MagicMock(), 1)
 
+    def test_import_b_tax_handles_failing_file_load(self):
+        instance = BTaxPaymentImport()
+        with self.mock_sftp_server():
+            with patch.object(instance, "_parse", return_value=None):
+                instance.import_b_tax(MagicMock(), 1)
+
     def test_import_b_tax_verbosity_2(self):
         # Arrange
         stdout = MagicMock()
@@ -129,7 +136,17 @@ class TestBTaxPaymentImport(ImportTestCase):
         instance = BTaxPaymentImport()
         with self.mock_sftp_server(_EXAMPLE_1):
             # Act
-            result: list[BTaxPayment] = instance._parse("filename1.csv")
+            result: list[BTaxPayment] | None = instance._parse("filename1.csv")
             # Assert
             self.assertIsInstance(result, list)
             self.assertIsInstance(result[0], BTaxPayment)
+
+    def test_parse_handles_client_exception(self):
+        # Arrange
+        instance = BTaxPaymentImport()
+        with self.mock_sftp_server(_EXAMPLE_1):
+            with patch.object(instance, "get_file", side_effect=ClientException):
+                # Act
+                result: list[BTaxPayment] | None = instance._parse("filename1.csv")
+                # Assert
+                self.assertIsNone(result)
