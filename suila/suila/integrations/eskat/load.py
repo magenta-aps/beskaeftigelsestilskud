@@ -69,7 +69,7 @@ class Handler:
             Person.objects.bulk_create(
                 persons.values(),
                 update_conflicts=True,
-                update_fields=("cpr", "name"),
+                update_fields=("cpr", "load"),
                 unique_fields=("cpr",),
             )
             out.write(f"Processed {len(persons)} Person objects")

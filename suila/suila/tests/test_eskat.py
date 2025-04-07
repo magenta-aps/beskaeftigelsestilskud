@@ -1023,7 +1023,7 @@ class TestTaxInformation(BaseTestCase):
             self.assertEqual(data, ["FULL", "LIM"])
 
 
-class TestHandler(SimpleTestCase):
+class TestHandlerGetFieldValues(SimpleTestCase):
     def test_get_field_values_exclude_kwarg_default(self):
         # Arrange
         instance = Handler()
@@ -1032,6 +1032,27 @@ class TestHandler(SimpleTestCase):
         field_values = instance.get_field_values(item)
         # Assert: no fields were excluded
         self.assertListEqual(list(field_values.keys()), [f.name for f in fields(item)])
+
+
+class TestHandlerCreatePersonYears(BaseEnvMixin, TestCase):
+    def test_create_person_years_does_not_overwrite_person_name(self):
+        # Assert: person has name before calling `create_person_years`
+        # (In real life, `Person.name` is populated using `get_person_info_from_dafo`.)
+        self.assertEqual(self.person.name, "Person")
+        # Arrange
+        load = DataLoad.objects.create(source="testing")
+        out = MagicMock()
+        # Act: call `create_person_years`
+        Handler.create_person_years(
+            {self.year.year: {self.person.cpr: TaxScope.FULDT_SKATTEPLIGTIG}},
+            load,
+            out,
+        )
+        # Assert: person has name after calling `create_person_years`
+        self.person.refresh_from_db()
+        self.assertEqual(self.person.name, "Person")
+        # Assert: person has reference to the latest data load which touched the person
+        self.assertEqual(self.person.load, load)
 
 
 class TestLoadEskatCommand(BaseEnvMixin, TestCase):
