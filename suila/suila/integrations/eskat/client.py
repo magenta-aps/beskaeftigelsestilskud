@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from threading import current_thread
 from typing import Any, Dict, Iterable, List
 
@@ -21,6 +22,8 @@ from suila.integrations.eskat.responses.data_models import (
     MonthlyIncome,
     TaxInformation,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class EskatClient:
@@ -71,7 +74,7 @@ class EskatClient:
         chunk: int = 1
         first_response = self.get(path + f"?chunk={chunk}&chunkSize={chunk_size}")
         total_chunks = first_response["totalChunks"]
-        print(f"total eskat chunks: {total_chunks} of size {chunk_size}")
+        logger.info(f"total eskat chunks: {total_chunks} of size {chunk_size}")
         yield first_response
         if total_chunks > 1:
             remaining_paths = [

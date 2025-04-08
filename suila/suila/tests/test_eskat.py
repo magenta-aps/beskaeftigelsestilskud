@@ -1115,7 +1115,7 @@ class TestLoadEskatCommand(BaseEnvMixin, TestCase):
                         year=input_year,
                         month=input_month,
                         cpr=None,
-                        verbosity=1,
+                        verbosity=0,
                         skew=True,
                         fetch_chunk_size=20,
                         insert_chunk_size=20,

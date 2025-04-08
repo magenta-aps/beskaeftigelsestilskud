@@ -128,7 +128,7 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
 
     def _run(self, mock_updates=None, **kwargs):
         # Arrange
-        kwargs.setdefault("verbosity", 3)
+        kwargs.setdefault("verbosity", 0)
         kwargs.setdefault("cpr", None)
         command = GetPersonInfoFromDafoCommand()
         mock_client = Mock()

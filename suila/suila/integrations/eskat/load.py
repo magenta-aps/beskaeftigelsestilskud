@@ -193,7 +193,7 @@ class AnnualIncomeHandler(Handler):
 
                 for item in items:
                     if item.cpr is None or item.year is None:
-                        print(
+                        out.write(
                             "Skipping item with empty CPR and/or year "
                             f"(cpr={item.cpr!r}, year={item.year!r})"
                         )
@@ -286,7 +286,7 @@ class ExpectedIncomeHandler(Handler):
 
                 for item in items:
                     if item.cpr is None or item.year is None:
-                        print(
+                        out.write(
                             "Skipping item with empty CPR and/or year "
                             f"(cpr={item.cpr!r}, year={item.year!r})"
                         )
