@@ -6,23 +6,27 @@
 # Intended to be run daily
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 from suila.dispatch import JobDispatcher
+from suila.management.commands.common import SuilaBaseCommand
 from suila.models import ManagementCommands
 
 
-class Command(BaseCommand):
+class Command(SuilaBaseCommand):
+    filename = __file__
 
     def add_arguments(self, parser):
         parser.add_argument("--year", type=int)
         parser.add_argument("--month", type=int)
         parser.add_argument("--day", type=int)
         parser.add_argument("--cpr", type=str)
-        parser.add_argument("--reraise", action="store_true", default=False)
         super().add_arguments(parser)
 
-    def handle(self, *args, **options):
+    def _write_verbose(self, msg, **kwargs):
+        if self._verbose:
+            self.stdout.write(msg, **kwargs)
+
+    def _handle(self, *args, **options):
         """
         Job which runs all other relevant management jobs on the proper days.
 
@@ -147,7 +151,3 @@ class Command(BaseCommand):
         )
 
         self._write_verbose("Done")
-
-    def _write_verbose(self, msg, **kwargs):
-        if self._verbose:
-            self.stdout.write(msg, **kwargs)
