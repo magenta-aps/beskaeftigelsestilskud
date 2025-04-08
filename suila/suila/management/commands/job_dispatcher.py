@@ -84,12 +84,13 @@ class Command(SuilaBaseCommand):
         ESKAT_BASE_URL = settings.ESKAT_BASE_URL  # type: ignore[misc]
 
         job_dispatcher.call_job(
-            "calculate_stability_score", year - 1, verbosity=verbosity
+            ManagementCommands.CALCULATE_STABILITY_SCORE, year - 1, verbosity=verbosity
         )
         job_dispatcher.call_job(
-            "autoselect_estimation_engine", year, verbosity=verbosity
+            ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE, year, verbosity=verbosity
         )
 
+        # Call "load_eskat" for 3 different "types"
         for typ in ["expectedincome", "monthlyincome", "taxinformation"]:
 
             if not ESKAT_BASE_URL:
@@ -100,7 +101,7 @@ class Command(SuilaBaseCommand):
 
             # Load data from eskat
             job_dispatcher.call_job(
-                "load_eskat",
+                ManagementCommands.LOAD_ESKAT,
                 year,
                 typ,
                 month=None if typ == "expectedincome" else month,
@@ -119,7 +120,7 @@ class Command(SuilaBaseCommand):
 
         # Estimate income
         job_dispatcher.call_job(
-            "estimate_income",
+            ManagementCommands.ESTIMATE_INCOME,
             year=year,
             cpr=cpr,
             verbosity=verbosity,
@@ -127,7 +128,7 @@ class Command(SuilaBaseCommand):
 
         # Calculate benefit
         job_dispatcher.call_job(
-            "calculate_benefit",
+            ManagementCommands.CALCULATE_BENEFIT,
             year,
             month=month,
             cpr=cpr,
@@ -136,7 +137,7 @@ class Command(SuilaBaseCommand):
 
         # Send to prisme
         job_dispatcher.call_job(
-            "export_benefits_to_prisme",
+            ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             year=year,
             month=month,
             verbosity=verbosity,
@@ -144,7 +145,7 @@ class Command(SuilaBaseCommand):
 
         # Send eboks messages
         job_dispatcher.call_job(
-            "eboks_send",
+            ManagementCommands.SEND_EBOKS,
             year=year,
             month=month,
             verbosity=verbosity,

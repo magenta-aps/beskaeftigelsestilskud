@@ -55,9 +55,6 @@ class JobDispatcher:
                 ManagementCommands.ESTIMATE_INCOME,
                 ManagementCommands.CALCULATE_BENEFIT,
             ],
-            # ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [
-            #     ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-            # ],
             ManagementCommands.SEND_EBOKS: [
                 ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             ],
