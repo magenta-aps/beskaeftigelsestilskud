@@ -20,7 +20,6 @@ class Command(SuilaBaseCommand):
         parser.add_argument("--month", type=int)
         parser.add_argument("--day", type=int)
         parser.add_argument("--cpr", type=str)
-        parser.add_argument("--reraise", action="store_true", default=False)
         super().add_arguments(parser)
 
     def _write_verbose(self, msg, **kwargs):
