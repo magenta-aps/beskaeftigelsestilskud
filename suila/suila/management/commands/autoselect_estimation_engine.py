@@ -34,7 +34,7 @@ class Command(BaseCommand):
                     years = [kwargs["year"]]
                 else:
                     years = set(
-                        [summary.person_year.year.year for summary in summaries]
+                        [summary.person_year.year.year + 1 for summary in summaries]
                     )
 
                 for year in [y for y in years if y != first_year]:
