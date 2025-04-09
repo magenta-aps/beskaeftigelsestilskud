@@ -720,7 +720,7 @@ class PersonMonth(PermissionsMixin, models.Model):
             ),
             has_u_income=Value(False),  # TODO: Get U income
         ).annotate(
-            signal=Case(
+            has_signal=Case(
                 When(
                     Q(has_paid_b_tax=True)
                     | Q(has_a_income=True)
