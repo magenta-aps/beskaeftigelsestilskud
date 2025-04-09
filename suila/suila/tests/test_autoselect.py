@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
 from io import StringIO
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -106,3 +107,19 @@ class AutoSelectEngineTests(TestCase):
     def test_autoselect_for_all_years(self):
         self.call_command(0)
         self.assert_that_engines_are_updated()
+
+    def test_autoselect_for_empty_year(self):
+        self.call_command(2022)
+        self.assert_that_engines_equal_defaults()
+
+    @patch("suila.management.commands.autoselect_estimation_engine.PersonYear.objects")
+    def test_autoselect_for_nonexising_person_year(self, person_year_mock):
+        person_year_mock.get.side_effect = PersonYear.DoesNotExist
+        self.call_command(2023)
+        self.assert_that_engines_equal_defaults()
+
+    @patch("suila.management.commands.autoselect_estimation_engine.Profile")
+    def test_autoselect_management_command_profiler(self, profiler):
+        self.assertFalse(profiler.called)
+        self.call_command(2023, profile=True)
+        self.assertTrue(profiler.called)

@@ -19,7 +19,26 @@ omit =
     */mitid_test/*
     */suila/simulation.py
     */suila/integrations/eskat/responses/*
-    */management/commands/*.py
     */data_update/*
+    */management/commands/make_messages.py
+    */management/commands/create_api_group.py
+    */management/commands/create_groups.py
+    */management/commands/create_user.py
+    */management/commands/eboks_send.py
+    */management/commands/eboks_update_status.py
+    */management/commands/estimate_income.py
+    */management/commands/export_benefits_to_prisme.py
+    */management/commands/export_users.py
+    */management/commands/get_employer_info_from_dafo.py
+    */management/commands/get_person_info_from_dafo.py
+    */management/commands/import_u1a_data.py
+    */management/commands/import_users.py
+    */management/commands/job_dispatcher.py
+    */management/commands/load_dummy_calculation_method.py
+    */management/commands/load_eskat.py
+    */management/commands/load_prisme_b_tax.py
+    */management/commands/test_end_to_end_for_cpr.py
+    */management/commands/load_prisme_benefits_posting_status.py
+    */management/commands/wait_for_db.py
 parallel = true
 concurrency = multiprocessing

@@ -1,11 +1,14 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from cProfile import Profile
 
 from django.core.management.base import BaseCommand
 
 from suila.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -55,7 +58,7 @@ class Command(BaseCommand):
                                 person=person, year=year
                             )
                         except PersonYear.DoesNotExist:
-                            print(f"No PersonYear found for {person}")
+                            logger.info(f"No PersonYear found for {person}")
                             continue
                         setattr(
                             person_year,
