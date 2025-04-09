@@ -713,18 +713,15 @@ class PersonMonth(PermissionsMixin, models.Model):
     @classmethod
     def signal_qs(cls, qs: QuerySet[PersonMonth]) -> QuerySet[PersonMonth]:
         return qs.annotate(
-            has_a_income=Case(
+            has_income=Case(
                 When(amount_sum__gt=Value(0), then=Value(True)),
                 default_value=Value(False),
                 output_field=BooleanField(),
-            ),
-            has_u_income=Value(False),  # TODO: Get U income
+            )
         ).annotate(
             has_signal=Case(
                 When(
-                    Q(has_paid_b_tax=True)
-                    | Q(has_a_income=True)
-                    | Q(has_u_income=True),
+                    Q(has_paid_b_tax=True) | Q(has_income=True),
                     then=Value(True),
                 ),
                 default=Value(False),
