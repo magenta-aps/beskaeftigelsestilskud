@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import datetime
+import logging
 
 from django.conf import settings
 from django.core import management
@@ -11,6 +12,8 @@ from django.utils import timezone
 from suila.benefit import get_payout_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
+
+logger = logging.getLogger(__name__)
 
 
 class JobDispatcher:
@@ -124,7 +127,7 @@ class JobDispatcher:
     def call_job(self, name, *args, **kwargs):
         if self.allow_job(name):
             self.check_dependencies(name)
-            print(
+            logger.info(
                 f"\n{datetime.date(self.year, self.month, self.day)}: "
                 f"Running job {name} ..."
             )

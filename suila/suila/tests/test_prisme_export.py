@@ -8,7 +8,7 @@ from csv import DictReader
 from datetime import date
 from decimal import Decimal
 from io import BytesIO, TextIOWrapper
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import ANY, MagicMock, Mock, patch
 
 from django.conf import settings
 from django.core.management import call_command
@@ -203,6 +203,8 @@ class TestBatchExport(TestCase):
         """If a `Person` has no `location_code`, the corresponding `PrismeAccountAlias`
         cannot be retrieved, and `get_prisme_batch_item` should raise an exception.
         """
+        logging.getLogger("suila.integrations.prisme.benefits").exception = MagicMock()
+        logging.disable(logging.INFO)
         # Arrange
         self._add_person_month(
             3112700000,
@@ -217,6 +219,7 @@ class TestBatchExport(TestCase):
         with self.assertLogs(level=logging.ERROR):
             # Act
             self._get_prisme_batch_item(export, prisme_batch)
+        logging.disable(logging.CRITICAL)
 
     def test_get_prisme_batch_item_calculates_dates(self):
         """The G68 `Betalingsdato` field should be the third Monday of the month that

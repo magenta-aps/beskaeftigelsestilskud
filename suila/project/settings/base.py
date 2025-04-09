@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sys
+import warnings
 from decimal import Decimal
 from pathlib import Path
 from typing import List
@@ -104,5 +105,13 @@ PITU = {
 
 if TESTING:
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+    # Ignore warnings related to naive datetimes
+    # Those are triggered because we use datetime.datetime
+    # instead of django.utils.timezone
+    warnings.filterwarnings("ignore", message=".*naive datetime.*")
+
+    # Disable log messages unless they are important
+    logging.disable(logging.CRITICAL)
 
 CRISPY_TEMPLATE_PACK = "uni_form"

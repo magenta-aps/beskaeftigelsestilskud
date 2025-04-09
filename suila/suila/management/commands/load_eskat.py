@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
+from io import BytesIO, TextIOWrapper
 from itertools import batched
 from typing import Iterator, List
 
@@ -55,6 +56,7 @@ class Command(SuilaBaseCommand):
         self._write_verbose(
             f"Handling subcommand: {typ} (YEAR={year}, MONTH={month}, CPR={cpr})"
         )
+        out = self.stdout if self._verbose else TextIOWrapper(BytesIO())
         if typ == "annualincome":
             if month is not None:
                 self.stdout.write(
@@ -64,8 +66,8 @@ class Command(SuilaBaseCommand):
                 year, cpr, chunk_size=fetch_chunk_size
             )
             for chunk in batched(annual_income_data, insert_chunk_size):
-                print(f"Handling parsed chunk of size {len(chunk)}")
-                AnnualIncomeHandler.create_or_update_objects(chunk, load, self.stdout)
+                self._write_verbose(f"Handling parsed chunk of size {len(chunk)}")
+                AnnualIncomeHandler.create_or_update_objects(chunk, load, out)
         if typ == "expectedincome":
             if month is not None:
                 self.stdout.write(
@@ -75,10 +77,8 @@ class Command(SuilaBaseCommand):
                 year, cpr, chunk_size=fetch_chunk_size
             )
             for chunk in batched(expected_income_data, insert_chunk_size):
-                print(f"Handling parsed chunk of size {len(chunk)}")
-                ExpectedIncomeHandler.create_or_update_objects(
-                    year, chunk, load, self.stdout
-                )
+                self._write_verbose(f"Handling parsed chunk of size {len(chunk)}")
+                ExpectedIncomeHandler.create_or_update_objects(year, chunk, load, out)
             ExpectedIncomeHandler.finalize()
 
         if typ == "monthlyincome":
@@ -109,12 +109,12 @@ class Command(SuilaBaseCommand):
                 # vi tager af puljen med en anden skestørrelse)
                 for chunk in batched(monthly_income_data, insert_chunk_size):
                     # Spis af generatoren i chunks
-                    print(f"Handling parsed chunk of size {len(chunk)}")
+                    self._write_verbose(f"Handling parsed chunk of size {len(chunk)}")
                     MonthlyIncomeHandler.create_or_update_objects(
                         year_,
                         chunk,
                         load,
-                        self.stdout,
+                        out,
                     )
         if typ == "taxinformation":
             tax_information_data = client.get_tax_information(
@@ -123,13 +123,8 @@ class Command(SuilaBaseCommand):
             cprs: List[str] = []
             for chunk in batched(tax_information_data, insert_chunk_size):
                 # Spis af generatoren i chunks
-                print(f"Handling parsed chunk of size {len(chunk)}")
-                TaxInformationHandler.create_or_update_objects(
-                    year,
-                    chunk,
-                    load,
-                    self.stdout,
-                )
+                self._write_verbose(f"Handling parsed chunk of size {len(chunk)}")
+                TaxInformationHandler.create_or_update_objects(year, chunk, load, out)
                 if cpr is None:
                     cprs += [c.cpr for c in chunk]
             if cpr is None:

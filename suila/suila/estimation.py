@@ -168,7 +168,8 @@ class EstimationEngine:
                     dry_run,
                     output_stream,
                 )
-                print(f"Processed batch {counter}/{batches_count}")
+                if output_stream is not None:
+                    output_stream.write(f"Processed batch {counter}/{batches_count}")
 
     @staticmethod
     def _process_batch(
