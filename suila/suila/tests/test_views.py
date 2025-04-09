@@ -9,6 +9,7 @@ from decimal import Decimal
 from typing import Any
 from unittest.mock import MagicMock, patch
 from urllib.parse import quote_plus
+from uuid import uuid4 as uuid
 
 import requests
 from bs4 import BeautifulSoup
@@ -824,6 +825,9 @@ class TestNoteView(TimeContextMixin, PersonEnv):
 
     def test_create_attachment(self):
         view = self.view_class()
+        filename1 = f"testfile_{uuid()}"
+        filename2 = f"testfile_{uuid()}"
+
         request = self.request_factory.post(
             reverse("suila:person_detail_notes", kwargs={"pk": self.person1.pk}),
             {
@@ -833,12 +837,12 @@ class TestNoteView(TimeContextMixin, PersonEnv):
                 "attachments-MIN_NUM_FORMS": 0,
                 "attachments-MAX_NUM_FORMS": 1000,
                 "attachments-0-file": SimpleUploadedFile(
-                    name="testfile",
+                    name=filename1,
                     content=b"Test data",
                     content_type="text/plain",
                 ),
                 "attachments-1-file": SimpleUploadedFile(
-                    name="testfile2",
+                    name=filename2,
                     content=b"Test data 2",
                     content_type="text/plain",
                 ),
@@ -857,17 +861,17 @@ class TestNoteView(TimeContextMixin, PersonEnv):
         self.assertEqual(note.text, "Test tekst")
         self.assertEqual(note.attachments.count(), 2)
 
-        attachments = list(note.attachments.all())
+        attachments = list(note.attachments.all().order_by("pk"))
         attachment = attachments[0]
         self.assertEqual(attachment.content_type, "text/plain")
-        self.assertEqual(attachment.filename, "testfile")
+        self.assertEqual(attachment.filename, filename1)
         with attachment.file.open() as f:
             data = f.read()
         self.assertEqual(data, b"Test data")
 
         attachment = attachments[1]
         self.assertEqual(attachment.content_type, "text/plain")
-        self.assertEqual(attachment.filename, "testfile2")
+        self.assertEqual(attachment.filename, filename2)
         with attachment.file.open() as f:
             data = f.read()
         self.assertEqual(data, b"Test data 2")
