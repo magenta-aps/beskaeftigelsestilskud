@@ -79,7 +79,7 @@ def calculate_benefit(
         month_qs,
         index="person_year__person__cpr",
         dtypes={
-            "signal": bool,
+            "has_signal": bool,
         },
     )
 
@@ -109,7 +109,7 @@ def calculate_benefit(
     df = pd.concat([month_df, estimates_df, payouts_df, assessment_df], axis=1)
 
     # Any months not found in concatenation have been set to NaN, replace with False
-    df["signal"] = df["signal"].fillna(False)
+    df["has_signal"] = df["has_signal"].fillna(False)
 
     df["calculation_basis"] = (
         df["estimated_year_result"]
@@ -119,7 +119,7 @@ def calculate_benefit(
     )
 
     # Only payout if we have a signal
-    df.loc[np.logical_not(df["signal"]), "calculation_basis"] = 0
+    df.loc[np.logical_not(df["has_signal"]), "calculation_basis"] = 0
 
     # Calculate benefit
     df["estimated_year_benefit"] = (
