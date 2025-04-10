@@ -61,10 +61,12 @@ class IncomeType(TextChoices):
 
 
 class ManagementCommands(TextChoices):
-    GET_PERSON_INFO_FROM_DAFO = "get_person_info_from_dafo"
     CALCULATE_STABILITY_SCORE = "calculate_stability_score"
     AUTOSELECT_ESTIMATION_ENGINE = "autoselect_estimation_engine"
     LOAD_ESKAT = "load_eskat"
+    LOAD_PRISME_B_TAX = "load_prisme_b_tax"
+    IMPORT_U1A_DATA = "import_u1a_data"
+    GET_PERSON_INFO_FROM_DAFO = "get_person_info_from_dafo"
     ESTIMATE_INCOME = "estimate_income"
     CALCULATE_BENEFIT = "calculate_benefit"
     EXPORT_BENEFITS_TO_PRISME = "export_benefits_to_prisme"
