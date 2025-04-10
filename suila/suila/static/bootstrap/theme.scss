@@ -180,6 +180,26 @@ header nav.navbar .navbar-toggler {
 .offcanvas-xl.showing ul.navbar-nav li.nav-item {
   margin: $spacer 0;
 }
+.offcanvas-xl.show .profile-menu,
+.offcanvas-xl.showing .profile-menu {
+  padding: 1.5 * $spacer;
+  border-top: 1px solid $dark-primary;
+}
+.offcanvas-xl.show .profile-menu .action,
+.offcanvas-xl.showing .profile-menu .action {
+  margin-left: -($btn-padding-x / 2);
+}
+.offcanvas-xl.show a.close,
+.offcanvas-xl.showing a.close {
+  position: absolute;
+  top: 2 * $spacer;
+  right: 1.5 * $spacer;
+  text-decoration: none;
+}
+.offcanvas-xl.show .close span.material-icons,
+.offcanvas-xl.showing .close span.material-icons {
+  vertical-align: bottom;
+}
 
 .content {
   margin: 0;
@@ -481,7 +501,7 @@ div.explainer p {
   }
 }
 
-// "Large" (or bigger)
+// "Large" (or larger)
 @include media-breakpoint-up(lg) {
   .content {
     margin: $spacer 3 * $spacer 3 * $spacer 3 * $spacer;
@@ -491,6 +511,16 @@ div.explainer p {
 
   header nav.navbar .nav-item {
     margin-bottom: $spacer;
+  }
+}
+
+// "Large" (or smaller)
+@include media-breakpoint-down(lg) {
+  header {
+    margin: 0;
+  }
+  .content {
+    border-radius: 0;
   }
 }
 
