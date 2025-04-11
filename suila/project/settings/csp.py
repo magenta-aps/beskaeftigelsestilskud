@@ -10,6 +10,7 @@ CSP_DEFAULT_SRC = (
 )
 CSP_SCRIPT_SRC_ATTR = (
     "'self'",
+    "'unsafe-inline'",
     "localhost:8000" if DEBUG else HOST_DOMAIN,
 )
 CSP_STYLE_SRC_ATTR = (

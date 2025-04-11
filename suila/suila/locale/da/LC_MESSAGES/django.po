@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-27 07:52-0200\n"
+"POT-Creation-Date: 2025-04-11 11:11-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -437,6 +437,19 @@ msgstr ""
 msgid "Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til Grønland."
 msgstr ""
 
+#: suila/templates/suila/faq.html
+msgid "Du er blevet sat i bero"
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Medarbejdere i borgerservice kan sætte personer i bero, hvis de vurderer at "
+"det er nødvendigt. Det kan for eksempel være fordi din indkomst er blevet "
+"indberettet forkert, eller fordi din indkomst er ustabil. Når man er blevet "
+"sat i bero, modtager man Suila-tapit til årsopgørelsen året efter. Du kan "
+"maksimalt være i bero i ét skatteår ad gangen."
+msgstr ""
+
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -554,6 +567,18 @@ msgid "Forventet årsindkomst fra arbejde"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
+#, python-format
+msgid ""
+"Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit til "
+"årsopgørelsen slut %(year)s."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Kontakt venligst borgerservice hvis du ønsker at udbetalingerne genoptages."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
 msgid "Bemærk!"
 msgstr ""
 
@@ -594,6 +619,14 @@ msgstr ""
 
 #: suila/templates/suila/person_detail.html
 msgid "e-Boks-beskeder preview"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Genoptag udbetalinger"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Sæt udbetalinger i bero"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html

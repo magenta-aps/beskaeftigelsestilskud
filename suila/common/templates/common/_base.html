@@ -7,6 +7,7 @@
 {% load cache %}
 {% load compress %}
 {% load suila_permissions %}
+{% load element_tags %}
 <!doctype html>
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
@@ -39,160 +40,184 @@
         </nav>
         {% endif %}
 
-        <nav class="nav navbar navbar-expand">
+        <nav class="nav navbar navbar-expand-xl">
             <h1 class="navbar-brand py-0 my-0">
                 <a href="{% url 'suila:root' %}" class="logo-suila">Suila.gl</a>
             </h1>
-            <ul class="navbar-nav d-flex align-items-center">
-                {% if user.is_authenticated %}
-                <li class="nav-item ms-4">
-                    <a href="{% url 'suila:root' %}" class="d-flex align-items-center {% if current_view == 'suila:root' %}active{% endif %}">
-                        <span class="material-icons">home</span>
-                        <span class="ms-1">{% translate "Forside" %}</span>
+            <div class="d-flex flex-fill">
+                {# Language picker is separate element in nav bar at smaller screen sizes #}
+                <ul class="navbar-nav d-flex d-xl-none ms-auto mt-auto mb-auto">
+                    <li class="nav-item d-flex align-items-center mt-auto mb-auto">
+                        {% language_picker %}
+                    </li>
+                </ul>
+                <button class="navbar-toggler btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarOffcanvasLg" aria-controls="navbarOffcanvasLg" aria-label="{% trans 'Åbn menu' %}">
+                    <span class="material-icons">menu</span>
+                </button>
+                <div class="offcanvas offcanvas-xl offcanvas-end" tabindex="-1" id="navbarOffcanvasLg" aria-labelledby="navbarOffcanvasLgLabel">
+                    <a href="#" class="close d-flex d-xl-none" data-bs-dismiss="offcanvas" aria-label="{% translate 'Luk' %}">
+                        <span class="material-icons fs-4">close</span>
                     </a>
-                </li>
-                {% endif %}
+                    <ul class="navbar-nav d-flex align-items-xl-center align-content-stretch flex-wrap flex-fill pt-3">
+                        {% if user.is_authenticated %}
+                        <li class="nav-item ms-4">
+                            <a href="{% url 'suila:root' %}" class="d-flex align-items-center {% if current_view == 'suila:root' %}active{% endif %}">
+                                <span class="material-icons">home</span>
+                                <span class="ms-1">{% translate "Forside" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% if user.is_authenticated and user.cpr is not None and has_personyears %}
-                <li class="nav-item ms-4">
-                    <a href="{% url 'suila:person_detail' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail' %}active{% endif %}">
-                        <span class="material-icons">person</span>
-                        <span class="ms-1">{% translate "Mit overblik" %}</span>
-                    </a>
-                </li>
-                {% endif %}
+                        {% if user.is_authenticated and user.cpr is not None and has_personyears %}
+                        <li class="nav-item ms-4">
+                            <a href="{% url 'suila:person_detail' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail' %}active{% endif %}">
+                                <span class="material-icons">person</span>
+                                <span class="ms-1">{% translate "Mit overblik" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% if user.is_authenticated and user.cpr is not None and has_personyears %}
-                <li class="nav-item ms-4">
-                    <a href="{% url 'suila:person_detail_income' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail_income' %}active{% endif %}">
-                        <span class="material-icons">assignment</span>
-                        <span class="ms-1">{% translate "Mine signaler" %}</span>
-                    </a>
-                </li>
-                {% endif %}
+                        {% if user.is_authenticated and user.cpr is not None and has_personyears %}
+                        <li class="nav-item ms-4">
+                            <a href="{% url 'suila:person_detail_income' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_detail_income' %}active{% endif %}">
+                                <span class="material-icons">assignment</span>
+                                <span class="ms-1">{% translate "Mine signaler" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
-                <li class="nav-item ms-4">
-                    <a href="{% url 'suila:person_search' %}" class="d-flex align-items-center {% if current_view == 'suila:person_search' %}active{% endif %}">
-                        <span class="material-icons">search</span>
-                        <span class="ms-1">{% translate "Borgersøgning" %}</span>
-                    </a>
-                </li>
-                {% endif %}
+                        {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+                        <li class="nav-item ms-4">
+                            <a href="{% url 'suila:person_search' %}" class="d-flex align-items-center {% if current_view == 'suila:person_search' %}active{% endif %}">
+                                <span class="material-icons">search</span>
+                                <span class="ms-1">{% translate "Borgersøgning" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% if user.is_authenticated and user.cpr is not None and has_personyears %}
-                <li class="nav-item ms-4">
-                    <a href="{% url 'suila:person_graph' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_graph' %}active{% endif %}">
-                        <span class="material-icons">link</span>
-                        <span class="ms-1">{% translate "Mit estimerede Suila-tapit" %}</span>
-                    </a>
-                </li>
-                {% endif %}
+                        {% if user.is_authenticated and user.cpr is not None and has_personyears %}
+                        <li class="nav-item ms-4">
+                            <a href="{% url 'suila:person_graph' pk=person.pk %}" class="d-flex align-items-center {% if current_view == 'suila:person_graph' %}active{% endif %}">
+                                <span class="material-icons">link</span>
+                                <span class="ms-1">{% translate "Mit estimerede Suila-tapit" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% if user.is_authenticated %}
-                <li class="nav-item ms-4">
-                    <a href="{% url 'suila:faq' %}" class="d-flex align-items-center {% if current_view == 'suila:faq' %}active{% endif %}">
-                        <span class="material-icons">help</span>
-                        <span class="ms-1">{% translate "Ikke modtaget Suila-tapit" %}</span>
-                    </a>
-                </li>
-                {% endif %}
+                        {% if user.is_authenticated %}
+                        <li class="nav-item ms-4">
+                            <a href="{% url 'suila:faq' %}" class="d-flex align-items-center {% if current_view == 'suila:faq' %}active{% endif %}">
+                                <span class="material-icons">help</span>
+                                <span class="ms-1">{% translate "Ikke modtaget Suila-tapit" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% if user.is_authenticated %}
-                <li class="nav-item ms-4">
-                    <a href="{% url 'suila:calculator' %}" class="d-flex align-items-center {% if current_view == 'suila:calculator' %}active{% endif %}">
-                        <span class="material-icons">calculate</span>
-                        <span class="ms-1">{% translate "Suila-tapit-beregneren" %}</span>
-                    </a>
-                </li>
-                {% endif %}
+                        {% if user.is_authenticated %}
+                        <li class="nav-item ms-4">
+                            <a href="{% url 'suila:calculator' %}" class="d-flex align-items-center {% if current_view == 'suila:calculator' %}active{% endif %}">
+                                <span class="material-icons">calculate</span>
+                                <span class="ms-1">{% translate "Suila-tapit-beregneren" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                {% if user.is_authenticated and user|has_permissions:"suila.view_data_analysis" %}
-                <li class="nav-item dropdown ms-4">
-                    <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="material-icons">description</span>
-                        <span class="ms-1">{% translate "Estimeringsoverblik for hver person" %}</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        {% for year in years %}
-                        <li><a href="{% url 'data_analysis:person_years' year=year %}" class="dropdown-item">{{ year }}</a></li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                {% endif %}
-
-                {% if user.is_authenticated and user|has_permissions:"suila.view_data_analysis" %}
-                <li class="nav-item dropdown ms-4">
-                    <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="material-icons">description</span>
-                        <span class="ms-1">{% translate "Histogrammer over estimeringernes afvigelse" %}</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        {% for year in years %}
-                        <li><a href="{% url 'data_analysis:histogram' year=year %}" class="dropdown-item">{{ year }}</a></li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                {% endif %}
-
-                {% if user.is_authenticated and user|has_permissions:"suila.view_joblog" %}
-                <li class="nav-item dropdown ms-4">
-                    <a href="{% url 'data_analysis:job_log' %}" class="d-flex align-items-center">
-                        <span class="material-icons">description</span>
-                        <span class="ms-1">{% translate "Jobliste" %}</span>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-            <ul class="navbar-nav d-flex align-items-center ms-auto">
-                <div class="d-flex align-items-center ms-4">
-                    <span class="material-icons">language</span>
-                    <form action="{% url 'set_language' %}" method="post" class="navbar-form navbar-right mx-1 my-2">
-                        {% csrf_token %}
-                        <div class="form-group me-3">
-                            <select name="language" class="form-select">
-                                {% get_available_languages as LANGUAGES %}
-                                {% get_language_info_list for LANGUAGES as languages %}
-                                {% for language in languages %}
-                                <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
-                                    {{ language.name_local|capfirst }}
-                                </option>
+                        {% if user.is_authenticated and user|has_permissions:"suila.view_data_analysis" %}
+                        <li class="nav-item dropdown ms-4">
+                            <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="material-icons">description</span>
+                                <span class="ms-1">{% translate "Estimeringsoverblik for hver person" %}</span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                {% for year in years %}
+                                <li><a href="{% url 'data_analysis:person_years' year=year %}" class="dropdown-item">{{ year }}</a></li>
                                 {% endfor %}
-                            </select>
-                            <script nonce="{{ request.csp_nonce }}">$("[name=language]").on("change", function () {
-                                this.form.submit()
-                            })</script>
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        {% if user.is_authenticated and user|has_permissions:"suila.view_data_analysis" %}
+                        <li class="nav-item dropdown ms-4">
+                            <a href="#" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="material-icons">description</span>
+                                <span class="ms-1">{% translate "Histogrammer over estimeringernes afvigelse" %}</span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                {% for year in years %}
+                                <li><a href="{% url 'data_analysis:histogram' year=year %}" class="dropdown-item">{{ year }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        {% if user.is_authenticated and user|has_permissions:"suila.view_joblog" %}
+                        <li class="nav-item dropdown ms-4">
+                            <a href="{% url 'data_analysis:job_log' %}" class="d-flex align-items-center">
+                                <span class="material-icons">description</span>
+                                <span class="ms-1">{% translate "Jobliste" %}</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    <ul class="util-menu navbar-nav d-none d-xl-flex align-items-xl-center align-self-xl-start flex-no-wrap ms-4 me-auto pt-xxl-3">
+                        {# Language picker is integrated in rest of menu on largest screen sizes #}
+                        <div class="d-flex nav-item align-items-center">
+                            {% language_picker %}
                         </div>
-                    </form>
-                </div>
-                {% if user.is_authenticated %}
-                <li class="nav-item dropdown">
-                    <a href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="material-icons fs-3 d-flex">account_circle</span>
-                    </a>
-                    <div id="settings" class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        {% if user.is_authenticated %}
+                        {# This version of the profile menu is shown on largest screen sizes #}
+                        <li class="nav-item dropdown">
+                            <a href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="material-icons fs-3 d-flex">account_circle</span>
+                            </a>
+                            <div id="settings" class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <div class="d-flex align-items-center">
+                                    <span class="material-icons me-2">account_circle</span>
+                                    <h4>{{ user.get_full_name }}</h4>
+                                </div>
+                                {% if not user_twofactor_enabled %}
+                                <div class="d-flex mb-3">
+                                    <a href="{% url 'login:two_factor_setup' %}" class="btn btn-primary d-flex align-items-center">
+                                        <span class="material-icons me-1">devices</span>
+                                        {% translate "Aktivér to-faktor-login" %}
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <div class="d-flex">
+                                    <a href="{% url 'login:logout' %}" class="btn btn-primary d-flex align-items-center">
+                                        <span class="material-icons me-1">logout</span>
+                                        {% translate "Log ud" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% if user.is_authenticated %}
+                    {# This version of the profile menu is shown on smaller screen sizes #}
+                    <div class="profile-menu d-flex d-xl-none flex-column">
                         <div class="d-flex align-items-center">
-                            <span class="material-icons me-2">account_circle</span>
-                            <h4>{{ user.get_full_name }}</h4>
+                            <span class="material-icons me-2 fs-2">account_circle</span>
+                            <h4 class="text-white fs-5 fw-bold">{{ user.get_full_name }}</h4>
                         </div>
                         {% if not user_twofactor_enabled %}
-                        <div class="d-flex">
-                            <a href="{% url 'login:two_factor_setup' %}" class="btn btn-primary d-flex align-items-center" id="logout-link">
+                        <div class="action d-flex mt-4 mb-3">
+                            <a href="{% url 'login:two_factor_setup' %}" class="btn btn-primary d-flex align-items-center">
                                 <span class="material-icons me-1">devices</span>
                                 {% translate "Aktivér to-faktor-login" %}
                             </a>
                         </div>
                         {% endif %}
-                        <div class="d-flex">
-                            <a href="{% url 'login:logout' %}" class="btn btn-primary d-flex align-items-center" id="logout-link">
+                        <div class="action d-flex">
+                            <a href="{% url 'login:logout' %}" class="btn btn-primary d-flex align-items-center">
                                 <span class="material-icons me-1">logout</span>
                                 {% translate "Log ud" %}
                             </a>
                         </div>
                     </div>
-                </li>
-                {% endif %}
-            </ul>
+                    {% endif %}
+                </div>
+            </div>
         </nav>
     </header>
 
@@ -213,6 +238,11 @@
     {% endblock %}
 
     <script nonce="{{ request.csp_nonce }}">
+        // Activate Bootstrap offcanvas actions (= hamburger menu)
+        const offcanvasElementList = document.querySelectorAll('.offcanvas-xl');
+        const offcanvasList = [...offcanvasElementList].map(offcanvasEl => new bootstrap.Offcanvas(offcanvasEl));
+
+        // Activate Bootstrap tooltips (unused at the moment)
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     </script>

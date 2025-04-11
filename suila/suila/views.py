@@ -659,9 +659,7 @@ class GraphViewMixin(ContextMixin):
         return json.dumps(data, cls=SuilaJSONEncoder)
 
 
-class GraphView(
-    YearMonthMixin, ViewLogMixin, GraphViewMixin, MustHavePersonYearMixin, TemplateView
-):
+class GraphView(YearMonthMixin, ViewLogMixin, GraphViewMixin, TemplateView):
     template_name = "suila/graph.html"
 
 
