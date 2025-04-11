@@ -7,7 +7,13 @@
 {% block page %}
 <div class="content">
     <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-3">
+        {# Simplified breadcrumb for smaller screens #}
+        <ol class="breadcrumb d-flex d-lg-none align-items-center mb-1">
+            <li class="text-body-secondary me-2">&lsaquo;</li>
+            <li class="breadcrumb-item"><a href="/">{% translate "Forside" %}</a></li>
+        </ol>
+        {# Normal breadcrumb for larger screens #}
+        <ol class="breadcrumb d-none d-lg-flex mb-3">
             <li class="breadcrumb-item"><a href="/">{% translate "Forside" %}</a></li>
             {% block breadcrumb %}
             {% endblock %}
