@@ -109,6 +109,10 @@ class Command(SuilaBaseCommand):
                     skew=typ == "monthlyincome",
                 )
 
+        job_dispatcher.call_job(
+            ManagementCommands.LOAD_PRISME_B_TAX,
+        )
+
         # Populate `Person.location_code` and `Person.civil_state` (requires Pitu/DAFO
         # API access via valid client certificate.)
         job_dispatcher.call_job(
