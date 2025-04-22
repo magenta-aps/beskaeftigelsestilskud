@@ -247,8 +247,8 @@ class PersonDetailView(
                     "benefit_paid": person_month.benefit_paid,
                     "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
-                    "paused": person_year.paused,
-                    "person_year_id": person_year.pk,
+                    "paused": person_year.person.paused,
+                    "person_id": person_year.person.pk,
                     "next_year": person_year.year.year + 1,
                 }
             )
@@ -984,15 +984,15 @@ class EboksMessageView(
         return HttpResponse(content=pdf_data, content_type="application/pdf")
 
 
-class PersonYearPauseUpdateView(
+class PersonPauseUpdateView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
     ViewLogMixin,
     UpdateView,
 ):
-    model = PersonYear
-    required_model_permissions = ["suila.change_personyear"]
+    model = Person
+    required_model_permissions = ["suila.change_person"]
     fields = ["paused"]
 
     def get_success_url(self):
-        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.person.pk})
+        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})

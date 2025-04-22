@@ -234,9 +234,9 @@ class CalculateBenefitTest(BaseTestCase):
         for test_case in test_cases:
 
             # Reset person1s "pause" attribute for each test case
-            person_year.paused = False
-            person_year.save()
-            self.assertFalse(person_year.paused)
+            person_year.person.paused = False
+            person_year.person.save()
+            self.assertFalse(person_year.person.paused)
 
             remaining_year_benefit = correct_year_benefit
             for month in range(1, 13):
@@ -244,17 +244,17 @@ class CalculateBenefitTest(BaseTestCase):
 
                 # Pause all payouts for person1
                 if month == test_case["pause_month"]:
-                    person_year.paused = True
-                    person_year.save()
-                    self.assertTrue(person_year.paused)
+                    person_year.person.paused = True
+                    person_year.person.save()
+                    self.assertTrue(person_year.person.paused)
 
                 # Resume payouts for person1
                 if month == test_case["unpause_month"]:
-                    person_year.paused = False
-                    person_year.save()
-                    self.assertFalse(person_year.paused)
+                    person_year.person.paused = False
+                    person_year.person.save()
+                    self.assertFalse(person_year.person.paused)
 
-                if person_year.paused:
+                if person_year.person.paused:
                     correct_month_benefit = 0
                 else:
                     correct_month_benefit = remaining_year_benefit / months_remaining

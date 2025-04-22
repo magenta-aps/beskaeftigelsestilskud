@@ -359,6 +359,13 @@ class Person(PermissionsMixin, models.Model):
         help_text=_("CPR nummer"),
     )
 
+    # Når en person er på pause udbetaler vi ved årsopgørelsen (dvs. December).
+    paused = models.BooleanField(
+        default=False,
+        null=False,
+        blank=False,
+    )
+
     name = models.TextField(blank=True, null=True)
     address_line_1 = models.TextField(blank=True, null=True)
     address_line_2 = models.TextField(blank=True, null=True)
@@ -440,12 +447,6 @@ class PersonYear(PermissionsMixin, models.Model):
         related_name="history_entries",
     )
 
-    # Når en person er på pause udbetaler vi ved årsopgørelsen (dvs. December).
-    paused = models.BooleanField(
-        default=False,
-        null=False,
-        blank=False,
-    )
     person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,

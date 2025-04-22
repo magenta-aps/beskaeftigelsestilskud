@@ -85,8 +85,8 @@ class Command(BaseCommand):
             tax,
             *self.get_permissions(
                 (Year, ("view",)),
-                (Person, ("view",)),
-                (PersonYear, ("view", "change")),
+                (Person, ("view", "change")),
+                (PersonYear, ("view",)),
                 (PersonMonth, ("view",)),
                 (Employer, ("view",)),
                 (MonthlyIncomeReport, ("view",)),
