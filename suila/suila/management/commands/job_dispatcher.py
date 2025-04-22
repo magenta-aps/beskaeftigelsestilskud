@@ -15,6 +15,8 @@ from suila.models import ManagementCommands
 class Command(SuilaBaseCommand):
     filename = __file__
 
+    load_eskat_types = ["expectedincome", "monthlyincome", "taxinformation"]
+
     def add_arguments(self, parser):
         parser.add_argument("--year", type=int)
         parser.add_argument("--month", type=int)
@@ -91,24 +93,21 @@ class Command(SuilaBaseCommand):
         )
 
         # Call "load_eskat" for 3 different "types"
-        for typ in ["expectedincome", "monthlyincome", "taxinformation"]:
-
-            if not ESKAT_BASE_URL:
-                self._write_verbose(
-                    "ESKAT_BASE_URL is not set - cannot load data from eskat"
-                )
-                break
-
-            # Load data from eskat
-            job_dispatcher.call_job(
-                ManagementCommands.LOAD_ESKAT,
-                year,
-                typ,
-                month=None if typ == "expectedincome" else month,
-                verbosity=verbosity,
-                cpr=cpr,
-                skew=typ == "monthlyincome",
+        if not ESKAT_BASE_URL:
+            self._write_verbose(
+                "ESKAT_BASE_URL is not set - cannot load data from eskat"
             )
+        else:
+            for typ in self.load_eskat_types:
+                job_dispatcher.call_job(
+                    ManagementCommands.LOAD_ESKAT,
+                    year,
+                    typ,
+                    month=None if typ == "expectedincome" else month,
+                    verbosity=verbosity,
+                    cpr=cpr,
+                    skew=typ == "monthlyincome",
+                )
 
         # Populate `Person.location_code` and `Person.civil_state` (requires Pitu/DAFO
         # API access via valid client certificate.)
