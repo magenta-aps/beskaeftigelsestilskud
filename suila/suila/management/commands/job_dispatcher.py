@@ -109,8 +109,15 @@ class Command(SuilaBaseCommand):
                     skew=typ == "monthlyincome",
                 )
 
+        # Load Prisme b-tax data
+        job_dispatcher.call_job(ManagementCommands.LOAD_PRISME_B_TAX)
+
+        # Load U1A/udbytte data from AKAP
         job_dispatcher.call_job(
-            ManagementCommands.LOAD_PRISME_B_TAX,
+            ManagementCommands.IMPORT_U1A_DATA,
+            year=year,
+            cpr=cpr,
+            verbosity=verbosity,
         )
 
         # Populate `Person.location_code` and `Person.civil_state` (requires Pitu/DAFO

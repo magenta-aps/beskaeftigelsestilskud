@@ -39,6 +39,7 @@ class JobDispatcher:
             ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: [],
             ManagementCommands.LOAD_ESKAT: [],
             ManagementCommands.LOAD_PRISME_B_TAX: [],
+            ManagementCommands.IMPORT_U1A_DATA: [],
             ManagementCommands.GET_PERSON_INFO_FROM_DAFO: [
                 ManagementCommands.LOAD_ESKAT,
             ],
@@ -104,6 +105,7 @@ class JobDispatcher:
         elif name in [
             ManagementCommands.LOAD_ESKAT,
             ManagementCommands.LOAD_PRISME_B_TAX,
+            ManagementCommands.IMPORT_U1A_DATA,
             ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
             ManagementCommands.ESTIMATE_INCOME,
         ]:
