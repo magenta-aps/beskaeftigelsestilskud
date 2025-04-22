@@ -65,7 +65,7 @@
     <div class="g-col-3 emphasis">
         <b>{% translate "Næste forventede beløb til udbetaling" %}</b>
         <h1 class="mt-3">
-            {% if paused %}
+            {% if paused or in_quarantine and quarantine_weight == 0 %}
                 0 <i class="bi bi-exclamation-triangle-fill"></i>
             {% else %}
                 {{ benefit_paid|format_amount }}
@@ -95,6 +95,19 @@
             {% blocktrans trimmed  with year=next_year %}
             Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit
             til årsopgørelsen slut {{ year }}.
+            {% endblocktrans %}
+        </p>
+    </div>
+</div>
+
+{% elif in_quarantine and quarantine_weight == 0 %}
+<div class="grid gap-3 mt-5">
+    <div class="g-col-12 sidebar">
+        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {{ quarantine_reason }}</h2>
+        <p>
+            {% blocktrans trimmed  with year=next_year %}
+            Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit
+            i januar {{ year }}.
             {% endblocktrans %}
         </p>
     </div>
