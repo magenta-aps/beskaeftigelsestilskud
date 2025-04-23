@@ -98,7 +98,7 @@ def calculate_benefit(
             "b_income": float,
             "b_expenses": float,
             "catchsale_expenses": float,
-            "paused": bool,
+            "person__paused": bool,
         },
     )
 

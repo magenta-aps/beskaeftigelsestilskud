@@ -261,7 +261,7 @@ class EstimationEngine:
                     and (person_month._year, person_month.month) in exclude_months
                 )
                 and person_month.person_year.tax_scope == TaxScope.FULDT_SKATTEPLIGTIG
-                and not person_month.person_year.paused
+                and not person_month.person_year.person.paused
             )
         ]
         results = []

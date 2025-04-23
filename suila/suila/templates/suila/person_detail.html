@@ -158,11 +158,11 @@
         {% jumbo_link person_eboks_preview_url _("e-Boks-beskeder preview") "assignment" %}
     </div>
     {% endif %}
-    {% if user|has_permissions:"suila.change_personyear" %}
+    {% if user|has_permissions:"suila.change_person" %}
         <div class="g-col-4 jumbo d-grid gap-3">
-        <form method="post" action="{% url 'suila:pause_person_year' pk=person_year_id %}">
+        <form method="post" action="{% url 'suila:pause_person' pk=person_id %}">
             {% csrf_token %}
-            <input type="hidden" name="person_year" value="{{person_year_id}}"/>
+            <input type="hidden" name="person" value="{{person_id}}"/>
             {% if paused %}
                 {% jumbo_button "paused" "false" _("Genoptag udbetalinger") "play_arrow" %}
             {% else %}

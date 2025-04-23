@@ -67,9 +67,9 @@ from suila.views import (
     PersonFilterSet,
     PersonGraphView,
     PersonMonthTable,
+    PersonPauseUpdateView,
     PersonSearchView,
     PersonTable,
-    PersonYearPauseUpdateView,
     RootView,
     YearMonthMixin,
 )
@@ -1516,54 +1516,56 @@ class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
 
 
-class TestPersonYearPauseUpdateView(TestViewMixin, PersonEnv):
-    view_class = PersonYearPauseUpdateView
+class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
+    view_class = PersonPauseUpdateView
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
         cls.person_year = PersonYear.objects.all()[0]
-        cls.url = reverse("suila:pause_person_year", kwargs={"pk": cls.person_year.pk})
+        cls.url = reverse(
+            "suila:pause_person", kwargs={"pk": cls.person_year.person.pk}
+        )
         cls.data = {
-            "person_year": cls.person_year.pk,
+            "person": cls.person_year.person.pk,
             "paused": True,
         }
 
-    def test_pause_person_year_as_admin(self):
-        self.assertFalse(self.person_year.paused)
+    def test_pause_person_as_admin(self):
+        self.assertFalse(self.person_year.person.paused)
 
         self.client.force_login(self.admin_user)
         self.client.post(self.url, data=self.data)
 
-        self.person_year.refresh_from_db()
-        self.assertTrue(self.person_year.paused)
+        self.person_year.person.refresh_from_db()
+        self.assertTrue(self.person_year.person.paused)
 
-    def test_pause_person_year_as_staff(self):
-        self.assertFalse(self.person_year.paused)
+    def test_pause_person_as_staff(self):
+        self.assertFalse(self.person_year.person.paused)
 
         self.client.force_login(self.staff_user)
         self.client.post(self.url, data=self.data)
 
-        self.person_year.refresh_from_db()
-        self.assertTrue(self.person_year.paused)
+        self.person_year.person.refresh_from_db()
+        self.assertTrue(self.person_year.person.paused)
 
-    def test_pause_person_year_as_normal_user(self):
-        self.assertFalse(self.person_year.paused)
+    def test_pause_person_as_normal_user(self):
+        self.assertFalse(self.person_year.person.paused)
 
         self.client.force_login(self.normal_user)
         response = self.client.post(self.url, data=self.data)
 
         self.assertEqual(response.status_code, 403)
 
-    def test_unpause_person_year(self):
-        self.person_year.paused = True
-        self.person_year.save()
+    def test_unpause_person(self):
+        self.person_year.person.paused = True
+        self.person_year.person.save()
 
-        self.assertTrue(self.person_year.paused)
+        self.assertTrue(self.person_year.person.paused)
 
         self.client.force_login(self.admin_user)
         self.data["paused"] = False
         self.client.post(self.url, data=self.data)
 
-        self.person_year.refresh_from_db()
-        self.assertFalse(self.person_year.paused)
+        self.person_year.person.refresh_from_db()
+        self.assertFalse(self.person_year.person.paused)

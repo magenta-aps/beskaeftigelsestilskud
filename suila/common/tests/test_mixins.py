@@ -27,7 +27,7 @@ class UserMixin:
             *Permission.objects.filter(codename__startswith="view")
         )
         cls.staff_group.permissions.add(
-            Permission.objects.get(codename="change_personyear")
+            Permission.objects.get(codename="change_person")
         )
         cls.staff_user.groups.add(cls.staff_group)
 
