@@ -25,6 +25,7 @@ TEMPLATES = [
                 "suila.context_processors.version_context",
                 "suila.context_processors.person_context",
                 "suila.context_processors.nav_context",
+                "suila.context_processors.matomo_context",
             ],
             "loaders": default_loaders if DEBUG else cached_loaders,
             "libraries": {

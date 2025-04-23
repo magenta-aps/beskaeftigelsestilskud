@@ -41,3 +41,7 @@ def nav_context(request: HttpRequest):
         return {"current_view": request.resolver_match.view_name}  # type: ignore
     except Exception:
         return {"current_view": None}
+
+
+def matomo_context(request: HttpRequest):
+    return {"matomo_host": settings.MATOMO_HOST, "matomo_url": settings.MATOMO_URL}

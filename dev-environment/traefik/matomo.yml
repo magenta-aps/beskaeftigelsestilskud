@@ -1,0 +1,16 @@
+http:
+
+  services:
+    matomo:
+      loadBalancer:
+        servers:
+          - url: "http://matomo:80/"
+
+  routers:
+
+    motomo:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`bf-matomo`)"
+      service: "matomo"
+      tls: {}

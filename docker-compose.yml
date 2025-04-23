@@ -173,6 +173,32 @@ services:
     ports:
       - "8123:8025"
 
+  suila-matomo:
+    container_name: suila-matomo
+    image: matomo
+    networks:
+      - default
+      - matomo
+    env_file:
+      - ./dev-environment/matomo/db.env
+    volumes:
+      - matomo-config:/var/www/html/config:rw
+    ports:
+      - "8127:80"
+
+  suila-matomo-db:
+    container_name: suila-matomo-db
+    image: mariadb:11.7.2
+    command: --max-allowed-packet=64MB
+    volumes:
+      - matomo-data:/var/lib/mysql:Z
+    env_file:
+      - ./dev-environment/matomo/db.env
+    networks:
+      - matomo
+    ports:
+      - "3306:3306"
+
   suila-traefik:
     image: traefik:2.2
     container_name: suila-traefik
@@ -196,9 +222,12 @@ services:
 
 volumes:
   postgres-data:
+  matomo-data:
+  matomo-config:
   file-data:
 
 networks:
   default:
   database:
+  matomo:
   mail:

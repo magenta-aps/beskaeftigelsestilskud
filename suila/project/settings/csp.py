@@ -3,15 +3,18 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from project.settings.base import DEBUG, HOST_DOMAIN
+from project.settings.matomo import MATOMO_HOST
 
 CSP_DEFAULT_SRC = (
     "'self'",
-    "localhost:8000" if DEBUG else HOST_DOMAIN,
+    "localhost:8120" if DEBUG else HOST_DOMAIN,
+    MATOMO_HOST,
 )
 CSP_SCRIPT_SRC_ATTR = (
     "'self'",
     "'unsafe-inline'",
     "localhost:8000" if DEBUG else HOST_DOMAIN,
+    MATOMO_HOST,
 )
 CSP_STYLE_SRC_ATTR = (
     "'self'",
