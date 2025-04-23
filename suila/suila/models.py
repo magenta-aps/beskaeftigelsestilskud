@@ -1685,9 +1685,6 @@ class JobLog(PermissionsMixin, models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.year = self.runtime.year
-        self.month = self.runtime.month
-        super().save(update_fields=["year", "month"])
 
 
 class EboksMessage(PermissionsMixin, models.Model):
