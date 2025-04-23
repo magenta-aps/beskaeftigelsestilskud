@@ -44,4 +44,7 @@ def nav_context(request: HttpRequest):
 
 
 def matomo_context(request: HttpRequest):
-    return {"matomo_host": settings.MATOMO_HOST, "matomo_url": settings.MATOMO_URL}
+    return {
+        "matomo_host": settings.MATOMO_HOST,  # type: ignore
+        "matomo_url": settings.MATOMO_URL,  # type: ignore
+    }
