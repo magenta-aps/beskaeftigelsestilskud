@@ -1569,3 +1569,14 @@ class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
 
         self.person_year.person.refresh_from_db()
         self.assertFalse(self.person_year.person.paused)
+
+    def test_history(self):
+        self.client.force_login(self.staff_user)
+        self.client.post(self.url, data=self.data)
+
+        latest_history_entry = self.person_year.person.history.order_by(
+            "-history_date"
+        )[0]
+
+        self.assertTrue(latest_history_entry.paused)
+        self.assertEqual(latest_history_entry.history_user_id, self.staff_user.id)
