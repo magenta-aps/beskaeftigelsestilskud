@@ -1,17 +1,21 @@
 http:
 
   services:
-    bf:
+    suila:
       loadBalancer:
         servers:
-          - url: "http://bf-web:8000/"
+          - url: "http://suila-web:8000/"
+    matomo:
+      loadBalancer:
+        servers:
+          - url: "http://suila-matomo:80/"
 
   routers:
     rest:
       entryPoints:
         - "websecure"
-      rule: "Host(`api.bf-traefik`)"
-      service: "bf"
+      rule: "Host(`api.suila-traefik`)"
+      service: "suila"
       middlewares:
         - "pass-tls-clientcert"
         - "api-path"
@@ -21,21 +25,28 @@ http:
     public:
       entryPoints:
         - "websecure"
-      rule: "Host(`bf-traefik`)"
-      service: "bf"
+      rule: "Host(`suila-traefik`)"
+      service: "suila"
       tls: {}
 
     private:
       entryPoints:
         - "websecure"
-      rule: "Host(`bf-traefik`)"
-      service: "bf"
+      rule: "Host(`suila-traefik`)"
+      service: "suila"
+      tls: {}
+
+    matomo:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`matomo.suila-traefik`)"
+      service: "matomo"
       tls: {}
 
     web-to-websecure-bf:
       entryPoints:
         - "web"
-      rule: "Host(`bf-traefik`) || Host(`localhost`)"
+      rule: "Host(`suila-traefik`) || Host(`localhost`)"
       service: "noop@internal"
       middlewares:
         - "redirect-web-to-websecure-bf"
