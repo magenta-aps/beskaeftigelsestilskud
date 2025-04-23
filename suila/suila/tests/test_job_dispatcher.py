@@ -27,8 +27,8 @@ class TestJobDispatcherCommands(TestCase):
     @override_settings(ESKAT_BASE_URL="http://djangotest")
     def test_job_dispatch_calls_second_tuesday(self, mock_call_command: MagicMock):
         mock_call_command.side_effect = _mock_call_command
-        job_dispatcher_test_date = datetime(2025, 4, 8)
 
+        job_dispatcher_test_date = datetime(2025, 4, 8)
         call_command(
             self.command,
             year=job_dispatcher_test_date.year,
@@ -107,19 +107,17 @@ class TestJobDispatcherCommands(TestCase):
     def test_job_dispatch_calls_on_calculation_date(self, mock_call_command: MagicMock):
         mock_call_command.side_effect = _mock_call_command
 
-        job_dispatcher_test_date = datetime(2025, 5, 1)
-        payout_date: date = get_payout_date(
-            job_dispatcher_test_date.year, job_dispatcher_test_date.month
-        )
+        payout_date: date = get_payout_date(2025, 5)
         calculation_date: date = payout_date - timedelta(days=7)
         # FYI: subtraction of 7-days, is currently hardcoded into
         # the JobDispatcher class
 
+        job_dispatcher_test_date = calculation_date
         call_command(
             self.command,
-            year=calculation_date.year,
-            month=calculation_date.month,
-            day=calculation_date.day,
+            year=job_dispatcher_test_date.year,
+            month=job_dispatcher_test_date.month,
+            day=job_dispatcher_test_date.day,
         )
 
         mock_call_command.assert_has_calls(
@@ -127,7 +125,7 @@ class TestJobDispatcherCommands(TestCase):
                 # "data load"-jobs
                 call(
                     ManagementCommands.LOAD_ESKAT,
-                    calculation_date.year,
+                    job_dispatcher_test_date.year,
                     "expectedincome",
                     month=None,
                     cpr=None,
@@ -138,9 +136,9 @@ class TestJobDispatcherCommands(TestCase):
                 ),
                 call(
                     ManagementCommands.LOAD_ESKAT,
-                    calculation_date.year,
+                    job_dispatcher_test_date.year,
                     "monthlyincome",
-                    month=calculation_date.month,
+                    month=job_dispatcher_test_date.month,
                     cpr=None,
                     skew=True,
                     traceback=False,
@@ -149,9 +147,9 @@ class TestJobDispatcherCommands(TestCase):
                 ),
                 call(
                     ManagementCommands.LOAD_ESKAT,
-                    calculation_date.year,
+                    job_dispatcher_test_date.year,
                     "taxinformation",
-                    month=calculation_date.month,
+                    month=job_dispatcher_test_date.month,
                     cpr=None,
                     skew=False,
                     traceback=False,
@@ -163,7 +161,7 @@ class TestJobDispatcherCommands(TestCase):
                 ),
                 call(
                     ManagementCommands.IMPORT_U1A_DATA,
-                    year=calculation_date.year,
+                    year=job_dispatcher_test_date.year,
                     cpr=None,
                     verbosity=1,
                     traceback=False,
@@ -179,7 +177,7 @@ class TestJobDispatcherCommands(TestCase):
                 # Estimation-jobs
                 call(
                     ManagementCommands.ESTIMATE_INCOME,
-                    year=calculation_date.year,
+                    year=job_dispatcher_test_date.year,
                     cpr=None,
                     verbosity=1,
                     traceback=False,
@@ -189,7 +187,101 @@ class TestJobDispatcherCommands(TestCase):
                 call(
                     ManagementCommands.CALCULATE_BENEFIT,
                     job_dispatcher_test_date.year,
-                    month=calculation_date.month,
+                    month=job_dispatcher_test_date.month,
+                    cpr=None,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
+            ]
+        )
+
+    @patch("suila.dispatch.management.call_command")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_job_dispatch_call_on_year_first_day(self, mock_call_command: MagicMock):
+        mock_call_command.side_effect = _mock_call_command
+
+        job_dispatcher_test_date = datetime(2025, 1, 1)
+        call_command(
+            self.command,
+            year=job_dispatcher_test_date.year,
+            month=job_dispatcher_test_date.month,
+            day=job_dispatcher_test_date.day,
+        )
+
+        mock_call_command.assert_has_calls(
+            [
+                # "once a year"-jobs
+                call(
+                    ManagementCommands.CALCULATE_STABILITY_SCORE,
+                    job_dispatcher_test_date.year - 1,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
+                call(
+                    ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
+                    job_dispatcher_test_date.year,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
+                # "data load"-jobs
+                call(
+                    ManagementCommands.LOAD_ESKAT,
+                    job_dispatcher_test_date.year,
+                    "expectedincome",
+                    month=None,
+                    cpr=None,
+                    skew=False,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                ),
+                call(
+                    ManagementCommands.LOAD_ESKAT,
+                    job_dispatcher_test_date.year,
+                    "monthlyincome",
+                    month=job_dispatcher_test_date.month,
+                    cpr=None,
+                    skew=True,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                ),
+                call(
+                    ManagementCommands.LOAD_ESKAT,
+                    job_dispatcher_test_date.year,
+                    "taxinformation",
+                    month=job_dispatcher_test_date.month,
+                    cpr=None,
+                    skew=False,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                ),
+                call(
+                    ManagementCommands.LOAD_PRISME_B_TAX, traceback=False, reraise=False
+                ),
+                call(
+                    ManagementCommands.IMPORT_U1A_DATA,
+                    year=job_dispatcher_test_date.year,
+                    cpr=None,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
+                call(
+                    ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+                    cpr=None,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
+                # Estimation-jobs
+                call(
+                    ManagementCommands.ESTIMATE_INCOME,
+                    year=job_dispatcher_test_date.year,
                     cpr=None,
                     verbosity=1,
                     traceback=False,
