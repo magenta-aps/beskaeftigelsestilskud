@@ -4,5 +4,11 @@
 import os
 import re
 
-MATOMO_URL = os.environ.get("MATOMO_URL", "")
-MATOMO_HOST = re.sub(r"^https?://", "", MATOMO_URL)
+MATOMO = {
+    "url": os.environ.get("MATOMO_URL", ""),
+    "host": re.sub(r"^https?://", "", os.environ.get("MATOMO_URL", "")),
+    "site_id": {
+        "suila_public": os.environ.get("MATOMO_SUILA_PUBLIC_SITEID"),
+        "suila_private": os.environ.get("MATOMO_SUILA_PRIVATE_SITEID"),
+    },
+}

@@ -45,6 +45,9 @@ def nav_context(request: HttpRequest):
 
 def matomo_context(request: HttpRequest):
     return {
-        "matomo_host": settings.MATOMO_HOST,  # type: ignore
-        "matomo_url": settings.MATOMO_URL,  # type: ignore
+        "matomo_host": settings.MATOMO["host"],  # type: ignore
+        "matomo_url": settings.MATOMO["url"],  # type: ignore
+        "matomo_site_id": settings.MATOMO["site_id"][
+            "suila_public" if settings.PUBLIC else "suila_private"
+        ],
     }
