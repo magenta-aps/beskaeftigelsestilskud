@@ -41,3 +41,13 @@ def nav_context(request: HttpRequest):
         return {"current_view": request.resolver_match.view_name}  # type: ignore
     except Exception:
         return {"current_view": None}
+
+
+def matomo_context(request: HttpRequest):
+    return {
+        "matomo_host": settings.MATOMO["host"],  # type: ignore
+        "matomo_url": settings.MATOMO["url"],  # type: ignore
+        "matomo_site_id": settings.MATOMO["site_id"][  # type: ignore
+            "suila_public" if settings.PUBLIC else "suila_private"  # type: ignore
+        ],
+    }
