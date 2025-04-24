@@ -368,6 +368,18 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
             self.assertFalse(response.context_data["table"].orderable)
 
+    def test_get_context_data_can_unpause(self):
+        person = Person.objects.get(cpr=self.normal_user.cpr)
+        person.can_unpause_himself = False
+        person.save()
+
+        with self._time_context(year=2020):  # December 2020
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertFalse(response.context_data["can_unpause"])
+
+            view, response = self.request_get(self.admin_user, pk=self.person1.pk)
+            self.assertTrue(response.context_data["can_unpause"])
+
     def test_get_context_data_handles_no_matching_person_month(self):
         # Arrange: go to year without `PersonMonth` objects for `normal_user`
         PersonYear.objects.update_or_create(
@@ -1535,6 +1547,15 @@ class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
             "paused": True,
         }
 
+        cls.allow_unpause_url = reverse(
+            "suila:allow_unpause_person", kwargs={"pk": cls.person_year.person.pk}
+        )
+
+        cls.allow_unpause_data = {
+            "person": cls.person_year.person.pk,
+            "can_unpause_himself": False,
+        }
+
     def test_pause_person_as_admin(self):
         self.assertFalse(self.person_year.person.paused)
 
@@ -1555,10 +1576,52 @@ class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
 
     def test_pause_person_as_normal_user(self):
         self.assertFalse(self.person_year.person.paused)
+        self.normal_user.cpr = "0202021234"
+        self.normal_user.save()
+
+        self.assertNotEqual(self.normal_user.cpr, self.person_year.person.cpr)
 
         self.client.force_login(self.normal_user)
         response = self.client.post(self.url, data=self.data)
 
+        self.assertEqual(response.status_code, 403)
+
+    def test_pause_self_as_normal_user(self):
+        self.assertFalse(self.person_year.person.paused)
+
+        self.assertEqual(self.normal_user.cpr, self.person_year.person.cpr)
+
+        self.client.force_login(self.normal_user)
+        self.client.post(self.url, data=self.data)
+
+        self.person_year.person.refresh_from_db()
+        self.assertTrue(self.person_year.person.paused)
+
+    def test_unpause_self_as_normal_user(self):
+        self.person_year.person.paused = True
+        self.person_year.person.save()
+
+        self.assertTrue(self.person_year.person.paused)
+        self.assertEqual(self.normal_user.cpr, self.person_year.person.cpr)
+
+        self.client.force_login(self.normal_user)
+        self.data["paused"] = False
+        self.client.post(self.url, data=self.data)
+
+        self.person_year.person.refresh_from_db()
+        self.assertFalse(self.person_year.person.paused)
+
+    def test_unpause_self_as_normal_user_not_allowed(self):
+        self.person_year.person.paused = True
+        self.person_year.person.can_unpause_himself = False
+        self.person_year.person.save()
+
+        self.assertTrue(self.person_year.person.paused)
+        self.assertEqual(self.normal_user.cpr, self.person_year.person.cpr)
+
+        self.client.force_login(self.normal_user)
+        self.data["paused"] = False
+        response = self.client.post(self.url, data=self.data)
         self.assertEqual(response.status_code, 403)
 
     def test_unpause_person(self):
@@ -1584,3 +1647,20 @@ class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
 
         self.assertTrue(latest_history_entry.paused)
         self.assertEqual(latest_history_entry.history_user_id, self.staff_user.id)
+
+    def test_edit_allow_unpause_as_admin(self):
+        self.assertTrue(self.person_year.person.can_unpause_himself)
+
+        self.client.force_login(self.admin_user)
+        self.client.post(self.allow_unpause_url, data=self.allow_unpause_data)
+
+        self.person_year.person.refresh_from_db()
+        self.assertFalse(self.person_year.person.can_unpause_himself)
+
+    def test_edit_allow_unpause_as_normal_user(self):
+        self.client.force_login(self.normal_user)
+        response = self.client.post(
+            self.allow_unpause_url, data=self.allow_unpause_data
+        )
+
+        self.assertEqual(response.status_code, 403)

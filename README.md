@@ -8,8 +8,20 @@ To start the project, `up` the docker containers using compose:
 docker compose up -d
 ```
 
-The system will start out empty. To load test-data into the database, you can use
-the eskat-api:
+You can then log in with one of the following:
+
+| Username         | Password         | Description                         |
+|------------------|------------------|-------------------------------------|
+| `admin`          | `admin`          | Admin poweruser                     |
+| `anders`         | `anders`         | Citizen user without a person-year  |
+| `bruce`          | `bruce`          | Citizen user with a person-year     |
+| `borgerservice`  | `borgerservice`  | Citizen-service user                |
+| `skattestyrelsen`| `skattestyrelsen`| Tax-department user                 |
+
+
+## Loading data
+The system will start out with some dummy data. To load real test-data into the
+database, you can use the eskat-api:
 
 ```
 docker exec -it suila-web-private python manage.py load_eskat 2025 monthlyincome

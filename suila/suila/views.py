@@ -238,6 +238,15 @@ class PersonDetailView(
                 - person_year.catchsale_expenses
                 + (person_year.b_income - person_year.b_expenses)
             )
+
+            if (
+                self.request.user.cpr == person_year.person.cpr
+                and not person_year.person.can_unpause_himself
+            ):
+                can_unpause = False
+            else:
+                can_unpause = True
+
             context_data.update(
                 {
                     "show_next_payment": True,
@@ -248,6 +257,8 @@ class PersonDetailView(
                     "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
                     "paused": person_year.person.paused,
+                    "can_unpause_himself": person_year.person.can_unpause_himself,
+                    "can_unpause": can_unpause,
                     "person_id": person_year.person.pk,
                     "next_year": person_year.year.year + 1,
                 }
@@ -991,8 +1002,41 @@ class PersonPauseUpdateView(
     UpdateView,
 ):
     model = Person
-    required_model_permissions = ["suila.change_person"]
+    required_model_permissions = ["suila.view_person"]
     fields = ["paused"]
+
+    @classmethod
+    def has_permissions(cls, **kwargs):
+        request = kwargs.get("request")
+        user = kwargs.get("user", request.user)
+        person = Person.objects.get(pk=int(request.POST.get("person")))
+        paused = request.POST.get("paused").lower()
+
+        if user.cpr == person.cpr:
+            if paused == "true":
+                # Users can pause themselves
+                return True
+            else:
+                # Users can only unpause themselves if allowed.
+                if person.can_unpause_himself:
+                    return True
+                else:
+                    return False
+        return super().has_permissions(**kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
+
+
+class PersonPausePermissionsUpdateView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    UpdateView,
+):
+    model = Person
+    required_model_permissions = ["suila.change_person"]
+    fields = ["can_unpause_himself"]
 
     def get_success_url(self):
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})

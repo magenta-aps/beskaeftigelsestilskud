@@ -97,11 +97,40 @@
             til årsopgørelsen slut {{ year }}.
             {% endblocktrans %}
         </p>
+        {% if not can_unpause_himself %}
         <p>
             {% blocktrans trimmed %}
             Kontakt venligst borgerservice hvis du ønsker at udbetalingerne genoptages.
             {% endblocktrans %}
         </p>
+        {% endif %}
+
+        {% if user|has_permissions:"suila.change_person" %}
+            <div class="input-group">
+                <div class="jumbo">
+                    <form method="post" action="{% url 'suila:allow_unpause_person' pk=person_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="person" value="{{person_id}}"/>
+                        {% if can_unpause_himself %}
+                            {% jumbo_button "can_unpause_himself" "false" "" "check_box" %}
+                        {% else %}
+                            {% jumbo_button "can_unpause_himself" "true" "" "check_box_outline_blank" %}
+                        {% endif %}
+                    </form>
+                </div>
+                <span class="input-group-text">
+                    {% if can_unpause_himself %}
+                        {% blocktrans trimmed %}
+                        Borger må selv genoptage udbetalinger.
+                        {% endblocktrans %}
+                    {% else %}
+                        {% blocktrans trimmed %}
+                        Borger må ikke selv genoptage udbetalinger.
+                        {% endblocktrans %}
+                    {% endif %}
+                </span>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endif %}
@@ -141,7 +170,7 @@
         {% jumbo_link person_income_url _("Mit estimerede Suila-tapit") "link" %}
     </div>
     {% else %}
-    <div class="g-col-12 jumbo">
+    <div class="g-col-8 jumbo">
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
         {% jumbo_link person_income_url _("Mine signaler - få information om beregningsgrundlaget for dit Suila-tapit") "assignment" %}
     </div>
@@ -158,7 +187,7 @@
         {% jumbo_link person_eboks_preview_url _("e-Boks-beskeder preview") "assignment" %}
     </div>
     {% endif %}
-    {% if user|has_permissions:"suila.change_person" %}
+    {% if can_unpause or not paused %}
         <div class="g-col-4 jumbo d-grid gap-3">
         <form method="post" action="{% url 'suila:pause_person' pk=person_id %}">
             {% csrf_token %}

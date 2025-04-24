@@ -73,6 +73,7 @@ class TestSimulationJSONEncoder(TestCase):
             "foreign_address": None,
             "country_code": None,
             "paused": False,
+            "can_unpause_himself": True,
         }
         cls.personyear_serialized = {
             "id": cls.personyear.pk,

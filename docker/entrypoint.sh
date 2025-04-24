@@ -50,6 +50,9 @@ if [ "${CREATE_DUMMY_USERS,,}" = true ]; then
   python manage.py create_user borgerservice borgerservice -g Borgerservice
   echo 'creating skattestyrelsen user'
   python manage.py create_user skattestyrelsen skattestyrelsen -g Skattestyrelsen
+
+  echo 'creatinging dummy citizen users and generating data'
+  python manage.py create_dummy_data
 fi
 
 if [ "${CREATE_API_USER,,}" = true ]; then

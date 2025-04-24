@@ -366,6 +366,12 @@ class Person(PermissionsMixin, models.Model):
         blank=False,
     )
 
+    can_unpause_himself = models.BooleanField(
+        default=True,
+        null=False,
+        blank=False,
+    )
+
     name = models.TextField(blank=True, null=True)
     address_line_1 = models.TextField(blank=True, null=True)
     address_line_2 = models.TextField(blank=True, null=True)

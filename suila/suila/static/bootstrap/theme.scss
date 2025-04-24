@@ -581,3 +581,13 @@ div.explainer p {
     display: none;
   }
 }
+
+.input-group-text{
+  background-color: $light-grey;
+  border-color: $primary;
+  border-width: 2px;
+  font-size: 1.2 * $spacer;
+  font-weight: bold;
+  color: $black;
+
+}
