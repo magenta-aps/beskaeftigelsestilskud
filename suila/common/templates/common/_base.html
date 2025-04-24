@@ -27,6 +27,15 @@
     <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}"/>
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'suila/apple-touch-icon.png' %}" />
     <link rel="manifest" href="{% static 'suila/site.webmanifest' %}" />
+
+    {% if matomo_host %}
+        <script nonce="{{request.csp_nonce}}">
+            var _paq = window._paq = window._paq || [];
+            _paq.push(["trackPageView"],["enableLinkTracking"],["setTrackerUrl", "{{matomo_url}}/matomo.php"],["setSiteId","{{matomo_site_id}}"]);
+        </script>
+        <script nonce="{{request.csp_nonce}}" async src="{{matomo_url}}/matomo.js"></script>
+    {% endif %}
+
     {% block extra_headers %}
     {% endblock %}
 </head>
