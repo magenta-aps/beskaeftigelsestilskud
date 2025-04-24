@@ -40,5 +40,6 @@ omit =
     */management/commands/test_end_to_end_for_cpr.py
     */management/commands/load_prisme_benefits_posting_status.py
     */management/commands/wait_for_db.py
+    */management/commands/create_dummy_data.py
 parallel = true
 concurrency = multiprocessing

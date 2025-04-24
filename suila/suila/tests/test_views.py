@@ -1553,13 +1553,42 @@ class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
         self.person_year.person.refresh_from_db()
         self.assertTrue(self.person_year.person.paused)
 
-    def test_pause_person_as_normal_user(self):
+    def test_pause_other_person_as_normal_user(self):
         self.assertFalse(self.person_year.person.paused)
+        self.normal_user.cpr = "0202021234"
+        self.normal_user.save()
+
+        self.assertNotEqual(self.normal_user.cpr, self.person_year.person.cpr)
 
         self.client.force_login(self.normal_user)
         response = self.client.post(self.url, data=self.data)
 
         self.assertEqual(response.status_code, 403)
+
+    def test_pause_self_as_normal_user(self):
+        self.assertFalse(self.person_year.person.paused)
+
+        self.assertEqual(self.normal_user.cpr, self.person_year.person.cpr)
+
+        self.client.force_login(self.normal_user)
+        self.client.post(self.url, data=self.data)
+
+        self.person_year.person.refresh_from_db()
+        self.assertTrue(self.person_year.person.paused)
+
+    def test_unpause_self_as_normal_user(self):
+        self.person_year.person.paused = True
+        self.person_year.person.save()
+
+        self.assertTrue(self.person_year.person.paused)
+        self.assertEqual(self.normal_user.cpr, self.person_year.person.cpr)
+
+        self.client.force_login(self.normal_user)
+        self.data["paused"] = False
+        self.client.post(self.url, data=self.data)
+
+        self.person_year.person.refresh_from_db()
+        self.assertFalse(self.person_year.person.paused)
 
     def test_unpause_person(self):
         self.person_year.person.paused = True
