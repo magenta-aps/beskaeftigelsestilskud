@@ -12,7 +12,12 @@ from common.utils import get_income_estimates_df, isnan
 from django.conf import settings
 from django.test import override_settings
 
-from suila.benefit import calculate_benefit, get_payout_date, get_payout_df
+from suila.benefit import (
+    calculate_benefit,
+    get_calculation_date,
+    get_payout_date,
+    get_payout_df,
+)
 from suila.models import PersonMonth, PersonYear
 
 
@@ -294,6 +299,22 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertEqual(get_payout_date(2025, 10), date(2025, 10, 21))
         self.assertEqual(get_payout_date(2025, 11), date(2025, 11, 18))
         self.assertEqual(get_payout_date(2025, 12), date(2025, 12, 16))
+
+    def test_get_calculation_date(self):
+        self.assertEqual(get_calculation_date(2024, 11), date(2024, 11, 11))
+        self.assertEqual(get_calculation_date(2024, 12), date(2024, 12, 9))
+        self.assertEqual(get_calculation_date(2025, 1), date(2025, 1, 13))
+        self.assertEqual(get_calculation_date(2025, 2), date(2025, 2, 10))
+        self.assertEqual(get_calculation_date(2025, 3), date(2025, 3, 10))
+        self.assertEqual(get_calculation_date(2025, 4), date(2025, 4, 7))
+        self.assertEqual(get_calculation_date(2025, 5), date(2025, 5, 12))
+        self.assertEqual(get_calculation_date(2025, 6), date(2025, 6, 9))
+        self.assertEqual(get_calculation_date(2025, 7), date(2025, 7, 7))
+        self.assertEqual(get_calculation_date(2025, 8), date(2025, 8, 11))
+        self.assertEqual(get_calculation_date(2025, 9), date(2025, 9, 8))
+        self.assertEqual(get_calculation_date(2025, 10), date(2025, 10, 13))
+        self.assertEqual(get_calculation_date(2025, 11), date(2025, 11, 10))
+        self.assertEqual(get_calculation_date(2025, 12), date(2025, 12, 8))
 
     def test_benefit_paid_ceil_rounding(self):
         df = calculate_benefit(1, self.year.year)

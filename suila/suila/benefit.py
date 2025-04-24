@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date
+from datetime import date, timedelta
 from fractions import Fraction
 
 import numpy as np
@@ -12,7 +12,6 @@ from django.conf import settings
 from more_itertools import one
 from numpy import float64
 
-# from suila.estimation import EstimationEngine, MonthlyContinuationEngine
 from suila.models import PersonMonth, PersonYear, TaxScope, Year
 
 
@@ -264,3 +263,10 @@ def get_payout_date(year: int, month: int) -> date:
     if first_tuesday > 7:
         first_tuesday -= 7
     return date(year, month, first_tuesday + 14)
+
+
+def get_calculation_date(year: int, month: int) -> date:
+    # settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS default is 8
+    return get_payout_date(year, month) - timedelta(
+        days=settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS  # type: ignore
+    )
