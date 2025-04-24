@@ -37,8 +37,9 @@ class JobDispatcher:
         self.dependencies = {
             ManagementCommands.CALCULATE_STABILITY_SCORE: [],
             ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: [],
-            # ManagementCommands.LOAD_PRISME_B_TAX: [],
             ManagementCommands.LOAD_ESKAT: [],
+            ManagementCommands.LOAD_PRISME_B_TAX: [],
+            ManagementCommands.IMPORT_U1A_DATA: [],
             ManagementCommands.GET_PERSON_INFO_FROM_DAFO: [
                 ManagementCommands.LOAD_ESKAT,
             ],
@@ -55,9 +56,6 @@ class JobDispatcher:
                 ManagementCommands.ESTIMATE_INCOME,
                 ManagementCommands.CALCULATE_BENEFIT,
             ],
-            # ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [
-            #     ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-            # ],
             ManagementCommands.SEND_EBOKS: [
                 ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             ],
@@ -106,6 +104,8 @@ class JobDispatcher:
 
         elif name in [
             ManagementCommands.LOAD_ESKAT,
+            ManagementCommands.LOAD_PRISME_B_TAX,
+            ManagementCommands.IMPORT_U1A_DATA,
             ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
             ManagementCommands.ESTIMATE_INCOME,
         ]:

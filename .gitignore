@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 *.pyc
+**/__pychace__/
 *.mo
 env/
 .idea/

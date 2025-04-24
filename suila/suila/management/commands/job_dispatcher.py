@@ -15,6 +15,8 @@ from suila.models import ManagementCommands
 class Command(SuilaBaseCommand):
     filename = __file__
 
+    load_eskat_types = ["expectedincome", "monthlyincome", "taxinformation"]
+
     def add_arguments(self, parser):
         parser.add_argument("--year", type=int)
         parser.add_argument("--month", type=int)
@@ -84,30 +86,39 @@ class Command(SuilaBaseCommand):
         ESKAT_BASE_URL = settings.ESKAT_BASE_URL  # type: ignore[misc]
 
         job_dispatcher.call_job(
-            "calculate_stability_score", year - 1, verbosity=verbosity
+            ManagementCommands.CALCULATE_STABILITY_SCORE, year - 1, verbosity=verbosity
         )
         job_dispatcher.call_job(
-            "autoselect_estimation_engine", year, verbosity=verbosity
+            ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE, year, verbosity=verbosity
         )
 
-        for typ in ["expectedincome", "monthlyincome", "taxinformation"]:
-
-            if not ESKAT_BASE_URL:
-                self._write_verbose(
-                    "ESKAT_BASE_URL is not set - cannot load data from eskat"
-                )
-                break
-
-            # Load data from eskat
-            job_dispatcher.call_job(
-                "load_eskat",
-                year,
-                typ,
-                month=None if typ == "expectedincome" else month,
-                verbosity=verbosity,
-                cpr=cpr,
-                skew=typ == "monthlyincome",
+        # Call "load_eskat" for 3 different "types"
+        if not ESKAT_BASE_URL:
+            self._write_verbose(
+                "ESKAT_BASE_URL is not set - cannot load data from eskat"
             )
+        else:
+            for typ in self.load_eskat_types:
+                job_dispatcher.call_job(
+                    ManagementCommands.LOAD_ESKAT,
+                    year,
+                    typ,
+                    month=None if typ == "expectedincome" else month,
+                    verbosity=verbosity,
+                    cpr=cpr,
+                    skew=typ == "monthlyincome",
+                )
+
+        # Load Prisme b-tax data
+        job_dispatcher.call_job(ManagementCommands.LOAD_PRISME_B_TAX)
+
+        # Load U1A/udbytte data from AKAP
+        job_dispatcher.call_job(
+            ManagementCommands.IMPORT_U1A_DATA,
+            year=year,
+            cpr=cpr,
+            verbosity=verbosity,
+        )
 
         # Populate `Person.location_code` and `Person.civil_state` (requires Pitu/DAFO
         # API access via valid client certificate.)
@@ -119,7 +130,7 @@ class Command(SuilaBaseCommand):
 
         # Estimate income
         job_dispatcher.call_job(
-            "estimate_income",
+            ManagementCommands.ESTIMATE_INCOME,
             year=year,
             cpr=cpr,
             verbosity=verbosity,
@@ -127,7 +138,7 @@ class Command(SuilaBaseCommand):
 
         # Calculate benefit
         job_dispatcher.call_job(
-            "calculate_benefit",
+            ManagementCommands.CALCULATE_BENEFIT,
             year,
             month=month,
             cpr=cpr,
@@ -136,7 +147,7 @@ class Command(SuilaBaseCommand):
 
         # Send to prisme
         job_dispatcher.call_job(
-            "export_benefits_to_prisme",
+            ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             year=year,
             month=month,
             verbosity=verbosity,
@@ -144,7 +155,7 @@ class Command(SuilaBaseCommand):
 
         # Send eboks messages
         job_dispatcher.call_job(
-            "eboks_send",
+            ManagementCommands.SEND_EBOKS,
             year=year,
             month=month,
             verbosity=verbosity,
