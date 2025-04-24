@@ -205,21 +205,6 @@ class TestJobDispatcherCommands(TestCase):
 
         mock_call_command.assert_has_calls(
             [
-                # "once a year"-jobs
-                call(
-                    ManagementCommands.CALCULATE_STABILITY_SCORE,
-                    job_dispatcher_test_date.year - 1,
-                    verbosity=1,
-                    traceback=False,
-                    reraise=False,
-                ),
-                call(
-                    ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
-                    job_dispatcher_test_date.year,
-                    verbosity=1,
-                    traceback=False,
-                    reraise=False,
-                ),
                 # "data load"-jobs
                 call(
                     ManagementCommands.LOAD_ESKAT,

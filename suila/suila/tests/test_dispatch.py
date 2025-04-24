@@ -130,7 +130,7 @@ class TestJobDispatcher(TestCase):
 
     def test_allow_job(self):
         self.assertTrue(
-            self.allow_job(ManagementCommands.CALCULATE_STABILITY_SCORE, 2021, 1, 1)
+            self.allow_job(ManagementCommands.CALCULATE_STABILITY_SCORE, 2021, 3, 1)
         )
         self.assertFalse(
             self.allow_job(ManagementCommands.CALCULATE_STABILITY_SCORE, 2021, 2, 1)

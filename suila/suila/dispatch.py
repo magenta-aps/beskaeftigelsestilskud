@@ -88,7 +88,7 @@ class JobDispatcher:
             ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
         ]:
             if (
-                self.month == 1
+                self.month == 3
                 and self.day < self.calculation_date.day
                 and not job_ran_this_year
             ):
