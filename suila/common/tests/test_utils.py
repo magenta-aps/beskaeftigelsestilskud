@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date, datetime
 from decimal import Decimal
+from io import StringIO
 from itertools import cycle
 
 from common.utils import (
@@ -15,6 +16,7 @@ from common.utils import (
     map_between_zero_and_one,
     to_dataframe,
 )
+from django.core.management import call_command as core_call_command
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.timezone import get_current_timezone
@@ -225,6 +227,18 @@ class BaseTestCase(TestCase):
                     engine="TwelveMonthsSummationEngine",
                     income_type=IncomeType.A,
                 )
+
+    def call_command(self, name, *args, **kwargs):
+        stdout = StringIO()
+        stderr = StringIO()
+        core_call_command(
+            name,
+            *args,
+            stdout=stdout,
+            stderr=stderr,
+            **kwargs,
+        )
+        return stdout, stderr
 
 
 @override_settings(ENFORCE_QUARANTINE=True)
