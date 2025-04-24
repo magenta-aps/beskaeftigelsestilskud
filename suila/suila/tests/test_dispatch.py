@@ -153,13 +153,14 @@ class TestJobDispatcher(TestCase):
             )
         )
 
-        # 2024-01-09 is the second tuesday in january
+        # 2024-01-08 is "the day before the second tuesday" in january
         self.assertTrue(
-            self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 9)
-        )
-        self.assertFalse(
             self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 8)
         )
+        self.assertFalse(
+            self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 7)
+        )
+
         self.assertTrue(
             self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 14)
         )

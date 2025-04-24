@@ -9,7 +9,7 @@ from django.core import management
 from django.db.models import Q
 from django.utils import timezone
 
-from suila.benefit import get_payout_date
+from suila.benefit import get_calculation_date, get_payout_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
@@ -25,9 +25,7 @@ class JobDispatcher:
         self.reraise = reraise
 
         self.payout_date = get_payout_date(self.year, self.month)
-
-        # Allow for a week between calculation and payout
-        self.calculation_date = self.payout_date - datetime.timedelta(days=7)
+        self.calculation_date = get_calculation_date(self.year, self.month)
 
         # We send data to prisme "x" days before the payout date
         self.prisme_date = self.payout_date - datetime.timedelta(
