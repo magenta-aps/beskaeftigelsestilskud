@@ -211,7 +211,9 @@ services:
       - "8124:80"
       - "8125:443"
     volumes:
-      - ./dev-environment/traefik/etc/traefik/:/etc/traefik/:rw
+      - ./dev-environment/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dev-environment/traefik/bf.yml:/etc/traefik/dynamic/bf.yml:ro
+      - ./dev-environment/cert/traefik/:/etc/traefik/certs/:ro
 
   suila-hosts-updater:
     container_name: suila-hosts-updater
@@ -232,6 +234,7 @@ services:
     volumes:
       - crowdsec-data:/var/lib/crowdsec/data
       - ./dev-environment/crowdsec/traefik.yaml:/etc/crowdsec/acquis.d/traefik.yaml:ro
+      # For at vi kan læse docker log fra host ind i containeren
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - GID=1000
