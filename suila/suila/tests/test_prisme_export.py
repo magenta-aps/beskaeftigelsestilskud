@@ -3,11 +3,10 @@
 # SPDX-License-Identifier: MPL-2.0
 import logging
 import re
-import unittest
 from csv import DictReader
 from datetime import date
 from decimal import Decimal
-from io import BytesIO, TextIOWrapper
+from io import TextIOWrapper
 from unittest.mock import ANY, MagicMock, Mock, patch
 
 from django.conf import settings
@@ -261,63 +260,91 @@ class TestBatchExport(TestCase):
         # Assert
         self.assertEqual(export.get_posting_date(february), date(2025, 4, 8))
 
-    def test_upload_batch(self):
+    def test_upload_batch_handles_sftp_success(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
         should upload the serialized G68/G69 transaction pairs using the
         `put_file_in_prisme_folder` function. Upon calling the method, the `PrismeBatch`
         object should contain the correct upload status.
         """
-        for test_upload_exception in (False, True):
-            with self.subTest(test_upload_exception=test_upload_exception):
-                # Arrange
-                self._add_person_month(3112700000, Decimal("1000"))
-                prisme_batch, _ = PrismeBatch.objects.get_or_create(
-                    prefix=31, export_date=date.today()
-                )
-                export = self._get_instance()
-                prisme_batch_item, person_month = self._get_prisme_batch_item(
-                    export, prisme_batch
-                )
-                with patch(
-                    "suila.integrations.prisme.benefits.put_file_in_prisme_folder",
-                    side_effect=(
-                        ClientException("Uh-oh") if test_upload_exception else None
-                    ),
-                ) as mock_put:
-                    # Act
-                    export.upload_batch(prisme_batch, [prisme_batch_item])
-                    # Assert
-                    prisme_batch.refresh_from_db()
-                    if test_upload_exception:
-                        # Assert: the upload function is called multiple times, until
-                        # giving up.
-                        mock_put.assert_called_with(
-                            settings.PRISME,
-                            ANY,  # `buf`
-                            ANY,  # `destination_folder`
-                            "SUILA_G68_export_"
-                            f"{prisme_batch.prefix:02}_{export._year}_"
-                            f"{export._month:02}"
-                            ".g68",
-                        )
-                        self.assertEqual(mock_put.call_count, 10)  # 10 retry attempts
-                        # Assert: the `PrismeBatch` object is updated
-                        self.assertEqual(prisme_batch.status, PrismeBatch.Status.Failed)
-                        self.assertEqual(prisme_batch.failed_message, "Uh-oh")
-                    else:
-                        # Assert: the upload function is called once (succeeding)
-                        mock_put.assert_called_once_with(
-                            settings.PRISME,
-                            ANY,  # `buf`
-                            ANY,  # `destination_folder`
-                            "SUILA_G68_export_"
-                            f"{prisme_batch.prefix:02}_{export._year}_"
-                            f"{export._month:02}"
-                            ".g68",
-                        )
-                        # Assert: the `PrismeBatch` object is updated
-                        self.assertEqual(prisme_batch.status, PrismeBatch.Status.Sent)
-                        self.assertEqual(prisme_batch.failed_message, "")
+        # Arrange
+        self._add_person_month(3112700000, Decimal("1000"))
+        prisme_batch, _ = PrismeBatch.objects.get_or_create(
+            prefix=31, export_date=date.today()
+        )
+        export = self._get_instance()
+        prisme_batch_item, person_month = self._get_prisme_batch_item(
+            export, prisme_batch
+        )
+        with patch(
+            "suila.integrations.prisme.benefits.put_file_in_prisme_folder",
+        ) as mock_put:
+            # Act
+            export.upload_batch(prisme_batch, [prisme_batch_item])
+            # Assert
+            prisme_batch.refresh_from_db()
+            # Assert: the upload function is called once (succeeding)
+            mock_put.assert_called_once_with(
+                settings.PRISME,
+                ANY,  # `buf`
+                ANY,  # `destination_folder`
+                "SUILA_G68_export_"
+                f"{prisme_batch.prefix:02}_{export._year}_"
+                f"{export._month:02}"
+                ".g68",
+            )
+            # Assert: the `PrismeBatch` object is updated
+            self.assertEqual(prisme_batch.status, PrismeBatch.Status.Sent)
+            self.assertEqual(prisme_batch.failed_message, "")
+            # Assert: `PrismeBatchItem` objects exist for this batch
+            self.assertGreater(
+                PrismeBatchItem.objects.filter(prisme_batch=prisme_batch).count(),
+                0,
+            )
+
+    def test_upload_batch_handles_sftp_failure(self):
+        """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
+        should upload the serialized G68/G69 transaction pairs using the
+        `put_file_in_prisme_folder` function. If `put_file_in_prisme_folder` raises an
+        exception after retrying, `upload_batch` should record the failure on the
+        `PrismeBatch` in question.
+        """
+        # Arrange
+        self._add_person_month(3112700000, Decimal("1000"))
+        prisme_batch, _ = PrismeBatch.objects.get_or_create(
+            prefix=31, export_date=date.today()
+        )
+        export = self._get_instance()
+        prisme_batch_item, person_month = self._get_prisme_batch_item(
+            export, prisme_batch
+        )
+        with patch(
+            "suila.integrations.prisme.benefits.put_file_in_prisme_folder",
+            side_effect=ClientException("Uh-oh"),
+        ) as mock_put:
+            # Act
+            export.upload_batch(prisme_batch, [prisme_batch_item])
+            # Assert
+            prisme_batch.refresh_from_db()
+            # Assert: the upload function is called multiple times, until
+            # giving up.
+            mock_put.assert_called_with(
+                settings.PRISME,
+                ANY,  # `buf`
+                ANY,  # `destination_folder`
+                "SUILA_G68_export_"
+                f"{prisme_batch.prefix:02}_{export._year}_"
+                f"{export._month:02}"
+                ".g68",
+            )
+            self.assertEqual(mock_put.call_count, 10)  # 10 retry attempts
+            # Assert: the `PrismeBatch` object is updated
+            self.assertEqual(prisme_batch.status, PrismeBatch.Status.Failed)
+            self.assertEqual(prisme_batch.failed_message, "Uh-oh")
+            # Assert: `PrismeBatchItem` objects do not exist for this batch
+            self.assertEqual(
+                PrismeBatchItem.objects.filter(prisme_batch=prisme_batch).count(),
+                0,
+            )
 
     def test_export_batches_verbosity_1(self):
         # Arrange
@@ -328,7 +355,7 @@ class TestBatchExport(TestCase):
             # Act
             export.export_batches(stdout, verbosity=1)
 
-        self.assertEqual(stdout.write.call_count, 2)
+        self.assertEqual(stdout.write.call_count, 4)
 
     def test_export_batches_verbosity_2(self):
         # Arrange
@@ -339,7 +366,7 @@ class TestBatchExport(TestCase):
             # Act
             export.export_batches(stdout, verbosity=2)
 
-        self.assertEqual(stdout.write.call_count, 7)
+        self.assertEqual(stdout.write.call_count, 9)
 
     def test_export_batches_normal(self):
         """Given non-exported `PersonMonth` objects for this year and month, this method
@@ -425,8 +452,7 @@ class TestBatchExport(TestCase):
                 [call.args[0] for call in stdout.write.call_args_list],
             )
 
-    @unittest.skip
-    def test_export_batches_uploads_csv_report(self):
+    def test_export_batches_uploads_control_list(self):
         # Arrange
         self._add_person_month(3101000000, Decimal("1000"))
         export = self._get_instance()
@@ -440,11 +466,9 @@ class TestBatchExport(TestCase):
             last_call = mock_put.call_args_list[-1]
             self.assertEqual(last_call.args[3], "SUILA_kontrolliste_2025_01.csv")
             # Arrange: get CSV output
-            output = export.get_control_list(TextIOWrapper(BytesIO()))
-            # Act
-            output = export.get_control_list(output)
+            output = export.get_control_list_csv()
             # Assert
-            rows: list[dict] = list(DictReader(output, delimiter=";"))
+            rows: list[dict] = list(DictReader(TextIOWrapper(output), delimiter=";"))
             self.assertListEqual(
                 rows,
                 [
@@ -455,6 +479,56 @@ class TestBatchExport(TestCase):
                     }
                 ],
             )
+
+    def test_export_batches_handles_control_list_upload_failure(self):
+        # Arrange
+        self._add_person_month(3101000000, Decimal("1000"))
+        export = self._get_instance()
+        stdout = Mock()
+
+        def fail_on_control_list_upload(buf, folder, filename):
+            if "kontrolliste" in filename:
+                raise ClientException("Failure in control list upload")
+
+        with patch.object(
+            export,
+            "_put_file_in_prisme_folder",
+            new=fail_on_control_list_upload,
+        ):
+            # Act
+            export.export_batches(stdout, verbosity=2)
+            # Assert
+            self._assert_stdout_write_contains(stdout, "FAILED to export control list")
+
+    def test_export_batches_reports_failure(self):
+        for verbosity in (1, 2):
+            # Arrange: add CPRs resulting in more than one batch being exported
+            # (different prefixes.)
+            self._add_person_month(3001000000, Decimal("1000"))
+            self._add_person_month(3101000000, Decimal("1000"))
+            export = self._get_instance()
+            stdout = Mock()
+            with patch(
+                "suila.integrations.prisme.benefits.put_file_in_prisme_folder",
+                side_effect=ClientException("Uh-oh"),
+            ):
+                with self.subTest(verbosity=verbosity):
+                    # Act
+                    export.export_batches(stdout, verbosity=verbosity)
+                    # Assert
+                    self._assert_stdout_write_contains(
+                        stdout, "FAILED to export 2 batch(es)"
+                    )
+
+    def _assert_stdout_write_contains(self, stdout, text: str):
+        self.assertIn(
+            text,
+            "\n".join(
+                call.args[0]
+                for call in stdout.write.call_args_list
+                if len(call.args) > 0
+            ),
+        )
 
     def _assert_prisme_batch_items_state(
         self,
@@ -490,7 +564,7 @@ class TestBatchExport(TestCase):
                 (call.args[2], call.args[3])
                 for call in mock_put_file_in_prisme_folder.call_args_list
             ],
-            file_paths,  # + [("kontrolliste", "SUILA_kontrolliste_2025_01.csv")],
+            file_paths + [("kontrolliste", "SUILA_kontrolliste_2025_01.csv")],
         )
         # Assert: all `PersonMonth` objects are now exported (= have a corresponding
         # `PrismeBatchItem` object.) Thus, the batch export will not "see" them
