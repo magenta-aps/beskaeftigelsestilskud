@@ -1,21 +1,25 @@
 http:
 
   services:
-    suila:
+    suila-web-private:
       loadBalancer:
         servers:
-          - url: "http://suila-web:8000/"
-    matomo:
+          - url: "http://suila-web-private:8000/"
+    suila-web-public:
       loadBalancer:
         servers:
-          - url: "http://suila-matomo:80/"
+          - url: "http://suila-web-public:8000/"
+    suila-api:
+      loadBalancer:
+        servers:
+          - url: "http://suila-api:8000/"
 
   routers:
     rest:
       entryPoints:
         - "websecure"
       rule: "Host(`api.suila-traefik`)"
-      service: "suila"
+      service: "suila-api"
       middlewares:
         - "pass-tls-clientcert"
         - "api-path"
@@ -26,22 +30,19 @@ http:
       entryPoints:
         - "websecure"
       rule: "Host(`suila-traefik`)"
-      service: "suila"
+      service: "suila-web-public"
+      middlewares:
+        - "crowdsec"
       tls: {}
 
-    private:
-      entryPoints:
-        - "websecure"
-      rule: "Host(`suila-traefik`)"
-      service: "suila"
-      tls: {}
-
-    matomo:
-      entryPoints:
-        - "websecure"
-      rule: "Host(`matomo.suila-traefik`)"
-      service: "matomo"
-      tls: {}
+#    private:
+#      entryPoints:
+#        - "websecure"
+#      rule: "Host(`suila-traefik`)"
+#      service: "suila-web-private"
+#      middlewares:
+#        - "crowdsec"
+#      tls: {}
 
     web-to-websecure-bf:
       entryPoints:
@@ -64,13 +65,32 @@ http:
             province: true
             locality: true
             organization: true
-            organizationalUnit: true
+            #            organizationalUnit: true
             commonName: true
             serialNumber: true
             domainComponent: true
     api-path:
       addPrefix:
         prefix: "/api"
+    crowdsec:
+      plugin:
+        bouncer:
+          defaultDecisionSeconds: 60
+          crowdsecMode: live
+          crowdsecAppsecEnabled: false # <--- here you can enable appsec waf
+          crowdsecAppsecHost: crowdsec:7422
+          crowdsecAppsecFailureBlock: true
+          crowdsecAppsecUnreachableBlock: true
+          # Kør `docker exec crowdsec cscli bouncers add traefik-bouncer`
+          # og indsæt genereret key her
+          crowdsecLapiKey: MvBu33C1ZPvug8CK+OaaR0155ENeRNH7HVjt2KgtPjA
+          # Sæt derefter `enabled` til `true`
+          enabled: false
+          # Hvis API-key er forkert, og enabled er `true`, kan det resultere i
+          # at _alle_ requests bliver afvist
+          crowdsecLapiHost: crowdsec:8080
+          crowdsecLapiScheme: http
+          crowdsecLapiTLSInsecureVerify: false
 
 tls:
   stores:
