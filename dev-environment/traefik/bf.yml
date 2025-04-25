@@ -83,7 +83,7 @@ http:
           crowdsecAppsecUnreachableBlock: true
           # Kør `docker exec crowdsec cscli bouncers add traefik-bouncer`
           # og indsæt genereret key her
-          crowdsecLapiKey: EW7/j4ahFif8FIuA898RiU0wxNcBksV9oPPKXSb/f1U
+          crowdsecLapiKey: <genereret api key>
           # Sæt derefter `enabled` til `true`
           enabled: true
           # Hvis API-key er forkert, og enabled er `true`, kan det resultere i
