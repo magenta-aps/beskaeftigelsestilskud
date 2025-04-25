@@ -75,7 +75,7 @@ http:
     crowdsec:
       plugin:
         bouncer:
-          defaultDecisionSeconds: 60
+          defaultDecisionSeconds: 5
           crowdsecMode: live
           crowdsecAppsecEnabled: false # <--- here you can enable appsec waf
           crowdsecAppsecHost: crowdsec:7422
@@ -83,9 +83,9 @@ http:
           crowdsecAppsecUnreachableBlock: true
           # Kør `docker exec crowdsec cscli bouncers add traefik-bouncer`
           # og indsæt genereret key her
-          crowdsecLapiKey: MvBu33C1ZPvug8CK+OaaR0155ENeRNH7HVjt2KgtPjA
+          crowdsecLapiKey: EW7/j4ahFif8FIuA898RiU0wxNcBksV9oPPKXSb/f1U
           # Sæt derefter `enabled` til `true`
-          enabled: false
+          enabled: true
           # Hvis API-key er forkert, og enabled er `true`, kan det resultere i
           # at _alle_ requests bliver afvist
           crowdsecLapiHost: crowdsec:8080
