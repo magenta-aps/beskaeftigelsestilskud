@@ -2,16 +2,17 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
+from csv import DictWriter
 from datetime import date, timedelta
 from decimal import Decimal
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Generator
 
 from dateutil.relativedelta import TU, relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
-from django.db.models import CharField, QuerySet, Value
+from django.db.models import CharField, F, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
 from tenacity import (
     after_log,
@@ -207,11 +208,12 @@ class BatchExport:
         # E.g. for a `PersonMonth` in February 2025, the posting date is April 8, 2025.
         return person_month.year_month + relativedelta(months=2, weekday=TU(+2))
 
+    @transaction.atomic
     def upload_batch(
         self,
         prisme_batch: PrismeBatch,
         prisme_batch_items: list[PrismeBatchItem],
-    ) -> None:
+    ) -> PrismeBatch.Status:
         # Get destination folder and filename for this batch
         destination_folder: str = self.get_destination_folder(prisme_batch)
         filename: str = self.get_destination_filename(prisme_batch)
@@ -239,46 +241,57 @@ class BatchExport:
         else:
             prisme_batch.status = PrismeBatch.Status.Sent
             prisme_batch.failed_message = ""
+            # Save all Prisme batch items belonging to the current batch
+            PrismeBatchItem.objects.bulk_create(prisme_batch_items)
         finally:
             prisme_batch.save()
 
-    # def get_control_list(self, output: TextIOWrapper) -> TextIOWrapper:
-    #     # Fetch all Prisme batch items created for this year and month
-    #     prisme_batch_items: QuerySet[PrismeBatchItem] = (
-    #         PrismeBatchItem.objects.select_related("person_month__person_year__person")
-    #         .filter(
-    #             person_month__person_year__year=self._year,
-    #             person_month__month=self._month,
-    #         )
-    #         .order_by(
-    #             "person_month__person_year__person__cpr",
-    #             "prisme_batch__prefix",
-    #         )
-    #         .annotate(
-    #             cpr=F("person_month__person_year__person__cpr"),
-    #             amount=F("person_month__benefit_paid"),
-    #         )
-    #     )
-    #
-    #     # Write each Prisme batch item to CSV report
-    #     writer: DictWriter = DictWriter(
-    #         output,
-    #         fieldnames=["filnavn", "cpr", "beløb"],
-    #         delimiter=";",
-    #     )
-    #     writer.writeheader()
-    #     writer.writerows(
-    #         [
-    #             {
-    #                 "filnavn": self.get_destination_filename(row.prisme_batch),
-    #                 "cpr": row.cpr,  # type: ignore[attr-defined]
-    #                 "beløb": row.amount,  # type: ignore[attr-defined]
-    #             }
-    #             for row in prisme_batch_items
-    #         ]
-    #     )
-    #     output.seek(0)
-    #     return output
+        return prisme_batch.status
+
+    def get_control_list_data(self) -> QuerySet:
+        # Fetch all Prisme batch items created for this year and month
+        prisme_batch_items: QuerySet[PrismeBatchItem] = (
+            PrismeBatchItem.objects.select_related("person_month__person_year__person")
+            .filter(
+                person_month__person_year__year=self._year,
+                person_month__month=self._month,
+            )
+            .order_by(
+                "person_month__person_year__person__cpr",
+                "prisme_batch__prefix",
+            )
+            .annotate(
+                cpr=F("person_month__person_year__person__cpr"),
+                amount=F("person_month__benefit_paid"),
+            )
+        )
+        return prisme_batch_items
+
+    def get_control_list_csv(self, encoding: str = "utf-8") -> BytesIO:
+        with StringIO(newline="") as out:
+            # Write each Prisme batch item to CSV report
+            writer: DictWriter = DictWriter(
+                out,
+                fieldnames=["filnavn", "cpr", "beløb"],
+                delimiter=";",
+            )
+            writer.writeheader()
+            writer.writerows(
+                [
+                    {
+                        "filnavn": self.get_destination_filename(row.prisme_batch),
+                        "cpr": row.cpr,  # type: ignore[attr-defined]
+                        "beløb": row.amount,  # type: ignore[attr-defined]
+                    }
+                    for row in self.get_control_list_data()
+                ]
+            )
+            # Rewind `out` to start
+            out.seek(0)
+            # Convert `StringIO` to `BytesIO` so it can be uploaded using
+            # `put_file_in_prisme_folder`.
+            buf: BytesIO = BytesIO(out.getvalue().encode(encoding))
+            return buf
 
     def get_g68_g69_transaction_writer(self):
         return G68G69TransactionWriter(
@@ -292,7 +305,7 @@ class BatchExport:
         reraise=True,  # raise `ClientException` if final retry attempt fails
         stop=stop_after_attempt(10),
         wait=wait_fixed(1),  # 1 second before retry
-        after=after_log(logger, logging.DEBUG),  # log all retry attempts
+        after=after_log(logger, logging.WARNING),  # log all retry attempts
     )
     def _put_file_in_prisme_folder(
         self,
@@ -307,12 +320,12 @@ class BatchExport:
             filename,
         )
 
-    @transaction.atomic
     def export_batches(self, stdout: OutputWrapper, verbosity: int):
         person_month_queryset: QuerySet[PersonMonth] = self.get_person_month_queryset()
 
         num_person_months: int = person_month_queryset.count()
-        num_batches: int = 0
+        num_succeeded_batches: int = 0
+        num_failed_batches: int = 0
 
         stdout.write(
             f"Found {num_person_months} person month(s) to export for "
@@ -349,30 +362,47 @@ class BatchExport:
                         f"Could not build Prisme batch item for {person_month}"
                     )
 
-            # Save all Prisme batch items belonging to the current batch
-            PrismeBatchItem.objects.bulk_create(prisme_batch_items)
-
             # Export the current batch to Prisme
-            self.upload_batch(prisme_batch, prisme_batch_items)
+            status = self.upload_batch(prisme_batch, prisme_batch_items)
 
-            if verbosity >= 2:
-                stdout.write(f"Uploaded batch with pk={prisme_batch.pk}")
+            # Collect/report upload status for this batch
+            if status is PrismeBatch.Status.Sent:
+                num_succeeded_batches += 1
+                if verbosity >= 2:
+                    stdout.write(f"Uploaded batch with pk={prisme_batch.pk}")
+            if status is PrismeBatch.Status.Failed:
+                num_failed_batches += 1
+                if verbosity >= 2:
+                    stdout.write(f"Failed to upload batch with pk={prisme_batch.pk}")
 
-            num_batches += 1
+        if num_succeeded_batches > 0:
+            stdout.write(
+                f"Exported {num_succeeded_batches} batch(es) "
+                f"({num_person_months} person month(s)) "
+                f"for year={self._year}, month={self._month}."
+            )
 
-        stdout.write(
-            f"Exported {num_batches} batch(es) ({num_person_months} person month(s)) "
-            f"for year={self._year}, month={self._month}."
-        )
+        if num_failed_batches > 0:
+            stdout.write(
+                f"FAILED to export {num_failed_batches} batch(es) "
+                f"for year={self._year}, month={self._month}."
+            )
+            return  # don't write control list if any batches failed to upload
 
         # Write control list CSV file to SFTP
-        # buf: BytesIO = BytesIO()
-        # self.get_control_list(TextIOWrapper(buf))  # mutates `buf`
-        # self._put_file_in_prisme_folder(
-        #     buf,
-        #     settings.PRISME["control_folder"],  # type: ignore[misc]
-        #     f"SUILA_kontrolliste_{self._year}_{self._month:02}.csv",
-        # )
-        # stdout.write(
-        #     f"Exported control list for year={self._year}, month={self._month}."
-        # )
+        filename: str = f"SUILA_kontrolliste_{self._year}_{self._month:02}.csv"
+        try:
+            buf: BytesIO = self.get_control_list_csv()
+            self._put_file_in_prisme_folder(
+                buf,
+                settings.PRISME["control_folder"],  # type: ignore[misc]
+                filename,
+            )
+        except Exception:
+            logger.exception("failed to upload control list %r", filename)
+            stdout.write(f"FAILED to export control list '{filename}'.")
+        else:
+            stdout.write(
+                f"Exported control list for year={self._year}, month={self._month}."
+            )
+            stdout.write("All done.")
