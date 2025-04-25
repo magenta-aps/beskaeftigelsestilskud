@@ -50,6 +50,11 @@ LOGGING: dict = {
             "level": "ERROR",
             "propagate": False,
         },
+        "paramiko": {
+            "handlers": ["gunicorn"],
+            "level": "ERROR",
+            "propagate": False,
+        },
     },
 }
 
