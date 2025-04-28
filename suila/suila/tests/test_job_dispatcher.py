@@ -25,10 +25,15 @@ class TestJobDispatcherCommands(TestCase):
 
     @patch("suila.dispatch.management.call_command")
     @override_settings(ESKAT_BASE_URL="http://djangotest")
-    def test_job_dispatch_calls_second_tuesday(self, mock_call_command: MagicMock):
+    def test_job_dispatch_calls_before_calculation_date(
+        self, mock_call_command: MagicMock
+    ):
         mock_call_command.side_effect = _mock_call_command
 
-        job_dispatcher_test_date = datetime(2025, 4, 8)
+        # Three days before the CALCULATION_DATE
+        # OBS: CALCULATION_DATE is, by default, the second monday in the month
+        job_dispatcher_test_date = get_calculation_date(2025, 5) - timedelta(days=3)
+
         call_command(
             self.command,
             year=job_dispatcher_test_date.year,
@@ -36,6 +41,7 @@ class TestJobDispatcherCommands(TestCase):
             day=job_dispatcher_test_date.day,
         )
 
+        self.assertEqual(mock_call_command.call_count, 7)
         mock_call_command.assert_has_calls(
             [
                 # "data load"-jobs
@@ -114,6 +120,7 @@ class TestJobDispatcherCommands(TestCase):
             day=job_dispatcher_test_date.day,
         )
 
+        self.assertEqual(mock_call_command.call_count, 8)
         mock_call_command.assert_has_calls(
             [
                 # "data load"-jobs
@@ -203,6 +210,7 @@ class TestJobDispatcherCommands(TestCase):
             day=job_dispatcher_test_date.day,
         )
 
+        self.assertEqual(mock_call_command.call_count, 7)
         mock_call_command.assert_has_calls(
             [
                 # "data load"-jobs
@@ -280,6 +288,7 @@ class TestJobDispatcherCommands(TestCase):
         job_dispatcher_test_date: date = get_calculation_date(2025, 3) - timedelta(
             days=1
         )
+
         call_command(
             self.command,
             year=job_dispatcher_test_date.year,
