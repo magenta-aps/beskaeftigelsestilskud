@@ -59,3 +59,16 @@ class TestDisplayStatus(TestCase):
         result = display_status(self.person_month)
         # Assert
         self.assertDictEqual(result, {"name": _("Beløb fastlagt"), "established": True})
+
+    def test_paused(self):
+        # Arrange: add a Prisme batch item to the person month under test
+        self.person_month.prismebatchitem = PrismeBatchItem(
+            status=PrismeBatchItem.PostingStatus.Posted, paused=True
+        )
+        # Act
+        result = display_status(self.person_month)
+        # Assert
+        self.assertDictEqual(
+            result,
+            {"name": _("Udbetalingspause"), "established": True},
+        )
