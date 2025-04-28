@@ -1,13 +1,16 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from unittest.mock import patch
+from io import StringIO
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
 from common.tests.test_utils import BaseTestCase
+from django.core.management import call_command
+from django.test import TestCase
 
-from suila.models import PersonYear
+from suila.models import ManagementCommands, PersonYear
 
 
 class CalculateStabilityScoreTest(BaseTestCase):
@@ -68,3 +71,21 @@ class CalculateStabilityScoreTest(BaseTestCase):
         ):
             self.assertEqual(person_year.stability_score_a, None)
             self.assertEqual(person_year.stability_score_b, None)
+
+
+class GetPersonInfoFromDAFO(TestCase):
+    @patch(
+        "suila.management.commands.get_person_info_from_dafo.Command._get_pitu_client"
+    )
+    def test_no_persons(self, mock_get_pitu_client: MagicMock):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+        mock_get_pitu_client.assert_not_called()
