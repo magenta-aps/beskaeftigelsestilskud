@@ -6,11 +6,13 @@ from datetime import date, datetime, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
+from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date
+from suila.benefit import get_calculation_date, get_payout_date
+from suila.exceptions import DependenciesNotMet
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
@@ -195,6 +197,31 @@ class TestJobDispatcherCommands(TestCase):
                     reraise=False,
                 ),
             ]
+        )
+
+    @patch("suila.dispatch.management.call_command")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_job_dispatch_calls_after_calculation_date(
+        self, mock_call_command: MagicMock
+    ):
+        mock_call_command.side_effect = _mock_call_command
+
+        # NOTE: The date must be after the following interval:
+        # `calculation_date.day <= day < prisme_date.day`
+        prisme_date = get_payout_date(2025, 5) - timedelta(days=settings.PRISME_DELAY)
+        job_dispatcher_test_date: date = prisme_date
+        with self.assertRaises(DependenciesNotMet) as context:
+            call_command(
+                self.command,
+                year=job_dispatcher_test_date.year,
+                month=job_dispatcher_test_date.month,
+                day=job_dispatcher_test_date.day,
+                reraise=True,
+            )
+
+        self.assertIn(
+            "'calculate_benefit' dependency for 'export_benefits_to_prisme' is not met",
+            str(context.exception),
         )
 
     @patch("suila.dispatch.management.call_command")
