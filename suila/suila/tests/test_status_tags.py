@@ -59,3 +59,28 @@ class TestDisplayStatus(TestCase):
         result = display_status(self.person_month)
         # Assert
         self.assertDictEqual(result, {"name": _("Beløb fastlagt"), "established": True})
+
+    def test_paused(self):
+        # Arrange: add a Prisme batch item to the person month under test
+        self.person_month.prismebatchitem = PrismeBatchItem(
+            status=PrismeBatchItem.PostingStatus.Posted, paused=True
+        )
+        # Act
+        result = display_status(self.person_month)
+        # Assert
+        self.assertDictEqual(
+            result,
+            {"name": _("Udbetalingspause"), "established": True},
+        )
+
+    @patch("suila.templatetags.status_tags.datetime", wraps=datetime)
+    def test_paused_after_current_month(self, mock_datetime):
+        self.person_month.person_year.person.paused = True
+        # Arrange: set current time to the year and month of the person month under test
+        mock_datetime.date.today.return_value = datetime.date(2020, 1, 1)
+        # Act
+        result = display_status(self.person_month)
+        # Assert
+        self.assertDictEqual(
+            result, {"name": _("Udbetalingspause"), "established": True}
+        )

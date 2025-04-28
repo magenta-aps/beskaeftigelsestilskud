@@ -1389,6 +1389,12 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
     `PostingStatus.Failed`.
     """
 
+    paused = models.BooleanField(
+        default=False,
+        null=False,
+        blank=False,
+    )
+
 
 class AnnualIncome(PermissionsMixin, models.Model):
     history = HistoricalRecords(

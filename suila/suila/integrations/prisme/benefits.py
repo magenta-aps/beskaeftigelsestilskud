@@ -166,6 +166,7 @@ class BatchExport:
             g68_content=transaction_pair.g68,
             g69_content=transaction_pair.g69,
             invoice_no=invoice_no,
+            paused=person_month.person_year.person.paused,
         )
 
     def get_posting_text(self, person_month: PersonMonth) -> str:
