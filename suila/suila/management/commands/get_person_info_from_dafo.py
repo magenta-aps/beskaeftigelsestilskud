@@ -29,8 +29,12 @@ class Command(SuilaBaseCommand):
                 self._write_verbose(
                     f"Could not find any persons with CPR={kwargs['cpr']}"
                 )
+                return self._write_verbose("Done")
         else:
             persons = Person.objects.all()
+            if not persons.exists():
+                self._write_verbose("Could not find any persons in the database.")
+                return self._write_verbose("Done")
 
         pitu_client = self._get_pitu_client()
 
