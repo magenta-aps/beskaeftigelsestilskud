@@ -343,6 +343,86 @@ class GetPersonInfoFromDAFO(TestCase):
             },
         )
 
+    @patch(
+        "suila.management.commands.get_person_info_from_dafo.Command._get_pitu_client"
+    )
+    def test_force_flag_no_cpr(self, mock_get_pitu_client: MagicMock):
+        mock_get_pitu_client.return_value = self._get_mock_pitu_client()
+
+        # Create test data
+        person1 = self._create_person(
+            "0101709988",
+            name="Test 1",
+            full_address="TestVej 1337, 1234 Oslo",
+            country_code="NO",
+        )
+        person2 = self._create_person(
+            "0102808877",
+            name="Test 2",
+            full_address="TestVej 2337, 1234 Oslo",
+            country_code="NO",
+        )
+
+        # Invoke the CMD & assert
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            force=True,
+        )
+
+        self.assertEqual(
+            mock_get_pitu_client.return_value.get_person_info.call_count, 2
+        )
+        mock_get_pitu_client.return_value.get_person_info.assert_has_calls(
+            [
+                call(person1.cpr),
+                call(person2.cpr),
+            ]
+        )
+
+        self.assertEqual(
+            [model_to_dict(person) for person in Person.objects.all().order_by("pk")],
+            [
+                {
+                    "id": ANY,
+                    "load": None,
+                    "cpr": person1.cpr,
+                    "paused": ANY,
+                    "name": "Test One Magenta",
+                    "address_line_1": None,
+                    "address_line_2": None,
+                    "address_line_3": None,
+                    "address_line_4": None,
+                    "address_line_5": None,
+                    "full_address": "Silkeborgvej 260, 8230 Åbyhøj",
+                    "foreign_address": None,
+                    "country_code": "DK",
+                    "civil_state": None,
+                    "location_code": None,
+                    "welcome_letter": ANY,
+                    "welcome_letter_sent_at": ANY,
+                },
+                {
+                    "id": ANY,
+                    "load": None,
+                    "cpr": person2.cpr,
+                    "paused": ANY,
+                    "name": "Test Two Magenta",
+                    "address_line_1": None,
+                    "address_line_2": None,
+                    "address_line_3": None,
+                    "address_line_4": None,
+                    "address_line_5": None,
+                    "full_address": "Silkeborgvej 261, 8230 Åbyhøj",
+                    "foreign_address": None,
+                    "country_code": "DK",
+                    "civil_state": None,
+                    "location_code": None,
+                    "welcome_letter": ANY,
+                    "welcome_letter_sent_at": ANY,
+                },
+            ],
+        )
+
     # PRIVATE helper methods
     def _get_mock_pitu_client(self) -> MagicMock:
         mock_get_person_info = MagicMock(
