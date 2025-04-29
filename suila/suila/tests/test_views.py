@@ -388,11 +388,17 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         PersonMonth.objects.create(
             person_year=person_year, month=1, import_date=date.today()
         )
-        with self._time_context(year=2025, month=3):  # March 2025
-            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
-            self.assertEqual(
-                response.context_data["next_payout_date"], date(2025, 3, 18)
-            )
+        for month in (3, 4):  # March and April
+            with self.subTest(month=month):
+                with self._time_context(year=2025, month=month):
+                    view, response = self.request_get(
+                        self.normal_user, pk=self.person1.pk
+                    )
+                    # For both March and April, the next payout date is in March, as
+                    # there is no `PersonMonth` for February in this test.
+                    self.assertEqual(
+                        response.context_data["next_payout_date"], date(2025, 3, 18)
+                    )
 
     def test_get_table_data(self):
         with self._time_context(year=2020):
