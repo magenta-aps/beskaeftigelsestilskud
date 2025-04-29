@@ -260,7 +260,7 @@ class PersonDetailView(
         max_date: date = date(self.year, self.month, 1) - relativedelta(months=2)
         try:
             person_month = PersonMonth.objects.filter(
-                person_year__person__pk=self.person_pk,
+                person_year__person=self.object,
                 person_year__year__year=max_date.year,
                 month__lte=max_date.month,
             ).latest("month")
@@ -272,14 +272,14 @@ class PersonDetailView(
             )
             return None
         else:
-            logger.info("person_month=%r", person_month)
+            quarantine_weights = settings.QUARANTINE_WEIGHTS  # type: ignore[misc]
             return RelevantPersonMonth(
                 person_month=person_month,
                 next_payout_date=get_payment_date(
                     person_month.person_year.year.year,
                     person_month.month,
                 ),
-                quarantine_weight=settings.QUARANTINE_WEIGHTS[person_month.month - 1],
+                quarantine_weight=quarantine_weights[person_month.month - 1],
             )
 
     def get_table_data(self):
