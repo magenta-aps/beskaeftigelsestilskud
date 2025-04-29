@@ -8,7 +8,7 @@ To start the project, `up` the docker containers using compose:
 docker compose up -d
 ```
 
-You can then log in with one of the following:
+You can then log in at http://localhost:8121/login with one of the following:
 
 | Username         | Password         | Description                         |
 |------------------|------------------|-------------------------------------|
