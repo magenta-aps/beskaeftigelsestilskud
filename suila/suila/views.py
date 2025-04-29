@@ -194,6 +194,13 @@ class PersonMonthTable(Table):
     )
 
 
+@dataclass(frozen=True)
+class RelevantPersonMonth:
+    person_month: PersonMonth
+    next_payout_date: date
+    quarantine_weight: int
+
+
 class PersonDetailView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
@@ -216,49 +223,64 @@ class PersonDetailView(
         # currently hidden from users.)
         context_data["year_in_past"] = self.person_year.year.year < date.today().year
 
-        # Determine the "focus date", e.g. which `PersonMonth` to get next benefit, etc.
-        # from. If we are currently in March 2025, the "focus date" is January 2025, and
-        # so on.
-        focus_date: date = date(self.year, self.month, 1) - relativedelta(months=2)
-        quarantine_weight = settings.QUARANTINE_WEIGHTS[focus_date.month - 1]
-        context_data["focus_date"] = focus_date
-        context_data["quarantine_weight"] = quarantine_weight
+        # Get the "currently relevant" person month
+        relevant_person_month: RelevantPersonMonth = self.get_relevant_person_month()
 
-        try:
-            person_month = PersonMonth.objects.get(
-                person_year__person__pk=self.person_pk,
-                person_year__year__year=focus_date.year,
-                month=focus_date.month,
-            )
-        except PersonMonth.DoesNotExist:
-            logger.error("No PersonMonth found for focus date %r", focus_date)
-            context_data["show_next_payment"] = False
-        else:
-            person_year = person_month.person_year
+        if relevant_person_month is not None:
+            person_year = relevant_person_month.person_month.person_year
             estimated_year_result = (
-                (person_month.estimated_year_result or Decimal(0))
+                (relevant_person_month.person_month.estimated_year_result or Decimal(0))
                 - person_year.catchsale_expenses
                 + (person_year.b_income - person_year.b_expenses)
             )
             context_data.update(
                 {
                     "show_next_payment": True,
-                    "next_payout_date": get_payment_date(
-                        focus_date.year, focus_date.month
+                    "next_payout_date": relevant_person_month.next_payout_date,
+                    "benefit_paid": relevant_person_month.person_month.benefit_paid,
+                    "estimated_year_benefit": (
+                        relevant_person_month.person_month.estimated_year_benefit
                     ),
-                    "benefit_paid": person_month.benefit_paid,
-                    "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
                     "paused": person_year.person.paused,
                     "person_id": person_year.person.pk,
                     "next_year": person_year.year.year + 1,
                     "in_quarantine": person_year.in_quarantine,
                     "quarantine_reason": person_year.quarantine_reason,
+                    "quarantine_weight": relevant_person_month.quarantine_weight,
                 }
             )
+        else:
+            context_data["show_next_payment"] = False
 
         self.log_view(self.object)
         return context_data
+
+    def get_relevant_person_month(self) -> RelevantPersonMonth | None:
+        max_date: date = date(self.year, self.month, 1) - relativedelta(months=2)
+        try:
+            person_month = PersonMonth.objects.filter(
+                person_year__person__pk=self.person_pk,
+                person_year__year__year=max_date.year,
+                month__lte=max_date.month,
+            ).latest("month")
+        except PersonMonth.DoesNotExist:
+            logger.error(
+                "No PersonMonth found for person %r (max_date=%r)",
+                self.person_pk,
+                max_date,
+            )
+            return None
+        else:
+            logger.info("person_month=%r", person_month)
+            return RelevantPersonMonth(
+                person_month=person_month,
+                next_payout_date=get_payment_date(
+                    person_month.person_year.year.year,
+                    person_month.month,
+                ),
+                quarantine_weight=settings.QUARANTINE_WEIGHTS[person_month.month - 1],
+            )
 
     def get_table_data(self):
         return (
