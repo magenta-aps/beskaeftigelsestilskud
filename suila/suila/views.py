@@ -994,5 +994,15 @@ class PersonPauseUpdateView(
     required_model_permissions = ["suila.change_person"]
     fields = ["paused"]
 
+    @classmethod
+    def has_permissions(cls, **kwargs):
+        request = kwargs.get("request")
+        user = kwargs.get("user", request.user)
+        person = Person.objects.get(pk=int(request.POST.get("person")))
+
+        if user.cpr == person.cpr:
+            return True
+        return super().has_permissions(**kwargs)
+
     def get_success_url(self):
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
