@@ -94,11 +94,11 @@ class GetPersonInfoFromDAFO(TestCase):
     @patch(
         "suila.management.commands.get_person_info_from_dafo.Command._get_pitu_client"
     )
-    def test_only_new_persons(self, mock_get_pitu_client: MagicMock):
+    def test_persons_with_no_personinfo(self, mock_get_pitu_client: MagicMock):
         # Test data
-        person1 = self._create_person("test1", "0101709988")
-        person2 = self._create_person("test2", "0102808877")
-        person3 = self._create_person("test3", "0103907766")
+        person1 = self._create_person("0101709988")
+        person2 = self._create_person("0102808877")
+        person3 = self._create_person("0103907766")
 
         # Mocking
         mock_get_person_info = MagicMock(
@@ -196,9 +196,64 @@ class GetPersonInfoFromDAFO(TestCase):
             },
         )
 
+    @patch(
+        "suila.management.commands.get_person_info_from_dafo.Command._get_pitu_client"
+    )
+    def test_persons_with_existing_personinfo(self, mock_get_pitu_client: MagicMock):
+        # Test data
+        self._create_person(
+            "0101709988",
+            name="Test One Magenta",
+            full_address="Silkeborgvej 260, 8230 Åbyhøj",
+            country_code="DK",
+            civil_state=None,
+            foreign_address=None,
+        )
+        self._create_person(
+            "0102808877",
+            name="Test Two Magenta",
+            full_address="Silkeborgvej 261, 8230 Åbyhøj",
+            country_code="DK",
+            civil_state=None,
+            foreign_address=None,
+        )
+        person3 = self._create_person("0103907766")
+        person4 = self._create_person("0104906655")
+
+        mock_get_pitu_client.return_value = self._get_mock_pitu_client()
+
+        # Invoke the command
+        stdout = StringIO()
+        stderr = StringIO()
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+        # Should only fetch person-info for persons missing it, which in this test is 2
+        self.assertEqual(
+            mock_get_pitu_client.return_value.get_person_info.call_count, 2
+        )
+        mock_get_pitu_client.return_value.get_person_info.assert_has_calls(
+            [
+                call(person3.cpr),
+                call(person4.cpr),
+            ]
+        )
+
     # PRIVATE helper methods
-    def _create_person(self, name: str, cpr: str):
-        return Person.objects.create(name=name, cpr=cpr)
+    def _get_mock_pitu_client(self) -> MagicMock:
+        mock_get_person_info = MagicMock(
+            side_effect=GetPersonInfoFromDAFO._mock_get_person_info
+        )
+        mock_pitu_client = MagicMock(get_person_info=mock_get_person_info)
+
+        return mock_pitu_client
+
+    def _create_person(self, cpr: str, **kwargs):
+        return Person.objects.create(cpr=cpr, **kwargs)
 
     @staticmethod
     def _mock_get_person_info(cpr: str) -> Dict[str, Any]:
