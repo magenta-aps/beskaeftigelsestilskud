@@ -89,6 +89,7 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
     def test_partial_address(self):
         # Act: run with `cpr` parameter
         self._run(mock_updates={"bynavn": None})
+
         # Assert that address is created even with missing data
         self.assertQuerySetEqual(
             Person.objects.filter(cpr=self.cpr).values("full_address"),
@@ -99,7 +100,7 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
             ],
         )
 
-        self._run(mock_updates={"postnummer": None})
+        self._run(mock_updates={"postnummer": None}, force=True)
         self.assertQuerySetEqual(
             Person.objects.filter(cpr=self.cpr).values("full_address"),
             [
@@ -109,7 +110,7 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
             ],
         )
 
-        self._run(mock_updates={"adresse": None})
+        self._run(mock_updates={"adresse": None}, force=True)
         self.assertQuerySetEqual(
             Person.objects.filter(cpr=self.cpr).values("full_address"),
             [
@@ -135,6 +136,7 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
         mock_result = {**self._mock_result}
         if mock_updates:
             mock_result.update(mock_updates)
+
         mock_client.get_person_info.return_value = mock_result
         with patch(
             "suila.management.commands.get_person_info_from_dafo."
