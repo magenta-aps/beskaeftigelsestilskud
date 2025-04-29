@@ -220,7 +220,9 @@ class PersonDetailView(
         # from. If we are currently in March 2025, the "focus date" is January 2025, and
         # so on.
         focus_date: date = date(self.year, self.month, 1) - relativedelta(months=2)
+        quarantine_weight = settings.QUARANTINE_WEIGHTS[focus_date.month - 1]
         context_data["focus_date"] = focus_date
+        context_data["quarantine_weight"] = quarantine_weight
 
         try:
             person_month = PersonMonth.objects.get(
@@ -250,6 +252,8 @@ class PersonDetailView(
                     "paused": person_year.person.paused,
                     "person_id": person_year.person.pk,
                     "next_year": person_year.year.year + 1,
+                    "in_quarantine": person_year.in_quarantine,
+                    "quarantine_reason": person_year.quarantine_reason,
                 }
             )
 

@@ -6,6 +6,8 @@ from decimal import Decimal
 from io import StringIO
 from itertools import cycle
 
+from bs4 import BeautifulSoup
+from common.tests.test_mixins import TestViewMixin
 from common.utils import (
     add_parameters_to_url,
     calculate_stability_score,
@@ -33,6 +35,8 @@ from suila.models import (
     StandardWorkBenefitCalculationMethod,
     Year,
 )
+from suila.tests.test_views import TimeContextMixin
+from suila.views import PersonDetailView
 
 
 class TestUtils(TestCase):
@@ -242,7 +246,9 @@ class BaseTestCase(TestCase):
 
 
 @override_settings(ENFORCE_QUARANTINE=True)
-class QuarantineTest(BaseTestCase):
+class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
+    view_class = PersonDetailView
+
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -287,22 +293,24 @@ class QuarantineTest(BaseTestCase):
         salary = {cls.person3: 5_700, cls.person4: 41_000}
         for month_number in range(1, 13):
             offset = next(offset_gen)
-            for person_year in [cls.person_year3, cls.person_year4]:
-                month = PersonMonth.objects.create(
-                    person_year=person_year,
-                    month=month_number,
-                    import_date=date.today(),
-                    benefit_paid=1050,
-                    prior_benefit_paid=1050 * (month_number - 1),
-                    actual_year_benefit=1050 * 12,
-                )
+            for person in [cls.person3, cls.person4]:
+                for year in [cls.year, cls.last_year]:
+                    person_year = PersonYear.objects.get(person=person, year=year)
+                    month = PersonMonth.objects.create(
+                        person_year=person_year,
+                        month=month_number,
+                        import_date=date.today(),
+                        benefit_paid=1050,
+                        prior_benefit_paid=1050 * (month_number - 1),
+                        actual_year_benefit=1050 * 12,
+                    )
 
-                MonthlyIncomeReport.objects.create(
-                    person_month=month,
-                    salary_income=Decimal(salary[person_year.person] * offset),
-                    month=month.month,
-                    year=cls.last_year.year,
-                )
+                    MonthlyIncomeReport.objects.create(
+                        person_month=month,
+                        salary_income=Decimal(salary[person_year.person] * offset),
+                        month=month.month,
+                        year=year,
+                    )
 
     def test_get_people_in_quarantine(self):
         df = get_people_in_quarantine(
@@ -325,7 +333,7 @@ class QuarantineTest(BaseTestCase):
         self.assertTrue(person_year_3.in_quarantine)
         self.assertTrue(person_year_4.in_quarantine)
 
-        self.assertIn("Modtog for meget", person_year_1.quarantine_reason)
+        self.assertIn("modtog for meget", person_year_1.quarantine_reason)
         self.assertEqual("-", person_year_2.quarantine_reason)
         self.assertIn("for tæt på bundgrænsen", person_year_3.quarantine_reason)
         self.assertIn("for tæt på øverste grænse", person_year_4.quarantine_reason)
@@ -357,3 +365,50 @@ class QuarantineTest(BaseTestCase):
         self.assertTrue(df.loc[self.person4.cpr, "earns_too_much"])
         self.assertFalse(df.loc[self.person3.cpr, "earns_too_much"])
         self.assertFalse(df.loc[self.person4.cpr, "earns_too_little"])
+
+    @override_settings(QUARANTINE_IF_EARNS_TOO_LITTLE=True)
+    @override_settings(QUARANTINE_IF_EARNS_TOO_MUCH=True)
+    @override_settings(QUARANTINE_IF_WRONG_PAYOUT=True)
+    @override_settings(QUARANTINE_WEIGHTS=[0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 1])
+    def test_quarantine_view(self):
+
+        # Check that quarantine messages are displayed properly
+        with self._time_context(year=2024, month=11):
+            view, response = self.request_get(self.admin_user, pk=self.person1.pk)
+            response.render()
+            soup = str(BeautifulSoup(response.content, features="lxml"))
+            self.assertIn("Du modtog for meget tilskud i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på øverste grænse i 2023", soup)
+
+            view, response = self.request_get(self.admin_user, pk=self.person3.pk)
+            response.render()
+            soup = str(BeautifulSoup(response.content, features="lxml"))
+            self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
+            self.assertIn("Du tjente for tæt på bundgrænsen i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på øverste grænse i 2023", soup)
+
+            view, response = self.request_get(self.admin_user, pk=self.person4.pk)
+            response.render()
+            soup = str(BeautifulSoup(response.content, features="lxml"))
+            self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
+            self.assertIn("Du tjente for tæt på øverste grænse i 2023", soup)
+
+        # Check that payouts resume in december (because the weight = 10)
+        with self._time_context(year=2024, month=12):
+            view, response = self.request_get(self.admin_user, pk=self.person1.pk)
+            response.render()
+            soup = str(BeautifulSoup(response.content, features="lxml"))
+            self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på øverste grænse i 2023", soup)
+
+        # It is not possible to be in quarantine in February (because the weight =1)
+        with self._time_context(year=2024, month=2):
+            view, response = self.request_get(self.admin_user, pk=self.person1.pk)
+            response.render()
+            soup = str(BeautifulSoup(response.content, features="lxml"))
+            self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
+            self.assertNotIn("Du tjente for tæt på øverste grænse i 2023", soup)

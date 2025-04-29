@@ -390,19 +390,19 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
     if quarantine_if_wrong_payout:
         df.in_quarantine = df.in_quarantine | df.wrong_payout
         df.loc[df.wrong_payout, "quarantine_reason"] = str(
-            _("Modtog for meget tilskud i {year}").format(year=year - 1)
+            _("Du modtog for meget tilskud i {year}").format(year=year - 1)
         )
 
     if quarantine_if_too_much:
         df.in_quarantine = df.in_quarantine | df.earns_too_much
         df.loc[df.earns_too_much, "quarantine_reason"] = str(
-            _("Tjente for tæt på øverste grænse i {year}").format(year=year - 1)
+            _("Du tjente for tæt på øverste grænse i {year}").format(year=year - 1)
         )
 
     if quarantine_if_too_little:
         df.in_quarantine = df.in_quarantine | df.earns_too_little
         df.loc[df.earns_too_little, "quarantine_reason"] = str(
-            _("Tjente for tæt på bundgrænsen i {year}").format(year=year - 1)
+            _("Du tjente for tæt på bundgrænsen i {year}").format(year=year - 1)
         )
 
     df = df.reindex(cpr_numbers)
