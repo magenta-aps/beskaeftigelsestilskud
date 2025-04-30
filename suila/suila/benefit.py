@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date
+from datetime import date, timedelta
 from fractions import Fraction
 
 import numpy as np
@@ -12,7 +12,6 @@ from django.conf import settings
 from more_itertools import one
 from numpy import float64
 
-# from suila.estimation import EstimationEngine, MonthlyContinuationEngine
 from suila.models import PersonMonth, PersonYear, TaxScope, Year
 
 
@@ -264,3 +263,25 @@ def get_payout_date(year: int, month: int) -> date:
     if first_tuesday > 7:
         first_tuesday -= 7
     return date(year, month, first_tuesday + 14)
+
+
+def get_calculation_date(year: int, month: int) -> date:
+    """Get date for when to do calculations in a month
+
+    The day before the 2nd tuesday in a month - Can be changed by modifying
+    `settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS`.
+    """
+    return get_payout_date(year, month) - timedelta(
+        days=settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS  # type: ignore
+    )
+
+
+def get_prisme_date(year: int, month: int) -> date:
+    """Get date for when to export data to PRISME
+
+    The day before payout date - Can be changed by modifying
+    `settings.PRISME_DELAY`.
+    """
+    return get_payout_date(year, month) - timedelta(
+        days=settings.PRISME_DELAY  # type: ignore
+    )

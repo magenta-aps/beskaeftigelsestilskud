@@ -4,12 +4,11 @@
 import datetime
 import logging
 
-from django.conf import settings
 from django.core import management
 from django.db.models import Q
 from django.utils import timezone
 
-from suila.benefit import get_payout_date
+from suila.benefit import get_calculation_date, get_prisme_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
@@ -24,15 +23,8 @@ class JobDispatcher:
         self.day = day or today.day
         self.reraise = reraise
 
-        self.payout_date = get_payout_date(self.year, self.month)
-
-        # Allow for a week between calculation and payout
-        self.calculation_date = self.payout_date - datetime.timedelta(days=7)
-
-        # We send data to prisme "x" days before the payout date
-        self.prisme_date = self.payout_date - datetime.timedelta(
-            days=settings.PRISME_DELAY
-        )
+        self.calculation_date = get_calculation_date(self.year, self.month)
+        self.prisme_date = get_prisme_date(self.year, self.month)
 
         self.dependencies = {
             ManagementCommands.CALCULATE_STABILITY_SCORE: [],

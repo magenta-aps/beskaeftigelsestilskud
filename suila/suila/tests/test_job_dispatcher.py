@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
@@ -10,7 +10,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from suila.benefit import get_payout_date
+from suila.benefit import get_calculation_date
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
@@ -106,13 +106,7 @@ class TestJobDispatcherCommands(TestCase):
     @override_settings(ESKAT_BASE_URL="http://djangotest")
     def test_job_dispatch_calls_on_calculation_date(self, mock_call_command: MagicMock):
         mock_call_command.side_effect = _mock_call_command
-
-        payout_date: date = get_payout_date(2025, 5)
-        calculation_date: date = payout_date - timedelta(days=7)
-        # FYI: subtraction of 7-days, is currently hardcoded into
-        # the JobDispatcher class
-
-        job_dispatcher_test_date = calculation_date
+        job_dispatcher_test_date = get_calculation_date(2025, 5)
         call_command(
             self.command,
             year=job_dispatcher_test_date.year,
