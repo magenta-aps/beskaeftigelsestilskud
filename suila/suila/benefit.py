@@ -266,7 +266,22 @@ def get_payout_date(year: int, month: int) -> date:
 
 
 def get_calculation_date(year: int, month: int) -> date:
-    # settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS default is 8
+    """Get date for when to do calculations in a month
+
+    The day before the 2nd tuesday in a month - Can be changed by modifying
+    `settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS`.
+    """
     return get_payout_date(year, month) - timedelta(
         days=settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS  # type: ignore
+    )
+
+
+def get_prisme_date(year: int, month: int) -> date:
+    """Get date for when to export data to PRISME
+
+    The day before payout date - Can be changed by modifying
+    `settings.PRISME_DELAY`.
+    """
+    return get_payout_date(year, month) - timedelta(
+        days=settings.PRISME_DELAY  # type: ignore
     )
