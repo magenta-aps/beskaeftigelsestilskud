@@ -15,6 +15,9 @@ def display_status(person_month: PersonMonth) -> dict:
         posting_status = PrismeBatchItem.PostingStatus(
             person_month.prismebatchitem.status  # type: ignore
         )
+
+        paused = person_month.prismebatchitem.paused
+
     except PrismeBatchItem.DoesNotExist:
         # TODO: show "Afventer udbetaling" if estimated year result is between 475000
         # and 500000 kr.
@@ -23,6 +26,12 @@ def display_status(person_month: PersonMonth) -> dict:
         if datetime.date.today() < person_month.year_month:
             return {"name": _("Foreløbigt beløb"), "established": False}
         else:
-            return {"name": _("Beløb fastlagt"), "established": True}
+            if person_month.person_year.person.paused:
+                return {"name": _("Udbetalingspause"), "established": True}
+            else:
+                return {"name": _("Beløb fastlagt"), "established": True}
     else:
-        return {"name": posting_status.label, "established": True}
+        if paused:
+            return {"name": _("Udbetalingspause"), "established": True}
+        else:
+            return {"name": posting_status.label, "established": True}

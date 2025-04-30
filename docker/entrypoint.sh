@@ -45,6 +45,10 @@ if [ "${CREATE_DUMMY_ADMIN,,}" = true ]; then
   echo 'creating superuser'
   python manage.py create_user admin admin --is_superuser
 fi
+if [ "${LOAD_CALCULATION_METHOD,,}" = true ]; then
+  echo "Loading calculation method"
+  python manage.py load_dummy_calculation_method
+fi
 if [ "${CREATE_DUMMY_USERS,,}" = true ]; then
   echo 'creating borgerservice user'
   python manage.py create_user borgerservice borgerservice -g Borgerservice
@@ -64,11 +68,6 @@ python manage.py createcachetable
 if [ "${PULL_IDP_METADATA,,}" = true ]; then
   echo "Updating metadata"
   python manage.py update_mitid_idp_metadata
-fi
-
-if [ "${LOAD_CALCULATION_METHOD,,}" = true ]; then
-  echo "Loading calculation method"
-  python manage.py load_dummy_calculation_method
 fi
 
 if [ "${LOAD_PRISME_ACCOUNT_ALIASES,,}" = true ]; then
