@@ -1,0 +1,4 @@
+# Read accesslog from docker container "suila-traefik"
+source: docker
+container_name:
+  - suila-traefik
