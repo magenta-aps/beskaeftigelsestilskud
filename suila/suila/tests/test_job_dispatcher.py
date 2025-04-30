@@ -6,12 +6,11 @@ from datetime import date, datetime, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
-from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date, get_payout_date
+from suila.benefit import get_calculation_date, get_prisme_date
 from suila.exceptions import DependenciesNotMet
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
 from suila.models import JobLog, ManagementCommands, StatusChoices
@@ -208,8 +207,7 @@ class TestJobDispatcherCommands(TestCase):
 
         # NOTE: The date must be after the following interval:
         # `calculation_date.day <= day < prisme_date.day`
-        prisme_date = get_payout_date(2025, 5) - timedelta(days=settings.PRISME_DELAY)
-        job_dispatcher_test_date: date = prisme_date
+        job_dispatcher_test_date: date = get_prisme_date(2025, 5)
         with self.assertRaises(DependenciesNotMet) as context:
             call_command(
                 self.command,
