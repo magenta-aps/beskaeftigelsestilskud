@@ -423,6 +423,29 @@ class GetPersonInfoFromDAFO(TestCase):
             ],
         )
 
+    @patch(
+        "suila.management.commands.get_person_info_from_dafo.Command._get_pitu_client"
+    )
+    def test_force_flag_for_cpr(self, mock_get_pitu_client: MagicMock):
+        mock_get_pitu_client.return_value = self._get_mock_pitu_client()
+
+        person1 = self._create_person(
+            "0101709988",
+            name="Test 1",
+            full_address="TestVej 1337, 1234 Oslo",
+            country_code="NO",
+        )
+
+        # Invoke & assert
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            cpr=person1.cpr,
+            force=True,
+        )
+        mock_get_pitu_client.return_value.get_person_info.assert_called_once_with(
+            "0101709988"
+        )
+
     # PRIVATE helper methods
     def _get_mock_pitu_client(self) -> MagicMock:
         mock_get_person_info = MagicMock(
