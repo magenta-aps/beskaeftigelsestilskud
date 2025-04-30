@@ -29,7 +29,7 @@ http:
     public:
       entryPoints:
         - "websecure"
-      rule: "Host(`suila-traefik`)"
+      rule: Host(`suila-traefik`)
       service: "suila-web-public"
       middlewares:
         - "crowdsec"
@@ -83,9 +83,9 @@ http:
           crowdsecAppsecUnreachableBlock: true
           # Kør `docker exec crowdsec cscli bouncers add traefik-bouncer`
           # og indsæt genereret key her
-          crowdsecLapiKey: <genereret api key>
+          crowdsecLapiKey: some_api_key
           # Sæt derefter `enabled` til `true`
-          enabled: true
+          enabled: false
           # Hvis API-key er forkert, og enabled er `true`, kan det resultere i
           # at _alle_ requests bliver afvist
           crowdsecLapiHost: crowdsec:8080
