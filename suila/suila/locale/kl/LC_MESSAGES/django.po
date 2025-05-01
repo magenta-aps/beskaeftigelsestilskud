@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-11 11:11-0100\n"
+"POT-Creation-Date: 2025-05-01 11:52-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -708,8 +708,10 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
+#, python-format
 msgid ""
-"Kontakt venligst borgerservice hvis du ønsker at udbetalingerne genoptages."
+"Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
+"%(year)s."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -1279,6 +1281,10 @@ msgstr "Decembarip"
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Foreløbigt beløb"
 msgstr "Tunniunneartussatut naatsorsuutaagallartut"
+
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
+msgid "Udbetalingspause"
+msgstr ""
 
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Beløb fastlagt"
