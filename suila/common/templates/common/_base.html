@@ -237,9 +237,14 @@
 
     {% block footer %}
     <footer>
-        <a href="https://www.aka.gl" target="_blank" class="d-inline-flex align-items-center">
-            <span>https://www.aka.gl</span>
-        </a>
+        <div class="d-flex">
+            <a href="https://www.aka.gl" target="_blank" class="d-inline-flex align-items-center">
+                <span>https://www.aka.gl</span>
+            </a>
+            <h4 class="d-inline-flex align-items-center ms-auto">
+              v{{ version }}
+            </h4>
+        </div>
     </footer>
     {% endblock %}
 
