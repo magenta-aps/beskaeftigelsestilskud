@@ -21,7 +21,7 @@
     <link href="{% static 'material-design/filled.css' %}" rel="stylesheet" nonce="{{ request.csp_nonce }}"/>
     <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-    <title>{% translate "Suila" %}</title>
+    <title>{% block title %}{% translate "Suila" %}{% endblock %}</title>
     <link rel="icon" type="image/png" href="{% static 'suila/favicon-96x96.png' %}" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="{% static 'suila/favicon.svg' %}" />
     <link rel="shortcut icon" type="image/png" href="{% static 'suila/favicon.ico' %}"/>
