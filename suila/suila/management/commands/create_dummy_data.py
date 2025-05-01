@@ -81,16 +81,19 @@ class Command(BaseCommand):
 
         dates = get_dates_to_create()
 
-        persons = [
+        persons = {
             # Normal person
-            Person.objects.update_or_create(cpr=bruce.cpr)[0],
+            Person.objects.update_or_create(cpr=bruce.cpr)[0]: [10000] * 12,
             # Person who is paused
             Person.objects.update_or_create(
                 cpr="0301011991", defaults={"paused": True}
-            )[0],
-        ]
+            )[0]: [10000]
+            * 12,
+            # Person who is in quarantine (because he earns nearly too much)
+            Person.objects.update_or_create(cpr="0401011991")[0]: [490_000 / 12] * 12,
+        }
 
-        for person in persons:
+        for person, salary in persons.items():
             for date in dates:
                 year = date.year
                 month = date.month
@@ -109,7 +112,7 @@ class Command(BaseCommand):
                     person_month=person_month,
                     month=month,
                     year=year,
-                    defaults={"salary_income": Decimal(10000)},
+                    defaults={"salary_income": Decimal(salary[date.month - 1])},
                 )
 
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
