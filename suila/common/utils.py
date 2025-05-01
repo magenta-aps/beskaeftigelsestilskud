@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import numpy as np
 import pandas as pd
+from common.models import User
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model, QuerySet
@@ -19,6 +20,7 @@ from suila.models import (
     IncomeEstimate,
     IncomeType,
     MonthlyIncomeReport,
+    Person,
     PersonMonth,
     PersonYear,
     Year,
@@ -463,3 +465,27 @@ class SuilaJSONEncoder(DjangoJSONEncoder):
             }
 
         return super().default(obj)
+
+
+def get_user_who_pressed_pause(person: Person) -> str | None:
+    """
+    Returns either "self" or "skattestyrelsen"; Depending on who changed the "pause"
+    attribute on a Person object.
+    """
+    history_records = person.history.order_by("-history_date")
+    user_who_pressed_pause = None
+    for i in range(len(history_records) - 1):
+        new_record = history_records[i]
+        old_record = history_records[i + 1]
+
+        delta = new_record.diff_against(old_record)
+
+        if "paused" in delta.changed_fields:
+            user_who_changed_object = User.objects.get(id=new_record.history_user_id)
+
+            if user_who_changed_object.cpr == person.cpr:
+                user_who_pressed_pause = "self"
+            else:
+                user_who_pressed_pause = "skattestyrelsen"
+            break
+    return user_who_pressed_pause

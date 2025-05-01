@@ -90,11 +90,22 @@
 {% if paused %}
 <div class="grid gap-3 mt-5">
     <div class="g-col-12 sidebar">
-        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i></h2>
+        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {% translate "Udbetalingspause" %} </h2>
+        <p>
+            {% if user_who_pressed_pause == "self" %}
+                {% blocktrans trimmed %}
+                    Du har sat din udbetaling på pause.
+                {% endblocktrans %}
+            {% elif user_who_pressed_pause == "skattestyrelsen" %}
+                {% blocktrans trimmed %}
+                    Din udbetaling er sat på pause. Du har oplyst Skattestyrelsen,
+                    at din udbetaling skal sættes på pause.
+                {% endblocktrans %}
+            {% endif %}
+        </p>
         <p>
             {% blocktrans trimmed  with year=next_year %}
-            Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit
-            til årsopgørelsen slut {{ year }}.
+                Du får udbetalt Suila-tapit til årsopgørelsen slut {{ year }}.
             {% endblocktrans %}
         </p>
     </div>
