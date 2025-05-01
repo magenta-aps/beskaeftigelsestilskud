@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 
 from common.fields import CPRField
 from common.models import User
-from common.utils import SuilaJSONEncoder, omit
+from common.utils import SuilaJSONEncoder, get_user_who_pressed_pause, omit
 from common.view_mixins import ViewLogMixin
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -228,6 +228,7 @@ class PersonDetailView(
 
         if relevant_person_month is not None:
             person_year = relevant_person_month.person_month.person_year
+            person = person_year.person
             estimated_year_result = (
                 (relevant_person_month.person_month.estimated_year_result or Decimal(0))
                 - person_year.catchsale_expenses
@@ -242,12 +243,13 @@ class PersonDetailView(
                         relevant_person_month.person_month.estimated_year_benefit
                     ),
                     "estimated_year_result": estimated_year_result,
-                    "paused": person_year.person.paused,
-                    "person_id": person_year.person.pk,
+                    "paused": person.paused,
+                    "person_id": person.pk,
                     "next_year": person_year.year.year + 1,
                     "in_quarantine": person_year.in_quarantine,
                     "quarantine_reason": person_year.quarantine_reason,
                     "quarantine_weight": relevant_person_month.quarantine_weight,
+                    "user_who_pressed_pause": get_user_who_pressed_pause(person),
                 }
             )
         else:

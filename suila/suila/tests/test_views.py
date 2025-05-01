@@ -68,7 +68,6 @@ from suila.views import (
     PersonFilterSet,
     PersonGraphView,
     PersonMonthTable,
-    PersonPauseUpdateView,
     PersonSearchView,
     PersonTable,
     RootView,
@@ -1526,8 +1525,8 @@ class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
 
 
-class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
-    view_class = PersonPauseUpdateView
+class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
+    view_class = PersonDetailView
 
     @classmethod
     def setUpTestData(cls):
@@ -1540,6 +1539,13 @@ class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
             "person": cls.person_year.person.pk,
             "paused": True,
         }
+
+    def get_context_data(self):
+        with self._time_context(year=2020):  # December 2020
+            view, response = self.request_get(
+                self.normal_user, pk=self.person_year.person.pk
+            )
+        return response.context_data
 
     def test_pause_person_as_admin(self):
         self.assertFalse(self.person_year.person.paused)
@@ -1619,3 +1625,45 @@ class TestPersonPauseUpdateView(TestViewMixin, PersonEnv):
 
         self.assertTrue(latest_history_entry.paused)
         self.assertEqual(latest_history_entry.history_user_id, self.staff_user.id)
+
+    def test_context_data_not_paused(self):
+        context_data = self.get_context_data()
+        self.assertIsNone(context_data["user_who_pressed_pause"])
+        self.assertEqual(context_data["paused"], False)
+
+    def test_context_data_paused_by_admin(self):
+        self.client.force_login(self.staff_user)
+        self.client.post(self.url, data=self.data)
+
+        context_data = self.get_context_data()
+        self.assertEqual(context_data["user_who_pressed_pause"], "skattestyrelsen")
+        self.assertEqual(context_data["paused"], True)
+
+    def test_context_data_paused_by_self(self):
+        self.client.force_login(self.normal_user)
+        self.client.post(self.url, data=self.data)
+
+        context_data = self.get_context_data()
+        self.assertEqual(context_data["user_who_pressed_pause"], "self")
+        self.assertEqual(context_data["paused"], True)
+
+    def test_context_data_paused_and_unpaused_by_self(self):
+        self.client.force_login(self.normal_user)
+        self.client.post(self.url, data=self.data)
+
+        self.data["paused"] = False
+        self.client.post(self.url, data=self.data)
+
+        context_data = self.get_context_data()
+        self.assertEqual(context_data["user_who_pressed_pause"], "self")
+        self.assertEqual(context_data["paused"], False)
+
+    def test_context_data_person_changed_but_not_paused(self):
+
+        person = self.person_year.person
+        person.name = "Andersine"
+        person.save()
+
+        context_data = self.get_context_data()
+        self.assertIsNone(context_data["user_who_pressed_pause"])
+        self.assertEqual(context_data["paused"], False)
