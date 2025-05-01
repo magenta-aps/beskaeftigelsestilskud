@@ -10,14 +10,11 @@ from math import ceil
 from operator import attrgetter
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from common import utils
 from dateutil.relativedelta import relativedelta
-from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import F, QuerySet, Sum
 from django.utils import timezone
-from pandas import DataFrame
 from project.util import mean_error, root_mean_sq_error, trim_list_first
 
 from suila import data
@@ -111,14 +108,6 @@ class EstimationEngine:
         if count:
             person_year_qs = person_year_qs[:count]
 
-        # Get quarantined & excluded months
-        if output_stream is not None:
-            output_stream.write("Fetching people in quarantine ...\n")
-
-        quarantine_df = utils.get_people_in_quarantine(
-            year, {personyear.person.cpr for personyear in person_year_qs}
-        )
-
         if output_stream is not None:
             output_stream.write("Fetching person_month_map ...\n")
 
@@ -141,11 +130,6 @@ class EstimationEngine:
         )
 
         # Process rows in batches
-        exclude_months = {
-            (now.year, now.month),
-            (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12),
-        }
-
         batch_size = 10  # 10 people, not 10 personmonths
         if output_stream is not None:
             output_stream.write(
@@ -161,8 +145,6 @@ class EstimationEngine:
                 batch_results, batch_summaries = EstimationEngine._process_batch(
                     year,
                     person_pk_list,
-                    quarantine_df,
-                    exclude_months,
                     person_month_map,
                     now,
                     dry_run,
@@ -175,8 +157,6 @@ class EstimationEngine:
     def _process_batch(
         year: int,
         person_pk_list: Iterable[int],
-        quarantine_df: DataFrame,
-        exclude_months: set[tuple[int, int]],
         person_month_map: dict[Any, PersonMonth],
         timestamp: datetime,
         dry_run: bool = True,
@@ -216,7 +196,6 @@ class EstimationEngine:
             .select_related("person_year")
             .annotate(
                 person_pk=F("person_year__person__pk"),
-                person_cpr=F("person_year__person__cpr"),
                 person_year_pk=F("person_year__pk"),
                 _year=F(  # underscore to avoid collision with class property
                     "person_year__year_id"
@@ -252,16 +231,7 @@ class EstimationEngine:
                 signal=person_month.signal,
             )
             for person_month in person_month_qs
-            if (
-                not (
-                    (
-                        settings.ENFORCE_QUARANTINE  # type: ignore
-                        and quarantine_df.loc[person_month.person_cpr, "in_quarantine"]
-                    )
-                    and (person_month._year, person_month.month) in exclude_months
-                )
-                and person_month.person_year.tax_scope == TaxScope.FULDT_SKATTEPLIGTIG
-            )
+            if person_month.person_year.tax_scope == TaxScope.FULDT_SKATTEPLIGTIG
         ]
         results = []
         summaries = []

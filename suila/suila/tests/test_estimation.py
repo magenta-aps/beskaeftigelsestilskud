@@ -2,16 +2,15 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from decimal import Decimal
 from io import TextIOBase
 from unittest import mock
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 from common.utils import get_people_in_quarantine
 from django.test import TestCase
 from django.utils.timezone import get_current_timezone
-from pandas import DataFrame
 
 from suila.data import MonthlyIncomeData
 from suila.estimation import (
@@ -347,77 +346,6 @@ class TestEstimationEngine(TestCase):
         quarantine_df = get_people_in_quarantine(self.year2.year, {self.person.cpr})
         self.assertTrue(quarantine_df.loc[self.person.cpr, "earns_too_much"])
         self.assertTrue(quarantine_df.loc[self.person.cpr, "in_quarantine"])
-
-    @mock.patch("django.utils.timezone.now")
-    @mock.patch("common.utils.get_people_in_quarantine")
-    @mock.patch("suila.data.MonthlyIncomeData", autospec=True)
-    def test_quarantined_estimate(
-        self,
-        monthlyincomedata: MagicMock,
-        get_people_in_quarantine: MagicMock,
-        now: MagicMock,
-    ):
-        get_people_in_quarantine.return_value = DataFrame(
-            {
-                "in_quarantine": [True],
-                "quarantine_reason": ["Earns too much"],
-                "earns_too_little": [False],
-                "earns_too_much": [True],
-            },
-            index=[self.person.cpr],
-        )
-        now.return_value = datetime(2025, 1, 15, 15, 0, 0, tzinfo=timezone.utc)
-
-        with self.assertRaises(TypeError):
-            # Mocking breaker noget i metoden, men det sker efter
-            # vi har fået det vi skal bruge i assertions nedenfor
-            EstimationEngine.estimate_all(
-                self.year.year, self.person.pk, count=1, dry_run=True
-            )
-
-        # Asserts
-        get_people_in_quarantine.assert_called()
-        monthlyincomedata.assert_called()
-        exclude_months = {(2024, 12), (2025, 1)}
-        for month in range(1, 13):
-            try:
-                person_month = PersonMonth.objects.get(
-                    person_year__year=self.year.year, month=month
-                )
-            except PersonMonth.DoesNotExist:
-                continue
-
-            data = {
-                "year": self.year.year,
-                "month": month,
-                "person_pk": self.person.pk,
-                "person_month_pk": person_month.pk,
-                "person_year_pk": person_month.person_year.pk,
-                "a_income": sum(
-                    person_month.monthlyincomereport_set.all().values_list(
-                        "a_income", flat=True
-                    )
-                ),
-                "u_income": sum(
-                    person_month.monthlyincomereport_set.all().values_list(
-                        "u_income", flat=True
-                    )
-                ),
-            }
-            data["signal"] = data["a_income"] > 0 or data["u_income"]
-
-            if (self.year.year, month) in exclude_months:
-                self.assertNotIn(
-                    call(**data),
-                    monthlyincomedata.call_args_list,
-                    f"year: {self.year.year}, month: {month}",
-                )
-            else:
-                self.assertIn(
-                    call(**data),
-                    monthlyincomedata.call_args_list,
-                    f"year: {self.year.year}, month: {month}",
-                )
 
 
 class TestInYearExtrapolationEngine(TestCase):
