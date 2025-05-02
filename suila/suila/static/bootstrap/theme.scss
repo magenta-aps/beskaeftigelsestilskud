@@ -578,6 +578,6 @@ div.explainer p {
 // "Small" (or smaller)
 @include media-breakpoint-down(sm) {
   #graph {
-    display: none;
+    padding: 0;
   }
 }

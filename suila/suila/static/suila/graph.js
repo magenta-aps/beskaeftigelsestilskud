@@ -29,6 +29,8 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
             "selection": {"enabled": false},
             "fontFamily": "Figtree Normal, Trebuchet MS, Helvetica, sans-serif",
             "height": "100%",
+            "width": "100%",
+            "redrawOnParentResize": true,
         },
         "tooltip": {"enabled": false},
         "colors": ["#820041"], // $primary
@@ -41,7 +43,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
         "grid": {
             "padding": {
                 "top": 50,
-                "right": 200,
+                "right": 100,
                 "bottom": 50,
                 "left": 50,
             },
@@ -149,6 +151,123 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
         }
     }
 
+    chartData["responsive"] = [{
+        breakpoint: 600,
+        options: {
+            "chart": {
+                // "nonce": "{{ request.csp_nonce }}",
+                // "type": "line",
+                // "toolbar": {"show": false},
+                // "animations": {"enabled": false},
+                // "selection": {"enabled": false},
+                // "fontFamily": "Figtree Normal, Trebuchet MS, Helvetica, sans-serif",
+                // "height": "100%",
+                // "width": "98%",
+                "zoom": {
+                    "enabled": false,
+                },
+                "redrawOnParentResize": true,
+            },
+            "tooltip": {"enabled": false},
+            "colors": ["#820041"], // $primary
+            "grid": {
+                "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10,
+                },
+                // xaxis: {
+                //     lines: {
+                //         show: true
+                //     }
+                // },
+                // yaxis: {
+                //     lines: {
+                //         show: false
+                //     }
+                // }
+            },
+            "markers": {
+                "size": 4,
+                "strokeWidth": 0,
+                "colors": ["#820041"], // $primary
+            },
+            "dataLabels": {
+                "enabled": false,
+            },
+            "legend": {
+                "fontSize": "12px",
+                "color": "#820041", // $primary
+            },
+            "stroke": {
+                "show": true,
+                "width": 2,
+            },
+            "xaxis": {
+                // "type": "numeric",
+                "title": {
+                    // "text": gettext("Årsindkomst i kr."),
+                    "style": {
+                        "fontSize": "12px",
+                        // "color": "#820041", // $primary
+                    },
+                },
+                "labels": {
+                    "style": {
+                        "fontSize": "12px",
+                        // "colors": ["#820041"], // $primary
+                    },
+                    // "formatter": formatter.format,
+                },
+            },
+            "yaxis": {
+                "title": {
+                    "text": gettext("Suila-tapit i kr."),
+                    "style": {
+                        "fontSize": "12px",
+                        "color": "#820041", // $primary
+                    },
+                },
+                "labels": {
+                    "style": {
+                        "fontSize": "12px",
+                        "colors": ["#820041"], // $primary
+                    },
+                    "formatter": formatter.format,
+                },
+            },
+            "annotations": {
+                "points": [{
+                    "x": yearlyIncome,
+                    "y": yearlyBenefit,
+                    "marker": {
+                        "size": 4,
+                        "fillColor": "#ffe169",
+                        "strokeColor": "#820041",
+                        "strokeWidth": 1,
+                    },
+                    "label": {
+                        // "text": [
+                        //     interpolate(gettext("Årsindkomst: %s"), [formatter.format(yearlyIncome)]),
+                        //     interpolate(gettext("Suila-tapit: %s"), [formatter.format(0)]),
+                        // ],
+                        "style": {
+                            "background": "#ffe169", // $secondary
+                            "color": "#820041", // $primary
+                            "fontSize": "12px",
+                        },
+                        "borderColor": "#ffe169", // $secondary
+                        "borderWidth": 20,
+                        "borderRadius": 5,
+                        "offsetY": -25,
+                    }
+                }],
+            }
+        },
+    }]
+
     const chart = new ApexCharts(graph.get(0), chartData);
     chart.render();
+    window.dispatchEvent(new Event('resize'));  // Force redraw to fit window size
 }
