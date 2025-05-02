@@ -155,6 +155,7 @@ class PersonSearchView(
     table_class = PersonTable
     filterset_class = PersonFilterSet
     template_name = "suila/person_search.html"
+    matomo_pagename = "Personsøgning"
 
     def get_queryset(self):
         qs = Person.filter_user_permissions(
@@ -215,6 +216,7 @@ class PersonDetailView(
     template_name = "suila/person_detail.html"
     required_object_permissions = ["view"]
     table_class = PersonMonthTable
+    matomo_pagename = "Persondetaljer - forside"
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -408,6 +410,7 @@ class PersonDetailIncomeView(
     context_object_name = "person"
     template_name = "suila/person_detail_income.html"
     required_object_permissions = ["view"]
+    matomo_pagename = "Persondetaljer - indkomst"
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -453,6 +456,7 @@ class PersonDetailIncomeView(
         ).order_by("-year__year")
 
         self.log_view(self.object)
+        print(context_data)
         return context_data
 
     def get_income_signals(self) -> list[IncomeSignal]:
@@ -572,6 +576,7 @@ class PersonDetailEboksPreView(
     required_model_permissions = [
         "suila.view_person",
     ]
+    matomo_pagename = "Persondetaljer - ebokspreview"
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -602,6 +607,7 @@ class PersonDetailEboksSendView(
         "suila.add_eboksmessage",
     ]
     form_class = ConfirmationForm
+    matomo_pagename = "Persondetaljer - ebokssendview"
 
     def get_success_url(self):
         return reverse("suila:person_detail", kwargs={"pk": self.object.pk})
@@ -689,6 +695,7 @@ class GraphViewMixin(ContextMixin):
 
 class GraphView(YearMonthMixin, ViewLogMixin, GraphViewMixin, TemplateView):
     template_name = "suila/graph.html"
+    matomo_pagename = "Info - graf"
 
 
 class PersonGraphView(
@@ -703,6 +710,7 @@ class PersonGraphView(
     template_name = "suila/graph.html"
     model = Person
     required_object_permissions = ["view"]
+    matomo_pagename = "Persondetaljer - graf"
 
     def get_context_data(self, **kwargs):
         self.log_view(self.object)
@@ -742,6 +750,7 @@ class CalculatorView(
 ):
     form_class = CalculatorForm
     template_name = "suila/calculate.html"
+    matomo_pagename = "Info - beregner"
 
     @cached_property
     def is_advanced(self):
@@ -893,6 +902,7 @@ class PersonDetailNotesView(
     required_model_permissions = [
         "suila.view_note",
     ]
+    matomo_pagename = "Persondetaljer - noter"
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()

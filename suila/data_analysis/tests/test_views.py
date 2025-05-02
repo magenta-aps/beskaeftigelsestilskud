@@ -349,6 +349,28 @@ class TestPersonAnalysisView(TestViewMixin, TestCase):
             {self.person_year, self.middle_person_year, self.other_person_year},
         )
 
+    def test_matomo_pagename(self):
+        view, response = self.request_get(
+            self.admin_user,
+            f"person/{self.person.pk}/?year_start=2020&year_end=2022",
+            pk=self.person.pk,
+        )
+        context_data = response.context_data
+        self.assertEqual(
+            context_data["view"].matomo_pagename,
+            f"Estimeringsoverblik 2020 - 2022 for person id {self.person.pk}",
+        )
+        view, response = self.request_get(
+            self.admin_user,
+            f"person/{self.person.pk}/?year_start=2022&year_end=2022",
+            pk=self.person.pk,
+        )
+        context_data = response.context_data
+        self.assertEqual(
+            context_data["view"].matomo_pagename,
+            f"Estimeringsoverblik 2022 for person id {self.person.pk}",
+        )
+
 
 class PersonYearEstimationSetupMixin:
     @classmethod
@@ -689,6 +711,13 @@ class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase
         self.assertEqual(len(itemviews), 1)
         self.assertEqual(itemviews[0].item, self.person_year)
 
+    def test_matomo_pagename(self):
+        view, response = self.request_get(self.admin_user, "", year=2022)
+        context_data = response.context_data
+        self.assertEqual(
+            context_data["view"].matomo_pagename, "Estimeringsoverblik 2022"
+        )
+
 
 class TestHistogramView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase):
     view_class = HistogramView
@@ -824,6 +853,11 @@ class TestHistogramView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase)
         self.assertEqual(pageview.kwargs, {"year": 2020})
         self.assertEqual(pageview.params, {})
         self.assertEqual(pageview.itemviews.count(), 0)
+
+    def test_matomo_pagename(self):
+        view, response = self.request_get(self.admin_user, "2020/histogram/", year=2020)
+        context_data = response.context_data
+        self.assertEqual(context_data["view"].matomo_pagename, "Histogram 2020")
 
 
 class TestUpdateEngineViewPreferences(TestCase):
