@@ -69,6 +69,19 @@ class PersonAnalysisView(
         "suila.view_data_analysis",
     ]
 
+    @property
+    def matomo_pagename(self):
+        return (
+            f"Estimeringsoverblik {self.year_range_string} "
+            f"for person id {self.object.id}"
+        )
+
+    @property
+    def year_range_string(self):
+        if self.year_start == self.year_end:
+            return str(self.year_start)
+        return f"{self.year_start} - {self.year_end}"
+
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.income_type = None
@@ -256,6 +269,10 @@ class PersonListView(
         "suila.view_data_analysis",
     ]
 
+    @property
+    def matomo_pagename(self):
+        return f"Estimeringsoverblik {self.year}"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.object_list = None
@@ -331,6 +348,10 @@ class HistogramView(
         "suila.view_personyear",
         "suila.view_data_analysis",
     ]
+
+    @property
+    def matomo_pagename(self):
+        return f"Histogram {self.year}"
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("format") == "json":
@@ -441,6 +462,7 @@ class JobListView(
     form_class = JobListOptionsForm
     default_ordering = "-runtime"
     required_model_permissions = ["suila.view_joblog"]
+    matomo_pagename = "Jobliste"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

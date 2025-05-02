@@ -13,6 +13,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://suila-api:8000/"
+    matomo:
+      loadBalancer:
+        servers:
+          - url: "http://suila-matomo:80"
 
   routers:
     rest:
@@ -43,6 +47,14 @@ http:
 #      middlewares:
 #        - "crowdsec"
 #      tls: {}
+
+    matomo:
+      entryPoints:
+        - "web"
+        - "websecure"
+      rule: "Host(`matomo.suila-traefik`)"
+      service: "matomo"
+      tls: {}
 
     web-to-websecure-bf:
       entryPoints:
