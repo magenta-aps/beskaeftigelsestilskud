@@ -142,6 +142,20 @@
             til næste måned.
             {% endblocktrans %}
         </p>
+        <h3>{% translate "Sæt udbetalinger på pause" %}</h3>
+        <p>
+            {% blocktrans trimmed %}
+            Hvis du ikke ønsker at modtage den månedlige udbetaling af Suila-tapit, har du nu
+            mulighed for at sætte udbetalingerne på pause. Pausen varer så længe du ønsker det.
+            {% endblocktrans %}
+        </p>
+        <p>
+            {% blocktrans trimmed %}
+            Du mister ikke retten til Suila-tapit. Hvis du er berettiget til Suila-tapit efter at dine
+            indkomster for året er opgjort i august næste år, vil du modtage en årsopgørelse,
+            der viser hvor meget du har til gode eller har modtaget for meget.
+            {% endblocktrans %}
+        </p>
     </div>
 </div>
 
@@ -183,9 +197,9 @@
             {% csrf_token %}
             <input type="hidden" name="person" value="{{person_id}}"/>
             {% if paused %}
-                {% jumbo_button "paused" "false" _("Genoptag udbetalinger") "play_arrow" %}
+                {% jumbo_button "paused" "false" _("Stop pause") "play_arrow" %}
             {% else %}
-                {% jumbo_button "paused" "true" _("Sæt udbetalinger i bero") "pause" %}
+                {% jumbo_button "paused" "true" _("Start pause") "pause" %}
             {% endif %}
         </form>
         </div>
