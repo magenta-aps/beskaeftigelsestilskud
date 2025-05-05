@@ -573,11 +573,18 @@ div.explainer p {
   div.detail-table.p-5 {
     padding: $spacer !important;
   }
+
+  #graph {
+    padding: 0;
+    height: 40rem;
+  }
+
 }
 
 // "Small" (or smaller)
 @include media-breakpoint-down(sm) {
   #graph {
     padding: 0;
+    height: 40rem;
   }
 }
