@@ -3,7 +3,7 @@
 hosts_file="/hosts"
 
 add_hosts=""
-for hostname in suila-web-public suila-web-private suila-idp suila-mailhog suila-traefik api.suila-traefik matomo.suila-traefik; do
+for hostname in suila-web suila-web-private suila-idp suila-mailhog suila-traefik api.suila-traefik matomo.suila-traefik; do
   if ! grep $hostname $hosts_file; then
     add_hosts+=" $hostname"
   fi
