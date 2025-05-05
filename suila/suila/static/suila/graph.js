@@ -124,7 +124,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
     };
 
     chartData["responsive"] = [{
-        breakpoint: 600,
+        breakpoint: 768,
         options: {
             "chart": {
                 "zoom": {
