@@ -31,6 +31,9 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
             "height": "100%",
             "width": "100%",
             "redrawOnParentResize": true,
+            "zoom": {
+                "allowMouseWheelZoom": false,
+            }
         },
         "tooltip": {"enabled": false},
         "colors": ["#820041"], // $primary
