@@ -43,7 +43,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
         "grid": {
             "padding": {
                 "top": 50,
-                "right": 100,
+                "right": 200,
                 "bottom": 50,
                 "left": 50,
             },
