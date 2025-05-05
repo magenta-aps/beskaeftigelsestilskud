@@ -8,6 +8,7 @@ from unittest.mock import ANY, MagicMock, call, patch
 
 from django.conf import settings
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.forms import model_to_dict
 from django.test import TestCase
 
@@ -486,3 +487,169 @@ class TestImportU1ADataCommand(TestCase):
                 },
             ],
         )
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_verbose(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        call_command(self.command, verbosity=1, stdout=stdout, stderr=stderr)
+        self.assertNotIn("Running AKAP U1A data import:", stdout.getvalue())
+
+        call_command(self.command, verbosity=3, stdout=stdout, stderr=stderr)
+        self.assertIn("Running AKAP U1A data import:", stdout.getvalue())
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_year_arg(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        call_command(self.command, verbosity=3, stdout=stdout, stderr=stderr, year=1991)
+        self.assertIn("year(s): [1991]", stdout.getvalue())
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_failure(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        mock_get_akap_u1a_items_unique_cprs.side_effect = ValueError("foo")
+
+        with self.assertRaises(CommandError):
+            call_command(self.command)
+
+    @patch("suila.management.commands.import_u1a_data.Command._import_data")
+    def test_dry_run(
+        self,
+        import_data: MagicMock(),
+    ):
+
+        def create_stuff(*args, **kwargs):
+            Person.objects.create(name="Person to roll back")
+            return MagicMock()
+
+        import_data.side_effect = create_stuff
+
+        call_command(self.command, dry=True)
+        self.assertFalse(Person.objects.filter(name="Person to roll back").exists())
+
+        call_command(self.command, dry=False)
+        self.assertTrue(Person.objects.filter(name="Person to roll back").exists())
+
+    @patch("suila.management.commands.import_u1a_data.Command._import_data")
+    def test_finish(
+        self,
+        import_data: MagicMock(),
+    ):
+
+        result1 = MagicMock()
+        result2 = MagicMock()
+        result3 = MagicMock()
+        stdout = StringIO()
+
+        Year.objects.create(year=1991)
+        Year.objects.create(year=1992)
+
+        result1.import_year = 1991
+        result2.person_months_updated = [None] * 123
+
+        import_data.side_effect = [result1, result2, result3]
+
+        call_command(self.command, stdout=stdout)
+        self.assertIn("Year: 1991", stdout.getvalue())
+        self.assertIn("PersonMonths updated: 123", stdout.getvalue())
+        self.assertIn("DONE", stdout.getvalue())
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_cpr_arg(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        stdout = StringIO()
+
+        call_command(self.command, cpr=self.person1.cpr, stdout=stdout, verbosity=3)
+        self.assertNotIn("No CPR(s) specified, fetching all", stdout.getvalue())
+
+        call_command(self.command, cpr=None, stdout=stdout, verbosity=3)
+        self.assertIn("No CPR(s) specified, fetching all", stdout.getvalue())
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_cpr_arg_unknown_person(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        stdout = StringIO()
+
+        call_command(self.command, cpr="0101011991", stdout=stdout, verbosity=3)
+        self.assertIn("WARNING: Could not find Person", stdout.getvalue())
+
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items")
+    @patch("suila.management.commands.import_u1a_data.get_akap_u1a_items_unique_cprs")
+    def test_report_not_changed(
+        self,
+        mock_get_akap_u1a_items_unique_cprs: MagicMock,
+        mock_get_akap_u1a_items: MagicMock,
+    ):
+        # Test specific data
+        existing_person_year = PersonYear.objects.create(
+            person=self.person1,
+            year=self.year,
+        )
+
+        existing_person_month = PersonMonth.objects.create(
+            person_year=existing_person_year,
+            month=self.u1a_1.dato_vedtagelse.month,
+            import_date=datetime.now().date(),
+        )
+
+        u1a_employer = Employer.objects.create(
+            cvr=self.u1a_1.cvr,
+            name=self.u1a_1.virksomhedsnavn,
+        )
+
+        MonthlyIncomeReport.objects.create(
+            employer=u1a_employer,
+            person_month=existing_person_month,
+            salary_income=Decimal("1234.00"),
+        )
+
+        # Mocking
+        mock_get_akap_u1a_items_unique_cprs.return_value = [self.person1.cpr]
+        mock_get_akap_u1a_items.return_value = [
+            AKAPU1AItem(
+                id=1,
+                u1a=self.u1a_1,
+                cpr_cvr_tin=self.person1.cpr,
+                navn="Test Person",
+                adresse="Testvej 1337",
+                postnummer="8000",
+                by="Aarhus",
+                land="Danmark",
+                udbytte=Decimal("1337.00"),
+                oprettet=datetime.now(),
+            )
+        ]
+
+        # Invoke
+        stdout = StringIO()
+        call_command(self.command, stdout=stdout, verbosity=3)
+        self.assertIn("UPDATED MonthlyIncomeReport", stdout.getvalue())
+
+        stdout = StringIO()
+        call_command(self.command, stdout=stdout, verbosity=3)
+        self.assertNotIn("UPDATED MonthlyIncomeReport", stdout.getvalue())

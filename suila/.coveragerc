@@ -31,7 +31,6 @@ omit =
     */management/commands/export_users.py
     */management/commands/get_employer_info_from_dafo.py
     */management/commands/get_person_info_from_dafo.py
-    */management/commands/import_u1a_data.py
     */management/commands/import_users.py
     */management/commands/job_dispatcher.py
     */management/commands/load_dummy_calculation_method.py
