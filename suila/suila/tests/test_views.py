@@ -45,6 +45,8 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearU1AAssessment,
+    PrismeBatch,
+    PrismeBatchItem,
     StandardWorkBenefitCalculationMethod,
     SuilaEboksMessage,
     Year,
@@ -59,6 +61,7 @@ from suila.views import (
     IncomeSignalTable,
     IncomeSignalType,
     IncomeSumsBySignalTypeTable,
+    PersonAnnualIncomeEstimateUpdateView,
     PersonDetailEboksPreView,
     PersonDetailEboksSendView,
     PersonDetailIncomeView,
@@ -1667,3 +1670,100 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         context_data = self.get_context_data()
         self.assertIsNone(context_data["user_who_pressed_pause"])
         self.assertEqual(context_data["paused"], False)
+
+
+class TestPersonAnnualIncomeEstimateUpdateView(
+    TimeContextMixin, TestViewMixin, PersonEnv
+):
+    view_class = PersonAnnualIncomeEstimateUpdateView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.person_month = PersonMonth.objects.filter(month=5)[0]
+        cls.person_year = cls.person_month.person_year
+        cls.url = reverse(
+            "suila:set_person_annual_income_estimate",
+            kwargs={"pk": cls.person_year.person.pk},
+        )
+        cls.data = {
+            "person": cls.person_year.person.pk,
+            "annual_income_estimate": 100_000,
+            "year": cls.person_year.year.year,
+            "month": cls.person_month.month,
+        }
+
+    def test_edit_person_as_admin(self):
+        self.assertIsNone(self.person_year.person.annual_income_estimate)
+
+        self.client.force_login(self.admin_user)
+        self.client.post(self.url, data=self.data)
+
+        self.person_year.person.refresh_from_db()
+        self.assertEqual(self.person_year.person.annual_income_estimate, 100_000)
+
+    def test_that_person_is_recalculated(self):
+
+        month_qs = PersonMonth.objects.filter(person_year=self.person_year)
+        self.assertEqual(len(month_qs), 12)
+
+        for person_month in month_qs:
+            self.assertGreater(person_month.benefit_paid, 0)
+
+        # Set annual income to zero;
+        # We expect benefit_paid on all future months to become zero.
+        self.data["annual_income_estimate"] = 0
+        self.client.force_login(self.admin_user)
+        self.client.post(self.url, data=self.data)
+
+        for person_month in month_qs:
+            person_month.refresh_from_db()
+            if person_month.month >= 5:
+                self.assertEqual(person_month.benefit_paid, 0)
+            else:
+                self.assertGreater(person_month.benefit_paid, 0)
+
+    def test_that_person_is_not_recalculated_if_sent_to_prisme(self):
+        month_qs = PersonMonth.objects.filter(person_year=self.person_year)
+
+        prisme_batch = PrismeBatch.objects.create(
+            status="sent", export_date=date.today(), prefix=1
+        )
+
+        for person_month in month_qs:
+            PrismeBatchItem.objects.create(
+                person_month=person_month, prisme_batch=prisme_batch
+            )
+
+        self.data["annual_income_estimate"] = 0
+        self.client.force_login(self.admin_user)
+        self.client.post(self.url, data=self.data)
+
+        for person_month in month_qs:
+            person_month.refresh_from_db()
+            self.assertGreater(person_month.benefit_paid, 0)
+
+    @patch("suila.views.call_command")
+    def test_person_month_does_not_exist(self, call_command: MagicMock()):
+        self.data["month"] = 14
+
+        self.client.force_login(self.admin_user)
+        self.client.post(self.url, data=self.data)
+
+        # Even though a month does not exist, we still update the amount
+        # This just means that nothing gets recalculated
+        self.person_year.person.refresh_from_db()
+        self.assertEqual(self.person_year.person.annual_income_estimate, 100_000)
+
+        call_command.assert_not_called()
+
+    def test_history(self):
+        self.client.force_login(self.staff_user)
+        self.client.post(self.url, data=self.data)
+
+        latest_history_entry = self.person_year.person.history.order_by(
+            "-history_date"
+        )[0]
+
+        self.assertTrue(latest_history_entry.annual_income_estimate is not None)
+        self.assertEqual(latest_history_entry.history_user_id, self.staff_user.id)

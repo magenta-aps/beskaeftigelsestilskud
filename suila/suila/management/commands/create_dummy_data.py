@@ -118,6 +118,7 @@ class Command(BaseCommand):
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
 
             last_month = get_last_month(datetime.date.today())
+            month_before_last_month = get_last_month(last_month)
             for date in dates:
 
                 call_command(
@@ -127,7 +128,7 @@ class Command(BaseCommand):
                     month=date.month,
                 )
 
-                if date <= last_month:
+                if date < month_before_last_month:
                     prisme_batch, _ = PrismeBatch.objects.update_or_create(
                         export_date=datetime.date(date.year, date.month, 12),
                         defaults={"status": "sent", "prefix": 1},

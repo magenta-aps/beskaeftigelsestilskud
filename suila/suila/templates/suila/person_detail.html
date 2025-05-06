@@ -82,7 +82,31 @@
     </div>
     <div class="g-col-3 emphasis">
         <b>{% translate "Forventet årsindkomst fra arbejde" %}<sup>*</sup></b>
-        <h1 class="mt-3">{{ estimated_year_result|format_amount }}</h1>
+        <h1 class="mt-3">
+        {% if manually_entered_income %}
+            {{ manually_entered_income|format_amount }}
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        {% else %}
+            {{ estimated_year_result|format_amount }}
+            {% if user|has_permissions:"suila.change_person" %}
+                <button id="toggle_annual_income_form" class="btn btn-link">
+                    <i class="bi bi-pencil-fill" style="font-size: 1.4rem"></i>
+                </button>
+            {% endif %}
+        {% endif %}
+        </h1>
+        <div id="annual_income_form" class="d-none">
+            <form method="post" action="{% url 'suila:set_person_annual_income_estimate' pk=person_id %}">
+                {% csrf_token %}
+                <input type="hidden" name="person" value="{{person_id}}"/>
+                <input type="hidden" name="year" value="{{year}}"/>
+                <input type="hidden" name="month" value="{{month}}"/>
+                <div class="input-group mb-3">
+                    <input type="text" name="annual_income_estimate">
+                    <button type="submit" class="btn btn-primary">{% translate "Gem estimering" %}</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endif %}
@@ -125,6 +149,32 @@
 </div>
 {% endif %}
 
+{% if manually_entered_income %}
+<div class="grid gap-3 mt-5">
+    <div class="g-col-12 sidebar">
+        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {% translate "Din årsindtægt er manuelt estimeret" %} </h2>
+        <p>
+            {% blocktrans trimmed with estimated_year_result=estimated_year_result|format_amount %}
+                Den estimerede årsindtægt er manuelt beregnet af Skattestyrelsen.
+                Den automatisk estimerede årsindtægt er {{ estimated_year_result }}
+
+                Det er den manuelt beregnede årsindtægt, der ligger til grunde for
+                estimeringen af din årlige Suila-tapit.
+            {% endblocktrans %}
+        </p>
+        {% if user|has_permissions:"suila.change_person" %}
+        <form method="post" action="{% url 'suila:set_person_annual_income_estimate' pk=person_id %}">
+            {% csrf_token %}
+            <input type="hidden" name="person" value="{{person_id}}"/>
+            <input type="hidden" name="year" value="{{year}}"/>
+            <input type="hidden" name="month" value="{{month}}"/>
+            <input type="hidden" name="annual_income_estimate" value=""/>
+            <button type="submit" class="btn btn-primary">{% translate "Skift til automatisk estimering" %}</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 <div class="grid gap-3 mt-5">
     <div class="g-col-12 sidebar">
@@ -279,4 +329,15 @@
         </ul>
     </div>
 </div>
+
+<script nonce="{{ request.csp_nonce }}">
+function toggle($el) {
+    $el.toggleClass("d-none");
+}
+function toggleAnnualIncomeForm() {
+    toggle($("#annual_income_form"));
+}
+$("#toggle_annual_income_form").on("click", toggleAnnualIncomeForm);
+</script>
+
 {% endblock %}
