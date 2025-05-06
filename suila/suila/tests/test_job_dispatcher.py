@@ -12,8 +12,9 @@ from django.utils import timezone
 
 from suila.benefit import get_calculation_date, get_prisme_date
 from suila.exceptions import DependenciesNotMet
+from suila.management.commands.common import SuilaBaseCommand
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
-from suila.models import JobLog, ManagementCommands, StatusChoices
+from suila.models import ManagementCommands, StatusChoices
 
 
 class TestJobDispatcherCommands(TestCase):
@@ -309,36 +310,21 @@ class TestJobDispatcherCommands(TestCase):
     ):
         mock_call_command.side_effect = _mock_call_command
 
-        # Verify the jobs run the day before calculation_date in march
-        job_dispatcher_test_date: date = get_calculation_date(2025, 3) - timedelta(
-            days=1
-        )
+        for job_dispatcher_test_data in [
+            (get_calculation_date(2025, 1) - timedelta(days=1), False),
+            (get_calculation_date(2025, 2) - timedelta(days=1), False),
+            (get_calculation_date(2025, 3) - timedelta(days=1), True),
+            (get_calculation_date(2025, 3) - timedelta(days=1), False),
+        ]:
+            job_dispatcher_test_date, expected_to_run = job_dispatcher_test_data
+            call_command(
+                self.command,
+                year=job_dispatcher_test_date.year,
+                month=job_dispatcher_test_date.month,
+                day=job_dispatcher_test_date.day,
+            )
 
-        call_command(
-            self.command,
-            year=job_dispatcher_test_date.year,
-            month=job_dispatcher_test_date.month,
-            day=job_dispatcher_test_date.day,
-        )
-
-        self.assertEqual(mock_call_command.call_count, 9)
-        mock_call_command.assert_has_calls(
-            [
-                # "once a year"-jobs
-                call(
-                    ManagementCommands.CALCULATE_STABILITY_SCORE,
-                    job_dispatcher_test_date.year - 1,
-                    verbosity=1,
-                    traceback=False,
-                    reraise=False,
-                ),
-                call(
-                    ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
-                    job_dispatcher_test_date.year,
-                    verbosity=1,
-                    traceback=False,
-                    reraise=False,
-                ),
+            expected_calls = [
                 # "data load"-jobs
                 call(
                     ManagementCommands.LOAD_ESKAT,
@@ -374,7 +360,9 @@ class TestJobDispatcherCommands(TestCase):
                     verbosity=1,
                 ),
                 call(
-                    ManagementCommands.LOAD_PRISME_B_TAX, traceback=False, reraise=False
+                    ManagementCommands.LOAD_PRISME_B_TAX,
+                    traceback=False,
+                    reraise=False,
                 ),
                 call(
                     ManagementCommands.IMPORT_U1A_DATA,
@@ -401,105 +389,47 @@ class TestJobDispatcherCommands(TestCase):
                     reraise=False,
                 ),
             ]
-        )
 
-        # Verify the jobs DON'T RUN before "the day before calculation_date"
-        for job_dispatcher_test_date in [
-            get_calculation_date(2025, 1) - timedelta(days=1),
-            get_calculation_date(2025, 2) - timedelta(days=1),
-        ]:
+            if expected_to_run:
+                expected_calls = [
+                    call(
+                        ManagementCommands.CALCULATE_STABILITY_SCORE,
+                        job_dispatcher_test_date.year - 1,
+                        verbosity=1,
+                        traceback=False,
+                        reraise=False,
+                    ),
+                    call(
+                        ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
+                        job_dispatcher_test_date.year,
+                        verbosity=1,
+                        traceback=False,
+                        reraise=False,
+                    ),
+                ] + expected_calls
+
+            self.assertEqual(mock_call_command.call_count, len(expected_calls))
+            mock_call_command.assert_has_calls(expected_calls)
             mock_call_command.reset_mock()
-            call_command(
-                self.command,
-                year=job_dispatcher_test_date.year,
-                month=job_dispatcher_test_date.month,
-                day=job_dispatcher_test_date.day,
-            )
-
-            self.assertEqual(mock_call_command.call_count, 7)
-            mock_call_command.assert_has_calls(
-                [
-                    # "data load"-jobs
-                    call(
-                        ManagementCommands.LOAD_ESKAT,
-                        job_dispatcher_test_date.year,
-                        "expectedincome",
-                        month=None,
-                        cpr=None,
-                        skew=False,
-                        traceback=False,
-                        reraise=False,
-                        verbosity=1,
-                    ),
-                    call(
-                        ManagementCommands.LOAD_ESKAT,
-                        job_dispatcher_test_date.year,
-                        "monthlyincome",
-                        month=job_dispatcher_test_date.month,
-                        cpr=None,
-                        skew=True,
-                        traceback=False,
-                        reraise=False,
-                        verbosity=1,
-                    ),
-                    call(
-                        ManagementCommands.LOAD_ESKAT,
-                        job_dispatcher_test_date.year,
-                        "taxinformation",
-                        month=job_dispatcher_test_date.month,
-                        cpr=None,
-                        skew=False,
-                        traceback=False,
-                        reraise=False,
-                        verbosity=1,
-                    ),
-                    call(
-                        ManagementCommands.LOAD_PRISME_B_TAX,
-                        traceback=False,
-                        reraise=False,
-                    ),
-                    call(
-                        ManagementCommands.IMPORT_U1A_DATA,
-                        year=job_dispatcher_test_date.year,
-                        cpr=None,
-                        verbosity=1,
-                        traceback=False,
-                        reraise=False,
-                    ),
-                    call(
-                        ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
-                        cpr=None,
-                        verbosity=1,
-                        traceback=False,
-                        reraise=False,
-                    ),
-                    # Estimation-jobs
-                    call(
-                        ManagementCommands.ESTIMATE_INCOME,
-                        year=job_dispatcher_test_date.year,
-                        cpr=None,
-                        verbosity=1,
-                        traceback=False,
-                        reraise=False,
-                    ),
-                ]
-            )
 
 
 # Shared mocking method(s)
 def _mock_call_command(command_name, *args, **options):
     now = timezone.now()
-    JobLog.objects.create(
-        name=command_name,
-        status=StatusChoices.SUCCEEDED,
-        year_param=(
-            options.get("year", None) if command_name not in ["load_eskat"] else args[0]
-        ),
-        month_param=options.get("month", None),
-        type_param=(
-            options.get("type", None) if command_name not in ["load_eskat"] else args[1]
-        ),
-        # Fake it took 30 seconds to run the job
-        runtime=now,
-        runtime_end=now + timedelta(seconds=30),
-    )
+    options["status"] = StatusChoices.SUCCEEDED
+    options["runtime"] = now
+    options["runtime_end"] = now + timedelta(seconds=30)
+
+    # Handlign of command kwargs - since we don't trigger the "argument parser"
+    # NOTE: Django management-command concept adds the "args" to the "kwargs" variable
+    if command_name in [
+        ManagementCommands.LOAD_ESKAT,
+        ManagementCommands.CALCULATE_STABILITY_SCORE,
+        ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
+    ]:
+        options["year"] = args[0]
+
+    if command_name == ManagementCommands.LOAD_ESKAT:
+        options["type"] = args[1]
+
+    SuilaBaseCommand.create_joblog(command_name, **options)
