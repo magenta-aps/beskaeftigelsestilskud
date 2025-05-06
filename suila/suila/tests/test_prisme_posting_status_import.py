@@ -2,17 +2,51 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
-from unittest.mock import MagicMock
+from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
+from django.core.management import call_command
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from suila.integrations.prisme.posting_status import PostingStatus, PostingStatusImport
+from suila.integrations.prisme.posting_status import (
+    PostingStatus,
+    PostingStatusImport,
+    PostingStatusImportMissingInvoiceNumber,
+)
+from suila.management.commands.load_prisme_benefits_posting_status import (
+    Command as LoadPrismeBenefitsPostingStatusCommand,
+)
 from suila.models import PersonMonth, PrismeBatch, PrismeBatchItem
 from suila.tests.helpers import ImportTestCase
 
 _EXAMPLE_1 = "§15;3112700000;00587075;9700;2021/04/09;RJ00;JKH Tesst;§15-000000059;"
 _EXAMPLE_2 = "§15;3112700000;01587075;9700;2021/04/09;RJ00;JKH Tesst;§15-000000059;"
+_EXAMPLE_3 = "§15;3112700000;02587075;1313;2020/03/17;RJ00;JKH Tesst;§15-000000059;"
+
+
+class TestLoadPrismeBenefitsPostingStatusCommand(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        self.command = LoadPrismeBenefitsPostingStatusCommand()
+
+    def test_command_defaults(self):
+        """The default behavior is to use `PostingStatusImport`"""
+        with patch(
+            "suila.management.commands.load_prisme_benefits_posting_status."
+            "PostingStatusImport",
+        ) as mock_import:
+            call_command(self.command)
+            mock_import.assert_called_once()
+
+    def test_command_handles_unknown_invoice_number_arg(self):
+        """`--unknown-invoice-number` uses `PostingStatusImportMissingInvoiceNumber`"""
+        with patch(
+            "suila.management.commands.load_prisme_benefits_posting_status."
+            "PostingStatusImportMissingInvoiceNumber",
+        ) as mock_import:
+            call_command(self.command, unknown_invoice_number=True)
+            mock_import.assert_called_once()
 
 
 class TestPostingStatus(SimpleTestCase):
@@ -28,23 +62,7 @@ class TestPostingStatus(SimpleTestCase):
         self.assertEqual(obj.voucher_no, "§15-000000059")
 
 
-class TestPostingStatusImport(ImportTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        # This item has an invoice number matching the invoice number in the mocked
-        # "posting status" CSV file, and should be considered "failed to post."
-        cls._item_on_posting_status_list = cls._add_prisme_batch_item(
-            cls.add_person_month(311270_0000),
-            "00587075",
-        )
-        # This item has an invoice number which is not present in the mocked "posting
-        # status" CSV file, and should be considered "succeeded to post."
-        cls._item_not_on_posting_status_list = cls._add_prisme_batch_item(
-            cls.add_person_month(311271_0000),
-            "12345678",
-        )
-
+class PostingStatusImportTestCase(ImportTestCase):
     @classmethod
     def _add_prisme_batch_item(
         cls,
@@ -64,6 +82,24 @@ class TestPostingStatusImport(ImportTestCase):
             posting_status_filename=posting_status_filename,
         )
         return prisme_batch_item
+
+
+class TestPostingStatusImport(PostingStatusImportTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        # This item has an invoice number matching the invoice number in the mocked
+        # "posting status" CSV file, and should be considered "failed to post."
+        cls._item_on_posting_status_list = cls._add_prisme_batch_item(
+            cls.add_person_month(311270_0000),
+            "00587075",
+        )
+        # This item has an invoice number which is not present in the mocked "posting
+        # status" CSV file, and should be considered "succeeded to post."
+        cls._item_not_on_posting_status_list = cls._add_prisme_batch_item(
+            cls.add_person_month(311271_0000),
+            "12345678",
+        )
 
     def test_import_posting_status_is_idempotent(self):
         # Arrange
@@ -128,3 +164,49 @@ class TestPostingStatusImport(ImportTestCase):
                 },
             ],
         )
+
+
+class TestPostingStatusImportMissingInvoiceNumber(PostingStatusImportTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        # This item matches the data in the mocked "posting status" CSV file on CPR,
+        # date and amount (but not on invoice number.) It should cause the import to
+        # mark the Prisme batch item as failed.
+        cls._matching_item = cls._add_prisme_batch_item(
+            cls.add_person_month(311270_0000, benefit_paid=Decimal("1313.00")),
+            "01",
+        )
+        # This item does not match the data in the mocked "posting status" CSV file on
+        # neither CPR, date and amount, nor on invoice number. It should be skipped by
+        # the import.
+        cls._non_matching_item = cls._add_prisme_batch_item(
+            cls.add_person_month(311270_0001, benefit_paid=Decimal("1313.00")),
+            "02",
+        )
+
+    def test_import_posting_status_by_cpr_date_and_amount(self):
+        # Arrange
+        instance = PostingStatusImportMissingInvoiceNumber()
+        # In this test, `_EXAMPLE_1` does not match any Prisme batch item (neither on
+        # invoice number, nor CPR/date/amount) while `_EXAMPLE_3` matches on CPR/date/
+        # amount, but not on invoice number.
+        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_3):
+            # Act
+            instance.import_posting_status(MagicMock(), 1)
+        # Assert: matching item is marked as failed
+        self._matching_item.refresh_from_db()
+        self.assertEqual(
+            self._matching_item.status, PrismeBatchItem.PostingStatus.Failed
+        )
+        self.assertNotEqual(self._matching_item.posting_status_filename, "")
+        self.assertEqual(self._matching_item.error_code, "RJ00")
+        self.assertEqual(self._matching_item.error_description, "JKH Tesst")
+        # Assert: non-matching item is unchanged
+        self._non_matching_item.refresh_from_db()
+        self.assertEqual(
+            self._non_matching_item.status, PrismeBatchItem.PostingStatus.Sent
+        )
+        self.assertEqual(self._non_matching_item.posting_status_filename, "")
+        self.assertEqual(self._non_matching_item.error_code, "")
+        self.assertEqual(self._non_matching_item.error_description, "")

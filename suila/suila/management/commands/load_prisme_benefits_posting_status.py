@@ -5,7 +5,10 @@ from datetime import date
 
 from django.core.management.base import BaseCommand
 
-from suila.integrations.prisme.posting_status import PostingStatusImport
+from suila.integrations.prisme.posting_status import (
+    PostingStatusImport,
+    PostingStatusImportMissingInvoiceNumber,
+)
 
 
 class Command(BaseCommand):
@@ -23,11 +26,22 @@ class Command(BaseCommand):
             nargs="?",
             default=today.month,
         )
+        parser.add_argument(
+            "--unknown-invoice-number",
+            action="store_true",
+            help="Process posting status for unknown invoice numbers",
+        )
 
     def handle(self, *args, **options):
-        posting_status_import: PostingStatusImport = PostingStatusImport(
-            options["year"], options["month"]
-        )
+        if options["unknown_invoice_number"]:
+            posting_status_import: PostingStatusImportMissingInvoiceNumber = (
+                PostingStatusImportMissingInvoiceNumber()
+            )
+        else:
+            posting_status_import: PostingStatusImport = PostingStatusImport(
+                options["year"], options["month"]
+            )
+
         posting_status_import.import_posting_status(
             self.stdout, verbosity=options["verbosity"]
         )
