@@ -14,6 +14,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
             maximumFractionDigits: 0,
         }
     );
+    const breakpointMD = 768;
 
     if (yearlyIncome > data[data.length - 1][0]) {
         // result is greater than our current max point in the graph
@@ -127,7 +128,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
     };
 
     chartData["responsive"] = [{
-        breakpoint: 768,
+        breakpoint: breakpointMD,
         options: {
             "chart": {
                 "zoom": {
@@ -150,9 +151,11 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                 "strokeWidth": 0,
                 "colors": ["#820041"], // $primary
             },
+
             "dataLabels": {
                 "enabled": false,
             },
+
             "legend": {
                 "fontSize": "12px",
                 "color": "#820041", // $primary
@@ -221,7 +224,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
         }
 
         for (let responsiveSettings of chartData["responsive"]) {
-            if (responsiveSettings["breakpoint"] === 600) {
+            if (responsiveSettings["breakpoint"] === breakpointMD) {
                 responsiveSettings["options"]["annotations"] = {
                     "points": [{
                         "x": yearlyIncome,
