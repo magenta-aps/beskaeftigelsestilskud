@@ -483,9 +483,11 @@ table th.orderable.desc a::after {
 // Suila graph
 #graph {
   height: 50rem;
-  padding: $spacer;
+  //padding: $spacer;
   background: $light-grey;
   border-radius: $spacer;
+  width: 100%;
+  position: relative;
 }
 
 // Misc
