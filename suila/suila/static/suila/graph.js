@@ -291,7 +291,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
             const size = chart["size"];
             if (
                 (size["lt"] === null || windowWidth < size["lt"]) &&
-                (size["gt"] === null || windowWidth > size["gt"])
+                (size["gt"] === null || windowWidth >= size["gt"])
             ) {
                 return chart;
             }
