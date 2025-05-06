@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 import logging
+from typing import Optional
 
 from django.core import management
 from django.db.models import Q
@@ -53,18 +54,24 @@ class JobDispatcher:
         }
 
     def job_ran_this_month(self, name):
+        return self.job_ran_month(name, self.month)
+
+    def job_ran_month(self, name: str, month: int):
         return JobLog.objects.filter(
-            Q(month_param=self.month) | Q(month_param=None),
+            Q(month_param=month) | Q(month_param=None),
             name=name,
             status=StatusChoices.SUCCEEDED,
             year_param=self.year,
         ).exists()
 
     def job_ran_this_year(self, name):
+        return self.job_ran_year(name, self.year)
+
+    def job_ran_year(self, name: str, year: int):
         return JobLog.objects.filter(
             name=name,
             status=StatusChoices.SUCCEEDED,
-            year_param=self.year,
+            year_param=year,
         ).exists()
 
     def check_dependencies(self, name):
@@ -75,12 +82,20 @@ class JobDispatcher:
             if not job_ran_this_month:
                 raise DependenciesNotMet(name, dependency)
 
-    def allow_job(self, name) -> bool:
+    def allow_job(
+        self, name, year: Optional[int] = None, month: Optional[int] = None
+    ) -> bool:
         """
         Determine whether to run a job or not
         """
-        job_ran_this_month = self.job_ran_this_month(name)
-        job_ran_this_year = self.job_ran_this_year(name)
+        job_ran_this_year = (
+            self.job_ran_this_year(name) if not year else self.job_ran_year(name, year)
+        )
+        job_ran_this_month = (
+            self.job_ran_this_month(name)
+            if not month
+            else self.job_ran_month(name, month)
+        )
 
         if name in [
             ManagementCommands.CALCULATE_STABILITY_SCORE,
@@ -116,16 +131,26 @@ class JobDispatcher:
         return False
 
     def call_job(self, name, *args, **kwargs):
-        if self.allow_job(name):
-            self.check_dependencies(name)
-            logger.info(
-                f"\n{datetime.date(self.year, self.month, self.day)}: "
-                f"Running job {name} ..."
-            )
-            management.call_command(
-                name,
-                *args,
-                traceback=self.reraise,
-                reraise=self.reraise,
-                **kwargs,
-            )
+        allow_job_kwargs = {}
+        if name in [
+            ManagementCommands.CALCULATE_STABILITY_SCORE,
+        ]:
+            allow_job_kwargs["year"] = args[0]
+
+        if not self.allow_job(name, **allow_job_kwargs):
+            return
+
+        self.check_dependencies(name)
+
+        logger.info(
+            f"\n{datetime.date(self.year, self.month, self.day)}: "
+            f"Running job {name} ..."
+        )
+
+        management.call_command(
+            name,
+            *args,
+            traceback=self.reraise,
+            reraise=self.reraise,
+            **kwargs,
+        )
