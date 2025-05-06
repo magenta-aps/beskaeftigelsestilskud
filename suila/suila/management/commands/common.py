@@ -22,19 +22,8 @@ class SuilaBaseCommand(BaseCommand):
         super().add_arguments(parser)
 
     def handle(self, *args, **options):
-
-        available_job_params = [
-            f.name for f in JobLog._meta.fields if f.name.endswith("_param")
-        ]
-
-        job_kwargs = {
-            param: options.get(param.replace("_param", ""))
-            for param in available_job_params
-        }
-
-        job_log = JobLog.objects.create(
-            name=os.path.basename(self.filename).split(".")[0], **job_kwargs
-        )
+        job_name = os.path.basename(self.filename).split(".")[0]
+        job_log = self.create_joblog(job_name, *args, **options)
 
         try:
             if options.get("profile", False):
@@ -59,3 +48,20 @@ class SuilaBaseCommand(BaseCommand):
                     "runtime_end",
                 )
             )
+
+    @staticmethod
+    def create_joblog(job_name, **kwargs):
+        available_job_params = [
+            f.name for f in JobLog._meta.fields if f.name.endswith("_param")
+        ]
+
+        job_kwargs = {
+            param: kwargs.get(param.replace("_param", ""))
+            for param in available_job_params
+        }
+
+        # Add status to job_kwargs if its in the method-kwargs
+        if "status" in kwargs:
+            job_kwargs["status"] = kwargs["status"]
+
+        return JobLog.objects.create(name=job_name, **job_kwargs)
