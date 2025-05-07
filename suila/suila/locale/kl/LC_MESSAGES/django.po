@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-01 11:52-0100\n"
+"POT-Creation-Date: 2025-05-07 07:23-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -536,19 +536,6 @@ msgstr ""
 "Kalaallit nunaanni tamakkiisumik akileraartussaatitaaguit Suila-tapinik "
 "pisinnaavutit."
 
-#: suila/templates/suila/faq.html
-msgid "Du er blevet sat i bero"
-msgstr ""
-
-#: suila/templates/suila/faq.html
-msgid ""
-"Medarbejdere i borgerservice kan sætte personer i bero, hvis de vurderer at "
-"det er nødvendigt. Det kan for eksempel være fordi din indkomst er blevet "
-"indberettet forkert, eller fordi din indkomst er ustabil. Når man er blevet "
-"sat i bero, modtager man Suila-tapit til årsopgørelsen året efter. Du kan "
-"maksimalt være i bero i ét skatteår ad gangen."
-msgstr ""
-
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -700,11 +687,24 @@ msgstr "%(year)s-mi Suila-tapit tunniunneqartussatut naatsorsuutigineqartut"
 msgid "Forventet årsindkomst fra arbejde"
 msgstr "Ukiumut sulinermi isertitariumaagassatut naatsorsuutigineqartut"
 
+#: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
+#: suila/tests/test_status_tags.py
+msgid "Udbetalingspause"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Du har sat din udbetaling på pause."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Din udbetaling er sat på pause. Du har oplyst Skattestyrelsen, at din "
+"udbetaling skal sættes på pause."
+msgstr ""
+
 #: suila/templates/suila/person_detail.html
 #, python-format
-msgid ""
-"Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit til "
-"årsopgørelsen slut %(year)s."
+msgid "Du får udbetalt Suila-tapit til årsopgørelsen slut %(year)s."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -740,6 +740,25 @@ msgstr ""
 "nuunneqassapput."
 
 #: suila/templates/suila/person_detail.html
+msgid "Sæt udbetalinger på pause"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Hvis du ikke ønsker at modtage den månedlige udbetaling af Suila-tapit, har "
+"du nu mulighed for at sætte udbetalingerne på pause. Pausen varer så længe "
+"du ønsker det."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Du mister ikke retten til Suila-tapit. Hvis du er berettiget til Suila-tapit "
+"efter at dine indkomster for året er opgjort i august næste år, vil du "
+"modtage en årsopgørelse, der viser hvor meget du har til gode eller har "
+"modtaget for meget."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
 msgid "Notater"
 msgstr "Nalunaarsukkat"
@@ -767,11 +786,11 @@ msgid "e-Boks-beskeder preview"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Genoptag udbetalinger"
+msgid "Stop pause"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Sæt udbetalinger i bero"
+msgid "Start pause"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -1281,10 +1300,6 @@ msgstr "Decembarip"
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Foreløbigt beløb"
 msgstr "Tunniunneartussatut naatsorsuutaagallartut"
-
-#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
-msgid "Udbetalingspause"
-msgstr ""
 
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Beløb fastlagt"
