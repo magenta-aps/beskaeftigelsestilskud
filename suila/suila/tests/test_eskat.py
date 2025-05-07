@@ -1367,6 +1367,15 @@ class TestExpectedIncomeUpdate(TestUpdateMixin, TestCase):
         # Assert: we expect a yearly income matching the self-reported expected income
         self.assertEqual(estimate_2, Decimal("0"))
 
+        # other_b_income is part of the estimate
+        self.create_or_update_objects(
+            other_b_income=100000, valid_from="2020-01-06T00:00:00"
+        )
+        # Act: re-run income estimation for month 1
+        estimate_3 = self.estimate_income(month=1)
+        # Assert: we expect a yearly income matching the self-reported expected income
+        self.assertEqual(estimate_3, Decimal("100000"))
+
     def test_chunk_contains_same(self):
         self.create_or_update_multiple_objects(
             {"capital_income": 1300, "valid_from": "2020-07-01T00:00:00"},
