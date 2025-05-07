@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-07 07:23-0100\n"
+"POT-Creation-Date: 2025-05-07 11:55-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -687,6 +687,10 @@ msgstr "%(year)s-mi Suila-tapit tunniunneqartussatut naatsorsuutigineqartut"
 msgid "Forventet årsindkomst fra arbejde"
 msgstr "Ukiumut sulinermi isertitariumaagassatut naatsorsuutigineqartut"
 
+#: suila/templates/suila/person_detail.html
+msgid "Gem estimering"
+msgstr ""
+
 #: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
 #: suila/tests/test_status_tags.py
 msgid "Udbetalingspause"
@@ -712,6 +716,23 @@ msgstr ""
 msgid ""
 "Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
 "%(year)s."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Din årsindtægt er manuelt estimeret"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid ""
+"Den estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Den "
+"automatisk estimerede årsindtægt er %(estimated_year_result)s Det er den "
+"manuelt beregnede årsindtægt, der ligger til grunde for estimeringen af din "
+"årlige Suila-tapit."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Skift til automatisk estimering"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html

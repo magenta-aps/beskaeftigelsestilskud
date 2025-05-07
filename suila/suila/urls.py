@@ -13,6 +13,7 @@ from suila.views import (
     EboksMessageView,
     GeneratedEboksMessageView,
     GraphView,
+    PersonAnnualIncomeEstimateUpdateView,
     PersonDetailEboksPreView,
     PersonDetailEboksSendView,
     PersonDetailIncomeView,
@@ -56,6 +57,11 @@ urlpatterns: List[URLResolver | URLPattern] = [
         "person/<int:pk>/pause/",
         PersonPauseUpdateView.as_view(),
         name="pause_person",
+    ),
+    path(
+        "person/<int:pk>/set_annual_income/",
+        PersonAnnualIncomeEstimateUpdateView.as_view(),
+        name="set_person_annual_income_estimate",
     ),
     path(
         "note_attachments/<int:pk>/",

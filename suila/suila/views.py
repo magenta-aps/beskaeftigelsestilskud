@@ -18,6 +18,7 @@ from common.utils import SuilaJSONEncoder, get_user_who_pressed_pause, omit
 from common.view_mixins import ViewLogMixin
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.core.management import call_command
 from django.db.models import CharField, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
@@ -53,6 +54,7 @@ from suila.integrations.eboks.client import EboksClient
 from suila.models import (
     BTaxPayment,
     Employer,
+    ManagementCommands,
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
@@ -229,7 +231,8 @@ class PersonDetailView(
         relevant_person_month: RelevantPersonMonth = self.get_relevant_person_month()
 
         if relevant_person_month is not None:
-            person_year = relevant_person_month.person_month.person_year
+            person_month = relevant_person_month.person_month
+            person_year = person_month.person_year
             person = person_year.person
             estimated_year_result = (
                 (relevant_person_month.person_month.estimated_year_result or Decimal(0))
@@ -240,10 +243,8 @@ class PersonDetailView(
                 {
                     "show_next_payment": True,
                     "next_payout_date": relevant_person_month.next_payout_date,
-                    "benefit_paid": relevant_person_month.person_month.benefit_paid,
-                    "estimated_year_benefit": (
-                        relevant_person_month.person_month.estimated_year_benefit
-                    ),
+                    "benefit_paid": person_month.benefit_paid,
+                    "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
                     "paused": person.paused,
                     "person_id": person.pk,
@@ -252,6 +253,9 @@ class PersonDetailView(
                     "quarantine_reason": person_year.quarantine_reason,
                     "quarantine_weight": relevant_person_month.quarantine_weight,
                     "user_who_pressed_pause": get_user_who_pressed_pause(person),
+                    "year": person_year.year.year,
+                    "month": person_month.month,
+                    "manually_entered_income": person.annual_income_estimate,
                 }
             )
         else:
@@ -1044,3 +1048,49 @@ class PersonPauseUpdateView(
 
     def get_success_url(self):
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
+
+
+class PersonAnnualIncomeEstimateUpdateView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    UpdateView,
+):
+    model = Person
+    required_model_permissions = ["suila.change_person"]
+    fields = ["annual_income_estimate"]
+
+    def get_success_url(self):
+        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        year = int(self.request.POST.get("year"))
+        month = int(self.request.POST.get("month"))
+
+        try:
+            person_month = PersonMonth.objects.get(
+                month=month,
+                person_year__year__year=year,
+                person_year__person__id=self.object.id,
+            )
+        except PersonMonth.DoesNotExist:
+            person_month = None
+
+        # Recalculate current and all future months for this user
+        while person_month is not None:
+            try:
+                prisme_batch_item = person_month.prismebatchitem
+            except PersonMonth.prismebatchitem.RelatedObjectDoesNotExist:
+                prisme_batch_item = None
+
+            # Only recalculate if this month was not sent to Prisme
+            if not prisme_batch_item:
+                call_command(
+                    ManagementCommands.CALCULATE_BENEFIT,
+                    person_month.person_year.year,
+                    month=person_month.month,
+                    cpr=self.object.cpr,
+                )
+            person_month = person_month.next
+        return response
