@@ -184,7 +184,7 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                     "redrawOnParentResize": true,
                     "redrawOnWindowResize": true,
                     "zoom": {
-                        "allowMouseWheelZoom": false,
+                        "enabled": false,
                     }
                 },
                 "tooltip": {"enabled": false},
