@@ -412,6 +412,51 @@ class TestJobDispatcherCommands(TestCase):
             mock_call_command.assert_has_calls(expected_calls)
             mock_call_command.reset_mock()
 
+    @patch("suila.management.commands.job_dispatcher.JobDispatcher")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_job_dispatch_verbose(self, job_dispatcher: MagicMock):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        call_command(
+            self.command,
+            year=2022,
+            month=1,
+            day=1,
+            verbosity=1,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        self.assertNotIn("Done", stdout.getvalue())
+
+        call_command(
+            self.command,
+            year=2022,
+            month=1,
+            day=1,
+            verbosity=3,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        self.assertIn("Done", stdout.getvalue())
+
+    @patch("suila.management.commands.job_dispatcher.JobDispatcher")
+    @override_settings(ESKAT_BASE_URL=None)
+    def test_job_dispatch_missing_eskat_url(self, job_dispatcher: MagicMock):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        call_command(
+            self.command,
+            year=2022,
+            month=1,
+            day=1,
+            verbosity=3,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        self.assertIn("ESKAT_BASE_URL is not set", stdout.getvalue())
+
 
 # Shared mocking method(s)
 def _mock_call_command(command_name, *args, **options):
