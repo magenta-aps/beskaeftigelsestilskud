@@ -45,7 +45,7 @@
         <form action="" method="post" class="form filter-form" novalidate>
             {% csrf_token %}
             {# Show monthly and yearly income inputs #}
-            {% bootstrap_field form.estimated_month_income layout="horizontal" horizontal_label_class="col-6" horizontal_field_class="col-6" %}
+            {% bootstrap_field form.estimated_month_income layout="horizontal" horizontal_label_class="col-6" horizontal_field_class="col-6" placeholder="" %}
             {% bootstrap_field form.estimated_year_income layout="horizontal" horizontal_label_class="col-6" horizontal_field_class="col-6" %}
             {% if user|has_permissions:"suila.use_adminsite_calculator_parameters" %}
             {# Show engine selector #}

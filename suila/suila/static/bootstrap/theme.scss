@@ -483,9 +483,11 @@ table th.orderable.desc a::after {
 // Suila graph
 #graph {
   height: 50rem;
-  padding: $spacer;
+  //padding: $spacer;
   background: $light-grey;
   border-radius: $spacer;
+  width: 100%;
+  position: relative;
 }
 
 // Misc
@@ -573,11 +575,18 @@ div.explainer p {
   div.detail-table.p-5 {
     padding: $spacer !important;
   }
+
+  #graph {
+    padding: 0;
+    height: 35rem;
+  }
+
 }
 
 // "Small" (or smaller)
 @include media-breakpoint-down(sm) {
   #graph {
-    display: none;
+    padding: 0;
+    height: 35rem;
   }
 }

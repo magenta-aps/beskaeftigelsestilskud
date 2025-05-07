@@ -60,6 +60,7 @@ LOGIN_BYPASS_ENABLED = bool(strtobool(os.environ.get("LOGIN_BYPASS_ENABLED", "Fa
 LOGIN_WHITELISTED_URLS = [
     "/favicon.ico",
     "/_ht/",
+    "/jsi18n/",
     LOGIN_URL,
     LOGIN_TIMEOUT_URL,
     LOGIN_REPEATED_URL,

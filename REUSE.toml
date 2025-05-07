@@ -31,3 +31,9 @@ path = ["suila/suila/static/material-design/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2016-2020 Google"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "suila/suila/static/apexcharts/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2025 ApexCharts"
+SPDX-License-Identifier = "MIT"
