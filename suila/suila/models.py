@@ -366,6 +366,15 @@ class Person(PermissionsMixin, models.Model):
         blank=False,
     )
 
+    # If annual income is manually set here, we do not use the estimation engines.
+    annual_income_estimate = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
     name = models.TextField(blank=True, null=True)
     address_line_1 = models.TextField(blank=True, null=True)
     address_line_2 = models.TextField(blank=True, null=True)

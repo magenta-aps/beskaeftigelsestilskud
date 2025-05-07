@@ -73,6 +73,7 @@ class TestSimulationJSONEncoder(TestCase):
             "foreign_address": None,
             "country_code": None,
             "paused": False,
+            "annual_income_estimate": None,
         }
         cls.personyear_serialized = {
             "id": cls.personyear.pk,

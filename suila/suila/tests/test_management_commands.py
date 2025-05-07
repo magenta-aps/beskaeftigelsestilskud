@@ -142,6 +142,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "location_code": None,
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
+                "annual_income_estimate": None,
             },
         )
 
@@ -165,6 +166,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "location_code": None,
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
+                "annual_income_estimate": None,
             },
         )
 
@@ -188,6 +190,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "location_code": None,
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
+                "annual_income_estimate": None,
             },
         )
 
@@ -278,6 +281,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "location_code": None,
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
+                "annual_income_estimate": None,
             },
         )
 
@@ -308,6 +312,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "location_code": None,
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
+                "annual_income_estimate": None,
             },
         )
 
@@ -340,6 +345,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "location_code": None,
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
+                "annual_income_estimate": None,
             },
         )
 
@@ -400,6 +406,7 @@ class GetPersonInfoFromDAFO(TestCase):
                     "location_code": None,
                     "welcome_letter": ANY,
                     "welcome_letter_sent_at": ANY,
+                    "annual_income_estimate": None,
                 },
                 {
                     "id": ANY,
@@ -419,6 +426,7 @@ class GetPersonInfoFromDAFO(TestCase):
                     "location_code": None,
                     "welcome_letter": ANY,
                     "welcome_letter_sent_at": ANY,
+                    "annual_income_estimate": None,
                 },
             ],
         )

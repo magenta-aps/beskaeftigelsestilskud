@@ -98,6 +98,7 @@ def calculate_benefit(
             "b_expenses": float,
             "catchsale_expenses": float,
             "person__paused": bool,
+            "person__annual_income_estimate": float,
         },
     )
 
@@ -116,6 +117,10 @@ def calculate_benefit(
         .sub(df["b_expenses"], fill_value=0)
         .sub(df["catchsale_expenses"], fill_value=0)
     )
+
+    # If annual income is set on a Person object, use that.
+    has_income_estimate = df.annual_income_estimate.notna()
+    df.loc[has_income_estimate, "calculation_basis"] = df.annual_income_estimate
 
     # Only payout if we have a signal
     df.loc[np.logical_not(df["has_signal"]), "calculation_basis"] = 0
