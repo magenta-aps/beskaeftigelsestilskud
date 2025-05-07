@@ -1222,6 +1222,7 @@ class PersonYearAssessment(PermissionsMixin, models.Model):
             + self.catch_sale_market_income
             + self.care_fee_income
             + self.capital_income
+            + self.other_b_income
         )
         return Decimal(incomes).quantize(Decimal("0.01"))
 
