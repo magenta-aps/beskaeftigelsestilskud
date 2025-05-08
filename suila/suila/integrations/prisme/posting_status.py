@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
+import re
 from dataclasses import dataclass
 from datetime import date
 
@@ -14,7 +15,7 @@ from django.db.models import QuerySet
 
 from suila.integrations.prisme.csv_format import CSVFormat
 from suila.integrations.prisme.sftp_import import SFTPImport
-from suila.models import PrismeBatch, PrismeBatchItem
+from suila.models import PrismeBatchItem
 
 logger = logging.getLogger(__name__)
 
@@ -54,23 +55,11 @@ class PostingStatusImport(SFTPImport):
         self._year = year
         self._month = month
 
-    @transaction.atomic()
     def import_posting_status(self, stdout: OutputWrapper, verbosity: int):
-        new_filenames: set[str] = self.get_new_filenames()
-
-        # Process new files, marking relevant items as "failed to post"
+        new_filenames: list[str] = self._process_filenames(self.get_new_filenames())
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
-            rows: list[PostingStatus] = self._parse(filename)
-            self._update_failed_items(filename, rows)
-            if verbosity >= 2:
-                for row in rows:
-                    stdout.write(f"{row}\n")
-                stdout.write("\n")
-
-        # Always mark all other items in relevant time period as succeeded
-        succeeded: int = self._update_succeeded_items()
-        stdout.write(f"Marked {succeeded} Prisme batch items as successfully posted\n")
+            self._update_prisme_batch_items(filename)
 
     def get_remote_folder_name(self) -> str:
         return settings.PRISME["posting_status_folder"]  # type: ignore[misc]
@@ -84,18 +73,62 @@ class PostingStatusImport(SFTPImport):
         )
         return known_filenames
 
+    def _process_filenames(self, filenames: set[str]) -> list[str]:
+        # Perform any filtering or sorting of incoming filenames here
+        def sort_by_filename_date(item: tuple[str, re.Match]) -> tuple[int, ...]:
+            """Return a tuple of integer values for the year, month, day and time
+            present in `filename`"""
+            # This allows sorting the incoming filenames chronologically
+            filename: str
+            match: re.Match
+            filename, match = item
+            return tuple(
+                [int(match.group(name)) for name in ("year", "month", "day", "time")]
+            )
+
+        # Construct pattern matching the filenames we are interested in
+        machine_id: str = settings.PRISME["machine_id"]
+        pattern: re.Pattern = re.compile(
+            rf"§38_{machine_id:05d}_"
+            r"(?P<day>\d{2})-"
+            r"(?P<month>\d{2})-"
+            r"(?P<year>\d{4})_"
+            r"(?P<time>\d{6})\.csv"
+        )
+
+        # Keep only the filenames that match `pattern`
+        matches: list[tuple[str, re.Match]] = [
+            (filename, pattern.match(filename))
+            for filename in filenames
+            if pattern.match(filename)
+        ]
+
+        # Return the filenames in the order by specified by `sort_by_filename_date`
+        return [
+            filename for filename, match in sorted(matches, key=sort_by_filename_date)
+        ]
+
     def _parse(self, filename: str) -> list[PostingStatus]:
         return PostingStatus.from_csv_buf(self.get_file(filename))
 
-    def _update_failed_items(self, filename: str, rows: list[PostingStatus]):
-        items: list[PrismeBatchItem] = []
+    def _get_prisme_batch_items(self) -> QuerySet[PrismeBatchItem]:
+        return PrismeBatchItem.objects.select_related(
+            "person_month__person_year__person",
+            "person_month__person_year__year",
+        )
+
+    @transaction.atomic
+    def _update_prisme_batch_items(self, filename: str):
+        qs: QuerySet[PrismeBatchItem] = self._get_prisme_batch_items()
+        print(f"Processing {qs.count()} Prisme batch items ...")
+
+        rows: list[PostingStatus] = self._parse(filename)
+        matches: list[PrismeBatchItem] = []
         for row in rows:
             try:
-                item: PrismeBatchItem = PrismeBatchItem.objects.get(
-                    invoice_no=row.invoice_no
-                )
+                item: PrismeBatchItem = qs.get(invoice_no=row.invoice_no)
             except PrismeBatchItem.DoesNotExist:
-                logger.info(
+                logger.debug(
                     "No Prisme batch item found for invoice number %s",
                     row.invoice_no,
                 )
@@ -104,24 +137,25 @@ class PostingStatusImport(SFTPImport):
                 item.posting_status_filename = filename
                 item.error_code = row.error_code
                 item.error_description = row.error_description
-                items.append(item)
+                matches.append(item)
 
-        PrismeBatchItem.objects.bulk_update(
-            items,
+        num_failed: int = qs.bulk_update(
+            matches,
             ["status", "posting_status_filename", "error_code", "error_description"],
         )
+        print(f"Updated {num_failed} to status=failed")
 
-        return items
-
-    def _update_succeeded_items(self) -> int:
-        assert date(self._year, self._month, 1) < date.today()
-        qs: QuerySet[PrismeBatchItem] = PrismeBatchItem.objects.filter(
-            status=PrismeBatchItem.PostingStatus.Sent,
-            prisme_batch__status=PrismeBatch.Status.Sent,
-            person_month__person_year__year__year__lte=self._year,
-            person_month__month__lte=self._month,
+        # qs = self._get_prisme_batch_items()
+        num_succeeded: int = qs.exclude(
+            status=PrismeBatchItem.PostingStatus.Failed
+        ).update(
+            status=PrismeBatchItem.PostingStatus.Posted,
+            posting_status_filename=filename,
+            error_code="",
+            error_description="",
         )
-        return qs.update(status=PrismeBatchItem.PostingStatus.Posted)
+        print(f"Updated {num_succeeded} to status=posted")
+        print()
 
 
 class PostingStatusImportMissingInvoiceNumber(SFTPImport):
