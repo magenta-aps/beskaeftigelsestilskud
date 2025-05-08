@@ -1430,6 +1430,13 @@ class PrismeBatch(PermissionsMixin, models.Model):
     )
 
 
+class PrismePostingStatusFile(models.Model):
+    filename = models.TextField(unique=True)
+    """Contains the filename of the the "bogføringsstatus" (posting status) CSV file"""
+
+    created = models.DateTimeField(auto_now_add=True)
+
+
 class PrismeBatchItem(PermissionsMixin, models.Model):
     class Meta:
         unique_together = ("prisme_batch", "person_month")
@@ -1449,12 +1456,18 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
         on_delete=models.CASCADE,
     )
 
+    posting_status_file = models.ForeignKey(
+        PrismePostingStatusFile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    """Indicates the posting status file where we got the posted/failed status for this
+    Prisme batch item."""
+
     g68_content = models.TextField()
 
     g69_content = models.TextField()
-
-    posting_status_filename = models.TextField()
-    """Contains the filename of the the "bogføringsstatus" (posting status) CSV file"""
 
     invoice_no = models.TextField(
         null=True,
