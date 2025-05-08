@@ -53,3 +53,22 @@ class ImportTestCase(TestCase):
                 side_effect=[BytesIO(file.encode(self.encoding)) for file in files],
             ):
                 yield
+
+    @contextmanager
+    def mock_sftp_server_folder(self, *files: tuple[str, str]):
+        with patch(
+            "suila.integrations.prisme.sftp_import.list_prisme_folder",
+            # This causes N calls to `get_file_in_prisme_folder` to be made, where N is
+            # the length of `files`.
+            return_value=[filename for filename, contents in files],
+        ):
+            with patch(
+                "suila.integrations.prisme.sftp_import.get_file_in_prisme_folder",
+                # On each call to `get_file_in_prisme_folder`, provide a new return
+                # value from this iterable.
+                side_effect=[
+                    BytesIO(contents.encode(self.encoding))
+                    for filename, contents in files
+                ],
+            ):
+                yield
