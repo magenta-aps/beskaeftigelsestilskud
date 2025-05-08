@@ -459,7 +459,6 @@ class PersonDetailIncomeView(
         ).order_by("-year__year")
 
         self.log_view(self.object)
-        print(context_data)
         return context_data
 
     def get_income_signals(self) -> list[IncomeSignal]:
