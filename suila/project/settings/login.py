@@ -93,7 +93,8 @@ SAML = {
     "name": os.environ.get("SAML_SP_NAME") or "Toldbehandling",
     "description": os.environ.get("SAML_SP_DESCRIPTION") or "Beskæftigelsesfradrag",
     "verify_ssl_cert": False,
-    "metadata_remote": os.environ.get("SAML_IDP_METADATA"),
+    # "metadata_remote": os.environ.get("SAML_IDP_METADATA"),
+    "metadata_remote": "https://foo",
     # Til metadata-fetch mellem containere
     "metadata_remote_container": os.environ.get("SAML_IDP_METADATA_CONTAINER"),
     "metadata": {"local": ["/var/cache/suila/idp_metadata.xml"]},  # IdP Metadata

@@ -7,12 +7,22 @@ from typing import List
 from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import TemplateView
 from django_mitid_auth.saml.views import AccessDeniedView
-from login.views import BeskLoginView, LogoutView, TwoFactorSetup
+from login.views import (  # BeskLoginCallbackView,; BeskMitIDLoginView,
+    BeskLoginView,
+    LogoutView,
+    MitIdErrorView,
+    TwoFactorSetup,
+)
 
 app_name = "login"
 
 
 urlpatterns: List[URLResolver | URLPattern] = [
+    # path("mitid/login/", BeskMitIDLoginView.as_view(), name="login"),
+    # path(
+    #     "mitid/login/callback/", BeskLoginCallbackView.as_view(),
+    #      name="login-callback"
+    # ),
     path("mitid/", include("django_mitid_auth.urls", namespace="mitid")),
     path(
         "login",
@@ -38,6 +48,11 @@ urlpatterns: List[URLResolver | URLPattern] = [
         "error/login-nocpr/",
         AccessDeniedView.as_view(template_name="login/login_no_cpr.html"),
         name="login-no-cpr",
+    ),
+    path(
+        "error/login-mitid-error/",
+        MitIdErrorView.as_view(),
+        name="login-mitid-error",
     ),
     path(
         "error/login-failed/",

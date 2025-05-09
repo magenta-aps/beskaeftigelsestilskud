@@ -18,4 +18,5 @@ MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django_otp.middleware.OTPMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "suila.project.middleware.ExceptionMiddleware",
 ]

@@ -16,8 +16,77 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import RedirectView
+from django.views.generic.base import TemplateView
+from django_mitid_auth.urls import LoginCallbackView
+from django_mitid_auth.urls import LoginView as MitIDLoginView
 from login.forms import AuthenticationForm, BeskAuthenticationTokenForm
 from two_factor.views import LoginView, SetupView
+
+
+class BeskMitIDLoginView(MitIDLoginView):
+
+    def dispatch(self, *args, **kwargs):
+
+        try:
+            print("!D" * 800)
+            print("All OK")
+            print("!D" * 800)
+            return super().dispatch(*args, **kwargs)
+        except Exception as e:  # noqa
+            print("!R" * 800)
+            print("Redirecting")
+            print(e)
+            print("!R" * 800)
+            return redirect(reverse("login:login-mitid-error"))
+
+    def post(self, *args, **kwargs):
+        # print(1 / 0)
+        print("!P" * 800)
+        print("Posting")
+        print("!P" * 800)
+        return super().post(*args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        # print(1 / 0)
+        print("!G" * 800)
+        print("Getting")
+        print("!G" * 800)
+        return super().get(*args, **kwargs)
+
+
+class BeskLoginCallbackView(LoginCallbackView):
+
+    def dispatch(self, *args, **kwargs):
+
+        try:
+            print("D" * 800)
+            print("All OK")
+            print("D" * 800)
+            return super().dispatch(*args, **kwargs)
+        except Exception as e:  # noqa
+            print("R" * 800)
+            print("Redirecting")
+            print(e)
+            print("R" * 800)
+            return redirect(reverse("login:login-mitid-error"))
+
+    def post(self, *args, **kwargs):
+        # print(1 / 0)
+        print("P" * 800)
+        print("Posting")
+        print("P" * 800)
+        return super().post(*args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        # print(1 / 0)
+        print("G" * 800)
+        print("Getting")
+        print("G" * 800)
+        return super().get(*args, **kwargs)
+
+
+class MitIdErrorView(TemplateView):
+    template_name = "login/login_mitid_error.html"
 
 
 class BeskLoginView(LoginView):
@@ -67,6 +136,9 @@ class BeskLoginView(LoginView):
         if not request.user.is_authenticated:
             if settings.PUBLIC:
                 # MitID login
+                print("x" * 80)
+                print("Redirecting to MitID login")
+                print("x" * 80)
                 response = self.login_mitid(request, *args, **kwargs)
             else:
                 # django login
@@ -102,7 +174,11 @@ class BeskLoginView(LoginView):
             )
         if not request.user.is_authenticated:
             # no user, redirect to login page
-            return redirect(reverse("login:mitid:login"))
+            redir = redirect(reverse("login:mitid:login"))
+            print("w" * 80)
+            print(redir)
+            print("w" * 80)
+            return redir
         return None
 
     def login_django(self, request, *args, **kwargs) -> HttpResponse | None:

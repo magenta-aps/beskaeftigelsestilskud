@@ -1,0 +1,19 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/card.html" %}
+{% load i18n %}
+
+{% block title %}
+{% translate "Adgang nægtet" %}
+{% endblock %}
+
+{% block userinfo %}
+{% endblock %}
+
+{% block content %}
+    {% translate "Adgang nægtet" as header %}
+    {% translate 'Vi oplever problemer med MitID. Prøv igen senere.' as body %}
+    <h1>{{ header }}</h1>
+    <p>{{ body }}</p>
+{% endblock %}

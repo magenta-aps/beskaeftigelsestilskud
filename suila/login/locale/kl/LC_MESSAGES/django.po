@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-07 11:30-0200\n"
+"POT-Creation-Date: 2025-05-09 11:51-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,6 +52,7 @@ msgid "Login mislykkedes"
 msgstr ""
 
 #: login/templates/login/login_failed.html
+#: login/templates/login/login_mitid_error.html
 #: login/templates/login/login_no_cpr.html
 #: login/templates/login/login_repeat.html
 #: login/templates/login/login_timeout.html
@@ -66,6 +67,10 @@ msgstr ""
 #: login/templates/login/login_no_cpr.html
 msgid "Log ud"
 msgstr "Anigit"
+
+#: login/templates/login/login_mitid_error.html
+msgid "Vi oplever problemer med MitID. Prøv igen senere."
+msgstr ""
 
 #: login/templates/login/login_no_cpr.html
 msgid "Det anvendte login har ikke et CPR-nummer tilknyttet."
