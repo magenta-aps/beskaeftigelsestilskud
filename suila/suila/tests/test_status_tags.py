@@ -75,7 +75,7 @@ class TestDisplayStatus(TestCase):
 
     @patch("suila.templatetags.status_tags.datetime", wraps=datetime)
     def test_paused_after_current_month(self, mock_datetime):
-        self.person_month.person_year.person.paused = True
+        self.person_month.paused = True
         # Arrange: set current time to the year and month of the person month under test
         mock_datetime.date.today.return_value = datetime.date(2020, 1, 1)
         # Act
