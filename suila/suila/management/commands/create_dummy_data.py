@@ -91,6 +91,8 @@ class Command(BaseCommand):
             * 12,
             # Person who is in quarantine (because he earns nearly too much)
             Person.objects.update_or_create(cpr="0401011991")[0]: [490_000 / 12] * 12,
+            # Person who gets nothing because he earns too much
+            Person.objects.update_or_create(cpr="0501011991")[0]: [5_000_000 / 12] * 12,
         }
 
         for person, salary in persons.items():
@@ -129,10 +131,6 @@ class Command(BaseCommand):
                 )
 
                 if date < month_before_last_month:
-                    prisme_batch, _ = PrismeBatch.objects.update_or_create(
-                        export_date=datetime.date(date.year, date.month, 12),
-                        defaults={"status": "sent", "prefix": 1},
-                    )
 
                     person_month = PersonMonth.objects.get(
                         person_year__person=person,
@@ -140,11 +138,18 @@ class Command(BaseCommand):
                         person_year__year__year=date.year,
                     )
 
-                    PrismeBatchItem.objects.update_or_create(
-                        prisme_batch=prisme_batch,
-                        person_month=person_month,
-                        defaults={
-                            "status": "posted",
-                            "paused": person_month.person_year.person.paused,
-                        },
-                    )
+                    if person_month.benefit_paid > 0:
+
+                        prisme_batch, _ = PrismeBatch.objects.update_or_create(
+                            export_date=datetime.date(date.year, date.month, 12),
+                            defaults={"status": "sent", "prefix": 1},
+                        )
+
+                        PrismeBatchItem.objects.update_or_create(
+                            prisme_batch=prisme_batch,
+                            person_month=person_month,
+                            defaults={
+                                "status": "posted",
+                                "paused": person_month.person_year.person.paused,
+                            },
+                        )

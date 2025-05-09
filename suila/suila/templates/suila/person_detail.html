@@ -246,6 +246,8 @@
         <form method="post" action="{% url 'suila:pause_person' pk=person_id %}">
             {% csrf_token %}
             <input type="hidden" name="person" value="{{person_id}}"/>
+            <input type="hidden" name="year" value="{{year}}"/>
+            <input type="hidden" name="month" value="{{month}}"/>
             {% if paused %}
                 {% jumbo_button "paused" "false" _("Stop pause") "play_arrow" %}
             {% else %}
