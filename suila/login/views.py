@@ -16,8 +16,37 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import RedirectView
+from django.views.generic.base import TemplateView
+from django_mitid_auth.urls import LoginCallbackView
 from login.forms import AuthenticationForm, BeskAuthenticationTokenForm
 from two_factor.views import LoginView, SetupView
+
+
+class BeskLoginCallbackView(LoginCallbackView):
+
+    def dispatch(self, *args, **kwargs):
+
+        try:
+            print("D" * 800)
+            print("All OK")
+            print("D" * 800)
+            return super().dispatch(*args, **kwargs)
+        except:  # noqa
+            print("R" * 800)
+            print("Redirecting")
+            print("R" * 800)
+            return redirect(reverse("login:login-mitid-error"))
+
+    def post(self, *args, **kwargs):
+        # print(1 / 0)
+        print("P" * 800)
+        print("Posting")
+        print("P" * 800)
+        return super().post(*args, **kwargs)
+
+
+class MitIdErrorView(TemplateView):
+    template_name = "login/login_mitid_error.html"
 
 
 class BeskLoginView(LoginView):
