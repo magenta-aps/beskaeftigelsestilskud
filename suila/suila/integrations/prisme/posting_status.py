@@ -5,6 +5,7 @@ import logging
 from dataclasses import dataclass
 from datetime import date
 
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import OutputWrapper
@@ -121,3 +122,61 @@ class PostingStatusImport(SFTPImport):
             person_month__month__lte=self._month,
         )
         return qs.update(status=PrismeBatchItem.PostingStatus.Posted)
+
+
+class PostingStatusImportMissingInvoiceNumber(SFTPImport):
+    """Import posting status for lines where we cannot match the invoice number to
+    `PrismeBatchItem.invoice_no`. Tries to match on CPR, date and amount instead.
+    """
+
+    @transaction.atomic
+    def import_posting_status(self, stdout: OutputWrapper, verbosity: int):
+        filenames: set[str] = self.get_new_filenames()
+        items: list[PrismeBatchItem] = []
+        qs: QuerySet[PrismeBatchItem] = PrismeBatchItem.objects.select_related(
+            "person_month__person_year__person",
+            "person_month__person_year__year",
+        )
+
+        for filename in filenames:
+            stdout.write(f"Loading file: {filename}\n")
+            rows: list[PostingStatus] = PostingStatus.from_csv_buf(
+                self.get_file(filename)
+            )
+            for row in rows:
+                issue_date = row.due_date - relativedelta(months=2, day=1)
+                try:
+                    item: PrismeBatchItem = qs.get(
+                        person_month__person_year__person__cpr=f"{row.cpr:010d}",
+                        person_month__person_year__year__year=issue_date.year,
+                        person_month__month=issue_date.month,
+                        person_month__benefit_paid=row.amount,
+                    )
+                except PrismeBatchItem.DoesNotExist:
+                    logger.info(
+                        "No Prisme batch item found for "
+                        "cpr %r, issue date %r, amount %r",
+                        row.cpr,
+                        issue_date,
+                        row.amount,
+                    )
+                else:
+                    # Mark Prisme batch item as failed
+                    item.status = PrismeBatchItem.PostingStatus.Failed
+                    item.posting_status_filename = filename
+                    item.error_code = row.error_code
+                    item.error_description = row.error_description
+                    items.append(item)
+
+        PrismeBatchItem.objects.bulk_update(
+            items,
+            ["status", "posting_status_filename", "error_code", "error_description"],
+        )
+        stdout.write(f"Updated posting status for {len(items)} Prisme batch items")
+        return items
+
+    def get_remote_folder_name(self) -> str:
+        return settings.PRISME["posting_status_folder"]  # type: ignore[misc]
+
+    def get_known_filenames(self) -> set[str]:
+        return set()  # always empty set

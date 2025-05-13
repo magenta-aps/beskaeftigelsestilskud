@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from contextlib import contextmanager
 from datetime import date
+from decimal import Decimal
 from io import BytesIO
 from unittest.mock import patch
 
@@ -22,12 +23,16 @@ class ImportTestCase(TestCase):
         cpr: int,
         year: int = 2020,
         month: int = 1,
+        benefit_paid: Decimal = Decimal("1000.00"),
     ) -> PersonMonth:
         year, _ = Year.objects.get_or_create(year=year)
         person, _ = Person.objects.get_or_create(cpr=cpr)
         person_year, _ = PersonYear.objects.get_or_create(year=year, person=person)
         person_month, _ = PersonMonth.objects.get_or_create(
-            person_year=person_year, month=month, import_date=date.today()
+            person_year=person_year,
+            month=month,
+            import_date=date.today(),
+            benefit_paid=benefit_paid,
         )
         return person_month
 
