@@ -586,6 +586,28 @@ class TestPersonMonth(UserModelTest):
         self.assertTrue(self.month4.signal)
         self.assertFalse(self.month12.signal)
 
+    def test_that_paused_attribute_is_inherited_from_person(self):
+        """
+        When we create a new person_month it should inherit the paused attribute from
+        a person. This way we know if a person was paused during this month.
+        """
+        person = self.person
+
+        year = Year.objects.create(year=2030)
+        person_year = PersonYear.objects.create(year=year, person=self.person)
+
+        person_month = PersonMonth.objects.create(
+            month=1, person_year=person_year, import_date=date.today()
+        )
+        self.assertFalse(person_month.paused)
+
+        person.paused = True
+        person.save()
+        person_month = PersonMonth.objects.create(
+            month=2, person_year=person_year, import_date=date.today()
+        )
+        self.assertTrue(person_month.paused)
+
 
 class TestEmployer(ModelTest):
 

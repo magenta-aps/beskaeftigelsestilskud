@@ -26,7 +26,7 @@ def display_status(person_month: PersonMonth) -> dict:
         if datetime.date.today() < person_month.year_month:
             return {"name": _("Foreløbigt beløb"), "established": False}
         else:
-            if person_month.person_year.person.paused:
+            if person_month.paused:
                 return {"name": _("Udbetalingspause"), "established": True}
             else:
                 return {"name": _("Beløb fastlagt"), "established": True}

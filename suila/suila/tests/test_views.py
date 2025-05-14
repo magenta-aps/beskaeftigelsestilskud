@@ -1535,12 +1535,15 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
     def setUpTestData(cls):
         super().setUpTestData()
         cls.person_year = PersonYear.objects.all()[0]
+        cls.person_month = PersonMonth.objects.get(person_year=cls.person_year, month=3)
         cls.url = reverse(
             "suila:pause_person", kwargs={"pk": cls.person_year.person.pk}
         )
         cls.data = {
             "person": cls.person_year.person.pk,
             "paused": True,
+            "year": cls.person_year.year.year,
+            "month": cls.person_month.month,
         }
 
     def get_context_data(self):
@@ -1670,6 +1673,31 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         context_data = self.get_context_data()
         self.assertIsNone(context_data["user_who_pressed_pause"])
         self.assertEqual(context_data["paused"], False)
+
+    def test_that_person_months_are_paused(self):
+
+        self.client.force_login(self.normal_user)
+        self.client.post(self.url, data=self.data)
+
+        person_months = PersonMonth.objects.filter(person_year=self.person_year)
+        months = [p.month for p in person_months]
+
+        self.assertEqual(len(person_months), 12)
+        self.assertIn(1, months)
+        self.assertIn(12, months)
+
+        for person_month in person_months:
+            if person_month.month < 3:
+                self.assertFalse(person_month.paused)
+            else:
+                self.assertTrue(person_month.paused)
+
+        self.data["paused"] = False
+        self.client.post(self.url, data=self.data)
+
+        for person_month in person_months:
+            person_month.refresh_from_db()
+            self.assertFalse(person_month.paused)
 
 
 class TestPersonAnnualIncomeEstimateUpdateView(
