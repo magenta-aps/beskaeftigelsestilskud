@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-07 11:55-0100\n"
+"POT-Creation-Date: 2025-05-14 08:04-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -694,22 +694,19 @@ msgstr ""
 #: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
 #: suila/tests/test_status_tags.py
 msgid "Udbetalingspause"
-msgstr ""
+msgstr "Pisartakkanik unitsitsigallarneq"
 
 #: suila/templates/suila/person_detail.html
-msgid "Du har sat din udbetaling på pause."
-msgstr ""
+msgid "Du har sat dine udbetalinger på pause."
+msgstr "Tigusartakkatit unitsikkallarpatit"
 
 #: suila/templates/suila/person_detail.html
 msgid ""
-"Din udbetaling er sat på pause. Du har oplyst Skattestyrelsen, at din "
-"udbetaling skal sættes på pause."
+"Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen, at dine "
+"udbetalinger skal sættes på pause."
 msgstr ""
-
-#: suila/templates/suila/person_detail.html
-#, python-format
-msgid "Du får udbetalt Suila-tapit til årsopgørelsen slut %(year)s."
-msgstr ""
+"Tunniunneqartartut unitsinneqarallarsimapput. Akileraartarnermut "
+"Aqutsisoqarfik tigusartakkavit unitsinneqarallarnissaanik paasitissimavat."
 
 #: suila/templates/suila/person_detail.html
 #, python-format
@@ -762,22 +759,28 @@ msgstr ""
 
 #: suila/templates/suila/person_detail.html
 msgid "Sæt udbetalinger på pause"
-msgstr ""
+msgstr "Tunniunneqartartut unitsikkallakkit"
 
 #: suila/templates/suila/person_detail.html
 msgid ""
 "Hvis du ikke ønsker at modtage den månedlige udbetaling af Suila-tapit, har "
-"du nu mulighed for at sætte udbetalingerne på pause. Pausen varer så længe "
+"du nu mulighed for at sætte udbetalingerne på pause. Pausen varer, så længe "
 "du ønsker det."
 msgstr ""
+"Suila-tapisiassatit qaammatikkaartumik tigusarusunngikkukkit "
+"unitsitsigallarnissannik periarfissaqalerputit. Unitsitsigallarnerup "
+"sivisussusaa nammineerlutit aalajangissavat."
 
 #: suila/templates/suila/person_detail.html
 msgid ""
-"Du mister ikke retten til Suila-tapit. Hvis du er berettiget til Suila-tapit "
-"efter at dine indkomster for året er opgjort i august næste år, vil du "
-"modtage en årsopgørelse, der viser hvor meget du har til gode eller har "
-"modtaget for meget."
+"Hvis du er berettiget, mister du ikke retten til Suila-tapit. Du modtager en "
+"årsopgørelse i august næste år, der viser, hvor meget Suila-tapit du har til "
+"gode eller har modtaget for meget."
 msgstr ""
+"Suila-tapisisinnaatitaaguit pisinnaatitaanerit annaanavianngilat. Aappaagu "
+"aggustimi ukiumut isertitarisimasatit kisinneqarsimaleriarpata "
+"takuneqarsinnaalerumaarpoq Suila-tapinik tigunngitsuugaqarsimanersutit, "
+"tigusatilluunniit amerlavallaarsimanersut."
 
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
@@ -807,12 +810,12 @@ msgid "e-Boks-beskeder preview"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Stop pause"
-msgstr ""
+msgid "Genoptag udbetalinger"
+msgstr "Pisartakkatit aallarteqqikkit"
 
 #: suila/templates/suila/person_detail.html
-msgid "Start pause"
-msgstr ""
+msgid "Pause i udbetalinger"
+msgstr "Unitsitsigallaqqanerit aallartigut"
 
 #: suila/templates/suila/person_detail.html
 #, python-format
