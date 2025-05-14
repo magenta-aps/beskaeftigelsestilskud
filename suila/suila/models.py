@@ -665,6 +665,8 @@ class PersonMonth(PermissionsMixin, models.Model):
     )
 
     # Gem, om personen er på pause i denne måned.
+    # Bruges kun til visning i udbetalings-historik.
+    # Når vi beregner bruger vi "paused" attribut på Person modellen.
     paused = models.BooleanField(
         default=False,
         null=False,
