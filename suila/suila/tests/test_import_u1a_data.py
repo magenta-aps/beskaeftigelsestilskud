@@ -202,6 +202,7 @@ class TestImportU1ADataCommand(TestCase):
                 "municipality_name": None,
                 "person_year": person_year.id,
                 "prior_benefit_paid": None,
+                "paused": False,
             },
         )
 
@@ -342,6 +343,7 @@ class TestImportU1ADataCommand(TestCase):
                 "municipality_code": None,
                 "municipality_name": None,
                 "prior_benefit_paid": None,
+                "paused": False,
             },
         )
 

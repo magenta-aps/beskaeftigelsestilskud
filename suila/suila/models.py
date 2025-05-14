@@ -664,6 +664,19 @@ class PersonMonth(PermissionsMixin, models.Model):
         default=False,
     )
 
+    # Gem, om personen er på pause i denne måned.
+    # Bruges kun til visning i udbetalings-historik.
+    # Når vi beregner bruger vi "paused" attribut på Person modellen.
+    paused = models.BooleanField(
+        default=False,
+        null=False,
+        blank=False,
+    )
+
+    def save(self, *args, **kwargs):
+        self.paused = self.person_year.person.paused
+        super().save(*args, **kwargs)
+
     @property
     def person(self):
         return self.person_year.person
