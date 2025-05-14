@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-14 08:04-0100\n"
+"POT-Creation-Date: 2025-05-14 11:06-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -689,7 +689,7 @@ msgstr "Ukiumut sulinermi isertitariumaagassatut naatsorsuutigineqartut"
 
 #: suila/templates/suila/person_detail.html
 msgid "Gem estimering"
-msgstr ""
+msgstr "Naatsorsukkat toqqukkit"
 
 #: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
 #: suila/tests/test_status_tags.py
@@ -716,21 +716,22 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Din årsindtægt er manuelt estimeret"
-msgstr ""
+msgid "Din årsindtægt er manuelt estimeret."
+msgstr "Ukiumut isertitariumaagassatit nammineq kisitaapput."
 
 #: suila/templates/suila/person_detail.html
-#, python-format
 msgid ""
-"Den estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Den "
-"automatisk estimerede årsindtægt er %(estimated_year_result)s Det er den "
-"manuelt beregnede årsindtægt, der ligger til grunde for estimeringen af din "
+"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
+"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
 "årlige Suila-tapit."
 msgstr ""
+"Ukiumut isertitariumaagassatit Akileraartarnermut Aqutsisoqarfimmit nammineq "
+"kisinneqarsimapput. Namminerluni kisitaq ukiumut Suila-"
+"tapisiariumaagassannut tunngavigineqarpoq."
 
 #: suila/templates/suila/person_detail.html
 msgid "Skift til automatisk estimering"
-msgstr ""
+msgstr "Naatsorsorneqarsimasut nammineq kisitsisartumut naatsorsortikkit"
 
 #: suila/templates/suila/person_detail.html
 msgid "Bemærk!"

@@ -147,14 +147,12 @@
 {% if manually_entered_income %}
 <div class="grid gap-3 mt-5">
     <div class="g-col-12 sidebar">
-        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {% translate "Din årsindtægt er manuelt estimeret" %} </h2>
+        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {% translate "Din årsindtægt er manuelt estimeret." %} </h2>
         <p>
-            {% blocktrans trimmed with estimated_year_result=estimated_year_result|format_amount %}
-                Den estimerede årsindtægt er manuelt beregnet af Skattestyrelsen.
-                Den automatisk estimerede årsindtægt er {{ estimated_year_result }}
-
-                Det er den manuelt beregnede årsindtægt, der ligger til grunde for
-                estimeringen af din årlige Suila-tapit.
+            {% blocktrans trimmed %}
+                Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er
+                den manuelt beregnede årsindtægt, der ligger til grund for estimeringen
+                af dit årlige Suila-tapit.
             {% endblocktrans %}
         </p>
         {% if user|has_permissions:"suila.change_person" %}
