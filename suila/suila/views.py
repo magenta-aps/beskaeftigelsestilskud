@@ -61,7 +61,6 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
-    PersonYearU1AAssessment,
     SuilaEboksMessage,
     WorkingTaxCreditCalculationMethod,
     Year,
@@ -460,7 +459,6 @@ class PersonDetailIncomeView(
         ).order_by("-year__year")
 
         self.log_view(self.object)
-        print(context_data)
         return context_data
 
     def get_income_signals(self) -> list[IncomeSignal]:
@@ -468,7 +466,6 @@ class PersonDetailIncomeView(
             itertools.chain(
                 self.get_monthly_income_signals(),
                 self.get_b_tax_payments(),
-                self.get_u1a_assessments(),
             ),
             # Default ordering: newest first, then by signal type, then by source
             key=lambda signal: (
@@ -505,6 +502,13 @@ class PersonDetailIncomeView(
                     item.catchsale_income,
                     item.person_month.year_month,
                 )
+            if item.u_income > 0:
+                yield IncomeSignal(
+                    IncomeSignalType.Udbytte,
+                    format_employer(item.employer),
+                    item.u_income,
+                    item.person_month.year_month,
+                )
 
     def get_b_tax_payments(self) -> Iterable[IncomeSignal]:
         qs = BTaxPayment.objects.filter(
@@ -518,17 +522,6 @@ class PersonDetailIncomeView(
                     % {"rate_number": item.rate_number},
                     item.amount_paid,
                     item.person_month.year_month,  # type: ignore[union-attr]
-                )
-
-    def get_u1a_assessments(self) -> Iterable[IncomeSignal]:
-        qs = PersonYearU1AAssessment.objects.filter(person_year=self.person_year)
-        for item in qs:
-            if item.dividend_total > 0:
-                yield IncomeSignal(
-                    IncomeSignalType.Udbytte,
-                    item.u1a_ids,
-                    item.dividend_total,
-                    item.created.date(),
                 )
 
     def _get_latest_income_month(self) -> int:

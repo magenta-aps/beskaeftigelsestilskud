@@ -44,7 +44,6 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
-    PersonYearU1AAssessment,
     PrismeBatch,
     PrismeBatchItem,
     StandardWorkBenefitCalculationMethod,
@@ -181,6 +180,11 @@ class PersonEnv(TestCase):
                         if person_month.month > 1
                         else Decimal("0")
                     ),
+                    u_income=(
+                        Decimal(person_month.month * 100)
+                        if person_month.month > 1
+                        else Decimal("0")
+                    ),
                 )
                 income_report.update_amount()
                 income_reports.append(income_report)
@@ -204,14 +208,6 @@ class PersonEnv(TestCase):
             for person_month in person_months
         ]
         BTaxPayment.objects.bulk_create(b_tax_payments)
-        # Create `PersonYearU1AAssessment` objects
-        u1a_assessments = [
-            PersonYearU1AAssessment(
-                person_year=person_months[0].person_year, dividend_total=dividend_total
-            )
-            for dividend_total in (Decimal("0"), Decimal("10"))
-        ]
-        PersonYearU1AAssessment.objects.bulk_create(u1a_assessments)
 
 
 class TimeContextMixin(TestViewMixin):
@@ -537,19 +533,28 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
             # Act
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             result = view.get_income_signals()
+
             # Assert: monthly income signals are as expected
             self.assertListEqual(
                 [
                     signal
                     for signal in result
                     if signal.signal_type
-                    in (IncomeSignalType.Lønindkomst, IncomeSignalType.Indhandling)
+                    in (
+                        IncomeSignalType.Lønindkomst,
+                        IncomeSignalType.Indhandling,
+                        IncomeSignalType.Udbytte,
+                    )
                 ],
                 [
                     IncomeSignal(
                         signal_type,
                         employer,
-                        Decimal(month * 10),
+                        (
+                            Decimal(month * 10)
+                            if signal_type != IncomeSignalType.Udbytte
+                            else Decimal(month * 100)
+                        ),
                         date(2020, month, 1),
                     )
                     for month, signal_type, employer in itertools.product(
@@ -557,7 +562,11 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                         # income.)
                         range(12, 1, -1),
                         # Two types of signal
-                        (IncomeSignalType.Lønindkomst, IncomeSignalType.Indhandling),
+                        (
+                            IncomeSignalType.Lønindkomst,
+                            IncomeSignalType.Indhandling,
+                            IncomeSignalType.Udbytte,
+                        ),
                         # 12 entries for employer 2 (who only has a CVR, no name),
                         # 12 entries for employer 1 (whose name is "Employer 1"),
                         # 12 entries without employer ("Ikke oplyst".)
@@ -586,22 +595,6 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                     )
                     # 11 months in reverse order (January is exempt due to zero income)
                     for month in range(12, 1, -1)
-                ],
-            )
-            # Assert: U1A signals are as expected
-            self.assertListEqual(
-                [
-                    signal
-                    for signal in result
-                    if signal.signal_type == IncomeSignalType.Udbytte
-                ],
-                [
-                    IncomeSignal(
-                        IncomeSignalType.Udbytte,
-                        "",
-                        Decimal("10"),
-                        date.today(),
-                    )
                 ],
             )
 
@@ -1437,7 +1430,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                     ],
                     "capital_income": [
                         Decimal("0.00"),
-                        Decimal("0.00"),
+                        Decimal("23100.00"),
                         Decimal("0.00"),
                         Decimal("0.00"),
                     ],
