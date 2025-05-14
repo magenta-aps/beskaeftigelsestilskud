@@ -118,19 +118,14 @@
         <p>
             {% if user_who_pressed_pause == "self" %}
                 {% blocktrans trimmed %}
-                    Du har sat din udbetaling på pause.
+                    Du har sat dine udbetalinger på pause.
                 {% endblocktrans %}
             {% elif user_who_pressed_pause == "skattestyrelsen" %}
                 {% blocktrans trimmed %}
-                    Din udbetaling er sat på pause. Du har oplyst Skattestyrelsen,
-                    at din udbetaling skal sættes på pause.
+                    Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen,
+                    at dine udbetalinger skal sættes på pause.
                 {% endblocktrans %}
             {% endif %}
-        </p>
-        <p>
-            {% blocktrans trimmed  with year=next_year %}
-                Du får udbetalt Suila-tapit til årsopgørelsen slut {{ year }}.
-            {% endblocktrans %}
         </p>
     </div>
 </div>
@@ -196,14 +191,14 @@
         <p>
             {% blocktrans trimmed %}
             Hvis du ikke ønsker at modtage den månedlige udbetaling af Suila-tapit, har du nu
-            mulighed for at sætte udbetalingerne på pause. Pausen varer så længe du ønsker det.
+            mulighed for at sætte udbetalingerne på pause. Pausen varer, så længe du ønsker det.
             {% endblocktrans %}
         </p>
         <p>
             {% blocktrans trimmed %}
-            Du mister ikke retten til Suila-tapit. Hvis du er berettiget til Suila-tapit efter at dine
-            indkomster for året er opgjort i august næste år, vil du modtage en årsopgørelse,
-            der viser hvor meget du har til gode eller har modtaget for meget.
+            Hvis du er berettiget, mister du ikke retten til Suila-tapit. Du modtager en
+            årsopgørelse i august næste år, der viser, hvor meget Suila-tapit du har til
+            gode eller har modtaget for meget.
             {% endblocktrans %}
         </p>
     </div>
@@ -249,9 +244,9 @@
             <input type="hidden" name="year" value="{{year}}"/>
             <input type="hidden" name="month" value="{{month}}"/>
             {% if paused %}
-                {% jumbo_button "paused" "false" _("Stop pause") "play_arrow" %}
+                {% jumbo_button "paused" "false" _("Genoptag udbetalinger") "play_arrow" %}
             {% else %}
-                {% jumbo_button "paused" "true" _("Start pause") "pause" %}
+                {% jumbo_button "paused" "true" _("Pause i udbetalinger") "pause" %}
             {% endif %}
         </form>
         </div>
