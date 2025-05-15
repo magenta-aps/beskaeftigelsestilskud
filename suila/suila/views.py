@@ -40,6 +40,7 @@ from django_filters.views import FilterView
 from django_tables2 import Column, SingleTableMixin, Table, TemplateColumn
 from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
+from django_tables2.views import SingleTableView
 from login.view_mixins import LoginRequiredMixin
 
 from suila.dates import get_payment_date
@@ -1106,3 +1107,70 @@ class PersonAnnualIncomeEstimateUpdateView(
                 )
             person_month = person_month.next
         return response
+
+
+class TaxScopeHistoryTable(Table):
+    history_date = TemplateColumn(
+        template_name="suila/table_columns/full_date.html",
+        verbose_name=_("Dato"),
+    )
+    tax_scope = TemplateColumn(
+        template_name="suila/table_columns/tax_scope.html",
+        verbose_name=_("Status"),
+    )
+
+
+class PersonTaxScopeHistoryView(
+    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, SingleTableView
+):
+    paginate_by = 5
+    model = Person
+    context_object_name = "person"
+    attributes_to_show = ["tax_scope"]
+    template_name = "suila/person_tax_scope_history.html"
+
+    table_class = TaxScopeHistoryTable
+    required_model_permissions = ["suila.view_person"]
+
+    def get_queryset(self):
+        person = Person.objects.get(pk=self.kwargs["pk"])
+
+        all_entries = []
+        for person_year in PersonYear.objects.filter(person=person):
+            all_entries.extend(person_year.history.all())
+
+        # Latest entry first
+        all_entries = sorted(
+            all_entries, key=lambda entry: entry.history_date, reverse=True
+        )
+
+        # Always show the latest entry
+        relevant_entries = [all_entries[0]]
+
+        # Add entries if they contain relevant information
+        for entry in all_entries[1:]:
+            delta = entry.diff_against(relevant_entries[-1])
+
+            if any(
+                attribute in delta.changed_fields
+                for attribute in self.attributes_to_show
+            ):
+                relevant_entries.append(entry)
+
+        return relevant_entries
+
+    def get_table_data(self):
+        return [
+            {
+                "history_date": entry.history_date,
+                "tax_scope": entry.tax_scope,
+            }
+            for entry in self.get_queryset()
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["person_pk"] = self.kwargs["pk"]
+        self.log_view()
+
+        return context

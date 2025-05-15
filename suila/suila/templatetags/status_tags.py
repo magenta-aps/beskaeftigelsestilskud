@@ -5,8 +5,9 @@ import datetime
 
 from django.template.defaultfilters import register
 from django.utils.translation import gettext_lazy as _
+from django_stubs_ext import StrOrPromise
 
-from suila.models import PersonMonth, PrismeBatchItem
+from suila.models import PersonMonth, PrismeBatchItem, TaxScope
 
 
 @register.inclusion_tag("suila/templatetags/status.html")
@@ -35,3 +36,14 @@ def display_status(person_month: PersonMonth) -> dict:
             return {"name": _("Udbetalingspause"), "established": True}
         else:
             return {"name": posting_status.label, "established": True}
+
+
+@register.filter
+def format_tax_scope(tax_scope: str) -> StrOrPromise:
+    if tax_scope == TaxScope.FULDT_SKATTEPLIGTIG:
+        return _("Fuld skattepligtig")
+    elif tax_scope == TaxScope.DELVIST_SKATTEPLIGTIG:
+        return _("Delvist skattepligtig")
+    elif tax_scope == TaxScope.FORSVUNDET_FRA_MANDTAL:
+        return _("Ikke i mandtal")
+    return ""

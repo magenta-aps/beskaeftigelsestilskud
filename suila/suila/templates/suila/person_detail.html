@@ -249,6 +249,14 @@
         </form>
         </div>
     {% endif %}
+
+    {% if user|has_permissions:"suila.view_person" %}
+    <div class="g-col-4 jumbo">
+        {% url "suila:person_tax_scope_history" pk=person.pk as person_tax_scope_history_url %}
+        {% jumbo_link person_tax_scope_history_url _("Mandtal") "assignment" %}
+    </div>
+    {% endif %}
+
 </div>
 
 <div class="grid gap-5 my-5">

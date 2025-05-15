@@ -7,8 +7,15 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils.translation import gettext_lazy as _
 
-from suila.models import Person, PersonMonth, PersonYear, PrismeBatchItem, Year
-from suila.templatetags.status_tags import display_status
+from suila.models import (
+    Person,
+    PersonMonth,
+    PersonYear,
+    PrismeBatchItem,
+    TaxScope,
+    Year,
+)
+from suila.templatetags.status_tags import display_status, format_tax_scope
 
 
 class TestDisplayStatus(TestCase):
@@ -84,3 +91,20 @@ class TestDisplayStatus(TestCase):
         self.assertDictEqual(
             result, {"name": _("Udbetalingspause"), "established": True}
         )
+
+
+class TestDisplayTaxScope(TestCase):
+
+    def test_format_tax_scope(self):
+        self.assertEqual(
+            format_tax_scope(TaxScope.FULDT_SKATTEPLIGTIG), "Fuld skattepligtig"
+        )
+
+        self.assertEqual(
+            format_tax_scope(TaxScope.DELVIST_SKATTEPLIGTIG), "Delvist skattepligtig"
+        )
+        self.assertEqual(
+            format_tax_scope(TaxScope.FORSVUNDET_FRA_MANDTAL), "Ikke i mandtal"
+        )
+
+        self.assertEqual(format_tax_scope("foo"), "")
