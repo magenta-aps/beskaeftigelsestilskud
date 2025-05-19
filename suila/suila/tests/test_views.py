@@ -48,6 +48,7 @@ from suila.models import (
     PrismeBatchItem,
     StandardWorkBenefitCalculationMethod,
     SuilaEboksMessage,
+    TaxScope,
     Year,
 )
 from suila.view_mixins import PermissionsRequiredMixin
@@ -72,6 +73,7 @@ from suila.views import (
     PersonMonthTable,
     PersonSearchView,
     PersonTable,
+    PersonTaxScopeHistoryView,
     RootView,
     YearMonthMixin,
 )
@@ -1788,3 +1790,75 @@ class TestPersonAnnualIncomeEstimateUpdateView(
 
         self.assertTrue(latest_history_entry.annual_income_estimate is not None)
         self.assertEqual(latest_history_entry.history_user_id, self.staff_user.id)
+
+
+class TestPersonTaxScopeHistoryView(TestViewMixin, PersonEnv):
+    view_class = PersonTaxScopeHistoryView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        # Fetch a person-year
+        cls.person_year = PersonYear.objects.all()[0]
+        cls.person = cls.person_year.person
+        cls.person_pk = cls.person.pk
+
+        # Modify the status on a person-year
+        cls.person_year.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
+        cls.person_year.save()
+
+        # Create a new person-year with a new status
+        next_year, _ = Year.objects.update_or_create(year=cls.person_year.year.year + 1)
+        cls.next_person_year = PersonYear.objects.create(
+            year=next_year, person=cls.person, tax_scope=TaxScope.DELVIST_SKATTEPLIGTIG
+        )
+
+        # Modify the persons stability_score.
+        # This should not be shown in the table
+        cls.next_person_year.stability_score_a = 0.1
+        cls.next_person_year.save()
+
+        cls.url = reverse(
+            "suila:person_tax_scope_history",
+            kwargs={"pk": cls.person_pk},
+        )
+
+    def test_table_view(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context_data
+
+        object_list = context["object_list"]
+
+        self.assertEqual(object_list[0].tax_scope, TaxScope.DELVIST_SKATTEPLIGTIG)
+        self.assertEqual(object_list[1].tax_scope, TaxScope.FORSVUNDET_FRA_MANDTAL)
+        self.assertEqual(object_list[2].tax_scope, TaxScope.FULDT_SKATTEPLIGTIG)
+
+        self.assertEqual(len(object_list), 3)
+
+        response.render()
+        soup = str(BeautifulSoup(response.content, features="lxml"))
+        self.assertIn("Fuld skattepligtig", soup)
+        self.assertIn("Ikke i mandtal", soup)
+        self.assertIn("Delvist skattepligtig", soup)
+
+    def test_pagination(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(self.url)
+        response.render()
+        soup = str(BeautifulSoup(response.content, features="lxml"))
+        self.assertNotIn("next", soup)
+
+        tax_scopes = [TaxScope.DELVIST_SKATTEPLIGTIG, TaxScope.FULDT_SKATTEPLIGTIG]
+        for i in range(40):
+            self.person_year.tax_scope = tax_scopes[i % 2]
+            self.person_year.save()
+
+        response = self.client.get(self.url)
+        response.render()
+        soup = str(BeautifulSoup(response.content, features="lxml"))
+        self.assertIn("next", soup)

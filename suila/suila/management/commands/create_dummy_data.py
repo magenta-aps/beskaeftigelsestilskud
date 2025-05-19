@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import datetime
+import random
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -16,6 +17,7 @@ from suila.models import (
     PersonYear,
     PrismeBatch,
     PrismeBatchItem,
+    TaxScope,
     Year,
 )
 
@@ -83,16 +85,26 @@ class Command(BaseCommand):
 
         persons = {
             # Normal person
-            Person.objects.update_or_create(cpr=bruce.cpr)[0]: [10000] * 12,
+            Person.objects.update_or_create(
+                cpr=bruce.cpr, defaults={"name": "Bruce Lee"}
+            )[0]: [10000]
+            * 12,
             # Person who is paused
             Person.objects.update_or_create(
-                cpr="0301011991", defaults={"paused": True}
+                cpr="0301011991",
+                defaults={"paused": True, "name": "Person who is paused"},
             )[0]: [10000]
             * 12,
             # Person who is in quarantine (because he earns nearly too much)
-            Person.objects.update_or_create(cpr="0401011991")[0]: [490_000 / 12] * 12,
+            Person.objects.update_or_create(
+                cpr="0401011991", defaults={"name": "Person who is in quarantine"}
+            )[0]: [490_000 / 12]
+            * 12,
             # Person who gets nothing because he earns too much
-            Person.objects.update_or_create(cpr="0501011991")[0]: [5_000_000 / 12] * 12,
+            Person.objects.update_or_create(
+                cpr="0501011991", defaults={"name": "Person who earns too much"}
+            )[0]: [5_000_000 / 12]
+            * 12,
         }
 
         for person, salary in persons.items():
@@ -116,6 +128,16 @@ class Command(BaseCommand):
                     year=year,
                     defaults={"salary_income": Decimal(salary[date.month - 1])},
                 )
+
+                person_year.tax_scope = random.choice(
+                    [
+                        TaxScope.FULDT_SKATTEPLIGTIG,
+                        TaxScope.DELVIST_SKATTEPLIGTIG,
+                        TaxScope.FORSVUNDET_FRA_MANDTAL,
+                    ]
+                )
+
+                person_year.save()
 
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
 

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-14 11:06-0100\n"
+"POT-Creation-Date: 2025-05-15 06:20-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -541,7 +541,9 @@ msgstr ""
 #: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
-#: suila/templates/suila/person_search.html suila/templates/suila/root.html
+#: suila/templates/suila/person_search.html
+#: suila/templates/suila/person_tax_scope_history.html
+#: suila/templates/suila/root.html
 msgid "Borgersøgning"
 msgstr "Innutaasumik ujaasigit"
 
@@ -550,6 +552,7 @@ msgstr "Innutaasumik ujaasigit"
 #: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_tax_scope_history.html
 #: suila/templates/suila/root.html
 msgid "Mit overblik"
 msgstr "Tamaasa isigalugit"
@@ -817,6 +820,11 @@ msgstr "Pisartakkatit aallarteqqikkit"
 #: suila/templates/suila/person_detail.html
 msgid "Pause i udbetalinger"
 msgstr "Unitsitsigallaqqanerit aallartigut"
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_tax_scope_history.html
+msgid "Mandtal"
+msgstr ""
 
 #: suila/templates/suila/person_detail.html
 #, python-format
@@ -1329,6 +1337,18 @@ msgstr "Tunniunneartussatut naatsorsuutaagallartut"
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Beløb fastlagt"
 msgstr "Tunniunneqartussat aalajangerneqarsimapput"
+
+#: suila/templatetags/status_tags.py
+msgid "Fuld skattepligtig"
+msgstr ""
+
+#: suila/templatetags/status_tags.py
+msgid "Delvist skattepligtig"
+msgstr ""
+
+#: suila/templatetags/status_tags.py
+msgid "Ikke i mandtal"
+msgstr ""
 
 #: suila/tests/test_views.py suila/views.py
 #, python-format
