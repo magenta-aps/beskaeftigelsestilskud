@@ -18,7 +18,7 @@ from suila.benefit import (
     get_payout_date,
     get_payout_df,
 )
-from suila.models import PersonMonth, PersonYear
+from suila.models import PersonMonth, PersonYear, PrismeBatch, PrismeBatchItem
 
 
 class CalculateBenefitTest(BaseTestCase):
@@ -347,6 +347,26 @@ class CalculateBenefitTest(BaseTestCase):
     def test_management_command(self):
         months = PersonMonth.objects.filter(person_year__year=self.year)
         self.assert_management_command(months)
+
+    def test_management_command_for_months_with_prisme_items(self):
+        months = PersonMonth.objects.filter(person_year__year=self.year)
+
+        prisme_batch = PrismeBatch.objects.create(
+            status="sent", export_date=date.today(), prefix=1
+        )
+
+        for month in months:
+            PrismeBatchItem.objects.create(
+                person_month=month, prisme_batch=prisme_batch
+            )
+            month.benefit_paid = 0
+            month.save()
+
+        self.call_command("calculate_benefit", self.year.year)
+        for month in months:
+            month.refresh_from_db()
+
+        self.assertEqual(sum([month.benefit_paid for month in months]), 0)
 
     def test_management_command_for_single_month(self):
         months = PersonMonth.objects.filter(person_year__year=self.year, month=2)

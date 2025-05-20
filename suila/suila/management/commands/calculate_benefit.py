@@ -43,7 +43,9 @@ class Command(SuilaBaseCommand):
             benefit = calculate_benefit(month_number, year, kwargs["cpr"])
 
             person_month_qs = PersonMonth.objects.filter(
-                person_year__year__year=kwargs["year"], month=month_number
+                person_year__year__year=kwargs["year"],
+                month=month_number,
+                prismebatchitem__isnull=True,
             ).select_related("person_year__person")
 
             person_months_to_update = []
