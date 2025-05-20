@@ -46,6 +46,15 @@ class TestDisplayStatus(TestCase):
             {"name": PrismeBatchItem.PostingStatus.Posted.label, "established": True},
         )
 
+        # If the amount equals zero - we should always display "Afsluttet"
+        self.person_month.benefit_paid = 0
+        self.person_month.save()
+
+        # Act
+        result = display_status(self.person_month)
+        # Assert
+        self.assertDictEqual(result, {"name": "Afsluttet", "established": True})
+
     @patch("suila.templatetags.status_tags.datetime", wraps=datetime)
     def test_before_current_month(self, mock_datetime):
         # Arrange: set current time to before the year and month of the person month
