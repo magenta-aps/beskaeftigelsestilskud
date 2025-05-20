@@ -1839,3 +1839,29 @@ class TestPersonTaxScopeHistoryView(TestViewMixin, PersonEnv):
         response.render()
         soup = str(BeautifulSoup(response.content, features="lxml"))
         self.assertIn("next", soup)
+
+    def test_show_first_item(self):
+        # The person exists since 2020-01-01
+        self.person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
+        self.person_year.b_income = 123
+        self.person_year.save()
+        h = self.person_year.history.all().order_by("-history_date")[0]
+        h.history_date = datetime(2020, 1, 1, 0, 0, 0)
+        h.save()
+
+        # The And was modified on 2020-02-02
+        self.person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
+        self.person_year.b_income = 456
+        self.person_year.save()
+        h = self.person_year.history.all().order_by("-history_date")[0]
+        h.history_date = datetime(2020, 2, 2, 0, 0, 0)
+        h.save()
+
+        # We should show that he was FULDT_SKATTEPLIGTIG since 2020-01-01
+        self.client.force_login(self.admin_user)
+        response = self.client.get(self.url)
+        context = response.context_data
+        object_list = context["object_list"]
+        first_obj = object_list[-1]
+        self.assertEqual(first_obj.history_date.strftime("%Y-%m-%d"), "2020-01-01")
+        self.assertEqual(first_obj.tax_scope, TaxScope.FULDT_SKATTEPLIGTIG)

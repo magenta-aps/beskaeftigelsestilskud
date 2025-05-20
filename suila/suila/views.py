@@ -1134,12 +1134,12 @@ class PersonTaxScopeHistoryView(
         for person_year in PersonYear.objects.filter(person=person):
             all_entries.extend(person_year.history.all())
 
-        # Latest entry first
+        # First entry first
         all_entries = sorted(
-            all_entries, key=lambda entry: entry.history_date, reverse=True
+            all_entries, key=lambda entry: entry.history_date, reverse=False
         )
 
-        # Always show the latest entry
+        # Always show the first entry
         relevant_entries = [all_entries[0]]
 
         # Add entries if they contain relevant information
@@ -1152,7 +1152,7 @@ class PersonTaxScopeHistoryView(
             ):
                 relevant_entries.append(entry)
 
-        return relevant_entries
+        return relevant_entries[::-1]
 
     def get_table_data(self):
         return [
