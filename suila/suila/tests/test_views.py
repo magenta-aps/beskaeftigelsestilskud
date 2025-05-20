@@ -401,7 +401,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
                     )
 
     def test_get_table_data(self):
-        with self._time_context(year=2020):
+        with self._time_context(year=2021, month=2):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             queryset = view.get_table_data()
             self.assertQuerySetEqual(

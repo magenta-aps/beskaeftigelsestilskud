@@ -223,12 +223,19 @@ class PersonDetailView(
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        # True if user is looking at a past year (usually not the case, as this is
-        # currently hidden from users.)
-        context_data["year_in_past"] = self.person_year.year.year < date.today().year
-
         # Get the "currently relevant" person month
         relevant_person_month: RelevantPersonMonth = self.get_relevant_person_month()
+
+        # True if user is looking at a past year (usually not the case, as this is
+        # currently hidden from users.)
+        context_data["year_in_past"] = (
+            (
+                relevant_person_month.person_month.person_year.year.year
+                < (date.today() - relativedelta(months=2)).year
+            )
+            if relevant_person_month
+            else self.person_year.year.year < date.today().year
+        )
 
         if relevant_person_month is not None:
             person_month = relevant_person_month.person_month
@@ -291,13 +298,20 @@ class PersonDetailView(
             )
 
     def get_table_data(self):
-        return (
-            PersonMonth.objects.select_related(
-                "person_year__person", "person_year__year"
+        relevant_person_month = self.get_relevant_person_month()
+        if relevant_person_month:
+            return (
+                PersonMonth.objects.select_related(
+                    "person_year__person", "person_year__year"
+                )
+                .filter(
+                    person_year=relevant_person_month.person_month.person_year,
+                    month__lte=relevant_person_month.person_month.month,
+                )
+                .order_by("month")
             )
-            .filter(person_year=self.person_year)
-            .order_by("month")
-        )
+        else:
+            return []
 
     def get_table_kwargs(self):
         return {"orderable": False}
