@@ -16,6 +16,7 @@ from typing import Iterable, List, Sequence, Tuple
 
 import pandas as pd
 from common.models import User
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -674,7 +675,13 @@ class PersonMonth(PermissionsMixin, models.Model):
     )
 
     def save(self, *args, **kwargs):
-        self.paused = self.person_year.person.paused
+        if not self.pk:
+            # This code only happens if the objects is
+            # not in the database yet. Otherwise it would
+            # have pk
+
+            if self.month == (date.today() - relativedelta(months=2)).month:
+                self.paused = self.person_year.person.paused
         super().save(*args, **kwargs)
 
     @property
