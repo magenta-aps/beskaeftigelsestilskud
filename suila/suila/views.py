@@ -1054,25 +1054,6 @@ class PersonPauseUpdateView(
             return True
         return super().has_permissions(**kwargs)
 
-    def form_valid(self, form):
-
-        response = super().form_valid(form)
-        year = int(self.request.POST.get("year"))
-        month = int(self.request.POST.get("month"))
-
-        person_month = PersonMonth.objects.get(
-            month=month,
-            person_year__year__year=year,
-            person_year__person__id=self.object.id,
-        )
-
-        # Set current and future person_months on pause/play
-        while person_month is not None:
-            person_month.paused = self.object.paused
-            person_month.save()
-            person_month = person_month.next
-        return response
-
     def get_success_url(self):
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
 

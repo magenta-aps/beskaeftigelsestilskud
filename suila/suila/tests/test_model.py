@@ -4,7 +4,9 @@
 
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
+import pytz
 from common.tests.test_mixins import UserMixin
 from django.test import TestCase
 from django.utils import timezone
@@ -16,6 +18,8 @@ from suila.models import (
     Employer,
     IncomeEstimate,
     IncomeType,
+    JobLog,
+    ManagementCommands,
     MonthlyIncomeReport,
     Person,
     PersonMonth,
@@ -23,6 +27,7 @@ from suila.models import (
     PersonYearAssessment,
     PrismeAccountAlias,
     StandardWorkBenefitCalculationMethod,
+    StatusChoices,
     Year,
 )
 
@@ -586,27 +591,84 @@ class TestPersonMonth(UserModelTest):
         self.assertTrue(self.month4.signal)
         self.assertFalse(self.month12.signal)
 
-    def test_that_paused_attribute_is_inherited_from_person(self):
-        """
-        When we create a new person_month it should inherit the paused attribute from
-        a person. This way we know if a person was paused during this month.
-        """
-        person = self.person
+    @patch("suila.models.datetime")
+    def test_paused_property(self, datetime_mock):
+        datetime_mock.side_effect = datetime
+        datetime_mock.now.return_value = pytz.utc.localize(datetime(2024, 5, 1))
 
-        year = Year.objects.create(year=2030)
-        person_year = PersonYear.objects.create(year=year, person=self.person)
+        self.person.paused = True
+        self.person.save()
+        self.person.refresh_from_db()
+        history_entries = self.person.history.all().order_by("-history_date")
 
-        person_month = PersonMonth.objects.create(
-            month=1, person_year=person_year, import_date=date.today()
+        for index, h in enumerate(history_entries):
+            if index == 0:
+                h.history_date = datetime(2024, 4, 15, 0, 0, 0)
+            else:
+                h.history_date = datetime(2024, 3, 10, 0, 0, 0)
+            h.save()
+
+        # The person did not exist yet on the 1st of March.
+        # We therefore assume that he was not paused.
+        self.assertFalse(self.month1.paused)
+
+        # On the 1st of April he exists, but was not paused
+        self.assertFalse(self.month2.paused)
+
+        # On the 1st of May he is paused
+        self.assertTrue(self.month3.paused)
+
+        # December is a future month. We assume that he is still paused by then.
+        self.assertTrue(self.month12.paused)
+
+        # Simulate that we calculated benefit on the 16th of April for someone else
+        job_log = JobLog.objects.create(
+            name=ManagementCommands.CALCULATE_BENEFIT,
+            runtime_end=datetime(2024, 4, 16, 12, 30, 0),
+            status=StatusChoices.SUCCEEDED,
+            cpr_param="35435252",
         )
-        self.assertFalse(person_month.paused)
 
-        person.paused = True
-        person.save()
-        person_month = PersonMonth.objects.create(
-            month=2, person_year=person_year, import_date=date.today()
+        job_log.runtime = datetime(2024, 4, 16, 12, 0, 0)
+        job_log.save()
+
+        # The function still checks for the first of april
+        self.assertFalse(self.month2.paused)
+
+        # Simulate that we calculated benefit for this person on the 16th of April
+        job_log = JobLog.objects.create(
+            name=ManagementCommands.CALCULATE_BENEFIT,
+            runtime_end=datetime(2024, 4, 16, 12, 30, 0),
+            status=StatusChoices.SUCCEEDED,
+            cpr_param=self.person.cpr,
         )
-        self.assertTrue(person_month.paused)
+
+        job_log.runtime = datetime(2024, 4, 16, 12, 0, 0)
+        job_log.save()
+
+        # Now the function checks if the person was paused on the 16th of April instead.
+        self.assertTrue(self.month2.paused)
+
+        # If the user changes cpr (for some reason):
+        # We can no longer find the calculation job for him and return False again
+        # Because he was not paused on the first of April
+        self.person.cpr = "qqqww"
+        self.person.save()
+        self.month2.refresh_from_db()
+        self.assertFalse(self.month2.paused)
+
+        # Simulate that we calculated benefit for everyone on the 16th of April
+        job_log = JobLog.objects.create(
+            name=ManagementCommands.CALCULATE_BENEFIT,
+            runtime_end=datetime(2024, 4, 16, 12, 30, 0),
+            status=StatusChoices.SUCCEEDED,
+        )
+
+        job_log.runtime = datetime(2024, 4, 16, 12, 0, 0)
+        job_log.save()
+
+        # Now the function again checks if the person was paused on the 16th of April.
+        self.assertTrue(self.month2.paused)
 
 
 class TestEmployer(ModelTest):
