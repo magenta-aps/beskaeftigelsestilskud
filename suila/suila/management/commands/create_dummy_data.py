@@ -5,6 +5,7 @@ import datetime
 import random
 from decimal import Decimal
 
+import pytz
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
@@ -59,6 +60,14 @@ def get_dates_to_create():
     return dates
 
 
+def set_history_date(obj, date):
+    entry = obj.history.all().order_by("-history_date")[0]
+    entry.history_date = pytz.utc.localize(
+        datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
+    )
+    entry.save()
+
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
@@ -108,6 +117,7 @@ class Command(BaseCommand):
         }
 
         for person, salary in persons.items():
+            set_history_date(person, dates[0])
             for date in dates:
                 year = date.year
                 month = date.month
@@ -122,6 +132,7 @@ class Command(BaseCommand):
                     person_year=person_year,
                     defaults={"import_date": datetime.date.today()},
                 )
+                set_history_date(person_month, date)
                 MonthlyIncomeReport.objects.update_or_create(
                     person_month=person_month,
                     month=month,
@@ -138,6 +149,9 @@ class Command(BaseCommand):
                 )
 
                 person_year.save()
+                set_history_date(person_year, date)
+            person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
+            person_year.save()
 
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
 

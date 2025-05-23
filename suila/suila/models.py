@@ -15,7 +15,9 @@ from os.path import basename
 from typing import Iterable, List, Sequence, Tuple
 
 import pandas as pd
+import pytz
 from common.models import User
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -664,19 +666,6 @@ class PersonMonth(PermissionsMixin, models.Model):
         default=False,
     )
 
-    # Gem, om personen er på pause i denne måned.
-    # Bruges kun til visning i udbetalings-historik.
-    # Når vi beregner bruger vi "paused" attribut på Person modellen.
-    paused = models.BooleanField(
-        default=False,
-        null=False,
-        blank=False,
-    )
-
-    def save(self, *args, **kwargs):
-        self.paused = self.person_year.person.paused
-        super().save(*args, **kwargs)
-
     @property
     def person(self):
         return self.person_year.person
@@ -753,6 +742,47 @@ class PersonMonth(PermissionsMixin, models.Model):
                 output_field=BooleanField(),
             )
         )
+
+    @property
+    def paused(self):
+        year = self.person_year.year.year
+        month = self.month
+
+        focus_date = pytz.utc.localize(
+            datetime(year, month, 1, 0, 0, 0) + relativedelta(months=2)
+        )
+        now = datetime.now(tz=pytz.utc)
+
+        if focus_date > now:
+            return self.person_year.person.paused
+
+        calculate_benefit_jobs_this_month = (
+            JobLog.objects.filter(
+                name=ManagementCommands.CALCULATE_BENEFIT,
+                runtime__month=focus_date.month,
+                runtime__year=focus_date.year,
+                status=StatusChoices.SUCCEEDED,
+            )
+            .filter(
+                Q(cpr_param__isnull=True) | Q(cpr_param=self.person_year.person.cpr)
+            )
+            .order_by("-runtime")
+        )
+
+        if calculate_benefit_jobs_this_month:
+            as_of_date = calculate_benefit_jobs_this_month[0].runtime
+        else:
+            if focus_date.month == now.month and focus_date.year == now.year:
+                as_of_date = now
+            else:
+                as_of_date = focus_date
+
+        qs = Person.history.as_of(as_of_date).filter(pk=self.person_year.person.pk)
+
+        if qs:
+            return qs[0].paused
+        else:
+            return False
 
 
 class Employer(PermissionsMixin, models.Model):
