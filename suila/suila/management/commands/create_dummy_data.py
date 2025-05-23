@@ -148,8 +148,8 @@ class Command(BaseCommand):
                 call_command(
                     ManagementCommands.CALCULATE_BENEFIT,
                     date.year,
+                    date.month,
                     cpr=person.cpr,
-                    month=date.month,
                 )
 
                 if date < month_before_last_month:

@@ -190,7 +190,7 @@ class TestJobDispatcherCommands(TestCase):
                 call(
                     ManagementCommands.CALCULATE_BENEFIT,
                     job_dispatcher_test_date.year,
-                    month=job_dispatcher_test_date.month,
+                    job_dispatcher_test_date.month,
                     cpr=None,
                     verbosity=1,
                     traceback=False,

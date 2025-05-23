@@ -343,7 +343,10 @@ class CalculateBenefitTest(BaseTestCase):
 
         self.assertGreater(len(months), 0)
         self.assertEqual(sum([month.benefit_calculated for month in months]), 0)
-        self.call_command("calculate_benefit", self.year.year, **kwargs)
+        for month in months:
+            self.call_command(
+                "calculate_benefit", self.year.year, month.month, **kwargs
+            )
         for month in months:
             month.refresh_from_db()
 
@@ -367,8 +370,8 @@ class CalculateBenefitTest(BaseTestCase):
             month.benefit_calculated = 0
             month.save()
 
-        self.call_command("calculate_benefit", self.year.year)
         for month in months:
+            self.call_command("calculate_benefit", self.year.year, month.month)
             month.refresh_from_db()
 
         self.assertEqual(sum([month.benefit_calculated for month in months]), 0)
@@ -385,18 +388,20 @@ class CalculateBenefitTest(BaseTestCase):
 
     @patch("suila.management.commands.calculate_benefit.isnan", return_value=True)
     def test_management_command_for_nan_values(self, isnan):
-        self.call_command("calculate_benefit", self.year.year)
         for month in PersonMonth.objects.filter(person_year__year=self.year):
+            self.call_command("calculate_benefit", self.year.year, month.month)
             month.refresh_from_db()
             self.assertIsNone(month.benefit_calculated)
 
     def test_management_command_verbose(self):
-        stdout, _ = self.call_command("calculate_benefit", self.year.year, verbosity=2)
+        stdout, _ = self.call_command(
+            "calculate_benefit", self.year.year, 1, verbosity=2
+        )
         self.assertIn("Calculating benefit", stdout.getvalue())
 
     @patch("suila.management.commands.common.Profile")
     def test_management_command_profile(self, profiler):
-        self.call_command("calculate_benefit", self.year.year, profile=True)
+        self.call_command("calculate_benefit", self.year.year, 1, profile=True)
         self.assertTrue(profiler.called)
 
     @patch("suila.management.commands.calculate_benefit.calculate_benefit")
@@ -406,7 +411,7 @@ class CalculateBenefitTest(BaseTestCase):
         command_error.return_value = Exception("bar")
 
         with self.assertRaisesMessage(Exception, "bar"):
-            self.call_command("calculate_benefit", self.year.year, reraise=False)
+            self.call_command("calculate_benefit", self.year.year, 1, reraise=False)
 
         with self.assertRaisesMessage(Exception, "foo"):
-            self.call_command("calculate_benefit", self.year.year, reraise=True)
+            self.call_command("calculate_benefit", self.year.year, 1, reraise=True)
