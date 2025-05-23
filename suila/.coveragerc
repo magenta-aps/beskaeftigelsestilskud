@@ -26,7 +26,6 @@ omit =
     */management/commands/create_user.py
     */management/commands/eboks_send.py
     */management/commands/eboks_update_status.py
-    */management/commands/estimate_income.py
     */management/commands/export_benefits_to_prisme.py
     */management/commands/export_users.py
     */management/commands/get_employer_info_from_dafo.py

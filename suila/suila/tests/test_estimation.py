@@ -1,14 +1,14 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import sys
 from datetime import date, datetime
 from decimal import Decimal
-from io import TextIOBase
+from io import StringIO
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from common.utils import get_people_in_quarantine
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils.timezone import get_current_timezone
 
@@ -23,6 +23,7 @@ from suila.estimation import (
 from suila.models import (
     IncomeEstimate,
     IncomeType,
+    ManagementCommands,
     MonthlyIncomeReport,
     Person,
     PersonMonth,
@@ -36,25 +37,6 @@ from suila.models import (
 
 
 class TestEstimationEngine(TestCase):
-
-    class OutputWrapper(TextIOBase):
-
-        def __init__(self, out, ending="\n"):
-            self._out = out
-            self.ending = ending
-
-        def __getattr__(self, name):
-            return getattr(self._out, name)
-
-        def flush(self):
-            if hasattr(self._out, "flush"):
-                self._out.flush()
-
-        def isatty(self):
-            return hasattr(self._out, "isatty") and self._out.isatty()
-
-        def write(self, msg="", style_func=None, ending=None):
-            pass
 
     @classmethod
     def setUpTestData(cls):
@@ -140,14 +122,26 @@ class TestEstimationEngine(TestCase):
             ],
         )
 
+    def estimate_all(
+        self, year, person_pk, count, dry_run=False, stdout=None, *args, **kwargs
+    ):
+        cpr = Person.objects.get(pk=person_pk).cpr if person_pk else None
+        call_command(
+            ManagementCommands.ESTIMATE_INCOME,
+            year=year,
+            count=count,
+            cpr=cpr,
+            stdout=stdout or StringIO(),
+            dry=dry_run,
+            **kwargs,
+        )
+
     def test_estimate_all(self):
-        output_stream = self.OutputWrapper(sys.stdout, ending="\n")
-        EstimationEngine.estimate_all(
+        self.estimate_all(
             self.year.year,
             self.person.pk,
             1,
             False,
-            output_stream,
         )
 
         income_estimates = list(
@@ -205,12 +199,11 @@ class TestEstimationEngine(TestCase):
         self.assertEqual(summary.mean_error_percent, Decimal("-54.42"))
         self.assertEqual(summary.rmse_percent, Decimal("63.76"))
 
-        EstimationEngine.estimate_all(
+        self.estimate_all(
             self.year2.year,
             self.person.pk,
             1,
             False,
-            output_stream,
         )
 
         self.assertEqual(
@@ -245,15 +238,13 @@ class TestEstimationEngine(TestCase):
         self.assertIsNone(summary.rmse_percent)
 
     def test_estimate_all_not_taxable(self):
-        output_stream = self.OutputWrapper(sys.stdout, ending="\n")
         self.person_year.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
         self.person_year.save()
-        EstimationEngine.estimate_all(
+        self.estimate_all(
             self.year.year,
             self.person.pk,
             1,
             False,
-            output_stream,
         )
 
         income_estimates = IncomeEstimate.objects.filter(
@@ -264,7 +255,7 @@ class TestEstimationEngine(TestCase):
         self.assertEqual(income_estimates, 0)
 
     def test_estimate_all_None_inputs(self):
-        EstimationEngine.estimate_all(self.year.year, None, None, False)
+        self.estimate_all(self.year.year, None, None, False)
         # When person=None and count = None the PersonYear queryset contains
         # all personYears
         all_person_years = PersonYear.objects.filter(year=self.year.year)
@@ -286,13 +277,13 @@ class TestEstimationEngine(TestCase):
             engine="InYearExtrapolationEngine",
         )
 
-        EstimationEngine.estimate_all(self.year.year, None, None, dry_run=True)
+        self.estimate_all(self.year.year, None, None, dry_run=True)
 
         self.assertEqual(
             IncomeEstimate.objects.filter(estimated_year_result=12341122).count(), 1
         )
 
-        EstimationEngine.estimate_all(self.year.year, None, None, dry_run=False)
+        self.estimate_all(self.year.year, None, None, dry_run=False)
 
         # One person * 10 months * 4 engines * 2 incometypes
         # NOTE: InYearExtrapolationEngine only handles A-IncomeType
@@ -311,7 +302,7 @@ class TestEstimationEngine(TestCase):
 
         instances.return_value = [MockEngine]
 
-        EstimationEngine.estimate_all(self.year.year, None, None)
+        self.estimate_all(self.year.year, None, None)
         instances.assert_called()
 
     def test_quarantined(self):
@@ -346,6 +337,30 @@ class TestEstimationEngine(TestCase):
         quarantine_df = get_people_in_quarantine(self.year2.year, {self.person.cpr})
         self.assertTrue(quarantine_df.loc[self.person.cpr, "earns_too_much"])
         self.assertTrue(quarantine_df.loc[self.person.cpr, "in_quarantine"])
+
+    def test_verbose(self):
+        stdout = StringIO()
+        self.estimate_all(
+            self.year.year, self.person.pk, 1, False, stdout=stdout, verbosity=3
+        )
+
+        self.assertIn("Done", stdout.getvalue())
+
+    @patch("suila.management.commands.estimate_income.EstimationEngine")
+    def test_estimate_all_years(self, estimation_engine_mock):
+        self.estimate_all(
+            None,
+            self.person.pk,
+            1,
+            False,
+        )
+
+        years = Year.objects.all()
+        calls = estimation_engine_mock.estimate_all.call_args_list
+
+        self.assertGreater(len(years), 1)
+        for i, year in enumerate(years):
+            self.assertEqual(calls[i][0][0], year.year)
 
 
 class TestInYearExtrapolationEngine(TestCase):
