@@ -769,6 +769,16 @@ class PersonMonth(PermissionsMixin, models.Model):
             .order_by("-runtime")
         )
 
+        # When we calculate benefit two things can happen:
+        # 1) Benefit gets calculated normally
+        # 2) The calculated benefit is 0 because the person is paused
+        #
+        # This is the only place in the code, where being paused matters.
+        #
+        # We would therefore like the "paused" property to reflect the state a user was
+        # in when benefit was calculated.
+        #
+        # Therefore we set the as_of_date to the date of the last calculate_benefit job
         if calculate_benefit_jobs_this_month:
             as_of_date = calculate_benefit_jobs_this_month[0].runtime
         else:
