@@ -188,7 +188,7 @@ class PersonMonthTable(Table):
     )
     benefit = TemplateColumn(
         template_name="suila/table_columns/amount.html",
-        accessor=Accessor("benefit_paid"),
+        accessor=Accessor("benefit_calculated"),
         verbose_name=_("Forventet beløb til udbetaling"),
     )
     status = TemplateColumn(
@@ -250,7 +250,7 @@ class PersonDetailView(
                 {
                     "show_next_payment": True,
                     "next_payout_date": relevant_person_month.next_payout_date,
-                    "benefit_paid": person_month.benefit_paid,
+                    "benefit_calculated": person_month.benefit_calculated,
                     "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
                     "paused": person.paused,

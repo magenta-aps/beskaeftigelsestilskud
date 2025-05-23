@@ -614,8 +614,8 @@ def calculate_payout(df_estimates, df_annual, treshold=0.05, truncate_amount=0):
             actual_year_benefit = df_annual.loc[:, year].map(calculate_benefit)
 
             prior_months = df_payout.loc[:, past_months]
-            prior_benefit_paid = prior_months.sum(axis=1)
-            benefit_this_month = (estimated_year_benefit - prior_benefit_paid) / (
+            prior_benefit_calculated = prior_months.sum(axis=1)
+            benefit_this_month = (estimated_year_benefit - prior_benefit_calculated) / (
                 12 - month_index
             )
             actual_benefit_this_month = actual_year_benefit / 12

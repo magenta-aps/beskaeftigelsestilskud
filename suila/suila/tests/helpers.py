@@ -23,7 +23,7 @@ class ImportTestCase(TestCase):
         cpr: int,
         year: int = 2020,
         month: int = 1,
-        benefit_paid: Decimal = Decimal("1000.00"),
+        benefit_calculated: Decimal = Decimal("1000.00"),
     ) -> PersonMonth:
         year, _ = Year.objects.get_or_create(year=year)
         person, _ = Person.objects.get_or_create(cpr=cpr)
@@ -32,7 +32,7 @@ class ImportTestCase(TestCase):
             person_year=person_year,
             month=month,
             import_date=date.today(),
-            benefit_paid=benefit_paid,
+            benefit_calculated=benefit_calculated,
         )
         return person_month
 

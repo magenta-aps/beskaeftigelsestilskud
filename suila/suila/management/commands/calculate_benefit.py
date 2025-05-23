@@ -27,8 +27,8 @@ class Command(SuilaBaseCommand):
         year = kwargs["year"]
 
         cols_to_update = [
-            "benefit_paid",
-            "prior_benefit_paid",
+            "benefit_calculated",
+            "prior_benefit_calculated",
             "estimated_year_benefit",
             "actual_year_benefit",
             "estimated_year_result",

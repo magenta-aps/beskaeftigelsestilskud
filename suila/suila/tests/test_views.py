@@ -157,7 +157,7 @@ class PersonEnv(TestCase):
             PersonMonth(
                 person_year=cls.person_year,
                 month=i,
-                benefit_paid=i,
+                benefit_calculated=i,
                 import_date=date(2020, 1, 1),
             )
             for i in range(1, 13)
@@ -173,12 +173,12 @@ class PersonEnv(TestCase):
                     person_month=person_month,
                     employer=employer,
                     salary_income=(
-                        person_month.benefit_paid * 10
+                        person_month.benefit_calculated * 10
                         if person_month.month > 1
                         else Decimal("0")
                     ),
                     catchsale_income=(
-                        person_month.benefit_paid * 10
+                        person_month.benefit_calculated * 10
                         if person_month.month > 1
                         else Decimal("0")
                     ),
@@ -196,12 +196,12 @@ class PersonEnv(TestCase):
             BTaxPayment(
                 person_month=person_month,
                 amount_paid=(
-                    person_month.benefit_paid * 10
+                    person_month.benefit_calculated * 10
                     if person_month.month > 1
                     else Decimal("0")
                 ),
                 # Provide values for non-nullable fields (unused in test)
-                amount_charged=person_month.benefit_paid * 10,
+                amount_charged=person_month.benefit_calculated * 10,
                 date_charged=person_month.year_month,
                 rate_number=person_month.month,
                 filename="",
@@ -354,15 +354,17 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             # Verify that expected context variables are present
             self.assertIn("next_payout_date", response.context_data)
-            self.assertIn("benefit_paid", response.context_data)
+            self.assertIn("benefit_calculated", response.context_data)
             self.assertIn("estimated_year_benefit", response.context_data)
             self.assertIn("estimated_year_result", response.context_data)
             self.assertIn("table", response.context_data)
             # Verify the values of the context variables
             self.assertIsNotNone(response.context_data["next_payout_date"])
             # When looking at page in December 2020, the "focus date" is October 2020
-            # The mocked `benefit_paid` for October is 10 (= the month number.)
-            self.assertEqual(response.context_data["benefit_paid"], Decimal("10.0"))
+            # The mocked `benefit_calculated` for October is 10 (= the month number.)
+            self.assertEqual(
+                response.context_data["benefit_calculated"], Decimal("10.0")
+            )
             self.assertIsNone(response.context_data["estimated_year_benefit"])
             self.assertEqual(response.context_data["estimated_year_result"], Decimal(0))
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
@@ -1731,10 +1733,10 @@ class TestPersonAnnualIncomeEstimateUpdateView(
         self.assertEqual(len(month_qs), 12)
 
         for person_month in month_qs:
-            self.assertGreater(person_month.benefit_paid, 0)
+            self.assertGreater(person_month.benefit_calculated, 0)
 
         # Set annual income to zero;
-        # We expect benefit_paid on all future months to become zero.
+        # We expect benefit_calculated on all future months to become zero.
         self.data["annual_income_estimate"] = 0
         self.client.force_login(self.admin_user)
         self.client.post(self.url, data=self.data)
@@ -1742,9 +1744,9 @@ class TestPersonAnnualIncomeEstimateUpdateView(
         for person_month in month_qs:
             person_month.refresh_from_db()
             if person_month.month >= 5:
-                self.assertEqual(person_month.benefit_paid, 0)
+                self.assertEqual(person_month.benefit_calculated, 0)
             else:
-                self.assertGreater(person_month.benefit_paid, 0)
+                self.assertGreater(person_month.benefit_calculated, 0)
 
     def test_that_person_is_not_recalculated_if_sent_to_prisme(self):
         month_qs = PersonMonth.objects.filter(person_year=self.person_year)
@@ -1764,7 +1766,7 @@ class TestPersonAnnualIncomeEstimateUpdateView(
 
         for person_month in month_qs:
             person_month.refresh_from_db()
-            self.assertGreater(person_month.benefit_paid, 0)
+            self.assertGreater(person_month.benefit_calculated, 0)
 
     @patch("suila.views.call_command")
     def test_person_month_does_not_exist(self, call_command: MagicMock()):

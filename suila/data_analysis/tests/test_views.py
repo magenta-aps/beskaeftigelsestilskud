@@ -388,7 +388,7 @@ class PersonYearEstimationSetupMixin:
             month=1,
             import_date=date(2020, 1, 1),
             actual_year_benefit=200,
-            benefit_paid=150,
+            benefit_calculated=150,
         )
         cls.income_report, _ = MonthlyIncomeReport.objects.get_or_create(
             person_month=cls.person_month,
@@ -615,7 +615,7 @@ class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase
             month=1,
             import_date=date(2020, 1, 1),
             actual_year_benefit=0,
-            benefit_paid=0,
+            benefit_calculated=0,
         )
 
         view, response = self.request_get(

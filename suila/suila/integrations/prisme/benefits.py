@@ -57,9 +57,9 @@ class BatchExport:
                 person_year__tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
                 month=self._month,
                 prismebatchitem__isnull=True,
-                benefit_paid__isnull=False,
+                benefit_calculated__isnull=False,
             )
-            .exclude(benefit_paid=Decimal("0"))
+            .exclude(benefit_calculated=Decimal("0"))
         )
         # Annotate with string version of CPR (zero-padded to 10 digits)
         qs = qs.annotate(
@@ -152,7 +152,7 @@ class BatchExport:
             UdbetalingsberettigetIdentKodeEnum.CPR,
             cpr,
             int(account_alias.alias),
-            person_month.benefit_paid,  # type: ignore[arg-type]
+            person_month.benefit_calculated,  # type: ignore[arg-type]
             self.get_payment_date(person_month),
             self.get_posting_date(person_month),
             self.get_posting_text(person_month),
@@ -263,7 +263,7 @@ class BatchExport:
             )
             .annotate(
                 cpr=F("person_month__person_year__person__cpr"),
-                amount=F("person_month__benefit_paid"),
+                amount=F("person_month__benefit_calculated"),
             )
         )
         return prisme_batch_items

@@ -52,8 +52,8 @@ class TestBatchExport(TestCase):
         """
         # Arrange
         cpr = 3112680000
-        benefit_paid = Decimal("1000")
-        self._add_person_month(cpr, benefit_paid)
+        benefit_calculated = Decimal("1000")
+        self._add_person_month(cpr, benefit_calculated)
         export = self._get_instance()
         # Act
         queryset = export.get_person_month_queryset()
@@ -64,21 +64,21 @@ class TestBatchExport(TestCase):
                 (
                     str(cpr),  # "identifier": CPR as string
                     str(cpr)[:2],  # "prefix": first two digits of CPR (as string)
-                    benefit_paid,
+                    benefit_calculated,
                 )
             ],
-            transform=lambda obj: (obj.identifier, obj.prefix, obj.benefit_paid),
+            transform=lambda obj: (obj.identifier, obj.prefix, obj.benefit_calculated),
         )
 
     def test_get_person_year_queryset_excludes_person_months_without_benefit(self):
         """Given one or more `PersonMonth` objects, the method should skip objects that
-        have a `benefit_paid` which is 0 or None.
+        have a `benefit_calculated` which is 0 or None.
         """
         # Arrange: add two person months which should be skipped
-        self._add_person_month(3112710000, benefit_paid=None)
-        self._add_person_month(3112720000, benefit_paid=Decimal("0"))
+        self._add_person_month(3112710000, benefit_calculated=None)
+        self._add_person_month(3112720000, benefit_calculated=Decimal("0"))
         # Arrange: add one person month which should be included
-        self._add_person_month(3112730000, benefit_paid=Decimal("1000"))
+        self._add_person_month(3112730000, benefit_calculated=Decimal("1000"))
         # Arrange
         export = self._get_instance()
         # Act
@@ -597,7 +597,7 @@ class TestBatchExport(TestCase):
     def _add_person_month(
         self,
         cpr: int,
-        benefit_paid: Decimal | None,
+        benefit_calculated: Decimal | None,
         year: int = 2025,
         month: int = 1,
         municipality_code: int = 956,
@@ -611,7 +611,7 @@ class TestBatchExport(TestCase):
         person_month, _ = PersonMonth.objects.get_or_create(
             person_year=person_year,
             month=month,
-            benefit_paid=benefit_paid,
+            benefit_calculated=benefit_calculated,
             import_date=date.today(),
         )
         return person_month

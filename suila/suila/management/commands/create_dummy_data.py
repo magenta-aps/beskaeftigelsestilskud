@@ -160,7 +160,7 @@ class Command(BaseCommand):
                         person_year__year__year=date.year,
                     )
 
-                    if person_month.benefit_paid > 0:
+                    if person_month.benefit_calculated > 0:
 
                         prisme_batch, _ = PrismeBatch.objects.update_or_create(
                             export_date=datetime.date(date.year, date.month, 12),
