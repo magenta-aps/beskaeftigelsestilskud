@@ -635,6 +635,13 @@ class PersonMonth(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
+    benefit_transferred = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default=0,
+    )
     estimated_year_benefit = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -647,11 +654,12 @@ class PersonMonth(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
-    prior_benefit_calculated = models.DecimalField(
+    prior_benefit_transferred = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
+        default=0,
     )
     estimated_year_result = models.DecimalField(
         max_digits=12,

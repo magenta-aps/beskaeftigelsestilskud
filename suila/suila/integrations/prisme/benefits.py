@@ -14,6 +14,7 @@ from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import CharField, F, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
+from simple_history.utils import bulk_update_with_history
 from tenacity import (
     after_log,
     retry,
@@ -160,6 +161,8 @@ class BatchExport:
             self.get_transaction_text(person_month),
         )
 
+        person_month.benefit_transferred = person_month.benefit_calculated
+
         return PrismeBatchItem(
             prisme_batch=prisme_batch,
             person_month=person_month,
@@ -244,6 +247,15 @@ class BatchExport:
             prisme_batch.failed_message = ""
             # Save all Prisme batch items belonging to the current batch
             PrismeBatchItem.objects.bulk_create(prisme_batch_items)
+
+            person_months_to_update = []
+            for prisme_batch_item in prisme_batch_items:
+                person_month = prisme_batch_item.person_month
+                person_month.benefit_transferred = person_month.benefit_calculated
+                person_months_to_update.append(person_month)
+            bulk_update_with_history(
+                person_months_to_update, PersonMonth, ["benefit_transferred"]
+            )
         finally:
             prisme_batch.save()
 
