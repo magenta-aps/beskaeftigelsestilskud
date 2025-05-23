@@ -1116,7 +1116,7 @@ class PersonAnnualIncomeEstimateUpdateView(
                 call_command(
                     ManagementCommands.CALCULATE_BENEFIT,
                     person_month.person_year.year,
-                    month=person_month.month,
+                    person_month.month,
                     cpr=self.object.cpr,
                 )
             person_month = person_month.next

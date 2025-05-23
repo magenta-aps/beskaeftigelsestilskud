@@ -140,7 +140,7 @@ class Command(SuilaBaseCommand):
         job_dispatcher.call_job(
             ManagementCommands.CALCULATE_BENEFIT,
             year,
-            month=month,
+            month,
             cpr=cpr,
             verbosity=verbosity,
         )
