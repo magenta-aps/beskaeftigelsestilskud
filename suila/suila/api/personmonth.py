@@ -38,8 +38,8 @@ class PersonMonthOut(ModelSchema):
             "estimated_year_result",
             "estimated_year_benefit",
             "actual_year_benefit",
-            "prior_benefit_paid",
-            "benefit_paid",
+            "prior_benefit_calculated",
+            "benefit_calculated",
         ]
 
     @staticmethod

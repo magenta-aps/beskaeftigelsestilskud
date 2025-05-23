@@ -47,7 +47,7 @@ class TestDisplayStatus(TestCase):
         )
 
         # If the amount equals zero - we should always display "Beløb fastlagt"
-        self.person_month.benefit_paid = 0
+        self.person_month.benefit_calculated = 0
         self.person_month.save()
 
         # Act

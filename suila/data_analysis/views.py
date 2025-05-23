@@ -221,7 +221,7 @@ class PersonYearEstimationMixin:
             - F("catchsale_expenses")
         )
 
-        qs = qs.annotate(payout=Sum("personmonth__benefit_paid"))
+        qs = qs.annotate(payout=Sum("personmonth__benefit_calculated"))
 
         qs = qs.annotate(
             correct_payout=Subquery(

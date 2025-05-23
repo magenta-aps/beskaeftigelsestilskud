@@ -629,7 +629,7 @@ class PersonMonth(PermissionsMixin, models.Model):
         decimal_places=2,
         default=Decimal(0),
     )
-    benefit_paid = models.DecimalField(
+    benefit_calculated = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
@@ -647,7 +647,7 @@ class PersonMonth(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
-    prior_benefit_paid = models.DecimalField(
+    prior_benefit_calculated = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,

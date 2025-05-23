@@ -41,8 +41,8 @@ def calculate_benefit(
     -----------
     df : DataFrame
         Dataframe indexed by cpr-number. Contains the following relevant columns:
-            * benefit_paid
-            * prior_benefit_paid
+            * benefit_calculated
+            * prior_benefit_calculated
             * estimated_year_benefit
             * actual_year_benefit
         The abovementioned columns map one-to-one to a PersonMonth object.
@@ -64,7 +64,7 @@ def calculate_benefit(
         safety_factor = float(settings.CALCULATION_SAFETY_FACTOR)  # type: ignore
     calculation_method = Year.objects.get(year=year).calculation_method
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
-    benefit_cols_this_year = [f"benefit_paid_month_{m}" for m in range(1, month)]
+    benefit_cols_this_year = [f"benefit_calculated_month_{m}" for m in range(1, month)]
 
     month_qs = PersonMonth.objects.filter(
         person_year__year_id=year, month=month
@@ -136,8 +136,10 @@ def calculate_benefit(
         .fillna(0)
         .map(calculate_benefit_func)
     )
-    df["prior_benefit_paid"] = df.loc[:, benefit_cols_this_year].sum(axis=1)
-    df["remaining_benefit_for_year"] = df.estimated_year_benefit - df.prior_benefit_paid
+    df["prior_benefit_calculated"] = df.loc[:, benefit_cols_this_year].sum(axis=1)
+    df["remaining_benefit_for_year"] = (
+        df.estimated_year_benefit - df.prior_benefit_calculated
+    )
     df["benefit_this_month"] = (df.remaining_benefit_for_year / (13 - month)).round(2)
 
     # Do not payout if the amount is below zero
@@ -150,7 +152,7 @@ def calculate_benefit(
     if threshold > 0 and month not in (1, 12):  # type: ignore
         # if the amount is very similar to last month's amount, use the same amount
         # as last month
-        df["benefit_last_month"] = df.loc[:, f"benefit_paid_month_{month-1}"]
+        df["benefit_last_month"] = df.loc[:, f"benefit_calculated_month_{month-1}"]
         diff = pd.Series(index=df.index)
         I_diff = df.benefit_last_month > 0
         diff_abs = (df.benefit_this_month - df.benefit_last_month).abs()
@@ -194,7 +196,7 @@ def calculate_benefit(
     # Do not payout if the amount is negative
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
 
-    df["benefit_paid"] = np.ceil(df["benefit_this_month"])
+    df["benefit_calculated"] = np.ceil(df["benefit_this_month"])
 
     return df
 
@@ -223,7 +225,7 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
 
     Notes
     -------
-    The "benefit_paid_month_0" column corresponds to December of the previous year.
+    The "benefit_calculated_month_0" column corresponds to December of the previous year
 
     """
     month_this_year_qs = PersonMonth.objects.filter(
@@ -238,10 +240,10 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
         month_df = utils.to_dataframe(
             month_qs.filter(person_year__person__cpr=cpr) if cpr else month_qs,
             index="person_year__person__cpr",
-            dtypes={"benefit_paid": float, "month": int},
+            dtypes={"benefit_calculated": float, "month": int},
         )
         payouts_df = month_df.pivot_table(
-            values="benefit_paid",
+            values="benefit_calculated",
             index=month_df.index,
             columns="month",
             aggfunc=one,
@@ -249,13 +251,13 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
         dfs.append(payouts_df)
 
     if not dfs[0].empty:
-        dfs[0].columns = ["benefit_paid_month_0"]
+        dfs[0].columns = ["benefit_calculated_month_0"]
     if not dfs[1].empty:
-        dfs[1].columns = [f"benefit_paid_month_{m}" for m in dfs[1].columns]
+        dfs[1].columns = [f"benefit_calculated_month_{m}" for m in dfs[1].columns]
 
     return pd.concat(dfs, axis=1).reindex(
-        columns=["benefit_paid_month_0"]
-        + [f"benefit_paid_month_{m}" for m in range(1, month)]
+        columns=["benefit_calculated_month_0"]
+        + [f"benefit_calculated_month_{m}" for m in range(1, month)]
     )
 
 

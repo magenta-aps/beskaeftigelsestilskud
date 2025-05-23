@@ -374,14 +374,14 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
         index="person_year__person__cpr",
         dtypes={
             "actual_year_benefit": float,
-            "prior_benefit_paid": float,
-            "benefit_paid": float,
+            "prior_benefit_calculated": float,
+            "benefit_calculated": float,
         },
     )
     df_2 = get_people_who_might_earn_too_much_or_little(year - 1, cpr_numbers)
 
-    df["total_benefit_paid"] = df.prior_benefit_paid + df.benefit_paid
-    df["error"] = df.total_benefit_paid - df.actual_year_benefit
+    df["total_benefit_calculated"] = df.prior_benefit_calculated + df.benefit_calculated
+    df["error"] = df.total_benefit_calculated - df.actual_year_benefit
     df["wrong_payout"] = df.error.fillna(0) > quarantine_limit
     df["earns_too_little"] = df_2.earns_too_little.reindex(df.index, fill_value=False)
     df["earns_too_much"] = df_2.earns_too_much.reindex(df.index, fill_value=False)

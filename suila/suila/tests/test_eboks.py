@@ -497,7 +497,7 @@ class SuilaMessageTest(EboksTest):
             PersonMonth.objects.create(
                 person_year=cls.person_year,
                 month=i,
-                benefit_paid=i,
+                benefit_calculated=i,
                 import_date=date(2020, 1, 1),
             )
             for i in range(1, 13)

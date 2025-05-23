@@ -201,8 +201,8 @@ class BaseTestCase(TestCase):
                     person_year=person_year,
                     month=month_number,
                     import_date=date.today(),
-                    benefit_paid=1050,
-                    prior_benefit_paid=1050 * (month_number - 1),
+                    benefit_calculated=1050,
+                    prior_benefit_calculated=1050 * (month_number - 1),
                     actual_year_benefit=1050 * 12,
                 )
                 income = MonthlyIncomeReport.objects.create(
@@ -300,8 +300,8 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
                         person_year=person_year,
                         month=month_number,
                         import_date=date.today(),
-                        benefit_paid=1050,
-                        prior_benefit_paid=1050 * (month_number - 1),
+                        benefit_calculated=1050,
+                        prior_benefit_calculated=1050 * (month_number - 1),
                         actual_year_benefit=1050 * 12,
                     )
 

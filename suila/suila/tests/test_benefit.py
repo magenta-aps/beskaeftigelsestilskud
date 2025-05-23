@@ -86,14 +86,14 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertIn(self.person1.cpr, df.index)
         self.assertIn(self.person2.cpr, df.index)
 
-        self.assertEqual(df.loc[self.person1.cpr, "benefit_paid_month_1"], 1050)
-        self.assertEqual(df.loc[self.person1.cpr, "benefit_paid_month_2"], 1050)
-        self.assertEqual(df.loc[self.person2.cpr, "benefit_paid_month_1"], 1050)
-        self.assertEqual(df.loc[self.person2.cpr, "benefit_paid_month_2"], 1050)
+        self.assertEqual(df.loc[self.person1.cpr, "benefit_calculated_month_1"], 1050)
+        self.assertEqual(df.loc[self.person1.cpr, "benefit_calculated_month_2"], 1050)
+        self.assertEqual(df.loc[self.person2.cpr, "benefit_calculated_month_1"], 1050)
+        self.assertEqual(df.loc[self.person2.cpr, "benefit_calculated_month_2"], 1050)
 
-        self.assertIn("benefit_paid_month_0", df.columns)
-        self.assertIn("benefit_paid_month_1", df.columns)
-        self.assertIn("benefit_paid_month_2", df.columns)
+        self.assertIn("benefit_calculated_month_0", df.columns)
+        self.assertIn("benefit_calculated_month_1", df.columns)
+        self.assertIn("benefit_calculated_month_2", df.columns)
         self.assertEqual(len(df.columns), 3)
 
     def test_get_payout_df_for_person(self):
@@ -120,7 +120,9 @@ class CalculateBenefitTest(BaseTestCase):
 
         for month in range(1, 13):
             df = calculate_benefit(month, self.year.year)
-            self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
+            self.assertEqual(
+                df.loc[self.person1.cpr, "benefit_calculated"], correct_benefit
+            )
 
     def test_calculate_benefit_with_safety_factor(self):
         safety_factor = settings.CALCULATION_SAFETY_FACTOR  # type: ignore
@@ -130,12 +132,15 @@ class CalculateBenefitTest(BaseTestCase):
         # The safety factor is applied in January
         df = calculate_benefit(1, self.year.year)
         self.assertEqual(
-            df.loc[self.person1.cpr, "benefit_paid"], correct_benefit * safety_factor
+            df.loc[self.person1.cpr, "benefit_calculated"],
+            correct_benefit * safety_factor,
         )
 
         # But not in December
         df = calculate_benefit(12, self.year.year)
-        self.assertEqual(df.loc[self.person1.cpr, "benefit_paid"], correct_benefit)
+        self.assertEqual(
+            df.loc[self.person1.cpr, "benefit_calculated"], correct_benefit
+        )
 
     @patch("common.utils.get_people_in_quarantine")
     def test_calculate_benefit_quarantine_default_settings(
@@ -157,12 +162,12 @@ class CalculateBenefitTest(BaseTestCase):
 
         for month in range(1, 13):
             df = calculate_benefit(month, self.year.year)
-            benefit_paid = df.loc[self.person1.cpr, "benefit_paid"]
+            benefit_calculated = df.loc[self.person1.cpr, "benefit_calculated"]
 
             if month <= 10:
-                self.assertEqual(benefit_paid, 0)
+                self.assertEqual(benefit_calculated, 0)
             else:
-                self.assertGreater(benefit_paid, 0)
+                self.assertGreater(benefit_calculated, 0)
 
     @patch("common.utils.get_people_in_quarantine")
     def test_calculate_benefit_quarantine(self, get_people_in_quarantine: MagicMock):
@@ -192,9 +197,9 @@ class CalculateBenefitTest(BaseTestCase):
 
                     df = calculate_benefit(month, self.year.year)
                     get_people_in_quarantine.assert_called()
-                    benefit_paid = df.loc[self.person1.cpr, "benefit_paid"]
+                    benefit_calculated = df.loc[self.person1.cpr, "benefit_calculated"]
                     self.assertEqual(
-                        benefit_paid,
+                        benefit_calculated,
                         correct_month_benefit,
                         f"For month {month} and weights {weight_list}",
                     )
@@ -204,7 +209,7 @@ class CalculateBenefitTest(BaseTestCase):
                         month=month,
                         person_year__year__year=self.year.year,
                     )
-                    person_month.benefit_paid = benefit_paid
+                    person_month.benefit_calculated = benefit_calculated
                     person_month.save()
 
     def test_calculate_benefit_pause(self):
@@ -264,20 +269,20 @@ class CalculateBenefitTest(BaseTestCase):
                 else:
                     correct_month_benefit = remaining_year_benefit / months_remaining
 
-                benefit_paid = calculate_benefit(month, self.year.year).loc[
+                benefit_calculated = calculate_benefit(month, self.year.year).loc[
                     self.person1.cpr,
-                    "benefit_paid",
+                    "benefit_calculated",
                 ]
 
-                self.assertEqual(benefit_paid, correct_month_benefit)
-                remaining_year_benefit -= Decimal(benefit_paid)
+                self.assertEqual(benefit_calculated, correct_month_benefit)
+                remaining_year_benefit -= Decimal(benefit_calculated)
 
                 person_month = PersonMonth.objects.get(
                     person_year__person__cpr=self.person1.cpr,
                     month=month,
                     person_year__year__year=self.year.year,
                 )
-                person_month.benefit_paid = benefit_paid
+                person_month.benefit_calculated = benefit_calculated
                 person_month.save()
 
     def test_isnan(self):
@@ -316,16 +321,16 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertEqual(get_calculation_date(2025, 11), date(2025, 11, 10))
         self.assertEqual(get_calculation_date(2025, 12), date(2025, 12, 8))
 
-    def test_benefit_paid_ceil_rounding(self):
+    def test_benefit_calculated_ceil_rounding(self):
         df = calculate_benefit(1, self.year.year)
 
-        # Assert the DataFrame "benefit_paid"-series have been rounded up
+        # Assert the DataFrame "benefit_calculated"-series have been rounded up
         # OBS: if not, the value "1056.0" will be "1055.61"
         pd.testing.assert_series_equal(
-            df["benefit_paid"].astype(pd.Float64Dtype()),
+            df["benefit_calculated"].astype(pd.Float64Dtype()),
             pd.Series(
                 [1050.0, 1056.0],
-                name="benefit_paid",
+                name="benefit_calculated",
                 dtype=pd.Float64Dtype(),
                 index=pd.Index(["1234567890", "1234567891"], dtype="object"),
             ),
@@ -333,16 +338,16 @@ class CalculateBenefitTest(BaseTestCase):
 
     def assert_management_command(self, months, **kwargs):
         for month in months:
-            month.benefit_paid = 0
+            month.benefit_calculated = 0
             month.save()
 
         self.assertGreater(len(months), 0)
-        self.assertEqual(sum([month.benefit_paid for month in months]), 0)
+        self.assertEqual(sum([month.benefit_calculated for month in months]), 0)
         self.call_command("calculate_benefit", self.year.year, **kwargs)
         for month in months:
             month.refresh_from_db()
 
-        self.assertGreater(sum([month.benefit_paid for month in months]), 0)
+        self.assertGreater(sum([month.benefit_calculated for month in months]), 0)
 
     def test_management_command(self):
         months = PersonMonth.objects.filter(person_year__year=self.year)
@@ -359,14 +364,14 @@ class CalculateBenefitTest(BaseTestCase):
             PrismeBatchItem.objects.create(
                 person_month=month, prisme_batch=prisme_batch
             )
-            month.benefit_paid = 0
+            month.benefit_calculated = 0
             month.save()
 
         self.call_command("calculate_benefit", self.year.year)
         for month in months:
             month.refresh_from_db()
 
-        self.assertEqual(sum([month.benefit_paid for month in months]), 0)
+        self.assertEqual(sum([month.benefit_calculated for month in months]), 0)
 
     def test_management_command_for_single_month(self):
         months = PersonMonth.objects.filter(person_year__year=self.year, month=2)
@@ -383,7 +388,7 @@ class CalculateBenefitTest(BaseTestCase):
         self.call_command("calculate_benefit", self.year.year)
         for month in PersonMonth.objects.filter(person_year__year=self.year):
             month.refresh_from_db()
-            self.assertIsNone(month.benefit_paid)
+            self.assertIsNone(month.benefit_calculated)
 
     def test_management_command_verbose(self):
         stdout, _ = self.call_command("calculate_benefit", self.year.year, verbosity=2)
