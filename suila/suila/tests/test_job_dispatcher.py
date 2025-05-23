@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import calendar
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
@@ -12,7 +12,6 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from suila.benefit import get_calculation_date, get_eboks_date, get_prisme_date
-from suila.exceptions import DependenciesNotMet
 from suila.management.commands.common import SuilaBaseCommand
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
 from suila.models import ManagementCommands, StatusChoices
