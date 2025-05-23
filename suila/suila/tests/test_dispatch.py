@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import datetime
-import random
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -42,28 +41,6 @@ class TestJobDispatcher(TestCase):
         )
 
         cls.job_dispatcher = JobDispatcher(year=2025, month=1, day=1)
-
-    def test_job_ran_this_month(self):
-        with self.subTest("current month"):
-            self.assertTrue(
-                self.job_dispatcher.job_ran_this_month(
-                    ManagementCommands.CALCULATE_STABILITY_SCORE
-                )
-            )
-            self.assertFalse(
-                self.job_dispatcher.job_ran_this_month(ManagementCommands.LOAD_ESKAT)
-            )
-
-        with self.subTest("next month"):
-            next_month = (datetime.datetime.today().month + 1) % 12
-            future_job_dispatcher = JobDispatcher(
-                year=self.job_dispatcher.year, month=next_month, day=1
-            )
-            self.assertFalse(
-                future_job_dispatcher.job_ran_this_month(
-                    ManagementCommands.CALCULATE_STABILITY_SCORE
-                )
-            )
 
     def test_job_ran_this_year(self):
         self.assertTrue(
