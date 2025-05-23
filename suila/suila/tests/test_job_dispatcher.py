@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import calendar
 from datetime import date, datetime, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
@@ -10,7 +11,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date, get_prisme_date
+from suila.benefit import get_calculation_date, get_eboks_date, get_prisme_date
 from suila.exceptions import DependenciesNotMet
 from suila.management.commands.common import SuilaBaseCommand
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
@@ -339,9 +340,9 @@ class TestJobDispatcherCommands(TestCase):
 
         for job_dispatcher_test_data in [
             (get_calculation_date(2025, 1) - timedelta(days=1), False),
-            (get_calculation_date(2025, 2) - timedelta(days=1), False),
-            (get_calculation_date(2025, 3) - timedelta(days=1), True),
-            (get_calculation_date(2025, 3) - timedelta(days=1), False),
+            # (get_calculation_date(2025, 2) - timedelta(days=1), False),
+            # (get_calculation_date(2025, 3) - timedelta(days=1), True),
+            # (get_calculation_date(2025, 3) - timedelta(days=1), False),
         ]:
             job_dispatcher_test_date, expected_to_run = job_dispatcher_test_data
             call_command(
@@ -492,6 +493,147 @@ class TestJobDispatcherCommands(TestCase):
             stderr=stderr,
         )
         self.assertIn("ESKAT_BASE_URL is not set", stdout.getvalue())
+
+    # NEW TESTS - after it was decided the job dispatcher will run every day (again)
+
+    @patch("suila.dispatch.timezone.now")
+    @patch("suila.dispatch.management.call_command")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_monthly_runs(
+        self, mock_call_command: MagicMock, mock_timezone_now: MagicMock
+    ):
+        # Test data
+        test_date = timezone.datetime(2025, 5, 1)
+        calculation_date = get_calculation_date(test_date.year, test_date.month)
+        prisme_date = get_prisme_date(test_date.year, test_date.month)
+        eboks_date = get_eboks_date(test_date.year, test_date.month)
+        _, num_days = calendar.monthrange(test_date.year, test_date.month)
+
+        # Mocking
+        mock_call_command.side_effect = _mock_call_command
+
+        # Go through each day of the month and verify the correct jobs was
+        # called on each day
+        for day in range(1, num_days + 1):
+            # Mock/Change the current date/now for each day
+            mock_timezone_now.return_value = timezone.datetime(
+                test_date.year, test_date.month, day, 2, 0, 0
+            )
+
+            # Invoke the job dispatcher command
+            call_command(
+                self.command,
+                year=test_date.year,
+                month=test_date.month,
+                day=test_date.day,
+            )
+
+            # Expect more calls on specific dates
+            expected_calls = []
+            if mock_timezone_now.return_value.day == calculation_date.day:
+                expected_calls += [
+                    # "data load"-jobs
+                    call(
+                        ManagementCommands.LOAD_ESKAT,
+                        test_date.year,
+                        "expectedincome",
+                        month=None,
+                        cpr=None,
+                        skew=False,
+                        traceback=False,
+                        reraise=False,
+                        verbosity=1,
+                    ),
+                    call(
+                        ManagementCommands.LOAD_ESKAT,
+                        test_date.year,
+                        "monthlyincome",
+                        month=test_date.month,
+                        cpr=None,
+                        skew=True,
+                        traceback=False,
+                        reraise=False,
+                        verbosity=1,
+                    ),
+                    call(
+                        ManagementCommands.LOAD_ESKAT,
+                        test_date.year,
+                        "taxinformation",
+                        month=test_date.month,
+                        cpr=None,
+                        skew=False,
+                        traceback=False,
+                        reraise=False,
+                        verbosity=1,
+                    ),
+                    call(
+                        ManagementCommands.LOAD_PRISME_B_TAX,
+                        traceback=False,
+                        reraise=False,
+                    ),
+                    call(
+                        ManagementCommands.IMPORT_U1A_DATA,
+                        year=test_date.year,
+                        cpr=None,
+                        verbosity=1,
+                        traceback=False,
+                        reraise=False,
+                    ),
+                    call(
+                        ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+                        cpr=None,
+                        verbosity=1,
+                        traceback=False,
+                        reraise=False,
+                    ),
+                    # Estimation-jobs
+                    call(
+                        ManagementCommands.ESTIMATE_INCOME,
+                        year=test_date.year,
+                        cpr=None,
+                        verbosity=1,
+                        traceback=False,
+                        reraise=False,
+                    ),
+                    call(
+                        ManagementCommands.CALCULATE_BENEFIT,
+                        test_date.year,
+                        test_date.month,
+                        cpr=None,
+                        verbosity=1,
+                        traceback=False,
+                        reraise=False,
+                    ),
+                ]
+
+            if mock_timezone_now.return_value.day == prisme_date.day:
+                expected_calls += [
+                    call(
+                        ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+                        year=test_date.year,
+                        month=test_date.month,
+                        traceback=False,
+                        reraise=False,
+                        verbosity=1,
+                    ),
+                ]
+
+            if mock_timezone_now.return_value.day == eboks_date.day:
+                expected_calls += [
+                    call(
+                        ManagementCommands.SEND_EBOKS,
+                        year=test_date.year,
+                        month=test_date.month,
+                        traceback=False,
+                        reraise=False,
+                        verbosity=1,
+                    ),
+                ]
+
+            # Assert job-calls
+            self.assertEqual(mock_call_command.call_count, len(expected_calls))
+            mock_call_command.assert_has_calls(expected_calls)
+            mock_call_command.reset_mock()
 
 
 # Shared mocking method(s)
