@@ -143,6 +143,8 @@ class Command(BaseCommand):
 
             last_month = get_last_month(datetime.date.today())
             month_before_last_month = get_last_month(last_month)
+            line_no = 1
+
             for date in dates:
 
                 call_command(
@@ -173,5 +175,7 @@ class Command(BaseCommand):
                             defaults={
                                 "status": "posted",
                                 "paused": person_month.person_year.person.paused,
+                                "invoice_no": f"{0:015d}{line_no:05d}",
                             },
                         )
+                        line_no += 1
