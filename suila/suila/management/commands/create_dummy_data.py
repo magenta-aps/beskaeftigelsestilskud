@@ -162,6 +162,8 @@ class Command(BaseCommand):
 
             last_month = get_last_month(datetime.date.today())
             month_before_last_month = get_last_month(last_month)
+            line_no = 1
+
             for date in dates:
 
                 call_command(
@@ -202,9 +204,11 @@ class Command(BaseCommand):
                                     "16202504080080400004&"
                                     "1700000000000027100004&40www.suila.gl takuuk"
                                 ),
+                                "invoice_no": f"{0:015d}{line_no:05d}",
                             },
                         )
                         person_month.benefit_transferred = (
                             person_month.benefit_calculated
                         )
                         person_month.save()
+                        line_no += 1
