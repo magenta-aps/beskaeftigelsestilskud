@@ -128,6 +128,10 @@ class JobDispatcher:
             if self.day >= self.prisme_date.day and not job_ran_this_month:
                 return True
 
+        elif name == ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS:
+            if self.job_ran_month(ManagementCommands.EXPORT_BENEFITS_TO_PRISME, month):
+                return True
+
         return False
 
     def call_job(self, name, *args, **kwargs):
