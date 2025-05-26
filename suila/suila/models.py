@@ -1052,9 +1052,27 @@ class BTaxPayment(PermissionsMixin, models.Model):
     Also note that the B tax paid may differ from the B tax that was charged.
     """
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                "cpr",
+                "amount_paid",
+                "amount_charged",
+                "date_charged",
+                "rate_number",
+                name="unique_btaxpayment",
+            )
+        ]
+
     person_month = models.ForeignKey(
         PersonMonth,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
+    cpr = models.CharField(
+        max_length=10,
         null=True,
         blank=True,
     )
