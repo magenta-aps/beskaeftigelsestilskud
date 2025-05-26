@@ -10,11 +10,7 @@ from django.core.management import call_command
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from suila.integrations.prisme.posting_status import (
-    PostingStatus,
-    PostingStatusImport,
-    PostingStatusImportMissingInvoiceNumber,
-)
+from suila.integrations.prisme.posting_status import PostingStatus, PostingStatusImport
 from suila.management.commands.load_prisme_benefits_posting_status import (
     Command as LoadPrismeBenefitsPostingStatusCommand,
 )
@@ -36,22 +32,12 @@ class TestLoadPrismeBenefitsPostingStatusCommand(SimpleTestCase):
         super().setUp()
         self.command = LoadPrismeBenefitsPostingStatusCommand()
 
-    def test_command_defaults(self):
-        """The default behavior is to use `PostingStatusImport`"""
+    def test_command_calls_import(self):
         with patch(
             "suila.management.commands.load_prisme_benefits_posting_status."
             "PostingStatusImport",
         ) as mock_import:
             call_command(self.command)
-            mock_import.assert_called_once()
-
-    def test_command_handles_unknown_invoice_number_arg(self):
-        """`--unknown-invoice-number` uses `PostingStatusImportMissingInvoiceNumber`"""
-        with patch(
-            "suila.management.commands.load_prisme_benefits_posting_status."
-            "PostingStatusImportMissingInvoiceNumber",
-        ) as mock_import:
-            call_command(self.command, unknown_invoice_number=True)
             mock_import.assert_called_once()
 
 
@@ -298,13 +284,17 @@ class TestPostingStatusImportMissingInvoiceNumber(PostingStatusImportTestCase):
             "02",
         )
 
+    @override_settings(PRISME={"machine_id": 1234, "posting_status_folder": "foo"})
     def test_import_posting_status_by_cpr_date_and_amount(self):
         # Arrange
-        instance = PostingStatusImportMissingInvoiceNumber()
+        instance = PostingStatusImport()
         # In this test, `_EXAMPLE_1` does not match any Prisme batch item (neither on
         # invoice number, nor CPR/date/amount) while `_EXAMPLE_3` matches on CPR/date/
         # amount, but not on invoice number.
-        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_3):
+        with self.mock_sftp_server_folder(
+            ("§38_01234_11-03-2025_000000.csv", _EXAMPLE_1),
+            ("§38_01234_11-03-2025_000001.csv", _EXAMPLE_3),
+        ):
             # Act
             instance.import_posting_status(MagicMock(), 1)
         # Assert: matching item is marked as failed
@@ -315,11 +305,11 @@ class TestPostingStatusImportMissingInvoiceNumber(PostingStatusImportTestCase):
         self.assertNotEqual(self._matching_item.posting_status_file.filename, "")
         self.assertEqual(self._matching_item.error_code, "RJ00")
         self.assertEqual(self._matching_item.error_description, "JKH Tesst")
-        # Assert: non-matching item is unchanged
+        # Assert: non-matching item is marked as posted
         self._non_matching_item.refresh_from_db()
         self.assertEqual(
-            self._non_matching_item.status, PrismeBatchItem.PostingStatus.Sent
+            self._non_matching_item.status, PrismeBatchItem.PostingStatus.Posted
         )
-        self.assertIsNone(self._non_matching_item.posting_status_file)
+        self.assertIsNotNone(self._non_matching_item.posting_status_file)
         self.assertEqual(self._non_matching_item.error_code, "")
         self.assertEqual(self._non_matching_item.error_description, "")
