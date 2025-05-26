@@ -129,8 +129,11 @@ class JobDispatcher:
                 return True
 
         elif name == ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS:
-            if self.job_ran_month(ManagementCommands.EXPORT_BENEFITS_TO_PRISME, month):
-                return True
+            if month is not None:
+                if self.job_ran_month(
+                    ManagementCommands.EXPORT_BENEFITS_TO_PRISME, month
+                ):
+                    return True
 
         return False
 
