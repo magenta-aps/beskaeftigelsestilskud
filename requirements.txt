@@ -77,3 +77,4 @@ datamodel-code-generator==0.26.2
 django_compressor==4.5.1
 django-libsass==0.9
 django-crispy-forms==2.3
+django-test-migrations==1.5.0

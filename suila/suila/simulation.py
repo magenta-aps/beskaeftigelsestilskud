@@ -212,7 +212,7 @@ class Simulation:
                         month=month
                     )
 
-                    payout = person_month.benefit_calculated or Decimal(0)
+                    payout = person_month.benefit_transferred or Decimal(0)
                     actual_year_benefit = person_month.actual_year_benefit
 
                     estimated_year_result = (

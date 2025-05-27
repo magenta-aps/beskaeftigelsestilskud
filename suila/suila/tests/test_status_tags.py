@@ -15,6 +15,7 @@ from suila.models import (
     TaxScope,
     Year,
 )
+from suila.templatetags.amount_tags import display_amount
 from suila.templatetags.status_tags import display_status, format_tax_scope
 
 
@@ -38,6 +39,7 @@ class TestDisplayStatus(TestCase):
         self.person_month.prismebatchitem = PrismeBatchItem(
             status=PrismeBatchItem.PostingStatus.Posted
         )
+        self.person_month.benefit_transferred = 123
         # Act
         result = display_status(self.person_month)
         # Assert
@@ -47,7 +49,7 @@ class TestDisplayStatus(TestCase):
         )
 
         # If the amount equals zero - we should always display "Beløb fastlagt"
-        self.person_month.benefit_calculated = 0
+        self.person_month.benefit_transferred = 0
         self.person_month.save()
 
         # Act
@@ -118,3 +120,26 @@ class TestDisplayTaxScope(TestCase):
         )
 
         self.assertEqual(format_tax_scope("foo"), "")
+
+
+class TestDisplayAmount(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        person, _ = Person.objects.update_or_create(cpr="0101011111")
+        year, _ = Year.objects.update_or_create(year=2020)
+        person_year, _ = PersonYear.objects.update_or_create(person=person, year=year)
+        cls.person_month, _ = PersonMonth.objects.update_or_create(
+            person_year=person_year,
+            month=1,
+            import_date=datetime.date(2020, 1, 1),
+            benefit_calculated=123,
+            benefit_transferred=456,
+        )
+
+    def test_amount_with_prisme_item(self):
+        self.assertEqual(display_amount(self.person_month)["value"], 123)
+        self.person_month.prismebatchitem = PrismeBatchItem(
+            status=PrismeBatchItem.PostingStatus.Posted
+        )
+        self.assertEqual(display_amount(self.person_month)["value"], 456)

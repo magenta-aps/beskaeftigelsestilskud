@@ -86,14 +86,14 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertIn(self.person1.cpr, df.index)
         self.assertIn(self.person2.cpr, df.index)
 
-        self.assertEqual(df.loc[self.person1.cpr, "benefit_calculated_month_1"], 1050)
-        self.assertEqual(df.loc[self.person1.cpr, "benefit_calculated_month_2"], 1050)
-        self.assertEqual(df.loc[self.person2.cpr, "benefit_calculated_month_1"], 1050)
-        self.assertEqual(df.loc[self.person2.cpr, "benefit_calculated_month_2"], 1050)
+        self.assertEqual(df.loc[self.person1.cpr, "benefit_transferred_month_1"], 1050)
+        self.assertEqual(df.loc[self.person1.cpr, "benefit_transferred_month_2"], 1050)
+        self.assertEqual(df.loc[self.person2.cpr, "benefit_transferred_month_1"], 1050)
+        self.assertEqual(df.loc[self.person2.cpr, "benefit_transferred_month_2"], 1050)
 
-        self.assertIn("benefit_calculated_month_0", df.columns)
-        self.assertIn("benefit_calculated_month_1", df.columns)
-        self.assertIn("benefit_calculated_month_2", df.columns)
+        self.assertIn("benefit_transferred_month_0", df.columns)
+        self.assertIn("benefit_transferred_month_1", df.columns)
+        self.assertIn("benefit_transferred_month_2", df.columns)
         self.assertEqual(len(df.columns), 3)
 
     def test_get_payout_df_for_person(self):
@@ -209,7 +209,7 @@ class CalculateBenefitTest(BaseTestCase):
                         month=month,
                         person_year__year__year=self.year.year,
                     )
-                    person_month.benefit_calculated = benefit_calculated
+                    person_month.benefit_transferred = benefit_calculated
                     person_month.save()
 
     def test_calculate_benefit_pause(self):
@@ -282,7 +282,7 @@ class CalculateBenefitTest(BaseTestCase):
                     month=month,
                     person_year__year__year=self.year.year,
                 )
-                person_month.benefit_calculated = benefit_calculated
+                person_month.benefit_transferred = benefit_calculated
                 person_month.save()
 
     def test_isnan(self):

@@ -7,6 +7,17 @@ from django.template.defaultfilters import register
 from django.utils.formats import number_format
 from django.utils.translation import gettext as _
 
+from suila.models import PersonMonth
+
+
+@register.inclusion_tag("suila/templatetags/amount.html")
+def display_amount(person_month: PersonMonth) -> dict:
+
+    if hasattr(person_month, "prismebatchitem"):
+        return {"value": person_month.benefit_transferred}
+    else:
+        return {"value": person_month.benefit_calculated}
+
 
 @register.filter
 def format_amount(
