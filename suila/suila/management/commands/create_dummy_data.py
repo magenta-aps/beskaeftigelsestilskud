@@ -187,6 +187,13 @@ class Command(BaseCommand):
                             defaults={
                                 "status": "posted",
                                 "paused": person_month.person_year.person.paused,
+                                "g68_content": (
+                                    "000G6800004011&020900&0300&"
+                                    "07000000000000000000&0800000031700&"
+                                    "09+&1002&1100000101001111&1220250414&"
+                                    "16202504080080400004&"
+                                    "1700000000000027100004&40www.suila.gl takuuk"
+                                ),
                             },
                         )
                         person_month.benefit_transferred = (
