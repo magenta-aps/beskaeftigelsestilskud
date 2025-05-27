@@ -174,14 +174,14 @@ class TestPostingStatusImportMissingInvoiceNumber(PostingStatusImportTestCase):
         # date and amount (but not on invoice number.) It should cause the import to
         # mark the Prisme batch item as failed.
         cls._matching_item = cls._add_prisme_batch_item(
-            cls.add_person_month(311270_0000, benefit_calculated=Decimal("1313.00")),
+            cls.add_person_month(311270_0000, benefit_transferred=Decimal("1313.00")),
             "01",
         )
         # This item does not match the data in the mocked "posting status" CSV file on
         # neither CPR, date and amount, nor on invoice number. It should be skipped by
         # the import.
         cls._non_matching_item = cls._add_prisme_batch_item(
-            cls.add_person_month(311270_0001, benefit_calculated=Decimal("1313.00")),
+            cls.add_person_month(311270_0001, benefit_transferred=Decimal("1313.00")),
             "02",
         )
 

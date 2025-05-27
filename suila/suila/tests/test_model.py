@@ -26,6 +26,8 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     PrismeAccountAlias,
+    PrismeBatch,
+    PrismeBatchItem,
     StandardWorkBenefitCalculationMethod,
     StatusChoices,
     Year,
@@ -197,6 +199,33 @@ class ModelTest(TestCase):
             catch_sale_factory_income=Decimal(10000),
         )
         cls.person_year.refresh_from_db()
+
+
+class TestPrismeBatchItem(ModelTest):
+    def test_amount_property(self):
+
+        prisme_batch = PrismeBatch.objects.create(
+            status="sent", export_date=date.today(), prefix=1
+        )
+
+        prisme_batch_item = PrismeBatchItem.objects.create(
+            person_month=self.month1,
+            prisme_batch=prisme_batch,
+            g68_content=(
+                "000G6800004011&020900&0300&"
+                "07000000000000000000&0800000031700&"
+                "09+&1002&1100000101001111&1220250414&"
+                "16202504080080400004&"
+                "1700000000000027100004&40www.suila.gl takuuk"
+            ),
+        )
+
+        self.assertEqual(prisme_batch_item.amount, 317)
+
+        with self.assertRaises(ValueError):
+            prisme_batch_item.g68_content = "foo"
+            prisme_batch_item.save()
+            prisme_batch_item.amount
 
 
 class TestStandardWorkBenefitCalculationMethod(ModelTest):

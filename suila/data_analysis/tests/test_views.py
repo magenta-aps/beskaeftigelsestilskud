@@ -389,6 +389,7 @@ class PersonYearEstimationSetupMixin:
             import_date=date(2020, 1, 1),
             actual_year_benefit=200,
             benefit_calculated=150,
+            benefit_transferred=150,
         )
         cls.income_report, _ = MonthlyIncomeReport.objects.get_or_create(
             person_month=cls.person_month,

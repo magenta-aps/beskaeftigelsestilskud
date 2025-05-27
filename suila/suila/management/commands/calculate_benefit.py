@@ -29,7 +29,7 @@ class Command(SuilaBaseCommand):
 
         cols_to_update = [
             "benefit_calculated",
-            "prior_benefit_calculated",
+            "prior_benefit_transferred",
             "estimated_year_benefit",
             "actual_year_benefit",
             "estimated_year_result",
