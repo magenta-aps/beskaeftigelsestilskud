@@ -17,12 +17,15 @@ class TestJobDispatcher(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        cls.jobs_runtime = datetime.datetime(2025, 1, 1)
+
         JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE,
             status=StatusChoices.SUCCEEDED,
             cpr_param="111",
             year_param=2025,
             month_param=1,
+            runtime=cls.jobs_runtime,
         )
         JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE,
@@ -30,6 +33,7 @@ class TestJobDispatcher(TestCase):
             cpr_param="222",
             year_param=2025,
             month_param=1,
+            runtime=cls.jobs_runtime,
         )
 
         JobLog.objects.create(
@@ -38,28 +42,19 @@ class TestJobDispatcher(TestCase):
             cpr_param="333",
             year_param=2025,
             month_param=1,
+            runtime=cls.jobs_runtime,
+        )
+
+        JobLog.objects.create(
+            name=ManagementCommands.CALCULATE_STABILITY_SCORE,
+            status=StatusChoices.SUCCEEDED,
+            cpr_param="3334",
+            year_param=2025,
+            month_param=2,
+            runtime=datetime.datetime(2025, 2, 1),
         )
 
         cls.job_dispatcher = JobDispatcher(year=2025, month=1, day=1)
-
-    def test_job_ran_this_year(self):
-        self.assertTrue(
-            self.job_dispatcher.job_ran_this_year(
-                ManagementCommands.CALCULATE_STABILITY_SCORE
-            )
-        )
-        self.assertFalse(
-            self.job_dispatcher.job_ran_this_year(ManagementCommands.LOAD_ESKAT)
-        )
-
-        next_year = (datetime.datetime.today().year + 1) % 12
-        future_job_dispatcher = JobDispatcher(year=next_year)
-
-        self.assertFalse(
-            future_job_dispatcher.job_ran_this_year(
-                ManagementCommands.CALCULATE_STABILITY_SCORE
-            )
-        )
 
     def test_check_dependencies(self):
         with self.assertRaises(DependenciesNotMet):
@@ -96,12 +91,49 @@ class TestJobDispatcher(TestCase):
             reraise=False,
         )
 
-    def allow_job(self, name, year, month, day, job_ran_this_month=False):
+    def test_job_ran_month(self):
+        # Check if a job ran a specific month + verify invalid params don't hinder this
+        self.assertTrue(
+            self.job_dispatcher.job_ran_month(
+                ManagementCommands.CALCULATE_STABILITY_SCORE,
+                year=2025,
+                month=2,
+                job_params={"invalid_attr": "blahblah"},
+            )
+        )
 
-        job_dispatcher = JobDispatcher(day=day, month=month, year=year)
+        # Verify that a valid joblog-field can be used in job_params
+        self.assertFalse(
+            self.job_dispatcher.job_ran_month(
+                ManagementCommands.CALCULATE_STABILITY_SCORE,
+                year=2025,
+                month=2,
+                job_params={"cpr_param": "112233"},
+            )
+        )
 
-        job_dispatcher.job_ran_this_month = MagicMock()
-        job_dispatcher.job_ran_this_month.return_value = job_ran_this_month
+    def test_job_ran_year(self):
+        # Check if a job ran a specific year + verify invalid params don't hinder this
+        self.assertTrue(
+            self.job_dispatcher.job_ran_year(
+                ManagementCommands.CALCULATE_STABILITY_SCORE,
+                self.job_dispatcher.year,
+                job_params={"invalid_attr": "thedarkside", "cpr_param": "3334"},
+            )
+        )
+
+        self.assertFalse(
+            self.job_dispatcher.job_ran_year(
+                ManagementCommands.LOAD_ESKAT, self.job_dispatcher.year
+            )
+        )
+
+        self.assertFalse(
+            self.job_dispatcher.job_ran_year(
+                ManagementCommands.CALCULATE_STABILITY_SCORE,
+                self.job_dispatcher.year + 1,
+            )
+        )
 
         return job_dispatcher.allow_job(name)
 
