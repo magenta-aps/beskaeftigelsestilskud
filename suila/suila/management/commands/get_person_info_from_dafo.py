@@ -116,6 +116,7 @@ class Command(SuilaBaseCommand):
         person.full_address = ", ".join(filter(not_empty, [address, post_code_city]))
         person.foreign_address = data.get("udlandsadresse")
         person.country_code = data.get("landekode")
+        person.cpr_status = data.get("statuskode")
 
         person.save()
 

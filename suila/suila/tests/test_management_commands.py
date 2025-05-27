@@ -143,6 +143,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
                 "annual_income_estimate": None,
+                "cpr_status": 1,
             },
         )
 
@@ -167,6 +168,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
                 "annual_income_estimate": None,
+                "cpr_status": 1,
             },
         )
 
@@ -191,6 +193,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
                 "annual_income_estimate": None,
+                "cpr_status": 70,
             },
         )
 
@@ -282,6 +285,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
                 "annual_income_estimate": None,
+                "cpr_status": 1,
             },
         )
 
@@ -313,6 +317,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
                 "annual_income_estimate": None,
+                "cpr_status": 70,
             },
         )
 
@@ -346,6 +351,7 @@ class GetPersonInfoFromDAFO(TestCase):
                 "welcome_letter": ANY,
                 "welcome_letter_sent_at": ANY,
                 "annual_income_estimate": None,
+                "cpr_status": 90,
             },
         )
 
@@ -407,6 +413,7 @@ class GetPersonInfoFromDAFO(TestCase):
                     "welcome_letter": ANY,
                     "welcome_letter_sent_at": ANY,
                     "annual_income_estimate": None,
+                    "cpr_status": 1,
                 },
                 {
                     "id": ANY,
@@ -427,6 +434,7 @@ class GetPersonInfoFromDAFO(TestCase):
                     "welcome_letter": ANY,
                     "welcome_letter_sent_at": ANY,
                     "annual_income_estimate": None,
+                    "cpr_status": 1,
                 },
             ],
         )
@@ -479,6 +487,7 @@ class GetPersonInfoFromDAFO(TestCase):
                     "postnummer": "8230",
                     "udlandsadresse": None,
                     "landekode": "DK",
+                    "statuskode": 1,  # 1="bopæl i Danmark"
                 }
             case "0102808877":
                 return {
@@ -490,6 +499,7 @@ class GetPersonInfoFromDAFO(TestCase):
                     "postnummer": "8230",
                     "udlandsadresse": None,
                     "landekode": "DK",
+                    "statuskode": 1,  # 1="bopæl i Danmark"
                 }
             case "0103907766":
                 return {
@@ -501,6 +511,7 @@ class GetPersonInfoFromDAFO(TestCase):
                     "postnummer": "8230",
                     "udlandsadresse": None,
                     "landekode": "DK",
+                    "statuskode": 70,  # 70="forsvundet"
                 }
             case "0104906655":
                 return {
@@ -512,4 +523,5 @@ class GetPersonInfoFromDAFO(TestCase):
                     "postnummer": "8230",
                     "udlandsadresse": None,
                     "landekode": "DK",
+                    "statuskode": 90,  # 90="død"
                 }
