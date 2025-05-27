@@ -51,6 +51,7 @@ class JobDispatcher:
             ManagementCommands.SEND_EBOKS: [
                 ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             ],
+            ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],
         }
 
     def job_ran_this_month(self, name):
@@ -129,11 +130,7 @@ class JobDispatcher:
                 return True
 
         elif name == ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS:
-            if month is not None:
-                if self.job_ran_month(
-                    ManagementCommands.EXPORT_BENEFITS_TO_PRISME, month
-                ):
-                    return True
+            return True
 
         return False
 

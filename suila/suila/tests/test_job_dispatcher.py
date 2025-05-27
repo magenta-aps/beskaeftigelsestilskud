@@ -43,7 +43,7 @@ class TestJobDispatcherCommands(TestCase):
             day=job_dispatcher_test_date.day,
         )
 
-        self.assertEqual(mock_call_command.call_count, 7)
+        self.assertEqual(mock_call_command.call_count, 8)
         mock_call_command.assert_has_calls(
             [
                 # "data load"-jobs
@@ -107,6 +107,15 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                 ),
+                # Posting status retrieval
+                call(
+                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+                    year=job_dispatcher_test_date.year,
+                    month=job_dispatcher_test_date.month,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
             ]
         )
 
@@ -122,7 +131,7 @@ class TestJobDispatcherCommands(TestCase):
             day=job_dispatcher_test_date.day,
         )
 
-        self.assertEqual(mock_call_command.call_count, 8)
+        self.assertEqual(mock_call_command.call_count, 9)
         mock_call_command.assert_has_calls(
             [
                 # "data load"-jobs
@@ -196,6 +205,15 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                 ),
+                # Posting status retrieval
+                call(
+                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+                    year=job_dispatcher_test_date.year,
+                    month=job_dispatcher_test_date.month,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
             ]
         )
 
@@ -236,7 +254,7 @@ class TestJobDispatcherCommands(TestCase):
             day=job_dispatcher_test_date.day,
         )
 
-        self.assertEqual(mock_call_command.call_count, 7)
+        self.assertEqual(mock_call_command.call_count, 8)
         mock_call_command.assert_has_calls(
             [
                 # "data load"-jobs
@@ -296,6 +314,15 @@ class TestJobDispatcherCommands(TestCase):
                     ManagementCommands.ESTIMATE_INCOME,
                     year=job_dispatcher_test_date.year,
                     cpr=None,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
+                # Posting status retrieval
+                call(
+                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+                    year=job_dispatcher_test_date.year,
+                    month=job_dispatcher_test_date.month,
                     verbosity=1,
                     traceback=False,
                     reraise=False,
@@ -384,6 +411,15 @@ class TestJobDispatcherCommands(TestCase):
                     ManagementCommands.ESTIMATE_INCOME,
                     year=job_dispatcher_test_date.year,
                     cpr=None,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                ),
+                # Posting status retrieval
+                call(
+                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+                    year=job_dispatcher_test_date.year,
+                    month=job_dispatcher_test_date.month,
                     verbosity=1,
                     traceback=False,
                     reraise=False,
