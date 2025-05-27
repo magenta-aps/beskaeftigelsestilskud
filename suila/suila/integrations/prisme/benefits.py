@@ -273,7 +273,6 @@ class BatchExport:
             )
             .annotate(
                 cpr=F("person_month__person_year__person__cpr"),
-                amount_on_person_month=F("person_month__benefit_transferred"),
             )
         )
         return prisme_batch_items
@@ -292,7 +291,7 @@ class BatchExport:
                     {
                         "filnavn": self.get_destination_filename(row.prisme_batch),
                         "cpr": row.cpr,
-                        "beløb": row.amount_on_person_month,
+                        "beløb": row.amount,
                     }
                     for row in self.get_control_list_data()
                 ]
