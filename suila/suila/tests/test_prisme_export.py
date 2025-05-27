@@ -478,7 +478,7 @@ class TestBatchExport(TestCase):
                     {
                         "filnavn": "SUILA_G68_export_31_2025_01.g68",
                         "cpr": "3101000000",
-                        "beløb": "1000",
+                        "beløb": "1000.00",
                     }
                 ],
             )
