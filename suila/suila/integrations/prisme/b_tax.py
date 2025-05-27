@@ -151,11 +151,13 @@ class BTaxPaymentImport(SFTPImport):
             ["has_paid_b_tax"],
             batch_size=1000,
         )
-        # Create `BTaxPayment` objects for input rows in `unmatched`
+
+        # Create `BTaxPayment` objects for input rows in `person_months`
         objs: list[BTaxPaymentModel] = [
             BTaxPaymentModel(
                 filename=filename,
                 person_month=person_month,
+                cpr=row.cpr,
                 amount_paid=abs(row.amount_paid),  # input value is always negative
                 amount_charged=row.amount_charged,
                 date_charged=row.date_charged,
@@ -164,6 +166,26 @@ class BTaxPaymentImport(SFTPImport):
             )
             for row, person_month in person_months
         ]
-        BTaxPaymentModel.objects.bulk_create(objs)
+        BTaxPaymentModel.objects.bulk_create(
+            objs,
+            update_conflicts=True,
+            update_fields=(
+                "filename",
+                "person_month",
+                "amount_paid",
+                "amount_charged",
+                "date_charged",
+                "rate_number",
+                "serial_number",
+            ),
+            unique_fields=(
+                "cpr",
+                "amount_paid",
+                "amount_charged",
+                "date_charged",
+                "rate_number",
+            ),
+            batch_size=1000,
+        )
 
         return objs
