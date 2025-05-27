@@ -389,6 +389,7 @@ class Person(PermissionsMixin, models.Model):
     country_code = models.CharField(blank=True, null=True, max_length=2)
     civil_state = models.TextField(blank=True, null=True)
     location_code = models.TextField(blank=True, null=True)
+    cpr_status = models.PositiveSmallIntegerField(blank=True, null=True)
 
     welcome_letter = models.ForeignKey(
         "SuilaEboksMessage",
