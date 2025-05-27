@@ -126,9 +126,6 @@ class JobDispatcher:
             ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],
         }
 
-    def job_ran_this_month(self, name, type_param: Optional[str] = None):
-        return self.job_ran_month(name, self.year, self.month, type_param)
-
     def job_ran_month(
         self,
         name: str,
@@ -171,10 +168,8 @@ class JobDispatcher:
         return JobLog.objects.filter(Q(runtime__year=year), **filters_kwargs).exists()
 
     def check_dependencies(self, name):
-        dependencies = self.dependencies[name]
-
-        for dependency in dependencies:
-            if not self.job_ran_month(dependency, self.now.year, self.now.month):
+        for dependency in self.dependencies[name]:
+            if not self.job_ran_month(dependency, self.year, self.month):
                 raise DependenciesNotMet(name, dependency)
 
     def allow_job(self, name, *args, **kwargs) -> bool:
@@ -183,10 +178,10 @@ class JobDispatcher:
         """
         # Gather job-params
         year = kwargs.get("year", None)
-        year = year if year is not None else self.now.year
+        year = year if year is not None else self.year
 
         month = kwargs.get("month", None)
-        month = month if month is not None else self.now.month
+        month = month if month is not None else self.month
 
         type_param = kwargs.get("type", None)
 
@@ -267,7 +262,6 @@ class JobDispatcher:
         month: Optional[int] = None,
         type_param: Optional[str] = None,
     ):
-        # month_to_check = month if month else self.now.month
         job_ran_this_month = self.job_ran_month(
             job_name,
             year,
