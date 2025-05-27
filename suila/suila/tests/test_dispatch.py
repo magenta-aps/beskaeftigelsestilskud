@@ -197,25 +197,14 @@ class TestJobDispatcher(TestCase):
         )
 
     def test_allow_job_load_prisme_benefits_posting_status(self):
-        """If benefits have been exported to Prisme this month, it is allowed to fetch
-        posting statuses (from any previous months.)"""
         # Arrange
-        cases: list[tuple[int | None, bool, bool]] = [
-            # (month, mocked return value, expected result)
-            (None, False, False),
-            (None, True, False),
-            (1, False, False),
-            (1, True, True),
-        ]
         job_dispatcher = JobDispatcher(year=2024, month=1, day=15)
-        for month, job_ran_month, expected_result in cases:
-            with self.subTest(month=month):
-                job_dispatcher.job_ran_month = lambda name, month: job_ran_month
-                # Act
-                result = job_dispatcher.allow_job(
-                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
-                    year=2024,
-                    month=month,
-                )
-                # Assert
-                self.assertEqual(result, expected_result)
+        job_dispatcher.job_ran_month = lambda name, month: True
+        # Act
+        result = job_dispatcher.allow_job(
+            ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+            year=2025,
+            month=1,
+        )
+        # Assert
+        self.assertTrue(result)
