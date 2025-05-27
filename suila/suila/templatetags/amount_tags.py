@@ -14,9 +14,9 @@ from suila.models import PersonMonth
 def display_amount(person_month: PersonMonth) -> dict:
 
     if hasattr(person_month, "prismebatchitem"):
-        return {"value": format_amount(person_month.benefit_transferred)}
+        return {"value": person_month.benefit_transferred}
     else:
-        return {"value": format_amount(person_month.benefit_calculated)}
+        return {"value": person_month.benefit_calculated}
 
 
 @register.filter
