@@ -194,6 +194,7 @@ class Command(BaseCommand):
                         PrismeBatchItem.objects.update_or_create(
                             prisme_batch=prisme_batch,
                             person_month=person_month,
+                            invoice_no=f"{0:015d}{line_no:05d}",
                             defaults={
                                 "status": "posted",
                                 "paused": person_month.person_year.person.paused,
@@ -204,7 +205,6 @@ class Command(BaseCommand):
                                     "16202504080080400004&"
                                     "1700000000000027100004&40www.suila.gl takuuk"
                                 ),
-                                "invoice_no": f"{0:015d}{line_no:05d}",
                             },
                         )
                         person_month.benefit_transferred = (
