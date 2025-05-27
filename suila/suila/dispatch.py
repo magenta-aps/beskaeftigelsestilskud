@@ -24,14 +24,14 @@ class JobDispatcher:
         # "year"-Jobs
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
             "type": "yearly",
-            "validator": lambda now, year, month: (
-                now.month == 3 and now.day < get_calculation_date(year, month).day
+            "validator": lambda year, month, day: (
+                month == 3 and day < get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: {
             "type": "yearly",
-            "validator": lambda now, year, month: (
-                now.month == 3 and now.day < get_calculation_date(year, month).day
+            "validator": lambda year, month, day: (
+                month == 3 and day < get_calculation_date(year, month).day
             ),
         },
         # "load"-jobs
@@ -240,7 +240,7 @@ class JobDispatcher:
         if job_validator is None:
             return True
 
-        return job_validator(self.now, self.year, self.month)
+        return job_validator(year, self.month, self.day)
 
     def _allow_job_monthly(
         self,
