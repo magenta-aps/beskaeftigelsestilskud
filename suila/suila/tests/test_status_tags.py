@@ -138,8 +138,8 @@ class TestDisplayAmount(TestCase):
         )
 
     def test_amount_with_prisme_item(self):
-        self.assertEqual(display_amount(self.person_month)["value"], "123 kr.")
+        self.assertEqual(display_amount(self.person_month)["value"], 123)
         self.person_month.prismebatchitem = PrismeBatchItem(
             status=PrismeBatchItem.PostingStatus.Posted
         )
-        self.assertEqual(display_amount(self.person_month)["value"], "456 kr.")
+        self.assertEqual(display_amount(self.person_month)["value"], 456)
