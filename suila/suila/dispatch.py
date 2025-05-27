@@ -25,67 +25,71 @@ class JobDispatcher:
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
             "type": "yearly",
             "validator": lambda year, month, day: (
-                month == 3 and day < get_calculation_date(year, month).day
+                # Allowed to run the day after SEND_EBOKS in february
+                month == 2
+                and day >= get_eboks_date(year, month).day + 1
             ),
         },
         ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: {
             "type": "yearly",
             "validator": lambda year, month, day: (
-                month == 3 and day < get_calculation_date(year, month).day
+                # Allowed to run the day after SEND_EBOKS in february
+                month == 2
+                and day >= get_eboks_date(year, month).day + 1
             ),
         },
         # "load"-jobs
         ManagementCommands.LOAD_ESKAT: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
-                get_calculation_date(year, month).day <= now.day
+            "validator": lambda year, month, day: (
+                day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.LOAD_PRISME_B_TAX: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
-                get_calculation_date(year, month).day <= now.day
+            "validator": lambda year, month, day: (
+                day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.IMPORT_U1A_DATA: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
-                get_calculation_date(year, month).day <= now.day
+            "validator": lambda year, month, day: (
+                day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.GET_PERSON_INFO_FROM_DAFO: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
-                get_calculation_date(year, month).day <= now.day
+            "validator": lambda year, month, day: (
+                day >= get_calculation_date(year, month).day
             ),
         },
         # "estimation"-jobs
         ManagementCommands.ESTIMATE_INCOME: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
-                get_calculation_date(year, month).day <= now.day
+            "validator": lambda year, month, day: (
+                day >= get_calculation_date(year, month).day
             ),
         },
         # "calculation"-jobs
         ManagementCommands.CALCULATE_BENEFIT: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
+            "validator": lambda year, month, day: (
                 get_calculation_date(year, month).day
-                <= now.day
+                <= day
                 < get_prisme_date(year, month).day
             ),
         },
         # "export"-jobs
         ManagementCommands.EXPORT_BENEFITS_TO_PRISME: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
-                now.day >= get_prisme_date(year, month).day
+            "validator": lambda year, month, day: (
+                day >= get_prisme_date(year, month).day
             ),
         },
         ManagementCommands.SEND_EBOKS: {
             "type": "monthly",
-            "validator": lambda now, year, month: (
-                now.day >= get_eboks_date(year, month).day
+            "validator": lambda year, month, day: (
+                day >= get_eboks_date(year, month).day
             ),
         },
     }
@@ -129,7 +133,7 @@ class JobDispatcher:
     def job_ran_month(
         self,
         name: str,
-        year: str,
+        year: int,
         month: int,
         job_params: Optional[Dict[str, str]] = None,
     ):
@@ -169,38 +173,21 @@ class JobDispatcher:
             if not self.job_ran_month(dependency, self.year, self.month):
                 raise DependenciesNotMet(name, dependency)
 
-    def allow_job(self, name, *args, **kwargs) -> bool:
+    def allow_job(self, name, job_params: Optional[Dict[str, str]] = None) -> bool:
         """
         Determine whether to run a job or not
         """
-        # Gather job-params
-        year = kwargs.get("year", None)
-        year = year if year is not None else self.year
-
-        month = kwargs.get("month", None)
-        month = month if month is not None else self.month
-
-        type_param = kwargs.get("type", None)
-
-        # Job-param "special cases"
-        match (name):
-            case ManagementCommands.CALCULATE_STABILITY_SCORE:
-                year = args[0]
-            case ManagementCommands.LOAD_ESKAT:
-                type_param = args[1]
-
-        # Get Job config
-        job_config = self.jobs.get(name, None)
-        if not job_config:
+        if name not in self.jobs:
             return False
 
         # Handle job based on type
+        job_config = self.jobs[name]
         match (job_config["type"]):
             case self.JOB_TYPE_YEARLY:
-                return self._allow_job_yearly(name, job_config, year)
+                return self._allow_job_yearly(name, job_config, self.year, job_params)
             case self.JOB_TYPE_MONTHLY:
                 return self._allow_job_monthly(
-                    name, job_config, year, month, type_param
+                    name, job_config, self.year, self.month, job_params
                 )
 
         # Default to "False" if the job-type is inknown
@@ -208,9 +195,28 @@ class JobDispatcher:
         return False
 
     def call_job(self, name, *args, **kwargs):
-        if not self.allow_job(name, *args, **kwargs):
+        # Gather job_params
+        job_params = {}
+        if "year" in kwargs:
+            job_params["year_param"] = kwargs["year"]
+        if "month" in kwargs:
+            job_params["month_param"] = kwargs["month"]
+        if "type" in kwargs:
+            job_params["type_param"] = kwargs["type"]
+
+        match (name):
+            case ManagementCommands.CALCULATE_STABILITY_SCORE:
+                job_params["year_param"] = args[0]
+            case ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE:
+                job_params["year_param"] = args[0]
+            case ManagementCommands.LOAD_ESKAT:
+                job_params["type_param"] = args[1]
+
+        # Check if the job is allowed to be called
+        if not self.allow_job(name, job_params):
             return
 
+        # If allowed, check if job dependencies are met
         try:
             self.check_dependencies(name)
         except DependenciesNotMet:
@@ -229,11 +235,14 @@ class JobDispatcher:
                 **kwargs,
             )
 
-    def _allow_job_yearly(self, job_name: str, job_config: Dict, year: int):
-        job_ran_this_year = self.job_ran_year(job_name, year)
-
-        # Only allow yearly jobs to run once a year
-        if job_ran_this_year:
+    def _allow_job_yearly(
+        self,
+        job_name: str,
+        job_config: Dict,
+        year: int,
+        job_params: Optional[Dict[str, str]] = None,
+    ):
+        if self.job_ran_year(job_name, year, job_params):
             return False
 
         job_validator = job_config.get("validator", None)
@@ -248,22 +257,13 @@ class JobDispatcher:
         job_config: Dict,
         year: int,
         month: int,
-        type_param: Optional[str] = None,
+        job_params: Optional[Dict[str, str]] = None,
     ):
-        job_ran_this_month = self.job_ran_month(
-            job_name,
-            year,
-            month,
-            job_params={
-                "type_param": type_param,
-            },
-        )
-
-        if job_ran_this_month:
+        if self.job_ran_month(job_name, year, month, job_params):
             return False
 
         job_validator = job_config.get("validator", None)
         if job_validator is None:
             return True
 
-        return job_validator(self.now, self.year, self.month)
+        return job_validator(year, month, self.day)
