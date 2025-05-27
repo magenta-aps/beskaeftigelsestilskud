@@ -148,9 +148,6 @@ class JobDispatcher:
             Q(runtime__year=year), Q(runtime__month=month), **filters_kwargs
         ).exists()
 
-    def job_ran_this_year(self, name):
-        return self.job_ran_year(name, self.year)
-
     def job_ran_year(
         self, name: str, year: int, job_params: Optional[Dict[str, str]] = None
     ):
@@ -232,17 +229,8 @@ class JobDispatcher:
                 **kwargs,
             )
 
-    def _allow_job_yearly(
-        self,
-        job_name: str,
-        job_config: Dict,
-        year: Optional[int] = None,
-    ):
-        job_ran_this_year = (
-            self.job_ran_this_year(job_name)
-            if not year
-            else self.job_ran_year(job_name, year)
-        )
+    def _allow_job_yearly(self, job_name: str, job_config: Dict, year: int):
+        job_ran_this_year = self.job_ran_year(job_name, year)
 
         # Only allow yearly jobs to run once a year
         if job_ran_this_year:
@@ -258,8 +246,8 @@ class JobDispatcher:
         self,
         job_name: str,
         job_config: Dict,
-        year: Optional[int] = None,
-        month: Optional[int] = None,
+        year: int,
+        month: int,
         type_param: Optional[str] = None,
     ):
         job_ran_this_month = self.job_ran_month(
