@@ -1,18 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-# from django.test import TestCase
 from datetime import date
 
-# from suila.models import (
-#     PersonYear,
-#     PersonMonth,
-#     Year,
-#     Person,
-#     PrismeBatch,
-#     PrismeBatchItem,
-# )
-# from django_test_migrations.migrator import Migrator
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
 
