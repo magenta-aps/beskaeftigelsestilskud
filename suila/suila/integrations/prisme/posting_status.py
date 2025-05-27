@@ -173,7 +173,7 @@ class PostingStatusImport(SFTPImport):
                         person_month__person_year__person__cpr=f"{row.cpr:010d}",
                         person_month__person_year__year__year=issue_date.year,
                         person_month__month=issue_date.month,
-                        person_month__benefit_calculated=row.amount,
+                        person_month__benefit_transferred=row.amount,
                     )
                 except PrismeBatchItem.DoesNotExist:
                     logger.debug(
