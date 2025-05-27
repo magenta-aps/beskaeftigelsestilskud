@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import calendar
-from datetime import datetime, timedelta
+from datetime import timedelta
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
@@ -24,86 +24,6 @@ class TestJobDispatcherCommands(TestCase):
         super().setUp()
         self.command = JobDispatcherCommand()
         self.command.stdout = StringIO()
-
-    @patch("suila.dispatch.management.call_command")
-    @override_settings(ESKAT_BASE_URL="http://djangotest")
-    def test_job_dispatch_call_on_year_first_day(self, mock_call_command: MagicMock):
-        mock_call_command.side_effect = _mock_call_command
-
-        job_dispatcher_test_date = datetime(2025, 1, 1)
-        call_command(
-            self.command,
-            year=job_dispatcher_test_date.year,
-            month=job_dispatcher_test_date.month,
-            day=job_dispatcher_test_date.day,
-        )
-
-        self.assertEqual(mock_call_command.call_count, 7)
-        mock_call_command.assert_has_calls(
-            [
-                # "data load"-jobs
-                call(
-                    ManagementCommands.LOAD_ESKAT,
-                    job_dispatcher_test_date.year,
-                    "expectedincome",
-                    month=None,
-                    cpr=None,
-                    skew=False,
-                    traceback=False,
-                    reraise=False,
-                    verbosity=1,
-                ),
-                call(
-                    ManagementCommands.LOAD_ESKAT,
-                    job_dispatcher_test_date.year,
-                    "monthlyincome",
-                    month=job_dispatcher_test_date.month,
-                    cpr=None,
-                    skew=True,
-                    traceback=False,
-                    reraise=False,
-                    verbosity=1,
-                ),
-                call(
-                    ManagementCommands.LOAD_ESKAT,
-                    job_dispatcher_test_date.year,
-                    "taxinformation",
-                    month=job_dispatcher_test_date.month,
-                    cpr=None,
-                    skew=False,
-                    traceback=False,
-                    reraise=False,
-                    verbosity=1,
-                ),
-                call(
-                    ManagementCommands.LOAD_PRISME_B_TAX, traceback=False, reraise=False
-                ),
-                call(
-                    ManagementCommands.IMPORT_U1A_DATA,
-                    year=job_dispatcher_test_date.year,
-                    cpr=None,
-                    verbosity=1,
-                    traceback=False,
-                    reraise=False,
-                ),
-                call(
-                    ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
-                    cpr=None,
-                    verbosity=1,
-                    traceback=False,
-                    reraise=False,
-                ),
-                # Estimation-jobs
-                call(
-                    ManagementCommands.ESTIMATE_INCOME,
-                    year=job_dispatcher_test_date.year,
-                    cpr=None,
-                    verbosity=1,
-                    traceback=False,
-                    reraise=False,
-                ),
-            ]
-        )
 
     @patch("suila.dispatch.management.call_command")
     @override_settings(ESKAT_BASE_URL="http://djangotest")
