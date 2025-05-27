@@ -376,7 +376,8 @@ class TestBatchExport(TestCase):
         # Arrange
         # Valid CPR passing the modulus-11 test was generated using
         # https://janosh.neocities.org/javascript-personal-id-check-and-generator/
-        self._add_person_month(3101000000, Decimal("1000"))
+        person_month = self._add_person_month(3101000000, Decimal("1000"))
+        self.assertEqual(person_month.benefit_transferred, 0)
         export = self._get_instance()
         stdout = Mock()
         with patch(
@@ -396,6 +397,8 @@ class TestBatchExport(TestCase):
                 # Single file in "normal" folder
                 [("g68g69", "SUILA_G68_export_31_2025_01.g68")],
             )
+        person_month.refresh_from_db()
+        self.assertGreater(person_month.benefit_transferred, 0)
 
     def test_export_batches_normal_and_non_mod11(self):
         # Arrange

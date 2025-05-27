@@ -16,6 +16,7 @@ from typing import Iterable, List, Sequence, Tuple
 
 import pandas as pd
 import pytz
+from common.model_utils import get_amount_from_g68_content
 from common.models import User
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -637,6 +638,13 @@ class PersonMonth(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
+    benefit_transferred = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default=0,
+    )
     estimated_year_benefit = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -649,7 +657,7 @@ class PersonMonth(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
-    prior_benefit_calculated = models.DecimalField(
+    prior_benefit_transferred = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
@@ -1475,6 +1483,10 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
         null=False,
         blank=False,
     )
+
+    @property
+    def amount(self):
+        return get_amount_from_g68_content(self.g68_content)
 
 
 class AnnualIncome(PermissionsMixin, models.Model):

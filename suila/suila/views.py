@@ -188,7 +188,7 @@ class PersonMonthTable(Table):
     )
     benefit = TemplateColumn(
         template_name="suila/table_columns/amount.html",
-        accessor=Accessor("benefit_calculated"),
+        accessor=Accessor("benefit_transferred"),
         verbose_name=_("Forventet beløb til udbetaling"),
     )
     status = TemplateColumn(

@@ -38,6 +38,7 @@ class TestDisplayStatus(TestCase):
         self.person_month.prismebatchitem = PrismeBatchItem(
             status=PrismeBatchItem.PostingStatus.Posted
         )
+        self.person_month.benefit_transferred = 123
         # Act
         result = display_status(self.person_month)
         # Assert
@@ -47,7 +48,7 @@ class TestDisplayStatus(TestCase):
         )
 
         # If the amount equals zero - we should always display "Beløb fastlagt"
-        self.person_month.benefit_calculated = 0
+        self.person_month.benefit_transferred = 0
         self.person_month.save()
 
         # Act

@@ -193,6 +193,7 @@ class TestImportU1ADataCommand(TestCase):
                 "actual_year_benefit": None,
                 "amount_sum": Decimal("1337.00"),
                 "benefit_calculated": None,
+                "benefit_transferred": Decimal("0.00"),
                 "estimated_year_benefit": None,
                 "estimated_year_result": None,
                 "fully_tax_liable": None,
@@ -201,7 +202,7 @@ class TestImportU1ADataCommand(TestCase):
                 "municipality_code": None,
                 "municipality_name": None,
                 "person_year": person_year.id,
-                "prior_benefit_calculated": None,
+                "prior_benefit_transferred": None,
             },
         )
 
@@ -335,13 +336,14 @@ class TestImportU1ADataCommand(TestCase):
                 "actual_year_benefit": None,
                 "amount_sum": Decimal("2571.00"),
                 "benefit_calculated": None,
+                "benefit_transferred": Decimal("0.00"),
                 "estimated_year_benefit": None,
                 "estimated_year_result": None,
                 "fully_tax_liable": None,
                 "has_paid_b_tax": False,
                 "municipality_code": None,
                 "municipality_name": None,
-                "prior_benefit_calculated": None,
+                "prior_benefit_transferred": None,
             },
         )
 

@@ -189,3 +189,7 @@ class Command(BaseCommand):
                                 "paused": person_month.person_year.person.paused,
                             },
                         )
+                        person_month.benefit_transferred = (
+                            person_month.benefit_calculated
+                        )
+                        person_month.save()

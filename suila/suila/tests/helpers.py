@@ -24,6 +24,7 @@ class ImportTestCase(TestCase):
         year: int = 2020,
         month: int = 1,
         benefit_calculated: Decimal = Decimal("1000.00"),
+        benefit_transferred: Decimal = Decimal("1000.00"),
     ) -> PersonMonth:
         year, _ = Year.objects.get_or_create(year=year)
         person, _ = Person.objects.get_or_create(cpr=cpr)
@@ -33,6 +34,7 @@ class ImportTestCase(TestCase):
             month=month,
             import_date=date.today(),
             benefit_calculated=benefit_calculated,
+            benefit_transferred=benefit_transferred,
         )
         return person_month
 

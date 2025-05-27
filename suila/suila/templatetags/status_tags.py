@@ -34,7 +34,7 @@ def display_status(person_month: PersonMonth) -> dict:
     else:
         if paused:
             return {"name": _("Udbetalingspause"), "established": True}
-        elif person_month.benefit_calculated == 0:
+        elif person_month.benefit_transferred == 0:
             return {"name": _("Beløb fastlagt"), "established": True}
         else:
             return {"name": posting_status.label, "established": True}
