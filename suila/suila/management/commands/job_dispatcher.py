@@ -89,7 +89,9 @@ class Command(SuilaBaseCommand):
             ManagementCommands.CALCULATE_STABILITY_SCORE, year - 1, verbosity=verbosity
         )
         job_dispatcher.call_job(
-            ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE, year, verbosity=verbosity
+            ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
+            year=year,
+            verbosity=verbosity,
         )
 
         # Call "load_eskat" for 3 different "types"

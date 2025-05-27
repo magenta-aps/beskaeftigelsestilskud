@@ -401,7 +401,7 @@ class TestJobDispatcherCommands(TestCase):
                     ),
                     call(
                         ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
-                        job_dispatcher_test_date.year,
+                        year=job_dispatcher_test_date.year,
                         verbosity=1,
                         traceback=False,
                         reraise=False,
@@ -470,7 +470,6 @@ def _mock_call_command(command_name, *args, **options):
     if command_name in [
         ManagementCommands.LOAD_ESKAT,
         ManagementCommands.CALCULATE_STABILITY_SCORE,
-        ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
     ]:
         options["year"] = args[0]
 
