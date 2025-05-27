@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import calendar
-from datetime import datetime, timedelta
+from datetime import timedelta
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
