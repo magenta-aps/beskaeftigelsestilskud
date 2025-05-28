@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 def populate_benefit_transferred(apps, schema_editor):
-    model = apps.get_model("suila", "PersonMonth")
+    PersonMonth = apps.get_model("suila", "PersonMonth")
     logger.info("Populating person_month.benefit_transferred")
 
-    person_months = model.objects.filter(
+    person_months = PersonMonth.objects.filter(
         person_year__year__year=2025,
         prismebatchitem__isnull=False,
     ).select_related("prismebatchitem")
@@ -20,6 +20,7 @@ def populate_benefit_transferred(apps, schema_editor):
     total_person_months = person_months.count()
 
     with transaction.atomic():
+        person_months_to_update = []
         for counter, person_month in enumerate(person_months, start=1):
             logger.info(f"Processing person_month {counter}/{total_person_months}")
 
@@ -28,7 +29,13 @@ def populate_benefit_transferred(apps, schema_editor):
             person_month.benefit_transferred = get_amount_from_g68_content(
                 person_month.prismebatchitem.g68_content
             )
-            person_month.save(update_fields=["benefit_transferred"])
+            person_months_to_update.append(person_month)
+
+        PersonMonth.objects.bulk_update(
+            person_months_to_update,
+            ["benefit_transferred"],
+            batch_size=1000,
+        )
 
 
 def populate_prior_benefit_transferred(apps, schema_editor):
