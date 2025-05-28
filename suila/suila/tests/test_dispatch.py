@@ -74,18 +74,16 @@ class TestJobDispatcher(TestCase):
         )
 
     @mock.patch("suila.dispatch.management")
-    def test_call_job(self, management_mock):
-
+    def test_call_job(self, management_mock: MagicMock):
         self.job_dispatcher.check_dependencies = MagicMock()
         self.job_dispatcher.allow_job = MagicMock()
-        self.job_dispatcher.allow_job.return_value = False
 
+        self.job_dispatcher.allow_job.return_value = False
         self.job_dispatcher.call_job("foo", "die", mucki="bar")
-        management_mock.assert_not_called()
+        management_mock.call_command.assert_not_called()
 
         self.job_dispatcher.allow_job.return_value = True
         self.job_dispatcher.call_job("foo", "die", mucki="bar")
-
         management_mock.call_command.assert_called_once_with(
             "foo",
             "die",
@@ -93,6 +91,14 @@ class TestJobDispatcher(TestCase):
             traceback=False,
             reraise=False,
         )
+        management_mock.call_command.reset_mock()
+
+        # Cover where the "DependenciesNotMet" exception is raised
+        self.job_dispatcher.check_dependencies.side_effect = DependenciesNotMet(
+            ManagementCommands.ESTIMATE_INCOME, ManagementCommands.LOAD_ESKAT
+        )
+        self.job_dispatcher.call_job(ManagementCommands.ESTIMATE_INCOME, year=2025)
+        management_mock.call_command.assert_not_called()
 
     def test_job_ran_month(self):
         # Check if a job ran a specific month + verify invalid params don't hinder this
