@@ -446,7 +446,7 @@ class TestJobDispatcherCommands(TestCase):
             ),
             call(
                 ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
-                test_date.year,
+                year=test_date.year,
                 verbosity=1,
                 traceback=False,
                 reraise=False,
