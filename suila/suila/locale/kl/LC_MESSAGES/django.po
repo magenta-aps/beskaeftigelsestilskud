@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-20 07:03-0100\n"
+"POT-Creation-Date: 2025-05-28 07:12-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1337,10 +1337,6 @@ msgstr "Tunniunneartussatut naatsorsuutaagallartut"
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Beløb fastlagt"
 msgstr "Tunniunneqartussat aalajangerneqarsimapput"
-
-#: suila/templatetags/status_tags.py
-msgid "Afsluttet"
-msgstr ""
 
 #: suila/templatetags/status_tags.py
 msgid "Fuld skattepligtig"
