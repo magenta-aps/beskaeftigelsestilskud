@@ -17,42 +17,45 @@ class TestJobDispatcher(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.jobs_runtime = datetime.datetime(2025, 1, 1)
-
-        JobLog.objects.create(
+        cls.joblog_succeeded_1 = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE,
             status=StatusChoices.SUCCEEDED,
             cpr_param="111",
             year_param=2025,
             month_param=1,
-            runtime=cls.jobs_runtime,
         )
-        JobLog.objects.create(
+        cls.joblog_succeeded_1.runtime = datetime.datetime(2025, 1, 1)
+        cls.joblog_succeeded_1.save()
+
+        cls.joblog_succeeded_2 = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE,
             status=StatusChoices.SUCCEEDED,
             cpr_param="222",
             year_param=2025,
             month_param=1,
-            runtime=cls.jobs_runtime,
         )
+        cls.joblog_succeeded_2.runtime = datetime.datetime(2025, 1, 1)
+        cls.joblog_succeeded_2.save()
 
-        JobLog.objects.create(
+        cls.joblog_failed_1 = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE,
             status=StatusChoices.FAILED,
             cpr_param="333",
             year_param=2025,
             month_param=1,
-            runtime=cls.jobs_runtime,
         )
+        cls.joblog_failed_1.runtime = datetime.datetime(2025, 1, 1)
+        cls.joblog_failed_1.save()
 
-        JobLog.objects.create(
+        cls.joblog_succeeded_3 = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE,
             status=StatusChoices.SUCCEEDED,
             cpr_param="3334",
             year_param=2025,
             month_param=2,
-            runtime=datetime.datetime(2025, 2, 1),
         )
+        cls.joblog_succeeded_3.runtime = datetime.datetime(2025, 2, 1)
+        cls.joblog_succeeded_3.save()
 
         cls.job_dispatcher = JobDispatcher(year=2025, month=1, day=1)
 
