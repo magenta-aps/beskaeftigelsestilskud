@@ -389,7 +389,15 @@ class Person(PermissionsMixin, models.Model):
     country_code = models.CharField(blank=True, null=True, max_length=2)
     civil_state = models.TextField(blank=True, null=True)
     location_code = models.TextField(blank=True, null=True)
+
     cpr_status = models.PositiveSmallIntegerField(blank=True, null=True)
+    """Contains the value of the `statuskode` field in CPR.
+    This field indicates whether the person is declared missing (status = 70), deceased
+    (status = 90), etc.
+    See
+    https://cprservicedesk.atlassian.net/wiki/spaces/CPR/pages/1722384544/Statuskoder+i+CPR
+    for more.
+    """
 
     welcome_letter = models.ForeignKey(
         "SuilaEboksMessage",
