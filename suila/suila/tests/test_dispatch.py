@@ -134,3 +134,14 @@ class TestJobDispatcher(TestCase):
                 self.job_dispatcher.year + 1,
             )
         )
+
+    def test_allow_job_invalid_job_name(self):
+        self.assertFalse(self.job_dispatcher.allow_job("something-darkside"))
+
+    def test_allow_job_invalid_job_type(self):
+        self.job_dispatcher.jobs["something-darkside"] = {
+            "type": "always",
+            "validator": lambda year, month, day: True,
+        }
+
+        self.assertFalse(self.job_dispatcher.allow_job("something-darkside"))
