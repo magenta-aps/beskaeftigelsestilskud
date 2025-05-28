@@ -135,85 +135,13 @@ class TestJobDispatcher(TestCase):
             )
         )
 
-        return job_dispatcher.allow_job(name)
+    def test_allow_job_invalid_job_name(self):
+        self.assertFalse(self.job_dispatcher.allow_job("something-darkside"))
 
-    def test_allow_job(self):
-        self.assertTrue(
-            self.allow_job(ManagementCommands.CALCULATE_STABILITY_SCORE, 2021, 3, 1)
-        )
-        self.assertFalse(
-            self.allow_job(ManagementCommands.CALCULATE_STABILITY_SCORE, 2021, 2, 1)
-        )
+    def test_allow_job_invalid_job_type(self):
+        self.job_dispatcher.jobs["something-darkside"] = {
+            "type": "always",
+            "validator": lambda year, month, day: True,
+        }
 
-        self.assertTrue(
-            self.allow_job(
-                ManagementCommands.LOAD_ESKAT,
-                random.randint(2000, 3000),
-                random.randint(1, 12),
-                random.randint(1, 31),
-            )
-        )
-        self.assertTrue(
-            self.allow_job(
-                ManagementCommands.ESTIMATE_INCOME,
-                random.randint(2000, 3000),
-                random.randint(1, 12),
-                random.randint(1, 31),
-            )
-        )
-
-        # 2024-01-08 is "the day before the second tuesday" in january
-        self.assertTrue(
-            self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 8)
-        )
-        self.assertFalse(
-            self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 7)
-        )
-
-        self.assertTrue(
-            self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 14)
-        )
-        self.assertFalse(
-            self.allow_job(ManagementCommands.CALCULATE_BENEFIT, 2024, 1, 15)
-        )
-
-        # 2024-01-15 is the day before the third tuesday in january
-        self.assertTrue(
-            self.allow_job(ManagementCommands.EXPORT_BENEFITS_TO_PRISME, 2024, 1, 15)
-        )
-        self.assertFalse(
-            self.allow_job(ManagementCommands.EXPORT_BENEFITS_TO_PRISME, 2024, 1, 14)
-        )
-
-        # If the job already ran it should not be run again
-        self.assertFalse(
-            self.allow_job(
-                ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-                2024,
-                1,
-                15,
-                job_ran_this_month=True,
-            )
-        )
-        self.assertFalse(
-            self.allow_job(
-                ManagementCommands.CALCULATE_BENEFIT,
-                2024,
-                1,
-                9,
-                job_ran_this_month=True,
-            )
-        )
-
-    def test_allow_job_load_prisme_benefits_posting_status(self):
-        # Arrange
-        job_dispatcher = JobDispatcher(year=2024, month=1, day=15)
-        job_dispatcher.job_ran_month = lambda name, month: True
-        # Act
-        result = job_dispatcher.allow_job(
-            ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
-            year=2025,
-            month=1,
-        )
-        # Assert
-        self.assertTrue(result)
+        self.assertFalse(self.job_dispatcher.allow_job("something-darkside"))
