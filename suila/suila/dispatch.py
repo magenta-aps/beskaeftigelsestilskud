@@ -184,10 +184,16 @@ class JobDispatcher:
         job_config = self.jobs[name]
         match (job_config["type"]):
             case self.JOB_TYPE_YEARLY:
-                return self._allow_job_yearly(name, job_config, self.year, job_params)
+                if self.job_ran_year(name, self.year, job_params):
+                    return False
+                return job_config["validator"](  # type: ignore[operator]
+                    self.year, self.month, self.day
+                )
             case self.JOB_TYPE_MONTHLY:
-                return self._allow_job_monthly(
-                    name, job_config, self.year, self.month, job_params
+                if self.job_ran_month(name, self.year, self.month, job_params):
+                    return False
+                return job_config["validator"](  # type: ignore[operator]
+                    self.year, self.month, self.day
                 )
 
         # Default to "False" if the job-type is inknown
@@ -201,8 +207,6 @@ class JobDispatcher:
             job_params["year_param"] = kwargs["year"]
         if "month" in kwargs:
             job_params["month_param"] = kwargs["month"]
-        if "type" in kwargs:
-            job_params["type_param"] = kwargs["type"]
 
         match (name):
             case ManagementCommands.CALCULATE_STABILITY_SCORE:
@@ -234,36 +238,3 @@ class JobDispatcher:
                 reraise=self.reraise,
                 **kwargs,
             )
-
-    def _allow_job_yearly(
-        self,
-        job_name: str,
-        job_config: Dict,
-        year: int,
-        job_params: Optional[Dict[str, str]] = None,
-    ):
-        if self.job_ran_year(job_name, year, job_params):
-            return False
-
-        job_validator = job_config.get("validator", None)
-        if job_validator is None:
-            return True
-
-        return job_validator(year, self.month, self.day)
-
-    def _allow_job_monthly(
-        self,
-        job_name: str,
-        job_config: Dict,
-        year: int,
-        month: int,
-        job_params: Optional[Dict[str, str]] = None,
-    ):
-        if self.job_ran_month(job_name, year, month, job_params):
-            return False
-
-        job_validator = job_config.get("validator", None)
-        if job_validator is None:
-            return True
-
-        return job_validator(year, month, self.day)
