@@ -114,6 +114,11 @@ class Command(BaseCommand):
                 cpr="0501011991", defaults={"name": "Person who earns too much"}
             )[0]: [5_000_000 / 12]
             * 12,
+            # Person without prisme-batch items
+            Person.objects.update_or_create(
+                cpr="0601011991", defaults={"name": "Person without prisme items"}
+            )[0]: [10000]
+            * 12,
         }
 
         for person, salary in persons.items():
@@ -174,7 +179,10 @@ class Command(BaseCommand):
                         person_year__year__year=date.year,
                     )
 
-                    if person_month.benefit_calculated > 0:
+                    if (
+                        person_month.benefit_calculated > 0
+                        and not person.name == "Person without prisme items"
+                    ):
 
                         prisme_batch, _ = PrismeBatch.objects.update_or_create(
                             export_date=datetime.date(date.year, date.month, 12),
