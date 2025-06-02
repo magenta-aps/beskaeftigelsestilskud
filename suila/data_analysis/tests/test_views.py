@@ -161,6 +161,7 @@ class TestSimulationJSONEncoder(TestCase):
                                 "estimated_year_result": 0.0,
                                 "month": m,
                                 "payout": 0.0,
+                                "calculated_payout": 0.0,
                                 "year": 2020,
                             }
                             for m in range(1, 13)
@@ -208,6 +209,7 @@ class TestSimulationJSONEncoder(TestCase):
                                 "estimated_year_result": 0.0,
                                 "month": m,
                                 "payout": 0.0,
+                                "calculated_payout": 0.0,
                                 "year": 2020,
                             }
                             for m in range(1, 13)

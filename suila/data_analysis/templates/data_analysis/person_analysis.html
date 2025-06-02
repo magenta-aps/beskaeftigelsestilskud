@@ -290,6 +290,7 @@ const getChartData = function (doc, row, rowId, options) {
 
     if (row.payout) {
         const payoutData = []
+        const calculatedData = []
         const cumulativeData = []
         const correctData = []
         const data = bucketize(row.payout);
@@ -300,6 +301,10 @@ const getChartData = function (doc, row, rowId, options) {
                 payoutData.push({
                     x: category(year, month),
                     y: item ? item.payout : null,
+                });
+                calculatedData.push({
+                    x: category(year, month),
+                    y: item ? item.calculated_payout : null,
                 });
                 cumulativeData.push({
                     x: category(year, month),
@@ -316,6 +321,10 @@ const getChartData = function (doc, row, rowId, options) {
             name: "Månedlig udbetaling",
             type: "column",
         },{
+            data: calculatedData,
+            name: "Månedlig beregning",
+            type: "column",
+        },{
             data: correctData,
             name: "Korrekt udbetaling",
             type: "line",
@@ -324,10 +333,10 @@ const getChartData = function (doc, row, rowId, options) {
             name: "Summeret udbetaling",
             type: "line",
         });
-        labelledSeries.push(series.length-3);
+        labelledSeries.push(series.length-4);
         hasData = true;
 
-        chartData.stroke.dashArray = [0, 8, 0]
+        chartData.stroke.dashArray = [0, 0, 8, 0]
         chartData.yaxis = [
             {
                 title: {
@@ -337,7 +346,8 @@ const getChartData = function (doc, row, rowId, options) {
                     formatter: function(value) {
                         return formatter.format(value)
                     }
-                }
+                },
+                seriesName: ['Månedlig beregning', 'Månedlig udbetaling']
             },
             {
                 opposite: true,
@@ -349,7 +359,8 @@ const getChartData = function (doc, row, rowId, options) {
                     formatter: function(value) {
                         return formatter.format(value)
                     }
-                }
+                },
+                seriesName: ['Summeret udbetaling', 'Korrekt udbetaling']
             },
         ];
         chartData.chart.events = {
