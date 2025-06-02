@@ -1,8 +1,10 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import datetime
 from decimal import Decimal
 
+from dateutil.relativedelta import relativedelta
 from django.template.defaultfilters import register
 from django.utils.formats import number_format
 from django.utils.translation import gettext as _
@@ -16,7 +18,14 @@ def display_amount(person_month: PersonMonth) -> dict:
     if hasattr(person_month, "prismebatchitem"):
         return {"value": person_month.benefit_transferred}
     else:
-        return {"value": person_month.benefit_calculated}
+        focus_date = datetime.date.today() - relativedelta(months=2)
+
+        if person_month.year_month >= datetime.date(
+            focus_date.year, focus_date.month, 1
+        ):
+            return {"value": person_month.benefit_calculated}
+        else:
+            return {"value": None}
 
 
 @register.filter
