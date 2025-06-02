@@ -136,3 +136,61 @@ class PopulateBenefitTransferredTest(MigratorTestCase):
         self.assertEqual(person_month1.prior_benefit_transferred, None)
         self.assertEqual(person_month2.prior_benefit_transferred, None)
         self.assertEqual(person_month3.prior_benefit_transferred, None)
+
+
+class UpdateBenefitTransferredTest(MigratorTestCase):
+    migrate_from = (
+        "suila",
+        "0040_prismepostingstatusfile_and_more",
+    )
+    migrate_to = ("suila", "0041_update_benefit_transferred_after_manual_override")
+
+    def prepare(self):
+
+        Year = self.old_state.apps.get_model("suila", "Year")
+        Person = self.old_state.apps.get_model("suila", "Person")
+        PersonYear = self.old_state.apps.get_model("suila", "PersonYear")
+        PersonMonth = self.old_state.apps.get_model("suila", "PersonMonth")
+        PrismeBatch = self.old_state.apps.get_model("suila", "PrismeBatch")
+        PrismeBatchItem = self.old_state.apps.get_model("suila", "PrismeBatchItem")
+
+        self.year = Year.objects.create(year=2025)
+        self.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
+
+        self.person_year = PersonYear.objects.create(
+            person=self.person,
+            year=self.year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+
+        # This person has benefit_calculated == 0. Meaning that we put it to zero
+        # manually because the person did not receive benefit. For some reason.
+        self.person_month = PersonMonth.objects.create(
+            person_year=self.person_year,
+            month=1,
+            import_date=date.today(),
+            benefit_transferred=317,
+            benefit_calculated=0,
+        )
+        self.prisme_batch = PrismeBatch.objects.create(
+            status="sent", export_date=date.today(), prefix=1
+        )
+
+        self.prisme_item = PrismeBatchItem.objects.create(
+            person_month=self.person_month,
+            prisme_batch=self.prisme_batch,
+            g68_content=(
+                "000G6800004011&020900&0300&"
+                "07000000000000000000&0800000031700&"  # 317 kr.
+                "09+&1002&1100000101001111&1220250414&"
+                "16202504080080400004&"
+                "1700000000000027100004&40www.suila.gl takuuk"
+            ),
+        )
+
+    def test_migration(self):
+        person_month = self.new_state.apps.get_model(
+            "suila", "PersonMonth"
+        ).objects.get(month=1)
+
+        self.assertEqual(person_month.benefit_transferred, 0)
