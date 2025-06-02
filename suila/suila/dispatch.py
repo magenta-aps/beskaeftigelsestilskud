@@ -51,6 +51,7 @@ class JobDispatcher:
             ManagementCommands.SEND_EBOKS: [
                 ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             ],
+            ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],
         }
 
     def job_ran_this_month(self, name):
@@ -127,6 +128,9 @@ class JobDispatcher:
         elif name == ManagementCommands.EXPORT_BENEFITS_TO_PRISME:  # pragma: no branch
             if self.day >= self.prisme_date.day and not job_ran_this_month:
                 return True
+
+        elif name == ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS:
+            return True
 
         return False
 

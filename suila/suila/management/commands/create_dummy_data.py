@@ -162,6 +162,8 @@ class Command(BaseCommand):
 
             last_month = get_last_month(datetime.date.today())
             month_before_last_month = get_last_month(last_month)
+            line_no = 1
+
             for date in dates:
 
                 call_command(
@@ -192,6 +194,7 @@ class Command(BaseCommand):
                         PrismeBatchItem.objects.update_or_create(
                             prisme_batch=prisme_batch,
                             person_month=person_month,
+                            invoice_no=f"{0:015d}{line_no:05d}",
                             defaults={
                                 "status": "posted",
                                 "paused": person_month.person_year.person.paused,
@@ -208,3 +211,4 @@ class Command(BaseCommand):
                             person_month.benefit_calculated
                         )
                         person_month.save()
+                        line_no += 1

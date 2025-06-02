@@ -195,3 +195,16 @@ class TestJobDispatcher(TestCase):
                 job_ran_this_month=True,
             )
         )
+
+    def test_allow_job_load_prisme_benefits_posting_status(self):
+        # Arrange
+        job_dispatcher = JobDispatcher(year=2024, month=1, day=15)
+        job_dispatcher.job_ran_month = lambda name, month: True
+        # Act
+        result = job_dispatcher.allow_job(
+            ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+            year=2025,
+            month=1,
+        )
+        # Assert
+        self.assertTrue(result)
