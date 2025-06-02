@@ -118,14 +118,22 @@ class PersonYearView(
             )
             management.call_command(
                 "autoselect_estimation_engine",
-                self.object.year_id
+                year=self.object.year_id
                 + 1,  # Will look at this year to set engine for next year
                 cpr=self.object.person.cpr,
             )
         if action == "calculate":
-            management.call_command(
-                "calculate_benefit", self.object.year_id, cpr=self.object.person.cpr
+            person_months = PersonMonth.objects.filter(
+                person_year__year__year=self.object.year_id,
+                person_year__person__cpr=self.object.person.cpr,
             )
+            for person_month in person_months:
+                management.call_command(
+                    "calculate_benefit",
+                    self.object.year_id,
+                    person_month.month,
+                    cpr=self.object.person.cpr,
+                )
         return redirect(
             "data_update:personyear_view",
             cpr=self.object.person.cpr,
