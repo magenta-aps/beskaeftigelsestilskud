@@ -121,6 +121,7 @@ class Command(BaseCommand):
             * 12,
         }
 
+        line_no = 1
         for person, salary in persons.items():
             set_history_date(person, dates[0])
             for date in dates:
@@ -162,7 +163,6 @@ class Command(BaseCommand):
 
             last_month = get_last_month(datetime.date.today())
             month_before_last_month = get_last_month(last_month)
-            line_no = 1
 
             for date in dates:
 
