@@ -14,6 +14,7 @@ from django.core.management.base import OutputWrapper
 from django.db import transaction
 from django.db.models import CharField, F, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
+from django.utils.numberformat import format as format_number
 from simple_history.utils import bulk_update_with_history
 from tenacity import (
     after_log,
@@ -291,7 +292,9 @@ class BatchExport:
                     {
                         "filnavn": self.get_destination_filename(row.prisme_batch),
                         "cpr": row.cpr,
-                        "beløb": row.amount,
+                        "beløb": format_number(
+                            row.amount, decimal_sep=",", decimal_pos=2
+                        ),
                     }
                     for row in self.get_control_list_data()
                 ]
