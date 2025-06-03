@@ -20,7 +20,7 @@ def date_context(request):
 
 
 def version_context(request):
-    return {"version": settings.VERSION}
+    return {"version": settings.VERSION, "environment": settings.ENVIRONMENT}
 
 
 def person_context(request):
