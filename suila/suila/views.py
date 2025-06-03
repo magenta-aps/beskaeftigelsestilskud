@@ -187,7 +187,7 @@ class PersonMonthTable(Table):
         verbose_name=_("Forventet udbetalingsdato"),
     )
     benefit = TemplateColumn(
-        template_name="suila/table_columns/amount.html",
+        template_name="suila/table_columns/benefit.html",
         verbose_name=_("Forventet beløb til udbetaling"),
     )
     status = TemplateColumn(
