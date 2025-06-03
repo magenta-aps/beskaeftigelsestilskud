@@ -1,0 +1,68 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-21 13:09-0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: data_analysis/forms.py
+msgid "År"
+msgstr ""
+
+#: data_analysis/forms.py
+msgid "Opløsning"
+msgstr ""
+
+#: data_analysis/forms.py
+msgid "Metrik"
+msgstr ""
+
+#: data_analysis/forms.py
+msgid "Alle"
+msgstr ""
+
+#: data_analysis/forms.py
+msgid "Indkomsttype"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/histogram.html
+msgid "Histogrammer for"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/histogram.html
+#: data_analysis/templates/data_analysis/person_analysis.html
+#: data_analysis/templates/data_analysis/personyear_list.html
+msgid "Opdatér"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/histogram.html
+msgid "Building histograms ..."
+msgstr ""
+
+#: data_analysis/templates/data_analysis/job_list.html
+msgid "Jobliste"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/personyear_list.html
+msgid "Estimeringsoverblik for"
+msgstr ""
+
+#: data_analysis/templatetags/suila_tags.py data_analysis/tests/test_tags.py
+msgid "Ja"
+msgstr ""
+
+#: data_analysis/templatetags/suila_tags.py data_analysis/tests/test_tags.py
+msgid "Nej"
+msgstr ""

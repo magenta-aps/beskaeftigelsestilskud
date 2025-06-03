@@ -77,9 +77,9 @@ fi
 
 if [ "${MAKEMESSAGES,,}" = true ]; then
   echo 'making messages'
-  python manage.py make_messages --locale=kl --locale=da --no-obsolete --add-location file
-  python manage.py make_messages --locale=kl --locale=da --no-obsolete --add-location file --domain djangojs
-  python manage.py compilemessages --locale=da --locale=kl --verbosity=2
+  python manage.py make_messages --locale=kl --locale=da --locale=en --no-obsolete --add-location file
+  python manage.py make_messages --locale=kl --locale=da --locale=en --no-obsolete --add-location file --domain djangojs
+  python manage.py compilemessages --locale=da --locale=kl --locale=en --verbosity=2
 fi
 if [ "${TEST,,}" = true ]; then
     echo 'running tests'
