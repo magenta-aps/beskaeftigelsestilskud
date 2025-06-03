@@ -50,6 +50,7 @@ class PayoutItem:
     year: int
     month: int
     payout: Decimal
+    calculated_payout: Decimal
     cumulative_payout: Decimal
     correct_payout: Decimal
     estimated_year_result: Decimal
@@ -213,6 +214,7 @@ class Simulation:
                     )
 
                     payout = person_month.benefit_transferred or Decimal(0)
+                    calculated_payout = person_month.benefit_calculated or Decimal(0)
                     actual_year_benefit = person_month.actual_year_benefit
 
                     estimated_year_result = (
@@ -224,6 +226,7 @@ class Simulation:
                     estimated_year_benefit = person_month.estimated_year_benefit
                 except PersonMonth.DoesNotExist:
                     payout = Decimal(0)
+                    calculated_payout = Decimal(0)
                     estimated_year_result = (
                         Decimal(0)  # No PersonMonth, so we just use 0
                         - person_year.catchsale_expenses
@@ -242,6 +245,7 @@ class Simulation:
                         year=person_year.year.year,
                         month=month,
                         payout=payout,
+                        calculated_payout=calculated_payout,
                         cumulative_payout=cumulative_payout,
                         correct_payout=actual_year_benefit,
                         estimated_year_result=estimated_year_result,
