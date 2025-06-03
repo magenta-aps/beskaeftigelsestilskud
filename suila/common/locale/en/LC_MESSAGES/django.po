@@ -1,0 +1,105 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-03 07:22-0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: common/fields.py
+msgid "Dette felt er påkrævet"
+msgstr "This field is required."
+
+#: common/fields.py
+msgid "Har du indtastet et korrekt CPR-nr.?"
+msgstr "Have you entered a valid CPR number?"
+
+#: common/templates/403.html
+msgid "Du har ikke adgang til at se denne side"
+msgstr "You do not have access to this site"
+
+#: common/templates/common/_base.html
+msgid "Suila"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Åbn menu"
+msgstr "Open menu"
+
+#: common/templates/common/_base.html
+msgid "Luk"
+msgstr "Close"
+
+#: common/templates/common/_base.html common/templates/common/base.html
+msgid "Forside"
+msgstr "Home"
+
+#: common/templates/common/_base.html
+msgid "Mit overblik"
+msgstr "My overview"
+
+#: common/templates/common/_base.html
+msgid "Mine signaler"
+msgstr "My signals"
+
+#: common/templates/common/_base.html
+msgid "Borgersøgning"
+msgstr "Search for individual"
+
+#: common/templates/common/_base.html
+msgid "Mit estimerede Suila-tapit"
+msgstr "My estimated Suila-tapit"
+
+#: common/templates/common/_base.html
+msgid "Ikke modtaget Suila-tapit"
+msgstr "No Suila-tapit recieved"
+
+#: common/templates/common/_base.html
+msgid "Suila-tapit-beregneren"
+msgstr "Suila-tapit calculator"
+
+#: common/templates/common/_base.html
+msgid "Estimeringsoverblik for hver person"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Histogrammer over estimeringernes afvigelse"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Jobliste"
+msgstr ""
+
+#: common/templates/common/_base.html
+msgid "Aktivér to-faktor-login"
+msgstr "Activate two factor approval."
+
+#: common/templates/common/_base.html
+msgid "Log ud"
+msgstr "Log out"
+
+#: common/utils.py
+#, python-brace-format
+msgid "Du modtog for meget tilskud i {year}"
+msgstr ""
+
+#: common/utils.py
+#, python-brace-format
+msgid "Du tjente for tæt på øverste grænse i {year}"
+msgstr ""
+
+#: common/utils.py
+#, python-brace-format
+msgid "Du tjente for tæt på bundgrænsen i {year}"
+msgstr ""
