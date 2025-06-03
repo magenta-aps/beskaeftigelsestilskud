@@ -40,7 +40,7 @@ msgstr ""
 #: login/templates/login/logged_out.html
 msgid ""
 "Du er nu logget ud. Vi anbefaler at du lukker denne tab for at fjerne "
-"tilbageværende cookie-data"
+"tilbageværende cookie-data."
 msgstr ""
 
 #: login/templates/login/logged_out.html
@@ -49,7 +49,7 @@ msgstr ""
 
 #: login/templates/login/login_failed.html
 msgid "Login mislykkedes"
-msgstr ""
+msgstr "Isernissat iluatsinngilaq"
 
 #: login/templates/login/login_failed.html
 #: login/templates/login/login_no_cpr.html

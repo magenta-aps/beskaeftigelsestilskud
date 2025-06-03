@@ -101,4 +101,4 @@ msgstr ""
 #: common/utils.py
 #, python-brace-format
 msgid "Du tjente for tæt på bundgrænsen i {year}"
-msgstr ""
+msgstr "Ukioq {year} isertitatit annikinnerpaaffissaminiissimapput"

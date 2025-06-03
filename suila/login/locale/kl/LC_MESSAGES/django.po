@@ -18,7 +18,7 @@ msgstr ""
 
 #: login/forms.py
 msgid "Brugernavn"
-msgstr "Atuisup aqqa"
+msgstr "Atuisup taagutaa"
 
 #: login/forms.py
 msgid "Password"
@@ -40,8 +40,10 @@ msgstr "Anivutit"
 #: login/templates/login/logged_out.html
 msgid ""
 "Du er nu logget ud. Vi anbefaler at du lukker denne tab for at fjerne "
-"tilbageværende cookie-data"
+"tilbageværende cookie-data."
 msgstr ""
+"Anivutit. Innersuussutigaarput quppernerit ammatitatit matussagitit "
+"paasissutissat saqqumisut tamarmik peerniassammata."
 
 #: login/templates/login/logged_out.html
 msgid "Log in"
@@ -60,7 +62,7 @@ msgstr "Iserfigisinnaanngilat"
 
 #: login/templates/login/login_failed.html
 msgid "Der kunne ikke logges ind med den angivne bruger."
-msgstr ""
+msgstr "Atuisoq toqqakkat isissutigineqarsinnaanngilaq."
 
 #: login/templates/login/login_failed.html
 #: login/templates/login/login_no_cpr.html
@@ -69,7 +71,7 @@ msgstr "Anigit"
 
 #: login/templates/login/login_no_cpr.html
 msgid "Det anvendte login har ikke et CPR-nummer tilknyttet."
-msgstr ""
+msgstr "CPR-normummut tassunga attuumassutilimmik atuisoqanngilaq."
 
 #: login/templates/login/login_repeat.html
 msgid "Det anvendte login er allerede anvendt. Prøv at logge ind igen."
