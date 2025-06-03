@@ -276,10 +276,10 @@ def get_calculation_date(year: int, month: int) -> date:
     """Get date for when to do calculations in a month
 
     The day before the 2nd tuesday in a month - Can be changed by modifying
-    `settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS`.
+    `settings.CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS`.
     """
     return get_payout_date(year, month) - timedelta(
-        days=settings.CALCULATION_DATE_PAYOUT_DATE_ADVANCE_DAYS  # type: ignore
+        days=settings.CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS  # type: ignore
     )
 
 
@@ -291,4 +291,15 @@ def get_prisme_date(year: int, month: int) -> date:
     """
     return get_payout_date(year, month) - timedelta(
         days=settings.PRISME_DELAY  # type: ignore
+    )
+
+
+def get_eboks_date(year: int, month: int):
+    """Get date for when to send EBOKS messages to citizens.
+
+    The day before the 3rd tuesday in the month
+    """
+
+    return get_payout_date(year, month) - timedelta(
+        days=settings.EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS  # type: ignore
     )
