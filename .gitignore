@@ -7,7 +7,7 @@
 *.mo
 env/
 .idea/
-docker-compose.override.yml
+docker-compose.*.yml
 data/er/*
 !data/er/.gitkeep
 data/web_uploads/notes/*
