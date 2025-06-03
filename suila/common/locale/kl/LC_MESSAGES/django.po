@@ -46,7 +46,7 @@ msgstr "Saqqaa"
 
 #: common/templates/common/_base.html
 msgid "Mit overblik"
-msgstr "Tamaasa isigalugit"
+msgstr "Paasissutissat uannut tunngasut"
 
 #: common/templates/common/_base.html
 msgid "Mine signaler"
