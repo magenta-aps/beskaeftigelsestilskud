@@ -33,7 +33,7 @@
             {% endblocktrans %}
             <br>
             {% blocktrans trimmed %}
-            Bemærk at beløbene er vejledende og kan ændre sig helt frem til den endelige udbetaling.
+            Bemærk, at beløbene er vejledende, og kan ændre sig helt frem til den endelige udbetaling.
             {% endblocktrans %}
             {% else %}
             {% blocktrans trimmed %}
@@ -49,7 +49,7 @@
             {% endblocktrans %}
             <p><b>{% translate "NemKonto" %}</b></p>
             {% blocktrans trimmed %}
-            Suila-tapit udbetales kun til NemKonto. Hvis du ikke har en NemKonto, skal du oprette en før du kan få
+            Suila-tapit udbetales kun til NemKonto. Hvis du ikke har en NemKonto, skal du oprette en, før du kan få
             udbetalt Suila-tapit. Har du ikke en NemKonto, skal du rette henvendelse til din bank herom.
             {% endblocktrans %}
         </div>
@@ -81,7 +81,7 @@
         <h1 class="mt-3">{{ estimated_year_benefit|format_amount }}</h1>
     </div>
     <div class="g-col-3 emphasis">
-        <b>{% translate "Forventet årsindkomst fra arbejde" %}<sup>*</sup></b>
+        <b>{% translate "Forventet årsindkomst fra arbejde" %}</b>
         <h1 class="mt-3">
         {% if manually_entered_income %}
             {{ manually_entered_income|format_amount }}
@@ -176,7 +176,7 @@
             {% blocktrans trimmed %}
             Der bliver kun foretaget udbetalinger, hvis Skattestyrelsen har modtaget signal fra arbejdsmarkedet i form
             af indberetning af løn fra arbejdsgivere, betalte B-skatter, indberetning af indhandling fra
-            indhandlingssteder eller oplysning om udloddet udbytte fra selskaber.
+            indhandlingssteder, eller oplysning om udloddet udbytte fra selskaber.
             {% endblocktrans %}
         </p>
         <p>
@@ -272,7 +272,7 @@
     </div>
     <div class="g-col-3 sidebar">
         <h2 class="mb-5">{% translate "Information" %}</h2>
-        <h3 class="my-3">{% translate "Forventet udbetalingsdato:" %}</h3>
+        <h3 class="my-3">{% translate "Forventet udbetalingsdato" %}</h3>
         <p class="mt-3">
             {% blocktrans trimmed %}
             Suila-tapit udbetales d. 3. tirsdag i måneden. Udbetalingen er altid for indkomster to måneder forinden.
@@ -280,7 +280,7 @@
             arbejdsmarkedet for marts måned.
             {% endblocktrans  %}
         </p>
-        <h3 class="mt-5 mb-3">{% translate "Forventet beløb til udbetaling:" %}</h3>
+        <h3 class="mt-5 mb-3">{% translate "Forventet beløb til udbetaling" %}</h3>
         <p class="mt-3">
             {% blocktrans trimmed %}
             Det forventede beløb til udbetaling er baseret på din estimerede årsindkomst. Din estimerede årsindkomst
@@ -289,13 +289,8 @@
             beløb, hvis du har gæld til det offentlige.
             {% endblocktrans %}
         </p>
-        <h3 class="mt-5 mb-3">{% translate "Forklaring af statusbeskeder:" %}</h3>
+        <h3 class="mt-5 mb-3">{% translate "Forklaring af statusbeskeder" %}</h3>
         <ul>
-            <li>
-                {% blocktrans trimmed %}
-                Foreløbigt beløb. Din kommende Suila-tapit udbetaling er estimeret, men endnu ikke fastlagt.
-                {% endblocktrans %}
-            </li>
             <li>
                 {% blocktrans trimmed %}
                 Beløb fastlagt. Din årsindkomst er estimeret, og der er fastlagt beløb for din kommende Suila-tapit
@@ -321,12 +316,7 @@
             <li>
                 {% blocktrans trimmed %}
                 Afventer udbetaling: Din forventede årsindkomst er 475.000 kr. – 500.000 kr. Dine Suila-tapit
-                udbetalinger starter når systemet er mere sikker på om din årsindkomst berettiger dig til Suila-tapit.
-                {% endblocktrans %}
-            </li>
-            <li>
-                {% blocktrans trimmed %}
-                Årsopgørelse er sendt: Du har modtaget årsopgørelse for Suila-tapit for dette år.
+                udbetalinger starter, når systemet er mere sikker på, om din årsindkomst berettiger dig til Suila-tapit.
                 {% endblocktrans %}
             </li>
         </ul>
