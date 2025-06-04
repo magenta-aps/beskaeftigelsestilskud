@@ -38,6 +38,7 @@ from suila.forms import NoteAttachmentFormSet
 from suila.models import (
     BTaxPayment,
     Employer,
+    IncomeEstimate,
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
@@ -369,6 +370,64 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertEqual(response.context_data["estimated_year_result"], Decimal(0))
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
             self.assertFalse(response.context_data["table"].orderable)
+
+    def test_get_relevant_person_month(self):
+
+        person_pk = self.person1.pk
+        person_months = PersonMonth.objects.filter(
+            person_year__person__pk=person_pk,
+            person_year__year__year=2020,
+        ).order_by("month")
+
+        # Check that all person_months are in the test-dataset
+        self.assertEqual(person_months.count(), 12)
+
+        # Check that none if them have income_estimates
+        for person_month in person_months:
+            self.assertEqual(person_month.incomeestimate_set.all().count(), 0)
+
+        with self._time_context(year=2020, month=6):
+            # Validate that the relevant person month is April (because we are in June)
+            # And none of the months have estimations
+            view, response = self.request_get(self.normal_user, pk=person_pk)
+            relevant_person_month = view.get_relevant_person_month()
+            self.assertEqual(relevant_person_month.person_month.month, 4)
+
+            # If we only have estimations for January, then the relevant person month
+            # should be january.
+            IncomeEstimate.objects.create(
+                person_month=person_months.get(month=1),
+                engine="InYearExtrapolationEngine",
+                income_type="A",
+                estimated_year_result=123,
+            )
+            view, response = self.request_get(self.normal_user, pk=person_pk)
+            relevant_person_month = view.get_relevant_person_month()
+            self.assertEqual(relevant_person_month.person_month.month, 1)
+
+            # If we also have estimations for February, then the relevant person month
+            # should be february.
+            IncomeEstimate.objects.create(
+                person_month=person_months.get(month=2),
+                engine="InYearExtrapolationEngine",
+                income_type="A",
+                estimated_year_result=123,
+            )
+            view, response = self.request_get(self.normal_user, pk=person_pk)
+            relevant_person_month = view.get_relevant_person_month()
+            self.assertEqual(relevant_person_month.person_month.month, 2)
+
+            # If all months have estimations, the relevant person month is april again
+            for month in range(3, 13):
+                IncomeEstimate.objects.create(
+                    person_month=person_months.get(month=month),
+                    engine="InYearExtrapolationEngine",
+                    income_type="A",
+                    estimated_year_result=123,
+                )
+            view, response = self.request_get(self.normal_user, pk=person_pk)
+            relevant_person_month = view.get_relevant_person_month()
+            self.assertEqual(relevant_person_month.person_month.month, 4)
 
     def test_get_context_data_handles_no_matching_person_month(self):
         # Arrange: go to year without `PersonMonth` objects for `normal_user`
