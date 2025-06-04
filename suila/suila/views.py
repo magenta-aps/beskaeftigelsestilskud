@@ -273,11 +273,20 @@ class PersonDetailView(
     def get_relevant_person_month(self) -> RelevantPersonMonth | None:
         max_date: date = date(self.year, self.month, 1) - relativedelta(months=2)
         try:
-            person_month = PersonMonth.objects.filter(
+            person_months = PersonMonth.objects.filter(
                 person_year__person=self.object,
                 person_year__year__year=max_date.year,
                 month__lte=max_date.month,
-            ).latest("month")
+            )
+            person_months_with_income_estimate = person_months.filter(
+                incomeestimate__isnull=False
+            ).distinct()
+
+            if person_months_with_income_estimate.exists():
+                person_month = person_months_with_income_estimate.latest("month")
+            else:
+                person_month = person_months.latest("month")
+
         except PersonMonth.DoesNotExist:
             logger.error(
                 "No PersonMonth found for person %r (max_date=%r)",
