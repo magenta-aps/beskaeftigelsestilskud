@@ -32,7 +32,6 @@ omit =
     */management/commands/import_users.py
     */management/commands/load_dummy_calculation_method.py
     */management/commands/load_eskat.py
-    */management/commands/load_prisme_b_tax.py
     */management/commands/test_end_to_end_for_cpr.py
     */management/commands/wait_for_db.py
     */management/commands/create_dummy_data.py

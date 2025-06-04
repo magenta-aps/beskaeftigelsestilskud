@@ -5,13 +5,14 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
+from django.core.management import call_command
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from tenQ.client import ClientException
 
 from suila.integrations.prisme.b_tax import BTaxPayment, BTaxPaymentImport
 from suila.models import BTaxPayment as BTaxPaymentModel
-from suila.models import PersonMonth
+from suila.models import ManagementCommands, PersonMonth
 from suila.tests.helpers import ImportTestCase
 
 _EXAMPLE_1 = "BTAX;3112700000;;2021;-3439;2000004544;3439;2021/04/20;004"
@@ -35,6 +36,12 @@ class TestBTaxPayment(SimpleTestCase):
 class TestBTaxPaymentImport(ImportTestCase):
     maxDiff = None
 
+    def import_b_tax(self, stdout, verbosity):
+        call_command(
+            ManagementCommands.LOAD_PRISME_B_TAX, stdout=stdout, verbosity=verbosity
+        )
+        return BTaxPaymentModel.objects.all()
+
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -42,10 +49,9 @@ class TestBTaxPaymentImport(ImportTestCase):
 
     def test_import_b_tax(self):
         # Arrange
-        instance = BTaxPaymentImport()
         with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
             # Act
-            objs: list[BTaxPaymentModel] = instance.import_b_tax(MagicMock(), 1)
+            objs: list[BTaxPaymentModel] = self.import_b_tax(MagicMock(), 1)
         # Assert: a `BTaxPayment` object is created for:
         # * `_EXAMPLE_1` (whose CPR, etc. match `self.person_month`)
         # * `_EXAMPLE_2` (whose CPR, etc. does not match an existing `PersonMonth`)
@@ -101,26 +107,23 @@ class TestBTaxPaymentImport(ImportTestCase):
         )
 
     def test_import_b_tax_is_idempotent(self):
-        # Arrange
-        instance = BTaxPaymentImport()
         with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
             # Act: import the same set of files twice
-            instance.import_b_tax(MagicMock(), 1)
-            instance.import_b_tax(MagicMock(), 1)
+            self.import_b_tax(MagicMock(), 1)
+            self.import_b_tax(MagicMock(), 1)
 
     def test_import_b_tax_handles_failing_file_load(self):
         instance = BTaxPaymentImport()
         with self.mock_sftp_server():
             with patch.object(instance, "_parse", return_value=None):
-                instance.import_b_tax(MagicMock(), 1)
+                self.import_b_tax(MagicMock(), 1)
 
     def test_import_b_tax_verbosity_2(self):
         # Arrange
         stdout = MagicMock()
-        instance = BTaxPaymentImport()
         with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
             # Act
-            instance.import_b_tax(stdout, 2)
+            self.import_b_tax(stdout, 2)
         # Assert
         self.assertEqual(stdout.write.call_count, 5)
 
