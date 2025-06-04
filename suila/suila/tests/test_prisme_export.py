@@ -23,6 +23,7 @@ from tenQ.writer.g68 import (
 
 from suila.integrations.prisme.benefits import BatchExport
 from suila.models import (
+    ManagementCommands,
     Person,
     PersonMonth,
     PersonYear,
@@ -346,25 +347,34 @@ class TestBatchExport(TestCase):
                 0,
             )
 
+    def export_batches(self, stdout, verbosity=0, export=None, month=3, year=2025):
+        if not export:
+            export = self._get_instance(month=month, year=year)
+        call_command(
+            ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+            year=export._year,
+            month=export._month,
+            stdout=stdout,
+            verbosity=verbosity,
+        )
+
     def test_export_batches_verbosity_1(self):
         # Arrange
         self._add_person_month(3112700000, Decimal("1000"))
-        export = self._get_instance()
         stdout = Mock()
         with patch("suila.integrations.prisme.benefits.put_file_in_prisme_folder"):
             # Act
-            export.export_batches(stdout, verbosity=1)
+            self.export_batches(stdout, verbosity=1)
 
         self.assertEqual(stdout.write.call_count, 4)
 
     def test_export_batches_verbosity_2(self):
         # Arrange
         self._add_person_month(3112700000, Decimal("1000"))
-        export = self._get_instance()
         stdout = Mock()
         with patch("suila.integrations.prisme.benefits.put_file_in_prisme_folder"):
             # Act
-            export.export_batches(stdout, verbosity=2)
+            self.export_batches(stdout, verbosity=2)
 
         self.assertEqual(stdout.write.call_count, 9)
 
@@ -384,7 +394,7 @@ class TestBatchExport(TestCase):
             "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
         ) as mock_put_file_in_prisme_folder:
             # Act
-            export.export_batches(stdout, verbosity=2)
+            self.export_batches(stdout, verbosity=2)
             # Assert
             self._assert_prisme_batch_items_state(
                 export,
@@ -413,7 +423,7 @@ class TestBatchExport(TestCase):
             "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
         ) as mock_put_file_in_prisme_folder:
             # Act
-            export.export_batches(stdout, verbosity=2)
+            self.export_batches(stdout, verbosity=2)
             # Assert
             self._assert_prisme_batch_items_state(
                 export,
@@ -442,16 +452,15 @@ class TestBatchExport(TestCase):
         person_month = self._add_person_month(
             3101000000, Decimal("1000"), municipality_code=0
         )
-        export = self._get_instance()
         stdout = Mock()
         with patch("suila.integrations.prisme.benefits.put_file_in_prisme_folder"):
             # Act
-            export.export_batches(stdout, verbosity=2)
+            self.export_batches(stdout, verbosity=2)
             # Assert: no Prisme batch items were created
             self.assertQuerySetEqual(PrismeBatchItem.objects.all(), [])
             # Assert: message is written to output
             self.assertIn(
-                f"Could not build Prisme batch item for {person_month}",
+                f"Could not build Prisme batch item for {person_month}\n",
                 [call.args[0] for call in stdout.write.call_args_list],
             )
 
@@ -464,7 +473,7 @@ class TestBatchExport(TestCase):
             "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
         ) as mock_put:
             # Act
-            export.export_batches(stdout, verbosity=2)
+            self.export_batches(stdout, verbosity=2)
             # Assert: final call to `put_file_in_prisme_folder` is the CSV report
             last_call = mock_put.call_args_list[-1]
             self.assertEqual(last_call.args[3], "SUILA_kontrolliste_2025_01.csv")
@@ -499,7 +508,7 @@ class TestBatchExport(TestCase):
             new=fail_on_control_list_upload,
         ):
             # Act
-            export.export_batches(stdout, verbosity=2)
+            self.export_batches(stdout, verbosity=2, export=export)
             # Assert
             self._assert_stdout_write_contains(stdout, "FAILED to export control list")
 
@@ -509,7 +518,6 @@ class TestBatchExport(TestCase):
             # (different prefixes.)
             self._add_person_month(3001000000, Decimal("1000"))
             self._add_person_month(3101000000, Decimal("1000"))
-            export = self._get_instance()
             stdout = Mock()
             with patch(
                 "suila.integrations.prisme.benefits.put_file_in_prisme_folder",
@@ -517,7 +525,7 @@ class TestBatchExport(TestCase):
             ):
                 with self.subTest(verbosity=verbosity):
                     # Act
-                    export.export_batches(stdout, verbosity=verbosity)
+                    self.export_batches(stdout, verbosity=verbosity)
                     # Assert
                     self._assert_stdout_write_contains(
                         stdout, "FAILED to export 2 batch(es)"
@@ -624,3 +632,11 @@ class TestBatchExport(TestCase):
         match: re.Match = re.match(rf".*&{field}(?P<val>[^&]+)(&.*|$)", transaction)
         self.assertIsNotNone(match)
         return match.groupdict()["val"]
+
+    @patch("suila.management.commands.export_benefits_to_prisme.BatchExport")
+    def test_management_command_exports_for_two_months_back(self, export_mock):
+        self.export_batches(stdout=MagicMock(), month=3)
+        export_mock.assert_called_with(2025, 1)
+
+        self.export_batches(stdout=MagicMock(), month=2)
+        export_mock.assert_called_with(2024, 12)
