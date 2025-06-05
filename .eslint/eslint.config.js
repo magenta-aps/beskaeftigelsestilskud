@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
+SPDX-License-Identifier: MPL-2.0
+*/
 // https://eslint.org/docs/latest/use/configure/
 // eslint.config.js
 import js from "@eslint/js";
