@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from common.utils import add_parameters_to_url
 from django.conf import settings
 from django.contrib.auth import (
@@ -13,6 +12,7 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpRequest, HttpResponse
+from django.http.response import HttpResponseNotFound
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import RedirectView
@@ -123,6 +123,11 @@ class BeskLoginView(LoginView):
 
 class TwoFactorSetup(SetupView):
     form_list = [("method", BeskAuthenticationTokenForm)]
+
+    def dispatch(self, request, *args, **kwargs):
+        if settings.PUBLIC:
+            return HttpResponseNotFound()
+        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return add_parameters_to_url(

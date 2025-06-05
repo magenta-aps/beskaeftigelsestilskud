@@ -184,7 +184,7 @@
                                     <span class="material-icons me-2">account_circle</span>
                                     <h4>{{ user.get_full_name }}</h4>
                                 </div>
-                                {% if not user_twofactor_enabled %}
+                                {% if not public and not user_twofactor_enabled %}
                                 <div class="d-flex mb-3">
                                     <a href="{% url 'login:two_factor_setup' %}" class="btn btn-primary d-flex align-items-center">
                                         <span class="material-icons me-1">devices</span>
@@ -209,7 +209,7 @@
                             <span class="material-icons me-2 fs-2">account_circle</span>
                             <h4 class="text-white fs-5 fw-bold">{{ user.get_full_name }}</h4>
                         </div>
-                        {% if not user_twofactor_enabled %}
+                        {% if not public and not user_twofactor_enabled %}
                         <div class="action d-flex mt-4 mb-3">
                             <a href="{% url 'login:two_factor_setup' %}" class="btn btn-primary d-flex align-items-center">
                                 <span class="material-icons me-1">devices</span>
