@@ -136,6 +136,12 @@ Lint REUSE compliance:
   script:
     - reuse lint
 
+Lint Javascript:
+  extends: .lint-default
+  image: registry.gitlab.com/pipeline-components/eslint:latest
+  script:
+    - sh -c "cp .eslint/package.json package.json && npm install @eslint/js && eslint --config .eslint/eslint.config.js --color --stats suila/suila/static/suila/*.js || rm package.json"
+
 # Test stage
 ############
 .test-default: &test-default
