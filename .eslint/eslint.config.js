@@ -13,7 +13,6 @@ export default [
                 jquery: true,
                 $: 'readonly',
                 bootstrap: 'readonly',
-                tempusDominus: 'readonly',
             },
             ecmaVersion: "latest",
             sourceType: "module",
