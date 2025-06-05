@@ -202,8 +202,32 @@ class LoginTest(TestCase):
             response.headers["Location"], resolve_url(settings.LOGIN_REDIRECT_URL)
         )
 
+    @override_settings(PUBLIC=True, LANGUAGE_CODE="da-dk")
+    def test_two_factor_public(self):
+        self.client.login(username="test", password="test")
+        response = self.client.get(
+            reverse("login:two_factor_setup"),
+        )
+        self.assertEqual(response.status_code, 404)
+        response = self.client.post(
+            reverse("login:two_factor_setup"),
+            data={"two_factor_setup-current_step": "generator"},
+        )
+        self.assertEqual(response.status_code, 404)
+
     @override_settings(PUBLIC=False, LANGUAGE_CODE="da-dk")
     def test_two_factor_setup(self):
+        response = self.client.get(
+            reverse("login:two_factor_setup"),
+        )
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.post(
+            reverse("login:two_factor_setup"),
+            data={"two_factor_setup-current_step": "generator"},
+        )
+        self.assertEqual(response.status_code, 302)
+
         self.client.login(username="test", password="test")
 
         response = self.client.post(
