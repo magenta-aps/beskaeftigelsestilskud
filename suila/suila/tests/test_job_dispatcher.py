@@ -136,6 +136,11 @@ class TestJobDispatcherCommands(TestCase):
         stdout = StringIO()
         stderr = StringIO()
 
+        job_dispatcher_mock = MagicMock()
+        job_dispatcher_mock.month = 6
+        job_dispatcher_mock.year = 2025
+        job_dispatcher.return_value = job_dispatcher_mock
+
         call_command(
             self.command,
             year=2022,
@@ -163,6 +168,11 @@ class TestJobDispatcherCommands(TestCase):
     def test_job_dispatch_missing_eskat_url(self, job_dispatcher: MagicMock):
         stdout = StringIO()
         stderr = StringIO()
+
+        job_dispatcher_mock = MagicMock()
+        job_dispatcher_mock.month = 6
+        job_dispatcher_mock.year = 2025
+        job_dispatcher.return_value = job_dispatcher_mock
 
         call_command(
             self.command,
@@ -279,7 +289,7 @@ class TestJobDispatcherCommands(TestCase):
                     call(
                         ManagementCommands.CALCULATE_BENEFIT,
                         test_date.year,
-                        test_date.month,
+                        test_date.month - 2,
                         cpr=None,
                         verbosity=1,
                         traceback=False,
