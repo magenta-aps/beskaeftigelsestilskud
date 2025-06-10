@@ -347,7 +347,7 @@ class TestBatchExport(TestCase):
                 0,
             )
 
-    def export_batches(self, stdout, verbosity=0, export=None, month=3, year=2025):
+    def export_batches(self, stdout, verbosity=0, export=None, month=1, year=2025):
         if not export:
             export = self._get_instance(month=month, year=year)
         call_command(
@@ -495,7 +495,7 @@ class TestBatchExport(TestCase):
     def test_export_batches_handles_control_list_upload_failure(self):
         # Arrange
         self._add_person_month(3101000000, Decimal("1000"))
-        export = self._get_instance()
+        export = self._get_instance(month=11, year=2024)
         stdout = Mock()
 
         def fail_on_control_list_upload(buf, folder, filename):
@@ -632,11 +632,3 @@ class TestBatchExport(TestCase):
         match: re.Match = re.match(rf".*&{field}(?P<val>[^&]+)(&.*|$)", transaction)
         self.assertIsNotNone(match)
         return match.groupdict()["val"]
-
-    @patch("suila.management.commands.export_benefits_to_prisme.BatchExport")
-    def test_management_command_exports_for_two_months_back(self, export_mock):
-        self.export_batches(stdout=MagicMock(), month=3)
-        export_mock.assert_called_with(2025, 1)
-
-        self.export_batches(stdout=MagicMock(), month=2)
-        export_mock.assert_called_with(2024, 12)

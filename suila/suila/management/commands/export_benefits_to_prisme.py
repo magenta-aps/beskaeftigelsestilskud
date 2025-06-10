@@ -27,14 +27,5 @@ class Command(SuilaBaseCommand):
         super().add_arguments(parser)
 
     def _handle(self, *args, **options):
-
-        # Always export for two months back
-        year = options["year"]
-        month = options["month"]
-        month -= 2
-        if month < 1:
-            month += 12
-            year -= 1
-
-        batch_export: BatchExport = BatchExport(year, month)
+        batch_export: BatchExport = BatchExport(options["year"], options["month"])
         batch_export.export_batches(self.stdout, verbosity=options["verbosity"])
