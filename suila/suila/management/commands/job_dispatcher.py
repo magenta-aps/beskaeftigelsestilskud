@@ -82,6 +82,10 @@ class Command(SuilaBaseCommand):
 
         year = job_dispatcher.year
         month = job_dispatcher.month
+
+        effect_year = year if month > 2 else year - 1
+        effect_month = month - 2 if month > 2 else month - 2 + 12
+
         cpr = options["cpr"]
         ESKAT_BASE_URL = settings.ESKAT_BASE_URL  # type: ignore[misc]
 
@@ -141,8 +145,8 @@ class Command(SuilaBaseCommand):
         # Calculate benefit
         job_dispatcher.call_job(
             ManagementCommands.CALCULATE_BENEFIT,
-            year if month > 2 else year - 1,
-            month - 2 if month > 2 else month - 2 + 12,
+            effect_year,
+            effect_month,
             cpr=cpr,
             verbosity=verbosity,
         )
@@ -150,16 +154,16 @@ class Command(SuilaBaseCommand):
         # Send to prisme
         job_dispatcher.call_job(
             ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-            year=year,
-            month=month,
+            year=effect_year,
+            month=effect_month,
             verbosity=verbosity,
         )
 
         # Send eboks messages
         job_dispatcher.call_job(
             ManagementCommands.SEND_EBOKS,
-            year=year,
-            month=month,
+            year=effect_year,
+            month=effect_month,
             verbosity=verbosity,
         )
 

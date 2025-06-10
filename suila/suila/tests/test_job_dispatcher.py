@@ -50,16 +50,16 @@ class TestJobDispatcherCommands(TestCase):
                 # since we haven't called the jobs on PRISME-day.
                 call(
                     ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-                    year=test_date.year,
-                    month=test_date.month,
+                    year=test_date.year - 1,
+                    month=test_date.month - 2 + 12,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
                 ),
                 call(
                     ManagementCommands.SEND_EBOKS,
-                    year=test_date.year,
-                    month=test_date.month,
+                    year=test_date.year - 1,
+                    month=test_date.month - 2 + 12,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
@@ -101,16 +101,16 @@ class TestJobDispatcherCommands(TestCase):
                 # since we haven't called the jobs on PRISME-day.
                 call(
                     ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-                    year=test_date.year,
-                    month=test_date.month,
+                    year=test_date.year - 1,
+                    month=test_date.month - 2 + 12,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
                 ),
                 call(
                     ManagementCommands.SEND_EBOKS,
-                    year=test_date.year,
-                    month=test_date.month,
+                    year=test_date.year - 1,
+                    month=test_date.month - 2 + 12,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
@@ -302,7 +302,7 @@ class TestJobDispatcherCommands(TestCase):
                     call(
                         ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
                         year=test_date.year,
-                        month=test_date.month,
+                        month=test_date.month - 2,
                         traceback=False,
                         reraise=False,
                         verbosity=1,
@@ -314,7 +314,7 @@ class TestJobDispatcherCommands(TestCase):
                     call(
                         ManagementCommands.SEND_EBOKS,
                         year=test_date.year,
-                        month=test_date.month,
+                        month=test_date.month - 2,
                         traceback=False,
                         reraise=False,
                         verbosity=1,

@@ -31,12 +31,6 @@ class Command(SuilaBaseCommand):
         save = kwargs["save"]
         send = kwargs["send"]
 
-        # Always send for two months back
-        month -= 2
-        if month < 1:
-            month += 12
-            year -= 1
-
         qs = (
             PersonYear.objects.filter(
                 year_id=year,
