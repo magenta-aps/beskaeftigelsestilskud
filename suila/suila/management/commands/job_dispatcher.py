@@ -141,8 +141,8 @@ class Command(SuilaBaseCommand):
         # Calculate benefit
         job_dispatcher.call_job(
             ManagementCommands.CALCULATE_BENEFIT,
-            year,
-            month,
+            year if month > 2 else year - 1,
+            month - 2 if month > 2 else month - 2 + 12,
             cpr=cpr,
             verbosity=verbosity,
         )
