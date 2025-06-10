@@ -7,14 +7,12 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
 from suila.integrations.prisme.posting_status import PostingStatus, PostingStatusImport
-from suila.management.commands.load_prisme_benefits_posting_status import (
-    Command as LoadPrismeBenefitsPostingStatusCommand,
-)
 from suila.models import (
+    ManagementCommands,
     PersonMonth,
     PrismeBatch,
     PrismeBatchItem,
@@ -27,10 +25,10 @@ _EXAMPLE_2 = "§15;3112700000;01587075;9700;2025/03/09;RJ00;JKH Tesst;§15-00000
 _EXAMPLE_3 = "§15;3112700000;02587075;1313;2020/03/09;RJ00;JKH Tesst;§15-000000059;"
 
 
-class TestLoadPrismeBenefitsPostingStatusCommand(SimpleTestCase):
+class TestLoadPrismeBenefitsPostingStatusCommand(TestCase):
     def setUp(self):
         super().setUp()
-        self.command = LoadPrismeBenefitsPostingStatusCommand()
+        self.command = ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS
 
     def test_command_calls_import(self):
         with patch(

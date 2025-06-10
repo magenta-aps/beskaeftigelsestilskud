@@ -166,8 +166,6 @@ class Command(SuilaBaseCommand):
         # Load Prisme posting status
         job_dispatcher.call_job(
             ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
-            year=year,
-            month=month,
             verbosity=verbosity,
         )
 
