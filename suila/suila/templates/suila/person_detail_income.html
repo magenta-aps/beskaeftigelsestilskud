@@ -125,10 +125,10 @@
 {% block extra_headers %}
 <script nonce="{{ request.csp_nonce }}">
 $(document).ready(function () {
-    $("select#id_source").change(function (evt) {
+    $("select#id_filter_key").change(function (evt) {
        const val = $(this).val();
        let currentUrl = new URL(window.location);
-       currentUrl.searchParams.set("source", val);
+       currentUrl.searchParams.set("filter_key", val);
        window.location = currentUrl.href;
     });
 });

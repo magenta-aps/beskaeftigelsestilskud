@@ -339,6 +339,22 @@ class IncomeSignal:
     amount: Decimal
     date: date
 
+    @property
+    def filter_key(self) -> str:
+        use_source = (
+            IncomeSignalType.Lønindkomst,
+            IncomeSignalType.Indhandling,
+            IncomeSignalType.Udbytte,
+        )
+        if self.signal_type in use_source:
+            return self.source
+        elif self.signal_type is IncomeSignalType.BetaltBSkat:
+            return gettext("B-skatterater")
+        else:
+            raise ValueError(
+                "cannot determine filter_key for %r" % self
+            )  # pragma: no cover
+
 
 class IncomeSumsBySignalTypeTable(Table):
     signal_type = TemplateColumn(
@@ -460,12 +476,12 @@ class PersonDetailIncomeView(
 
         # Filter signal list in detail table based on filter form
         signals: list[IncomeSignal]
-        if filter_form.is_valid() and filter_form.cleaned_data["source"] != "":
-            source: str = filter_form.cleaned_data["source"]
+        if filter_form.is_valid() and filter_form.cleaned_data["filter_key"] != "":
+            filter_key: str = filter_form.cleaned_data["filter_key"]
             signals = [
                 signal
                 for signal in self.get_income_signals()
-                if signal.source == source
+                if signal.filter_key == filter_key
             ]
         else:
             signals = self.get_income_signals()
