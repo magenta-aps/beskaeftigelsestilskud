@@ -118,11 +118,20 @@ class AutoSelectEngineTests(TestCase):
         self.call_command(year=2022)
         self.assert_that_engines_equal_defaults()
 
-    @patch("suila.management.commands.autoselect_estimation_engine.PersonYear.objects")
-    def test_autoselect_for_nonexising_person_year(self, person_year_mock):
-        person_year_mock.get.side_effect = PersonYear.DoesNotExist
+    def test_autoselect_for_nonexisting_person_year(self):
+        qs = PersonYear.objects.filter(year__year=2023)
+        qs.delete()
+
+        self.assertEqual(qs.count(), 0)
         self.call_command(year=2023)
-        self.assert_that_engines_equal_defaults()
+        self.assertGreater(qs.count(), 0)
+
+        self.assertEqual(
+            qs[0].preferred_estimation_engine_a, "TwelveMonthsSummationEngine"
+        )
+        self.assertEqual(
+            qs[0].preferred_estimation_engine_u, "InYearExtrapolationEngine"
+        )
 
     @patch("suila.management.commands.autoselect_estimation_engine.Profile")
     def test_autoselect_management_command_profiler(self, profiler):
