@@ -27,15 +27,15 @@ msgstr "Resolution"
 
 #: data_analysis/forms.py
 msgid "Metrik"
-msgstr ""
+msgstr "Metric"
 
 #: data_analysis/forms.py
 msgid "Alle"
-msgstr ""
+msgstr "All"
 
 #: data_analysis/forms.py
 msgid "Indkomsttype"
-msgstr ""
+msgstr "Income type"
 
 #: data_analysis/templates/data_analysis/histogram.html
 msgid "Histogrammer for"
