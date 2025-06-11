@@ -1,11 +1,14 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import csv
 import datetime
+import os
 import random
 from decimal import Decimal
 
 import pytz
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
@@ -66,6 +69,21 @@ def set_history_date(obj, date):
         datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
     )
     entry.save()
+
+
+def create_dummy_csv_files():
+    folder: str = str(
+        os.path.join(
+            settings.MEDIA_ROOT,  # type: ignore[misc]
+            settings.LOCAL_PRISME_CSV_STORAGE,  # type: ignore[misc]
+        )
+    )
+    for year in range(2025, 2030):
+        for month in range(1, 13):
+            filename = f"SUILA_kontrolliste_{year}_{month:02}.csv"
+            with open(os.path.join(folder, filename), "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow([random.randint(0, 9999) for x in range(5)])
 
 
 class Command(BaseCommand):
@@ -212,3 +230,4 @@ class Command(BaseCommand):
                         )
                         person_month.save()
                         line_no += 1
+        create_dummy_csv_files()

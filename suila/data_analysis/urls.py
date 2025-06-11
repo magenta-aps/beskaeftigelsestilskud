@@ -4,6 +4,7 @@
 
 
 from data_analysis.views import (
+    CsvFileReportListView,
     HistogramView,
     JobListView,
     PersonAnalysisView,
@@ -29,4 +30,5 @@ urlpatterns: list[URLResolver | URLPattern] = [
         name="update_preferences",
     ),
     path("job_log", JobListView.as_view(), name="job_log"),
+    path("csv_report", CsvFileReportListView.as_view(), name="csv_report"),
 ]
