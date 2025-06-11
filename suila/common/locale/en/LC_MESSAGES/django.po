@@ -92,7 +92,7 @@ msgstr "Log out"
 #: common/utils.py
 #, python-brace-format
 msgid "Du modtog for meget tilskud i {year}"
-msgstr ""
+msgstr "You received too much benefit in {year}"
 
 #: common/utils.py
 #, python-brace-format
