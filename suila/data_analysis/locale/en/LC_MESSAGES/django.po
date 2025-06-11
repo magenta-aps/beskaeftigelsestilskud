@@ -39,7 +39,7 @@ msgstr "Income type"
 
 #: data_analysis/templates/data_analysis/histogram.html
 msgid "Histogrammer for"
-msgstr ""
+msgstr "Histograms for"
 
 #: data_analysis/templates/data_analysis/histogram.html
 #: data_analysis/templates/data_analysis/person_analysis.html
@@ -57,7 +57,7 @@ msgstr "Job list"
 
 #: data_analysis/templates/data_analysis/personyear_list.html
 msgid "Estimeringsoverblik for"
-msgstr ""
+msgstr "Estimation overview for"
 
 #: data_analysis/templatetags/suila_tags.py data_analysis/tests/test_tags.py
 msgid "Ja"
