@@ -517,7 +517,7 @@ class CsvFileReportListView(
     template_name = "data_analysis/report_list.html"
     matomo_pagename = "CsvRapportListe"
     default_ordering = "filename"
-    required_model_permissions = ("suila.can_download_reports",)
+    required_model_permissions = ["suila.can_download_reports"]
 
     def get_ordering(self) -> str:
         return self.request.GET.get("order_by") or self.default_ordering
@@ -573,9 +573,9 @@ class CsvFileReportListView(
 
 
 class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, View):
-    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
+    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
 
-    required_model_permissions = ("suila.can_download_reports",)
+    required_model_permissions = ["suila.can_download_reports"]
 
     def get(self, request, *args, **kwargs):
         filename = kwargs["filename"]

@@ -411,7 +411,7 @@ class BatchExport:
                 os.path.join(
                     settings.LOCAL_PRISME_CSV_STORAGE_FULL,  # type: ignore[misc]
                     filename,
-                )  # type: ignore[misc]
+                )
             )
             with open(local_file, "wb") as f:
                 f.write(buf.getbuffer())
