@@ -45,7 +45,7 @@ msgstr ""
 #: data_analysis/templates/data_analysis/person_analysis.html
 #: data_analysis/templates/data_analysis/personyear_list.html
 msgid "Opdatér"
-msgstr ""
+msgstr "Update"
 
 #: data_analysis/templates/data_analysis/histogram.html
 msgid "Building histograms ..."
@@ -53,7 +53,7 @@ msgstr ""
 
 #: data_analysis/templates/data_analysis/job_list.html
 msgid "Jobliste"
-msgstr ""
+msgstr "Job list"
 
 #: data_analysis/templates/data_analysis/personyear_list.html
 msgid "Estimeringsoverblik for"
@@ -61,8 +61,8 @@ msgstr ""
 
 #: data_analysis/templatetags/suila_tags.py data_analysis/tests/test_tags.py
 msgid "Ja"
-msgstr ""
+msgstr "Yes"
 
 #: data_analysis/templatetags/suila_tags.py data_analysis/tests/test_tags.py
 msgid "Nej"
-msgstr ""
+msgstr "No"

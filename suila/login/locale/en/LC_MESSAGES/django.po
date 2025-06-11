@@ -58,11 +58,11 @@ msgstr "Login failed"
 #: login/templates/login/login_repeat.html
 #: login/templates/login/login_timeout.html
 msgid "Adgang nægtet"
-msgstr ""
+msgstr "Access denied"
 
 #: login/templates/login/login_failed.html
 msgid "Der kunne ikke logges ind med den angivne bruger."
-msgstr "Unidentified user – login faliure."
+msgstr "Unidentified user – login failure."
 
 #: login/templates/login/login_failed.html
 #: login/templates/login/login_no_cpr.html
@@ -71,11 +71,11 @@ msgstr "Log out"
 
 #: login/templates/login/login_no_cpr.html
 msgid "Det anvendte login har ikke et CPR-nummer tilknyttet."
-msgstr "No CPR-nummer connected to log in."
+msgstr "No CPR-number connected to login."
 
 #: login/templates/login/login_repeat.html
 msgid "Det anvendte login er allerede anvendt. Prøv at logge ind igen."
-msgstr "The login is already in use. Please, try again."
+msgstr "The login is already in use. Please try again."
 
 #: login/templates/login/login_repeat.html
 #: login/templates/login/login_timeout.html
@@ -85,7 +85,7 @@ msgstr "Log in"
 
 #: login/templates/login/login_timeout.html
 msgid "Det anvendte login er timet ud. Prøv at logge ind igen."
-msgstr ""
+msgstr "The login has timed out"
 
 #: login/templates/two_factor/_wizard_actions.html
 msgid "Fortsæt"
