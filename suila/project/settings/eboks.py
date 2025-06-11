@@ -15,4 +15,4 @@ EBOKS = {
 }
 
 # Relative to settings.MEDIA_ROOT
-LOCAL_PDF_STORAGE = "eboks"
+LOCAL_EBOKS_PDF_STORAGE = "eboks"

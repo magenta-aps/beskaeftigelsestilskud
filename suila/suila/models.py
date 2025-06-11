@@ -1853,7 +1853,7 @@ class EboksMessage(PermissionsMixin, models.Model):
         db_index=True,
     )
     contents = models.FileField(
-        null=True, upload_to=settings.LOCAL_PDF_STORAGE  # type: ignore
+        null=True, upload_to=settings.LOCAL_EBOKS_PDF_STORAGE  # type: ignore
     )
 
     @classmethod

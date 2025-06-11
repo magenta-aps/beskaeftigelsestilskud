@@ -21,3 +21,6 @@ PRISME = {
     "b_tax_folder": os.environ["PRISME_B_TAX_FOLDER"],
     "control_folder": os.environ["PRISME_CONTROL_FOLDER"],
 }
+
+# Relative to settings.MEDIA_ROOT
+LOCAL_PRISME_CSV_STORAGE = "prisme"
