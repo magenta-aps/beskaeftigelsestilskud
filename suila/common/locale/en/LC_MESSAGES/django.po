@@ -75,7 +75,7 @@ msgstr "Estimation overview for each person"
 
 #: common/templates/common/_base.html
 msgid "Histogrammer over estimeringernes afvigelse"
-msgstr ""
+msgstr "Estimate deviation histogram"
 
 #: common/templates/common/_base.html
 msgid "Jobliste"
