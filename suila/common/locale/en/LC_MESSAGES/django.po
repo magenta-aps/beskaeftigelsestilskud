@@ -97,9 +97,9 @@ msgstr "You received too much benefit in {year}"
 #: common/utils.py
 #, python-brace-format
 msgid "Du tjente for tæt på øverste grænse i {year}"
-msgstr ""
+msgstr "Your income for {year} was too close to the upper limit"
 
 #: common/utils.py
 #, python-brace-format
 msgid "Du tjente for tæt på bundgrænsen i {year}"
-msgstr ""
+msgstr "Your income for {year} was too close to the lower limit"

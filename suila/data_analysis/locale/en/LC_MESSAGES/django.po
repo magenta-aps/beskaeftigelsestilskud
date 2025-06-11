@@ -19,7 +19,7 @@ msgstr ""
 
 #: data_analysis/forms.py
 msgid "År"
-msgstr ""
+msgstr "Year"
 
 #: data_analysis/forms.py
 msgid "Opløsning"
