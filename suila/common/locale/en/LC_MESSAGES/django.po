@@ -71,7 +71,7 @@ msgstr "Suila-tapit calculator"
 
 #: common/templates/common/_base.html
 msgid "Estimeringsoverblik for hver person"
-msgstr ""
+msgstr "Estimation overview for each person"
 
 #: common/templates/common/_base.html
 msgid "Histogrammer over estimeringernes afvigelse"
@@ -79,7 +79,7 @@ msgstr ""
 
 #: common/templates/common/_base.html
 msgid "Jobliste"
-msgstr ""
+msgstr "Job list"
 
 #: common/templates/common/_base.html
 msgid "Aktivér to-faktor-login"
