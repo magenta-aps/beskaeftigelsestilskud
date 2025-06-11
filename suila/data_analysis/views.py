@@ -3,8 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 import copy
 import json
+import os
 from collections import Counter, defaultdict
+from datetime import datetime
 from decimal import Decimal
+from operator import itemgetter
+from stat import S_ISREG
 from typing import List
 from urllib.parse import urlencode
 
@@ -12,6 +16,7 @@ from common.models import EngineViewPreferences
 from common.utils import SuilaJSONEncoder
 from common.view_mixins import ViewLogMixin
 from data_analysis.forms import (
+    CsvReportOptionsForm,
     HistogramOptionsForm,
     JobListOptionsForm,
     PersonAnalysisOptionsForm,
@@ -21,7 +26,10 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
+from django.http.response import HttpResponseForbidden, HttpResponseNotFound
+from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
 from login.view_mixins import LoginRequiredMixin
@@ -500,3 +508,82 @@ class JobListView(
 
         self.log_view(self.object_list)
         return context
+
+
+class CsvFileReportListView(
+    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, ListView, FormView
+):
+    form_class = CsvReportOptionsForm
+    template_name = "data_analysis/report_list.html"
+    matomo_pagename = "CsvRapportListe"
+    default_ordering = "filename"
+    required_model_permissions = ["suila.can_download_reports"]
+
+    def get_ordering(self) -> str:
+        return self.request.GET.get("order_by") or self.default_ordering
+
+    def get_queryset(self):
+        folder: str = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
+        items = []
+        for filename in os.listdir(folder):
+            fullpath = os.path.join(folder, filename)
+            stat: os.stat_result = os.stat(fullpath)
+            if S_ISREG(stat.st_mode):  # Regular file
+                items.append(
+                    {
+                        "filename": filename,
+                        "url": reverse(
+                            "data_analysis:csv_report_download",
+                            kwargs={"filename": filename},
+                        ),
+                        "size": stat.st_size,
+                        "modified": datetime.fromtimestamp(
+                            stat.st_mtime, tz=timezone.get_current_timezone()
+                        ),
+                    }
+                )
+        ordering = self.get_ordering()
+        reverse_order = False
+        if ordering[0] == "-":
+            ordering = ordering[1:]
+            reverse_order = True
+        items = sorted(items, key=itemgetter(ordering), reverse=reverse_order)
+        return items
+
+    def get_form_kwargs(self):
+        return {
+            **super().get_form_kwargs(),
+            "data": self.request.GET,
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = context["form"]
+        form.full_clean()
+        params = params_no_none(form.cleaned_data)
+        current_order_by = params.pop("order_by", None) or self.default_ordering
+        sort_params = {}
+        for value, label in form.fields["order_by"].choices:
+            order_by = value if value != current_order_by else ("-" + value)
+            sort_params[value] = urlencode({**params, "order_by": order_by})
+        context["sort_params"] = sort_params
+        context["order_current"] = current_order_by
+        self.log_view()
+        return context
+
+
+class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, View):
+    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
+
+    required_model_permissions = ["suila.can_download_reports"]
+
+    def get(self, request, *args, **kwargs):
+        filename = kwargs["filename"]
+        fullpath = os.path.join(self.folder, filename)
+        if "/" in filename:  # do not trust the user input
+            return HttpResponseForbidden()
+        if os.path.isfile(fullpath):
+            return FileResponse(
+                open(fullpath, "rb"), as_attachment=True, filename=filename
+            )
+        return HttpResponseNotFound()

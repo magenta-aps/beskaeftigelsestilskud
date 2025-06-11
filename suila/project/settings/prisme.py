@@ -4,6 +4,8 @@
 
 import os
 
+from project.settings.upload import MEDIA_ROOT
+
 PRISME = {
     # SFTP credentials, etc.
     "host": os.environ["PRISME_HOST"],
@@ -24,3 +26,10 @@ PRISME = {
 
 # Relative to settings.MEDIA_ROOT
 LOCAL_PRISME_CSV_STORAGE = "prisme"
+
+LOCAL_PRISME_CSV_STORAGE_FULL = str(
+    os.path.join(
+        MEDIA_ROOT,  # type: ignore[misc]
+        LOCAL_PRISME_CSV_STORAGE,  # type: ignore[misc]
+    )
+)

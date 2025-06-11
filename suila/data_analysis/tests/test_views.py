@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import json
+import os
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
@@ -10,6 +11,8 @@ from common.models import EngineViewPreferences, PageView, User
 from common.tests.test_mixins import TestViewMixin
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
+    CsvFileReportDownloadView,
+    CsvFileReportListView,
     HistogramView,
     JobListView,
     PersonAnalysisView,
@@ -17,6 +20,7 @@ from data_analysis.views import (
     PersonYearEstimationMixin,
     SimulationJSONEncoder,
 )
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
@@ -24,6 +28,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from suila.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
+from suila.management.commands.create_dummy_data import create_dummy_csv_files
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -892,3 +897,105 @@ class TestUpdateEngineViewPreferences(TestCase):
         self.assertTrue(
             self.user.engine_view_preferences.show_MonthlyContinuationEngine
         )
+
+
+class TestCsvFileReportListView(TestViewMixin, TestCase):
+
+    view_class = CsvFileReportListView
+    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        create_dummy_csv_files(True)
+        folderpath = os.path.join(cls.folder, "foobarfolder")
+        if not os.path.exists(folderpath):
+            os.mkdir(folderpath)
+
+    def test_get_returns_html(self):
+        view, response = self.request_get(self.admin_user, "")
+        self.assertIsInstance(response, TemplateResponse)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(len(object_list), 60)
+        self.assertEqual(object_list[0]["filename"], "SUILA_kontrolliste_2025_01.csv")
+
+    def test_ordering(self):
+        view, response = self.request_get(self.admin_user, "?order_by=-filename")
+        self.assertIsInstance(response, TemplateResponse)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(object_list[0]["filename"], "SUILA_kontrolliste_2029_12.csv")
+
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "")
+
+    def test_view_staff_access(self):
+        try:
+            self.request_get(self.staff_user, "")
+        except PermissionDenied:
+            self.fail("Should have access")
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
+    def test_view_log(self):
+        self.request_get(self.admin_user, "")
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "CsvFileReportListView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {})
+        self.assertEqual(pageview.params, {})
+
+
+class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
+
+    view_class = CsvFileReportDownloadView
+    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.filename = "SUILA_kontrolliste_2025_01.csv"
+        cls.data = b"1,2,3,4,5"
+        with open(os.path.join(cls.folder, cls.filename), "wb") as f:
+            f.write(cls.data)
+
+    def test_download(self):
+        view, response = self.request_get(self.admin_user, "", filename=self.filename)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "text/csv")
+        self.assertEqual(response.headers["content-Length"], str(len(self.data)))
+        self.assertEqual(
+            response.headers["Content-Disposition"],
+            'attachment; filename="SUILA_kontrolliste_2025_01.csv"',
+        )
+        self.assertEqual(response.getvalue(), self.data)
+
+    def test_download_invalid_path(self):
+        view, response = self.request_get(
+            self.admin_user, "", filename="../../passwords.txt"
+        )
+        self.assertEqual(response.status_code, 403)
+        view, response = self.request_get(
+            self.admin_user, "", filename="nonexisting.csv"
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "", filename=self.filename)
+
+    def test_view_staff_access(self):
+        try:
+            self.request_get(self.staff_user, "", filename=self.filename)
+        except PermissionDenied:
+            self.fail("Should have access")
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", filename=self.filename)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")

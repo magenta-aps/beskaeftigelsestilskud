@@ -22,6 +22,7 @@ from suila.models import (
     PersonYearAssessment,
     PersonYearEstimateSummary,
     PersonYearU1AAssessment,
+    PrismeBatch,
     StandardWorkBenefitCalculationMethod,
     Year,
 )
@@ -102,6 +103,10 @@ class Command(BaseCommand):
                 (
                     StandardWorkBenefitCalculationMethod,
                     ("use_adminsite_calculator_parameters",),
+                ),
+                (
+                    PrismeBatch,
+                    ("can_download_reports",),
                 ),
             ),
         )
