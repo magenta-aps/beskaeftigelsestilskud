@@ -59,9 +59,7 @@ class Command(SuilaBaseCommand):
         out = self.stdout if self._verbose else TextIOWrapper(BytesIO())
         if typ == "annualincome":
             if month is not None:
-                self.stdout.write(
-                    "--month is not relevant when fetching expected income"
-                )
+                self.stdout.write("--month is not relevant when fetching annual income")
             annual_income_data = client.get_annual_income(
                 year, cpr, chunk_size=fetch_chunk_size
             )

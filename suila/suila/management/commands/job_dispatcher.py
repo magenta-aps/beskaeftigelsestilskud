@@ -109,7 +109,7 @@ class Command(SuilaBaseCommand):
                     ManagementCommands.LOAD_ESKAT,
                     year if typ == "monthlyincome" else effect_year,
                     typ,
-                    month=None if typ == "expectedincome" else month,
+                    month=month if typ == "monthlyincome" else None,
                     verbosity=verbosity,
                     cpr=cpr,
                     skew=typ == "monthlyincome",
