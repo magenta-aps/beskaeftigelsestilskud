@@ -23,7 +23,7 @@ msgstr "Year"
 
 #: data_analysis/forms.py
 msgid "Opløsning"
-msgstr ""
+msgstr "Resolution"
 
 #: data_analysis/forms.py
 msgid "Metrik"
