@@ -107,7 +107,7 @@ class Command(SuilaBaseCommand):
             for typ in self.load_eskat_types:
                 job_dispatcher.call_job(
                     ManagementCommands.LOAD_ESKAT,
-                    year,
+                    year if typ == "monthlyincome" else effect_year,
                     typ,
                     month=None if typ == "expectedincome" else month,
                     verbosity=verbosity,
@@ -121,7 +121,7 @@ class Command(SuilaBaseCommand):
         # Load U1A/udbytte data from AKAP
         job_dispatcher.call_job(
             ManagementCommands.IMPORT_U1A_DATA,
-            year=year,
+            year=effect_year,
             cpr=cpr,
             verbosity=verbosity,
         )
@@ -137,7 +137,7 @@ class Command(SuilaBaseCommand):
         # Estimate income
         job_dispatcher.call_job(
             ManagementCommands.ESTIMATE_INCOME,
-            year=year,
+            year=effect_year,
             cpr=cpr,
             verbosity=verbosity,
         )
