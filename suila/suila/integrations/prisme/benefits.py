@@ -322,7 +322,7 @@ class BatchExport:
     )
     def _put_file_in_prisme_folder(
         self,
-        buf: BytesIO,
+        buf: BytesIO | str,
         destination_folder: str,
         filename: str,
     ):
@@ -406,8 +406,14 @@ class BatchExport:
         filename: str = f"SUILA_kontrolliste_{self._year}_{self._month:02}.csv"
         try:
             buf: BytesIO = self.get_control_list_csv()
+            local_file: str = (
+                f"{settings.MEDIA_ROOT}/"  # type: ignore[misc]
+                f"{settings.LOCAL_PRISME_CSV_STORAGE}/{filename}"  # type: ignore[misc]
+            )
+            with open(local_file, "wb") as f:
+                f.write(buf.getbuffer())
             self._put_file_in_prisme_folder(
-                buf,
+                local_file,
                 settings.PRISME["control_folder"],  # type: ignore[misc]
                 filename,
             )
