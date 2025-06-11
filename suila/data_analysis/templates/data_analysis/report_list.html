@@ -1,0 +1,57 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "data_analysis/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load csp %}
+{% load suila_tags %}
+{% load bootstrap_icons %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<div class="row my-1 mx-1">
+    <h1>{% translate "Liste af CSV-rapporter" %} </h1>
+</div>
+<div class="row my-1 mx-1">
+    <table class="table table-bordered"  id="table">
+    <thead class="shadow-sm p-3 mb-5 bg-body rounded sticky-top">
+    <tr>
+        <th class="col-2">
+            <a href="?{{ sort_params.filename }}" class="link-dark">
+                Navn
+                {% include "data_analysis/sort_icon.html" with field="filename" %}
+            </a>
+        </th>
+        <th class="col-2">
+            <a href="?{{ sort_params.modified }}" class="link-dark">
+                Oprettet
+                {% include "data_analysis/sort_icon.html" with field="modified" %}
+            </a>
+        </th>
+        <th class="col-2">
+            <a href="?{{ sort_params.size }}" class="link-dark">
+                Størrelse
+                {% include "data_analysis/sort_icon.html" with field="size" %}
+            </a>
+        </th>
+
+    </tr>
+    </thead>
+    <tbody>
+    {% for object in object_list %}
+    <tr>
+        <td>{{ object.filename }}</td>
+        <td>{{ object.modified|date:"Y.m.d H:i:s O" }}</td>
+        <td>{{ object.size|filesizeformat }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+</div>
+
+{% endblock %}
