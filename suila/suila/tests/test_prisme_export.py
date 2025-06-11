@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
+import os.path
 import re
 from csv import DictReader
 from datetime import date
@@ -474,6 +475,12 @@ class TestBatchExport(TestCase):
         ) as mock_put:
             # Act
             self.export_batches(stdout, verbosity=2)
+
+            # Assert: local file created
+            folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
+            expected_file = os.path.join(folder, "SUILA_kontrolliste_2025_01.csv")
+            self.assertTrue(os.path.isfile(expected_file))
+
             # Assert: final call to `put_file_in_prisme_folder` is the CSV report
             last_call = mock_put.call_args_list[-1]
             self.assertEqual(last_call.args[3], "SUILA_kontrolliste_2025_01.csv")

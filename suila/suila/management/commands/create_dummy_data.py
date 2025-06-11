@@ -71,13 +71,17 @@ def set_history_date(obj, date):
     entry.save()
 
 
-def create_dummy_csv_files():
-    folder: str = str(
-        os.path.join(
-            settings.MEDIA_ROOT,  # type: ignore[misc]
-            settings.LOCAL_PRISME_CSV_STORAGE,  # type: ignore[misc]
-        )
-    )
+def create_dummy_csv_files(clean: bool = False):
+    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
+
+    if clean:
+        for file in os.listdir(folder):
+            path = os.path.join(folder, file)
+            if os.path.isfile(path):
+                os.remove(path)
+            else:
+                os.rmdir(path)
+
     for year in range(2025, 2030):
         for month in range(1, 13):
             filename = f"SUILA_kontrolliste_{year}_{month:02}.csv"
@@ -230,4 +234,4 @@ class Command(BaseCommand):
                         )
                         person_month.save()
                         line_no += 1
-        create_dummy_csv_files()
+        create_dummy_csv_files(True)

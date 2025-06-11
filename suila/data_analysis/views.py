@@ -523,12 +523,7 @@ class CsvFileReportListView(
         return self.request.GET.get("order_by") or self.default_ordering
 
     def get_queryset(self):
-        folder: str = str(
-            os.path.join(
-                settings.MEDIA_ROOT,  # type: ignore[misc]
-                settings.LOCAL_PRISME_CSV_STORAGE,  # type: ignore[misc]
-            )
-        )
+        folder: str = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
         items = []
         for filename in os.listdir(folder):
             fullpath = os.path.join(folder, filename)
@@ -552,7 +547,8 @@ class CsvFileReportListView(
         if ordering[0] == "-":
             ordering = ordering[1:]
             reverse_order = True
-        return sorted(items, key=itemgetter(ordering), reverse=reverse_order)
+        items = sorted(items, key=itemgetter(ordering), reverse=reverse_order)
+        return items
 
     def get_form_kwargs(self):
         return {
@@ -577,20 +573,15 @@ class CsvFileReportListView(
 
 
 class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, View):
-    folder: str = str(
-        os.path.join(
-            settings.MEDIA_ROOT,  # type: ignore[misc]
-            settings.LOCAL_PRISME_CSV_STORAGE,  # type: ignore[misc]
-        )
-    )
+    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
+
+    required_model_permissions = ("suila.can_download_reports",)
 
     def get(self, request, *args, **kwargs):
         filename = kwargs["filename"]
         fullpath = os.path.join(self.folder, filename)
         if "/" in filename:  # do not trust the user input
             return HttpResponseForbidden()
-        # if os.path.abspath(fullpath) != fullpath:
-        #     return HttpResponseForbidden()
         if os.path.isfile(fullpath):
             return FileResponse(
                 open(fullpath, "rb"), as_attachment=True, filename=filename

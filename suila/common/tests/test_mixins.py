@@ -29,6 +29,9 @@ class UserMixin:
         cls.staff_group.permissions.add(
             Permission.objects.get(codename="change_person")
         )
+        cls.staff_group.permissions.add(
+            Permission.objects.get(codename="can_download_reports")
+        )
         cls.staff_user.groups.add(cls.staff_group)
 
         # Bruger der matcher et CPR-nummer i databasen
