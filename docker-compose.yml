@@ -19,6 +19,7 @@ services:
       - ./log/cron.log:/log/cron.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./dev-environment/crontab:/crontab:ro
+      - file-data:/upload:rw
     environment:
       - MAKE_MIGRATIONS=true
       - MIGRATE=true

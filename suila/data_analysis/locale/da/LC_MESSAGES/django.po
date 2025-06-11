@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-21 09:04-0200\n"
+"POT-Creation-Date: 2025-06-11 07:01-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,6 +57,10 @@ msgstr ""
 
 #: data_analysis/templates/data_analysis/personyear_list.html
 msgid "Estimeringsoverblik for"
+msgstr ""
+
+#: data_analysis/templates/data_analysis/report_list.html
+msgid "Liste af CSV-rapporter"
 msgstr ""
 
 #: data_analysis/templatetags/suila_tags.py data_analysis/tests/test_tags.py

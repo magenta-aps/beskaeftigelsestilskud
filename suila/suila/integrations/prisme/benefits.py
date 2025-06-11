@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
+import os
 from csv import DictWriter
 from datetime import date, timedelta
 from decimal import Decimal
@@ -406,9 +407,11 @@ class BatchExport:
         filename: str = f"SUILA_kontrolliste_{self._year}_{self._month:02}.csv"
         try:
             buf: BytesIO = self.get_control_list_csv()
-            local_file: str = (
-                f"{settings.MEDIA_ROOT}/"  # type: ignore[misc]
-                f"{settings.LOCAL_PRISME_CSV_STORAGE}/{filename}"  # type: ignore[misc]
+            local_file: str = str(
+                os.path.join(
+                    settings.LOCAL_PRISME_CSV_STORAGE_FULL,  # type: ignore[misc]
+                    filename,
+                )
             )
             with open(local_file, "wb") as f:
                 f.write(buf.getbuffer())
