@@ -250,7 +250,7 @@ class TestJobDispatcherCommands(TestCase):
                         ManagementCommands.LOAD_ESKAT,
                         test_date.year,
                         "taxinformation",
-                        month=test_date.month,
+                        month=None,
                         cpr=None,
                         skew=False,
                         traceback=False,
