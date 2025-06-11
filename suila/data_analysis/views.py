@@ -26,7 +26,9 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
+from django.http.response import HttpResponseForbidden, HttpResponseNotFound
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
@@ -535,7 +537,10 @@ class CsvFileReportListView(
                 items.append(
                     {
                         "filename": filename,
-                        "url": "",
+                        "url": reverse(
+                            "data_analysis:csv_report_download",
+                            kwargs={"filename": filename},
+                        ),
                         "size": stat.st_size,
                         "modified": datetime.fromtimestamp(
                             stat.st_mtime, tz=timezone.get_current_timezone()
@@ -543,11 +548,11 @@ class CsvFileReportListView(
                     }
                 )
         ordering = self.get_ordering()
-        reverse = False
+        reverse_order = False
         if ordering[0] == "-":
             ordering = ordering[1:]
-            reverse = True
-        return sorted(items, key=itemgetter(ordering), reverse=reverse)
+            reverse_order = True
+        return sorted(items, key=itemgetter(ordering), reverse=reverse_order)
 
     def get_form_kwargs(self):
         return {
@@ -569,3 +574,25 @@ class CsvFileReportListView(
         context["order_current"] = current_order_by
         self.log_view()
         return context
+
+
+class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, View):
+    folder: str = str(
+        os.path.join(
+            settings.MEDIA_ROOT,  # type: ignore[misc]
+            settings.LOCAL_PRISME_CSV_STORAGE,  # type: ignore[misc]
+        )
+    )
+
+    def get(self, request, *args, **kwargs):
+        filename = kwargs["filename"]
+        fullpath = os.path.join(self.folder, filename)
+        if "/" in filename:  # do not trust the user input
+            return HttpResponseForbidden()
+        # if os.path.abspath(fullpath) != fullpath:
+        #     return HttpResponseForbidden()
+        if os.path.isfile(fullpath):
+            return FileResponse(
+                open(fullpath, "rb"), as_attachment=True, filename=filename
+            )
+        return HttpResponseNotFound()
