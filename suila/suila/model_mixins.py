@@ -51,6 +51,7 @@ class PermissionsMixin:
             return False
         if user.is_superuser:
             return True
+        print(user.get_all_permissions())
         return set(required_permissions).issubset(user.get_all_permissions())
 
     def has_object_permissions(

@@ -159,6 +159,7 @@
                         </li>
                         {% endif %}
 
+
                         {% if user.is_authenticated and user|has_permissions:"suila.view_joblog" %}
                         <li class="nav-item dropdown ms-4">
                             <a href="{% url 'data_analysis:job_log' %}" class="d-flex align-items-center">
@@ -166,6 +167,15 @@
                                 <span class="ms-1">{% translate "Jobliste" %}</span>
                             </a>
                         </li>
+                        {% endif %}
+
+                        {% if user.is_authenticated and user|has_permissions:"suila.can_download_reports" %}
+                            <li class="nav-item dropdown ms-4">
+                                <a href="{% url 'data_analysis:csv_report' %}" class="d-flex align-items-center">
+                                    <span class="material-icons">list_alt</span>
+                                    <span class="ms-1">{% translate "Kontrollister" %}</span>
+                                </a>
+                            </li>
                         {% endif %}
                     </ul>
                     <ul class="util-menu navbar-nav d-none d-xl-flex align-items-xl-center align-self-xl-start flex-no-wrap ms-4 me-auto pt-xxl-3">

@@ -515,6 +515,7 @@ class CsvFileReportListView(
     template_name = "data_analysis/report_list.html"
     matomo_pagename = "CsvRapportListe"
     default_ordering = "filename"
+    required_model_permissions = ("suila.can_download_reports",)
 
     def get_ordering(self) -> str:
         return self.request.GET.get("order_by") or self.default_ordering

@@ -1409,6 +1409,9 @@ class PrismeAccountAlias(PermissionsMixin, models.Model):
 
 
 class PrismeBatch(PermissionsMixin, models.Model):
+    class Meta:
+        permissions = (("can_download_reports", "Can download CSV reports"),)
+
     class Status(models.TextChoices):
         Sending = "sending", _("Sending")
         Sent = "sent", _("Sent")
