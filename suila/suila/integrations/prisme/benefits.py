@@ -407,7 +407,8 @@ class BatchExport:
         try:
             buf: BytesIO = self.get_control_list_csv()
             local_file: str = (
-                f"{settings.MEDIA_ROOT}/{settings.LOCAL_PRISME_CSV_STORAGE}/{filename}"
+                f"{settings.MEDIA_ROOT}/"  # type: ignore[misc]
+                f"{settings.LOCAL_PRISME_CSV_STORAGE}/{filename}"  # type: ignore[misc]
             )
             with open(local_file, "wb") as f:
                 f.write(buf.getbuffer())
