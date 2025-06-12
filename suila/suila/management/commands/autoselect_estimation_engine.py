@@ -5,7 +5,7 @@ from cProfile import Profile
 
 from django.core.management.base import BaseCommand
 
-from suila.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary
+from suila.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary, Year
 
 
 class Command(BaseCommand):
@@ -65,6 +65,9 @@ class Command(BaseCommand):
                 for year in years_to_process:
                     # Look for LAST year's results to find the best estimation
                     # engine for THIS year
+
+                    year_obj, _ = Year.objects.get_or_create(year=year)
+
                     relevant_summaries = summaries.filter(
                         person_year__year_id=year - 1, rmse_percent__isnull=False
                     )
@@ -84,13 +87,9 @@ class Command(BaseCommand):
 
                     if rmses:
                         best_engine = min(rmses, key=rmses.get)
-                        try:
-                            person_year = PersonYear.objects.get(
-                                person=person, year=year
-                            )
-                        except PersonYear.DoesNotExist:
-                            self._write_verbose(f"No PersonYear found for {person}")
-                            continue
+                        person_year, _ = PersonYear.objects.get_or_create(
+                            person=person, year=year_obj
+                        )
 
                         self._write_verbose(
                             (
