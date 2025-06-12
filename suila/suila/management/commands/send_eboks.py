@@ -85,4 +85,4 @@ class Command(SuilaBaseCommand):
                             suilamessage.send(client)
                         suilamessage.update_welcome_letter()
                     i += 1
-                    print(i)
+                    self.stdout.write(str(i))

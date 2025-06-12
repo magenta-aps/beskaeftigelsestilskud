@@ -2,16 +2,22 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import json
+import os
 import os.path
 import re
 import time
+from concurrent.futures import Future
 from datetime import date, timedelta
+from io import StringIO
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import requests
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
-from django.test import TestCase, override_settings
+from django.core.management import call_command as core_call_command
+from django.db import connections
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from requests import Response
 from requests.exceptions import ConnectionError
@@ -23,10 +29,12 @@ from suila.integrations.eboks.client import (
 )
 from suila.models import (
     EboksMessage,
+    ManagementCommands,
     Person,
     PersonMonth,
     PersonYear,
     SuilaEboksMessage,
+    TaxScope,
     Year,
 )
 
@@ -554,3 +562,182 @@ class SuilaMessageTest(EboksTest):
         self.assertTrue(
             self.person.welcome_letter_sent_at > timezone.now() - timedelta(seconds=1)
         )
+
+
+class EboksManagementCommandTestMixin:
+
+    def quarantine_df(self, in_quarantine):
+        return pd.DataFrame(
+            [in_quarantine],
+            index=["0101011111"],
+            columns=["in_quarantine"],
+        )
+
+    def setUpMocks(self):
+        self.quarantine_patcher = patch("common.utils.get_people_in_quarantine")
+        self.submit_patcher = patch(
+            "suila.management.commands.send_eboks.ThreadPoolExecutor.submit"
+        )
+        self.eboks_client_patcher = patch(
+            "suila.management.commands.send_eboks.EboksClient"
+        )
+
+        self.submit_mock = self.submit_patcher.start()
+        self.quarantine_mock = self.quarantine_patcher.start()
+        self.eboks_client_mock = self.eboks_client_patcher.start()
+
+        # Mock the quarantine dataframe. By default a person is NOT in quarantine
+        self.quarantine_mock.return_value = self.quarantine_df(False)
+
+        # Mock ThreadPoolExecutor.submit to close connections when done
+        # This allows for proper teardown of the test database
+        def on_done(future):
+            connections.close_all()
+
+        def mock_submit(func, obj):
+            future = Future()
+            future.set_result(func(obj))
+            future.add_done_callback(on_done)
+            return future
+
+        self.submit_mock.side_effect = mock_submit
+
+        # Setup mock e-Boks client
+        self.recipients = [{"status": "ok", "post_processing_status": ""}]
+        self.send_message_response = MagicMock()
+        self.send_message_response.json.return_value = {
+            "recipients": self.recipients,
+            "message_id": 666,
+        }
+
+        self.client_mock = MagicMock()
+        self.client_mock.get_message_id.return_value = 666
+        self.client_mock.send_message.return_value = self.send_message_response
+
+        # Patch the factory method to return the mocked client
+        self.eboks_client_mock.from_settings.return_value = self.client_mock
+
+
+class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin):
+    def setUp(self):
+        super().setUp()
+
+        self.person, _ = Person.objects.update_or_create(
+            cpr="0101011111", location_code=1, full_address="Polarvej 1, 6666 Nuuk"
+        )
+        self.year = Year.objects.create(year=2020)
+        self.person_year = PersonYear.objects.create(
+            person=self.person,
+            year=self.year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+            tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
+        )
+        self.person_months = [
+            PersonMonth.objects.create(
+                person_year=self.person_year,
+                month=i,
+                benefit_calculated=i,
+                import_date=date(2020, 1, 1),
+            )
+            for i in range(1, 13)
+        ]
+        self.setUpMocks()
+        self.stdout = StringIO()
+
+        try:
+            os.remove("/tmp/0101011111.pdf")
+        except FileNotFoundError:
+            pass
+
+    def call_command(self, year=2020, month=3, *args, **kwargs):
+        core_call_command(
+            ManagementCommands.SEND_EBOKS,
+            year,
+            month,
+            *args,
+            stdout=self.stdout,
+            **kwargs,
+        )
+
+    def test_management_command(self):
+        self.call_command(send=True)
+
+        message = SuilaEboksMessage.objects.get(cpr_cvr="0101011111")
+        self.client_mock.send_message.assert_called()
+        self.assertEqual(message.status, "sent")
+        self.assertEqual(message.type, "opgørelse")
+
+    def test_person_in_quarantine(self):
+        self.quarantine_mock.return_value = self.quarantine_df(True)
+        self.call_command(send=True)
+
+        message = SuilaEboksMessage.objects.get(cpr_cvr="0101011111")
+        self.client_mock.send_message.assert_called()
+        self.assertEqual(message.status, "sent")
+        self.assertEqual(message.type, "afventer")
+
+    def test_person_not_in_mandtal(self):
+        self.person_year.tax_scope = TaxScope.DELVIST_SKATTEPLIGTIG
+        self.person_year.save()
+        self.call_command(send=True)
+
+        self.client_mock.send_message.assert_not_called()
+        self.assertFalse(
+            SuilaEboksMessage.objects.filter(cpr_cvr="0101011111").exists()
+        )
+
+    def test_person_already_received_welcome_letter(self):
+        self.call_command(month=3, send=True)
+
+        self.person.refresh_from_db()
+        self.assertTrue(self.person.welcome_letter_sent_at is not None)
+
+        self.call_command(month=4, send=True)
+
+        message = SuilaEboksMessage.objects.get(cpr_cvr="0101011111")
+        self.client_mock.send_message.assert_called_once()
+        self.assertEqual(message.status, "sent")
+        self.assertEqual(message.type, "opgørelse")
+
+    def test_bogus_addresses(self):
+        for address in [
+            "Administrativ kontor, hvor vi laver administrative ting",
+            "",
+            "0",
+            "postkode 9999",
+            "Ukendt vej",
+            None,
+        ]:
+            self.person.full_address = address
+            self.person.save()
+            self.call_command(send=True)
+            self.client_mock.send_message.assert_not_called()
+
+    def test_cpr_arg(self):
+        self.call_command(send=True, cpr="123")
+        self.client_mock.send_message.assert_not_called()
+
+        self.call_command(send=True, cpr="0101011111")
+        self.client_mock.send_message.assert_called_once()
+
+    def test_send_arg(self):
+        self.call_command(send=False)
+        self.client_mock.send_message.assert_not_called()
+
+        self.call_command()  # "send" is False by default
+        self.client_mock.send_message.assert_not_called()
+
+        self.call_command(send=True)
+        self.client_mock.send_message.assert_called()
+
+    def test_save_arg(self):
+        self.call_command(send=False)
+        self.assertNotIn("0101011111.pdf", os.listdir("/tmp"))
+
+        self.call_command(send=False, save=True)
+        self.assertIn("0101011111.pdf", os.listdir("/tmp"))
+
+    def test_nonexisting_person_month(self):
+        PersonMonth.objects.get(month=3).delete()
+        self.call_command(month=3, send=True)
+        self.client_mock.send_message.assert_not_called()
