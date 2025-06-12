@@ -11,6 +11,7 @@ LANGUAGE_CODE = "da"
 LANGUAGES = [
     ("kl", "Kalaallisut"),
     ("da", "Dansk"),
+    ("en", "English"),
 ]
 EXTRA_LANG_INFO = {
     "kl": {
