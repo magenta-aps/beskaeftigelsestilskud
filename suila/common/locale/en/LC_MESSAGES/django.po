@@ -63,7 +63,7 @@ msgstr "My estimated Suila-tapit"
 
 #: common/templates/common/_base.html
 msgid "Ikke modtaget Suila-tapit"
-msgstr "No Suila-tapit recieved"
+msgstr "No Suila-tapit received"
 
 #: common/templates/common/_base.html
 msgid "Suila-tapit-beregneren"
