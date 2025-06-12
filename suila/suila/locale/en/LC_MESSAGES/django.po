@@ -1,0 +1,1344 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-11 07:46-0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: suila/forms.py
+msgid "Estimeret månedsindkomst"
+msgstr "Estimated monthly income"
+
+#: suila/forms.py
+msgid "Estimeret årsindkomst"
+msgstr "Estimated annual income"
+
+#: suila/forms.py suila/views.py
+msgid "Kilde"
+msgstr "Source"
+
+#: suila/forms.py
+#, python-format
+msgid ""
+"Marker en gyldig valgmulighed. %(value)s er ikke en af de tilgængelige "
+"valgmuligheder"
+msgstr "Select a valid option. %(value)s is not one of the available options."
+
+#: suila/forms.py
+msgid "Alle"
+msgstr "All"
+
+#: suila/models.py
+msgid "Benefit rate percent"
+msgstr ""
+
+#: suila/models.py
+msgid "Personal allowance"
+msgstr ""
+
+#: suila/models.py
+msgid "Standard allowance"
+msgstr ""
+
+#: suila/models.py
+msgid "Max benefit"
+msgstr ""
+
+#: suila/models.py
+msgid "Scaledown rate percent"
+msgstr ""
+
+#: suila/models.py
+msgid "CPR nummer"
+msgstr "CPR number"
+
+#: suila/models.py suila/templates/suila/person_detail_notes.html
+#: suila/views.py
+msgid "Dato"
+msgstr "Date"
+
+#: suila/models.py
+msgid "CVR-nummer"
+msgstr "CVR-number"
+
+#: suila/models.py
+msgid "Sending"
+msgstr ""
+
+#: suila/models.py
+msgid "Sent"
+msgstr ""
+
+#: suila/models.py
+msgid "Failed"
+msgstr ""
+
+#: suila/models.py
+msgid "Sendt til udbetaling"
+msgstr "Sent for payment"
+
+#: suila/models.py
+msgid "Udbetaling gennemført"
+msgstr "Payment completed"
+
+#: suila/models.py
+msgid "Fejl i udbetaling"
+msgstr "Payment error"
+
+#: suila/models.py
+msgid "Genereret"
+msgstr "Generated"
+
+#: suila/models.py
+msgid "Afsendt"
+msgstr "Sent"
+
+#: suila/models.py
+msgid "Afventer efterbehandling"
+msgstr ""
+
+#: suila/models.py
+msgid "Afsendelse fejlet"
+msgstr ""
+
+#: suila/models.py
+msgid "Gyldig E-boks modtager"
+msgstr ""
+
+#: suila/models.py
+msgid "Fritaget modtager"
+msgstr ""
+
+#: suila/models.py
+msgid "Ugyldig E-boks modtager (sendes til efterbehandling)"
+msgstr ""
+
+#: suila/models.py
+msgid "Afdød"
+msgstr ""
+
+#: suila/models.py
+msgid "Mindreårig"
+msgstr ""
+
+#: suila/models.py
+msgid "Afventer processering"
+msgstr ""
+
+#: suila/models.py
+msgid "Fundet gyldig postadresse"
+msgstr ""
+
+#: suila/models.py
+msgid "Ingen gyldig postadresse"
+msgstr ""
+
+#: suila/models.py
+msgid "Overført til fjernprint"
+msgstr ""
+
+#: suila/models.py
+msgid "U1A IDs i AKAP"
+msgstr "U1A IDs in AKAP"
+
+#: suila/models.py
+msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
+msgstr ""
+
+#: suila/templates/suila/about.html suila/templates/suila/root.html
+msgid "Hvad er Suila-tapit?"
+msgstr "What is Suila-tapit?"
+
+#: suila/templates/suila/about.html
+msgid "Se videoen om Suila-tapit"
+msgstr "Watch the video about Suila-tapit"
+
+#: suila/templates/suila/about.html
+msgid "Få mere information om Suila-tapit"
+msgstr "Get more information about Suila-tapit"
+
+#: suila/templates/suila/about.html
+msgid ""
+"På <a href=\"https://www.sullissivik.gl/Emner/B_Skatter-afgifter-og-gaeld-"
+"til-det-offentlige/Skat/Suilatapit-Beskaeftigelsesfradrag\" "
+"target=\"_blank\">Sullissivik.gl</a>"
+msgstr ""
+"On <a href=\"https://www.sullissivik.gl/Emner/B_Skatter-afgifter-og-gaeld-"
+"til-det-offentlige/Skat/Suilatapit-Beskaeftigelsesfradrag\" "
+"target=\"_blank\">Sullissivik.gl</a>"
+
+#: suila/templates/suila/about.html
+msgid ""
+"Hos <a href=\"https://aka.gl/emner/borger/skat/suila-tapit---"
+"beskaeftigelsesfradrag\" target=\"_blank\">Skattestyrelsen</a>"
+msgstr ""
+"At <a href=\"https://aka.gl/emner/borger/skat/suila-tapit---"
+"beskaeftigelsesfradrag\" target=\"_blank\">the Tax Agency</a>"
+
+#: suila/templates/suila/about.html
+msgid ""
+"<a href=\"https://www.facebook.com/profile.php?id=61573559829551\" "
+"target=\"_blank\">Suila-tapit på Facebook</a>"
+msgstr ""
+"<a href=\"https://www.facebook.com/profile.php?id=61573559829551\" "
+"target=\"_blank\">Suila-tapit on Facebook</a>"
+
+#: suila/templates/suila/calculate.html suila/templates/suila/root.html
+msgid "Suila-tapit-beregneren"
+msgstr "Suila-tapit calculator"
+
+#: suila/templates/suila/calculate.html
+msgid ""
+"Indtast din forventede månedsløn eller din forventede årsindkomst for at få "
+"en vejledende beregning på, hvor meget Suila-tapit du kan få udbetalt "
+"månedligt og årligt."
+msgstr ""
+"Enter your expected monthly salary or your expected annual income to receive "
+"an indicative calculation of how much Suila-tapit you can receive monthly "
+"and annually."
+
+#: suila/templates/suila/calculate.html
+msgid ""
+"Husk arbejdsgiverbetalt pension. Arbejdsgiverbetalt pension regnes også med "
+"til din indkomst."
+msgstr ""
+"Remember employer-paid pension. Employer-paid pension is also included in "
+"your income."
+
+#: suila/templates/suila/calculate.html
+msgid ""
+"Grafen viser sammenhængen mellem de gennemsnitlige månedlige Suila-tapit "
+"udbetalinger, og den indkomst du har angivet."
+msgstr ""
+"The graph shows the correlation between the average monthly Suila-tapit "
+"payments and the income you have entered."
+
+#: suila/templates/suila/calculate.html
+msgid ""
+"Bemærk, at denne beregning kun er vejledende. Dine personlige "
+"indkomstforhold kan påvirke den endelige beregning af din Suila-tapit."
+msgstr ""
+"Note that this calculation is for guidance only. Your personal income "
+"circumstances may affect the final calculation of your Suila-tapit."
+
+#: suila/templates/suila/calculate.html
+msgid "Indlæs beregningsmotor"
+msgstr "Load calculation engine"
+
+#: suila/templates/suila/calculate.html
+msgid "Beregn"
+msgstr "Calculate"
+
+#: suila/templates/suila/calculate.html
+msgid "Ryd"
+msgstr "Clear"
+
+#: suila/templates/suila/calculate.html
+msgid "Beregnet Suila-tapit pr. måned:"
+msgstr "Calculated Suila-tapit per month:"
+
+#: suila/templates/suila/calculate.html
+msgid "Beregnet Suila-tapit for hele året:"
+msgstr "Calculated Suila-tapit per year:"
+
+#: suila/templates/suila/calculate.html
+msgid "Indlæs"
+msgstr "Load"
+
+#: suila/templates/suila/eboks/base.html
+msgid "e-Boks-besked"
+msgstr "e-Boks-message"
+
+#: suila/templates/suila/faq.html
+msgid "Ikke modtaget Suila-tapit"
+msgstr "No Suila-tapit recieved"
+
+#: suila/templates/suila/faq.html suila/templates/suila/root.html
+msgid "Jeg har ikke modtaget Suila-tapit"
+msgstr "I have not recieved Suila-tapit"
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Få svar på de mest sandsynlige årsager til, at du ikke har fået udbetalt "
+"Suila-tapit."
+msgstr ""
+"Find out the most likely reasons why you have not received a Suila-tapit "
+"payment."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Suila-tapit udbetales, når systemet modtager signaler fra arbejdsmarkedet. "
+"De fire signaler er:"
+msgstr ""
+"Suila-tapit is paid when the Tax Agency receives signals from the labour "
+"market. The four signals are:"
+
+#: suila/templates/suila/faq.html
+msgid "A-indkomst fra lønarbejde, som arbejdsgiverne indberetter i Sulinal."
+msgstr "A-income from employment, reported by employers via Sulinal."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"A-indkomst fra indhandling, som indhandlingsstederne indberetter i Sulinal."
+msgstr "A-income from trading, reported by trading stations via Sulinal."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Betalte B-skatter. Hvis du har forskudsregistreret B-indkomst, vil du "
+"modtage en opkrævning af B-skatter. Når den betales, modtages signal."
+msgstr ""
+"Paid B-tax. If you have registered B-income in your preliminary income "
+"assessment, you will receive a B-tax bill. When the bill is paid, the signal "
+"is received."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Indberetning af udbytte. Når selskaberne indberetter udbytte, giver dette "
+"signal om en indkomst."
+msgstr ""
+"Reporting of dividends. When companies report dividends, this provides a "
+"signal of income."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Ud fra signalerne om indkomst beregnes en forventet årsindkomst. Suila-tapit "
+"udbetales til borgere med en forventet årsindkomst på 70.000 kr. – 500.000 "
+"kr. Dog vil borgere med en forventet årsindkomst på 475.000 - 500.000 kr. "
+"først modtage Suila-tapit, når Skattestyrelsen kan afklare, om den "
+"forventede årsindkomst holder sig under 500.000 kr."
+msgstr ""
+"Based on income signals, an expected annual income is calculated. Suila-"
+"tapit is paid to citizens with an expected annual income between DKK 70,000 "
+"and DKK 500,000. However, citizens with an expected annual income between "
+"DKK 475,000 and DKK 500,000 will only receive Suila-tapit once the Tax "
+"Agency can confirm that the expected income remains below DKK 500,000."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Bemærk, at der går to måneder fra den måned, din indkomst vedrører, til din "
+"udbetaling af Suila-tapit. Fx udbetales Suila-tapit for januar måned i "
+"marts, for februar måned i april, osv."
+msgstr ""
+"Note that there is a two-month delay between the month your income relates "
+"to and the month your Suila-tapit is paid. For example, Suila-tapit for "
+"January is paid out in March, for February in April, and so on."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Hvis du ikke har modtaget Suila-tapit, kan der være følgende forklaringer:"
+msgstr ""
+"If you have not received Suila-tapit, the following explanations may apply:"
+
+#: suila/templates/suila/faq.html
+msgid "Manglende signal"
+msgstr "Missing signal"
+
+#: suila/templates/suila/faq.html
+#, python-format
+msgid ""
+"Din arbejdsgiver eller dit indhandlingssted har ikke indberettet din "
+"indkomst. Eller har indberettet for sent eller forkert. Måske har de slet "
+"ikke indberettet. På siden <a href=\"%(url)s\">\"Mine signaler\"</a> kan du "
+"se hvilke oplysninger Skattestyrelsen har om dine indkomster. Hvis der "
+"mangler signal om indkomst fra arbejde og indhandling, så kontakt din "
+"arbejdsgiver eller dit indhandlingssted."
+msgstr ""
+"Your employer or your purchasing station has not reported your income — or "
+"has reported it late or incorrectly. They may not have reported it at all. "
+"On the page <a href=\"%(url)s\">\"My signals\"</a>, you can see what "
+"information the Tax Agency has about your income. If income signals from "
+"work and purchasing are missing, please contact your employer or your "
+"purchasing station."
+
+#: suila/templates/suila/faq.html
+msgid "Du har ikke givet signal"
+msgstr "You have not provided a signal."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Du er selvstændig erhvervsdrivende og har ikke indbetalt løbende B-skatter. "
+"Eller du har betalt et beløb, der er så stort, at Skattestyrelsens beregning "
+"viser, at du forventes at komme til at tjene over 500.000 kr. om året. Med "
+"forskudsregistrering på <a href=\"https://sullissivik.gl\" "
+"target=\"_blank\">Sullissivik.gl</a> kan du give os oplysninger om dine "
+"indkomster som selvstændig erhvervsdrivende. Ud fra din forskudsregistrering "
+"sender Skattestyrelsen månedlig opkrævning af B-skatter. Når du betaler dem, "
+"giver du os signal om din indkomst."
+msgstr ""
+"You are self-employed and have not made ongoing B-tax payments. Or you have "
+"paid an amount so high that the Tax Agency’s calculation shows you are "
+"expected to earn more than DKK 500,000 annually. Using the preliminary "
+"income assessment at Sullissivik.gl, you can submit information about your "
+"self-employed income. Based on your preliminary registration, the Tax Agency "
+"sends a monthly B-tax bill. When you pay it, you are providing a signal "
+"about your income."
+
+#: suila/templates/suila/faq.html
+msgid "Signal om høj indkomst"
+msgstr "Signal of high income"
+
+#: suila/templates/suila/faq.html
+msgid "Ved forventet årsindkomst mellem 475.000-500.000 kr."
+msgstr "For expected annual income between DKK 475,000 and DKK 500,000."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Da Skattestyrelsen har registeret, at du har en forventet årsindkomst på "
+"475.000 – 500.000 kr., udbetales beløbet ikke endnu. Det betyder følgende:"
+msgstr ""
+"Since the Tax Agency has registered that you have an expected annual income "
+"of DKK 475,000–500,000, payment will not be made yet. This means:"
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der "
+"viser, at du forventer at have en årsindkomst på 475.000-500.000 kr., vil du "
+"ikke modtage Suila-tapit en gang om måneden. Du modtager i stedet én samlet "
+"udbetaling for månederne januar 2025 til november 2025 i januar 2026."
+msgstr ""
+"If, during the year, the Tax Agency continues to receive information "
+"indicating that you are expected to earn DKK 475,000–500,000, you will not "
+"receive monthly Suila-tapit payments. Instead, you will receive one lump-sum "
+"payment for the months January 2025 to November 2025 in January 2026."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at din "
+"forventede årsindkomst er under 475.000 kr., vil Skattestyrelsen igangsætte "
+"månedlige udbetalinger. Det sker den tredje tirsdag i hver måned."
+msgstr ""
+"If, during the year, the Tax Agency receives information showing that your "
+"expected annual income is below DKK 475,000, the Tax Agency will initiate "
+"monthly payments. This will happen on the third Tuesday of each month."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Hvis din samlede indkomst viser sig at være over 500.000 kr., er du ikke i "
+"målgruppen for Suila-tapit."
+msgstr ""
+"If your total income turns out to exceed DKK 500,000, you are not part of "
+"the target group for Suila-tapit."
+
+#: suila/templates/suila/faq.html
+msgid "Ved forventet årsindkomst der overstiger 500.000 kr."
+msgstr "For expected annual income exceeding DKK 500,000."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Din forventede indkomst er for høj til, at du er i målgruppen for Suila-"
+"tapit. Skattestyrelsen forventer, at din årsindkomst overstiger 500.000 kr. "
+"Det er beregnet på baggrund af de informationer Skattestyrelsen har om dine "
+"indtægter."
+msgstr ""
+"Your expected income is too high to be within the target group for Suila-"
+"tapit. The Tax Agency expects your annual income to exceed DKK 500,000. This "
+"is calculated based on the information the Tax Agency has received about "
+"your income."
+
+#: suila/templates/suila/faq.html
+msgid "Forskellige signaler"
+msgstr "Diffuse signals."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, "
+"der varierer meget fra måned til måned. Eller indkomster fra udbytte. Det "
+"giver Skattestyrelsen signaler, der peger i forskellige retninger. "
+"Udbetaling afventer et klarere signal."
+msgstr ""
+"The Tax Agency has information indicating that in recent years you have had "
+"income that fluctuates significantly from month to month — or income from "
+"dividends. This provides the Tax Agency with signals pointing in different "
+"directions. Payment is on hold until a clearer signal is received."
+
+#: suila/templates/suila/faq.html
+msgid "Et andet signal"
+msgstr "Another signal."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Suila-tapit er et beskæftigelsesfradrag der udbetales til borgere med "
+"indkomster i form af lønindkomst, indhandlingsbeløb, overskud ved "
+"selvstændig virksomhed samt modtaget udbyttebetaling. Hvis dine indkomster "
+"stammer fx fra uddannelsesstøtte, alderspension eller sociale ydelser, er du "
+"ikke berettiget til Suila-tapit."
+msgstr ""
+"Suila-tapit is an employment allowance paid to citizens with income in the "
+"form of employment income, purchasing income, profit from self-employment, "
+"and received dividend payments. If your income comes solely from, for "
+"example, education grants, old-age pension or social benefits, you are not "
+"eligible for Suila-tapit."
+
+#: suila/templates/suila/faq.html
+msgid "Du har ikke NemKonto"
+msgstr "You do not have a NemKonto account."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Kontakt din bank for at få NemKonto. Hvis du mangler MitID for at få "
+"NemKonto, så kontakt Borgerservice i kommunen."
+msgstr ""
+"Contact your bank to set up a NemKonto. If you do not have MitID required to "
+"obtain a NemKonto, please contact your municipal Service desk."
+
+#: suila/templates/suila/faq.html
+msgid "Beløbet du skal modtage er under 100 kr."
+msgstr "The amount you are to receive is under DKK 100."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Det er kun beløb på 100 kr. eller mere, der udbetales månedligt. Hvis det "
+"samlede beløb, du skal have udbetalt, er mindre end 100 kr., vil "
+"udbetalingen blive overført til næste måned."
+msgstr ""
+"Only amounts of DKK 100 or more are paid out monthly. If the total amount "
+"you are entitled to is less than DKK 100, the payment will be carried over "
+"to the next month."
+
+#: suila/templates/suila/faq.html
+msgid "Du er ikke fuldt skattepligtig til Grønland"
+msgstr "You are not fully tax liable in Greenland."
+
+#: suila/templates/suila/faq.html
+msgid "Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til Grønland."
+msgstr ""
+"You can only receive Suila-tapit if you are fully tax liable in Greenland."
+
+#: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_eboks_preview.html
+#: suila/templates/suila/person_detail_eboks_send.html
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_search.html
+#: suila/templates/suila/person_tax_scope_history.html
+#: suila/templates/suila/root.html
+msgid "Borgersøgning"
+msgstr "Search for individual"
+
+#: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_eboks_preview.html
+#: suila/templates/suila/person_detail_eboks_send.html
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_tax_scope_history.html
+#: suila/templates/suila/root.html
+msgid "Mit overblik"
+msgstr "My overview"
+
+#: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
+#: suila/templates/suila/root.html
+msgid "Mit estimerede Suila-tapit"
+msgstr "My estimated Suila-tapit"
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Her ser du sammenhængen mellem din forventede årsindkomst og den "
+"gennemsnitlige månedlige Suila-tapit udbetaling. De indtægter, der indgår i "
+"beregningsgrundlaget, er overskud fra indhandling, overskud som selvstændig "
+"erhvervsdrivende, lønindkomster samt udbytte."
+msgstr ""
+"Here you can see the correlation between your expected annual income and the "
+"average monthly Suila-tapit payment. The income included in the calculation "
+"basis consists of profit from purchasing, profit as a self-employed person, "
+"employment income, and dividends."
+
+#: suila/templates/suila/graph.html
+msgid "Kan du ikke se dine tal?"
+msgstr "Unable to find your data?"
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at du "
+"forventer at have en årsindkomst på 475.000-500.000 kr., vil du ikke modtage "
+"Suila-tapit en gang om måneden. Det er, fordi din estimerede årsindkomst er "
+"tæt på den øvre grænse på 500.000 kr. for at være berettiget til Suila-"
+"tapit. Du modtager i stedet én samlet udbetaling for månederne januar 2025 "
+"til november 2025 i januar 2026."
+msgstr ""
+"If, during the year, the Tax Agency continues to receive information "
+"indicating that you are expected to earn DKK 475,000–500,000, you will not "
+"receive monthly Suila-tapit payments. Instead, you will receive one lump-sum "
+"payment for the months January 2025 to November 2025 in January 2026."
+
+#: suila/templates/suila/graph.html
+msgid ""
+"Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke "
+"modtage Suila-tapit, og dine tal vises derfor ikke på grafen."
+msgstr ""
+"If your annual income is below DKK 70,000 or above DKK 500,000, you will not "
+"receive Suila-tapit, and therefore your figures will not appear in the graph."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"\"Mit overblik\" er dit overblik over kommende og tidligere udbetalinger af "
+"Suila-tapit for indeværende år."
+msgstr ""
+"\"My overview\" is your overview of upcoming and previous Suila-tapit "
+"payments for the current year."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Her får du et overblik over de vigtigste beløb og datoer, og en oversigt "
+"over dine forventede månedlige Suila-tapit udbetalinger."
+msgstr ""
+"Here you get an overview of the most important amounts and dates, and a "
+"summary of your expected monthly Suila-tapit payments."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Bemærk, at beløbene er vejledende, og kan ændre sig helt frem til den "
+"endelige udbetaling."
+msgstr ""
+"Note that the amounts are indicative and may change until the final payment."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Her kan du få et overblik over dine udbetalinger af Suila-tapit for "
+"forgangne år."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Modregning"
+msgstr "Offsets"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Hvis du har gæld til det offentlige, kan der ske modregning af op til en "
+"tredjedel af beløbet inden udbetaling. Modregning betyder, at du modtager et "
+"lavere beløb, fordi dele af beløbet er brugt til at afdrage på din gæld til "
+"det offentlige. Eventuelle modregninger fremgår ikke af oplysningerne her på "
+"siden. Er der sket modregning vil du modtage brev herom i din e-Boks."
+msgstr ""
+"If you have public debt, up to one third of the amount may be offset before "
+"payment. Offset means that you receive a lower amount because part of it has "
+"been used to reduce your public debt. Note: Offsets are not shown on this "
+"page. If an offset has occurred, you will receive a letter in your e-Boks."
+
+#: suila/templates/suila/person_detail.html
+msgid "NemKonto"
+msgstr "NemKonto account"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Suila-tapit udbetales kun til NemKonto. Hvis du ikke har en NemKonto, skal "
+"du oprette en, før du kan få udbetalt Suila-tapit. Har du ikke en NemKonto, "
+"skal du rette henvendelse til din bank herom."
+msgstr ""
+"Suila-tapit is only paid to a NemKonto bank account. If you do not have a "
+"NemKonto, you must create one before you can receive Suila-tapit. If you do "
+"not have a NemKonto, please contact your bank."
+
+#: suila/templates/suila/person_detail.html
+msgid "Næste udbetalingsdato"
+msgstr "Next pay out date"
+
+#: suila/templates/suila/person_detail.html
+msgid "Næste forventede beløb til udbetaling"
+msgstr "Next expected amount for payment"
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid "Forventet beløb til udbetaling for hele %(year)s"
+msgstr "Expected amount to be paid for all of %(year)s"
+
+#: suila/templates/suila/person_detail.html
+msgid "Forventet årsindkomst fra arbejde"
+msgstr "Expected annual income from employment"
+
+#: suila/templates/suila/person_detail.html
+msgid "Gem estimering"
+msgstr "Save income estimate"
+
+#: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
+#: suila/tests/test_status_tags.py
+msgid "Udbetalingspause"
+msgstr "Payment pause"
+
+#: suila/templates/suila/person_detail.html
+msgid "Du har sat dine udbetalinger på pause."
+msgstr "You have paused your Suila-tapit payment."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen, at dine "
+"udbetalinger skal sættes på pause."
+msgstr ""
+"Your Suila-tapit payment is paused. You have informed the Tax Agency that "
+"your payments should be paused."
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid ""
+"Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
+"%(year)s."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Din årsindtægt er manuelt estimeret."
+msgstr "The annual income has been manually estimated."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
+"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
+"årlige Suila-tapit."
+msgstr ""
+"Annual income has been manually estimated by the Tax Agency. The current "
+"Suila-tapit pay outs is based on the manual income estimate."
+
+#: suila/templates/suila/person_detail.html
+msgid "Skift til automatisk estimering"
+msgstr "Change to automatic income estimates."
+
+#: suila/templates/suila/person_detail.html
+msgid "Bemærk!"
+msgstr "Notice!"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Der bliver kun foretaget udbetalinger, hvis Skattestyrelsen har modtaget "
+"signal fra arbejdsmarkedet i form af indberetning af løn fra arbejdsgivere, "
+"betalte B-skatter, indberetning af indhandling fra indhandlingssteder, eller "
+"oplysning om udloddet udbytte fra selskaber."
+msgstr ""
+"Payments are only made if the Tax Agency has received a signal from the "
+"labour market in the form of reported wages from employers, paid B-tax, "
+"reported purchasing income from purchasing stations, or information on "
+"distributed dividends from companies. "
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Du modtager ikke en udbetaling, hvis næste udbetalingsbeløb er mindre end "
+"100 kr. Beløbet vil blive overført til næste måned."
+msgstr ""
+"You will not receive a payment if the next amount to be paid is less than "
+"DKK 100. The amount will be carried over to the next month."
+
+#: suila/templates/suila/person_detail.html
+msgid "Sæt udbetalinger på pause"
+msgstr "Put payments on hold"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Hvis du ikke ønsker at modtage den månedlige udbetaling af Suila-tapit, har "
+"du nu mulighed for at sætte udbetalingerne på pause. Pausen varer, så længe "
+"du ønsker det."
+msgstr ""
+"If you do not wish to receive the monthly Suila-tapit payments, you now have "
+"the option to pause them. The pause will last as long as you want."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Hvis du er berettiget, mister du ikke retten til Suila-tapit. Du modtager en "
+"årsopgørelse i august næste år, der viser, hvor meget Suila-tapit du har til "
+"gode eller har modtaget for meget."
+msgstr ""
+"You will not lose your right to Suila-tapit. If you are entitled to Suila-"
+"tapit after your income for the year is assessed in August next year, you "
+"will receive an annual statement showing how much you are owed or how much "
+"you have received in excess."
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_notes.html
+msgid "Notater"
+msgstr "Notes"
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/root.html
+msgid "Mine signaler"
+msgstr "My signals"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Mine signaler - få information om beregningsgrundlaget for dit Suila-tapit"
+msgstr ""
+"My signals –find information about the calculation basis for your Suila-"
+"tapit."
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Årsopgørelse"
+msgstr "Annual statement"
+
+#: suila/templates/suila/person_detail.html
+msgid "e-Boks-beskeder preview"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Genoptag udbetalinger"
+msgstr "Resume payments"
+
+#: suila/templates/suila/person_detail.html
+msgid "Pause i udbetalinger"
+msgstr "Payments on hold"
+
+#: suila/templates/suila/person_detail.html
+#: suila/templates/suila/person_tax_scope_history.html
+msgid "Mandtal"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid "Udbetalinger for %(year)s"
+msgstr "Payments for %(year)s"
+
+#: suila/templates/suila/person_detail.html
+msgid "Information"
+msgstr "Information"
+
+#: suila/templates/suila/person_detail.html suila/views.py
+msgid "Forventet udbetalingsdato"
+msgstr "Expected date for payouts"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Suila-tapit udbetales d. 3. tirsdag i måneden. Udbetalingen er altid for "
+"indkomster to måneder forinden. Fx får du kun udbetalt Suila-tapit den 3. "
+"tirsdag i maj, hvis Skattestyrelsen har modtaget signal fra arbejdsmarkedet "
+"for marts måned."
+msgstr ""
+"Suila-tapit is paid on the 3rd Tuesday of the month. The payment always "
+"concerns income from two months prior. For example, you will only receive "
+"Suila-tapit on the 3rd Tuesday of May if the Tax Agency has received a "
+"signal from the labour market for the month of March."
+
+#: suila/templates/suila/person_detail.html suila/views.py
+msgid "Forventet beløb til udbetaling"
+msgstr "Expected amount to be paid out"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Det forventede beløb til udbetaling er baseret på din estimerede "
+"årsindkomst. Din estimerede årsindkomst genberegnes hver gang, "
+"Skattestyrelsen modtager nye oplysninger. Fx hvis en arbejdsgiver indsender "
+"lønoplysninger. Bemærk, at Skattestyrelsen kan foretage modregning på op til "
+"en tredjedel af det udbetalte beløb, hvis du har gæld til det offentlige."
+msgstr ""
+"The expected payment amount is based on your estimated annual income. Your "
+"estimated annual income is recalculated each time the Tax Agency receives "
+"new information, e.g. when an employer submits wage information."
+
+#: suila/templates/suila/person_detail.html
+msgid "Forklaring af statusbeskeder"
+msgstr "Status explanations"
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Beløb fastlagt. Din årsindkomst er estimeret, og der er fastlagt beløb for "
+"din kommende Suila-tapit udbetaling."
+msgstr ""
+"Amount determined. Your annual income is estimated and the amount for your "
+"upcoming Suila-tapit payment has been set."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Sendt til udbetaling: Din Suila-tapit udbetaling  er sendt til din NemKonto."
+msgstr ""
+"Sent for payment. Your Suila-tapit payment has been sent to your NemKonto."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Udbetaling gennemført: Udbetalingen af Suila-tapit for den pågældende måned "
+"er afsluttet."
+msgstr ""
+"Payment completed. The Suila-tapit payment for the relevant month has been "
+"completed."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Fejl i udbetaling: Der er opstået en fejl under udbetaling af din Suila-"
+"tapit. Kontakt Borgerservice for yderligere information."
+msgstr ""
+"Payment error. An error occurred during the payment of your Suila-tapit. "
+"Contact Citizen Service for more information."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Afventer udbetaling: Din forventede årsindkomst er 475.000 kr. – 500.000 kr. "
+"Dine Suila-tapit udbetalinger starter, når systemet er mere sikker på, om "
+"din årsindkomst berettiger dig til Suila-tapit."
+msgstr ""
+"Awaiting payment. Your expected annual income is DKK 475,000 – 500,000. Your "
+"Suila-tapit payments will begin once the Tax Agency has more certainty that "
+"your income qualifies you for Suila-tapit."
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "e-Boks-beskeder"
+msgstr "e-Boks-messages"
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid ""
+"Her ser du en liste med de e-Boks-beskeder, vi kan sende til borgeren. Dette "
+"er for at vi kan verificere at de ser korrekte ud."
+msgstr ""
+"Here is a list of the e-Boks messages we can send. These are provided to "
+"validate the authenticity."
+
+#: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
+msgid "Måned"
+msgstr "Month"
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "Type: opgørelse"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "Type: afventer"
+msgstr "Type: On hold"
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "Åbn"
+msgstr "Open"
+
+#: suila/templates/suila/person_detail_eboks_send.html
+#, python-format
+msgid ""
+"Herunder vises den årsopgørelse som er sendt til borgeren. Beskeden er "
+"afsendt %(timestamp)s."
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid ""
+"Herunder vises den årsopgørelse som kan sendes til borgeren. Tryk på knappen "
+"\"Send\" for at afsende årsopgørelsen med e-Boks."
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Send"
+msgstr "Send"
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Bekræftelse"
+msgstr "Confirmation"
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
+msgstr "Confirm"
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Nej"
+msgstr "No"
+
+#: suila/templates/suila/person_detail_eboks_send.html
+msgid "Ja"
+msgstr "Yes"
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Her stammer oplysningerne fra"
+msgstr "Here is where the information comes from:"
+
+#: suila/templates/suila/person_detail_income.html
+msgid "A-indkomst og indhandling"
+msgstr "A-income and trading"
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger og "
+"oplysninger om indhandling fra indhandlingssteder og til Skattestyrelsen. "
+"Hvis du mener, at oplysningerne er forkerte, så henvend dig til din "
+"arbejdsgiver eller dit indhandlingssted."
+msgstr ""
+"The information about A-income comes from employers' wage reporting and "
+"information about purchasing from purchasing stations to the Tax Agency. If "
+"you notice incorrect information, please contact your employer or your "
+"purchasing station."
+
+#: suila/templates/suila/person_detail_income.html
+msgid "B-indkomst"
+msgstr "B-Income"
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på "
+"baggrund af din forskudsregistrering. Du kan altid ændre din "
+"forskudsregistrering på <a href=\"https://sullissivik.gl\" "
+"target=\"_blank\">Sullissivik.gl</a>, hvis du mener at den er forkert."
+msgstr ""
+"Information about paid B-tax comes from your own B-tax payments based on "
+"your preliminary income assessment. You can always change your preliminary "
+"income assessment on Sullissivik.gl if you believe it is incorrect."
+
+#: suila/templates/suila/person_detail_income.html suila/views.py
+msgid "Udbytte"
+msgstr "Dividends"
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysning om udbytte stammer fra selskabernes indberetning af udloddet "
+"udbytte til dig. Hvis du har modtaget udbytte sidste år, forventer "
+"Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker "
+"oplysninger om udbytte fra tidligere år beregningen af din forventede "
+"indkomst for i år."
+msgstr ""
+"Information about dividends comes from companies’ reporting of distributed "
+"dividends to you. If you received dividends last year, the Tax Agency "
+"expects that you will also receive dividends this year. In this way, "
+"information about dividends from previous years affects the calculation of "
+"your expected income for this year."
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Oversigt over signaler"
+msgstr "Overview of signals"
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Her ser du en liste med de signaler Skattestyrelsen har modtaget."
+msgstr "Here you see a list of the signals the Tax Agency has received."
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Hvis din arbejdsgiver eller dit indhandlingssted indberetter korrekt, kan "
+"oplysningerne om din indtægt som regel ses 15-30 dage efter den måned du har "
+"arbejdet/indhandlet."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter "
+"betalingen."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysninger om udbytte kan som regel ses 15-30 dage efter at selskabet har "
+"indsendt den lovpligtige udbytteblanket."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Pension"
+msgstr "Pension"
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Arbejdsgiverindbetalt pension vises ikke på listen over signaler. Beløbet "
+"indgår i beregningen af Suila-tapit. <a href=\"https://suila.gl\">Suila.gl</"
+"a> vil vise dette på et senere tidspunkt."
+msgstr ""
+"Employer-paid pension is not shown in the list of signals. The amount is "
+"included in the calculation of Suila-tapit. Suila.gl will display this at a "
+"later stage."
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Tilføj notat"
+msgstr "Add note"
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Opret notat"
+msgstr "New note"
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Forfatter"
+msgstr "Author"
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Besked"
+msgstr "Messsage"
+
+#: suila/templates/suila/person_detail_notes.html
+msgid "Filer"
+msgstr "Files"
+
+#: suila/templates/suila/person_no_year.html
+msgid "Denne person har ikke nogen data"
+msgstr ""
+
+#: suila/templates/suila/person_no_year.html
+msgid "Du har ikke en profil på Suila.gl"
+msgstr "You do not have a profile at Suila.gl"
+
+#: suila/templates/suila/person_no_year.html
+msgid "Der findes ingen indkomstdata for denne person"
+msgstr ""
+
+#: suila/templates/suila/person_no_year_text.html
+msgid ""
+"Du er logget ind på Suila.gl med MitID, men du har ikke en profil tilknyttet "
+"dit CPR-nr. De mest sandsynlige årsager til, at du ikke har en profil er, at:"
+msgstr ""
+"You are logged in to Suila.gl using MitID, but you do not have a profile "
+"linked to your CPR number. The most likely reasons why you do not have a "
+"profile are:"
+
+#: suila/templates/suila/person_no_year_text.html
+msgid ""
+"Du ikke har indkomst i Grønland eller at du ikke er fuldt skattepligtig til "
+"Grønland. Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til "
+"Grønland."
+msgstr ""
+"You do not have income in Greenland or are not fully tax liable in "
+"Greenland. You can only receive Suila-tapit if you are fully tax liable in "
+"Greenland."
+
+#: suila/templates/suila/person_no_year_text.html
+msgid ""
+"Suila endnu ikke har modtaget dine indkomstinformationer. Hvis du netop er "
+"begyndt at arbejde i Grønland, kan der gå en kortere periode, før du får en "
+"profil på Suila.gl."
+msgstr ""
+"Suila has not yet received your income information. If you have only "
+"recently started working in Greenland, it may take a short period before a "
+"profile is created for you on Suila.gl."
+
+#: suila/templates/suila/person_no_year_text.html
+msgid "Her kan du finde mere information om Suila-tapit:"
+msgstr "Here you find more informaiton about Suila-tapit:"
+
+#: suila/templates/suila/person_no_year_text.html
+#, python-format
+msgid "På <a href=\"%(link)s\">Sullissivik.gl</a>"
+msgstr "On <a href=\"%(link)s\">Sullissivik.gl</a>"
+
+#: suila/templates/suila/person_no_year_text.html
+#, python-format
+msgid "Hos <a href=\"%(link)s\">Skattestyrelsen</a>"
+msgstr "At <a href=\"%(link)s\">The Tax Agency</a>"
+
+#: suila/templates/suila/person_no_year_text.html
+#, python-format
+msgid "<a href=\"%(link)s\">Suila-tapit på Facebook</a>"
+msgstr "<a href=\"%(link)s\">Suila-tapit on Facebook</a>"
+
+#: suila/templates/suila/person_no_year_text.html
+#, python-format
+msgid ""
+"Du kan kontakte Borgerservice hos Skattestyrelsen, hvis du har spørgsmål. "
+"Find mere information på <a href=\"%(link)s\">aka.gl</a>"
+msgstr ""
+"Please, contact the service desk at the Tax Agency if you have any "
+"questions. Find more information at <a href=\"%(link)s\">aka.gl</a>"
+
+#: suila/templates/suila/person_search.html
+msgid "Liste over borgere"
+msgstr "List of citizens"
+
+#: suila/templates/suila/person_search.html
+msgid "Filtre"
+msgstr "Filters"
+
+#: suila/templates/suila/person_search.html
+msgid "Søg"
+msgstr "Search"
+
+#: suila/templates/suila/root.html
+#, python-format
+msgid "Velkommen %(name)s"
+msgstr "Welcome %(name)s"
+
+#: suila/templates/suila/root.html
+msgid "Aktiveret"
+msgstr "Activated"
+
+#: suila/templates/suila/root.html
+msgid "To-faktor-godkendelse er nu aktiv."
+msgstr "Two factor authentification is now active."
+
+#: suila/templates/suila/root.html
+msgid "OK"
+msgstr "OK"
+
+#: suila/templatetags/amount_tags.py
+msgid "-"
+msgstr "-"
+
+#: suila/templatetags/amount_tags.py
+#, python-format
+msgid "%(amount)s kr."
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "January"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "February"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "March"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "April"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "May"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "June"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "July"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "August"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "September"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "October"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "November"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgid "December"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "January"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "February"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "March"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "April"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "May"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "June"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "July"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "August"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "September"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "October"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "November"
+msgstr ""
+
+#: suila/templatetags/date_tags.py
+msgctxt "alt. month"
+msgid "December"
+msgstr ""
+
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
+msgid "Foreløbigt beløb"
+msgstr "Preliminary amount"
+
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
+msgid "Beløb fastlagt"
+msgstr "Amount determined"
+
+#: suila/templatetags/status_tags.py
+msgid "Fuld skattepligtig"
+msgstr ""
+
+#: suila/templatetags/status_tags.py
+msgid "Delvist skattepligtig"
+msgstr ""
+
+#: suila/templatetags/status_tags.py
+msgid "Ikke i mandtal"
+msgstr ""
+
+#: suila/tests/test_views.py suila/views.py
+#, python-format
+msgid "CVR: %(cvr)s"
+msgstr ""
+
+#: suila/tests/test_views.py suila/views.py
+msgid "Ikke oplyst"
+msgstr "-"
+
+#: suila/tests/test_views.py suila/views.py
+#, python-format
+msgid "Rate: %(rate_number)s"
+msgstr ""
+
+#: suila/views.py
+msgid "Navn"
+msgstr "Name"
+
+#: suila/views.py
+msgid "CPR-nummer"
+msgstr "CPR-number"
+
+#: suila/views.py
+msgid "Adresse"
+msgstr "Address"
+
+#: suila/views.py
+msgid "Status"
+msgstr "Status"
+
+#: suila/views.py
+msgid "Lønindkomst"
+msgstr "Income from wages"
+
+#: suila/views.py
+msgid "Indhandling"
+msgstr "Trading"
+
+#: suila/views.py
+msgid "Betalt B-skat"
+msgstr "B-tax paid"
+
+#: suila/views.py
+msgid "Signaltype"
+msgstr "Signal type"
+
+#: suila/views.py
+msgid "Indeværende måned"
+msgstr "Current month"
+
+#: suila/views.py
+msgid "Samlet for året"
+msgstr "total amount"
+
+#: suila/views.py
+msgid "Beløb"
+msgstr "Amount"

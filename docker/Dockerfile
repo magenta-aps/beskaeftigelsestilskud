@@ -57,6 +57,6 @@ USER suila
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /app
-RUN django-admin compilemessages --locale=da --locale=kl --verbosity=0
+RUN django-admin compilemessages --locale=da --locale=kl --locale=en --verbosity=0
 
 CMD ["gunicorn","-b","0.0.0.0:8000","project.wsgi:application","-w","4","--timeout","120","--error-logfile","-","--capture-output"]
