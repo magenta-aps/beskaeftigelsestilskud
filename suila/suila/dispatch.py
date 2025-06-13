@@ -170,6 +170,10 @@ class JobDispatcher:
         if name not in self.jobs:
             return False
 
+        # Verbosity is not relevant when deciding whether to run a job or not
+        if job_params:
+            job_params.pop("verbosity_param", None)
+
         # Handle job based on type
         job_config = self.jobs[name]
         match (job_config["type"]):
@@ -193,10 +197,8 @@ class JobDispatcher:
     def call_job(self, name, *args, **kwargs):
         # Gather job_params
         job_params = {}
-        if "year" in kwargs:
-            job_params["year_param"] = kwargs["year"]
-        if "month" in kwargs:
-            job_params["month_param"] = kwargs["month"]
+        for param, value in kwargs.items():
+            job_params[param + "_param"] = value
 
         match (name):
             case ManagementCommands.CALCULATE_STABILITY_SCORE:
