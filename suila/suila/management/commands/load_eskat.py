@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import date
 from io import BytesIO, TextIOWrapper
 from itertools import batched
 from typing import Iterator, List
@@ -131,7 +130,7 @@ class Command(SuilaBaseCommand):
     def _get_year_and_month_kwargs(
         self,
         year: int,
-        month: int | None,
+        month: int,
         num: int = 3,
         offset: int = 2,
     ) -> Iterator[tuple[int, dict]]:
@@ -143,9 +142,6 @@ class Command(SuilaBaseCommand):
             y: int = year + div
             m: int = mod + 1
             return y, m
-
-        if month is None:
-            month = date.today().month
 
         assert 1 <= month <= 12
 
