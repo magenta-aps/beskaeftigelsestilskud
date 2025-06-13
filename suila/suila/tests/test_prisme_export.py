@@ -499,7 +499,10 @@ class TestBatchExport(TestCase):
                 ],
             )
 
-    def test_export_batches_handles_control_list_upload_failure(self):
+    @patch("suila.integrations.prisme.benefits.put_file_in_prisme_folder")
+    def test_export_batches_handles_control_list_upload_failure(
+        self, mock_put_file_in_prisme_folder: MagicMock
+    ):
         # Arrange
         self._add_person_month(3101000000, Decimal("1000"))
         export = self._get_instance(month=11, year=2024)
@@ -509,15 +512,10 @@ class TestBatchExport(TestCase):
             if "kontrolliste" in filename:
                 raise ClientException("Failure in control list upload")
 
-        with patch.object(
-            export,
-            "_put_file_in_prisme_folder",
-            new=fail_on_control_list_upload,
-        ):
-            # Act
-            self.export_batches(stdout, verbosity=2, export=export)
-            # Assert
-            self._assert_stdout_write_contains(stdout, "FAILED to export control list")
+        mock_put_file_in_prisme_folder.side_effect = fail_on_control_list_upload
+
+        self.export_batches(stdout, verbosity=2, export=export)
+        self._assert_stdout_write_contains(stdout, "FAILED to export control list")
 
     def test_export_batches_reports_failure(self):
         for verbosity in (1, 2):
