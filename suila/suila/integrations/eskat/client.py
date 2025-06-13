@@ -107,45 +107,31 @@ class EskatClient:
 
     def get_annual_income(
         self,
-        year: int | None = None,
+        year: int,
         cpr: str | None = None,
         chunk_size: int = 20,
     ) -> Iterable[AnnualIncome]:
-        if year is None:
-            if cpr is None:
-                raise ValueError("Must specify either year or cpr (or both)")
-            responses: Iterable[Dict[str, Any]] = [
-                self.get(f"/api/annualincome/get/{cpr}")
-            ]
+        if cpr is None:
+            responses = self.get_chunked(
+                f"/api/annualincome/get/chunks/all/{year}", chunk_size
+            )
         else:
-            if cpr is None:
-                responses = self.get_chunked(
-                    f"/api/annualincome/get/chunks/all/{year}", chunk_size
-                )
-            else:
-                responses = [self.get(f"/api/annualincome/get/{cpr}/{year}")]
+            responses = [self.get(f"/api/annualincome/get/{cpr}/{year}")]
         for item in self.unpack(responses):
             yield AnnualIncomeHandler.from_api_dict(item)
 
     def get_expected_income(
         self,
-        year: int | None = None,
+        year: int,
         cpr: str | None = None,
         chunk_size: int = 20,
     ) -> Iterable[ExpectedIncome]:
-        if year is None:
-            if cpr is None:
-                raise ValueError("Must specify either year or cpr (or both)")
-            responses: Iterable[Dict[str, Any]] = [
-                self.get(f"/api/expectedincome/get/{cpr}")
-            ]
+        if cpr is None:
+            responses = self.get_chunked(
+                f"/api/expectedincome/get/chunks/all/{year}", chunk_size
+            )
         else:
-            if cpr is None:
-                responses = self.get_chunked(
-                    f"/api/expectedincome/get/chunks/all/{year}", chunk_size
-                )
-            else:
-                responses = [self.get(f"/api/expectedincome/get/{cpr}/{year}")]
+            responses = [self.get(f"/api/expectedincome/get/{cpr}/{year}")]
         for item in self.unpack(responses):
             yield ExpectedIncomeHandler.from_api_dict(item)
 
@@ -188,24 +174,17 @@ class EskatClient:
 
     def get_tax_information(
         self,
-        year: int | None = None,
+        year: int,
         cpr: str | None = None,
         chunk_size: int = 20,
     ) -> Iterable[TaxInformation]:
-        if year is None:
-            if cpr is None:
-                raise ValueError("Must specify either year or cpr (or both)")
-            responses: Iterable[Dict[str, Any]] = [
-                self.get(f"/api/taxinformation/get/{cpr}")
-            ]
+        if cpr is None:
+            responses = self.get_chunked(
+                f"/api/taxinformation/get/chunks/all/{year}",
+                chunk_size,
+            )
         else:
-            if cpr is None:
-                responses = self.get_chunked(
-                    f"/api/taxinformation/get/chunks/all/{year}",
-                    chunk_size,
-                )
-            else:
-                responses = [self.get(f"/api/taxinformation/get/{cpr}/{year}")]
+            responses = [self.get(f"/api/taxinformation/get/{cpr}/{year}")]
         for item in self.unpack(responses):
             yield TaxInformationHandler.from_api_dict(item)
 
