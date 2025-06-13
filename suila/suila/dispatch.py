@@ -25,17 +25,13 @@ class JobDispatcher:
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
             "type": "yearly",
             "validator": lambda year, month, day: (
-                # Allowed to run the day after SEND_EBOKS in february
-                month == 2
-                and day >= get_eboks_date(year, month).day + 1
+                month == 2 and day >= get_eboks_date(year, month).day + 1
             ),
         },
         ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: {
             "type": "yearly",
             "validator": lambda year, month, day: (
-                # Allowed to run the day after SEND_EBOKS in february
-                month == 2
-                and day >= get_eboks_date(year, month).day + 1
+                month == 2 and day >= get_eboks_date(year, month).day + 1
             ),
         },
         # "load"-jobs
