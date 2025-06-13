@@ -9,7 +9,7 @@ from django.core import management
 from django.db.models import Q
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date, get_eboks_date, get_prisme_date
+from suila.benefit import get_calculation_date, get_eboks_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
@@ -74,16 +74,14 @@ class JobDispatcher:
         ManagementCommands.CALCULATE_BENEFIT: {
             "type": "monthly",
             "validator": lambda year, month, day: (
-                get_calculation_date(year, month).day
-                <= day
-                < get_prisme_date(year, month).day
+                day >= get_calculation_date(year, month).day
             ),
         },
         # "export"-jobs
         ManagementCommands.EXPORT_BENEFITS_TO_PRISME: {
             "type": "monthly",
             "validator": lambda year, month, day: (
-                day >= get_prisme_date(year, month).day
+                day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.SEND_EBOKS: {
@@ -100,10 +98,6 @@ class JobDispatcher:
         self.month = month or self.now.month
         self.day = day or self.now.day
         self.reraise = reraise
-
-        self.calculation_date = get_calculation_date(self.year, self.month)
-        self.prisme_date = get_prisme_date(self.year, self.month)
-        self.eboks_date = get_eboks_date(self.year, self.month)
 
         self.dependencies = {
             ManagementCommands.CALCULATE_STABILITY_SCORE: [],
