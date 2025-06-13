@@ -24,7 +24,6 @@ omit =
     */management/commands/create_api_group.py
     */management/commands/create_groups.py
     */management/commands/create_user.py
-    */management/commands/send_eboks.py
     */management/commands/eboks_update_status.py
     */management/commands/export_users.py
     */management/commands/get_employer_info_from_dafo.py
