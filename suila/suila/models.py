@@ -1805,6 +1805,7 @@ class JobLog(PermissionsMixin, models.Model):
     cpr_param = models.TextField(default=None, null=True)
     type_param = models.TextField(default=None, null=True)
     verbosity_param = models.IntegerField(default=None, null=True)
+    skew_param = models.BooleanField(default=None, null=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
