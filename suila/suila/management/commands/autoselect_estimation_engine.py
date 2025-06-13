@@ -1,17 +1,14 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from cProfile import Profile
-
-from django.core.management.base import BaseCommand
-
+from suila.management.commands.common import SuilaBaseCommand
 from suila.models import IncomeType, Person, PersonYear, PersonYearEstimateSummary, Year
 
 
-class Command(BaseCommand):
+class Command(SuilaBaseCommand):
+    filename = __file__
 
     def add_arguments(self, parser):
-        parser.add_argument("--profile", action="store_true", default=False)
         parser.add_argument("--year", type=int)
         parser.add_argument("--cpr", type=str)
         super().add_arguments(parser)
@@ -106,11 +103,3 @@ class Command(BaseCommand):
                         person_year.save(
                             update_fields=(preferred_estimation_engine_field,)
                         )
-
-    def handle(self, *args, **options):
-        if options.get("profile", False):
-            profiler = Profile()
-            profiler.runcall(self._handle, *args, **options)
-            profiler.print_stats(sort="tottime")
-        else:
-            self._handle(*args, **options)

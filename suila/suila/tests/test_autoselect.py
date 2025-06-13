@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 from decimal import Decimal
 from io import StringIO
-from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -132,12 +131,6 @@ class AutoSelectEngineTests(TestCase):
         self.assertEqual(
             qs[0].preferred_estimation_engine_u, "InYearExtrapolationEngine"
         )
-
-    @patch("suila.management.commands.autoselect_estimation_engine.Profile")
-    def test_autoselect_management_command_profiler(self, profiler):
-        self.assertFalse(profiler.called)
-        self.call_command(year=2023, profile=True)
-        self.assertTrue(profiler.called)
 
     def test_verbose(self):
         stdout = StringIO()
