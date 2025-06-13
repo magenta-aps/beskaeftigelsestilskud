@@ -87,12 +87,6 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-
-# Out goal is to payout on the month's third tuesday. This means we need to send payout
-# information to PRISME one or two (or three?) days in advance. this amount of days can
-# be configured here
-PRISME_DELAY = int(os.environ.get("PRISME_DELAY", "1"))
-
 PITU = {
     "certificate": os.environ.get("PITU_CLIENT_CERT"),
     "private_key": os.environ.get("PITU_CLIENT_CERT_KEY"),

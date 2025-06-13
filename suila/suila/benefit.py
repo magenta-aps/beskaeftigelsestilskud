@@ -283,17 +283,6 @@ def get_calculation_date(year: int, month: int) -> date:
     )
 
 
-def get_prisme_date(year: int, month: int) -> date:
-    """Get date for when to export data to PRISME
-
-    The day before payout date - Can be changed by modifying
-    `settings.PRISME_DELAY`.
-    """
-    return get_payout_date(year, month) - timedelta(
-        days=settings.PRISME_DELAY  # type: ignore
-    )
-
-
 def get_eboks_date(year: int, month: int):
     """Get date for when to send EBOKS messages to citizens.
 
