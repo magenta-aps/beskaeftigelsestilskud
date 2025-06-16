@@ -349,7 +349,7 @@ class IncomeSignal:
         if self.signal_type in use_source:
             return self.source
         elif self.signal_type is IncomeSignalType.BetaltBSkat:
-            return gettext("B-skatterater")
+            return gettext("Betalte B-skatter")
         else:
             raise ValueError(
                 "cannot determine filter_key for %r" % self
