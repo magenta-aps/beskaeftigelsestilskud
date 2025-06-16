@@ -4,6 +4,7 @@
 
 import calendar
 from datetime import date, timedelta
+from decimal import Decimal
 from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
@@ -14,7 +15,15 @@ from django.utils import timezone
 from suila.benefit import get_calculation_date, get_eboks_date
 from suila.management.commands.common import SuilaBaseCommand
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
-from suila.models import ManagementCommands, StatusChoices
+from suila.models import (
+    ManagementCommands,
+    Person,
+    PersonMonth,
+    PersonYear,
+    StandardWorkBenefitCalculationMethod,
+    StatusChoices,
+    Year,
+)
 
 
 class TestJobDispatcherCommands(TestCase):
@@ -24,6 +33,24 @@ class TestJobDispatcherCommands(TestCase):
         super().setUp()
         self.command = JobDispatcherCommand()
         self.command.stdout = StringIO()
+
+        self.calc = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+
+        self.year = Year.objects.create(year=2025, calculation_method=self.calc)
+        self.person = Person.objects.create(cpr="0101011234", name="Ozzy")
+        self.person_year = PersonYear.objects.create(year=self.year, person=self.person)
+
+        for month in range(1, 13):
+            PersonMonth.objects.create(
+                month=month, person_year=self.person_year, import_date=date.today()
+            )
 
     @patch("suila.dispatch.timezone.now")
     @patch("suila.dispatch.management.call_command")
@@ -300,6 +327,72 @@ class TestJobDispatcherCommands(TestCase):
             self.assertEqual(mock_call_command.call_count, len(expected_calls))
             mock_call_command.assert_has_calls(expected_calls)
             mock_call_command.reset_mock()
+
+    def run_job_dispatcher(
+        self,
+        mock_call_command,
+        mock_timezone_now,
+        calculate_benefit_for_single_cpr=False,
+    ):
+
+        # Test data
+        test_date = timezone.datetime(2025, 5, 1)
+        calculation_date = get_calculation_date(test_date.year, test_date.month)
+        _, num_days = calendar.monthrange(test_date.year, test_date.month)
+
+        # Mocking
+        mock_call_command.side_effect = _mock_call_command
+
+        day = calculation_date.day
+
+        # Go through each day of the month and verify the correct jobs was
+        # called on each day
+
+        # Mock/Change the current date/now
+        mock_timezone_now.return_value = timezone.datetime(
+            test_date.year, test_date.month, day, 2, 0, 0
+        )
+
+        # Run calculate_benefit for a single cpr number
+        if calculate_benefit_for_single_cpr:
+            call_command(
+                ManagementCommands.CALCULATE_BENEFIT, 2025, 3, cpr=self.person.cpr
+            )
+
+        # Invoke the job dispatcher command
+        call_command(
+            self.command,
+            year=test_date.year,
+            month=test_date.month,
+            day=day,
+        )
+
+        return [c.args[0] for c in mock_call_command.call_args_list]
+
+    @patch("suila.dispatch.timezone.now")
+    @patch("suila.dispatch.management.call_command")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_calculate_benefit_when_benefit_was_not_calculated_for_single_person(
+        self, mock_call_command: MagicMock, mock_timezone_now: MagicMock
+    ):
+        calls = self.run_job_dispatcher(
+            mock_call_command,
+            mock_timezone_now,
+        )
+        self.assertIn(ManagementCommands.CALCULATE_BENEFIT, calls)
+
+    @patch("suila.dispatch.timezone.now")
+    @patch("suila.dispatch.management.call_command")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_calculate_benefit_when_benefit_was_calculated_for_single_person(
+        self, mock_call_command: MagicMock, mock_timezone_now: MagicMock
+    ):
+        calls = self.run_job_dispatcher(
+            mock_call_command,
+            mock_timezone_now,
+            calculate_benefit_for_single_cpr=True,
+        )
+        self.assertIn(ManagementCommands.CALCULATE_BENEFIT, calls)
 
     # Helper methods
     def _call_job_dispatcher_on_date(
