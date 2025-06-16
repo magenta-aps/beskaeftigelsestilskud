@@ -48,6 +48,15 @@ class TestBatchExport(TestCase):
         self.assertEqual(export._year, 2025)
         self.assertEqual(export._month, 1)
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        file_path = os.path.join(
+            settings.LOCAL_PRISME_CSV_STORAGE_FULL, "SUILA_kontrolliste_2025_01.csv"
+        )
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
     def test_get_person_month_queryset(self):
         """Given one or more `PersonMonth` objects, the method should return a queryset
         containing each `PersonMonth`, annotated with an `identifier` and `prefix`.
