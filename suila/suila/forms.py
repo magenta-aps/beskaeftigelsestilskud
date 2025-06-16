@@ -11,6 +11,7 @@ from django.forms import (
     Form,
     HiddenInput,
     ModelForm,
+    Select,
     Textarea,
 )
 from django.forms.fields import BooleanField
@@ -119,6 +120,7 @@ class IncomeSignalFilterForm(Form):
             ),
         },
         required=False,
+        widget=Select(attrs={"data-submit-onchange": "true"}),
     )
 
     def __init__(self, *args, **kwargs):
