@@ -912,6 +912,15 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
         if not os.path.exists(folderpath):
             os.mkdir(folderpath)
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        file_path = os.path.join(
+            settings.LOCAL_PRISME_CSV_STORAGE_FULL, "SUILA_kontrolliste_2025_01.csv"
+        )
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
     def test_get_returns_html(self):
         view, response = self.request_get(self.admin_user, "")
         self.assertIsInstance(response, TemplateResponse)
@@ -959,19 +968,29 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.filename = "SUILA_kontrolliste_2025_01.csv"
+        cls.filename = "SUILA_kontrolliste_2025_01_test.csv"
         cls.data = b"1,2,3,4,5"
         with open(os.path.join(cls.folder, cls.filename), "wb") as f:
             f.write(cls.data)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        file_path = os.path.join(
+            settings.LOCAL_PRISME_CSV_STORAGE_FULL,
+            "SUILA_kontrolliste_2025_01_test.csv",
+        )
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     def test_download(self):
         view, response = self.request_get(self.admin_user, "", filename=self.filename)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/csv")
-        # self.assertEqual(response.headers["content-Length"], str(len(self.data)))
+        self.assertEqual(response.headers["content-Length"], str(len(self.data)))
         self.assertEqual(
             response.headers["Content-Disposition"],
-            'attachment; filename="SUILA_kontrolliste_2025_01.csv"',
+            'attachment; filename="SUILA_kontrolliste_2025_01_test.csv"',
         )
         self.assertEqual(response.getvalue(), self.data)
 
