@@ -902,7 +902,27 @@ class TestUpdateEngineViewPreferences(TestCase):
         )
 
 
-class TestCsvFileReportListView(TestViewMixin, TestCase):
+class CsvFileTestMixin:
+
+    active = set()
+
+    @classmethod
+    def setUpClass(cls):
+        print(f"{cls.__name__} begin")
+        super().setUpClass()
+        CsvFileTestMixin.active.add(cls.__name__)
+
+    @classmethod
+    def tearDownClass(cls):
+        print(f"{cls.__name__} end")
+        super().tearDownClass()
+        CsvFileTestMixin.active.remove(cls.__name__)
+        if len(CsvFileTestMixin.active) == 0:
+            print("cleanup")
+            cleanup_dummy_files()
+
+
+class TestCsvFileReportListView(TestViewMixin, CsvFileTestMixin, TestCase):
 
     view_class = CsvFileReportListView
     folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
@@ -910,17 +930,14 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
+        print("setUpTestData")
         create_dummy_csv_files(True)
         folderpath = os.path.join(cls.folder, "TEST_foobarfolder")
         if not os.path.exists(folderpath):
             os.mkdir(folderpath)
 
-    @classmethod
-    def tearDownClass(cls):
-        cleanup_dummy_files()
-        super().tearDownClass()
-
     def test_get_returns_html(self):
+        print("test_get_returns_html")
         view, response = self.request_get(self.admin_user, "")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
@@ -930,6 +947,7 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
         )
 
     def test_ordering(self):
+        print("test_ordering")
         view, response = self.request_get(self.admin_user, "?order_by=-filename")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
@@ -963,7 +981,7 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
         self.assertEqual(pageview.params, {})
 
 
-class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
+class TestCsvFileReportDownloadView(TestViewMixin, CsvFileTestMixin, TestCase):
 
     view_class = CsvFileReportDownloadView
     folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
@@ -976,12 +994,8 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
         with open(os.path.join(cls.folder, cls.filename), "wb") as f:
             f.write(cls.data)
 
-    @classmethod
-    def tearDownClass(cls):
-        cleanup_dummy_files()
-        super().tearDownClass()
-
     def test_download(self):
+        print("test_download")
         view, response = self.request_get(self.admin_user, "", filename=self.filename)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/csv")
@@ -993,6 +1007,7 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
         self.assertEqual(response.getvalue(), self.data)
 
     def test_download_invalid_path(self):
+        print("test_download_invalid_path")
         view, response = self.request_get(
             self.admin_user, "", filename="../../passwords.txt"
         )
@@ -1003,16 +1018,19 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_view_borger_denied(self):
+        print("test_view_borger_denied")
         with self.assertRaises(PermissionDenied):
             self.request_get(self.normal_user, "", filename=self.filename)
 
     def test_view_staff_access(self):
+        print("test_view_staff_access")
         try:
             self.request_get(self.staff_user, "", filename=self.filename)
         except PermissionDenied:
             self.fail("Should have access")
 
     def test_view_anonymous_denied(self):
+        print("test_view_anonymous_denied")
         view, response = self.request_get(self.no_user, "", filename=self.filename)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
