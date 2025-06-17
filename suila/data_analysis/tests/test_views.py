@@ -20,15 +20,18 @@ from data_analysis.views import (
     PersonYearEstimationMixin,
     SimulationJSONEncoder,
 )
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
 
 from suila.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
-from suila.management.commands.create_dummy_data import create_dummy_csv_files
+from suila.management.commands.create_dummy_data import (
+    cleanup_dummy_files,
+    create_dummy_csv_files,
+)
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -899,40 +902,46 @@ class TestUpdateEngineViewPreferences(TestCase):
         )
 
 
+@override_settings(
+    LOCAL_PRISME_CSV_STORAGE="TestCsvFileReportListView",
+    LOCAL_PRISME_CSV_STORAGE_FULL="/tmp/TestCsvFileReportListView",
+)
 class TestCsvFileReportListView(TestViewMixin, TestCase):
 
     view_class = CsvFileReportListView
-    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
+    folder = "/tmp/TestCsvFileReportListView"
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
+        os.mkdir(cls.folder)
         create_dummy_csv_files(True)
-        folderpath = os.path.join(cls.folder, "foobarfolder")
+        folderpath = os.path.join(cls.folder, "TEST_foobarfolder")
         if not os.path.exists(folderpath):
             os.mkdir(folderpath)
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        file_path = os.path.join(
-            settings.LOCAL_PRISME_CSV_STORAGE_FULL, "SUILA_kontrolliste_2025_01.csv"
-        )
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        cleanup_dummy_files()
+        os.rmdir(cls.folder)
 
     def test_get_returns_html(self):
         view, response = self.request_get(self.admin_user, "")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
         self.assertEqual(len(object_list), 60)
-        self.assertEqual(object_list[0]["filename"], "SUILA_kontrolliste_2025_01.csv")
+        self.assertEqual(
+            object_list[0]["filename"], "TEST_SUILA_kontrolliste_2025_01.csv"
+        )
 
     def test_ordering(self):
         view, response = self.request_get(self.admin_user, "?order_by=-filename")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
-        self.assertEqual(object_list[0]["filename"], "SUILA_kontrolliste_2029_12.csv")
+        self.assertEqual(
+            object_list[0]["filename"], "TEST_SUILA_kontrolliste_2029_12.csv"
+        )
 
     def test_view_borger_denied(self):
         with self.assertRaises(PermissionDenied):
@@ -960,15 +969,20 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
         self.assertEqual(pageview.params, {})
 
 
+@override_settings(
+    LOCAL_PRISME_CSV_STORAGE="TestCsvFileReportDownloadView",
+    LOCAL_PRISME_CSV_STORAGE_FULL="/tmp/TestCsvFileReportDownloadView",
+)
 class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
 
     view_class = CsvFileReportDownloadView
-    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
+    folder = "/tmp/TestCsvFileReportDownloadView"
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.filename = "SUILA_kontrolliste_2025_01_test.csv"
+        os.mkdir(cls.folder)
+        cls.filename = "TEST_SUILA_kontrolliste_2028_01.csv"
         cls.data = b"1,2,3,4,5"
         with open(os.path.join(cls.folder, cls.filename), "wb") as f:
             f.write(cls.data)
@@ -976,21 +990,17 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        file_path = os.path.join(
-            settings.LOCAL_PRISME_CSV_STORAGE_FULL,
-            "SUILA_kontrolliste_2025_01_test.csv",
-        )
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        cleanup_dummy_files()
+        os.rmdir(cls.folder)
 
     def test_download(self):
         view, response = self.request_get(self.admin_user, "", filename=self.filename)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/csv")
-        self.assertEqual(response.headers["content-Length"], str(len(self.data)))
+        self.assertEqual(response.headers["Content-Length"], str(len(self.data)))
         self.assertEqual(
             response.headers["Content-Disposition"],
-            'attachment; filename="SUILA_kontrolliste_2025_01_test.csv"',
+            f'attachment; filename="{self.filename}"',
         )
         self.assertEqual(response.getvalue(), self.data)
 

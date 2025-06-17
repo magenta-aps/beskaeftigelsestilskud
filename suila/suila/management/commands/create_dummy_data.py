@@ -75,19 +75,28 @@ def create_dummy_csv_files(clean: bool = False):
     folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
 
     if clean:
-        for file in os.listdir(folder):
-            path = os.path.join(folder, file)
-            if os.path.isfile(path):
-                os.remove(path)
-            else:
-                os.rmdir(path)
+        cleanup_dummy_files()
 
     for year in range(2025, 2030):
         for month in range(1, 13):
-            filename = f"SUILA_kontrolliste_{year}_{month:02}.csv"
+            filename = f"TEST_SUILA_kontrolliste_{year}_{month:02}.csv"
             with open(os.path.join(folder, filename), "w", newline="") as f:
                 writer = csv.writer(f)
                 writer.writerow([random.randint(0, 9999) for x in range(5)])
+
+
+def cleanup_dummy_files():
+    try:
+        folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
+        for file in os.listdir(folder):
+            if "test" in file.lower():
+                path = os.path.join(folder, file)
+                if os.path.isfile(path):
+                    os.remove(path)
+                else:
+                    os.rmdir(path)
+    except Exception:
+        pass
 
 
 class Command(BaseCommand):

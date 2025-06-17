@@ -211,8 +211,6 @@ Unittest:
   script:
     - cd /app
     - echo "CI_PROJECT_DIR = ${CI_PROJECT_DIR}"
-    - echo "${PWD}"
-    - ls -al
     - coverage run manage.py test --parallel
     - coverage combine
     - coverage report --show-missing --fail-under=100
