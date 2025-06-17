@@ -20,7 +20,6 @@ from data_analysis.views import (
     PersonYearEstimationMixin,
     SimulationJSONEncoder,
 )
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
@@ -906,11 +905,12 @@ class TestUpdateEngineViewPreferences(TestCase):
 class TestCsvFileReportListView(TestViewMixin, TestCase):
 
     view_class = CsvFileReportListView
-    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
+    folder = "/tmp/TestCsvFileReportListView"
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
+        os.mkdir(cls.folder)
         create_dummy_csv_files(True)
         folderpath = os.path.join(cls.folder, "TEST_foobarfolder")
         if not os.path.exists(folderpath):
@@ -919,6 +919,7 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
     @classmethod
     def tearDownClass(cls):
         cleanup_dummy_files()
+        os.rmdir(cls.folder)
 
     def test_get_returns_html(self):
         print("test_get_returns_html")
@@ -973,11 +974,12 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
 class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
 
     view_class = CsvFileReportDownloadView
-    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
+    folder = "/tmp/TestCsvFileReportDownloadView"
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
+        os.mkdir(cls.folder)
         cls.filename = "TEST_SUILA_kontrolliste_2025_01.csv"
         cls.data = b"1,2,3,4,5"
         with open(os.path.join(cls.folder, cls.filename), "wb") as f:
@@ -986,6 +988,7 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
     @classmethod
     def tearDownClass(cls):
         cleanup_dummy_files()
+        os.rmdir(cls.folder)
 
     def test_download(self):
         print("test_download")
