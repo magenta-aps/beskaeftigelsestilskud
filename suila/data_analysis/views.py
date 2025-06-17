@@ -588,3 +588,22 @@ class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, Vi
                 open(fullpath, "rb"), as_attachment=True, filename=filename
             )
         return HttpResponseNotFound()
+
+
+class CalculationParametersListView(
+    LoginRequiredMixin, PermissionsRequiredMixin, ListView
+):
+    model = Year
+    template_name = "data_analysis/calculation_parameters_list.html"
+
+    def get_context_data(self, **kwargs):
+        methods = set([year.calculation_method for year in self.object_list])
+        return super().get_context_data(
+            **{
+                **kwargs,
+                "graph_points": json.dumps(
+                    {method.pk: method.graph_points for method in methods},
+                    cls=SuilaJSONEncoder,
+                ),
+            }
+        )

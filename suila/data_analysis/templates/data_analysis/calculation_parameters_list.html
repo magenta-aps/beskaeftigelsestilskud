@@ -1,0 +1,129 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "data_analysis/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load csp %}
+{% load suila_tags %}
+{% load bootstrap_icons %}
+
+{% block extra_headers %}
+    <script id="graph_points" type="application/json" nonce="{{ request.csp_nonce }}">{{ graph_points|safe }}</script>
+    <link rel="stylesheet" href="{% static "apexcharts/apexcharts.min.css" %}" nonce="{{ request.csp_nonce }}">
+    <script src="{% static "apexcharts/apexcharts.min.js" %}" nonce="{{ request.csp_nonce }}"></script>
+    <script nonce="{{ request.csp_nonce }}">
+        $(function() {
+            const graphPoints = JSON.parse($("#graph_points").text());
+            const graphModal = new bootstrap.Modal('#modal-graph', {keyboard: false});
+            const graphModalBody = $("#modal-graph-container");
+            const openPayoutGraph = function(id) {
+                const element = $(`<div></div>`);
+                graphModalBody.empty();
+                graphModalBody.append(element);
+                const data = graphPoints[id];
+                console.log(data);
+                const chart = new ApexCharts(element.get(0), {
+                    "chart": {
+                        "type": "line",
+                        "zoom": {
+                            "allowMouseWheelZoom": false,
+                        }
+                    },
+                    "series": [{
+                        "name": "Beskæftigelsestilskud",
+                        "data": data,
+                    }],
+                    "xaxis": {
+                        "type": "numeric",
+                        "title": {
+                            "text": "Estimeret årsindkomst"
+                        }
+                    },
+                    "yaxis": {
+                        "title": {
+                            "text": "Beregnet beskæftigelsestilskud for hele året"
+                        }
+                    },
+                    "tooltip": {
+                        "enabled": false,
+                    },
+                });
+                chart.render();
+                graphModal.show();
+            };
+
+            $("[data-action=graph]").on("click", function() {
+                const $this = $(this);
+                openPayoutGraph($this.data("method-id"));
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="row my-1 mx-1">
+        <h1>{% translate "Beregningsparametre" %} </h1>
+    </div>
+    <div class="row my-1 mx-1">
+        <table class="table table-bordered"  id="table">
+            <thead class="shadow-sm p-3 mb-5 bg-body rounded sticky-top">
+            <tr>
+                <th>
+                    Skatteår
+                </th>
+                <th>
+                    benefit_rate_percent
+                </th>
+                <th>
+                    personal_allowance
+                </th>
+                <th>
+                    standard_allowance
+                </th>
+                <th>
+                    max_benefit
+                </th>
+                <th>
+                    scaledown_rate_percent
+                </th>
+                <th>
+                    scaledown_ceiling
+                </th>
+                <th>
+                    Handlinger
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for year in object_list %}
+                {% with calculation_method=year.calculation_method %}
+                <tr>
+                    <td>{{ year.year }}</td>
+                    <td>{{ calculation_method.benefit_rate_percent }}</td>
+                    <td>{{ calculation_method.personal_allowance }}</td>
+                    <td>{{ calculation_method.standard_allowance }}</td>
+                    <td>{{ calculation_method.max_benefit }}</td>
+                    <td>{{ calculation_method.scaledown_rate_percent }}</td>
+                    <td>{{ calculation_method.scaledown_ceiling }}</td>
+                    <td><button type="button" class="btn btn-primary" data-action="graph" data-method-id="{{ calculation_method.pk }}">Graf</button></td>
+                </tr>
+                {% endwith %}
+            {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <div id="modal-graph" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Beregningsgraf</h5></div>
+                <div class="modal-body">
+                    <div id="modal-graph-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

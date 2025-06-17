@@ -17,7 +17,7 @@
     {% compress css %}
     <link type="text/x-scss" href="{% static 'bootstrap/theme.scss' %}" rel="stylesheet" media="screen" nonce="{{ request.csp_nonce }}">
     {% endcompress %}
-    <link rel="stylesheet" href="{% static 'suila/style.css' %}"  nonce="{{request.csp_nonce}}">
+    <link rel="stylesheet" href="{% static 'suila/style.css' %}" nonce="{{request.csp_nonce}}">
     <link href="{% static 'material-design/filled.css' %}" rel="stylesheet" nonce="{{ request.csp_nonce }}"/>
     <script src="{% static 'jquery/jquery-3.7.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
     <script src="{% static 'bootstrap/bootstrap.bundle.min.js' %}" nonce="{{request.csp_nonce}}"></script>

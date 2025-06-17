@@ -4,6 +4,7 @@
 
 
 from data_analysis.views import (
+    CalculationParametersListView,
     CsvFileReportDownloadView,
     CsvFileReportListView,
     HistogramView,
@@ -36,5 +37,10 @@ urlpatterns: list[URLResolver | URLPattern] = [
         "csv_report/<str:filename>",
         CsvFileReportDownloadView.as_view(),
         name="csv_report_download",
+    ),
+    path(
+        "calculation_parameters/",
+        CalculationParametersListView.as_view(),
+        name="calculation_parameters_list",
     ),
 ]

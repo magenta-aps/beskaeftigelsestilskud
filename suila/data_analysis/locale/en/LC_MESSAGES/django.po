@@ -37,6 +37,10 @@ msgstr "All"
 msgid "Indkomsttype"
 msgstr "Income type"
 
+#: data_analysis/templates/data_analysis/calculation_parameters_list.html
+msgid "Beregningsparametre"
+msgstr ""
+
 #: data_analysis/templates/data_analysis/histogram.html
 msgid "Histogrammer for"
 msgstr "Histograms for"
