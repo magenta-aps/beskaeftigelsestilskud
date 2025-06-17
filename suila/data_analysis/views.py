@@ -573,13 +573,14 @@ class CsvFileReportListView(
 
 
 class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, View):
-    folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
 
     required_model_permissions = ["suila.can_download_reports"]
 
     def get(self, request, *args, **kwargs):
         filename = kwargs["filename"]
-        fullpath = os.path.join(self.folder, filename)
+        fullpath = os.path.join(
+            settings.LOCAL_PRISME_CSV_STORAGE_FULL, filename  # type: ignore[misc]
+        )
         if "/" in filename:  # do not trust the user input
             return HttpResponseForbidden()
         if os.path.isfile(fullpath):
