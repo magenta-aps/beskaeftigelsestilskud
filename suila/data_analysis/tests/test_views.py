@@ -914,7 +914,6 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-
         os.mkdir(cls.folder)
         create_dummy_csv_files(True)
         folderpath = os.path.join(cls.folder, "TEST_foobarfolder")
@@ -928,7 +927,6 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
         os.rmdir(cls.folder)
 
     def test_get_returns_html(self):
-        print("test_get_returns_html")
         view, response = self.request_get(self.admin_user, "")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
@@ -938,7 +936,6 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
         )
 
     def test_ordering(self):
-        print("test_ordering")
         view, response = self.request_get(self.admin_user, "?order_by=-filename")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
@@ -947,25 +944,21 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
         )
 
     def test_view_borger_denied(self):
-        print("test_view_borger_denied")
         with self.assertRaises(PermissionDenied):
             self.request_get(self.normal_user, "")
 
     def test_view_staff_access(self):
-        print("test_view_staff_access")
         try:
             self.request_get(self.staff_user, "")
         except PermissionDenied:
             self.fail("Should have access")
 
     def test_view_anonymous_denied(self):
-        print("test_view_anonymous_denied")
         view, response = self.request_get(self.no_user, "")
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
 
     def test_view_log(self):
-        print("test_view_log")
         self.request_get(self.admin_user, "")
         logs = PageView.objects.all()
         self.assertEqual(logs.count(), 1)
@@ -1001,11 +994,8 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
         os.rmdir(cls.folder)
 
     def test_download(self):
-        print("test_download")
         view, response = self.request_get(self.admin_user, "", filename=self.filename)
         self.assertEqual(response.status_code, 200)
-        print(response.headers)
-        print(response.getvalue())
         self.assertEqual(response.headers["Content-Type"], "text/csv")
         self.assertEqual(response.headers["Content-Length"], str(len(self.data)))
         self.assertEqual(
@@ -1015,7 +1005,6 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
         self.assertEqual(response.getvalue(), self.data)
 
     def test_download_invalid_path(self):
-        print("test_download_invalid_path")
         view, response = self.request_get(
             self.admin_user, "", filename="../../passwords.txt"
         )
@@ -1026,19 +1015,16 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_view_borger_denied(self):
-        print("test_view_borger_denied")
         with self.assertRaises(PermissionDenied):
             self.request_get(self.normal_user, "", filename=self.filename)
 
     def test_view_staff_access(self):
-        print("test_view_staff_access")
         try:
             self.request_get(self.staff_user, "", filename=self.filename)
         except PermissionDenied:
             self.fail("Should have access")
 
     def test_view_anonymous_denied(self):
-        print("test_view_anonymous_denied")
         view, response = self.request_get(self.no_user, "", filename=self.filename)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
