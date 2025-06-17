@@ -28,7 +28,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from suila.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
-from suila.management.commands.create_dummy_data import create_dummy_csv_files
+from suila.management.commands.create_dummy_data import (
+    cleanup_dummy_files,
+    create_dummy_csv_files,
+)
 from suila.models import (
     IncomeEstimate,
     IncomeType,
@@ -908,22 +911,31 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         create_dummy_csv_files(True)
-        folderpath = os.path.join(cls.folder, "foobarfolder")
+        folderpath = os.path.join(cls.folder, "TEST_foobarfolder")
         if not os.path.exists(folderpath):
             os.mkdir(folderpath)
+
+    @classmethod
+    def tearDownClass(cls):
+        cleanup_dummy_files()
+        super().tearDownClass()
 
     def test_get_returns_html(self):
         view, response = self.request_get(self.admin_user, "")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
         self.assertEqual(len(object_list), 60)
-        self.assertEqual(object_list[0]["filename"], "SUILA_kontrolliste_2025_01.csv")
+        self.assertEqual(
+            object_list[0]["filename"], "TEST_SUILA_kontrolliste_2025_01.csv"
+        )
 
     def test_ordering(self):
         view, response = self.request_get(self.admin_user, "?order_by=-filename")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
-        self.assertEqual(object_list[0]["filename"], "SUILA_kontrolliste_2029_12.csv")
+        self.assertEqual(
+            object_list[0]["filename"], "TEST_SUILA_kontrolliste_2029_12.csv"
+        )
 
     def test_view_borger_denied(self):
         with self.assertRaises(PermissionDenied):
@@ -959,22 +971,14 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.filename = "SUILA_kontrolliste_2025_01_test.csv"
+        cls.filename = "TEST_SUILA_kontrolliste_2025_01.csv"
         cls.data = b"1,2,3,4,5"
         with open(os.path.join(cls.folder, cls.filename), "wb") as f:
             f.write(cls.data)
 
     @classmethod
     def tearDownClass(cls):
-        try:
-            file_path = os.path.join(
-                settings.LOCAL_PRISME_CSV_STORAGE_FULL,
-                cls.filename,
-            )
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except Exception:
-            pass
+        cleanup_dummy_files()
         super().tearDownClass()
 
     def test_download(self):
