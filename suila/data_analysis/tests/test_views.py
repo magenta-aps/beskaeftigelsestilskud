@@ -24,7 +24,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from suila.estimation import InYearExtrapolationEngine, TwelveMonthsSummationEngine
@@ -902,34 +902,8 @@ class TestUpdateEngineViewPreferences(TestCase):
         )
 
 
-active = set()
-
-
-class CsvFileTestMixin:
-
-    active = set()
-
-    @classmethod
-    def setUpClass(cls):
-        global active
-        print(f"{cls.__name__} begin")
-        super().setUpClass()
-        active.add(cls.__name__)
-        print(active)
-
-    @classmethod
-    def tearDownClass(cls):
-        global active
-        print(f"{cls.__name__} end")
-        super().tearDownClass()
-        active.remove(cls.__name__)
-        print(active)
-        if len(active) == 0:
-            print("cleanup")
-            cleanup_dummy_files()
-
-
-class TestCsvFileReportListView(TestViewMixin, CsvFileTestMixin, TestCase):
+@override_settings(LOCAL_PRISME_CSV_STORAGE_FULL="/tmp/TestCsvFileReportListView")
+class TestCsvFileReportListView(TestViewMixin, TestCase):
 
     view_class = CsvFileReportListView
     folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
@@ -937,11 +911,14 @@ class TestCsvFileReportListView(TestViewMixin, CsvFileTestMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        print("setUpTestData")
         create_dummy_csv_files(True)
         folderpath = os.path.join(cls.folder, "TEST_foobarfolder")
         if not os.path.exists(folderpath):
             os.mkdir(folderpath)
+
+    @classmethod
+    def tearDownClass(cls):
+        cleanup_dummy_files()
 
     def test_get_returns_html(self):
         print("test_get_returns_html")
@@ -992,7 +969,8 @@ class TestCsvFileReportListView(TestViewMixin, CsvFileTestMixin, TestCase):
         self.assertEqual(pageview.params, {})
 
 
-class TestCsvFileReportDownloadView(TestViewMixin, CsvFileTestMixin, TestCase):
+@override_settings(LOCAL_PRISME_CSV_STORAGE_FULL="/tmp/TestCsvFileReportDownloadView")
+class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
 
     view_class = CsvFileReportDownloadView
     folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL
@@ -1004,6 +982,10 @@ class TestCsvFileReportDownloadView(TestViewMixin, CsvFileTestMixin, TestCase):
         cls.data = b"1,2,3,4,5"
         with open(os.path.join(cls.folder, cls.filename), "wb") as f:
             f.write(cls.data)
+
+    @classmethod
+    def tearDownClass(cls):
+        cleanup_dummy_files()
 
     def test_download(self):
         print("test_download")
