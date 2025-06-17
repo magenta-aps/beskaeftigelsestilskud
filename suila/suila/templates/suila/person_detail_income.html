@@ -124,11 +124,10 @@
 
 {% block extra_headers %}
 <script nonce="{{ request.csp_nonce }}">
-$(document).ready(function () {
+$(function () {
     $("select[data-submit-onchange=true]").on("change", function (evt) {
-        const val = $(this).val();
-        let currentUrl = new URL(window.location);
-        currentUrl.searchParams.set("filter_key", val);
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set("filter_key", $(this).val());
         window.location = currentUrl.href;
     });
 });
