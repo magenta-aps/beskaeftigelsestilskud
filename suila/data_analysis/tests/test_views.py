@@ -966,13 +966,16 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        try:
+            file_path = os.path.join(
+                settings.LOCAL_PRISME_CSV_STORAGE_FULL,
+                cls.filename,
+            )
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception:
+            pass
         super().tearDownClass()
-        file_path = os.path.join(
-            settings.LOCAL_PRISME_CSV_STORAGE_FULL,
-            "SUILA_kontrolliste_2025_01_test.csv",
-        )
-        if os.path.exists(file_path):
-            os.remove(file_path)
 
     def test_download(self):
         view, response = self.request_get(self.admin_user, "", filename=self.filename)
@@ -981,7 +984,7 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
         self.assertEqual(response.headers["content-Length"], str(len(self.data)))
         self.assertEqual(
             response.headers["Content-Disposition"],
-            'attachment; filename="SUILA_kontrolliste_2025_01_test.csv"',
+            f'attachment; filename="{self.filename}"',
         )
         self.assertEqual(response.getvalue(), self.data)
 
