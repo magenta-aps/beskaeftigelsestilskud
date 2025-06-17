@@ -911,12 +911,14 @@ class CsvFileTestMixin:
         print(f"{cls.__name__} begin")
         super().setUpClass()
         CsvFileTestMixin.active.add(cls.__name__)
+        print(CsvFileTestMixin.active)
 
     @classmethod
     def tearDownClass(cls):
         print(f"{cls.__name__} end")
         super().tearDownClass()
         CsvFileTestMixin.active.remove(cls.__name__)
+        print(CsvFileTestMixin.active)
         if len(CsvFileTestMixin.active) == 0:
             print("cleanup")
             cleanup_dummy_files()
@@ -956,21 +958,25 @@ class TestCsvFileReportListView(TestViewMixin, CsvFileTestMixin, TestCase):
         )
 
     def test_view_borger_denied(self):
+        print("test_view_borger_denied")
         with self.assertRaises(PermissionDenied):
             self.request_get(self.normal_user, "")
 
     def test_view_staff_access(self):
+        print("test_view_staff_access")
         try:
             self.request_get(self.staff_user, "")
         except PermissionDenied:
             self.fail("Should have access")
 
     def test_view_anonymous_denied(self):
+        print("test_view_anonymous_denied")
         view, response = self.request_get(self.no_user, "")
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
 
     def test_view_log(self):
+        print("test_view_log")
         self.request_get(self.admin_user, "")
         logs = PageView.objects.all()
         self.assertEqual(logs.count(), 1)
