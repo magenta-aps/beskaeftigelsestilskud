@@ -902,24 +902,29 @@ class TestUpdateEngineViewPreferences(TestCase):
         )
 
 
+active = set()
+
+
 class CsvFileTestMixin:
 
     active = set()
 
     @classmethod
     def setUpClass(cls):
+        global active
         print(f"{cls.__name__} begin")
         super().setUpClass()
-        CsvFileTestMixin.active.add(cls.__name__)
-        print(CsvFileTestMixin.active)
+        active.add(cls.__name__)
+        print(active)
 
     @classmethod
     def tearDownClass(cls):
+        global active
         print(f"{cls.__name__} end")
         super().tearDownClass()
-        CsvFileTestMixin.active.remove(cls.__name__)
-        print(CsvFileTestMixin.active)
-        if len(CsvFileTestMixin.active) == 0:
+        active.remove(cls.__name__)
+        print(active)
+        if len(active) == 0:
             print("cleanup")
             cleanup_dummy_files()
 
