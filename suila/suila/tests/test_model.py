@@ -636,6 +636,15 @@ class TestPersonMonth(UserModelTest):
         self.assertTrue(self.month4.signal)
         self.assertFalse(self.month12.signal)
         self.assertTrue(self.month10.signal)
+        income_qs = PersonMonth.signal_qs(
+            self.person_year.personmonth_set.all()
+        ).filter(has_signal=True)
+        self.assertIn(self.month1, income_qs)
+        self.assertIn(self.month2, income_qs)
+        self.assertIn(self.month3, income_qs)
+        self.assertIn(self.month4, income_qs)
+        self.assertNotIn(self.month12, income_qs)
+        self.assertIn(self.month10, income_qs)
 
     @patch("suila.models.datetime")
     def test_paused_property(self, datetime_mock):
