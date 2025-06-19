@@ -68,9 +68,9 @@
         {% with current_year=person_year.year.year %}
         <li class="nav-item mx-5">
             {% if current_year == year %}
-            <a class="nav-link active" aria-current="page" href="{% querystring year=current_year %}">{{ current_year }}</a>
+            <a class="nav-link active" aria-current="page" href="{% querystring year=current_year filter_key=None %}">{{ current_year }}</a>
             {% else %}
-            <a class="nav-link" href="{% querystring year=current_year %}">{{ current_year }}</a>
+            <a class="nav-link" href="{% querystring year=current_year filter_key=None %}">{{ current_year }}</a>
             {% endif %}
         </li>
         {% endwith %}
@@ -81,6 +81,7 @@
             <div class="col-xl-3">
                 <form action="" method="get" class="form filter-form">
                     {% bootstrap_form detail_table_filter %}
+                    <input type="hidden" name="year" value="{{ year }}" />
                 </form>
             </div>
         </div>
@@ -124,12 +125,9 @@
 
 {% block extra_headers %}
 <script nonce="{{ request.csp_nonce }}">
-$(document).ready(function () {
-    $("select#id_source").change(function (evt) {
-       const val = $(this).val();
-       let currentUrl = new URL(window.location);
-       currentUrl.searchParams.set("source", val);
-       window.location = currentUrl.href;
+$(function () {
+    $("select[data-submit-onchange=true]").on("change", function (evt) {
+        this.form.submit();
     });
 });
 </script>
