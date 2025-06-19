@@ -30,9 +30,12 @@ from django.db.models import (
     BooleanField,
     Case,
     F,
+    Func,
     Index,
+    OuterRef,
     Q,
     QuerySet,
+    Subquery,
     Sum,
     TextChoices,
     Value,
@@ -740,20 +743,28 @@ class PersonMonth(PermissionsMixin, models.Model):
 
     @property
     def signal(self):
-        return self.has_paid_b_tax or self.amount_sum > 0
+        return (
+            self.has_paid_b_tax
+            or self.monthlyincomereport_set.filter(
+                Q(a_income__gt=0) | Q(u_income__gt=0)
+            ).exists()
+        )
 
     @classmethod
     def signal_qs(cls, qs: QuerySet[PersonMonth]) -> QuerySet[PersonMonth]:
         return qs.annotate(
-            has_income=Case(
-                When(amount_sum__gt=Value(0), then=Value(True)),
-                default_value=Value(False),
-                output_field=BooleanField(),
+            income_count=Subquery(
+                MonthlyIncomeReport.objects.filter(person_month=OuterRef("pk"))
+                .filter(Q(a_income__gt=0) | Q(u_income__gt=0))
+                .order_by()
+                .values("id")
+                .annotate(count=Func(F("id"), function="COUNT"))
+                .values("count")
             )
         ).annotate(
             has_signal=Case(
                 When(
-                    Q(has_paid_b_tax=True) | Q(has_income=True),
+                    Q(has_paid_b_tax=True) | Q(income_count__gt=0),
                     then=Value(True),
                 ),
                 default=Value(False),
