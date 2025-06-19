@@ -661,21 +661,21 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 ],
             )
 
-    def test_source_query_parameter(self):
+    def test_filter_key_query_parameter(self):
         with self._time_context(year=2020):
-            # Act: perform GET request with `source` parameter set to valid value
+            # Act: perform GET request with `filter_key` parameter set to valid value
             request = self.request_factory.get(
-                "", data={"source": quote_plus("Employer 1")}
+                "", data={"filter_key": quote_plus("Employer 1")}
             )
             request.user = self.normal_user
             view = self.view_class()
             view.setup(request, pk=self.person1.pk)
             response = view.get(request, pk=self.person1.pk)
-            # Assert: only signals matching the `source` parameter are displayed in the
-            # detail table.
+            # Assert: only signals matching the `filter_key` parameter are displayed in
+            # the detail table.
             filtered_signals = response.context_data["detail_table"].data.data
             self.assertEqual(
-                [signal.source for signal in filtered_signals],
+                [signal.filter_key for signal in filtered_signals],
                 ["Employer 1"] * len(filtered_signals),
             )
 

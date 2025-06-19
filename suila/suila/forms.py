@@ -11,6 +11,7 @@ from django.forms import (
     Form,
     HiddenInput,
     ModelForm,
+    Select,
     Textarea,
 )
 from django.forms.fields import BooleanField
@@ -110,7 +111,7 @@ class CalculatorForm(Form):
 
 
 class IncomeSignalFilterForm(Form):
-    source = ChoiceField(
+    filter_key = ChoiceField(
         label=_("Kilde"),
         error_messages={
             "invalid_choice": _(
@@ -119,21 +120,22 @@ class IncomeSignalFilterForm(Form):
             ),
         },
         required=False,
+        widget=Select(attrs={"data-submit-onchange": "true"}),
     )
 
     def __init__(self, *args, **kwargs):
         signals = kwargs.pop("signals", [])
         super().__init__(*args, **kwargs)
-        self.fields["source"].choices = [("", _("Alle"))] + [
-            (quote_plus(source), source)
-            for source in sorted(set(signal.source for signal in signals))
+        self.fields["filter_key"].choices = [("", _("Alle"))] + [
+            (quote_plus(str(filter_key)), filter_key)
+            for filter_key in sorted(set(signal.filter_key for signal in signals))
         ]
-        self.fields["source"].initial = unquote_plus(
-            kwargs.get("data", {}).get("source", "")
+        self.fields["filter_key"].initial = unquote_plus(
+            str(kwargs.get("data", {}).get("filter_key", "")),
         )
 
-    def clean_source(self) -> str:
-        return unquote_plus(self.cleaned_data["source"])
+    def clean_filter_key(self) -> str:
+        return unquote_plus(self.cleaned_data["filter_key"])
 
 
 class ConfirmationForm(Form):
