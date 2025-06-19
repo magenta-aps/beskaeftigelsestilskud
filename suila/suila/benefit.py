@@ -74,6 +74,7 @@ def calculate_benefit(
     # Only consider people who are FULDT_SKATTEPLIGTIG
     month_qs.filter(person_year__tax_scope=TaxScope.FULDT_SKATTEPLIGTIG)
     month_qs = PersonMonth.signal_qs(month_qs)
+    print(month_qs)
     month_df = to_dataframe(
         month_qs,
         index="person_year__person__cpr",

@@ -71,6 +71,9 @@ class ModelTest(TestCase):
         cls.month4 = PersonMonth.objects.create(
             person_year=cls.person_year, month=4, import_date=date.today()
         )
+        cls.month10 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=10, import_date=date.today()
+        )
         cls.month12 = PersonMonth.objects.create(
             person_year=cls.person_year, month=12, import_date=date.today()
         )
@@ -166,6 +169,19 @@ class ModelTest(TestCase):
             month=cls.year2month1.month,
             year=cls.year2.year,
         )
+        cls.report10a = MonthlyIncomeReport.objects.create(
+            person_month=cls.month10,
+            salary_income=Decimal(-1000),
+            month=cls.month10.month,
+            year=cls.year.year,
+        )
+        cls.report10b = MonthlyIncomeReport.objects.create(
+            person_month=cls.month10,
+            salary_income=Decimal(1000),
+            month=cls.month10.month,
+            year=cls.year.year,
+        )
+
         # No IncomeEstimate
 
         cls.final_settlement = AnnualIncome.objects.create(
@@ -619,6 +635,7 @@ class TestPersonMonth(UserModelTest):
         self.assertTrue(self.month3.signal)
         self.assertTrue(self.month4.signal)
         self.assertFalse(self.month12.signal)
+        self.assertTrue(self.month10.signal)
 
     @patch("suila.models.datetime")
     def test_paused_property(self, datetime_mock):
