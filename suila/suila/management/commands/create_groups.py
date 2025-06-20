@@ -87,6 +87,7 @@ class Command(BaseCommand):
             *self.get_permissions(
                 (Year, ("view",)),
                 (Person, ("view", "change")),
+                (Person, ("view_data_analysis",)),
                 (PersonYear, ("view",)),
                 (PersonMonth, ("view",)),
                 (Employer, ("view",)),
