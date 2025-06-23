@@ -35,6 +35,14 @@ class AuthenticationForm(BootstrapForm, DjangoAuthenticationForm):
         ),
     )
 
+    error_messages = {
+        "invalid_login": _(
+            "Indtast venligst korrekt brugernavn og adgangskode. "
+            "Bemærk, at begge felter kan være versalfølsomme."
+        ),
+        "inactive": _("Denne konto er inaktiv."),
+    }
+
 
 class BeskAuthenticationTokenForm(AuthenticationTokenForm):
     def __init__(self, user, initial_device, **kwargs):
