@@ -30,8 +30,9 @@
                 <b>{% translate "A-indkomst og indhandling" %}</b>
                 <br>
                 {% blocktrans trimmed %}
-                Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger og oplysninger om indhandling
-                fra indhandlingssteder og til Skattestyrelsen. Hvis du mener, at oplysningerne er forkerte, så henvend
+                Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger
+                og oplysninger om indhandling fra indhandlingssteder sendt til
+                Skattestyrelsen. Hvis du mener, at oplysningerne er forkerte, så henvend
                 dig til din arbejdsgiver eller dit indhandlingssted.
                 {% endblocktrans %}
             </li>
@@ -57,7 +58,7 @@
     </div>
 </div>
 <div class="col-12 mt-5 mt-xl-0">
-    <h2 class="mb-3">{% translate "Oversigt over signaler" %}</h2>
+    <h2 class="mb-3">{% translate "Oversigt over dine signaler" %}</h2>
     <p>
         {% blocktrans trimmed %}
         Her ser du en liste med de signaler Skattestyrelsen har modtaget.
@@ -93,21 +94,27 @@
                 <h3>{% translate "A-indkomst og indhandling" %}</h3>
                 <p>
                     {% blocktrans trimmed %}
-                    Hvis din arbejdsgiver eller dit indhandlingssted indberetter korrekt, kan oplysningerne om din indtægt
-                    som regel ses 15-30 dage efter den måned du har arbejdet/indhandlet.
+                    Data på Suila.gl opdateres når arbejdsgiverne indberetter løn og når
+                    indhandlingssteder indrapporterer indhandling. Vær opmærksom på, at
+                    data vises med forsinkelse. Hver måned trækkes de senest
+                    tilgængelige data i forbindelse med din udbetaling.
                     {% endblocktrans %}
                 </p>
                 <h3>{% translate "B-indkomst" %}</h3>
                 <p>
                     {% blocktrans trimmed %}
-                    Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter betalingen.
+                    Oplysning om B-indkomst kan vises med forsinkelse. Systemet trækker
+                    de senest tilgængelige oplysninger lige inden den månedlige
+                    udbetaling beregnes.
                     {% endblocktrans %}
                 </p>
                 <h3>{% translate "Udbytte" %}</h3>
                 <p>
                     {% blocktrans trimmed %}
-                    Oplysninger om udbytte kan som regel ses 15-30 dage efter at selskabet har indsendt den lovpligtige
-                    udbytteblanket.
+                    Data på Suila.gl opdateres når selskaber indberetter udbetalt
+                    udbytte. Vær opmærksom på, at data vises med forsinkelse. Hver måned
+                    trækkes de senest tilgængelige data i forbindelse med din
+                    udbetaling.
                     {% endblocktrans %}
                 </p>
                 <h3>{% translate "Pension" %}</h3>
