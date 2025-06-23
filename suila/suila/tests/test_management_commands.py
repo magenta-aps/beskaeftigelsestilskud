@@ -76,6 +76,60 @@ class CalculateStabilityScoreTest(BaseTestCase):
             self.assertEqual(person_year.stability_score_b, None)
 
 
+class CreateGroups(TestCase):
+    def test_create_skattestyrelsen(self):
+        call_command("create_groups")
+        group = Group.objects.get(name="Skattestyrelsen")
+
+        permissions = [p.codename for p in group.permissions.all()]
+
+        self.assertIn("view_annualincome", permissions)
+        self.assertIn("view_btaxpayment", permissions)
+        self.assertIn("view_eboksmessage", permissions)
+        self.assertIn("view_employer", permissions)
+        self.assertIn("view_incomeestimate", permissions)
+        self.assertIn("view_monthlyincomereport", permissions)
+        self.assertIn("view_note", permissions)
+        self.assertIn("view_noteattachment", permissions)
+        self.assertIn("change_person", permissions)
+        self.assertIn("view_data_analysis", permissions)
+        self.assertIn("view_person", permissions)
+        self.assertIn("view_personmonth", permissions)
+        self.assertIn("view_personyear", permissions)
+        self.assertIn("view_personyearassessment", permissions)
+        self.assertIn("view_personyearestimatesummary", permissions)
+        self.assertIn("view_personyearu1aassessment", permissions)
+        self.assertIn("can_download_reports", permissions)
+        self.assertIn("use_adminsite_calculator_parameters", permissions)
+        self.assertIn("view_year", permissions)
+
+        self.assertEqual(len(permissions), 19)
+
+    def test_create_borgerservice(self):
+        call_command("create_groups")
+        group = Group.objects.get(name="Borgerservice")
+
+        permissions = [p.codename for p in group.permissions.all()]
+
+        self.assertIn("view_annualincome", permissions)
+        self.assertIn("view_btaxpayment", permissions)
+        self.assertIn("view_eboksmessage", permissions)
+        self.assertIn("view_employer", permissions)
+        self.assertIn("view_incomeestimate", permissions)
+        self.assertIn("view_monthlyincomereport", permissions)
+        self.assertIn("view_note", permissions)
+        self.assertIn("view_noteattachment", permissions)
+        self.assertIn("view_person", permissions)
+        self.assertIn("view_personmonth", permissions)
+        self.assertIn("view_personyear", permissions)
+        self.assertIn("view_personyearassessment", permissions)
+        self.assertIn("view_personyearestimatesummary", permissions)
+        self.assertIn("view_personyearu1aassessment", permissions)
+        self.assertIn("view_year", permissions)
+
+        self.assertEqual(len(permissions), 15)
+
+
 class GetPersonInfoFromDAFO(TestCase):
     maxDiff = None
 
