@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-16 11:43-0100\n"
+"POT-Creation-Date: 2025-06-23 06:09-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -193,9 +193,8 @@ msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid ""
-"Indtast din forventede månedsløn eller din forventede årsindkomst for at få "
-"en vejledende beregning på, hvor meget Suila-tapit du kan få udbetalt "
-"månedligt og årligt."
+"Indtast din forventede månedsløn eller årsindkomst for at få en vejledende "
+"beregning af, hvor meget Suila-tapit du kan få udbetalt månedligt og årligt."
 msgstr ""
 
 #: suila/templates/suila/calculate.html
@@ -207,7 +206,7 @@ msgstr ""
 #: suila/templates/suila/calculate.html
 msgid ""
 "Grafen viser sammenhængen mellem de gennemsnitlige månedlige Suila-tapit "
-"udbetalinger, og den indkomst du har angivet."
+"udbetalinger og den indkomst, du har angivet."
 msgstr ""
 
 #: suila/templates/suila/calculate.html
@@ -736,8 +735,8 @@ msgstr ""
 #: suila/templates/suila/person_detail.html
 msgid ""
 "Afventer udbetaling: Din forventede årsindkomst er 475.000 kr. – 500.000 kr. "
-"Dine Suila-tapit udbetalinger starter, når systemet er mere sikker på, om "
-"din årsindkomst berettiger dig til Suila-tapit."
+"Dine Suila-tapit udbetalinger starter, når Skattestyrelsen er mere sikker "
+"på, om din årsindkomst berettiger dig til Suila-tapit."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html
@@ -810,7 +809,7 @@ msgstr ""
 #: suila/templates/suila/person_detail_income.html
 msgid ""
 "Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger og "
-"oplysninger om indhandling fra indhandlingssteder og til Skattestyrelsen. "
+"oplysninger om indhandling fra indhandlingssteder sendt til Skattestyrelsen. "
 "Hvis du mener, at oplysningerne er forkerte, så henvend dig til din "
 "arbejdsgiver eller dit indhandlingssted."
 msgstr ""
@@ -841,7 +840,7 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
-msgid "Oversigt over signaler"
+msgid "Oversigt over dine signaler"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -850,21 +849,23 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
 msgid ""
-"Hvis din arbejdsgiver eller dit indhandlingssted indberetter korrekt, kan "
-"oplysningerne om din indtægt som regel ses 15-30 dage efter den måned du har "
-"arbejdet/indhandlet."
+"Data på Suila.gl opdateres når arbejdsgiverne indberetter løn og når "
+"indhandlingssteder indrapporterer indhandling. Vær opmærksom på, at data "
+"vises med forsinkelse. Hver måned trækkes de senest tilgængelige data i "
+"forbindelse med din udbetaling."
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
 msgid ""
-"Oplysning om betalte B-skatter fremgår som regel senest 14 dage efter "
-"betalingen."
+"Oplysning om B-indkomst kan vises med forsinkelse. Systemet trækker de "
+"senest tilgængelige oplysninger lige inden den månedlige udbetaling beregnes."
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
 msgid ""
-"Oplysninger om udbytte kan som regel ses 15-30 dage efter at selskabet har "
-"indsendt den lovpligtige udbytteblanket."
+"Data på Suila.gl opdateres når selskaber indberetter udbetalt udbytte. Vær "
+"opmærksom på, at data vises med forsinkelse. Hver måned trækkes de senest "
+"tilgængelige data i forbindelse med din udbetaling."
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
