@@ -21,7 +21,6 @@ omit =
     */suila/integrations/eskat/responses/*
     */data_update/*
     */management/commands/make_messages.py
-    */management/commands/create_api_group.py
     */management/commands/create_groups.py
     */management/commands/create_user.py
     */management/commands/eboks_update_status.py
