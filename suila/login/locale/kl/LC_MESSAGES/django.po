@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 06:09-0100\n"
+"POT-Creation-Date: 2025-06-23 07:10-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,6 +27,18 @@ msgstr "Isissutissaq"
 #: login/forms.py
 msgid "Kodeord"
 msgstr "Isissutissaq"
+
+#: login/forms.py
+msgid ""
+"Indtast venligst korrekt brugernavn og adgangskode. Bemærk, at begge felter "
+"kan være versalfølsomme."
+msgstr ""
+"Isertaatit atusutulluunniit taaguutit eqqortumik allassimanerlugit "
+"qulakkiikkit. Eqqumaffigiuk naqinnerit angisuujunersut apeqqutaasinnaammata."
+
+#: login/forms.py
+msgid "Denne konto er inaktiv."
+msgstr ""
 
 #: login/forms.py
 #, python-brace-format
