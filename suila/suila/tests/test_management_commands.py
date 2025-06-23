@@ -8,6 +8,7 @@ from unittest.mock import ANY, MagicMock, call, patch
 import numpy as np
 import pandas as pd
 from common.tests.test_utils import BaseTestCase
+from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.forms import model_to_dict
 from django.test import TestCase
@@ -525,3 +526,16 @@ class GetPersonInfoFromDAFO(TestCase):
                     "landekode": "DK",
                     "statuskode": 90,  # 90="død"
                 }
+
+
+class CreateApiGroup(TestCase):
+    def test_create_api_group(self):
+        call_command("create_api_group", "api")
+        api_group = Group.objects.get(name="api")
+
+        permissions = [p.codename for p in api_group.permissions.all()]
+        self.assertIn("view_person", permissions)
+        self.assertIn("view_year", permissions)
+        self.assertIn("view_personyear", permissions)
+        self.assertIn("view_personmonth", permissions)
+        self.assertEqual(len(permissions), 4)
