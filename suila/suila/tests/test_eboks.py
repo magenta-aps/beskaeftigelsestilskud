@@ -358,7 +358,7 @@ class FinalStatusTest(EboksTest):
         mock_request.side_effect = self.mock_request(
             message.message_id, "remote printed"
         )
-        EboksMessage.update_final_statuses()
+        core_call_command("eboks_update_status")
         message.refresh_from_db()
         self.assertEqual(message.status, "sent")
         self.assertEqual(message.post_processing_status, "remote printed")
@@ -390,7 +390,7 @@ class FinalStatusTest(EboksTest):
     @patch.object(requests.sessions.Session, "request")
     def test_update_final_statuses_none(self, mock_request):
         # Not initializing anything
-        EboksMessage.update_final_statuses()
+        core_call_command("eboks_update_status")
         mock_request.assert_not_called()
 
     @patch.object(requests.sessions.Session, "request")
