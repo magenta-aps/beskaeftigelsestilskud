@@ -915,7 +915,7 @@ class TestCsvFileReportListView(TestViewMixin, TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         os.mkdir(cls.folder)
-        create_dummy_csv_files(True)
+        create_dummy_csv_files()
         folderpath = os.path.join(cls.folder, "TEST_foobarfolder")
         if not os.path.exists(folderpath):
             os.mkdir(folderpath)
