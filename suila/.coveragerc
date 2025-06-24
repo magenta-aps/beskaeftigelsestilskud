@@ -25,7 +25,6 @@ omit =
     */management/commands/eboks_update_status.py
     */management/commands/export_users.py
     */management/commands/get_employer_info_from_dafo.py
-    */management/commands/get_person_info_from_dafo.py
     */management/commands/import_users.py
     */management/commands/load_dummy_calculation_method.py
     */management/commands/test_end_to_end_for_cpr.py

@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from concurrent.futures import Future
 from io import StringIO
 from typing import Any, Dict
 from unittest.mock import ANY, MagicMock, call, patch
@@ -10,8 +11,10 @@ import pandas as pd
 from common.tests.test_utils import BaseTestCase
 from django.contrib.auth.models import Group
 from django.core.management import call_command
+from django.db import connections
 from django.forms import model_to_dict
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
+from requests.exceptions import HTTPError
 
 from suila.models import ManagementCommands, Person, PersonYear
 
@@ -130,8 +133,37 @@ class CreateGroups(TestCase):
         self.assertEqual(len(permissions), 15)
 
 
-class GetPersonInfoFromDAFO(TestCase):
+class GetPersonInfoFromDAFO(TransactionTestCase):
     maxDiff = None
+
+    def setUp(self):
+        self.submit_patcher = patch(
+            "suila.management.commands.get_person_info_from_dafo."
+            "ThreadPoolExecutor.submit"
+        )
+        self.pitu_client_patcher = patch(
+            "suila.management.commands.get_person_info_from_dafo.PituClient"
+        )
+
+        self.submit_mock = self.submit_patcher.start()
+        self.pitu_client_mock = self.pitu_client_patcher.start()
+
+        # Mock ThreadPoolExecutor.submit to close connections when done
+        # This allows for proper teardown of the test database
+        def on_done(future):
+            connections.close_all()
+
+        def mock_submit(func, obj):
+            future = Future()
+            future.set_result(func(obj))
+            future.add_done_callback(on_done)
+            return future
+
+        self.submit_mock.side_effect = mock_submit
+
+        self.client_mock = self._get_mock_pitu_client()
+
+        self.pitu_client_mock.from_settings.return_value = self.client_mock
 
     @patch(
         "suila.management.commands.get_person_info_from_dafo.Command._get_pitu_client"
@@ -142,6 +174,59 @@ class GetPersonInfoFromDAFO(TestCase):
         )
 
         mock_get_pitu_client.assert_not_called()
+
+    def test_http_404(self):
+        # Test data
+        self._create_person("0101709988")
+
+        # Mocking
+        response = MagicMock(status_code=404)
+        self.client_mock.get_person_info.side_effect = HTTPError(response=response)
+        self.pitu_client_mock.from_settings.return_value = self.client_mock
+
+        stdout = StringIO()
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=StringIO(),
+        )
+        self.assertIn("Could not find person", stdout.getvalue())
+
+    @patch("suila.management.commands.get_person_info_from_dafo.Command.update_person")
+    def test_error_processing_person(self, update_person_mock: MagicMock):
+        # Test data
+        self._create_person("0101709988")
+
+        # Mocking
+        update_person_mock.side_effect = ValueError("foo")
+
+        stdout = StringIO()
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=StringIO(),
+        )
+        self.assertIn("Error processing person: foo", stdout.getvalue())
+
+    def test_unexpected_http_error(self):
+        # Test data
+        self._create_person("0101709988")
+
+        # Mocking
+        response = MagicMock(status_code=303)
+        self.client_mock.get_person_info.side_effect = HTTPError(response=response)
+        self.pitu_client_mock.from_settings.return_value = self.client_mock
+
+        stdout = StringIO()
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=StringIO(),
+        )
+        self.assertIn("Unexpected 303 error", stdout.getvalue())
 
     @patch(
         "suila.management.commands.get_person_info_from_dafo.Command._get_pitu_client"
@@ -516,6 +601,67 @@ class GetPersonInfoFromDAFO(TestCase):
         mock_get_pitu_client.return_value.get_person_info.assert_called_once_with(
             "0101709988"
         )
+
+    def test_no_civilstand(self):
+        # Test data
+        self._create_person("0101709988")
+
+        # Mocking
+        person_info = self._mock_get_person_info("0101709988")
+        person_info.pop("civilstand")
+        self.client_mock.get_person_info.return_value = person_info
+        self.client_mock.get_person_info.side_effect = None
+        self.pitu_client_mock.from_settings.return_value = self.client_mock
+
+        stdout = StringIO()
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=StringIO(),
+        )
+
+        self.assertIn('no "civilstand" in person_data', stdout.getvalue())
+
+    def test_no_first_name(self):
+        # Test data
+        self._create_person("0101709988")
+
+        # Mocking
+        person_info = self._mock_get_person_info("0101709988")
+        person_info.pop("fornavn")
+        self.client_mock.get_person_info.return_value = person_info
+        self.client_mock.get_person_info.side_effect = None
+        self.pitu_client_mock.from_settings.return_value = self.client_mock
+
+        stdout = StringIO()
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=StringIO(),
+        )
+        self.assertIn('no "fornavn" and "efternavn" in person_data', stdout.getvalue())
+
+    def test_no_last_name(self):
+        # Test data
+        self._create_person("0101709988")
+
+        # Mocking
+        person_info = self._mock_get_person_info("0101709988")
+        person_info.pop("efternavn")
+        self.client_mock.get_person_info.return_value = person_info
+        self.client_mock.get_person_info.side_effect = None
+        self.pitu_client_mock.from_settings.return_value = self.client_mock
+
+        stdout = StringIO()
+        call_command(
+            ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+            verbosity=2,
+            stdout=stdout,
+            stderr=StringIO(),
+        )
+        self.assertIn('no "fornavn" and "efternavn" in person_data', stdout.getvalue())
 
     # PRIVATE helper methods
     def _get_mock_pitu_client(self) -> MagicMock:
