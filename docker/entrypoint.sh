@@ -43,7 +43,7 @@ if [ "${CREATE_USER_GROUPS,,}" = true ]; then
 fi
 if [ "${CREATE_DUMMY_ADMIN,,}" = true ]; then
   echo 'creating superuser'
-  python manage.py create_user admin admin --is_superuser
+  python manage.py create_user admin admin --is_superuser --is_staff
 fi
 if [ "${LOAD_CALCULATION_METHOD,,}" = true ]; then
   echo "Loading calculation method"

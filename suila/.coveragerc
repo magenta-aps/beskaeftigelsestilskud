@@ -9,7 +9,6 @@ source = .
 omit =
     */manage.py
     */project/*
-    */admin.py
     */apps.py
     */urls.py
     */tests.py

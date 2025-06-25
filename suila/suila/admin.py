@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
-from suila.models import PrismeAccountAlias
+from suila.models import PrismeAccountAlias, User
 
 
 @admin.register(PrismeAccountAlias)
@@ -24,3 +25,9 @@ class PrismeAccountAliasAdmin(admin.ModelAdmin):
         "tax_year",
     ]
     search_fields = ["alias__icontains"]
+
+
+# Register our own model admin for possible customization
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    pass
