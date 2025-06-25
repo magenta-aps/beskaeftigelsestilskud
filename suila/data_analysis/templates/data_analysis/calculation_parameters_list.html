@@ -73,22 +73,22 @@
                     Skatteår
                 </th>
                 <th>
-                    benefit_rate_percent
+                    benefit rate percent
                 </th>
                 <th>
-                    personal_allowance
+                    personal allowance
                 </th>
                 <th>
-                    standard_allowance
+                    standard allowance
                 </th>
                 <th>
-                    max_benefit
+                    max benefit
                 </th>
                 <th>
-                    scaledown_rate_percent
+                    scaledown rate percent
                 </th>
                 <th>
-                    scaledown_ceiling
+                    scaledown ceiling
                 </th>
                 <th>
                     Handlinger
@@ -110,9 +110,91 @@
                 </tr>
                 {% endwith %}
             {% endfor %}
+{#            <tr>#}
+{#                <td>#}
+{#                    {{ next_year }}#}
+{#                </td>#}
+{#                <td>#}
+{#                    {{ form.benefit_rate_percent }}#}
+{#                </td>#}
+{#                <td>#}
+{#                    {{ form.personal_allowance }}#}
+{#                </td>#}
+{#                <td>#}
+{#                    {{ form.standard_allowance }}#}
+{#                </td>#}
+{#                <td>#}
+{#                    {{ form.max_benefit }}#}
+{#                </td>#}
+{#                <td>#}
+{#                    {{ form.scaledown_rate_percent }}#}
+{#                </td>#}
+{#                <td>#}
+{#                    {{ form.scaledown_ceiling }}#}
+{#                </td>#}
+{#                <td>#}
+{#                    <div class="col-12">#}
+{#                        <button type="button" class="btn btn-primary" data-action="graph" data-method-id="0">Graf</button>#}
+{#                        <button type="submit" class="btn btn-success">Gem</button>#}
+{#                    </div>#}
+{#                </td>#}
+{#            </tr>#}
             </tbody>
         </table>
 
+        <div id="engine_parameters">
+                <div class="row align-items-center my-1">
+                    <div class="col-md-6">
+                        <label for="{{ form.benefit_rate_percent.name }}">{{ form.benefit_rate_percent.label }}</label>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.benefit_rate_percent }}
+                    </div>
+                </div>
+                <div class="row align-items-center my-1">
+                    <div class="col-md-6">
+                        <label for="{{ form.personal_allowance.name }}">{{ form.personal_allowance.label }}</label>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.personal_allowance }}
+                    </div>
+                </div>
+                <div class="row align-items-center my-1">
+                    <div class="col-md-6">
+                        <label for="{{ form.standard_allowance.name }}">{{ form.standard_allowance.label }}</label>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.standard_allowance }}
+                    </div>
+                </div>
+                <div class="row align-items-center my-1">
+                    <div class="col-md-6">
+                        <label for="{{ form.max_benefit.name }}">{{ form.max_benefit.label }}</label>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.max_benefit }}
+                    </div>
+                </div>
+                <div class="row align-items-center my-1">
+                    <div class="col-md-6">
+                        <label for="{{ form.scaledown_rate_percent.name }}">{{ form.scaledown_rate_percent.label }}</label>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.scaledown_rate_percent }}
+                    </div>
+                </div>
+                <div class="row align-items-center my-1">
+                    <div class="col-md-6">
+                        <label for="{{ form.scaledown_ceiling.name }}">{{ form.scaledown_ceiling.label }}</label>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.scaledown_ceiling }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">Gem</button>
+
+        </div>
     </div>
 
     <div id="modal-graph" class="modal fade" tabindex="-1">

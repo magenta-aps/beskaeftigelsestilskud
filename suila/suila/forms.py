@@ -4,6 +4,7 @@
 from decimal import Decimal
 from urllib.parse import quote_plus, unquote_plus
 
+from common.form_mixins import BootstrapForm
 from django.forms import (
     ChoiceField,
     DecimalField,
@@ -48,7 +49,7 @@ NoteAttachmentFormSet = inlineformset_factory(
 )
 
 
-class CalculatorForm(Form):
+class CalculatorForm(BootstrapForm):
     estimated_month_income = DecimalField(
         required=False,
         label=_("Estimeret månedsindkomst"),

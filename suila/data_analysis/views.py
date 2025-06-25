@@ -5,7 +5,7 @@ import copy
 import json
 import os
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from operator import itemgetter
 from stat import S_ISREG
@@ -26,6 +26,7 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
+from django.forms.models import model_to_dict
 from django.http import FileResponse, HttpResponse
 from django.http.response import HttpResponseForbidden, HttpResponseNotFound
 from django.urls import reverse
@@ -37,6 +38,7 @@ from project.util import params_no_none, strtobool
 
 from suila.data import engine_keys
 from suila.estimation import EstimationEngine
+from suila.forms import CalculatorForm
 from suila.models import (
     IncomeType,
     JobLog,
@@ -591,13 +593,33 @@ class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, Vi
 
 
 class CalculationParametersListView(
-    LoginRequiredMixin, PermissionsRequiredMixin, ListView
+    LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormView
 ):
     model = Year
     template_name = "data_analysis/calculation_parameters_list.html"
+    form_class = CalculatorForm
+
+    @property
+    def next_year(self):
+        return date.today().year + 1
+
+    @property
+    def this_year(self):
+        return date.today().year
+
+    def get_queryset(self):
+        return super().get_queryset().filter(year__lte=self.this_year)
+
+    def get_initial(self):
+        year, _ = Year.objects.get_or_create(year=self.next_year)
+        method = year.calculation_method
+        if method is not None:
+            return model_to_dict(method)
 
     def get_context_data(self, **kwargs):
-        methods = set([year.calculation_method for year in self.object_list])
+        methods = set(
+            filter(None, [year.calculation_method for year in self.object_list])
+        )
         return super().get_context_data(
             **{
                 **kwargs,
@@ -605,5 +627,6 @@ class CalculationParametersListView(
                     {method.pk: method.graph_points for method in methods},
                     cls=SuilaJSONEncoder,
                 ),
+                "next_year": self.next_year,
             }
         )
