@@ -9,7 +9,7 @@ from django.core import management
 from django.db.models import Q
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date, get_eboks_date, get_payout_date
+from suila.benefit import get_calculation_date, get_eboks_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class JobDispatcher:
     JOB_TYPE_YEARLY = "yearly"
     JOB_TYPE_MONTHLY = "monthly"
+    JOB_TYPE_DAILY = "daily"
 
     jobs = {
         # "year"-Jobs
@@ -86,12 +87,6 @@ class JobDispatcher:
                 day >= get_eboks_date(year, month).day
             ),
         },
-        ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: {
-            "type": "monthly",
-            "validator": lambda year, month, day: (
-                day >= get_payout_date(year, month).day + 1
-            ),
-        },
     }
 
     def __init__(self, day=None, month=None, year=None, reraise=False):
@@ -126,6 +121,22 @@ class JobDispatcher:
             ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],
         }
 
+    def get_job_ran_filters(
+        self, job_name: str, job_params: Optional[Dict[str, str]] = None
+    ):
+        filters_kwargs = {
+            "name": job_name,
+            "status": StatusChoices.SUCCEEDED,
+        }
+
+        if job_params:
+            for job_param_name, job_param_value in job_params.items():
+                if not job_param_name.endswith("_param"):
+                    continue
+                filters_kwargs[job_param_name] = job_param_value
+
+        return filters_kwargs
+
     def job_ran_month(
         self,
         name: str,
@@ -133,17 +144,7 @@ class JobDispatcher:
         month: int,
         job_params: Optional[Dict[str, str]] = None,
     ):
-        filters_kwargs = {
-            "name": name,
-            "status": StatusChoices.SUCCEEDED,
-        }
-
-        if job_params:
-            for job_param_name, job_param_value in job_params.items():
-                if not job_param_name.endswith("_param"):
-                    continue
-                filters_kwargs[job_param_name] = job_param_value
-
+        filters_kwargs = self.get_job_ran_filters(name, job_params)
         return JobLog.objects.filter(
             Q(runtime__year=year), Q(runtime__month=month), **filters_kwargs
         ).exists()
@@ -151,18 +152,24 @@ class JobDispatcher:
     def job_ran_year(
         self, name: str, year: int, job_params: Optional[Dict[str, str]] = None
     ):
-        filters_kwargs = {
-            "name": name,
-            "status": StatusChoices.SUCCEEDED,
-        }
-
-        if job_params:
-            for job_param_name, job_param_value in job_params.items():
-                if not job_param_name.endswith("_param"):
-                    continue
-                filters_kwargs[job_param_name] = job_param_value
-
+        filters_kwargs = self.get_job_ran_filters(name, job_params)
         return JobLog.objects.filter(Q(runtime__year=year), **filters_kwargs).exists()
+
+    def job_ran_day(
+        self,
+        name: str,
+        year: int,
+        month: int,
+        day: int,
+        job_params: Optional[Dict[str, str]] = None,
+    ):
+        filters_kwargs = self.get_job_ran_filters(name, job_params)
+        return JobLog.objects.filter(
+            Q(runtime__year=year),
+            Q(runtime__month=month),
+            Q(runtime__day=day),
+            **filters_kwargs,
+        ).exists()
 
     def check_dependencies(self, name):
         for dependency in self.dependencies[name]:
