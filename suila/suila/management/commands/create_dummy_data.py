@@ -71,11 +71,10 @@ def set_history_date(obj, date):
     entry.save()
 
 
-def create_dummy_csv_files(clean: bool = False):
+def create_dummy_csv_files():
     folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
 
-    if clean:
-        cleanup_dummy_files()
+    cleanup_dummy_files()
 
     for year in range(2025, 2030):
         for month in range(1, 13):
@@ -95,7 +94,8 @@ def cleanup_dummy_files():
                     os.remove(path)
                 else:
                     os.rmdir(path)
-    except Exception:
+    except Exception as e:  # pragma: no cover
+        print(f"Unexpected exception in cleanup_dummy_files: {e}")
         pass
 
 
@@ -243,4 +243,4 @@ class Command(BaseCommand):
                         )
                         person_month.save()
                         line_no += 1
-        create_dummy_csv_files(True)
+        create_dummy_csv_files()
