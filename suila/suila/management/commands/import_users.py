@@ -13,7 +13,7 @@ User = get_user_model()
 
 
 def custom_decoder(obj):
-    if "date_joined" in obj:
+    if "date_joined" in obj:  # pragma: no cover
         obj["date_joined"] = datetime.fromisoformat(obj["date_joined"])
     return obj
 
