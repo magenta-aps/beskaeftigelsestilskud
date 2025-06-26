@@ -22,7 +22,6 @@ omit =
     */data_update/*
     */management/commands/make_messages.py
     */management/commands/create_user.py
-    */management/commands/eboks_update_status.py
     */management/commands/export_users.py
     */management/commands/import_users.py
     */management/commands/load_dummy_calculation_method.py
