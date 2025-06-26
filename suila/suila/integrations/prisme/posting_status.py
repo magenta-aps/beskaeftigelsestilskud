@@ -45,6 +45,16 @@ class PostingStatus(CSVFormat):
             voucher_no=row[7],
         )
 
+    @property
+    def normalized_invoice_no(self) -> str:
+        expected_invoice_no_length = 20
+        if len(self.invoice_no) == expected_invoice_no_length:
+            return self.invoice_no
+        elif len(self.invoice_no) < expected_invoice_no_length:
+            return self.invoice_no.zfill(expected_invoice_no_length)
+        else:  # invoice_no is longer than expected length
+            return self.invoice_no[-expected_invoice_no_length:]
+
 
 class PostingStatusImport(SFTPImport):
     """Import one or more posting status CSV files from Prisme SFTP"""
@@ -160,10 +170,12 @@ class PostingStatusImport(SFTPImport):
         matches: list[PrismeBatchItem] = []
         for row in rows:
             try:
-                item: PrismeBatchItem = qs.get(invoice_no=row.invoice_no)
+                item: PrismeBatchItem = qs.get(invoice_no=row.normalized_invoice_no)
             except PrismeBatchItem.DoesNotExist:
                 logger.debug(
-                    "No Prisme batch item found for invoice number %s",
+                    "No Prisme batch item found for invoice number %s (raw invoice "
+                    "number = %s)",
+                    row.normalized_invoice_no,
                     row.invoice_no,
                 )
                 # Try to look up by CPR/date/amount instead
