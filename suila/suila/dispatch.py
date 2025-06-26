@@ -9,7 +9,7 @@ from django.core import management
 from django.db.models import Q
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date, get_eboks_date
+from suila.benefit import get_calculation_date, get_eboks_date, get_payout_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
@@ -84,6 +84,12 @@ class JobDispatcher:
             "type": "monthly",
             "validator": lambda year, month, day: (
                 day >= get_eboks_date(year, month).day
+            ),
+        },
+        ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: {
+            "type": "monthly",
+            "validator": lambda year, month, day: (
+                day >= get_payout_date(year, month).day + 1
             ),
         },
     }
