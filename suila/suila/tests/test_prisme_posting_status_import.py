@@ -261,6 +261,15 @@ class TestPostingStatusImport(PostingStatusImportTestCase):
             ],
         )
 
+    def test_import_posting_status_verbosity_3(self):
+        # Arrange
+        stdout = MagicMock()
+        instance = PostingStatusImport()
+        # Act
+        instance.import_posting_status(stdout, 3)
+        # Assert
+        self.assertEqual(stdout.write.call_count, 91)
+
     @override_settings(PRISME={"posting_status_folder": "foo"})
     def test_get_remote_folder_name(self):
         # Arrange
