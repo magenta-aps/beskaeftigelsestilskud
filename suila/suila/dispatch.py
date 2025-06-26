@@ -21,7 +21,7 @@ class JobDispatcher:
     JOB_TYPE_MONTHLY = "monthly"
     JOB_TYPE_DAILY = "daily"
 
-    jobs = {
+    jobs: Dict[str, Dict] = {
         # "year"-Jobs
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
             "type": "yearly",
@@ -34,6 +34,10 @@ class JobDispatcher:
             "validator": lambda year, month, day: (
                 month == 2 and day >= get_eboks_date(year, month).day + 1
             ),
+        },
+        # Daily jobs
+        ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: {
+            "type": "daily",
         },
         # "load"-jobs
         ManagementCommands.LOAD_ESKAT: {
@@ -188,19 +192,32 @@ class JobDispatcher:
             job_params.pop("verbosity_param", None)
 
         # Handle job based on type
-        job_config = self.jobs[name]
+        job_config: Dict = self.jobs[name]
+        job_config_validator = job_config.get("validator", None)
         match (job_config["type"]):
             case self.JOB_TYPE_YEARLY:
                 if self.job_ran_year(name, self.year, job_params):
                     return False
-                return job_config["validator"](  # type: ignore[operator]
-                    self.year, self.month, self.day
+                return (
+                    job_config_validator(self.year, self.month, self.day)
+                    if job_config_validator
+                    else True
                 )
             case self.JOB_TYPE_MONTHLY:
                 if self.job_ran_month(name, self.year, self.month, job_params):
                     return False
-                return job_config["validator"](  # type: ignore[operator]
-                    self.year, self.month, self.day
+                return (
+                    job_config_validator(self.year, self.month, self.day)
+                    if job_config_validator
+                    else True
+                )
+            case self.JOB_TYPE_DAILY:
+                if self.job_ran_day(name, self.year, self.month, self.day, job_params):
+                    return False
+                return (
+                    job_config_validator(self.year, self.month, self.day)
+                    if job_config_validator
+                    else True
                 )
 
         # Default to "False" if the job-type is inknown
