@@ -23,6 +23,12 @@ from suila.tests.helpers import ImportTestCase
 _EXAMPLE_1 = "§15;3112700000;00587075;9700;2025/03/09;RJ00;JKH Tesst;§15-000000059;"
 _EXAMPLE_2 = "§15;3112700000;01587075;9700;2025/03/09;RJ00;JKH Tesst;§15-000000059;"
 _EXAMPLE_3 = "§15;3112700000;02587075;1313;2020/03/09;RJ00;JKH Tesst;§15-000000059;"
+_EXAMPLE_4 = (
+    "§15;3112700000;00000000000000587075;1313;2020/03/09;RJ00;JKH Tesst;§15-000000059;"
+)
+_EXAMPLE_5 = (
+    "§15;3112700000;000000000000000587075;1313;2020/03/09;RJ00;JKH Tesst;§15-000000059;"
+)
 
 
 class TestLoadPrismeBenefitsPostingStatusCommand(TestCase):
@@ -50,6 +56,16 @@ class TestPostingStatus(SimpleTestCase):
         self.assertEqual(obj.error_code, "RJ00")
         self.assertEqual(obj.error_description, "JKH Tesst")
         self.assertEqual(obj.voucher_no, "§15-000000059")
+
+    def test_normalized_invoice_no(self):
+        # `EXAMPLE_1` uses an invoice number shorter than the expected 20 digits.
+        # `EXAMPLE_4` uses an invoice number of the expected 20 digits.
+        # `EXAMPLE_5` uses an invoice number longer than the expected 20 digits.
+        # Assert that they all normalize to the same 20-digit invoice number.
+        for example in (_EXAMPLE_1, _EXAMPLE_4, _EXAMPLE_5):
+            with self.subTest(example=example):
+                obj = PostingStatus.from_csv_row(example.split(";"))
+                self.assertEqual(obj.normalized_invoice_no, "00000000000000587075")
 
 
 class PostingStatusImportTestCase(ImportTestCase):
