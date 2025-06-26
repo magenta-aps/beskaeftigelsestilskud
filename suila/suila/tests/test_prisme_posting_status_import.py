@@ -261,6 +261,19 @@ class TestPostingStatusImport(PostingStatusImportTestCase):
             ],
         )
 
+    @override_settings(PRISME={"machine_id": 1234, "posting_status_folder": "foo"})
+    def test_import_posting_status_verbosity_3(self):
+        # Arrange
+        stdout = MagicMock()
+        instance = PostingStatusImport()
+        with self.mock_sftp_server_folder(
+            ("§38_01234_11-03-2025_000000.csv", _EXAMPLE_1),
+        ):
+            # Act
+            instance.import_posting_status(stdout, 3)
+        # Assert
+        self.assertEqual(stdout.write.call_count, 12)
+
     @override_settings(PRISME={"posting_status_folder": "foo"})
     def test_get_remote_folder_name(self):
         # Arrange
