@@ -20,9 +20,6 @@ omit =
     */suila/integrations/eskat/responses/*
     */data_update/*
     */management/commands/make_messages.py
-    */management/commands/create_user.py
-    */management/commands/export_users.py
-    */management/commands/import_users.py
     */management/commands/wait_for_db.py
 parallel = true
 concurrency = multiprocessing
