@@ -88,13 +88,13 @@ class TestPostingStatusImport(PostingStatusImportTestCase):
         # "posting status" CSV file, and should be considered "failed to post."
         cls._item_on_posting_status_list = cls._add_prisme_batch_item(
             cls.add_person_month(311270_0000),
-            "00587075",
+            "00000000000000587075",
         )
         # This item has an invoice number which is not present in the mocked "posting
         # status" CSV file, and should be considered "succeeded to post."
         cls._item_not_on_posting_status_list = cls._add_prisme_batch_item(
             cls.add_person_month(311271_0000),
-            "12345678",
+            "00000000000012345678",
         )
 
     @override_settings(PRISME={"machine_id": 1234})
