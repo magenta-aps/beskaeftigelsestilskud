@@ -27,7 +27,6 @@ from django.views.i18n import JavaScriptCatalog
 from two_factor.urls import urlpatterns as tf_urls
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
     path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
     path(
@@ -38,13 +37,6 @@ urlpatterns = [
         ),
     ),
     path(
-        "",
-        include(
-            "login.urls",
-            namespace="login",
-        ),
-    ),
-    path(
         "analysis/",
         include(
             "data_analysis.urls",
@@ -52,10 +44,10 @@ urlpatterns = [
         ),
     ),
     path(
-        "update/",
+        "",
         include(
-            "data_update.urls",
-            namespace="data_update",
+            "login.urls",
+            namespace="login",
         ),
     ),
     path("", include(tf_urls)),
@@ -65,3 +57,16 @@ if settings.MITID_TEST_ENABLED:  # type: ignore[misc]
     urlpatterns.append(
         path("mitid_test/", include("mitid_test.urls", namespace="mitid_test"))
     )
+
+if not settings.PUBLIC:  # type: ignore[misc]
+    # Do *not* expose admin site on public interface
+    urlpatterns += [
+        path("admin/", admin.site.urls),
+        path(
+            "update/",
+            include(
+                "data_update.urls",
+                namespace="data_update",
+            ),
+        ),
+    ]
