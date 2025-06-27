@@ -119,6 +119,7 @@ CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
 
 # "eboks_date" is created from "payout_date - {days_offset}".
 # "payout_date" is the 3rd tuesday in the month.
+# So if this value is "1", it will be "monday in week 3"
 EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
     os.environ.get("EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS", "1")
 )

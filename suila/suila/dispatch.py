@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 class JobDispatcher:
     JOB_TYPE_YEARLY = "yearly"
     JOB_TYPE_MONTHLY = "monthly"
+    JOB_TYPE_DAILY = "daily"
 
-    jobs = {
+    jobs: Dict[str, Dict] = {
         # "year"-Jobs
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
             "type": "yearly",
@@ -33,6 +34,10 @@ class JobDispatcher:
             "validator": lambda year, month, day: (
                 month == 2 and day >= get_eboks_date(year, month).day + 1
             ),
+        },
+        # Daily jobs
+        ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: {
+            "type": "daily",
         },
         # "load"-jobs
         ManagementCommands.LOAD_ESKAT: {
@@ -120,6 +125,22 @@ class JobDispatcher:
             ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],
         }
 
+    def get_job_ran_filters(
+        self, job_name: str, job_params: Optional[Dict[str, str]] = None
+    ):
+        filters_kwargs = {
+            "name": job_name,
+            "status": StatusChoices.SUCCEEDED,
+        }
+
+        if job_params:
+            for job_param_name, job_param_value in job_params.items():
+                if not job_param_name.endswith("_param"):
+                    continue
+                filters_kwargs[job_param_name] = job_param_value
+
+        return filters_kwargs
+
     def job_ran_month(
         self,
         name: str,
@@ -127,17 +148,7 @@ class JobDispatcher:
         month: int,
         job_params: Optional[Dict[str, str]] = None,
     ):
-        filters_kwargs = {
-            "name": name,
-            "status": StatusChoices.SUCCEEDED,
-        }
-
-        if job_params:
-            for job_param_name, job_param_value in job_params.items():
-                if not job_param_name.endswith("_param"):
-                    continue
-                filters_kwargs[job_param_name] = job_param_value
-
+        filters_kwargs = self.get_job_ran_filters(name, job_params)
         return JobLog.objects.filter(
             Q(runtime__year=year), Q(runtime__month=month), **filters_kwargs
         ).exists()
@@ -145,18 +156,24 @@ class JobDispatcher:
     def job_ran_year(
         self, name: str, year: int, job_params: Optional[Dict[str, str]] = None
     ):
-        filters_kwargs = {
-            "name": name,
-            "status": StatusChoices.SUCCEEDED,
-        }
-
-        if job_params:
-            for job_param_name, job_param_value in job_params.items():
-                if not job_param_name.endswith("_param"):
-                    continue
-                filters_kwargs[job_param_name] = job_param_value
-
+        filters_kwargs = self.get_job_ran_filters(name, job_params)
         return JobLog.objects.filter(Q(runtime__year=year), **filters_kwargs).exists()
+
+    def job_ran_day(
+        self,
+        name: str,
+        year: int,
+        month: int,
+        day: int,
+        job_params: Optional[Dict[str, str]] = None,
+    ):
+        filters_kwargs = self.get_job_ran_filters(name, job_params)
+        return JobLog.objects.filter(
+            Q(runtime__year=year),
+            Q(runtime__month=month),
+            Q(runtime__day=day),
+            **filters_kwargs,
+        ).exists()
 
     def check_dependencies(self, name):
         for dependency in self.dependencies[name]:
@@ -175,19 +192,32 @@ class JobDispatcher:
             job_params.pop("verbosity_param", None)
 
         # Handle job based on type
-        job_config = self.jobs[name]
+        job_config: Dict = self.jobs[name]
+        job_config_validator = job_config.get("validator", None)
         match (job_config["type"]):
             case self.JOB_TYPE_YEARLY:
                 if self.job_ran_year(name, self.year, job_params):
                     return False
-                return job_config["validator"](  # type: ignore[operator]
-                    self.year, self.month, self.day
+                return (
+                    job_config_validator(self.year, self.month, self.day)
+                    if job_config_validator
+                    else True
                 )
             case self.JOB_TYPE_MONTHLY:
                 if self.job_ran_month(name, self.year, self.month, job_params):
                     return False
-                return job_config["validator"](  # type: ignore[operator]
-                    self.year, self.month, self.day
+                return (
+                    job_config_validator(self.year, self.month, self.day)
+                    if job_config_validator
+                    else True
+                )
+            case self.JOB_TYPE_DAILY:
+                if self.job_ran_day(name, self.year, self.month, self.day, job_params):
+                    return False
+                return (
+                    job_config_validator(self.year, self.month, self.day)
+                    if job_config_validator
+                    else True
                 )
 
         # Default to "False" if the job-type is inknown

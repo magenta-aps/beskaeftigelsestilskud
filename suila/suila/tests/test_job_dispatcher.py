@@ -81,6 +81,12 @@ class TestJobDispatcherCommands(TestCase):
                     reraise=False,
                     verbosity=1,
                 ),
+                call(
+                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                ),
             ]
 
             mock_call_command.assert_has_calls(expected_calls)
@@ -118,6 +124,12 @@ class TestJobDispatcherCommands(TestCase):
                     ManagementCommands.SEND_EBOKS,
                     year=test_date.year - 1,
                     month=test_date.month - 2 + 12,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                ),
+                call(
+                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
@@ -227,6 +239,7 @@ class TestJobDispatcherCommands(TestCase):
 
             # Expect more calls on specific dates
             expected_calls = []
+
             if day == calculation_date.day:
                 expected_calls += [
                     # "data load"-jobs
@@ -324,6 +337,16 @@ class TestJobDispatcherCommands(TestCase):
                 ]
 
             # Assert job-calls
+            # NOTE: Daily jobs are invoked every day AFTER the "other jobs"
+            expected_calls += [
+                call(
+                    ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                ),
+            ]
+
             self.assertEqual(mock_call_command.call_count, len(expected_calls))
             mock_call_command.assert_has_calls(expected_calls)
             mock_call_command.reset_mock()
