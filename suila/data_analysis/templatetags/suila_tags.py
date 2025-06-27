@@ -52,3 +52,8 @@ def yesno(boolean: bool, unused: Any = None) -> StrPromise:
     # The `unused` kwarg is required for compatibility with the Django admin's usage of
     # `yesno`.
     return _("Ja") if boolean else _("Nej")
+
+
+@register.filter
+def get_attr(obj, attr):
+    return getattr(obj, attr)
