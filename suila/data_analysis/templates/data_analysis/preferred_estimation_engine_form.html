@@ -1,0 +1,28 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load static %}
+{% load i18n %}
+<link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+<a href="#" class="link-primary dropdown-toggle text-decoration-none text-body" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="ps-0">{{ person_year|get_attr:field_name }}</span>
+</a>
+
+<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ person_year.id }}">
+    {% for value, label in engine_choices %}
+        <li>
+            <form method="post" action="{% url url_name pk=person_year.id %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="person_year" value="{{ person_year.id }}"/>
+                <input type="hidden" name="redirect_querystring" value="{{ request.META.QUERY_STRING }}">
+                <input type="hidden" name="{{ field_name }}" value="{{ value }}"/>
+                <button type="submit" class="dropdown-item {% if value == person_year|get_attr:field_name %}active{% endif %}">
+                    <span>{{ value }}</span>
+                    {% if value == person_year|get_attr:field_name %}
+                        <i class="bi bi-check2"></i>
+                    {% endif %}
+                </button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>

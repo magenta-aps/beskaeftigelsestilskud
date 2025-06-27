@@ -33,6 +33,9 @@ class UserMixin:
             Permission.objects.get(codename="change_person")
         )
         cls.staff_group.permissions.add(
+            Permission.objects.get(codename="change_personyear")
+        )
+        cls.staff_group.permissions.add(
             Permission.objects.get(codename="can_download_reports")
         )
         cls.staff_user.groups.add(cls.staff_group)
