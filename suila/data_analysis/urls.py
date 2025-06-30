@@ -4,6 +4,7 @@
 
 
 from data_analysis.views import (
+    CalculationParametersGraph,
     CalculationParametersListView,
     CsvFileReportDownloadView,
     CsvFileReportListView,
@@ -42,5 +43,10 @@ urlpatterns: list[URLResolver | URLPattern] = [
         "calculation_parameters/",
         CalculationParametersListView.as_view(),
         name="calculation_parameters_list",
+    ),
+    path(
+        "calculation_parameters/graph/",
+        CalculationParametersGraph.as_view(),
+        name="calculation_parameters_graph",
     ),
 ]

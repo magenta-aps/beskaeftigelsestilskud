@@ -17,12 +17,10 @@
             const graphPoints = JSON.parse($("#graph_points").text());
             const graphModal = new bootstrap.Modal('#modal-graph', {keyboard: false});
             const graphModalBody = $("#modal-graph-container");
-            const openPayoutGraph = function(id) {
+            const openPayoutGraph = function(data) {
                 const element = $(`<div></div>`);
                 graphModalBody.empty();
                 graphModalBody.append(element);
-                const data = graphPoints[id];
-                console.log(data);
                 const chart = new ApexCharts(element.get(0), {
                     "chart": {
                         "type": "line",
@@ -55,13 +53,49 @@
 
             $("[data-action=graph]").on("click", function() {
                 const $this = $(this);
-                openPayoutGraph($this.data("method-id"));
+                if ($this.data("method-id") !== undefined) {
+                    openPayoutGraph(graphPoints[$this.data("method-id")]);
+                } else if ($this.data("form") && $this.data("url")) {
+                    const form = $($this.data("form"));
+                    const fields = form.serialize();
+                    const url = $this.data("url");
+                    form.find(".is-invalid").removeClass("is-invalid");
+                    form.find(".invalid-feedback").remove();
+                    $.ajax({
+                            "url": url,
+                            "data": fields,
+                            "success": (data) => {
+                                openPayoutGraph(data["points"])
+                            },
+                            "error": (jqxhr) => {
+                                const data = jqxhr.responseJSON;
+                                if (data) {
+                                    const errors = data["errors"];
+                                    if (errors) {
+                                        for (let field in errors) {
+                                            const fieldErrors = errors[field];
+                                            const element = $(`[name=${field}]`);
+                                            const errorElement = $('<ul class="invalid-feedback errorlist"></ul>');
+                                            for (let fieldError of fieldErrors) {
+                                                errorElement.append($(`<li>${fieldError["message"]}</li>`));
+                                            }
+                                            element.parent().append(errorElement);
+                                            element.addClass("is-invalid");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
+
             });
         });
     </script>
 {% endblock %}
-
 {% block content %}
+    <form action="" method="post" id="calculation-parameters">
+    {% csrf_token %}
     <div class="row my-1 mx-1">
         <h1>{% translate "Beregningsparametre" %} </h1>
     </div>
@@ -76,19 +110,19 @@
                     benefit rate percent
                 </th>
                 <th>
-                    personal allowance
+                    Personfradrag
                 </th>
                 <th>
-                    standard allowance
+                    Standardfradrag
                 </th>
                 <th>
                     max benefit
                 </th>
                 <th>
-                    scaledown rate percent
+                    Aftrapningsrate
                 </th>
                 <th>
-                    scaledown ceiling
+                    Aftrapningsloft
                 </th>
                 <th>
                     Handlinger
@@ -110,93 +144,93 @@
                 </tr>
                 {% endwith %}
             {% endfor %}
-{#            <tr>#}
-{#                <td>#}
-{#                    {{ next_year }}#}
-{#                </td>#}
-{#                <td>#}
-{#                    {{ form.benefit_rate_percent }}#}
-{#                </td>#}
-{#                <td>#}
-{#                    {{ form.personal_allowance }}#}
-{#                </td>#}
-{#                <td>#}
-{#                    {{ form.standard_allowance }}#}
-{#                </td>#}
-{#                <td>#}
-{#                    {{ form.max_benefit }}#}
-{#                </td>#}
-{#                <td>#}
-{#                    {{ form.scaledown_rate_percent }}#}
-{#                </td>#}
-{#                <td>#}
-{#                    {{ form.scaledown_ceiling }}#}
-{#                </td>#}
-{#                <td>#}
-{#                    <div class="col-12">#}
-{#                        <button type="button" class="btn btn-primary" data-action="graph" data-method-id="0">Graf</button>#}
-{#                        <button type="submit" class="btn btn-success">Gem</button>#}
-{#                    </div>#}
-{#                </td>#}
-{#            </tr>#}
+            <tr>
+                <td>
+                    {{ next_year }}
+                </td>
+                <td>
+                    {{ form.benefit_rate_percent }}
+                </td>
+                <td>
+                    {{ form.personal_allowance }}
+                </td>
+                <td>
+                    {{ form.standard_allowance }}
+                </td>
+                <td>
+                    {{ form.max_benefit }}
+                </td>
+                <td>
+                    {{ form.scaledown_rate_percent }}
+                </td>
+                <td>
+                    {{ form.scaledown_ceiling }}
+                </td>
+                <td>
+                    <div class="col-12 btn-group">
+                        <button type="button" class="btn btn-primary" data-action="graph" data-form="#calculation-parameters" data-url="{% url 'data_analysis:calculation_parameters_graph' %}">Graf</button>
+                        <button type="submit" class="btn btn-success">Gem</button>
+                    </div>
+                </td>
+            </tr>
             </tbody>
         </table>
 
-        <div id="engine_parameters">
-                <div class="row align-items-center my-1">
-                    <div class="col-md-6">
-                        <label for="{{ form.benefit_rate_percent.name }}">{{ form.benefit_rate_percent.label }}</label>
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.benefit_rate_percent }}
-                    </div>
-                </div>
-                <div class="row align-items-center my-1">
-                    <div class="col-md-6">
-                        <label for="{{ form.personal_allowance.name }}">{{ form.personal_allowance.label }}</label>
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.personal_allowance }}
-                    </div>
-                </div>
-                <div class="row align-items-center my-1">
-                    <div class="col-md-6">
-                        <label for="{{ form.standard_allowance.name }}">{{ form.standard_allowance.label }}</label>
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.standard_allowance }}
-                    </div>
-                </div>
-                <div class="row align-items-center my-1">
-                    <div class="col-md-6">
-                        <label for="{{ form.max_benefit.name }}">{{ form.max_benefit.label }}</label>
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.max_benefit }}
-                    </div>
-                </div>
-                <div class="row align-items-center my-1">
-                    <div class="col-md-6">
-                        <label for="{{ form.scaledown_rate_percent.name }}">{{ form.scaledown_rate_percent.label }}</label>
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.scaledown_rate_percent }}
-                    </div>
-                </div>
-                <div class="row align-items-center my-1">
-                    <div class="col-md-6">
-                        <label for="{{ form.scaledown_ceiling.name }}">{{ form.scaledown_ceiling.label }}</label>
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.scaledown_ceiling }}
-                    </div>
-                </div>
+    {{ form.errors }}
+{#        <div id="engine_parameters">#}
+{#                <div class="row align-items-center my-1">#}
+{#                    <div class="col-md-6">#}
+{#                        <label for="{{ form.benefit_rate_percent.name }}">{{ form.benefit_rate_percent.label }}</label>#}
+{#                    </div>#}
+{#                    <div class="col-md-6">#}
+{#                        {{ form.benefit_rate_percent }}#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="row align-items-center my-1">#}
+{#                    <div class="col-md-6">#}
+{#                        <label for="{{ form.personal_allowance.name }}">{{ form.personal_allowance.label }}</label>#}
+{#                    </div>#}
+{#                    <div class="col-md-6">#}
+{#                        {{ form.personal_allowance }}#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="row align-items-center my-1">#}
+{#                    <div class="col-md-6">#}
+{#                        <label for="{{ form.standard_allowance.name }}">{{ form.standard_allowance.label }}</label>#}
+{#                    </div>#}
+{#                    <div class="col-md-6">#}
+{#                        {{ form.standard_allowance }}#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="row align-items-center my-1">#}
+{#                    <div class="col-md-6">#}
+{#                        <label for="{{ form.max_benefit.name }}">{{ form.max_benefit.label }}</label>#}
+{#                    </div>#}
+{#                    <div class="col-md-6">#}
+{#                        {{ form.max_benefit }}#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="row align-items-center my-1">#}
+{#                    <div class="col-md-6">#}
+{#                        <label for="{{ form.scaledown_rate_percent.name }}">{{ form.scaledown_rate_percent.label }}</label>#}
+{#                    </div>#}
+{#                    <div class="col-md-6">#}
+{#                        {{ form.scaledown_rate_percent }}#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="row align-items-center my-1">#}
+{#                    <div class="col-md-6">#}
+{#                        <label for="{{ form.scaledown_ceiling.name }}">{{ form.scaledown_ceiling.label }}</label>#}
+{#                    </div>#}
+{#                    <div class="col-md-6">#}
+{#                        {{ form.scaledown_ceiling }}#}
+{#                    </div>#}
+{#                </div>#}
 
-                <button type="submit" class="btn btn-success">Gem</button>
+{#                <button type="submit" class="btn btn-success">Gem</button>#}
 
         </div>
     </div>
-
     <div id="modal-graph" class="modal fade" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -207,5 +241,6 @@
             </div>
         </div>
     </div>
+    </form>
 
 {% endblock %}

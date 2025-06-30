@@ -49,7 +49,57 @@ NoteAttachmentFormSet = inlineformset_factory(
 )
 
 
-class CalculatorForm(BootstrapForm):
+class CalculationParametersForm(BootstrapForm):
+
+    benefit_rate_percent = DecimalField(
+        max_digits=5,
+        min_value=Decimal(0),
+        decimal_places=3,
+        required=True,
+        localize=True,
+    )
+    personal_allowance = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+        label=_("Personfradrag"),
+    )
+    standard_allowance = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+        label=_("Standardfradrag"),
+    )
+    max_benefit = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+    )
+    scaledown_rate_percent = DecimalField(
+        max_digits=5,
+        min_value=Decimal(0),
+        decimal_places=3,
+        required=True,
+        localize=True,
+        label=_("Aftrapningsrate"),
+    )
+    scaledown_ceiling = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+        label=_("Aftrapningsloft"),
+    )
+
+
+class CalculatorForm(CalculationParametersForm):
     estimated_month_income = DecimalField(
         required=False,
         label=_("Estimeret månedsindkomst"),

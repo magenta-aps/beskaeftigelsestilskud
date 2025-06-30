@@ -17,6 +17,22 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: suila/forms.py
+msgid "Personfradrag"
+msgstr ""
+
+#: suila/forms.py
+msgid "Standardfradrag"
+msgstr ""
+
+#: suila/forms.py
+msgid "Aftrapningsrate"
+msgstr ""
+
+#: suila/forms.py
+msgid "Aftrapningsloft"
+msgstr ""
+
+#: suila/forms.py
 msgid "Estimeret månedsindkomst"
 msgstr ""
 

@@ -48,6 +48,27 @@
             </p>
         </nav>
         {% endif %}
+        {% if messages %}
+            <div class="alert-container position-fixed start-50">
+            {% for message in messages %}
+                <div role="alert" class="alert text-center translate-middle
+                      {% if message.level == 20 %}alert-info
+                      {% elif message.level == 25 %}alert-success
+                      {% elif message.level == 30 %}alert-warning
+                      {% elif message.level == 40 %}alert-danger
+                      {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+            <script nonce="{{ request.csp_nonce }}">
+            $(function () {
+                $(document).on("click", function() {
+                    $(".alert").fadeOut();
+                });
+            });
+            </script>
+        {% endif %}
 
         <nav class="nav navbar navbar-expand-xl">
             <h1 class="navbar-brand py-0 my-0">
@@ -174,6 +195,16 @@
                                 <a href="{% url 'data_analysis:csv_report' %}" class="d-flex align-items-center">
                                     <span class="material-icons">list_alt</span>
                                     <span class="ms-1">{% translate "Kontrollister" %}</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+
+                        {% if user.is_authenticated and user|has_permissions:"suila.change_standardworkbenefitcalculationmethod" %}
+                            <li class="nav-item dropdown ms-4">
+                                <a href="{% url 'data_analysis:calculation_parameters_list' %}" class="d-flex align-items-center">
+                                    <span class="material-icons">show_chart</span>
+                                    <span class="ms-1">{% translate "Beregningsparametre" %}</span>
                                 </a>
                             </li>
                         {% endif %}

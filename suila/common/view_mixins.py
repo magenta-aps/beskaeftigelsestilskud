@@ -5,6 +5,8 @@ from typing import List
 
 from common.models import ItemView, PageView, User
 from django.db.models import Model, QuerySet
+from django.views.generic.base import TemplateResponseMixin
+from django.views.generic.edit import BaseFormView
 
 
 class ViewLogMixin:
@@ -30,3 +32,23 @@ class ViewLogMixin:
                 [ItemView(pageview=pageview, item=item) for item in items]
             )
         return pageview
+
+
+class BaseGetFormView(BaseFormView):
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == "GET":
+            kwargs["data"] = self.request.GET
+        return kwargs
+
+    def get(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+
+class GetFormView(TemplateResponseMixin, BaseGetFormView):
+    pass

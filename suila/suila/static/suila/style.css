@@ -19,6 +19,7 @@ textarea {
     list-style-type: none;
     padding: 0;
     color: red;
+    margin: 0;
 }
 
 /* Disable "is-valid" style on "filter" forms */
@@ -36,4 +37,12 @@ form.filter-form .is-valid:focus {
 iframe.eboks {
     width: 100%;
     min-height: 600pt;
+}
+
+.alert {
+    margin-top: var(--bs-alert-margin-bottom);
+}
+
+.alert-container {
+    z-index: 10001;
 }
