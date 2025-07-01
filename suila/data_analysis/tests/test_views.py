@@ -1065,7 +1065,7 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
         response.render()
         soup = BeautifulSoup(response.content, "html.parser")
         for row in soup.find_all("tr"):
-            values = [cell.text for cell in row.find_add("td")]
+            values = [cell.text for cell in row.find_all("td")]
             print(values)
 
     def test_view_borger_denied(self):
