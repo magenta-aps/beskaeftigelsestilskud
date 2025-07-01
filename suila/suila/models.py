@@ -131,7 +131,11 @@ class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
 class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
 
     benefit_rate_percent = models.DecimalField(
-        verbose_name=_("Benefit rate percent"),
+        verbose_name=_("Procentsats for Suila-tapit"),
+        help_text=_(
+            "Den procentdel af indkomstgrundlaget, "
+            "der anvendes til at beregne den udbetalte værdi af Suila-tapit."
+        ),
         max_digits=5,
         decimal_places=3,
         null=False,
@@ -143,28 +147,37 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         return self.benefit_rate_percent * Decimal("0.01")
 
     personal_allowance = models.DecimalField(
-        verbose_name=_("Personal allowance"),
+        verbose_name=_("Personfradrag"),
+        help_text=_(
+            "Et skattefrit beløb, som alle personer har ret til at "
+            "fratrække deres indkomst, før skatten beregnes."
+        ),
         max_digits=12,
         decimal_places=2,
         null=False,
         blank=False,
     )
     standard_allowance = models.DecimalField(
-        verbose_name=_("Standard allowance"),
+        verbose_name=_("Standardfradrag"),
         max_digits=12,
         decimal_places=2,
         null=False,
         blank=False,
     )
     max_benefit = models.DecimalField(
-        verbose_name=_("Max benefit"),
+        verbose_name=_("Maksimalt Suila-tapit"),
+        help_text=_("Den maksimale årlige Suila-tapit ydelse."),
         max_digits=12,
         decimal_places=2,
         null=False,
         blank=False,
     )
     scaledown_rate_percent = models.DecimalField(
-        verbose_name=_("Scaledown rate percent"),
+        verbose_name=_("Aftrapningsprocent"),
+        help_text=_(
+            "For personer, der tjener mere end det fastsatte aftrapningsbeløb, "
+            "skal Suila-tapit nedtrappes til den fastsatte aftrapningsprocent."
+        ),
         max_digits=5,
         decimal_places=3,
         null=False,
@@ -176,6 +189,11 @@ class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
         return self.scaledown_rate_percent * Decimal("0.01")
 
     scaledown_ceiling = models.DecimalField(
+        verbose_name=_("Aftrapningsbeløb"),
+        help_text=_(
+            "For personer, der tjener mere end den fastsatte aftrapningsbeløbet, "
+            "skal Suila-tapit nedtrappes med den fastsatte aftrapningsprocent."
+        ),
         max_digits=12,
         decimal_places=2,
         null=False,

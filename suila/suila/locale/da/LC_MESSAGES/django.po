@@ -16,11 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: suila/forms.py
+#: suila/forms.py suila/models.py
 msgid "Personfradrag"
 msgstr ""
 
-#: suila/forms.py
+#: suila/forms.py suila/models.py
 msgid "Standardfradrag"
 msgstr ""
 

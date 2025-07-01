@@ -54,6 +54,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.setup_borgerservice()
         self.setup_tax_officer()
+        self.setup_rate_editor()
 
     def setup_borgerservice(self):
         borgerservice, _ = Group.objects.update_or_create(
@@ -108,6 +109,22 @@ class Command(BaseCommand):
                 (
                     PrismeBatch,
                     ("can_download_reports",),
+                ),
+            ),
+        )
+
+    def setup_rate_editor(self):
+        editor, _ = Group.objects.update_or_create(name="Rateadministrator")
+        self.set_group_permissions(
+            editor,
+            *self.get_permissions(
+                (
+                    StandardWorkBenefitCalculationMethod,
+                    ("view", "add", "change", "delete"),
+                ),
+                (
+                    Year,
+                    ("view", "add", "change"),
                 ),
             ),
         )

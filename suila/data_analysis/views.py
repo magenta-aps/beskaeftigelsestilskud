@@ -607,6 +607,13 @@ class CalculationParametersListView(
     template_name = "data_analysis/calculation_parameters_list.html"
     form_class = CalculationParametersForm
     success_url = reverse_lazy("data_analysis:calculation_parameters_list")
+    required_model_permissions = [
+        "suila.view_standardworkbenefitcalculationmethod",
+        "suila.add_standardworkbenefitcalculationmethod",
+        "suila.change_standardworkbenefitcalculationmethod",
+        "suila.view_year",
+        "suila.change_year",
+    ]
 
     def post(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
@@ -621,7 +628,7 @@ class CalculationParametersListView(
         return date.today().year
 
     def get_queryset(self):
-        return super().get_queryset().filter(year__lte=self.this_year)
+        return super().get_queryset().filter(year__lte=self.this_year).order_by("year")
 
     def get_initial(self):
         year, _ = Year.objects.get_or_create(year=self.next_year)

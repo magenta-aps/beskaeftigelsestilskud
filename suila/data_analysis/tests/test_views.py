@@ -7,10 +7,12 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
+from bs4 import BeautifulSoup
 from common.models import EngineViewPreferences, PageView, User
 from common.tests.test_mixins import TestViewMixin
 from data_analysis.forms import PersonYearListOptionsForm
 from data_analysis.views import (
+    CalculationParametersListView,
     CsvFileReportDownloadView,
     CsvFileReportListView,
     HistogramView,
@@ -1026,5 +1028,61 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
 
     def test_view_anonymous_denied(self):
         view, response = self.request_get(self.no_user, "", filename=self.filename)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
+
+class TestCalculationParametersListView(TestViewMixin, TestCase):
+
+    view_class = CalculationParametersListView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.method1 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.year1 = Year.objects.create(year=2024, calculation_method=cls.method1)
+        cls.method2 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("60000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.year2 = Year.objects.create(year=2025, calculation_method=cls.method2)
+
+    def test_list_years(self):
+        view, response = self.request_get(self.admin_user, "")
+        items = response.context_data["object_list"]
+        self.assertQuerySetEqual(items, [self.year1, self.year2])
+        response.render()
+        soup = BeautifulSoup(response.content, "html.parser")
+        for row in soup.find_all("tr"):
+            values = [cell.text for cell in row.find_add("td")]
+            print(values)
+
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "")
+
+    def test_view_taxofficer_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.staff_user, "")
+
+    def test_view_editor_access(self):
+        try:
+            self.request_get(self.editor_user, "")
+        except PermissionDenied:
+            self.fail("Should have access")
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "")
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["location"], "/login?next=/")
