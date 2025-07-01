@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 06:09-0100\n"
+"POT-Creation-Date: 2025-07-01 07:05-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1017,20 +1017,6 @@ msgid ""
 "tilgængelige data i forbindelse med din udbetaling."
 msgstr ""
 
-#: suila/templates/suila/person_detail_income.html
-msgid "Pension"
-msgstr "Pension"
-
-#: suila/templates/suila/person_detail_income.html
-msgid ""
-"Arbejdsgiverindbetalt pension vises ikke på listen over signaler. Beløbet "
-"indgår i beregningen af Suila-tapit. <a href=\"https://suila.gl\">Suila.gl</"
-"a> vil vise dette på et senere tidspunkt."
-msgstr ""
-"Employer-paid pension is not shown in the list of signals. The amount is "
-"included in the calculation of Suila-tapit. Suila.gl will display this at a "
-"later stage."
-
 #: suila/templates/suila/person_detail_notes.html
 msgid "Tilføj notat"
 msgstr "Add note"
@@ -1327,6 +1313,10 @@ msgstr "Trading"
 #: suila/views.py
 msgid "Betalt B-skat"
 msgstr "B-tax paid"
+
+#: suila/views.py
+msgid "Pensionsindbetalinger"
+msgstr "Pension"
 
 #: suila/views.py
 msgid "Betalte B-skatter"

@@ -330,6 +330,7 @@ class IncomeSignalType(IntegerChoices):
     Indhandling = (1, _("Indhandling"))
     BetaltBSkat = (2, _("Betalt B-skat"))
     Udbytte = (3, _("Udbytte"))
+    Pension = (4, _("Pensionsindbetalinger"))
 
 
 @dataclass(frozen=True)
@@ -345,6 +346,7 @@ class IncomeSignal:
             IncomeSignalType.Lønindkomst,
             IncomeSignalType.Indhandling,
             IncomeSignalType.Udbytte,
+            IncomeSignalType.Pension,
         )
         if self.signal_type in use_source:
             return self.source
@@ -546,6 +548,13 @@ class PersonDetailIncomeView(
                     IncomeSignalType.Udbytte,
                     format_employer(item.employer),
                     item.u_income,
+                    item.person_month.year_month,
+                )
+            if item.employer_paid_gl_pension_income > 0:
+                yield IncomeSignal(
+                    IncomeSignalType.Pension,
+                    format_employer(item.employer),
+                    item.employer_paid_gl_pension_income,
                     item.person_month.year_month,
                 )
 
