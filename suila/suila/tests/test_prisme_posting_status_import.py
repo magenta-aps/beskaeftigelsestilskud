@@ -23,6 +23,12 @@ from suila.tests.helpers import ImportTestCase
 _EXAMPLE_1 = "§15;3112700000;00587075;9700;2025/03/09;RJ00;JKH Tesst;§15-000000059;"
 _EXAMPLE_2 = "§15;3112700000;01587075;9700;2025/03/09;RJ00;JKH Tesst;§15-000000059;"
 _EXAMPLE_3 = "§15;3112700000;02587075;1313;2020/03/09;RJ00;JKH Tesst;§15-000000059;"
+_EXAMPLE_4 = (
+    "§15;3112700000;00000000000000587075;1313;2020/03/09;RJ00;JKH Tesst;§15-000000059;"
+)
+_EXAMPLE_5 = (
+    "§15;3112700000;000000000000000587075;1313;2020/03/09;RJ00;JKH Tesst;§15-000000059;"
+)
 
 
 class TestLoadPrismeBenefitsPostingStatusCommand(TestCase):
@@ -50,6 +56,16 @@ class TestPostingStatus(SimpleTestCase):
         self.assertEqual(obj.error_code, "RJ00")
         self.assertEqual(obj.error_description, "JKH Tesst")
         self.assertEqual(obj.voucher_no, "§15-000000059")
+
+    def test_normalized_invoice_no(self):
+        # `EXAMPLE_1` uses an invoice number shorter than the expected 20 digits.
+        # `EXAMPLE_4` uses an invoice number of the expected 20 digits.
+        # `EXAMPLE_5` uses an invoice number longer than the expected 20 digits.
+        # Assert that they all normalize to the same 20-digit invoice number.
+        for example in (_EXAMPLE_1, _EXAMPLE_4, _EXAMPLE_5):
+            with self.subTest(example=example):
+                obj = PostingStatus.from_csv_row(example.split(";"))
+                self.assertEqual(obj.normalized_invoice_no, "00000000000000587075")
 
 
 class PostingStatusImportTestCase(ImportTestCase):
@@ -88,13 +104,13 @@ class TestPostingStatusImport(PostingStatusImportTestCase):
         # "posting status" CSV file, and should be considered "failed to post."
         cls._item_on_posting_status_list = cls._add_prisme_batch_item(
             cls.add_person_month(311270_0000),
-            "00587075",
+            "00000000000000587075",
         )
         # This item has an invoice number which is not present in the mocked "posting
         # status" CSV file, and should be considered "succeeded to post."
         cls._item_not_on_posting_status_list = cls._add_prisme_batch_item(
             cls.add_person_month(311271_0000),
-            "12345678",
+            "00000000000012345678",
         )
 
     @override_settings(PRISME={"machine_id": 1234})
@@ -244,6 +260,19 @@ class TestPostingStatusImport(PostingStatusImportTestCase):
                 "\n",
             ],
         )
+
+    @override_settings(PRISME={"machine_id": 1234, "posting_status_folder": "foo"})
+    def test_import_posting_status_verbosity_3(self):
+        # Arrange
+        stdout = MagicMock()
+        instance = PostingStatusImport()
+        with self.mock_sftp_server_folder(
+            ("§38_01234_11-03-2025_000000.csv", _EXAMPLE_1),
+        ):
+            # Act
+            instance.import_posting_status(stdout, 3)
+        # Assert
+        self.assertEqual(stdout.write.call_count, 12)
 
     @override_settings(PRISME={"posting_status_folder": "foo"})
     def test_get_remote_folder_name(self):

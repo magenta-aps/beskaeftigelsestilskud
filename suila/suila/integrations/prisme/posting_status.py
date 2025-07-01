@@ -10,7 +10,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
-from django.db.models import DateField, F, Func, Q, QuerySet, Value
+from django.db.models import Count, DateField, F, Func, Q, QuerySet, Value
 
 from suila.integrations.prisme.csv_format import CSVFormat
 from suila.integrations.prisme.sftp_import import SFTPImport
@@ -45,15 +45,27 @@ class PostingStatus(CSVFormat):
             voucher_no=row[7],
         )
 
+    @property
+    def normalized_invoice_no(self) -> str:
+        expected_invoice_no_length = 20
+        if len(self.invoice_no) == expected_invoice_no_length:
+            return self.invoice_no
+        elif len(self.invoice_no) < expected_invoice_no_length:
+            return self.invoice_no.zfill(expected_invoice_no_length)
+        else:  # invoice_no is longer than expected length
+            return self.invoice_no[-expected_invoice_no_length:]
+
 
 class PostingStatusImport(SFTPImport):
     """Import one or more posting status CSV files from Prisme SFTP"""
 
     def import_posting_status(self, stdout: OutputWrapper, verbosity: int):
+        self._print_summary(stdout, verbosity=verbosity)
         new_filenames: list[str] = self._process_filenames(self.get_new_filenames())
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}")
             self._update_prisme_batch_items(filename, stdout)
+            self._print_summary(stdout, verbosity=verbosity)
 
     def get_remote_folder_name(self) -> str:
         return settings.PRISME["posting_status_folder"]  # type: ignore[misc]
@@ -160,10 +172,12 @@ class PostingStatusImport(SFTPImport):
         matches: list[PrismeBatchItem] = []
         for row in rows:
             try:
-                item: PrismeBatchItem = qs.get(invoice_no=row.invoice_no)
+                item: PrismeBatchItem = qs.get(invoice_no=row.normalized_invoice_no)
             except PrismeBatchItem.DoesNotExist:
                 logger.debug(
-                    "No Prisme batch item found for invoice number %s",
+                    "No Prisme batch item found for invoice number %s (raw invoice "
+                    "number = %s)",
+                    row.normalized_invoice_no,
                     row.invoice_no,
                 )
                 # Try to look up by CPR/date/amount instead
@@ -212,3 +226,25 @@ class PostingStatusImport(SFTPImport):
         )
         stdout.write(f"Updated {num_succeeded} to status=posted")
         stdout.write("\n")
+
+    def _print_summary(self, stdout: OutputWrapper, verbosity: int) -> None:
+        if verbosity > 2:
+            stdout.write(
+                "".join("%10s" % col for col in ("Year", "Month", "Status", "Count"))
+            )
+            qs = (
+                PrismeBatchItem.objects.order_by(
+                    "person_month__person_year__year__year",
+                    "person_month__month",
+                    "status",
+                )
+                .values(
+                    "person_month__person_year__year__year",
+                    "person_month__month",
+                    "status",
+                )
+                .annotate(Count("id"))
+            )
+            for row in qs:
+                stdout.write("".join("%10s" % value for value in row.values()))
+            stdout.write("\n")
