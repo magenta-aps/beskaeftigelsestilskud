@@ -38,15 +38,19 @@ class BaseGetFormView(BaseFormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        if self.request.method == "GET":
-            kwargs["data"] = self.request.GET
+        if "data" not in kwargs:
+            # pragma: no branch
+            kwargs["data"] = {}
+        kwargs["data"].update(self.request.GET.dict())
         return kwargs
 
     def get(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
+            print("valid")
             return self.form_valid(form)
         else:
+            print("invalid")
             return self.form_invalid(form)
 
 

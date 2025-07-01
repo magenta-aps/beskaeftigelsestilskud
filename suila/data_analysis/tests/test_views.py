@@ -319,7 +319,12 @@ class TestPersonAnalysisView(TestViewMixin, TestCase):
         view, response = self.request_get(
             self.admin_user, "?income_type=A", pk=self.person.pk, year=2020
         )
+
         self.assertIsInstance(response, TemplateResponse)
+        self.assertTrue(
+            response.context_data["form"].is_valid(),
+            response.context_data["form"].errors,
+        )
         self.assertEqual(view.income_type, IncomeType.A)
 
         view, response = self.request_get(
@@ -1035,6 +1040,7 @@ class TestCsvFileReportDownloadView(TestViewMixin, TestCase):
 class TestCalculationParametersListView(TestViewMixin, TestCase):
 
     view_class = CalculationParametersListView
+    url = reverse("data_analysis:calculation_parameters_list")
 
     @classmethod
     def setUpTestData(cls):
@@ -1059,14 +1065,67 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
         cls.year2 = Year.objects.create(year=2025, calculation_method=cls.method2)
 
     def test_list_years(self):
-        view, response = self.request_get(self.admin_user, "")
+        self.client.force_login(self.admin_user)
+        response = self.client.get(self.url)
         items = response.context_data["object_list"]
         self.assertQuerySetEqual(items, [self.year1, self.year2])
         response.render()
         soup = BeautifulSoup(response.content, "html.parser")
-        for row in soup.find_all("tr"):
-            values = [cell.text for cell in row.find_all("td")]
-            print(values)
+        table_text = [
+            [cell.text.strip() for cell in row.find_all("td")]
+            for row in soup.find_all("tr")
+        ]
+        self.assertEqual(
+            table_text,
+            [
+                [],
+                [
+                    "2024",
+                    "17,500",
+                    "58000,00",
+                    "10000,00",
+                    "15750,00",
+                    "6,300",
+                    "250000,00",
+                    "Graf",
+                ],
+                [
+                    "2025",
+                    "17,500",
+                    "60000,00",
+                    "10000,00",
+                    "15750,00",
+                    "6,300",
+                    "250000,00",
+                    "Graf",
+                ],
+                ["2026", "", "", "", "", "", "", "Graf\nGem"],
+            ],
+        )
+
+    def test_update_method(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            self.url,
+            {
+                "benefit_rate_percent": 5,
+                "personal_allowance": "12000",
+                "standard_allowance": "9000",
+                "max_benefit": "17000",
+                "scaledown_rate_percent": "6.7",
+                "scaledown_ceiling": "300000",
+            },
+        )
+        year = Year.objects.get(year=2026)
+        method = year.calculation_method
+        self.assertEqual(method.benefit_rate_percent, 5)
+        self.assertEqual(method.personal_allowance, 12000)
+        self.assertEqual(method.standard_allowance, 9000)
+        self.assertEqual(method.max_benefit, 17000)
+        self.assertEqual(method.scaledown_rate_percent, Decimal("6.7"))
+        self.assertEqual(method.scaledown_ceiling, 300000)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], self.url)
 
     def test_view_borger_denied(self):
         with self.assertRaises(PermissionDenied):

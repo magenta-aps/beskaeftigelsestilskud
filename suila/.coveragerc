@@ -21,5 +21,6 @@ omit =
     */data_update/*
     */management/commands/make_messages.py
     */management/commands/wait_for_db.py
+    */management/commands/sql_sequence_reset.py
 parallel = true
 concurrency = multiprocessing

@@ -99,7 +99,7 @@ class CalculationParametersForm(BootstrapForm):
     )
 
 
-class CalculatorForm(CalculationParametersForm):
+class CalculatorForm(BootstrapForm):
     estimated_month_income = DecimalField(
         required=False,
         label=_("Estimeret månedsindkomst"),

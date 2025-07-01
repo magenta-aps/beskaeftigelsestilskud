@@ -1116,6 +1116,7 @@ class TestViewLog(TestViewMixin, TestCase):
 
 class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
     view_class = CalculatorView
+    maxDiff = None
 
     def request(self, amount):
         view, response = self.request_post(
@@ -1208,27 +1209,27 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
                     "fields": {
                         "benefit_rate_percent": {
                             "value": Decimal("17.500"),
-                            "label": "Benefit rate percent",
+                            "label": "Procentsats for Suila-tapit",
                         },
                         "personal_allowance": {
                             "value": Decimal("58000.00"),
-                            "label": "Personal allowance",
+                            "label": "Personfradrag",
                         },
                         "standard_allowance": {
                             "value": Decimal("10000.00"),
-                            "label": "Standard allowance",
+                            "label": "Standardfradrag",
                         },
                         "max_benefit": {
                             "value": Decimal("15750.00"),
-                            "label": "Max benefit",
+                            "label": "Maksimalt Suila-tapit",
                         },
                         "scaledown_rate_percent": {
                             "value": Decimal("6.300"),
-                            "label": "Scaledown rate percent",
+                            "label": "Aftrapningsprocent",
                         },
                         "scaledown_ceiling": {
                             "value": Decimal("250000.00"),
-                            "label": "Scaledown ceiling",
+                            "label": "Aftrapningsbeløb",
                         },
                     },
                 }

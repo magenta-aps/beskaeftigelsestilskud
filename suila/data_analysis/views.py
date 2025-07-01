@@ -74,7 +74,7 @@ class SimulationJSONEncoder(SuilaJSONEncoder):
 
 
 class PersonAnalysisView(
-    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, DetailView, GetFormView
+    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, GetFormView, DetailView
 ):
     model = Person
     context_object_name = "person"
@@ -103,22 +103,13 @@ class PersonAnalysisView(
         self.object = self.get_object()
         self.income_type = None
         # By default, only show last year.
-        year1 = self.object.last_year.year.year
-        year2 = self.object.last_year.year.year
-        self.year_start = min(year1, year2)
-        self.year_end = max(year1, year2)
+        self.year_start = self.year_end = self.object.last_year.year.year
         return super().get(request, *args, **kwargs)
-        # form = self.get_form()
-        # if form.is_valid():
-        #     return self.form_valid(form)
-        # else:
-        #     return self.form_invalid(form)
 
     def form_valid(self, form):
         income_type_raw = form.cleaned_data["income_type"]
         if income_type_raw:
             self.income_type = IncomeType(income_type_raw)
-
         year1 = int(form.cleaned_data["year_start"] or self.object.last_year.year.year)
         year2 = int(form.cleaned_data["year_end"] or self.object.last_year.year.year)
         self.year_start = min(year1, year2)
@@ -162,16 +153,10 @@ class PersonAnalysisView(
         )
 
     def get_form_kwargs(self):
-        data = {
-            "year_start": self.year_start,
-            "year_end": self.year_end,
-        }
-        # data.update(self.request.GET.dict())
-        return {
-            **super().get_form_kwargs(),
-            "data": data,
-            "instance": self.object,
-        }
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.object
+        print(kwargs)
+        return kwargs
 
 
 class PersonYearEstimationMixin:
