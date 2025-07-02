@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-01 07:05-0100\n"
+"POT-Creation-Date: 2025-07-02 06:23-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1315,8 +1315,8 @@ msgid "Betalt B-skat"
 msgstr "B-tax paid"
 
 #: suila/views.py
-msgid "Pensionsindbetalinger"
-msgstr "Pension"
+msgid "Pensionsindbetaling"
+msgstr "Pension contribution"
 
 #: suila/views.py
 msgid "Betalte B-skatter"
