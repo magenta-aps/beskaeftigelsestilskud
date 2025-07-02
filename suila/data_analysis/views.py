@@ -155,7 +155,6 @@ class PersonAnalysisView(
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["instance"] = self.object
-        print(kwargs)
         return kwargs
 
 
@@ -645,7 +644,7 @@ class CalculationParametersListView(
             create = True
             method = StandardWorkBenefitCalculationMethod()
         for key, value in form.cleaned_data.items():
-            if hasattr(method, key):
+            if hasattr(method, key):  # pragma: no branch
                 setattr(method, key, value)
         method.save()
         if create:
@@ -663,7 +662,7 @@ class CalculationParametersGraph(BaseGetFormView):
     def form_valid(self, form):
         method = StandardWorkBenefitCalculationMethod()
         for key, value in form.cleaned_data.items():
-            if hasattr(method, key):
+            if hasattr(method, key):  # pragma: no branch
                 setattr(method, key, value)
         return JsonResponse(
             data={"points": method.graph_points}, encoder=SuilaJSONEncoder
