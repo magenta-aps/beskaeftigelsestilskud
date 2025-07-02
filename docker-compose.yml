@@ -223,71 +223,25 @@ services:
       - ./dev-environment/hosts.sh:/hosts.sh:ro
       - /etc/hosts:/hosts:rw
     command: [ "bash", "/hosts.sh" ]
-#
-#  crowdsec:
-#    image: crowdsecurity/crowdsec:v1.6.8
-#    container_name: crowdsec
-#    restart: unless-stopped
-#    expose:
-#      - 8080 # http api for bouncers
-#      - 6060 # metrics endpoint for prometheus
-#      - 7422 # appsec waf endpoint
-#    volumes:
-#      - crowdsec-data:/var/lib/crowdsec/data
-#      - ./dev-environment/crowdsec/traefik.yaml:/etc/crowdsec/acquis.d/traefik.yaml:ro
-#    environment:
-#      - GID=1000
-#      - DOCKER_HOST=tcp://socketproxy:2375
-#      - COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios crowdsecurity/sshd crowdsecurity/linux crowdsecurity/appsec-generic-rules crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs
-#    networks:
-#      - default
-#      - socketproxy
-#
-#  socketproxy:
-#    container_name: socketproxy
-#    image: lscr.io/linuxserver/socket-proxy:latest
-#    read_only: true
-#    tmpfs:
-#      - /run
-#    networks:
-#      - socketproxy
-#    volumes:
-#      - /var/run/docker.sock:/var/run/docker.sock:ro
-#    environment:
-#      - LOG_LEVEL=notice # debug,info,notice,warning,err,crit,alert,emerg (default=info)
-#      ## Variables match the URL prefix (i.e. AUTH blocks access to /auth/* parts of the API, etc.).
-#      # 0 to revoke access.
-#      # 1 to grant access.
-#      ## Granted by Default
-#      - EVENTS=1
-#      - PING=1
-#      - VERSION=1
-#      ## Revoked by Default
-#      # Security critical
-#      - AUTH=0
-#      - SECRETS=0
-#      - POST=0
-#      # Not always needed
-#      - BUILD=0
-#      - COMMIT=0
-#      - CONFIGS=0
-#      - ALLOW_START=0
-#      - ALLOW_STOP0
-#      - ALLOW_RESTARTS=0
-#      - CONTAINERS=1 # Traefik, portainer, netdata etc.
-#      - DISTRIBUTION=0
-#      - EXEC=0
-#      - IMAGES=0
-#      - INFO=1
-#      - NETWORKS=0
-#      - NODES=0
-#      - PLUGINS=0
-#      - SERVICES=1
-#      - SESSION=0
-#      - SWARM=0
-#      - SYSTEM=1
-#      - TASKS=0
-#      - VOLUMES=0
+
+  crowdsec:
+    image: crowdsecurity/crowdsec:v1.6.8
+    container_name: crowdsec
+    restart: unless-stopped
+    expose:
+      - 8080 # http api for bouncers
+      - 6060 # metrics endpoint for prometheus
+      - 7422 # appsec waf endpoint
+    volumes:
+      - crowdsec-data:/var/lib/crowdsec/data
+      - ./dev-environment/crowdsec/traefik.yaml:/etc/crowdsec/acquis.d/traefik.yaml:ro
+      # For at vi kan læse docker log fra host ind i containeren
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - GID=1000
+      - COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios crowdsecurity/sshd crowdsecurity/linux crowdsecurity/appsec-generic-rules crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs
+    networks:
+      - default
 
 volumes:
   postgres-data:
@@ -301,4 +255,3 @@ networks:
   database:
   matomo:
   mail:
-  socketproxy:
