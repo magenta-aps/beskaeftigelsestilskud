@@ -14,7 +14,7 @@
             <form method="post" action="{% url url_name pk=person_year.id %}" class="d-inline">
                 {% csrf_token %}
                 <input type="hidden" name="person_year" value="{{ person_year.id }}"/>
-                <input type="hidden" name="redirect_querystring" value="{{ request.META.QUERY_STRING }}">
+                <input type="hidden" name="redirect_querystring" value="{% querystring %}">
                 <input type="hidden" name="{{ field_name }}" value="{{ value }}"/>
                 <button type="submit" class="dropdown-item {% if value == person_year|get_attr:field_name %}active{% endif %}">
                     <span>{{ value }}</span>

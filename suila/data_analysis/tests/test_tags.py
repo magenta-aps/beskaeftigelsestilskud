@@ -65,5 +65,5 @@ class TagsTest(TestCase):
         self.assertEqual(yesno(False), _("Nej"))
 
     def test_get_attr(self):
-        person = SimpleNamespace(name="Christoffer Bach Kofoed")
-        self.assertEqual(get_attr(person, "name"), "Christoffer Bach Kofoed")
+        person = SimpleNamespace(name="Christoffer")
+        self.assertEqual(get_attr(person, "name"), "Christoffer")

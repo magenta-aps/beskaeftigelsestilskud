@@ -591,7 +591,7 @@ class PersonYearEstimationEngineUpdateView(
             "data_analysis:person_analysis", kwargs={"pk": self.object.person.pk}
         )
         query_string = self.request.POST.get("redirect_querystring", "")
-        return f"{base_url}?{query_string}" if query_string else base_url
+        return f"{base_url}{query_string}" if query_string else base_url
 
 
 class PersonYearEstimationEngineAUpdateView(PersonYearEstimationEngineUpdateView):
