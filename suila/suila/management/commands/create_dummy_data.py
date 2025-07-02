@@ -14,6 +14,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 from suila.models import (
+    Employer,
     ManagementCommands,
     MonthlyIncomeReport,
     Person,
@@ -123,6 +124,10 @@ class Command(BaseCommand):
 
         dates = get_dates_to_create()
 
+        employer, _ = Employer.objects.update_or_create(
+            cvr=25052943, name="Magenta ApS"
+        )
+
         persons = {
             # Normal person
             Person.objects.update_or_create(
@@ -170,11 +175,16 @@ class Command(BaseCommand):
                     defaults={"import_date": datetime.date.today()},
                 )
                 set_history_date(person_month, date)
+                income = Decimal(salary[date.month - 1])
                 MonthlyIncomeReport.objects.update_or_create(
                     person_month=person_month,
                     month=month,
                     year=year,
-                    defaults={"salary_income": Decimal(salary[date.month - 1])},
+                    defaults={
+                        "salary_income": income - 100,
+                        "employer_paid_gl_pension_income": Decimal(100),
+                        "employer": employer,
+                    },
                 )
 
                 person_year.tax_scope = random.choice(

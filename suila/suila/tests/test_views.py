@@ -188,6 +188,11 @@ class PersonEnv(TestCase):
                         if person_month.month > 1
                         else Decimal("0")
                     ),
+                    employer_paid_gl_pension_income=(
+                        Decimal(person_month.month * 100)
+                        if person_month.month > 1
+                        else Decimal("0")
+                    ),
                 )
                 income_report.update_amount()
                 income_reports.append(income_report)
@@ -589,6 +594,16 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 ],
                 [(Decimal("0"), Decimal("0"))]
                 * len(response.context_data["sum_table"].data),
+            )
+
+    def test_get_pension_income_signal(self):
+        with self._time_context(year=2020):
+            # Act
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            result = view.get_income_signals()
+
+            self.assertIn(
+                IncomeSignalType.Pension, [signal.signal_type for signal in result]
             )
 
     def test_get_income_signals(self):
