@@ -317,7 +317,12 @@ class TestPersonAnalysisView(TestViewMixin, TestCase):
         view, response = self.request_get(
             self.admin_user, "?income_type=A", pk=self.person.pk, year=2020
         )
+
         self.assertIsInstance(response, TemplateResponse)
+        self.assertTrue(
+            response.context_data["form"].is_valid(),
+            response.context_data["form"].errors,
+        )
         self.assertEqual(view.income_type, IncomeType.A)
 
         view, response = self.request_get(

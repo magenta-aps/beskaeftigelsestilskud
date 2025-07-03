@@ -9,6 +9,8 @@ from django.views.generic import TemplateView
 
 from suila.api import api
 from suila.views import (
+    CalculationParametersGraph,
+    CalculationParametersListView,
     CalculatorView,
     EboksMessageView,
     GeneratedEboksMessageView,
@@ -93,5 +95,15 @@ urlpatterns: List[URLResolver | URLPattern] = [
         "persons/<int:pk>/msg/",
         EboksMessageView.as_view(),
         name="person_existing_message",
+    ),
+    path(
+        "calculation_parameters/",
+        CalculationParametersListView.as_view(),
+        name="calculation_parameters_list",
+    ),
+    path(
+        "calculation_parameters/graph/",
+        CalculationParametersGraph.as_view(),
+        name="calculation_parameters_graph",
     ),
 ]

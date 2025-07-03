@@ -88,4 +88,6 @@ if [ "${TEST,,}" = true ]; then
     coverage report --show-missing
   fi
 
+python manage.py sql_sequence_reset
+
 exec "$@"

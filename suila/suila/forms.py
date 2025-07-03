@@ -4,6 +4,7 @@
 from decimal import Decimal
 from urllib.parse import quote_plus, unquote_plus
 
+from common.form_mixins import BootstrapForm
 from django.forms import (
     ChoiceField,
     DecimalField,
@@ -48,7 +49,57 @@ NoteAttachmentFormSet = inlineformset_factory(
 )
 
 
-class CalculatorForm(Form):
+class CalculationParametersForm(BootstrapForm):
+
+    benefit_rate_percent = DecimalField(
+        max_digits=5,
+        min_value=Decimal(0),
+        decimal_places=3,
+        required=True,
+        localize=True,
+    )
+    personal_allowance = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+        label=_("Personfradrag"),
+    )
+    standard_allowance = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+        label=_("Standardfradrag"),
+    )
+    max_benefit = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+    )
+    scaledown_rate_percent = DecimalField(
+        max_digits=5,
+        min_value=Decimal(0),
+        decimal_places=3,
+        required=True,
+        localize=True,
+        label=_("Aftrapningsrate"),
+    )
+    scaledown_ceiling = DecimalField(
+        max_digits=12,
+        min_value=Decimal(0),
+        decimal_places=2,
+        required=True,
+        localize=True,
+        label=_("Aftrapningsloft"),
+    )
+
+
+class CalculatorForm(BootstrapForm):
     estimated_month_income = DecimalField(
         required=False,
         label=_("Estimeret månedsindkomst"),
