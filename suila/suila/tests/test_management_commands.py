@@ -99,6 +99,7 @@ class CreateGroups(TestCase):
         self.assertIn("view_person", permissions)
         self.assertIn("view_personmonth", permissions)
         self.assertIn("view_personyear", permissions)
+        self.assertIn("change_personyear", permissions)
         self.assertIn("view_personyearassessment", permissions)
         self.assertIn("view_personyearestimatesummary", permissions)
         self.assertIn("view_personyearu1aassessment", permissions)
@@ -106,7 +107,7 @@ class CreateGroups(TestCase):
         self.assertIn("use_adminsite_calculator_parameters", permissions)
         self.assertIn("view_year", permissions)
 
-        self.assertEqual(len(permissions), 19)
+        self.assertEqual(len(permissions), 20)
 
     def test_create_borgerservice(self):
         call_command("create_groups")

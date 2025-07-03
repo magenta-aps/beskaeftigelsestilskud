@@ -28,14 +28,15 @@ from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import FileResponse, HttpResponse
 from django.http.response import HttpResponseForbidden, HttpResponseNotFound
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import DetailView, FormView, View
+from django.views.generic.edit import UpdateView
 from django.views.generic.list import ListView
 from login.view_mixins import LoginRequiredMixin
 from project.util import params_no_none, strtobool
 
-from suila.data import engine_keys
+from suila.data import engine_choices, engine_keys
 from suila.estimation import EstimationEngine
 from suila.models import (
     IncomeType,
@@ -140,6 +141,7 @@ class PersonAnalysisView(
                 "config": {
                     "payout_trivial_limit": settings.CALCULATION_TRIVIAL_LIMIT,
                 },
+                "engine_choices": engine_choices,
             }
         )
 
@@ -573,3 +575,28 @@ class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, Vi
                 open(fullpath, "rb"), as_attachment=True, filename=filename
             )
         return HttpResponseNotFound()
+
+
+class PersonYearEstimationEngineUpdateView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    UpdateView,
+):
+    model = PersonYear
+    required_model_permissions = ["suila.change_personyear"]
+
+    def get_success_url(self):
+        base_url = reverse_lazy(
+            "data_analysis:person_analysis", kwargs={"pk": self.object.person.pk}
+        )
+        query_string = self.request.POST.get("redirect_querystring", "")
+        return f"{base_url}{query_string}" if query_string else base_url
+
+
+class PersonYearEstimationEngineAUpdateView(PersonYearEstimationEngineUpdateView):
+    fields = ["preferred_estimation_engine_a"]
+
+
+class PersonYearEstimationEngineUUpdateView(PersonYearEstimationEngineUpdateView):
+    fields = ["preferred_estimation_engine_u"]

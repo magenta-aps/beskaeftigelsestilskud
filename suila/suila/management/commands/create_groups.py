@@ -89,7 +89,7 @@ class Command(BaseCommand):
                 (Year, ("view",)),
                 (Person, ("view", "change")),
                 (Person, ("view_data_analysis",)),
-                (PersonYear, ("view",)),
+                (PersonYear, ("view", "change")),
                 (PersonMonth, ("view",)),
                 (Employer, ("view",)),
                 (MonthlyIncomeReport, ("view",)),
