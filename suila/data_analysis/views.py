@@ -603,19 +603,21 @@ class CalculationParametersListView(
         self.object_list = self.get_queryset()
         return super().post(request, *args, **kwargs)
 
-    @property
-    def next_year(self):
+    @staticmethod
+    def next_year():
         return date.today().year + 1
 
-    @property
-    def this_year(self):
+    @staticmethod
+    def this_year():
         return date.today().year
 
     def get_queryset(self):
-        return super().get_queryset().filter(year__lte=self.this_year).order_by("year")
+        return (
+            super().get_queryset().filter(year__lte=self.this_year()).order_by("year")
+        )
 
     def get_initial(self):
-        year, _ = Year.objects.get_or_create(year=self.next_year)
+        year, _ = Year.objects.get_or_create(year=self.next_year())
         method = year.calculation_method
         if method is not None:
             return model_to_dict(method)
@@ -632,12 +634,12 @@ class CalculationParametersListView(
                     {method.pk: method.graph_points for method in methods},
                     cls=SuilaJSONEncoder,
                 ),
-                "next_year": self.next_year,
+                "next_year": self.next_year(),
             }
         )
 
     def form_valid(self, form):
-        year, year_created = Year.objects.get_or_create(year=self.next_year)
+        year, year_created = Year.objects.get_or_create(year=self.next_year())
         method = year.calculation_method
         create = False
         if method is None:
