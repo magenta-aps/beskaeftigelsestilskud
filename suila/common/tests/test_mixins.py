@@ -5,9 +5,12 @@ from typing import Any, Dict, Tuple
 
 from common.models import User
 from django.contrib.auth.models import AnonymousUser, Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.template.response import TemplateResponse
 from django.test import RequestFactory
 from django.views.generic import TemplateView
+
+from suila.models import StandardWorkBenefitCalculationMethod
 
 
 class UserMixin:
@@ -43,6 +46,20 @@ class UserMixin:
             username="borger2", password="borger2", cpr="9999999999"
         )
         cls.no_user = AnonymousUser()
+
+        cls.editor_group = Group.objects.create(name="editor")
+        cls.editor_group.permissions.add(
+            *Permission.objects.filter(
+                content_type=ContentType.objects.get_for_model(
+                    StandardWorkBenefitCalculationMethod, for_concrete_model=False
+                )
+            )
+        )
+        cls.editor_group.permissions.add(
+            *Permission.objects.filter(codename__in=("view_year", "change_year"))
+        )
+        cls.editor_user = User.objects.create(username="editor", password="editor")
+        cls.editor_user.groups.add(cls.editor_group)
 
 
 class TestViewMixin(UserMixin):

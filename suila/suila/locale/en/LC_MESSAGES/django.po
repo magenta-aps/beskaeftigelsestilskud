@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-02 06:23-0100\n"
+"POT-Creation-Date: 2025-07-03 09:00-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,22 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: suila/forms.py suila/models.py
+msgid "Personfradrag"
+msgstr ""
+
+#: suila/forms.py suila/models.py
+msgid "Standardfradrag"
+msgstr ""
+
+#: suila/forms.py
+msgid "Aftrapningsrate"
+msgstr ""
+
+#: suila/forms.py
+msgid "Aftrapningsloft"
+msgstr ""
 
 #: suila/forms.py
 msgid "Estimeret månedsindkomst"
@@ -41,23 +57,47 @@ msgid "Alle"
 msgstr "All"
 
 #: suila/models.py
-msgid "Benefit rate percent"
+msgid "Procentsats for Suila-tapit"
 msgstr ""
 
 #: suila/models.py
-msgid "Personal allowance"
+msgid ""
+"Den procentdel af indkomstgrundlaget, der anvendes til at beregne den "
+"udbetalte værdi af Suila-tapit."
 msgstr ""
 
 #: suila/models.py
-msgid "Standard allowance"
+msgid ""
+"Et skattefrit beløb, som alle personer har ret til at fratrække deres "
+"indkomst, før skatten beregnes."
 msgstr ""
 
 #: suila/models.py
-msgid "Max benefit"
+msgid "Maksimalt Suila-tapit"
 msgstr ""
 
 #: suila/models.py
-msgid "Scaledown rate percent"
+msgid "Den maksimale årlige Suila-tapit ydelse."
+msgstr ""
+
+#: suila/models.py
+msgid "Aftrapningsprocent"
+msgstr ""
+
+#: suila/models.py
+msgid ""
+"For personer, der tjener mere end det fastsatte aftrapningsbeløb, skal Suila-"
+"tapit nedtrappes til den fastsatte aftrapningsprocent."
+msgstr ""
+
+#: suila/models.py
+msgid "Aftrapningsbeløb"
+msgstr ""
+
+#: suila/models.py
+msgid ""
+"For personer, der tjener mere end den fastsatte aftrapningsbeløbet, skal "
+"Suila-tapit nedtrappes med den fastsatte aftrapningsprocent."
 msgstr ""
 
 #: suila/models.py
@@ -255,6 +295,10 @@ msgstr "Calculated Suila-tapit per year:"
 #: suila/templates/suila/calculate.html
 msgid "Indlæs"
 msgstr "Load"
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid "Beregningsparametre"
+msgstr ""
 
 #: suila/templates/suila/eboks/base.html
 msgid "e-Boks-besked"
@@ -1337,3 +1381,7 @@ msgstr "total amount"
 #: suila/views.py
 msgid "Beløb"
 msgstr "Amount"
+
+#: suila/views.py
+msgid "Beregningsparametrene blev opdateret"
+msgstr ""

@@ -15,14 +15,15 @@ from urllib.parse import urlencode
 from common.fields import CPRField
 from common.models import User
 from common.utils import SuilaJSONEncoder, get_user_who_pressed_pause, omit
-from common.view_mixins import ViewLogMixin
+from common.view_mixins import BaseGetFormView, ViewLogMixin
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.contrib import messages
 from django.core.management import call_command
 from django.db.models import CharField, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import date as format_date
 from django.urls import reverse, reverse_lazy
@@ -31,7 +32,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_sameorigin
-from django.views.generic import DetailView, FormView, TemplateView
+from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django.views.generic.base import ContextMixin
 from django.views.generic.detail import BaseDetailView
 from django.views.generic.edit import UpdateView
@@ -45,6 +46,7 @@ from login.view_mixins import LoginRequiredMixin
 
 from suila.dates import get_payment_date
 from suila.forms import (
+    CalculationParametersForm,
     CalculatorForm,
     ConfirmationForm,
     IncomeSignalFilterForm,
@@ -62,6 +64,7 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
+    StandardWorkBenefitCalculationMethod,
     SuilaEboksMessage,
     WorkingTaxCreditCalculationMethod,
     Year,
@@ -1202,3 +1205,93 @@ class PersonTaxScopeHistoryView(
         self.log_view()
 
         return context
+
+
+class CalculationParametersListView(
+    LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormView
+):
+    model = Year
+    template_name = "suila/calculation_parameters_list.html"
+    form_class = CalculationParametersForm
+    success_url = reverse_lazy("suila:calculation_parameters_list")
+    required_model_permissions = [
+        "suila.view_standardworkbenefitcalculationmethod",
+        "suila.add_standardworkbenefitcalculationmethod",
+        "suila.change_standardworkbenefitcalculationmethod",
+        "suila.view_year",
+        "suila.change_year",
+    ]
+
+    def post(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return super().post(request, *args, **kwargs)
+
+    @staticmethod
+    def next_year():
+        return CalculationParametersListView.this_year() + 1
+
+    @staticmethod
+    def this_year():
+        return date.today().year
+
+    def get_queryset(self):
+        return (
+            super().get_queryset().filter(year__lte=self.this_year()).order_by("year")
+        )
+
+    def get_initial(self):
+        year, _ = Year.objects.get_or_create(year=self.next_year())
+        method = year.calculation_method
+        if method is not None:
+            return model_to_dict(method)
+        return None
+
+    def get_context_data(self, **kwargs):
+        methods = set(
+            filter(None, [year.calculation_method for year in self.get_queryset()])
+        )
+        return super().get_context_data(
+            **{
+                **kwargs,
+                "graph_points": json.dumps(
+                    {method.pk: method.graph_points for method in methods},
+                    cls=SuilaJSONEncoder,
+                ),
+                "next_year": self.next_year(),
+            }
+        )
+
+    def form_valid(self, form):
+        year, year_created = Year.objects.get_or_create(year=self.next_year())
+        method = year.calculation_method
+        create = False
+        if method is None:
+            create = True
+            method = StandardWorkBenefitCalculationMethod()
+        for key, value in form.cleaned_data.items():
+            if hasattr(method, key):  # pragma: no branch
+                setattr(method, key, value)
+        method.save()
+        if create:
+            year.calculation_method = method
+            year.save()
+        messages.add_message(
+            self.request, messages.SUCCESS, _("Beregningsparametrene blev opdateret")
+        )
+        return super().form_valid(form)
+
+
+class CalculationParametersGraph(BaseGetFormView):
+    form_class = CalculationParametersForm
+
+    def form_valid(self, form):
+        method = StandardWorkBenefitCalculationMethod()
+        for key, value in form.cleaned_data.items():
+            if hasattr(method, key):  # pragma: no branch
+                setattr(method, key, value)
+        return JsonResponse(
+            data={"points": method.graph_points}, encoder=SuilaJSONEncoder
+        )
+
+    def form_invalid(self, form):
+        return JsonResponse(data={"errors": form.errors.get_json_data()}, status=400)
