@@ -605,7 +605,7 @@ class CalculationParametersListView(
 
     @staticmethod
     def next_year():
-        return date.today().year + 1
+        return CalculationParametersListView.this_year() + 1
 
     @staticmethod
     def this_year():
