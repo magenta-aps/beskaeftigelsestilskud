@@ -15,6 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 from common.models import PageView, User
 from common.tests.test_mixins import TestViewMixin
+from common.utils import omit
 from common.view_mixins import ViewLogMixin
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -54,6 +55,8 @@ from suila.models import (
 )
 from suila.view_mixins import PermissionsRequiredMixin
 from suila.views import (
+    CalculationParametersGraph,
+    CalculationParametersListView,
     CalculatorView,
     CPRField,
     EboksMessageView,
@@ -1940,3 +1943,226 @@ class TestPersonTaxScopeHistoryView(TestViewMixin, PersonEnv):
         first_obj = object_list[-1]
         self.assertEqual(first_obj.history_date.strftime("%Y-%m-%d"), "2020-01-01")
         self.assertEqual(first_obj.tax_scope, TaxScope.FULDT_SKATTEPLIGTIG)
+
+
+class TestCalculationParametersListView(TestViewMixin, TestCase):
+
+    view_class = CalculationParametersListView
+    url = reverse("suila:calculation_parameters_list")
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.method1 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.year1 = Year.objects.create(year=2024, calculation_method=cls.method1)
+        cls.method2 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("60000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.year2 = Year.objects.create(year=2025, calculation_method=cls.method2)
+
+    def test_list_years(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(self.url)
+        items = response.context_data["object_list"]
+        self.assertQuerySetEqual(items, [self.year1, self.year2])
+        response.render()
+        soup = BeautifulSoup(response.content, "html.parser")
+        table_text = [
+            [cell.text.strip() for cell in row.find_all("td")]
+            for row in soup.find_all("tr")
+        ]
+        self.assertEqual(
+            table_text,
+            [
+                [],
+                [
+                    "2024",
+                    "17,500",
+                    "58000,00",
+                    "10000,00",
+                    "15750,00",
+                    "6,300",
+                    "250000,00",
+                    "Graf",
+                ],
+                [
+                    "2025",
+                    "17,500",
+                    "60000,00",
+                    "10000,00",
+                    "15750,00",
+                    "6,300",
+                    "250000,00",
+                    "Graf",
+                ],
+                ["2026", "", "", "", "", "", "", "Graf\nGem"],
+            ],
+        )
+
+    def test_create_method(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            self.url,
+            {
+                "benefit_rate_percent": 5,
+                "personal_allowance": "12000",
+                "standard_allowance": "9000",
+                "max_benefit": "17000",
+                "scaledown_rate_percent": "6.7",
+                "scaledown_ceiling": "300000",
+            },
+        )
+        year = Year.objects.get(year=2026)
+        method = year.calculation_method
+        self.assertEqual(method.benefit_rate_percent, 5)
+        self.assertEqual(method.personal_allowance, 12000)
+        self.assertEqual(method.standard_allowance, 9000)
+        self.assertEqual(method.max_benefit, 17000)
+        self.assertEqual(method.scaledown_rate_percent, Decimal("6.7"))
+        self.assertEqual(method.scaledown_ceiling, 300000)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], self.url)
+
+    def test_view_borger_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.normal_user, "")
+
+    def test_view_taxofficer_denied(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.staff_user, "")
+
+    def test_view_editor_access(self):
+        try:
+            self.request_get(self.editor_user, "")
+        except PermissionDenied:
+            self.fail("Should have access")
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
+    def test_view_existing(self):
+        method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("18"),
+            personal_allowance=Decimal("62000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("16000.00"),
+            scaledown_rate_percent=Decimal("6.5"),
+            scaledown_ceiling=Decimal("275000.00"),
+        )
+        Year.objects.create(year=date.today().year + 1, calculation_method=method)
+        self.client.force_login(self.admin_user)
+        response = self.client.get(self.url)
+        form = response.context_data["form"]
+        initial = form.initial
+        self.assertEqual(initial["id"], method.id)
+        self.assertEqual(initial["benefit_rate_percent"], Decimal("18"))
+        self.assertEqual(initial["personal_allowance"], Decimal("62000.00"))
+        self.assertEqual(initial["standard_allowance"], Decimal("10000"))
+        self.assertEqual(initial["max_benefit"], Decimal("16000"))
+        self.assertEqual(initial["scaledown_rate_percent"], Decimal("6.5"))
+        self.assertEqual(initial["scaledown_ceiling"], Decimal("275000.00"))
+
+    def test_update_existing(self):
+        method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("18"),
+            personal_allowance=Decimal("62000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("16000.00"),
+            scaledown_rate_percent=Decimal("6.5"),
+            scaledown_ceiling=Decimal("275000.00"),
+        )
+        Year.objects.create(year=date.today().year + 1, calculation_method=method)
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            self.url,
+            {
+                "id": method.id,
+                "benefit_rate_percent": 5,
+                "personal_allowance": "12000",
+                "standard_allowance": "9000",
+                "max_benefit": "17000",
+                "scaledown_rate_percent": "6.7",
+                "scaledown_ceiling": "300000",
+            },
+        )
+        method.refresh_from_db()
+        self.assertEqual(method.benefit_rate_percent, 5)
+        self.assertEqual(method.personal_allowance, 12000)
+        self.assertEqual(method.standard_allowance, 9000)
+        self.assertEqual(method.max_benefit, 17000)
+        self.assertEqual(method.scaledown_rate_percent, Decimal("6.7"))
+        self.assertEqual(method.scaledown_ceiling, 300000)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], self.url)
+
+
+class TestCalculationParametersGraph(TestViewMixin, TestCase):
+
+    view_class = CalculationParametersGraph
+    url = reverse("suila:calculation_parameters_graph")
+
+    def test_graph_points(self):
+        view, response = self.request_post(
+            self.admin_user,
+            "",
+            {
+                "benefit_rate_percent": "18",
+                "personal_allowance": "62000.00",
+                "standard_allowance": "10000",
+                "max_benefit": "16000.00",
+                "scaledown_rate_percent": "6.5",
+                "scaledown_ceiling": "275000.00",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "application/json")
+        self.assertJSONEqual(
+            response.content,
+            {
+                "points": [
+                    [0.0, 0.0],
+                    [72000.0, 0.0],
+                    [160888.89, 16000.0],
+                    [275000.0, 16000.0],
+                    [521153.85, 0.0],
+                ]
+            },
+        )
+
+    def test_invalid(self):
+        data = {
+            "benefit_rate_percent": "18",
+            "personal_allowance": "62000.00",
+            "standard_allowance": "10000",
+            "max_benefit": "16000.00",
+            "scaledown_rate_percent": "6.5",
+            "scaledown_ceiling": "275000.00",
+        }
+        for key in data:
+            view, response = self.request_post(self.admin_user, "", omit(data, key))
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.headers["Content-Type"], "application/json")
+            self.assertJSONEqual(
+                response.content,
+                {
+                    "errors": {
+                        key: [
+                            {"code": "required", "message": "Dette felt er påkrævet."}
+                        ]
+                    }
+                },
+            )

@@ -5,7 +5,7 @@ import copy
 import json
 import os
 from collections import Counter, defaultdict
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal
 from operator import itemgetter
 from stat import S_ISREG
@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 
 from common.models import EngineViewPreferences
 from common.utils import SuilaJSONEncoder
-from common.view_mixins import BaseGetFormView, GetFormView, ViewLogMixin
+from common.view_mixins import GetFormView, ViewLogMixin
 from data_analysis.forms import (
     CsvReportOptionsForm,
     HistogramOptionsForm,
@@ -23,20 +23,13 @@ from data_analysis.forms import (
     PersonYearListOptionsForm,
 )
 from django.conf import settings
-from django.contrib import messages
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
-from django.forms.models import model_to_dict
 from django.http import FileResponse, HttpResponse
-from django.http.response import (
-    HttpResponseForbidden,
-    HttpResponseNotFound,
-    JsonResponse,
-)
-from django.urls import reverse, reverse_lazy
+from django.http.response import HttpResponseForbidden, HttpResponseNotFound
+from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, View
 from django.views.generic.list import ListView
 from login.view_mixins import LoginRequiredMixin
@@ -44,7 +37,6 @@ from project.util import params_no_none, strtobool
 
 from suila.data import engine_keys
 from suila.estimation import EstimationEngine
-from suila.forms import CalculationParametersForm
 from suila.models import (
     IncomeType,
     JobLog,
@@ -53,7 +45,6 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
-    StandardWorkBenefitCalculationMethod,
     Year,
 )
 from suila.simulation import Simulation
@@ -582,93 +573,3 @@ class CsvFileReportDownloadView(LoginRequiredMixin, PermissionsRequiredMixin, Vi
                 open(fullpath, "rb"), as_attachment=True, filename=filename
             )
         return HttpResponseNotFound()
-
-
-class CalculationParametersListView(
-    LoginRequiredMixin, PermissionsRequiredMixin, ListView, FormView
-):
-    model = Year
-    template_name = "data_analysis/calculation_parameters_list.html"
-    form_class = CalculationParametersForm
-    success_url = reverse_lazy("data_analysis:calculation_parameters_list")
-    required_model_permissions = [
-        "suila.view_standardworkbenefitcalculationmethod",
-        "suila.add_standardworkbenefitcalculationmethod",
-        "suila.change_standardworkbenefitcalculationmethod",
-        "suila.view_year",
-        "suila.change_year",
-    ]
-
-    def post(self, request, *args, **kwargs):
-        self.object_list = self.get_queryset()
-        return super().post(request, *args, **kwargs)
-
-    @staticmethod
-    def next_year():
-        return CalculationParametersListView.this_year() + 1
-
-    @staticmethod
-    def this_year():
-        return date.today().year
-
-    def get_queryset(self):
-        return (
-            super().get_queryset().filter(year__lte=self.this_year()).order_by("year")
-        )
-
-    def get_initial(self):
-        year, _ = Year.objects.get_or_create(year=self.next_year())
-        method = year.calculation_method
-        if method is not None:
-            return model_to_dict(method)
-        return None
-
-    def get_context_data(self, **kwargs):
-        methods = set(
-            filter(None, [year.calculation_method for year in self.get_queryset()])
-        )
-        return super().get_context_data(
-            **{
-                **kwargs,
-                "graph_points": json.dumps(
-                    {method.pk: method.graph_points for method in methods},
-                    cls=SuilaJSONEncoder,
-                ),
-                "next_year": self.next_year(),
-            }
-        )
-
-    def form_valid(self, form):
-        year, year_created = Year.objects.get_or_create(year=self.next_year())
-        method = year.calculation_method
-        create = False
-        if method is None:
-            create = True
-            method = StandardWorkBenefitCalculationMethod()
-        for key, value in form.cleaned_data.items():
-            if hasattr(method, key):  # pragma: no branch
-                setattr(method, key, value)
-        method.save()
-        if create:
-            year.calculation_method = method
-            year.save()
-        messages.add_message(
-            self.request, messages.SUCCESS, _("Beregningsparametrene blev opdateret")
-        )
-        return super().form_valid(form)
-
-
-class CalculationParametersGraph(BaseGetFormView):
-    form_class = CalculationParametersForm
-
-    def form_valid(self, form):
-        method = StandardWorkBenefitCalculationMethod()
-        for key, value in form.cleaned_data.items():
-            if hasattr(method, key):  # pragma: no branch
-                setattr(method, key, value)
-        return JsonResponse(
-            data={"points": method.graph_points}, encoder=SuilaJSONEncoder
-        )
-
-    def form_invalid(self, form):
-        return JsonResponse(data={"errors": form.errors.get_json_data()}, status=400)

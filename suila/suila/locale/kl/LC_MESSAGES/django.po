@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-02 13:24-0100\n"
+"POT-Creation-Date: 2025-07-03 09:00-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -299,6 +299,10 @@ msgstr "Ukiumut Suila-tapisiassat naatsorsorneqarsimasut:"
 #: suila/templates/suila/calculate.html
 msgid "Indlæs"
 msgstr "Nuutsikkit/Aakkit"
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid "Beregningsparametre"
+msgstr ""
 
 #: suila/templates/suila/eboks/base.html
 msgid "e-Boks-besked"
@@ -1428,3 +1432,7 @@ msgstr "Ukiumut katillugit"
 #: suila/views.py
 msgid "Beløb"
 msgstr "Aningaasat"
+
+#: suila/views.py
+msgid "Beregningsparametrene blev opdateret"
+msgstr ""

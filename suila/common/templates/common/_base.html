@@ -202,7 +202,7 @@
 
                         {% if user.is_authenticated and user|has_permissions:"suila.change_standardworkbenefitcalculationmethod" %}
                             <li class="nav-item dropdown ms-4">
-                                <a href="{% url 'data_analysis:calculation_parameters_list' %}" class="d-flex align-items-center">
+                                <a href="{% url 'suila:calculation_parameters_list' %}" class="d-flex align-items-center">
                                     <span class="material-icons">show_chart</span>
                                     <span class="ms-1">{% translate "Beregningsparametre" %}</span>
                                 </a>
