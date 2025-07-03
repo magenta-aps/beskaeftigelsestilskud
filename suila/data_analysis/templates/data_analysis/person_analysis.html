@@ -9,7 +9,7 @@
 {% block content %}
 <h1>{{ person.name }}</h1>
 <div class="row">
-    <div class="col-4">
+    <div class="col-3">
         <table class="table">
             <tr>
                 <th class="col-4">CPR-nummer:</th>
@@ -21,13 +21,13 @@
             </tr>
         </table>
     </div>
-    <div class="col-8">
+    <div class="col-9">
         <table class="table">
             <tr>
                 <td class="col-1"></td>
                 <th class="col-1">Karantæne</th>
-                <th class="col-2">Karantæne grund</th>
-                <th class="col-2">Stabilitets-score (A)</th>
+                <th class="col-1">Karantæne grund</th>
+                <th class="col-1">Stabilitets-score (A)</th>
                 <th class="col-2">Estimeringsmotor (A)</th>
                 <th class="col-2">Estimeringsmotor (U)</th>
             </tr>
@@ -37,8 +37,12 @@
                 <td>{{ person_year.in_quarantine|yesno }}</td>
                 <td>{{ person_year.quarantine_reason }}</td>
                 <td>{{ person_year.stability_score_a|default_if_none:"-" }}</td>
-                <td>{{ person_year.preferred_estimation_engine_a }}</td>
-                <td>{{ person_year.preferred_estimation_engine_u }}</td>
+                <td>                    
+                    {% include "data_analysis/preferred_estimation_engine_form.html" with field_name="preferred_estimation_engine_a" url_name="data_analysis:set_personyear_estimation_engine_a" %}
+                </td>
+                <td>
+                    {% include "data_analysis/preferred_estimation_engine_form.html" with field_name="preferred_estimation_engine_u" url_name="data_analysis:set_personyear_estimation_engine_u" %}
+                </td>
             </tr>
             {% endfor %}
         </table>

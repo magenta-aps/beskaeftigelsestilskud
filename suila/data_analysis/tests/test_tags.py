@@ -1,9 +1,12 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from types import SimpleNamespace
+
 from data_analysis.templatetags.suila_tags import (
     concat,
     get,
+    get_attr,
     multiply,
     urlparams,
     yesno,
@@ -60,3 +63,7 @@ class TagsTest(TestCase):
     def test_yesno(self):
         self.assertEqual(yesno(True), _("Ja"))
         self.assertEqual(yesno(False), _("Nej"))
+
+    def test_get_attr(self):
+        person = SimpleNamespace(name="Christoffer")
+        self.assertEqual(get_attr(person, "name"), "Christoffer")
