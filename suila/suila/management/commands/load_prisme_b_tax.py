@@ -9,6 +9,17 @@ from suila.management.commands.common import SuilaBaseCommand
 class Command(SuilaBaseCommand):
     filename = __file__
 
+    def add_arguments(self, parser):
+        parser.add_argument("year", type=int)
+        parser.add_argument("month", type=int)
+        super().add_arguments(parser)
+
     def _handle(self, *args, **kwargs):
+
+        month = kwargs["month"]
+        year = kwargs["year"]
+
         b_tax_import: BTaxPaymentImport = BTaxPaymentImport()
-        b_tax_import.import_b_tax(self.stdout, verbosity=kwargs.get("verbosity", 0))
+        b_tax_import.import_b_tax(
+            year, month, self.stdout, verbosity=kwargs.get("verbosity", 0)
+        )

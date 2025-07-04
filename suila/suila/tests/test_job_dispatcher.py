@@ -279,6 +279,8 @@ class TestJobDispatcherCommands(TestCase):
                     ),
                     call(
                         ManagementCommands.LOAD_PRISME_B_TAX,
+                        test_date.year,
+                        test_date.month,
                         traceback=False,
                         reraise=False,
                     ),

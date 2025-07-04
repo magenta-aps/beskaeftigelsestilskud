@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import datetime
 import logging
 from dataclasses import dataclass
 from datetime import date
@@ -51,9 +52,15 @@ class BTaxPayment(CSVFormat):
 class BTaxPaymentImport(SFTPImport):
     """Import one or more B tax CSV files from Prisme SFTP"""
 
+    def get_timestamp(self, filename):
+        date_str = filename.split("_")[3]  # "05-06-2025"
+        return datetime.datetime.strptime(date_str, "%d-%m-%Y")
+
     @transaction.atomic()
     def import_b_tax(
         self,
+        year: int,
+        month: int,
         stdout: OutputWrapper,
         verbosity: int,
     ) -> list[BTaxPaymentModel]:
@@ -62,6 +69,15 @@ class BTaxPaymentImport(SFTPImport):
 
         if not new_filenames:
             raise FileNotFoundError("There are no new btax files")
+
+        relevant_file_found = False
+        for filename in new_filenames:
+            file_date = self.get_timestamp(filename)
+            if file_date.month == month and file_date.year == year:
+                relevant_file_found = True
+
+        if not relevant_file_found:
+            raise FileNotFoundError("There are no new btax files for this month")
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
