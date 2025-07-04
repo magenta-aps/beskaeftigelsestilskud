@@ -60,6 +60,9 @@ class BTaxPaymentImport(SFTPImport):
         new_filenames: set[str] = self.get_new_filenames()
         all_objs: list[BTaxPaymentModel] = []
 
+        if not new_filenames:
+            raise FileNotFoundError("There are no new btax files")
+
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
             rows: list[BTaxPayment] | None = self._parse(filename)

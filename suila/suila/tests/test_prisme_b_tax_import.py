@@ -6,6 +6,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from tenQ.client import ClientException
@@ -106,15 +107,16 @@ class TestBTaxPaymentImport(ImportTestCase):
             ],
         )
 
-    def test_import_b_tax_is_idempotent(self):
+    def test_import_b_tax_is_not_idempotent(self):
         with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
             # Act: import the same set of files twice
             self.import_b_tax(MagicMock(), 1)
-            self.import_b_tax(MagicMock(), 1)
+            with self.assertRaises(CommandError):
+                self.import_b_tax(MagicMock(), 1)
 
     def test_import_b_tax_handles_failing_file_load(self):
         instance = BTaxPaymentImport()
-        with self.mock_sftp_server():
+        with self.mock_sftp_server(_EXAMPLE_1):
             with patch.object(instance, "_parse", return_value=None):
                 self.import_b_tax(MagicMock(), 1)
 
