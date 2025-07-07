@@ -1,4 +1,4 @@
-{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
 {# SPDX-License-Identifier: MPL-2.0 #}
 
 {% extends "data_analysis/base.html" %}
@@ -104,46 +104,32 @@
             <thead class="shadow-sm p-3 mb-5 bg-body rounded sticky-top">
             <tr>
                 <th>
-                    Skatteår
+                    {% translate 'Skatteår' %}
                 </th>
                 <th>
                     {{ form.benefit_rate_percent.label }}
                 </th>
                 <th>
-                    Personfradrag
+                    {{ form.personal_allowance.label }}
                 </th>
                 <th>
-                    Standardfradrag
+                    {{ form.standard_allowance.label }}
                 </th>
                 <th>
-                     Maksimalt Suila-tapit
+                    {{ form.max_benefit.label }}
                 </th>
                 <th>
-                    Aftrapningsprocent
+                    {{ form.scaledown_rate_percent.label }}
                 </th>
                 <th>
-                    Aftrapningsbeløb
+                    {{ form.scaledown_ceiling.label }}
                 </th>
                 <th>
-                    Handlinger
+                    {% translate 'Handlinger' %}
                 </th>
             </tr>
             </thead>
             <tbody>
-            {% for year in object_list %}
-                {% with calculation_method=year.calculation_method %}
-                <tr>
-                    <td>{{ year.year }}</td>
-                    <td>{{ calculation_method.benefit_rate_percent }}</td>
-                    <td>{{ calculation_method.personal_allowance }}</td>
-                    <td>{{ calculation_method.standard_allowance }}</td>
-                    <td>{{ calculation_method.max_benefit }}</td>
-                    <td>{{ calculation_method.scaledown_rate_percent }}</td>
-                    <td>{{ calculation_method.scaledown_ceiling }}</td>
-                    <td><button type="button" class="btn btn-primary" data-action="graph" data-method-id="{{ calculation_method.pk }}">Graf</button></td>
-                </tr>
-                {% endwith %}
-            {% endfor %}
             <tr>
                 <td>
                     {{ next_year }}
@@ -168,73 +154,42 @@
                 </td>
                 <td>
                     <div class="col-12 btn-group">
-                        <button type="button" class="btn btn-primary" data-action="graph" data-form="#calculation-parameters" data-url="{% url 'suila:calculation_parameters_graph' %}">Graf</button>
-                        <button type="submit" class="btn btn-success">Gem</button>
+                        <button type="button" class="btn btn-primary" data-action="graph" data-form="#calculation-parameters" data-url="{% url 'suila:calculation_parameters_graph' %}">
+                            {% translate 'Graf' %}
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            {% translate 'Gem' %}
+                        </button>
                     </div>
                 </td>
             </tr>
+            {% for year in object_list %}
+                {% with calculation_method=year.calculation_method %}
+                <tr>
+                    <td>{{ year.year }}</td>
+                    <td>{{ calculation_method.benefit_rate_percent }}</td>
+                    <td>{{ calculation_method.personal_allowance }}</td>
+                    <td>{{ calculation_method.standard_allowance }}</td>
+                    <td>{{ calculation_method.max_benefit }}</td>
+                    <td>{{ calculation_method.scaledown_rate_percent }}</td>
+                    <td>{{ calculation_method.scaledown_ceiling }}</td>
+                    <td>
+                        <button type="button" class="btn btn-primary" data-action="graph" data-method-id="{{ calculation_method.pk }}">
+                            {% translate 'Graf' %}
+                        </button>
+                    </td>
+                </tr>
+                {% endwith %}
+            {% endfor %}
             </tbody>
         </table>
-
-    {{ form.errors }}
-{#        <div id="engine_parameters">#}
-{#                <div class="row align-items-center my-1">#}
-{#                    <div class="col-md-6">#}
-{#                        <label for="{{ form.benefit_rate_percent.name }}">{{ form.benefit_rate_percent.label }}</label>#}
-{#                    </div>#}
-{#                    <div class="col-md-6">#}
-{#                        {{ form.benefit_rate_percent }}#}
-{#                    </div>#}
-{#                </div>#}
-{#                <div class="row align-items-center my-1">#}
-{#                    <div class="col-md-6">#}
-{#                        <label for="{{ form.personal_allowance.name }}">{{ form.personal_allowance.label }}</label>#}
-{#                    </div>#}
-{#                    <div class="col-md-6">#}
-{#                        {{ form.personal_allowance }}#}
-{#                    </div>#}
-{#                </div>#}
-{#                <div class="row align-items-center my-1">#}
-{#                    <div class="col-md-6">#}
-{#                        <label for="{{ form.standard_allowance.name }}">{{ form.standard_allowance.label }}</label>#}
-{#                    </div>#}
-{#                    <div class="col-md-6">#}
-{#                        {{ form.standard_allowance }}#}
-{#                    </div>#}
-{#                </div>#}
-{#                <div class="row align-items-center my-1">#}
-{#                    <div class="col-md-6">#}
-{#                        <label for="{{ form.max_benefit.name }}">{{ form.max_benefit.label }}</label>#}
-{#                    </div>#}
-{#                    <div class="col-md-6">#}
-{#                        {{ form.max_benefit }}#}
-{#                    </div>#}
-{#                </div>#}
-{#                <div class="row align-items-center my-1">#}
-{#                    <div class="col-md-6">#}
-{#                        <label for="{{ form.scaledown_rate_percent.name }}">{{ form.scaledown_rate_percent.label }}</label>#}
-{#                    </div>#}
-{#                    <div class="col-md-6">#}
-{#                        {{ form.scaledown_rate_percent }}#}
-{#                    </div>#}
-{#                </div>#}
-{#                <div class="row align-items-center my-1">#}
-{#                    <div class="col-md-6">#}
-{#                        <label for="{{ form.scaledown_ceiling.name }}">{{ form.scaledown_ceiling.label }}</label>#}
-{#                    </div>#}
-{#                    <div class="col-md-6">#}
-{#                        {{ form.scaledown_ceiling }}#}
-{#                    </div>#}
-{#                </div>#}
-
-{#                <button type="submit" class="btn btn-success">Gem</button>#}
-
-        </div>
     </div>
     <div id="modal-graph" class="modal fade" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Beregningsgraf</h5></div>
+                <div class="modal-header">
+                    <h5 class="modal-title">{% translate 'Beregningsgraf' %}</h5>
+                </div>
                 <div class="modal-body">
                     <div id="modal-graph-container"></div>
                 </div>

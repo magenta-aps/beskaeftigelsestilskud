@@ -57,6 +57,7 @@ class CalculationParametersForm(BootstrapForm):
         decimal_places=3,
         required=True,
         localize=True,
+        label=_("Procentsats for Suila-tapit"),
     )
     personal_allowance = DecimalField(
         max_digits=12,

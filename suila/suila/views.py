@@ -1236,7 +1236,7 @@ class CalculationParametersListView(
 
     def get_queryset(self):
         return (
-            super().get_queryset().filter(year__lte=self.this_year()).order_by("year")
+            super().get_queryset().filter(year__lte=self.this_year()).order_by("-year")
         )
 
     def get_initial(self):

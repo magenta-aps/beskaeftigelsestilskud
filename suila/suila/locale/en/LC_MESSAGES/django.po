@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-03 09:00-0100\n"
+"POT-Creation-Date: 2025-07-07 11:50-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: suila/forms.py suila/models.py
+msgid "Procentsats for Suila-tapit"
+msgstr ""
 
 #: suila/forms.py suila/models.py
 msgid "Personfradrag"
@@ -55,10 +59,6 @@ msgstr "Select a valid option. %(value)s is not one of the available options."
 #: suila/forms.py
 msgid "Alle"
 msgstr "All"
-
-#: suila/models.py
-msgid "Procentsats for Suila-tapit"
-msgstr ""
 
 #: suila/models.py
 msgid ""
@@ -298,6 +298,26 @@ msgstr "Load"
 
 #: suila/templates/suila/calculation_parameters_list.html
 msgid "Beregningsparametre"
+msgstr ""
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid "Skatteår"
+msgstr ""
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid "Handlinger"
+msgstr ""
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid "Graf"
+msgstr ""
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid "Gem"
+msgstr ""
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid "Beregningsgraf"
 msgstr ""
 
 #: suila/templates/suila/eboks/base.html
