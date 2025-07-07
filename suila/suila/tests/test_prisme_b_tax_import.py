@@ -1,11 +1,13 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import traceback
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from tenQ.client import ClientException
@@ -33,12 +35,25 @@ class TestBTaxPayment(SimpleTestCase):
         self.assertEqual(obj.rate_number, 4)
 
 
+def extract_traceback(cm):
+    return "".join(
+        traceback.format_exception(
+            type(cm.exception), cm.exception, cm.exception.__traceback__
+        )
+    )
+
+
 class TestBTaxPaymentImport(ImportTestCase):
     maxDiff = None
 
-    def import_b_tax(self, stdout, verbosity):
+    def import_b_tax(self, stdout, verbosity, year=2025, month=7, force=False):
         call_command(
-            ManagementCommands.LOAD_PRISME_B_TAX, stdout=stdout, verbosity=verbosity
+            ManagementCommands.LOAD_PRISME_B_TAX,
+            year,
+            month,
+            stdout=stdout,
+            verbosity=verbosity,
+            force=force,
         )
         return BTaxPaymentModel.objects.all()
 
@@ -106,15 +121,48 @@ class TestBTaxPaymentImport(ImportTestCase):
             ],
         )
 
-    def test_import_b_tax_is_idempotent(self):
-        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
+    def test_import_b_tax_fails_if_no_relevant_files(self):
+        with self.mock_sftp_server(
+            _EXAMPLE_1,
+            _EXAMPLE_2,
+            _EXAMPLE_3,
+        ):
+            with self.assertRaises(CommandError) as cm:
+                # All example files are from july.
+                # So when running with month=8 there are no relevant files
+                self.import_b_tax(MagicMock(), 1, month=8)
+
+            # Assert the message is in the traceback
+            self.assertIn(
+                "FileNotFoundError: There are no btax files for this month",
+                extract_traceback(cm),
+            )
+            self.assertEqual(BTaxPaymentModel.objects.all().count(), 0)
+
+            # If we want, we can force-import old files:
+            self.import_b_tax(MagicMock(), 1, month=8, force=True)
+            self.assertEqual(BTaxPaymentModel.objects.all().count(), 3)
+
+    def test_import_b_tax_is_not_idempotent(self):
+        with self.mock_sftp_server(
+            _EXAMPLE_1,
+            _EXAMPLE_2,
+            _EXAMPLE_3,
+        ):
             # Act: import the same set of files twice
             self.import_b_tax(MagicMock(), 1)
-            self.import_b_tax(MagicMock(), 1)
+            with self.assertRaises(CommandError) as cm:
+                self.import_b_tax(MagicMock(), 1)
+
+            # Assert the message is in the traceback
+            self.assertIn(
+                "FileNotFoundError: There are no new btax files",
+                extract_traceback(cm),
+            )
 
     def test_import_b_tax_handles_failing_file_load(self):
         instance = BTaxPaymentImport()
-        with self.mock_sftp_server():
+        with self.mock_sftp_server(_EXAMPLE_1):
             with patch.object(instance, "_parse", return_value=None):
                 self.import_b_tax(MagicMock(), 1)
 

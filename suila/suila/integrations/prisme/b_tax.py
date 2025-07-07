@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from io import BytesIO
 
+from common.utils import get_b_tax_file_timestamp
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import OutputWrapper
@@ -54,11 +55,31 @@ class BTaxPaymentImport(SFTPImport):
     @transaction.atomic()
     def import_b_tax(
         self,
+        year: int,
+        month: int,
         stdout: OutputWrapper,
         verbosity: int,
+        force=False,
     ) -> list[BTaxPaymentModel]:
-        new_filenames: set[str] = self.get_new_filenames()
+        new_filenames: list[str] = [
+            f
+            for f in self.get_new_filenames()
+            if (f.endswith(".csv") and f.startswith("BSKAT"))
+        ]
         all_objs: list[BTaxPaymentModel] = []
+
+        if not new_filenames:
+            raise FileNotFoundError("There are no new btax files")
+
+        # Check if there are files which match the year/month we are in.
+        relevant_file_found = any(
+            (file_date := get_b_tax_file_timestamp(filename)).month == month
+            and file_date.year == year
+            for filename in new_filenames
+        )
+
+        if not relevant_file_found and not force:
+            raise FileNotFoundError("There are no btax files for this month")
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")

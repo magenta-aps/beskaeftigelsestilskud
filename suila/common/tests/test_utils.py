@@ -13,6 +13,7 @@ from common.utils import (
     calculate_stability_score,
     calculate_stability_score_for_entire_year,
     camelcase_to_snakecase,
+    get_b_tax_file_timestamp,
     get_income_as_dataframe,
     get_people_in_quarantine,
     map_between_zero_and_one,
@@ -412,3 +413,11 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
             self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
             self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
             self.assertNotIn("Du tjente for tæt på øverste grænse i 2023", soup)
+
+
+class BTaxUtilsTest(TestCase):
+    def test_get_b_tax_file_timestamp(self):
+        timestamp = get_b_tax_file_timestamp("BSKAT_2025_207025_09-05-2025_093200.csv")
+        self.assertEqual(timestamp.year, 2025)
+        self.assertEqual(timestamp.month, 5)
+        self.assertEqual(timestamp.day, 9)
