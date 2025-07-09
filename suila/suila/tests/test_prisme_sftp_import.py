@@ -12,7 +12,7 @@ class SampleSFTPImport(SFTPImport):
         return "sample"
 
     def get_known_filenames(self) -> set[str]:
-        return {"BSKAT1_2025_207025_04-07-2025_072506.csv"}
+        return {"filename1.csv"}
 
 
 class TestSFTPImport(ImportTestCase):
@@ -27,10 +27,8 @@ class TestSFTPImport(ImportTestCase):
             # Act
             result: set[str] = self.instance.get_new_filenames()
             # Assert: the new filenames are `filename2.csv` and `filename3.csv`, as
-            # `SampleSFTPImport.get_known_filenames` returns `BSKAT1(...).csv`.
-            self.assertEqual(
-                result, {f"BSKAT{i}_2025_207025_04-07-2025_072506.csv" for i in (2, 3)}
-            )
+            # `SampleSFTPImport.get_known_filenames` returns `{"filename1.csv"}`.
+            self.assertEqual(result, {f"filename{i}.csv" for i in (2, 3)})
 
     def test_get_file(self):
         with self.mock_sftp_server("1"):

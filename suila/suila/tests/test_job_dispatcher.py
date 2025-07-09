@@ -459,6 +459,9 @@ class TestJobDispatcherCommands(TestCase):
                     day=day,
                 )
             except CommandError:
+                # We expect a CommandError only if there are no new b-tax files.
+                # We ignore it because we are interested in the calls made to
+                # mock_call_command. Not in the error itself.
                 pass
             calls = [c.args[0] for c in mock_call_command.call_args_list]
             return calls

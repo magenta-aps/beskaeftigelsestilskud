@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import dataclasses
-import datetime
 import re
 from decimal import Decimal
 from typing import Any, Collection, Dict, Iterable, TypeVar
@@ -492,25 +491,3 @@ def get_user_who_pressed_pause(person: Person) -> str | None:
                 user_who_pressed_pause = "skattestyrelsen"
             break
     return user_who_pressed_pause
-
-
-def get_b_tax_file_timestamp(filename: str) -> datetime.datetime:
-    """
-    Returns the timestamp of a btax-file. Example btax filenames are:
-        - BSKAT_2022_207022_27-01-2025_120035.csv
-        - BSKAT_2025_207025_04-04-2025_123221.csv
-        - BSKAT_2025_207025_04-04-2025_150240.csv
-        - BSKAT_2025_207025_04-06-2025_084620.csv
-        - BSKAT_2025_207025_04-06-2025_085736.csv
-        - BSKAT_2025_207025_04-06-2025_085947.csv
-        - BSKAT_2025_207025_04-07-2025_070613.csv
-        - BSKAT_2025_207025_04-07-2025_071049.csv
-        - BSKAT_2025_207025_04-07-2025_071421.csv
-        - BSKAT_2025_207025_04-07-2025_071604.csv
-        - BSKAT_2025_207025_04-07-2025_072506.csv
-        - BSKAT_2025_207025_05-06-2025_100100.csv
-        - BSKAT_2025_207025_09-05-2025_082451.csv
-        - BSKAT_2025_207025_09-05-2025_082854.csv
-        - BSKAT_2025_207025_09-05-2025_093200.csv
-    """
-    return datetime.datetime.strptime(filename.split("_")[3], "%d-%m-%Y")

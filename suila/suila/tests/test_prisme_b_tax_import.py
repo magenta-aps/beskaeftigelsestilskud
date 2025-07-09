@@ -17,14 +17,23 @@ from suila.models import BTaxPayment as BTaxPaymentModel
 from suila.models import ManagementCommands, PersonMonth
 from suila.tests.helpers import ImportTestCase
 
-_EXAMPLE_1 = "BTAX;3112700000;;2021;-3439;2000004544;3439;2021/04/20;004"
-_EXAMPLE_2 = "BTAX;3112710000;;2021;-3439;2000004544;3439;2021/04/20;004"
-_EXAMPLE_3 = "BTAX;3112720000;;2021;0;2000004544;3439;2021/04/20;004"
+_EXAMPLE_1 = (
+    "BSKAT1_2025_207025_04-07-2025_072506.csv",
+    "BTAX;3112700000;;2021;-3439;2000004544;3439;2021/04/20;004",
+)
+_EXAMPLE_2 = (
+    "BSKAT2_2025_207025_04-07-2025_072506.csv",
+    "BTAX;3112710000;;2021;-3439;2000004544;3439;2021/04/20;004",
+)
+_EXAMPLE_3 = (
+    "BSKAT3_2025_207025_04-07-2025_072506.csv",
+    "BTAX;3112720000;;2021;0;2000004544;3439;2021/04/20;004",
+)
 
 
 class TestBTaxPayment(SimpleTestCase):
     def test_from_csv_row(self):
-        obj = BTaxPayment.from_csv_row(_EXAMPLE_1.split(";"))
+        obj = BTaxPayment.from_csv_row(_EXAMPLE_1[1].split(";"))
         self.assertEqual(obj.type, "BTAX")
         self.assertEqual(obj.cpr, "3112700000")
         self.assertEqual(obj.tax_year, 2021)
@@ -64,7 +73,7 @@ class TestBTaxPaymentImport(ImportTestCase):
 
     def test_import_b_tax(self):
         # Arrange
-        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
+        with self.mock_sftp_server_folder(_EXAMPLE_1, _EXAMPLE_2, _EXAMPLE_3):
             # Act
             objs: list[BTaxPaymentModel] = self.import_b_tax(MagicMock(), 1)
         # Assert: a `BTaxPayment` object is created for:
@@ -122,7 +131,7 @@ class TestBTaxPaymentImport(ImportTestCase):
         )
 
     def test_import_b_tax_fails_if_no_relevant_files(self):
-        with self.mock_sftp_server(
+        with self.mock_sftp_server_folder(
             _EXAMPLE_1,
             _EXAMPLE_2,
             _EXAMPLE_3,
@@ -134,7 +143,7 @@ class TestBTaxPaymentImport(ImportTestCase):
 
             # Assert the message is in the traceback
             self.assertIn(
-                "FileNotFoundError: There are no btax files for this month",
+                "BTaxFilesNotFound: There are no btax files for month=8",
                 extract_traceback(cm),
             )
             self.assertEqual(BTaxPaymentModel.objects.all().count(), 0)
@@ -144,7 +153,7 @@ class TestBTaxPaymentImport(ImportTestCase):
             self.assertEqual(BTaxPaymentModel.objects.all().count(), 3)
 
     def test_import_b_tax_is_not_idempotent(self):
-        with self.mock_sftp_server(
+        with self.mock_sftp_server_folder(
             _EXAMPLE_1,
             _EXAMPLE_2,
             _EXAMPLE_3,
@@ -156,20 +165,20 @@ class TestBTaxPaymentImport(ImportTestCase):
 
             # Assert the message is in the traceback
             self.assertIn(
-                "FileNotFoundError: There are no new btax files",
+                "BTaxFilesNotFound: There are no new btax files",
                 extract_traceback(cm),
             )
 
     def test_import_b_tax_handles_failing_file_load(self):
         instance = BTaxPaymentImport()
-        with self.mock_sftp_server(_EXAMPLE_1):
+        with self.mock_sftp_server_folder(_EXAMPLE_1):
             with patch.object(instance, "_parse", return_value=None):
                 self.import_b_tax(MagicMock(), 1)
 
     def test_import_b_tax_verbosity_2(self):
         # Arrange
         stdout = MagicMock()
-        with self.mock_sftp_server(_EXAMPLE_1, _EXAMPLE_2):
+        with self.mock_sftp_server_folder(_EXAMPLE_1, _EXAMPLE_2):
             # Act
             self.import_b_tax(stdout, 2)
         # Assert
@@ -185,7 +194,7 @@ class TestBTaxPaymentImport(ImportTestCase):
     def test_parse(self):
         # Arrange
         instance = BTaxPaymentImport()
-        with self.mock_sftp_server(_EXAMPLE_1):
+        with self.mock_sftp_server_folder(_EXAMPLE_1):
             # Act
             result: list[BTaxPayment] | None = instance._parse("filename1.csv")
             # Assert
@@ -195,7 +204,7 @@ class TestBTaxPaymentImport(ImportTestCase):
     def test_parse_handles_client_exception(self):
         # Arrange
         instance = BTaxPaymentImport()
-        with self.mock_sftp_server(_EXAMPLE_1):
+        with self.mock_sftp_server_folder(_EXAMPLE_1):
             with patch.object(instance, "get_file", side_effect=ClientException):
                 # Act
                 result: list[BTaxPayment] | None = instance._parse("filename1.csv")

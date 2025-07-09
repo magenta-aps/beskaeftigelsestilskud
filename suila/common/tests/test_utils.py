@@ -13,7 +13,6 @@ from common.utils import (
     calculate_stability_score,
     calculate_stability_score_for_entire_year,
     camelcase_to_snakecase,
-    get_b_tax_file_timestamp,
     get_income_as_dataframe,
     get_people_in_quarantine,
     map_between_zero_and_one,
@@ -24,6 +23,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.timezone import get_current_timezone
 
+from suila.integrations.prisme.b_tax import get_b_tax_file_timestamp
 from suila.models import (
     Employer,
     IncomeEstimate,

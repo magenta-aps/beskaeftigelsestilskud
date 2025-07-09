@@ -44,10 +44,7 @@ class ImportTestCase(TestCase):
             "suila.integrations.prisme.sftp_import.list_prisme_folder",
             # This causes N calls to `get_file_in_prisme_folder` to be made, where N is
             # the length of `files`.
-            return_value=[
-                f"BSKAT{i}_2025_207025_04-07-2025_072506.csv"
-                for i, _ in enumerate(files, start=1)
-            ],
+            return_value=[f"filename{i}.csv" for i, _ in enumerate(files, start=1)],
         ):
             with patch(
                 "suila.integrations.prisme.sftp_import.get_file_in_prisme_folder",

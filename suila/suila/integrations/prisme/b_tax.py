@@ -1,24 +1,47 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import datetime
 import logging
 from dataclasses import dataclass
 from datetime import date
 from io import BytesIO
 
-from common.utils import get_b_tax_file_timestamp
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import OutputWrapper
 from django.db import transaction
 from tenQ.client import ClientException
 
+from suila.exceptions import BTaxFilesNotFound
 from suila.integrations.prisme.csv_format import CSVFormat
 from suila.integrations.prisme.sftp_import import SFTPImport
 from suila.models import BTaxPayment as BTaxPaymentModel
 from suila.models import DataLoad, Person, PersonMonth, PersonYear, Year
 
 logger = logging.getLogger(__name__)
+
+
+def get_b_tax_file_timestamp(filename: str) -> datetime.datetime:
+    """
+    Returns the timestamp of a btax-file. Example btax filenames are:
+        - BSKAT_2022_207022_27-01-2025_120035.csv
+        - BSKAT_2025_207025_04-04-2025_123221.csv
+        - BSKAT_2025_207025_04-04-2025_150240.csv
+        - BSKAT_2025_207025_04-06-2025_084620.csv
+        - BSKAT_2025_207025_04-06-2025_085736.csv
+        - BSKAT_2025_207025_04-06-2025_085947.csv
+        - BSKAT_2025_207025_04-07-2025_070613.csv
+        - BSKAT_2025_207025_04-07-2025_071049.csv
+        - BSKAT_2025_207025_04-07-2025_071421.csv
+        - BSKAT_2025_207025_04-07-2025_071604.csv
+        - BSKAT_2025_207025_04-07-2025_072506.csv
+        - BSKAT_2025_207025_05-06-2025_100100.csv
+        - BSKAT_2025_207025_09-05-2025_082451.csv
+        - BSKAT_2025_207025_09-05-2025_082854.csv
+        - BSKAT_2025_207025_09-05-2025_093200.csv
+    """
+    return datetime.datetime.strptime(filename.split("_")[3], "%d-%m-%Y")
 
 
 @dataclass(frozen=True)
@@ -69,7 +92,7 @@ class BTaxPaymentImport(SFTPImport):
         all_objs: list[BTaxPaymentModel] = []
 
         if not new_filenames:
-            raise FileNotFoundError("There are no new btax files")
+            raise BTaxFilesNotFound()
 
         # Check if there are files which match the year/month we are in.
         relevant_file_found = any(
@@ -79,7 +102,7 @@ class BTaxPaymentImport(SFTPImport):
         )
 
         if not relevant_file_found and not force:
-            raise FileNotFoundError("There are no btax files for this month")
+            raise BTaxFilesNotFound(month=month)
 
         for filename in new_filenames:
             stdout.write(f"Loading new file: {filename}\n")
