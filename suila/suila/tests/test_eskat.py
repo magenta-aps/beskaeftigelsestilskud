@@ -864,7 +864,7 @@ class TestTaxInformation(BaseTestCase):
             "district_name": "",
         },
         {
-            "cpr": "0000005678",
+            "cpr": 5678,
             "year": 2024,
             "tax_scope": "LIM",
             "start_date": "2024-11-01T12:39:16.986Z",

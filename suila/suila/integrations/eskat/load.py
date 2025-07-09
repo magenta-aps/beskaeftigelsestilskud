@@ -157,7 +157,11 @@ class Handler:
     def sanitize_api_dict(dataclass, data: Dict[str, str | int | bool | float]):
         data_dict = camelcase_to_snakecase(data)
         valid_keys = {field.name for field in dataclass.__dataclass_fields__.values()}
-        return {k: v for k, v in data_dict.items() if k in valid_keys}
+        return {
+            k: str(v).zfill(10) if k == "cpr" else v
+            for k, v in data_dict.items()
+            if k in valid_keys
+        }
 
     @classmethod
     def finalize(cls):
