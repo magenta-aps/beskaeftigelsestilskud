@@ -57,7 +57,7 @@ class CalculationParametersForm(BootstrapForm):
         decimal_places=3,
         required=True,
         localize=True,
-        label=_("Procentsats for Suila-tapit"),
+        label=_("Beskæftigelsesfradrag stigningssats frem til loft"),
     )
     personal_allowance = DecimalField(
         max_digits=12,
@@ -81,6 +81,7 @@ class CalculationParametersForm(BootstrapForm):
         decimal_places=2,
         required=True,
         localize=True,
+        label=_("Maksimalt Suila-tapit/år"),
     )
     scaledown_rate_percent = DecimalField(
         max_digits=5,
@@ -88,7 +89,7 @@ class CalculationParametersForm(BootstrapForm):
         decimal_places=3,
         required=True,
         localize=True,
-        label=_("Aftrapningsrate"),
+        label=_("Aftrapningsprocent efter aftrapningsstart"),
     )
     scaledown_ceiling = DecimalField(
         max_digits=12,
@@ -96,7 +97,7 @@ class CalculationParametersForm(BootstrapForm):
         decimal_places=2,
         required=True,
         localize=True,
-        label=_("Aftrapningsloft"),
+        label=_("Beløb - aftrapningsstart"),
     )
 
 

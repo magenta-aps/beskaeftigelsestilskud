@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-07 11:50-0100\n"
+"POT-Creation-Date: 2025-07-10 05:10-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,8 +16,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: suila/forms.py suila/models.py
-msgid "Procentsats for Suila-tapit"
+#: suila/forms.py
+msgid "Beskæftigelsesfradrag stigningssats frem til loft"
 msgstr ""
 
 #: suila/forms.py suila/models.py
@@ -29,11 +29,15 @@ msgid "Standardfradrag"
 msgstr ""
 
 #: suila/forms.py
-msgid "Aftrapningsrate"
+msgid "Maksimalt Suila-tapit/år"
 msgstr ""
 
 #: suila/forms.py
-msgid "Aftrapningsloft"
+msgid "Aftrapningsprocent efter aftrapningsstart"
+msgstr ""
+
+#: suila/forms.py
+msgid "Beløb - aftrapningsstart"
 msgstr ""
 
 #: suila/forms.py
@@ -57,6 +61,10 @@ msgstr ""
 
 #: suila/forms.py
 msgid "Alle"
+msgstr ""
+
+#: suila/models.py
+msgid "Procentsats for Suila-tapit"
 msgstr ""
 
 #: suila/models.py
@@ -281,6 +289,20 @@ msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
 msgid "Beregningsparametre"
+msgstr ""
+
+#: suila/templates/suila/calculation_parameters_list.html
+msgid ""
+"Der kan tilføjes og ændres værdier for det efterfølgende år til og med 31/12 "
+"i indeværende år."
+msgstr ""
+
+#: suila/templates/suila/calculation_parameters_list.html
+#, python-format
+msgid ""
+"d. 1/1 låses værdierne, og et nyt felt for det efterfølgende år bliver "
+"tilgængeligt. Fx 1/1/%(year1)s er det ikke længere muligt at ændre værdierne "
+"for %(year1)s og det bliver muligt at tilføje værdier for %(year2)s."
 msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
