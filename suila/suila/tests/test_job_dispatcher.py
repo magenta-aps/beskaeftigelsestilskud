@@ -9,6 +9,7 @@ from io import StringIO
 from unittest.mock import MagicMock, call, patch
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -278,6 +279,8 @@ class TestJobDispatcherCommands(TestCase):
                     ),
                     call(
                         ManagementCommands.LOAD_PRISME_B_TAX,
+                        test_date.year,
+                        test_date.month,
                         traceback=False,
                         reraise=False,
                     ),
@@ -416,6 +419,73 @@ class TestJobDispatcherCommands(TestCase):
             calculate_benefit_for_single_cpr=True,
         )
         self.assertIn(ManagementCommands.CALCULATE_BENEFIT, calls)
+
+    @patch("suila.dispatch.timezone.now")
+    @patch("suila.dispatch.management.call_command")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_that_job_dispatcher_stops_if_there_are_no_new_btax_files(
+        self,
+        mock_call_command: MagicMock,
+        mock_timezone_now: MagicMock,
+    ):
+        calculation_date = get_calculation_date(2025, 7)
+
+        def mock_call_command_btax(command_name, *args, **options):
+            if (
+                timezone.now().day <= calculation_date.day
+                and command_name == ManagementCommands.LOAD_PRISME_B_TAX
+            ):
+                # Simulate that there are no btax files on the calculation date
+                raise FileNotFoundError("No Btax files!")
+            else:
+                # But the next day, there are files
+                return _mock_call_command(command_name, *args, **options)
+
+        def run_dispatcher(day):
+            mock_call_command.reset_mock()
+            mock_timezone_now.return_value = timezone.datetime(
+                calculation_date.year,
+                calculation_date.month,
+                day,
+                2,
+                0,
+                0,
+            )
+            try:
+                call_command(
+                    self.command,
+                    year=calculation_date.year,
+                    month=calculation_date.month,
+                    day=day,
+                )
+            except CommandError:
+                # We expect a CommandError only if there are no new b-tax files.
+                # We ignore it because we are interested in the calls made to
+                # mock_call_command. Not in the error itself.
+                pass
+            calls = [c.args[0] for c in mock_call_command.call_args_list]
+            return calls
+
+        # Mocking
+        mock_call_command.side_effect = mock_call_command_btax
+
+        # Validate that we do not calculate / estimate when the btax command fails
+        calls = run_dispatcher(calculation_date.day)
+        self.assertNotIn(ManagementCommands.CALCULATE_BENEFIT, calls)
+        self.assertNotIn(ManagementCommands.ESTIMATE_INCOME, calls)
+
+        # Validate that we do calculate / estimate the next day
+        # (when the proper files have appeared)
+        calls = run_dispatcher(calculation_date.day + 1)
+        self.assertIn(ManagementCommands.CALCULATE_BENEFIT, calls)
+        self.assertIn(ManagementCommands.ESTIMATE_INCOME, calls)
+
+        # Validate that we do not run the Btax command the next-next day
+        # (we already ran it this month)
+        calls = run_dispatcher(calculation_date.day + 2)
+        self.assertNotIn(ManagementCommands.LOAD_PRISME_B_TAX, calls)
+        self.assertNotIn(ManagementCommands.CALCULATE_BENEFIT, calls)
+        self.assertNotIn(ManagementCommands.ESTIMATE_INCOME, calls)
 
     # Helper methods
     def _call_job_dispatcher_on_date(

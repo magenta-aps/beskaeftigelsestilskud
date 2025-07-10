@@ -116,7 +116,7 @@ class Command(SuilaBaseCommand):
                 )
 
         # Load Prisme b-tax data
-        job_dispatcher.call_job(ManagementCommands.LOAD_PRISME_B_TAX)
+        job_dispatcher.call_job(ManagementCommands.LOAD_PRISME_B_TAX, year, month)
 
         # Load U1A/udbytte data from AKAP
         job_dispatcher.call_job(
