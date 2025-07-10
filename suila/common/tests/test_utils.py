@@ -23,6 +23,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.timezone import get_current_timezone
 
+from suila.integrations.prisme.b_tax import get_b_tax_file_timestamp
 from suila.models import (
     Employer,
     IncomeEstimate,
@@ -412,3 +413,11 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
             self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
             self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
             self.assertNotIn("Du tjente for tæt på øverste grænse i 2023", soup)
+
+
+class BTaxUtilsTest(TestCase):
+    def test_get_b_tax_file_timestamp(self):
+        timestamp = get_b_tax_file_timestamp("BSKAT_2025_207025_09-05-2025_093200.csv")
+        self.assertEqual(timestamp.year, 2025)
+        self.assertEqual(timestamp.month, 5)
+        self.assertEqual(timestamp.day, 9)
