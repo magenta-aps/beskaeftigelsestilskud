@@ -97,7 +97,20 @@
     <form action="" method="post" id="calculation-parameters">
     {% csrf_token %}
     <div class="row my-1 mx-1">
-        <h1>{% translate "Beregningsparametre" %} </h1>
+        <h1>{% translate "Beregningsparametre" %}</h1>
+    </div>
+    <div class="row my-1 mx-1">
+        <p>
+        {% blocktranslate trimmed %}
+        Der kan tilføjes og ændres værdier for det efterfølgende år til og med 31/12 i indeværende år.
+        {% endblocktranslate %}
+        </p>
+        <p>
+        {% blocktranslate trimmed with year1=next_year year2=next_year|add:1 %}
+        d. 1/1 låses værdierne, og et nyt felt for det efterfølgende år bliver tilgængeligt.
+        Fx 1/1/{{ year1 }} er det ikke længere muligt at ændre værdierne for {{ year1 }} og det bliver muligt at tilføje værdier for {{ year2 }}.
+        {% endblocktranslate %}
+        </p>
     </div>
     <div class="row my-1 mx-1">
         <table class="table table-bordered"  id="table">
