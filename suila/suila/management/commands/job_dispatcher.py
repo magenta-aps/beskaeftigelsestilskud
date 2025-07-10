@@ -107,12 +107,12 @@ class Command(SuilaBaseCommand):
             for typ in self.load_eskat_types:
                 job_dispatcher.call_job(
                     ManagementCommands.LOAD_ESKAT,
-                    year if typ == "monthlyincome" else effect_year,
+                    effect_year,
                     typ,
-                    month=month if typ == "monthlyincome" else None,
+                    month=None,
                     verbosity=verbosity,
                     cpr=cpr,
-                    skew=typ == "monthlyincome",
+                    skew=False,
                 )
 
         # Load Prisme b-tax data
