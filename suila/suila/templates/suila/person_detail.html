@@ -95,6 +95,7 @@
             {% endif %}
         {% endif %}
         </h1>
+        {% if person_id %}
         <div id="annual_income_form" class="d-none">
             <form method="post" action="{% url 'suila:set_person_annual_income_estimate' pk=person_id %}">
                 {% csrf_token %}
@@ -107,6 +108,7 @@
                 </div>
             </form>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endif %}
@@ -145,6 +147,7 @@
 {% endif %}
 
 {% if manually_entered_income %}
+{% if person_id %}
 <div class="grid gap-3 mt-5">
     <div class="g-col-12 sidebar">
         <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {% translate "Din årsindtægt er manuelt estimeret." %} </h2>
@@ -167,6 +170,7 @@
         {% endif %}
     </div>
 </div>
+{% endif %}
 {% endif %}
 
 <div class="grid gap-3 mt-5">
@@ -235,7 +239,8 @@
     </div>
     {% endif %}
     {% if user|has_permissions:"suila.change_person" or user.cpr == object.cpr  %}
-        <div class="g-col-4 jumbo d-grid gap-3">
+    {% if person_id %}
+    <div class="g-col-4 jumbo d-grid gap-3">
         <form method="post" action="{% url 'suila:pause_person' pk=person_id %}">
             {% csrf_token %}
             <input type="hidden" name="person" value="{{person_id}}"/>
@@ -247,16 +252,15 @@
                 {% jumbo_button "paused" "true" _("Pause i udbetalinger") "pause" %}
             {% endif %}
         </form>
-        </div>
+    </div>
     {% endif %}
-
+    {% endif %}
     {% if user|has_permissions:"suila.view_person" %}
     <div class="g-col-4 jumbo">
         {% url "suila:person_tax_scope_history" pk=person.pk as person_tax_scope_history_url %}
         {% jumbo_link person_tax_scope_history_url _("Mandtal") "assignment" %}
     </div>
     {% endif %}
-
 </div>
 
 <div class="grid gap-5 my-5">
