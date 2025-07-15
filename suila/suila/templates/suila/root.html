@@ -43,6 +43,31 @@ Velkommen {{ name }}
     </div>
 </div>
 
+{# Hastesag #65718 #}
+<div class="alert alert-primary my-5" role="alert">
+    <h2 class="mb-3">
+        {% blocktrans trimmed %}
+        Fejl i modregninger ved udbetaling af SUILA-tapit
+        {% endblocktrans %}
+    </h2>
+    <p>
+        {% blocktrans trimmed %}
+        Ved en systemopdatering af Skattestyrelsens økonomisystem, er nogle opsætninger ved en fejl bortfaldet. Dette har uheldigvis medført, at 3.398 borgere der har modtaget SUILA-Tapit tirsdag den 15. juli 2025 utilsigtet er blevet modregnet i alt 1.033.041 kr.
+        Skattestyrelsen arbejder på, at de borgere der ved en fejl er blevet modregnet, får udbetalt beløbet hurtigst muligt.
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans trimmed %}
+        Med venlig hilsen
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans trimmed %}
+        Skattestyrelsen
+        {% endblocktrans %}
+    </p>
+</div>
+
 {% if user|has_permissions:"suila.view_person,suila.view_personyear" %}
 
 {# Borgerservice links #}
