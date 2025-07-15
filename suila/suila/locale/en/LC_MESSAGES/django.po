@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-10 05:10-0100\n"
+"POT-Creation-Date: 2025-07-15 08:20-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1220,6 +1220,28 @@ msgstr "Two factor authentification is now active."
 #: suila/templates/suila/root.html
 msgid "OK"
 msgstr "OK"
+
+#: suila/templates/suila/root.html
+msgid "Fejl i modregninger ved udbetaling af SUILA-tapit"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid ""
+"Ved en systemopdatering af Skattestyrelsens økonomisystem, er nogle "
+"opsætninger ved en fejl bortfaldet. Dette har uheldigvis medført, at 3.398 "
+"borgere der har modtaget SUILA-Tapit tirsdag den 15. juli 2025 utilsigtet er "
+"blevet modregnet i alt 1.033.041 kr. Skattestyrelsen arbejder på, at de "
+"borgere der ved en fejl er blevet modregnet, får udbetalt beløbet hurtigst "
+"muligt."
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Med venlig hilsen"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid "Skattestyrelsen"
+msgstr ""
 
 #: suila/templatetags/amount_tags.py
 msgid "-"
