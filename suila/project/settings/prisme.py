@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import os
+from ast import literal_eval
 
 from project.settings.upload import MEDIA_ROOT
 
@@ -22,6 +23,11 @@ PRISME = {
     "posting_status_folder": os.environ["PRISME_POSTING_STATUS_FOLDER"],
     "b_tax_folder": os.environ["PRISME_B_TAX_FOLDER"],
     "control_folder": os.environ["PRISME_CONTROL_FOLDER"],
+    # List of CPRs that are output to their *own* file in the "mod11" folder, rather
+    # than the file shared by all other non-mod11 CPRs.
+    "mod11_separate_cprs": literal_eval(
+        os.environ.get("PRISME_MOD11_SEPARATE_CPRS", "[]")
+    ),
 }
 
 # Relative to settings.MEDIA_ROOT
