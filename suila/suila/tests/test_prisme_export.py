@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.db.models import QuerySet
 from django.test import TestCase
+from django.test.utils import override_settings
 from tenQ.client import ClientException
 from tenQ.writer.g68 import (
     BetalingstekstLinje,
@@ -366,6 +367,7 @@ class TestBatchExport(TestCase):
             month=export._month,
             stdout=stdout,
             verbosity=verbosity,
+            reraise=True,
         )
 
     def test_export_batches_verbosity_1(self):
@@ -451,6 +453,37 @@ class TestBatchExport(TestCase):
                     ("g68g69", "SUILA_G68_export_31_2025_01.g68"),
                     ("g68g69_mod11_cpr", "SUILA_G68_export_32_2025_01.g68"),
                 ],
+            )
+
+    @override_settings(
+        PRISME={
+            "mod11_separate_cprs": ["3101000001"],
+            **{k: v for k, v in settings.PRISME.items() if k != "mod11_separate_cprs"},
+        },
+    )
+    def test_export_batches_handles_separate_non_mod11_cprs(self):
+        # Arrange
+        # Provide an invalid CPR that matches the CPR in `mod11_separate_cprs`
+        self._add_person_month(3101000001, Decimal("1000"))
+        export = self._get_instance()
+        stdout = Mock()
+        with patch(
+            "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
+        ) as mock_put_file_in_prisme_folder:
+            # Act
+            self.export_batches(stdout, verbosity=2)
+            # Assert
+            self._assert_prisme_batch_items_state(
+                export,
+                mock_put_file_in_prisme_folder,
+                stdout,
+                # One batch, whose "prefix" is identical to the CPR
+                [3101000001],
+                # One batch item
+                [("3101000001", 3101000001)],
+                # One file in the non-mod11 folder, using the CPR as prefix (instead of
+                # 32.)
+                [("g68g69_mod11_cpr", "SUILA_G68_export_3101000001_2025_01.g68")],
             )
 
     def test_export_batches_handles_none(self):

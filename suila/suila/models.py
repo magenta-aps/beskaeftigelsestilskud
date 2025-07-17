@@ -1458,7 +1458,7 @@ class PrismeBatch(PermissionsMixin, models.Model):
         db_index=True,
     )
 
-    prefix = models.IntegerField(
+    prefix = models.BigIntegerField(
         db_index=True,
     )
 

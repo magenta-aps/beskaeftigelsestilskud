@@ -81,6 +81,10 @@ class BatchExport:
     def get_batches(
         self, qs: QuerySet[PersonMonth]
     ) -> Generator[tuple[PrismeBatch, QuerySet[PersonMonth]], None, None]:
+        # Get `mod11_separate_cprs` list of CPRs from settings
+        prisme: dict = settings.PRISME  # type: ignore[misc]
+        mod11_separate_cprs: list[str] = prisme["mod11_separate_cprs"]
+
         # Keep a separate set of all `PersonMonth` PKs where the CPR does not pass a
         # modulus-11 test. (These will be yielded last.)
         non_mod11_pks: set[int] = {
@@ -112,10 +116,38 @@ class BatchExport:
                     ),
                 )
 
-        # Finally, yield the "special" batch of non-mod11 CPR items, if any exist
+        # Finally, yield batches for the non-mod11 CPR items, if any exist
         if non_mod11_pks:
-            non_mod11_batch = PrismeBatch(prefix=32, export_date=date.today())
-            yield non_mod11_batch, qs.filter(pk__in=non_mod11_pks)
+            non_mod11: QuerySet[PersonMonth] = qs.filter(pk__in=non_mod11_pks)
+            if mod11_separate_cprs:
+                # Yield separate batch for *each* CPR
+                sub_qs: QuerySet[PersonMonth] = non_mod11.filter(
+                    person_year__person__cpr__in=mod11_separate_cprs
+                )
+                for person_month in sub_qs:
+                    logger.info(
+                        "Yielding separate batch for non-mod11 CPR %r",
+                        person_month.person_year.person.cpr,
+                    )
+                    yield (
+                        PrismeBatch(
+                            # Use the CPR as prefix
+                            prefix=int(person_month.person_year.person.cpr),
+                            export_date=date.today(),
+                        ),
+                        qs.filter(pk=person_month.pk),
+                    )
+
+            # Yield a *combined* batch for the non-mod11 CPRs *not in*
+            # `mod11_separate_cprs`
+            remaining_non_mod11: QuerySet[PersonMonth] = non_mod11.exclude(
+                person_year__person__cpr__in=mod11_separate_cprs
+            )
+            if remaining_non_mod11.exists():
+                yield (
+                    PrismeBatch(prefix=32, export_date=date.today()),
+                    remaining_non_mod11,
+                )
 
     def get_prisme_batch_item(
         self,
