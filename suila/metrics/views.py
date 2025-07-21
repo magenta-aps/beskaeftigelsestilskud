@@ -8,6 +8,7 @@ import tempfile
 from django.conf import settings
 from django.db import connection
 from django.http import HttpResponse
+from tenQ.client import ClientException, list_prisme_folder
 
 logger = logging.getLogger(__name__)
 
@@ -43,4 +44,13 @@ def health_check_database(request):
         return HttpResponse("OK")
     except Exception:
         logger.exception("Database health check failed")
+        return HttpResponse("ERROR", status=500)
+
+
+def health_check_sftp(request):
+    try:
+        list_prisme_folder(settings.PRISME, settings.PRISME["control_folder"])
+        return HttpResponse("OK")
+    except ClientException:
+        logger.exception("SFTP health check failed")
         return HttpResponse("ERROR", status=500)
