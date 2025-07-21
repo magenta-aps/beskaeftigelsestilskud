@@ -15,6 +15,7 @@ INSTALLED_APPS = [
     "common",
     "suila",
     "login",
+    "metrics",
     "django_mitid_auth",
     "data_analysis",
     "data_update",
