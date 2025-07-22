@@ -31,6 +31,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
+    TaxInformationPeriod,
     TaxScope,
     Year,
 )
@@ -131,11 +132,15 @@ class Handler:
         return person_year
 
     @classmethod
+    def parse_datetime(cls, value: str) -> datetime:
+        naive_dt: datetime = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+        aware_dt: datetime = naive_dt.replace(tzinfo=timezone.get_current_timezone())
+        return aware_dt
+
+    @classmethod
     def parse_value(cls, name: str, value: Any) -> Any:
         if name == "valid_from":
-            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").replace(
-                tzinfo=timezone.get_current_timezone()
-            )
+            return cls.parse_datetime(value)
         return Decimal(value)
 
     @classmethod
@@ -577,6 +582,7 @@ class TaxInformationHandler(Handler):
                 out,
             )
             cls.update_person_location_code(year, cpr_taxinfo_map)
+            cls.update_person_year_tax_information_periods(year, items)
 
     @classmethod
     def update_person_location_code(
@@ -611,6 +617,68 @@ class TaxInformationHandler(Handler):
             ["location_code"],
             batch_size=1000,
         )
+
+    @classmethod
+    def update_person_year_tax_information_periods(
+        cls,
+        year: int,
+        items: Iterable["TaxInformation"],
+    ):
+        # Map CPR to matching `PersonYear` objects in the given `year`
+        person_year_map = {
+            person_year.person.cpr: person_year
+            for person_year in PersonYear.objects.filter(
+                year__year=year
+            ).select_related("person", "year")
+        }
+
+        # Create a dictionary where the keys are CPRs and the values are lists of
+        # `TaxInformation` objects.
+        # We skip the `TaxInformation` objects that have a blank CPR.
+        # Also, we skip `TaxInformation` objects that have a blank `tax_scope` (in
+        # practice this is none of them.)
+        items_map = defaultdict(list)
+        for item in items:
+            if item.cpr and item.tax_scope:
+                items_map[item.cpr].append(item)
+            else:
+                logger.warning("Skipping %r", item)
+
+        with transaction.atomic():
+            # Remove any previous tax information periods for the given year and CPRs
+            TaxInformationPeriod.objects.filter(
+                person_year__year__year=year,
+                person_year__person__cpr__in=items_map.keys(),
+            ).delete()
+
+            # Create a new set of tax information periods for the person years that we
+            # already have, looking up `PersonYear` in `person_year_map` by CPR.
+            objs: list[TaxInformationPeriod] = [
+                TaxInformationPeriod(
+                    person_year=person_year_map[cpr],
+                    start_date=cls.parse_datetime(tax_information.start_date),
+                    end_date=cls.parse_datetime(tax_information.end_date),
+                    tax_scope=tax_information.tax_scope,
+                )
+                for cpr, tax_information_list in items_map.items()
+                for tax_information in tax_information_list
+                if cpr in person_year_map
+            ]
+            TaxInformationPeriod.objects.bulk_create(objs, batch_size=1000)
+
+        # Log items that do not have a matching `PersonYear` in `person_year_map`
+        skipped: dict[str, list[TaxInformation]] = {
+            cpr: tax_information_list
+            for cpr, tax_information_list in items_map.items()
+            if cpr not in person_year_map
+        }
+        if skipped:
+            logger.warning(
+                "Skipped %d items where a matching PersonYear could not be found "
+                "(items=%r)",
+                len(skipped),
+                skipped,
+            )
 
     @classmethod
     def update_missing(cls, year: int, found_cprs: Iterable[str], load: DataLoad):
