@@ -105,9 +105,6 @@ if TESTING:
     # instead of django.utils.timezone
     warnings.filterwarnings("ignore", message=".*naive datetime.*")
 
-    # Disable log messages unless they are important
-    logging.disable(logging.CRITICAL)
-
 CRISPY_TEMPLATE_PACK = "uni_form"
 
 # "calculation_date" is created from "payout_date - {days_offset}"
