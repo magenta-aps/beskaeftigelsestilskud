@@ -132,7 +132,7 @@ class Handler:
         return person_year
 
     @classmethod
-    def parse_datetime(cls, value: str) -> datetime:
+    def parse_datetime(cls, value: Any) -> datetime:
         naive_dt: datetime = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
         aware_dt: datetime = naive_dt.replace(tzinfo=timezone.get_current_timezone())
         return aware_dt
@@ -658,7 +658,7 @@ class TaxInformationHandler(Handler):
                     person_year=person_year_map[cpr],
                     start_date=cls.parse_datetime(tax_information.start_date),
                     end_date=cls.parse_datetime(tax_information.end_date),
-                    tax_scope=tax_information.tax_scope,
+                    tax_scope=tax_information.tax_scope,  # type: ignore
                 )
                 for cpr, tax_information_list in items_map.items()
                 for tax_information in tax_information_list
