@@ -1224,7 +1224,10 @@ class TestTaxInformation(BaseTestCase):
         # Assert: the expected warnings are logged
         self.assertListEqual(
             [record.msg for record in cm.records],
-            ["Skipping %r", "Skipping %r"],
+            [
+                "Skipping %r (has no year or CPR)",
+                "Skipping %r (has no tax scope)",
+            ],
         )
 
     def test_get_taxscopes(self):
