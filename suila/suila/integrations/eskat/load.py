@@ -568,21 +568,33 @@ class TaxInformationHandler(Handler):
     ):
         year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
         cpr_taxinfo_map: Dict[str, TaxInformation] = {}
+
+        # Create a dictionary where the keys are CPRs and the values are lists of
+        # `TaxInformation` objects.
+        # We skip the `TaxInformation` objects that have a blank CPR.
+        # Also, we skip `TaxInformation` objects that have a blank `tax_scope` (in
+        # practice this is none of them.)
+        items_map = defaultdict(list)
+
         for item in items:
+            # Populate `year_cpr_tax_scopes`
             if item.year is not None and item.cpr is not None:
                 year_cpr_tax_scopes[item.year][item.cpr] = TaxScope.from_taxinformation(
                     item
                 )
+            # Populate `cpr_taxinfo_map`
             if item.cpr is not None:
                 cpr_taxinfo_map[item.cpr] = item
+            # Populate `items_map`
+            if item.cpr and item.tax_scope:
+                items_map[item.cpr].append(item)
+            else:
+                logger.warning("Skipping %r (has no CPR or tax scope)", item)
+
         with transaction.atomic():
-            cls.create_person_years(
-                year_cpr_tax_scopes,
-                load,
-                out,
-            )
+            cls.create_person_years(year_cpr_tax_scopes, load, out)
             cls.update_person_location_code(year, cpr_taxinfo_map)
-            cls.update_person_year_tax_information_periods(year, items)
+            cls.update_person_year_tax_information_periods(year, items_map)
 
     @classmethod
     def update_person_location_code(
@@ -622,7 +634,7 @@ class TaxInformationHandler(Handler):
     def update_person_year_tax_information_periods(
         cls,
         year: int,
-        items: Iterable["TaxInformation"],
+        items_map: dict[str, list[TaxInformation]],
     ):
         # Map CPR to matching `PersonYear` objects in the given `year`
         person_year_map = {
@@ -631,18 +643,6 @@ class TaxInformationHandler(Handler):
                 year__year=year
             ).select_related("person", "year")
         }
-
-        # Create a dictionary where the keys are CPRs and the values are lists of
-        # `TaxInformation` objects.
-        # We skip the `TaxInformation` objects that have a blank CPR.
-        # Also, we skip `TaxInformation` objects that have a blank `tax_scope` (in
-        # practice this is none of them.)
-        items_map = defaultdict(list)
-        for item in items:
-            if item.cpr and item.tax_scope:
-                items_map[item.cpr].append(item)
-            else:
-                logger.warning("Skipping %r", item)
 
         with transaction.atomic():
             # Remove any previous tax information periods for the given year and CPRs
