@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from datetime import datetime
 from decimal import Decimal
 
 from suila.models import (
@@ -10,6 +11,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     StandardWorkBenefitCalculationMethod,
+    TaxInformationPeriod,
     Year,
 )
 
@@ -33,6 +35,14 @@ class BaseEnvMixin:
             person=cls.person,
             year=cls.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+        # Create period covering the entire year under test, to verify the previous
+        # behavior (reading `PersonYear.tax_scope`) is preserved.
+        TaxInformationPeriod.objects.get_or_create(
+            person_year=cls.personyear,
+            tax_scope="FULL",
+            start_date=datetime(cls.year.year, 1, 1),
+            end_date=datetime(cls.year.year, 12, 31),
         )
 
     def get_or_create_person_month(self, month: int, **kwargs) -> PersonMonth:

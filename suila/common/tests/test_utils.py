@@ -34,6 +34,7 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     StandardWorkBenefitCalculationMethod,
+    TaxInformationPeriod,
     Year,
 )
 from suila.tests.test_views import TimeContextMixin
@@ -195,6 +196,15 @@ class BaseTestCase(TestCase):
                     person_year.year.year, 1, 1, 0, 0, 0, tzinfo=get_current_timezone()
                 ),
                 care_fee_income=Decimal(180000),
+            )
+
+            # Create periods covering the entire year under test, to verify the previous
+            # behavior (reading `PersonYear.tax_scope`) is preserved.
+            TaxInformationPeriod.objects.get_or_create(
+                person_year=person_year,
+                tax_scope="FULL",
+                start_date=datetime(year.year, 1, 1),
+                end_date=datetime(year.year, 12, 31),
             )
 
             for month_number in range(1, 13):

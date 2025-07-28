@@ -22,6 +22,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import DateTimeRangeField
 from django.core.files import File
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
@@ -29,6 +30,7 @@ from django.db.models import (
     SET_NULL,
     BooleanField,
     Case,
+    Exists,
     F,
     Func,
     Index,
@@ -650,6 +652,54 @@ class TaxInformationPeriod(PermissionsMixin, models.Model):
         verbose_name=_("Skattepligtighed"),
     )
 
+    @classmethod
+    def get_person_month_filter_annotation(
+        cls,
+        year: int,
+        month: int,
+        required_tax_scope: str = "FULL",
+    ) -> Exists:
+        # Get the lower and upper bounds of the month we are looking for
+        month_period = cls.get_period_for_month(year, month)
+        # Construct subquery which searches for any tax information periods overlapping
+        # the month we are looking for.
+        queryset: QuerySet[TaxInformationPeriod] = cls.get_annotated_queryset(
+            required_tax_scope=required_tax_scope,
+        )
+        subquery: QuerySet[TaxInformationPeriod] = queryset.filter(
+            person_year=OuterRef("person_year"),
+            period__overlap=month_period,
+        )
+        return Exists(subquery)
+
+    @classmethod
+    def get_annotated_queryset(
+        cls,
+        required_tax_scope: str = "FULL",
+    ) -> QuerySet[TaxInformationPeriod]:
+        class TsTzRange(Func):
+            function = "TSTZRANGE"
+            output_field = DateTimeRangeField()
+
+        queryset: QuerySet[TaxInformationPeriod] = (
+            TaxInformationPeriod.objects.select_related("person_year")
+            .annotate(period=TsTzRange("start_date", "end_date"))
+            .filter(tax_scope=required_tax_scope)
+        )
+
+        return queryset
+
+    @classmethod
+    def get_period_for_month(cls, year: int, month: int) -> tuple[datetime, datetime]:
+        month_start: datetime = datetime(
+            year,
+            month,
+            1,
+            tzinfo=timezone.get_current_timezone(),
+        )
+        month_end: datetime = month_start + relativedelta(months=1)
+        return month_start, month_end
+
 
 class PersonMonth(PermissionsMixin, models.Model):
 
@@ -870,6 +920,20 @@ class PersonMonth(PermissionsMixin, models.Model):
             return qs[0].paused
         else:
             return False
+
+    @cached_property
+    def has_tax_information_period(self, tax_scope: str = "FULL") -> bool:
+        month_period = TaxInformationPeriod.get_period_for_month(
+            self.person_year.year.year,
+            self.month,
+        )
+        queryset = TaxInformationPeriod.get_annotated_queryset(
+            required_tax_scope=tax_scope
+        )
+        return queryset.filter(
+            person_year=self.person_year,
+            period__overlap=month_period,
+        ).exists()
 
 
 class Employer(PermissionsMixin, models.Model):

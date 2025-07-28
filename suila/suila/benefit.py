@@ -9,10 +9,11 @@ import pandas as pd
 from common import utils
 from common.utils import to_dataframe
 from django.conf import settings
+from django.db.models import Exists
 from more_itertools import one
 from numpy import float64
 
-from suila.models import PersonMonth, PersonYear, TaxScope, Year
+from suila.models import PersonMonth, PersonYear, TaxInformationPeriod, Year
 
 
 def calculate_benefit(
@@ -71,8 +72,17 @@ def calculate_benefit(
     ).order_by("person_year__person__cpr")
     if cpr:
         month_qs = month_qs.filter(person_year__person__cpr=cpr)
-    # Only consider people who are FULDT_SKATTEPLIGTIG
-    month_qs.filter(person_year__tax_scope=TaxScope.FULDT_SKATTEPLIGTIG)
+
+    # Only consider people who have a "FULL" tax scope in the given period
+    has_full_tax_scope_in_month: Exists = (
+        TaxInformationPeriod.get_person_month_filter_annotation(year, month)
+    )
+    month_qs = month_qs.annotate(
+        has_full_tax_scope_in_month=has_full_tax_scope_in_month
+    ).filter(
+        has_full_tax_scope_in_month=True,
+    )
+
     month_qs = PersonMonth.signal_qs(month_qs)
     month_df = to_dataframe(
         month_qs,
