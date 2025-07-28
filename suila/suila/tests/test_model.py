@@ -4,6 +4,7 @@
 
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from operator import attrgetter
 from unittest.mock import patch
 
 import pytz
@@ -30,6 +31,7 @@ from suila.models import (
     PrismeBatchItem,
     StandardWorkBenefitCalculationMethod,
     StatusChoices,
+    TaxInformationPeriod,
     Year,
 )
 
@@ -918,3 +920,95 @@ class TestPersonYearAssessment(ModelTest):
         self.assertFalse(assessment1.latest)
         assessment2.refresh_from_db()
         self.assertTrue(assessment2.latest)
+
+
+class TestTaxInformationPeriod(ModelTest):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.person2 = Person.objects.create(name="Hans Jensen", cpr="0987654321")
+        cls.person2_person_year = PersonYear.objects.create(
+            person=cls.person2,
+            year=cls.year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+        PersonMonth.objects.bulk_create(
+            [
+                PersonMonth(
+                    person_year=cls.person2_person_year,
+                    month=month,
+                    import_date=date.today(),
+                )
+                for month in range(1, 5)
+            ]
+        )
+        cls.period1 = TaxInformationPeriod.objects.create(
+            person_year=cls.person_year,
+            tax_scope="FULL",
+            start_date=cls._get_datetime(2, 15),  # Feb 15
+            end_date=cls._get_datetime(4, 15),  # Apr 15
+        )
+
+    @classmethod
+    def _get_datetime(cls, month: int, day: int):
+        return datetime(
+            cls.year.year, month, day, tzinfo=timezone.get_current_timezone()
+        )
+
+    def test_get_person_month_filter_annotation(self):
+        # Arrange: for each month under test, describe the expected result of the
+        # annotation.
+        test_cases = [
+            # The test cases consist of month numbers along with the expected values of
+            # the annotation for `self.person_year` and `self.person2_person_year`.
+            # (`self.person2_person_year` have no `TaxInformationPeriod` objects, so the
+            # annotation is always expected to be False, regardless of the month.)
+            (1, [False, False]),  # no overlapping period
+            (2, [True, False]),  # partially overlapping period
+            (3, [True, False]),  # completely overlapping period
+            (4, [True, False]),  # partially overlapping period
+        ]
+        for month, expected_result in test_cases:
+            with self.subTest(month=month, expected_result=expected_result):
+                # Act
+                annotated_queryset = (
+                    PersonMonth.objects.filter(
+                        person_year__in=(self.person_year, self.person2_person_year),
+                        month=month,
+                    )
+                    .annotate(
+                        result=TaxInformationPeriod.get_person_month_filter_annotation(
+                            self.year.year, month
+                        )
+                    )
+                    .order_by("person_year")
+                )
+                # Assert
+                self.assertQuerySetEqual(
+                    annotated_queryset,
+                    expected_result,
+                    transform=attrgetter("result"),
+                )
+
+    def test_get_person_month_filter_annotation_other_required_tax_scope(self):
+        # Act
+        month = 2
+        annotated_queryset = (
+            PersonMonth.objects.filter(
+                person_year__in=(self.person_year, self.person2_person_year),
+                month=month,
+            )
+            .annotate(
+                result=TaxInformationPeriod.get_person_month_filter_annotation(
+                    self.year.year, month, required_tax_scope="LIM"
+                )
+            )
+            .order_by("person_year")
+        )
+        # Assert: the annotation is always False, as no `TaxInformationPeriod` objects
+        # match the specified `required_tax_scope`.
+        self.assertQuerySetEqual(
+            annotated_queryset,
+            [False, False],
+            transform=attrgetter("result"),
+        )

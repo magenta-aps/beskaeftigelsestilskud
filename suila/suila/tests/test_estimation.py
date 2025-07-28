@@ -31,7 +31,7 @@ from suila.models import (
     PersonYearAssessment,
     PersonYearEstimateSummary,
     StandardWorkBenefitCalculationMethod,
-    TaxScope,
+    TaxInformationPeriod,
     Year,
 )
 
@@ -68,6 +68,22 @@ class TestEstimationEngine(TestCase):
             year=cls.year2,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
         )
+
+        # Create tax information periods covering the entire tax years for person year
+        # 1 and 2.
+        cls.period1 = TaxInformationPeriod.objects.create(
+            person_year=cls.person_year,
+            tax_scope="FULL",
+            start_date=cls.get_datetime(cls.person_year.year.year, 1, 1),
+            end_date=cls.get_datetime(cls.person_year.year.year, 12, 31),
+        )
+        cls.period2 = TaxInformationPeriod.objects.create(
+            person_year=cls.person_year2,
+            tax_scope="FULL",
+            start_date=cls.get_datetime(cls.person_year2.year.year, 1, 1),
+            end_date=cls.get_datetime(cls.person_year2.year.year, 12, 31),
+        )
+
         for month, income in enumerate(
             [0, 0, 1000, 1000, 1000, 900, 1100, 800, 1200, 1000, 1000, 1000], start=1
         ):
@@ -98,6 +114,10 @@ class TestEstimationEngine(TestCase):
                 person_month=person_month,
                 salary_income=Decimal(income),
             )
+
+    @classmethod
+    def get_datetime(cls, year: int, month: int, day: int) -> datetime:
+        return datetime(year, month, day, tzinfo=get_current_timezone())
 
     def setUp(self):
         IncomeEstimate.objects.all().delete()
@@ -238,15 +258,16 @@ class TestEstimationEngine(TestCase):
         self.assertIsNone(summary.rmse_percent)
 
     def test_estimate_all_not_taxable(self):
-        self.person_year.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
-        self.person_year.save()
+        # Arrange: remove tax information period
+        self.period1.delete()
+        # Act
         self.estimate_all(
             self.year.year,
             self.person.pk,
             1,
             False,
         )
-
+        # Assert
         income_estimates = IncomeEstimate.objects.filter(
             person_month__person_year=self.person_year,
             engine="InYearExtrapolationEngine",

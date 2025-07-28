@@ -26,7 +26,6 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearEstimateSummary,
-    TaxScope,
 )
 
 
@@ -231,7 +230,7 @@ class EstimationEngine:
                 signal=person_month.signal,
             )
             for person_month in person_month_qs
-            if person_month.person_year.tax_scope == TaxScope.FULDT_SKATTEPLIGTIG
+            if person_month.has_tax_information_period
         ]
         results = []
         summaries = []
