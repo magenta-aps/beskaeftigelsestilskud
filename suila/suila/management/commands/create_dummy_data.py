@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from suila.models import (
     Employer,
@@ -22,6 +23,7 @@ from suila.models import (
     PersonYear,
     PrismeBatch,
     PrismeBatchItem,
+    TaxInformationPeriod,
     TaxScope,
     Year,
 )
@@ -157,6 +159,8 @@ class Command(BaseCommand):
             * 12,
         }
 
+        tz = timezone.get_current_timezone()
+
         line_no = 1
         for person, salary in persons.items():
             set_history_date(person, dates[0])
@@ -197,8 +201,13 @@ class Command(BaseCommand):
 
                 person_year.save()
                 set_history_date(person_year, date)
-            person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
-            person_year.save()
+
+                TaxInformationPeriod.objects.update_or_create(
+                    person_year=person_year,
+                    tax_scope="FULL",
+                    start_date=datetime.datetime(year, 1, 1, tzinfo=tz),
+                    end_date=datetime.datetime(year, 12, 31, tzinfo=tz),
+                )
 
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
 
