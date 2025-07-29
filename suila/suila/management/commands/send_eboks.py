@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from itertools import batched
@@ -10,7 +11,9 @@ from django.db.models import Q
 
 from suila.integrations.eboks.client import EboksClient
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import PersonMonth, PersonYear, SuilaEboksMessage, TaxScope
+from suila.models import PersonMonth, PersonYear, SuilaEboksMessage
+
+logger = logging.getLogger(__name__)
 
 
 class Command(SuilaBaseCommand):
@@ -35,7 +38,6 @@ class Command(SuilaBaseCommand):
             PersonYear.objects.filter(
                 year_id=year,
                 person__welcome_letter_sent_at__isnull=True,
-                tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
                 person__full_address__isnull=False,
             )
             .exclude(
@@ -61,15 +63,21 @@ class Command(SuilaBaseCommand):
             )
             try:
                 personmonth: PersonMonth = personyear.personmonth_set.get(month=month)
-                suilamessage = SuilaEboksMessage.objects.create(
-                    person_month=personmonth, type=typ
-                )
-                if save:
-                    with open(f"/tmp/{personyear.person.cpr}.pdf", "wb") as fp:
-                        fp.write(suilamessage.pdf)
-                return suilamessage
             except PersonMonth.DoesNotExist:
                 pass
+            else:
+                if personmonth.has_tax_information_period:
+                    suilamessage = SuilaEboksMessage.objects.create(
+                        person_month=personmonth, type=typ
+                    )
+                    if save:
+                        with open(f"/tmp/{personyear.person.cpr}.pdf", "wb") as fp:
+                            fp.write(suilamessage.pdf)
+                    return suilamessage
+                else:
+                    logger.info(
+                        "Skipping %r (no full tax scope for month)", personmonth
+                    )
 
         i = 0
         for batch in batched(qs.iterator(), 100):
