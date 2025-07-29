@@ -1,17 +1,13 @@
 {# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
 {# SPDX-License-Identifier: MPL-2.0 #}
 
-{% extends "data_analysis/base.html" %}
+{% extends "suila/person_detail_base.html" %}
 {% load static %}
 {% load i18n %}
 {% load csp %}
 {% load suila_tags %}
 {% load bootstrap_icons %}
 {% load render_table from django_tables2 %}
-
-{% block extra_headers %}
-    <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
-{% endblock %}
 
 {% block breadcrumb %}
 {% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
@@ -22,7 +18,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="row my-1 mx-1">
+<div class="row my-5">
 {% render_table table %}
 </div>
 {% endblock %}

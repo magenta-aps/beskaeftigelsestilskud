@@ -42,10 +42,10 @@ def display_status(person_month: PersonMonth) -> dict:
 
 @register.filter
 def format_tax_scope(tax_scope: str) -> StrOrPromise:
-    if tax_scope == TaxScope.FULDT_SKATTEPLIGTIG:
+    if tax_scope in (TaxScope.FULDT_SKATTEPLIGTIG, "FULL"):
         return _("Fuld skattepligtig")
-    elif tax_scope == TaxScope.DELVIST_SKATTEPLIGTIG:
+    elif tax_scope in (TaxScope.DELVIST_SKATTEPLIGTIG, "LIM"):
         return _("Delvist skattepligtig")
-    elif tax_scope == TaxScope.FORSVUNDET_FRA_MANDTAL:
+    elif tax_scope in (TaxScope.FORSVUNDET_FRA_MANDTAL, None):
         return _("Ikke i mandtal")
     return ""
