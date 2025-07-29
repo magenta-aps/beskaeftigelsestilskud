@@ -5,7 +5,7 @@ import logging
 import os.path
 import re
 from csv import DictReader
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from io import TextIOWrapper
 from unittest.mock import ANY, MagicMock, Mock, patch
@@ -31,6 +31,7 @@ from suila.models import (
     PersonYear,
     PrismeBatch,
     PrismeBatchItem,
+    TaxInformationPeriod,
     Year,
 )
 
@@ -663,6 +664,14 @@ class TestBatchExport(TestCase):
             defaults={"location_code": municipality_code},
         )
         person_year, _ = PersonYear.objects.get_or_create(year=year, person=person)
+        TaxInformationPeriod.objects.get_or_create(
+            person_year=person_year,
+            tax_scope="FULL",
+            # Period covers entire year under test, to verify the previous behavior
+            # (reading `PersonYear.tax_scope`) is preserved.
+            start_date=datetime(year.year, 1, 1),
+            end_date=datetime(year.year, 12, 31),
+        )
         person_month, _ = PersonMonth.objects.get_or_create(
             person_year=person_year,
             month=month,

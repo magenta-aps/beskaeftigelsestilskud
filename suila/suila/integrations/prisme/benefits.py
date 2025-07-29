@@ -13,7 +13,7 @@ from dateutil.relativedelta import TU, relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
-from django.db.models import CharField, F, QuerySet, Value
+from django.db.models import CharField, Exists, F, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
 from django.utils.numberformat import format as format_number
 from simple_history.utils import bulk_update_with_history
@@ -38,7 +38,7 @@ from suila.models import (
     PrismeAccountAlias,
     PrismeBatch,
     PrismeBatchItem,
-    TaxScope,
+    TaxInformationPeriod,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,15 +52,26 @@ class BatchExport:
     def get_person_month_queryset(self) -> QuerySet[PersonMonth]:
         # Find all person months for this year/month which:
         # - have not yet been exported,
+        # - have a full tax scope period overlapping the given month,
         # - and have a non-zero calculated benefit
+        has_full_tax_scope_in_month: Exists = (
+            TaxInformationPeriod.get_person_month_filter_annotation(
+                self._year, self._month
+            )
+        )
         qs: QuerySet[PersonMonth] = (
             PersonMonth.objects.select_related("person_year__person", "prismebatchitem")
+            .annotate(has_full_tax_scope_in_month=has_full_tax_scope_in_month)
             .filter(
+                # This year and month
                 person_year__year=self._year,
-                person_year__tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
                 month=self._month,
+                # No previous export for this person, year and month
                 prismebatchitem__isnull=True,
+                # Only person months with a calculated benefit
                 benefit_calculated__isnull=False,
+                # Has full tax scope in this month
+                has_full_tax_scope_in_month=True,
             )
             .exclude(benefit_calculated=Decimal("0"))
         )
