@@ -4,7 +4,7 @@
 
 import os
 
-from project.settings.base import ENVIRONMENT
+from project.settings.base import ENVIRONMENT, TESTING
 
 LOGGING: dict = {
     "version": 1,
@@ -70,3 +70,6 @@ if os.path.isfile(log_filename) and ENVIRONMENT != "development":
         "level": "INFO",
     }
     LOGGING["loggers"]["django"]["handlers"].append("file")
+
+if TESTING:
+    LOGGING["handlers"]["gunicorn"]["class"] = "logging.NullHandler"

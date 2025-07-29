@@ -621,6 +621,36 @@ class PersonYear(PermissionsMixin, models.Model):
         return qs.none()
 
 
+class TaxInformationPeriod(PermissionsMixin, models.Model):
+    class Meta:
+        unique_together = [
+            ("person_year", "start_date", "end_date"),
+        ]
+
+    person_year = models.ForeignKey(
+        PersonYear,
+        on_delete=models.CASCADE,
+    )
+
+    start_date = models.DateTimeField(
+        null=False,
+        blank=False,
+        verbose_name=_("Startdato"),
+    )
+
+    end_date = models.DateTimeField(
+        null=False,
+        blank=False,
+        verbose_name=_("Slutdato"),
+    )
+
+    tax_scope = models.CharField(
+        null=False,
+        blank=False,
+        verbose_name=_("Skattepligtighed"),
+    )
+
+
 class PersonMonth(PermissionsMixin, models.Model):
 
     class Meta:
