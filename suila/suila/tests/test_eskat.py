@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
+import logging
 import re
 from collections import namedtuple
 from dataclasses import fields
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from io import StringIO, TextIOBase
 from math import ceil
@@ -21,6 +22,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.test.testcases import SimpleTestCase
 from django.utils import timezone
+from django.utils.timezone import get_current_timezone
 from requests import HTTPError, Response
 
 from suila.integrations.eskat.client import EskatClient
@@ -52,6 +54,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
+    TaxInformationPeriod,
     TaxScope,
     Year,
 )
@@ -819,8 +822,8 @@ class TestTaxInformation(BaseTestCase):
             "cpr": "0000001234",
             "year": 2023,
             "tax_scope": "FULL",
-            "start_date": "2024-11-01T12:39:16.986Z",
-            "end_date": "2024-11-01T12:39:16.986Z",
+            "start_date": "2024-11-01T00:00:00",
+            "end_date": "2024-11-01T00:00:00",
             "tax_municipality_number": "956",
             "cpr_municipality_code": "956",
             "region_number": "",
@@ -831,8 +834,8 @@ class TestTaxInformation(BaseTestCase):
             "cpr": "0000005678",
             "year": 2023,
             "tax_scope": "FULL",
-            "start_date": "2024-11-01T12:39:16.986Z",
-            "end_date": "2024-11-01T12:39:16.986Z",
+            "start_date": "2024-11-01T00:00:00",
+            "end_date": "2024-11-01T00:00:00",
             "tax_municipality_number": "956",
             "cpr_municipality_code": "956",
             "region_number": "",
@@ -843,8 +846,8 @@ class TestTaxInformation(BaseTestCase):
             "cpr": "0000009012",
             "year": 2023,
             "tax_scope": "FULL",
-            "start_date": "2024-11-01T12:39:16.986Z",
-            "end_date": "2024-11-01T12:39:16.986Z",
+            "start_date": "2024-11-01T00:00:00",
+            "end_date": "2024-11-01T00:00:00",
             "tax_municipality_number": "956",
             "cpr_municipality_code": "956",
             "region_number": "",
@@ -855,8 +858,8 @@ class TestTaxInformation(BaseTestCase):
             "cpr": "0000001234",
             "year": 2024,
             "tax_scope": "FULL",
-            "start_date": "2024-11-01T12:39:16.986Z",
-            "end_date": "2024-11-01T12:39:16.986Z",
+            "start_date": "2024-11-01T00:00:00",
+            "end_date": "2024-11-01T00:00:00",
             "tax_municipality_number": "956",
             "cpr_municipality_code": "956",
             "region_number": "",
@@ -867,8 +870,8 @@ class TestTaxInformation(BaseTestCase):
             "cpr": "0000005678",
             "year": 2024,
             "tax_scope": "LIM",
-            "start_date": "2024-11-01T12:39:16.986Z",
-            "end_date": "2024-11-01T12:39:16.986Z",
+            "start_date": "2024-11-01T00:00:00",
+            "end_date": "2024-11-01T00:00:00",
             "tax_municipality_number": "956",
             "cpr_municipality_code": "956",
             "region_number": "",
@@ -879,8 +882,8 @@ class TestTaxInformation(BaseTestCase):
             "cpr": "bogus",
             "year": 2024,
             "tax_scope": "LIM",
-            "start_date": "2024-11-01T12:39:16.986Z",
-            "end_date": "2024-11-01T12:39:16.986Z",
+            "start_date": "2024-11-01T00:00:00",
+            "end_date": "2024-11-01T00:00:00",
             "tax_municipality_number": "956",
             "cpr_municipality_code": "956",
             "region_number": "",
@@ -978,6 +981,9 @@ class TestTaxInformation(BaseTestCase):
             self.assertEqual(data[0].cpr, "0000001234")
 
     def test_tax_information_load(self):
+        start_date = "2024-01-01T00:00:00"
+        end_date = "2024-12-31T00:00:00"
+
         TaxInformationHandler.create_or_update_objects(
             2024,
             [
@@ -986,6 +992,8 @@ class TestTaxInformation(BaseTestCase):
                     2024,
                     tax_scope="FULL",
                     cpr_municipality_code="956",
+                    start_date=start_date,
+                    end_date=end_date,
                 ),
                 TaxInformation(
                     None,
@@ -1008,6 +1016,8 @@ class TestTaxInformation(BaseTestCase):
                     2024,
                     tax_scope="LIM",
                     cpr_municipality_code="956",
+                    start_date=start_date,
+                    end_date=end_date,
                 )
             ],
             DataLoad.objects.create(source="test"),
@@ -1029,6 +1039,8 @@ class TestTaxInformation(BaseTestCase):
                     "0000001234",
                     2024,
                     cpr_municipality_code="956",
+                    start_date=start_date,
+                    end_date=end_date,
                 )
             ],
             DataLoad.objects.create(source="test"),
@@ -1068,6 +1080,152 @@ class TestTaxInformation(BaseTestCase):
             self.OutputWrapper(stdout, ending="\n"),
         )
         self.assertQuerySetEqual(Person.objects.all(), [])
+
+    def test_tax_information_load_populates_tax_information_periods(self):
+        # Arrange
+        start = datetime(2024, 1, 1)
+        end = datetime(2024, 12, 31)
+        # Act: run the tax information load three times
+        for _ in (1, 2, 3):
+            TaxInformationHandler.create_or_update_objects(
+                2024,
+                [
+                    TaxInformation(
+                        "0000001234",
+                        2024,
+                        tax_scope="FULL",
+                        cpr_municipality_code="956",
+                        start_date=start.isoformat(timespec="seconds"),
+                        end_date=end.isoformat(timespec="seconds"),
+                    )
+                ],
+                DataLoad.objects.create(source="test"),
+                self.OutputWrapper(stdout, ending="\n"),
+            )
+        # Assert: only one tax information period is created
+        self.assertQuerySetEqual(
+            TaxInformationPeriod.objects.all(),
+            [
+                (
+                    "0000001234",
+                    2024,
+                    "FULL",
+                    start.replace(tzinfo=get_current_timezone()),
+                    end.replace(tzinfo=get_current_timezone()),
+                )
+            ],
+            transform=lambda obj: (
+                obj.person_year.person.cpr,
+                obj.person_year.year.year,
+                obj.tax_scope,
+                obj.start_date,
+                obj.end_date,
+            ),
+        )
+
+    def test_tax_information_load_populates_multiple_tax_information_periods(self):
+        # Act: run the tax information load on one person with three different periods
+        TaxInformationHandler.create_or_update_objects(
+            2024,
+            [
+                TaxInformation(
+                    "0000001234",
+                    2024,
+                    tax_scope="FULL",
+                    cpr_municipality_code="956",
+                    start_date="2024-01-01T00:00:00",
+                    end_date="2024-02-01T00:00:00",
+                ),
+                TaxInformation(
+                    "0000001234",
+                    2024,
+                    tax_scope="FULL",
+                    cpr_municipality_code="956",
+                    start_date="2024-02-01T00:00:00",
+                    end_date="2024-03-01T00:00:00",
+                ),
+                TaxInformation(
+                    "0000001234",
+                    2024,
+                    tax_scope="FULL",
+                    cpr_municipality_code="956",
+                    start_date="2024-01-01T00:00:00",
+                    end_date="2024-03-01T00:00:00",
+                ),
+            ],
+            DataLoad.objects.create(source="test"),
+            self.OutputWrapper(stdout, ending="\n"),
+        )
+        # Assert: three tax information periods are created
+        self.assertQuerySetEqual(
+            TaxInformationPeriod.objects.all(),
+            [
+                (
+                    "0000001234",
+                    2024,
+                    "FULL",
+                    datetime(2024, 1, 1).replace(tzinfo=get_current_timezone()),
+                    datetime(2024, 2, 1).replace(tzinfo=get_current_timezone()),
+                ),
+                (
+                    "0000001234",
+                    2024,
+                    "FULL",
+                    datetime(2024, 2, 1).replace(tzinfo=get_current_timezone()),
+                    datetime(2024, 3, 1).replace(tzinfo=get_current_timezone()),
+                ),
+                (
+                    "0000001234",
+                    2024,
+                    "FULL",
+                    datetime(2024, 1, 1).replace(tzinfo=get_current_timezone()),
+                    datetime(2024, 3, 1).replace(tzinfo=get_current_timezone()),
+                ),
+            ],
+            transform=lambda obj: (
+                obj.person_year.person.cpr,
+                obj.person_year.year.year,
+                obj.tax_scope,
+                obj.start_date,
+                obj.end_date,
+            ),
+            ordered=False,
+        )
+
+    def test_tax_information_load_skips_bogus_items(self):
+        with self.assertLogs(level=logging.WARNING) as cm:
+            # Act: run the tax information load on one object missing a CPR, and
+            # another missing a tax scope.
+            TaxInformationHandler.create_or_update_objects(
+                2024,
+                [
+                    # 1. No CPR
+                    TaxInformation(
+                        year=2024,
+                        tax_scope="FULL",
+                        cpr_municipality_code="956",
+                        start_date="2024-01-01T00:00:00",
+                        end_date="2024-02-01T00:00:00",
+                    ),
+                    # 2. No `tax_scope`
+                    TaxInformation(
+                        cpr="0000001234",
+                        year=2024,
+                        cpr_municipality_code="956",
+                        start_date="2024-02-01T00:00:00",
+                        end_date="2024-03-01T00:00:00",
+                    ),
+                ],
+                DataLoad.objects.create(source="test"),
+                self.OutputWrapper(stdout, ending="\n"),
+            )
+        # Assert: no tax information periods are created
+        self.assertQuerySetEqual(TaxInformationPeriod.objects.all(), [])
+        # Assert: the expected warnings are logged
+        self.assertListEqual(
+            [record.msg for record in cm.records],
+            ["Skipping %r (has no CPR or tax scope)"] * 2,
+        )
 
     def test_get_taxscopes(self):
         client = EskatClient.from_settings()
