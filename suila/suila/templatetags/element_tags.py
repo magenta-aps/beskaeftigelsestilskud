@@ -24,9 +24,10 @@ def jumbo_button(name, value, title, icon):
 
 
 @register.inclusion_tag("suila/templatetags/action_button.html", takes_context=True)
-def action_button(context, title, modal_id, modal_body):
+def action_button(context, title, material_icon, modal_id, modal_body):
     return {  # pragma: no cover
         "title": title,
+        "material_icon": material_icon,
         "modal_id": modal_id,
         "modal_body": modal_body,
         **context.flatten(),

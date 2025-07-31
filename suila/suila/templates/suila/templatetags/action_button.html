@@ -3,7 +3,7 @@
 
 {% load i18n %}
 <button type="button" class="btn action-btn" data-bs-toggle="modal" data-bs-target="#{{ modal_id }}">
-  <i class="bi bi-pencil-fill" style="font-size: 1.0rem"></i> {% translate title %}
+  <span class="material-icons me-2">{{ material_icon }}</span>{% translate title %}
 </button>
 
 <div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}_label" aria-hidden="true">

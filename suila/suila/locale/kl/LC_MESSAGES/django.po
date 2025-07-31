@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-30 11:11-0100\n"
+"POT-Creation-Date: 2025-07-31 11:00-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -114,11 +114,11 @@ msgstr ""
 msgid "CPR nummer"
 msgstr "CPR-normu"
 
-#: suila/models.py
+#: suila/models.py suila/views.py
 msgid "Startdato"
 msgstr ""
 
-#: suila/models.py
+#: suila/models.py suila/views.py
 msgid "Slutdato"
 msgstr ""
 
@@ -888,6 +888,10 @@ msgstr ""
 "tigusatilluunniit amerlavallaarsimanersut."
 
 #: suila/templates/suila/person_detail.html
+msgid "Ændre årsindkomst"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
 msgid "Notater"
 msgstr "Nalunaarsukkat"
@@ -1498,6 +1502,10 @@ msgstr "Ukiumut katillugit"
 #: suila/views.py
 msgid "Beløb"
 msgstr "Aningaasat"
+
+#: suila/views.py
+msgid "År"
+msgstr ""
 
 #: suila/views.py
 msgid "Beregningsparametrene blev opdateret"

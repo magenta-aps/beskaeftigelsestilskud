@@ -7,6 +7,9 @@ $secondary: #ffe169;
 $light-secondary: #bf0169;
 $light-primary: #dacac4;
 $lightest-primary: #f9eff4;
+$action-primary: #63635e;
+$action-secondary: #4f4f4a;
+$info-primary: #fff0b4;
 
 // Neutral colours
 $black: #000000;
@@ -438,7 +441,7 @@ a.help span.material-icons {
 
 // Info box
 .info {
-  background: #fff0b4;
+  background: $info-primary;
   padding: $spacer;
   border-radius: $spacer;
 }
@@ -607,14 +610,14 @@ div.explainer p {
 
 // Action buttons ("Handlinger")
 .action-btn {
-    background-color: #63635e;
-    border-color: #63635e;
+    background-color: $action-primary;
+    border-color: $action-primary;
     color: white; 
-    padding: 0.6rem 1.2rem;
+    padding: 0.6 * $spacer 1.2 * $spacer;
 }
 
 .action-btn:hover {
-    background-color: #4f4f4a;
-    border-color: #4f4f4a;
+    background-color: $action-secondary;
+    border-color: $action-secondary;
     color: white;
 }

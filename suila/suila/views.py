@@ -1152,7 +1152,7 @@ class PersonAnnualIncomeEstimateUpdateView(
                 use_l10n=True,
                 force_grouping=True,
             )
-            standard_note_text = _("Benyt manuelt estimeret årsindkomst")
+            standard_note_text = gettext("Benyt manuelt estimeret årsindkomst")
             standard_note_text += f" ({annual_income_estimate_formatted} kr.)"
         else:
             standard_note_text = _("Benyt automatisk estimeret årsindkomst")
