@@ -20,7 +20,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
-from django.db.models import CharField, IntegerChoices, Max, Q, QuerySet, Value
+from django.db.models import CharField, F, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -41,7 +41,6 @@ from django_filters.views import FilterView
 from django_tables2 import Column, SingleTableMixin, Table, TemplateColumn
 from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
-from django_tables2.views import SingleTableView
 from login.view_mixins import LoginRequiredMixin
 
 from suila.dates import get_payment_date
@@ -1141,18 +1140,33 @@ class PersonAnnualIncomeEstimateUpdateView(
 
 
 class TaxScopeHistoryTable(Table):
-    history_date = TemplateColumn(
-        template_name="suila/table_columns/full_date.html",
-        verbose_name=_("Dato"),
-    )
     tax_scope = TemplateColumn(
+        accessor=Accessor("_tax_scope"),
         template_name="suila/table_columns/tax_scope.html",
         verbose_name=_("Status"),
+    )
+    year = Column(
+        accessor=Accessor("_year"),
+        verbose_name=_("År"),
+    )
+    start_date = TemplateColumn(
+        accessor=Accessor("_start_date"),
+        template_name="suila/table_columns/full_date.html",
+        verbose_name=_("Startdato"),
+    )
+    end_date = TemplateColumn(
+        accessor=Accessor("_end_date"),
+        template_name="suila/table_columns/full_date.html",
+        verbose_name=_("Slutdato"),
     )
 
 
 class PersonTaxScopeHistoryView(
-    LoginRequiredMixin, PermissionsRequiredMixin, ViewLogMixin, SingleTableView
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    SingleTableMixin,
+    DetailView,
 ):
     paginate_by = 5
     model = Person
@@ -1163,47 +1177,24 @@ class PersonTaxScopeHistoryView(
     table_class = TaxScopeHistoryTable
     required_model_permissions = ["suila.view_person"]
 
-    def get_queryset(self):
-        person = Person.objects.get(pk=self.kwargs["pk"])
-
-        all_entries = []
-        for person_year in PersonYear.objects.filter(person=person):
-            all_entries.extend(person_year.history.all())
-
-        # First entry first
-        all_entries = sorted(
-            all_entries, key=lambda entry: entry.history_date, reverse=False
-        )
-
-        # Always show the first entry
-        relevant_entries = [all_entries[0]]
-
-        # Add entries if they contain relevant information
-        for entry in all_entries[1:]:
-            delta = entry.diff_against(relevant_entries[-1])
-
-            if any(
-                attribute in delta.changed_fields
-                for attribute in self.attributes_to_show
-            ):
-                relevant_entries.append(entry)
-
-        return relevant_entries[::-1]
-
     def get_table_data(self):
-        return [
-            {
-                "history_date": entry.history_date,
-                "tax_scope": entry.tax_scope,
-            }
-            for entry in self.get_queryset()
-        ]
+        person: Person = self.object
+        person_years: QuerySet[PersonYear] = person.personyear_set.order_by(
+            "-year__year",
+            "-taxinformationperiod__start_date",
+        ).annotate(
+            # Prefix using underscore to avoid name collision on `year` and `tax_scope`
+            _year=F("year__year"),
+            _tax_scope=F("taxinformationperiod__tax_scope"),
+            _start_date=F("taxinformationperiod__start_date"),
+            _end_date=F("taxinformationperiod__end_date"),
+        )
+        return person_years
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["person_pk"] = self.kwargs["pk"]
         self.log_view()
-
         return context
 
 

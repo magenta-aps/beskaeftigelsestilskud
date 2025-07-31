@@ -50,7 +50,7 @@ from suila.models import (
     PrismeBatchItem,
     StandardWorkBenefitCalculationMethod,
     SuilaEboksMessage,
-    TaxScope,
+    TaxInformationPeriod,
     Year,
 )
 from suila.view_mixins import PermissionsRequiredMixin
@@ -1853,47 +1853,40 @@ class TestPersonTaxScopeHistoryView(TestViewMixin, PersonEnv):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-
-        # Fetch a person-year
-        cls.person_year = PersonYear.objects.all()[0]
-        cls.person = cls.person_year.person
-        cls.person_pk = cls.person.pk
-
-        # Modify the status on a person-year
-        cls.person_year.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
-        cls.person_year.save()
-
-        # Create a new person-year with a new status
-        next_year, _ = Year.objects.update_or_create(year=cls.person_year.year.year + 1)
-        cls.next_person_year = PersonYear.objects.create(
-            year=next_year, person=cls.person, tax_scope=TaxScope.DELVIST_SKATTEPLIGTIG
-        )
-
-        # Modify the persons stability_score.
-        # This should not be shown in the table
-        cls.next_person_year.stability_score_a = 0.1
-        cls.next_person_year.save()
+        # Add person years and tax information periods for 2021 and 2022.
+        for year, tax_scope in [(2021, "FULL"), (2022, "LIM")]:
+            person_year, _ = PersonYear.objects.update_or_create(
+                person=cls.person1,
+                year=Year.objects.get(year=year),
+                preferred_estimation_engine_a="InYearExtrapolationEngine",
+            )
+            TaxInformationPeriod.objects.update_or_create(
+                person_year=person_year,
+                tax_scope=tax_scope,
+                start_date=datetime(year, 1, 1, tzinfo=timezone.get_current_timezone()),
+                end_date=datetime(year, 12, 31, tzinfo=timezone.get_current_timezone()),
+            )
 
         cls.url = reverse(
-            "suila:person_tax_scope_history",
-            kwargs={"pk": cls.person_pk},
+            "suila:person_tax_scope_history", kwargs={"pk": cls.person1.pk}
         )
 
     def test_table_view(self):
         self.client.force_login(self.admin_user)
         response = self.client.get(self.url)
-
         self.assertEqual(response.status_code, 200)
 
-        context = response.context_data
-
-        object_list = context["object_list"]
-
-        self.assertEqual(object_list[0].tax_scope, TaxScope.DELVIST_SKATTEPLIGTIG)
-        self.assertEqual(object_list[1].tax_scope, TaxScope.FORSVUNDET_FRA_MANDTAL)
-        self.assertEqual(object_list[2].tax_scope, TaxScope.FULDT_SKATTEPLIGTIG)
-
-        self.assertEqual(len(object_list), 3)
+        table = response.context_data["table"]
+        self.assertQuerySetEqual(
+            table.data,
+            [
+                (2022, "LIM"),
+                (2021, "FULL"),
+                (2020, None),
+            ],
+            transform=lambda obj: (obj._year, obj._tax_scope),
+            ordered=True,
+        )
 
         response.render()
         soup = str(BeautifulSoup(response.content, features="lxml"))
@@ -1902,47 +1895,29 @@ class TestPersonTaxScopeHistoryView(TestViewMixin, PersonEnv):
         self.assertIn("Delvist skattepligtig", soup)
 
     def test_pagination(self):
+        # 1. No pagination when fewer than 5 periods are defined
         self.client.force_login(self.admin_user)
         response = self.client.get(self.url)
         response.render()
         soup = str(BeautifulSoup(response.content, features="lxml"))
         self.assertNotIn("next", soup)
 
-        tax_scopes = [TaxScope.DELVIST_SKATTEPLIGTIG, TaxScope.FULDT_SKATTEPLIGTIG]
-        for i in range(40):
-            self.person_year.tax_scope = tax_scopes[i % 2]
-            self.person_year.save()
-
+        # 2. Pagination when more than 5 periods are defined
+        tz = timezone.get_current_timezone()
+        objs = [
+            TaxInformationPeriod(
+                person_year=self.person_year,
+                tax_scope="LIM",
+                start_date=datetime(self.person_year.year.year, month, 1, tzinfo=tz),
+                end_date=datetime(self.person_year.year.year, month, 28, tzinfo=tz),
+            )
+            for month in range(1, 13)
+        ]
+        TaxInformationPeriod.objects.bulk_create(objs)
         response = self.client.get(self.url)
         response.render()
         soup = str(BeautifulSoup(response.content, features="lxml"))
         self.assertIn("next", soup)
-
-    def test_show_first_item(self):
-        # The person exists since 2020-01-01
-        self.person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
-        self.person_year.b_income = 123
-        self.person_year.save()
-        h = self.person_year.history.all().order_by("-history_date")[0]
-        h.history_date = datetime(2020, 1, 1, 0, 0, 0)
-        h.save()
-
-        # The And was modified on 2020-02-02
-        self.person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
-        self.person_year.b_income = 456
-        self.person_year.save()
-        h = self.person_year.history.all().order_by("-history_date")[0]
-        h.history_date = datetime(2020, 2, 2, 0, 0, 0)
-        h.save()
-
-        # We should show that he was FULDT_SKATTEPLIGTIG since 2020-01-01
-        self.client.force_login(self.admin_user)
-        response = self.client.get(self.url)
-        context = response.context_data
-        object_list = context["object_list"]
-        first_obj = object_list[-1]
-        self.assertEqual(first_obj.history_date.strftime("%Y-%m-%d"), "2020-01-01")
-        self.assertEqual(first_obj.tax_scope, TaxScope.FULDT_SKATTEPLIGTIG)
 
 
 class TestCalculationParametersListView(TestViewMixin, TestCase):
