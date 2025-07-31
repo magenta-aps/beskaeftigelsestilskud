@@ -1,0 +1,21 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+<button type="button" class="btn action-btn" data-bs-toggle="modal" data-bs-target="#{{ modal_id }}">
+  <i class="bi bi-pencil-fill" style="font-size: 1.0rem"></i> {% translate title %}
+</button>
+
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}_label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id }}_label">{% translate title %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% include modal_body %}
+      </div>
+    </div>
+  </div>
+</div>

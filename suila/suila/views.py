@@ -29,6 +29,7 @@ from django.template.defaultfilters import date as format_date
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.formats import number_format
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -51,6 +52,7 @@ from suila.forms import (
     IncomeSignalFilterForm,
     NoteAttachmentFormSet,
     NoteForm,
+    PersonAnnualIncomeEstimateForm,
 )
 from suila.integrations.eboks.client import EboksClient
 from suila.models import (
@@ -264,6 +266,10 @@ class PersonDetailView(
                     "year": person_year.year.year,
                     "month": person_month.month,
                     "manually_entered_income": person.annual_income_estimate,
+                    "manually_entered_income_last_change": person.last_change(
+                        "annual_income_estimate"
+                    ),
+                    "manually_entered_income_formset": NoteAttachmentFormSet(),
                 }
             )
         else:
@@ -918,6 +924,7 @@ class FormWithFormsetView(FormView):
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         formset = self.get_formset()
+        self.object = self.get_object()
         for subform in formset:
             if hasattr(subform, "set_parent_form"):
                 subform.set_parent_form(form)  # pragma: no cover
@@ -951,10 +958,6 @@ class PersonDetailNotesView(
     ]
     matomo_pagename = "Persondetaljer - noter"
 
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return super().post(request, *args, **kwargs)
-
     def form_valid(  # type: ignore[override]
         self,
         form: NoteForm,
@@ -978,7 +981,7 @@ class PersonDetailNotesView(
 
     def get_notes(self) -> QuerySet[Note]:
         return Note.objects.filter(personyear__person_id=self.person_pk).order_by(
-            "created"
+            "-created"
         )
 
     def get_context_data(self, **kwargs):
@@ -1098,18 +1101,24 @@ class PersonAnnualIncomeEstimateUpdateView(
     PermissionsRequiredMixin,
     ViewLogMixin,
     UpdateView,
+    FormWithFormsetView,
 ):
     model = Person
+    form_class = PersonAnnualIncomeEstimateForm
+    formset_class = NoteAttachmentFormSet
     required_model_permissions = ["suila.change_person"]
-    fields = ["annual_income_estimate"]
 
     def get_success_url(self):
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        year = int(self.request.POST.get("year"))
-        month = int(self.request.POST.get("month"))
+    def form_valid(self, form, formset):
+        year = form.cleaned_data["year"]
+        month = form.cleaned_data["month"]
+        note = form.cleaned_data["note"]
+        annual_income_estimate = form.cleaned_data["annual_income_estimate"]
+
+        self.object.annual_income_estimate = annual_income_estimate
+        self.object.save()
 
         try:
             person_month = PersonMonth.objects.get(
@@ -1136,7 +1145,28 @@ class PersonAnnualIncomeEstimateUpdateView(
                     cpr=self.object.cpr,
                 )
             person_month = person_month.next
-        return response
+
+        if annual_income_estimate:
+            annual_income_estimate_formatted = number_format(
+                annual_income_estimate,
+                use_l10n=True,
+                force_grouping=True,
+            )
+            standard_note_text = _("Benyt manuelt estimeret årsindkomst")
+            standard_note_text += f" ({annual_income_estimate_formatted} kr.)"
+        else:
+            standard_note_text = _("Benyt automatisk estimeret årsindkomst")
+
+        note_obj = Note.objects.create(
+            text=standard_note_text + "; " + note,
+            personyear=PersonYear.objects.get(person=self.object, year=year),
+            author=self.request.user,
+        )
+
+        formset.instance = note_obj
+        formset.save()
+
+        return super().form_valid(form, formset)
 
 
 class TaxScopeHistoryTable(Table):

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-22 07:36-0100\n"
+"POT-Creation-Date: 2025-07-30 11:11-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -45,7 +45,7 @@ msgstr ""
 msgid "Estimeret månedsindkomst"
 msgstr "Estimated monthly income"
 
-#: suila/forms.py
+#: suila/forms.py suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Estimeret årsindkomst"
 msgstr "Estimated annual income"
 
@@ -613,6 +613,22 @@ msgid "Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til Grønland.
 msgstr ""
 "You can only receive Suila-tapit if you are fully tax liable in Greenland."
 
+#: suila/templates/suila/forms/annual_income_estimate_form.html suila/views.py
+msgid "Benyt automatisk estimeret årsindkomst"
+msgstr "Use automatically estimated annual income"
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html suila/views.py
+msgid "Benyt manuelt estimeret årsindkomst"
+msgstr "Use manually estimated annual income"
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html
+msgid "Notat"
+msgstr "Note"
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html
+msgid "Gem estimering"
+msgstr "Save income estimate"
+
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -676,6 +692,23 @@ msgid ""
 msgstr ""
 "If your annual income is below DKK 70,000 or above DKK 500,000, you will not "
 "receive Suila-tapit, and therefore your figures will not appear in the graph."
+
+#: suila/templates/suila/person_detail.html
+msgid "Din årsindtægt er manuelt estimeret."
+msgstr "The annual income has been manually estimated."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
+"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
+"årlige Suila-tapit."
+msgstr ""
+"Annual income has been manually estimated by the Tax Agency. The current "
+"Suila-tapit pay outs is based on the manual income estimate."
+
+#: suila/templates/suila/person_detail.html
+msgid "Sidst ændret:"
+msgstr "Last changed:"
 
 #: suila/templates/suila/person_detail.html
 msgid ""
@@ -754,10 +787,6 @@ msgstr "Expected amount to be paid for all of %(year)s"
 msgid "Forventet årsindkomst fra arbejde"
 msgstr "Expected annual income from employment"
 
-#: suila/templates/suila/person_detail.html
-msgid "Gem estimering"
-msgstr "Save income estimate"
-
 #: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
 #: suila/tests/test_status_tags.py
 msgid "Udbetalingspause"
@@ -781,23 +810,6 @@ msgid ""
 "Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
 "%(year)s."
 msgstr ""
-
-#: suila/templates/suila/person_detail.html
-msgid "Din årsindtægt er manuelt estimeret."
-msgstr "The annual income has been manually estimated."
-
-#: suila/templates/suila/person_detail.html
-msgid ""
-"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
-"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
-"årlige Suila-tapit."
-msgstr ""
-"Annual income has been manually estimated by the Tax Agency. The current "
-"Suila-tapit pay outs is based on the manual income estimate."
-
-#: suila/templates/suila/person_detail.html
-msgid "Skift til automatisk estimering"
-msgstr "Change to automatic income estimates."
 
 #: suila/templates/suila/person_detail.html
 msgid "Bemærk!"

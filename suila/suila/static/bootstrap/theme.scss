@@ -436,6 +436,19 @@ a.help span.material-icons {
   line-height: 1.75 * $spacer;
 }
 
+// Info box
+.info {
+  background: #fff0b4;
+  padding: $spacer;
+  border-radius: $spacer;
+}
+
+.info p {
+  line-height: 1.5 * $spacer;
+  padding-top: 0.6 * $spacer;
+}
+
+
 // Detail table
 ul.nav.detail-table {
   background: $primary;
@@ -589,4 +602,19 @@ div.explainer p {
     padding: 0;
     height: 35rem;
   }
+}
+
+
+// Action buttons ("Handlinger")
+.action-btn {
+    background-color: #63635e;
+    border-color: #63635e;
+    color: white; 
+    padding: 0.6rem 1.2rem;
+}
+
+.action-btn:hover {
+    background-color: #4f4f4a;
+    border-color: #4f4f4a;
+    color: white;
 }

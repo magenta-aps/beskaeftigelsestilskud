@@ -6,11 +6,13 @@ from urllib.parse import quote_plus, unquote_plus
 
 from common.form_mixins import BootstrapForm
 from django.forms import (
+    CharField,
     ChoiceField,
     DecimalField,
     FileInput,
     Form,
     HiddenInput,
+    IntegerField,
     ModelForm,
     Select,
     Textarea,
@@ -19,7 +21,7 @@ from django.forms.fields import BooleanField
 from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
-from suila.models import Note, NoteAttachment, WorkingTaxCreditCalculationMethod
+from suila.models import Note, NoteAttachment, Person, WorkingTaxCreditCalculationMethod
 
 
 class NoteForm(ModelForm):
@@ -193,3 +195,13 @@ class IncomeSignalFilterForm(Form):
 
 class ConfirmationForm(Form):
     confirmed = BooleanField(required=False)
+
+
+class PersonAnnualIncomeEstimateForm(ModelForm):
+    year = IntegerField(required=True)
+    month = IntegerField(required=True)
+    note = CharField(required=True)
+
+    class Meta:
+        model = Person
+        fields = ["annual_income_estimate"]
