@@ -7,7 +7,7 @@ import os.path
 import re
 import time
 from concurrent.futures import Future
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -34,6 +34,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     SuilaEboksMessage,
+    TaxInformationPeriod,
     TaxScope,
     Year,
 )
@@ -632,6 +633,16 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
             preferred_estimation_engine_a="InYearExtrapolationEngine",
             tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
         )
+        self.period = TaxInformationPeriod.objects.create(
+            person_year=self.person_year,
+            tax_scope="FULL",
+            start_date=datetime(
+                self.year.year, 1, 1, tzinfo=timezone.get_current_timezone()
+            ),
+            end_date=datetime(
+                self.year.year, 12, 31, tzinfo=timezone.get_current_timezone()
+            ),
+        )
         self.person_months = [
             PersonMonth.objects.create(
                 person_year=self.person_year,
@@ -677,10 +688,11 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
         self.assertEqual(message.type, "afventer")
 
     def test_person_not_in_mandtal(self):
-        self.person_year.tax_scope = TaxScope.DELVIST_SKATTEPLIGTIG
-        self.person_year.save()
+        # Arrange: remove tax information period for person year under test
+        self.period.delete()
+        # Act
         self.call_command(send=True)
-
+        # Assert: no message was created or sent
         self.client_mock.send_message.assert_not_called()
         self.assertFalse(
             SuilaEboksMessage.objects.filter(cpr_cvr="0101011111").exists()
