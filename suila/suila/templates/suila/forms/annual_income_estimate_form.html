@@ -48,6 +48,13 @@
     const $autoRadio = $('#automatic_estimate');
     const $incomeInput = $('input[name="annual_income_estimate"]');
 
+    // Check manual radio button if manually_entered_income is not None
+    // and prefill the input field with manually_entered_income value
+    {% if manually_entered_income is not None %}
+      $manualRadio.prop('checked', true);
+      $incomeInput.val('{{ manually_entered_income|floatformat:0 }}');
+    {% endif %}
+
     function toggleInput() {
       if ($manualRadio.is(':checked')) {
         $incomeInput.prop('disabled', false);
