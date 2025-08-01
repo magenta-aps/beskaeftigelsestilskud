@@ -81,3 +81,58 @@ $(function(){
     });
 });
 
+function initFormset(formsetContainerId, formsetPrototypeId) {
+    const container = $("#" + formsetContainerId);
+    const prototype = $("#" + formsetPrototypeId);
+
+    const formset = container.formset("attachments", prototype, true);
+
+    const subformAdded = function (subform) {
+        if (!(subform instanceof $)) {
+            subform = $(subform);
+        }
+        subform.find(".remove-row").click(removeForm.bind(subform, subform));
+        subformsUpdated();
+    };
+
+    const subformRemoved = function () {
+        const rows = container.find(".row");
+        rows.each(function (index) {
+            $(this).find("input[name],select[name]").each(function () {
+                this.id = this.id.replace(/-\d+-/, "-" + index + "-");
+                this.name = this.name.replace(/-\d+-/, "-" + index + "-");
+            });
+        });
+        subformsUpdated();
+    };
+
+    const subformsUpdated = function () {
+        const rows = container.find(".row");
+        const lastRow = rows.last();
+        rows.find(".remove-row").show();
+        lastRow.find(".remove-row").hide();
+    };
+
+    const removeForm = function (subform) {
+        subform.slideUp(400, () => {
+            formset.removeForm(subform, true);
+        });
+    };
+
+    container.find(".row").each(function () {
+        subformAdded(this);
+    });
+
+    container.on("subform.post_add", function (event, row) {
+        subformAdded(row);
+        $(row).slideDown(400);
+    });
+
+    container.on("subform.pre_add", function (event, row) {
+        $(row).hide();
+    });
+
+    container.on("subform.post_remove", function (event, row) {
+        subformRemoved(row);
+    });
+}

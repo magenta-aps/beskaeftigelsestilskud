@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-22 07:36-0100\n"
+"POT-Creation-Date: 2025-07-31 11:00-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "Estimeret månedsindkomst"
 msgstr "Qaammammut isertitariumaagassatut naatsorsuutigisat"
 
-#: suila/forms.py
+#: suila/forms.py suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Estimeret årsindkomst"
 msgstr "Ukiumut isertitariumaagassatut naatsorsuutigisat"
 
@@ -114,11 +114,11 @@ msgstr ""
 msgid "CPR nummer"
 msgstr "CPR-normu"
 
-#: suila/models.py
+#: suila/models.py suila/views.py
 msgid "Startdato"
 msgstr ""
 
-#: suila/models.py
+#: suila/models.py suila/views.py
 msgid "Slutdato"
 msgstr ""
 
@@ -628,6 +628,22 @@ msgstr ""
 "Kalaallit nunaanni tamakkiisumik akileraartussaatitaaguit Suila-tapinik "
 "pisinnaavutit."
 
+#: suila/templates/suila/forms/annual_income_estimate_form.html suila/views.py
+msgid "Benyt automatisk estimeret årsindkomst"
+msgstr ""
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html suila/views.py
+msgid "Benyt manuelt estimeret årsindkomst"
+msgstr ""
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html
+msgid "Notat"
+msgstr ""
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html
+msgid "Gem estimering"
+msgstr "Naatsorsukkat toqqukkit"
+
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -697,6 +713,24 @@ msgstr ""
 "Isertitavit 70.000 koruunit ataappagit 500.000 koruunilluunniit qaangerpagit "
 "Suila-tapisisassanngilatit. Taammammat titartakkami Suila-tapisiassarnik "
 "ersitsoqanngilaq."
+
+#: suila/templates/suila/person_detail.html
+msgid "Din årsindtægt er manuelt estimeret."
+msgstr "Ukiumut isertitariumaagassatit nammineq kisitaapput."
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
+"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
+"årlige Suila-tapit."
+msgstr ""
+"Ukiumut isertitariumaagassatit Akileraartarnermut Aqutsisoqarfimmit nammineq "
+"kisinneqarsimapput. Namminerluni kisitaq ukiumut Suila-"
+"tapisiariumaagassannut tunngavigineqarpoq."
+
+#: suila/templates/suila/person_detail.html
+msgid "Sidst ændret:"
+msgstr ""
 
 #: suila/templates/suila/person_detail.html
 msgid ""
@@ -779,10 +813,6 @@ msgstr "%(year)s-mi Suila-tapit tunniunneqartussatut naatsorsuutigineqartut"
 msgid "Forventet årsindkomst fra arbejde"
 msgstr "Ukiumut sulinermi isertitariumaagassatut naatsorsuutigineqartut"
 
-#: suila/templates/suila/person_detail.html
-msgid "Gem estimering"
-msgstr "Naatsorsukkat toqqukkit"
-
 #: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
 #: suila/tests/test_status_tags.py
 msgid "Udbetalingspause"
@@ -806,24 +836,6 @@ msgid ""
 "Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
 "%(year)s."
 msgstr ""
-
-#: suila/templates/suila/person_detail.html
-msgid "Din årsindtægt er manuelt estimeret."
-msgstr "Ukiumut isertitariumaagassatit nammineq kisitaapput."
-
-#: suila/templates/suila/person_detail.html
-msgid ""
-"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
-"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
-"årlige Suila-tapit."
-msgstr ""
-"Ukiumut isertitariumaagassatit Akileraartarnermut Aqutsisoqarfimmit nammineq "
-"kisinneqarsimapput. Namminerluni kisitaq ukiumut Suila-"
-"tapisiariumaagassannut tunngavigineqarpoq."
-
-#: suila/templates/suila/person_detail.html
-msgid "Skift til automatisk estimering"
-msgstr "Naatsorsorneqarsimasut nammineq kisitsisartumut naatsorsortikkit"
 
 #: suila/templates/suila/person_detail.html
 msgid "Bemærk!"
@@ -874,6 +886,10 @@ msgstr ""
 "aggustimi ukiumut isertitarisimasatit kisinneqarsimaleriarpata "
 "takuneqarsinnaalerumaarpoq Suila-tapinik tigunngitsuugaqarsimanersutit, "
 "tigusatilluunniit amerlavallaarsimanersut."
+
+#: suila/templates/suila/person_detail.html
+msgid "Ændre årsindkomst"
+msgstr ""
 
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
@@ -1486,6 +1502,10 @@ msgstr "Ukiumut katillugit"
 #: suila/views.py
 msgid "Beløb"
 msgstr "Aningaasat"
+
+#: suila/views.py
+msgid "År"
+msgstr ""
 
 #: suila/views.py
 msgid "Beregningsparametrene blev opdateret"

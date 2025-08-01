@@ -1769,6 +1769,11 @@ class TestPersonAnnualIncomeEstimateUpdateView(
             "annual_income_estimate": 100_000,
             "year": cls.person_year.year.year,
             "month": cls.person_month.month,
+            "note": "<reason for change>",
+            "attachments-TOTAL_FORMS": 0,
+            "attachments-INITIAL_FORMS": 0,
+            "attachments-MIN_NUM_FORMS": 0,
+            "attachments-MAX_NUM_FORMS": 1000,
         }
 
     def test_edit_person_as_admin(self):

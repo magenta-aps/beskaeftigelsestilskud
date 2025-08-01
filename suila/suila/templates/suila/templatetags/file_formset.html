@@ -1,0 +1,44 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% comment %}
+Expected context:
+- formset: the formset object
+- formset_name: a unique base string like "manually_entered_income_formset"
+{% endcomment %}
+
+{{ formset.management_form }}
+{% with container_id=formset_name|add:"_container" prototype_id=formset_name|add:"_prototype" %}
+  {% for subform in formset %}
+    <div id="{{ container_id }}">
+      <div class="row mb-0">
+        <div class="d-flex align-items-center mb-3">
+          <div class="flex-grow-1 me-0">
+            {{ subform.file }}
+          </div>
+          <button type="button" class="btn btn-outline-primary bi-x remove-row ms-2"></button>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+
+  <div id="{{ prototype_id }}" class="d-none">
+    {% with formset.empty_form as subform %}
+      <div class="row mb-0">
+        <div class="d-flex align-items-center mb-3">
+          <div class="flex-grow-1 me-0">
+            {{ subform.file }}
+          </div>
+          <button type="button" class="btn btn-outline-primary bi-x remove-row ms-2"></button>
+        </div>
+      </div>
+    {% endwith %}
+  </div>
+
+  <script nonce="{{ request.csp_nonce }}">
+    $(function () {
+        initFormset("{{ container_id }}", "{{ prototype_id }}");
+    });
+  </script>  
+  
+{% endwith %}

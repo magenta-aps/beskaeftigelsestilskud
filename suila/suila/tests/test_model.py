@@ -445,6 +445,30 @@ class TestPerson(UserModelTest):
         self.person.full_address = "Imaneq 32, 3900 Nuuk"
         self.assertEqual(self.person.full_address_splitted, ["Imaneq 32", "3900 Nuuk"])
 
+    def test_annual_income_estimate_last_change(self):
+        # Step 1: Create a Person with an initial income estimate
+        person = Person.objects.create(name="Test Person", annual_income_estimate=1000)
+
+        # Step 2: Change an unrelated field (should not trigger detection)
+        person.name = "Changed Name"
+        person.save()
+
+        # Step 3: Change the annual_income_estimate field
+        person.annual_income_estimate = 120000
+        person.save()
+        expected_timestamp = (
+            person.history.order_by("-history_date").first().history_date
+        )
+
+        # Step 4: Another unrelated change
+        person.name = "Changed Again"
+        person.save()
+
+        # Step 5: Check that the property returns the timestamp from step 3
+        self.assertEqual(
+            person.last_change("annual_income_estimate"), expected_timestamp
+        )
+
 
 class TestPersonYear(UserModelTest):
 

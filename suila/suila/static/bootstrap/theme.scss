@@ -7,6 +7,9 @@ $secondary: #ffe169;
 $light-secondary: #bf0169;
 $light-primary: #dacac4;
 $lightest-primary: #f9eff4;
+$action-primary: #63635e;
+$action-secondary: #4f4f4a;
+$info-primary: #fff0b4;
 
 // Neutral colours
 $black: #000000;
@@ -436,6 +439,19 @@ a.help span.material-icons {
   line-height: 1.75 * $spacer;
 }
 
+// Info box
+.info {
+  background: $info-primary;
+  padding: $spacer;
+  border-radius: $spacer;
+}
+
+.info p {
+  line-height: 1.5 * $spacer;
+  padding-top: 0.6 * $spacer;
+}
+
+
 // Detail table
 ul.nav.detail-table {
   background: $primary;
@@ -589,4 +605,19 @@ div.explainer p {
     padding: 0;
     height: 35rem;
   }
+}
+
+
+// Action buttons ("Handlinger")
+.action-btn {
+    background-color: $action-primary;
+    border-color: $action-primary;
+    color: white; 
+    padding: 0.6 * $spacer 1.2 * $spacer;
+}
+
+.action-btn:hover {
+    background-color: $action-secondary;
+    border-color: $action-secondary;
+    color: white;
 }
