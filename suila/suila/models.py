@@ -31,9 +31,11 @@ from django.db.models import (
     BooleanField,
     Case,
     Exists,
+    Expression,
     F,
     Func,
     Index,
+    IntegerField,
     OuterRef,
     Q,
     QuerySet,
@@ -696,6 +698,33 @@ class TaxInformationPeriod(PermissionsMixin, models.Model):
             period__overlap=month_period,
         )
         return Exists(subquery)
+
+    @classmethod
+    def get_person_month_filter_annotation_for_entire_year(
+        cls,
+        year: int,
+        month: int,
+        required_tax_scope: str = "FULL",
+    ):
+        """
+        Calculate the amount of months in a year for which tax-scope == "FULL"
+
+        Notes
+        --------
+        Future months are assumed to have tax-scope = "FULL"
+
+        the month/year parameters should be supplied such that we have data up and
+        including that month/year. This means that if load-eskat was executed for month
+        = 4 it is OK to run this function with month = 4 but not with month = 5.
+        """
+        sum_expr: Expression = Value(0, output_field=IntegerField())
+        for m in range(1, month + 1):
+            annotation = cls.get_person_month_filter_annotation(year, m)
+            sum_expr = sum_expr + Case(
+                When(annotation, then=1), default=0, output_field=IntegerField()
+            )
+
+        return sum_expr + Value(12 - month, output_field=IntegerField())
 
     @classmethod
     def get_annotated_queryset(
