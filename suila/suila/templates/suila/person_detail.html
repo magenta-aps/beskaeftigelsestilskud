@@ -16,9 +16,36 @@
 
 {% block extra_headers %}
 <link rel="stylesheet" href="{% static 'bootstrap-icons/font/bootstrap-icons.min.css' %}"/>
+<script src="{% static 'suila/formset.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'suila/fileinput.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock %}
 
 {% block person_data %}
+
+{% if manually_entered_income %}
+{% if person_id %}
+<div class="grid gap-3 mt-2">
+    <div class="g-col-4 info">
+        <b> {% translate "Din årsindtægt er manuelt estimeret." %} </b>
+        <p>
+            {% blocktrans trimmed %}
+                Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er
+                den manuelt beregnede årsindtægt, der ligger til grund for estimeringen
+                af dit årlige Suila-tapit.
+            {% endblocktrans %}           
+        </p>
+        <i>
+            {% blocktrans trimmed %}
+                Sidst ændret:
+            {% endblocktrans %}           
+            {{manually_entered_income_last_change}}
+        </i>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+
 <div class="row mt-5">
     <div class="col-md-12">
         <div class="explainer">
@@ -88,27 +115,8 @@
             <i class="bi bi-exclamation-triangle-fill"></i>
         {% else %}
             {{ estimated_year_result|format_amount }}
-            {% if user|has_permissions:"suila.change_person" %}
-                <button id="toggle_annual_income_form" class="btn btn-link">
-                    <i class="bi bi-pencil-fill" style="font-size: 1.4rem"></i>
-                </button>
-            {% endif %}
         {% endif %}
         </h1>
-        {% if person_id %}
-        <div id="annual_income_form" class="d-none">
-            <form method="post" action="{% url 'suila:set_person_annual_income_estimate' pk=person_id %}">
-                {% csrf_token %}
-                <input type="hidden" name="person" value="{{person_id}}"/>
-                <input type="hidden" name="year" value="{{year}}"/>
-                <input type="hidden" name="month" value="{{month}}"/>
-                <div class="input-group mb-3">
-                    <input type="text" name="annual_income_estimate">
-                    <button type="submit" class="btn btn-primary">{% translate "Gem estimering" %}</button>
-                </div>
-            </form>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endif %}
@@ -146,32 +154,6 @@
 </div>
 {% endif %}
 
-{% if manually_entered_income %}
-{% if person_id %}
-<div class="grid gap-3 mt-5">
-    <div class="g-col-12 sidebar">
-        <h2 class="mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {% translate "Din årsindtægt er manuelt estimeret." %} </h2>
-        <p>
-            {% blocktrans trimmed %}
-                Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er
-                den manuelt beregnede årsindtægt, der ligger til grund for estimeringen
-                af dit årlige Suila-tapit.
-            {% endblocktrans %}
-        </p>
-        {% if user|has_permissions:"suila.change_person" %}
-        <form method="post" action="{% url 'suila:set_person_annual_income_estimate' pk=person_id %}">
-            {% csrf_token %}
-            <input type="hidden" name="person" value="{{person_id}}"/>
-            <input type="hidden" name="year" value="{{year}}"/>
-            <input type="hidden" name="month" value="{{month}}"/>
-            <input type="hidden" name="annual_income_estimate" value=""/>
-            <button type="submit" class="btn btn-primary">{% translate "Skift til automatisk estimering" %}</button>
-        </form>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
-{% endif %}
 
 <div class="grid gap-3 mt-5">
     <div class="g-col-12 sidebar">
@@ -206,7 +188,20 @@
     </div>
 </div>
 
-<div class="grid gap-3 mt-5">
+{% if user|has_permissions:"suila.change_person" %}
+<div class="row mt-5">
+    <h2> Handlinger </h2>
+</div>
+<div class="row mt-3">
+    {% if person_id %}
+    <div class="col-4">
+        {% action_button _("Ændre årsindkomst") "edit" "annual_income_form" "suila/forms/annual_income_estimate_form.html" %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="grid gap-3 mt-4">
     {% if user|has_permissions:"suila.view_note" %}
     <div class="g-col-4 jumbo">
         {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}
@@ -326,15 +321,4 @@
         </ul>
     </div>
 </div>
-
-<script nonce="{{ request.csp_nonce }}">
-function toggle($el) {
-    $el.toggleClass("d-none");
-}
-function toggleAnnualIncomeForm() {
-    toggle($("#annual_income_form"));
-}
-$("#toggle_annual_income_form").on("click", toggleAnnualIncomeForm);
-</script>
-
 {% endblock %}

@@ -1,0 +1,67 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+<form method="post" enctype="multipart/form-data" action="{% url 'suila:set_person_annual_income_estimate' pk=person_id %}">
+  {% csrf_token %}
+  
+  <input type="hidden" name="person" value="{{ person_id }}"/>
+  <input type="hidden" name="year" value="{{ year }}"/>
+  <input type="hidden" name="month" value="{{ month }}"/>
+
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="income_option" id="automatic_estimate" checked>
+    <label class="form-check-label" for="automatic_estimate">
+      {% translate "Benyt automatisk estimeret årsindkomst" %}
+    </label>
+  </div>
+
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="income_option" id="manual_estimate">
+    <label class="form-check-label" for="manual_estimate">
+      {% translate "Benyt manuelt estimeret årsindkomst" %}
+    </label>
+  </div>
+
+  <div class="mb-3 ms-4">
+    <input type="number" name="annual_income_estimate" class="form-control"
+           placeholder="{% translate 'Estimeret årsindkomst' %}" autocomplete="off"
+           inputmode="numeric" pattern="\d*" required disabled>
+  </div>
+
+  <div class="mb-3">
+    <label for="note" class="form-label">{% translate "Notat" %}*</label>
+    <textarea name="note" id="note" class="form-control"
+              rows="3" autocomplete="off" required></textarea>
+  </div>
+  
+  {% file_formset manually_entered_income_formset "manually_entered_income_formset" %}
+
+  <div class="text-end">
+    <button type="submit" class="btn btn-primary">{% translate "Gem estimering" %}</button>
+  </div>
+</form>
+
+<script nonce="{{ request.csp_nonce }}">
+  $(function () {
+    const $manualRadio = $('#manual_estimate');
+    const $autoRadio = $('#automatic_estimate');
+    const $incomeInput = $('input[name="annual_income_estimate"]');
+
+    function toggleInput() {
+      if ($manualRadio.is(':checked')) {
+        $incomeInput.prop('disabled', false);
+      } else {
+        $incomeInput.prop('disabled', true).val('');
+      }
+    }
+
+    toggleInput();
+    $('input[name="income_option"]').on('change', toggleInput);
+
+    $incomeInput.on('input', function () {
+      let val = $(this).val().replace(/\D/g, '').slice(0, 10);
+      $(this).val(val); // Allow max. 10 digits
+    });
+  });
+</script>
