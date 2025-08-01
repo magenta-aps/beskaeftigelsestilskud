@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+import calendar
 import csv
 import datetime
 import os
@@ -29,6 +30,15 @@ from suila.models import (
 )
 
 User = get_user_model()
+
+tax_scope_dict = {
+    TaxScope.FULDT_SKATTEPLIGTIG: "FULL",
+    TaxScope.DELVIST_SKATTEPLIGTIG: "LIM",
+}
+
+
+def days_in_month(year: int, month: int) -> int:
+    return calendar.monthrange(year, month)[1]
 
 
 def get_next_month(date_obj):
@@ -202,12 +212,15 @@ class Command(BaseCommand):
                 person_year.save()
                 set_history_date(person_year, date)
 
-                TaxInformationPeriod.objects.update_or_create(
-                    person_year=person_year,
-                    tax_scope="FULL",
-                    start_date=datetime.datetime(year, 1, 1, tzinfo=tz),
-                    end_date=datetime.datetime(year, 12, 31, tzinfo=tz),
-                )
+                if not person_year.tax_scope == TaxScope.FORSVUNDET_FRA_MANDTAL:
+                    TaxInformationPeriod.objects.update_or_create(
+                        person_year=person_year,
+                        tax_scope=tax_scope_dict[person_year.tax_scope],
+                        start_date=datetime.datetime(year, month, 1, tzinfo=tz),
+                        end_date=datetime.datetime(
+                            year, month, days_in_month(year, month), tzinfo=tz
+                        ),
+                    )
 
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
 
