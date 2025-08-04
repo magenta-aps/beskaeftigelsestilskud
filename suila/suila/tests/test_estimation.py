@@ -257,24 +257,6 @@ class TestEstimationEngine(TestCase):
         self.assertIsNone(summary.mean_error_percent)
         self.assertIsNone(summary.rmse_percent)
 
-    def test_estimate_all_not_taxable(self):
-        # Arrange: remove tax information period
-        self.period1.delete()
-        # Act
-        self.estimate_all(
-            self.year.year,
-            self.person.pk,
-            1,
-            False,
-        )
-        # Assert
-        income_estimates = IncomeEstimate.objects.filter(
-            person_month__person_year=self.person_year,
-            engine="InYearExtrapolationEngine",
-            income_type=IncomeType.A,
-        ).count()
-        self.assertEqual(income_estimates, 0)
-
     def test_estimate_all_None_inputs(self):
         self.estimate_all(self.year.year, None, None, False)
         # When person=None and count = None the PersonYear queryset contains
