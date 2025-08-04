@@ -664,7 +664,9 @@ class TaxInformationHandler(Handler):
                 for tax_information in tax_information_list
                 if cpr in person_year_map
             ]
-            TaxInformationPeriod.objects.bulk_create(objs, batch_size=1000)
+            TaxInformationPeriod.objects.bulk_create(
+                objs, batch_size=1000, ignore_conflicts=True
+            )
 
         # Log items that do not have a matching `PersonYear` in `person_year_map`
         skipped: dict[str, list[TaxInformation]] = {
