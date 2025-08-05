@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-31 11:00-0100\n"
+"POT-Creation-Date: 2025-08-06 11:24-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -351,6 +351,7 @@ msgid "Graf"
 msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
+#: suila/templates/suila/forms/pause_form.html
 msgid "Gem"
 msgstr ""
 
@@ -637,12 +638,21 @@ msgid "Benyt manuelt estimeret årsindkomst"
 msgstr ""
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
+#: suila/templates/suila/forms/pause_form.html
 msgid "Notat"
 msgstr ""
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Gem estimering"
 msgstr "Naatsorsukkat toqqukkit"
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "I gang"
+msgstr ""
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "På pause"
+msgstr ""
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html
@@ -713,24 +723,6 @@ msgstr ""
 "Isertitavit 70.000 koruunit ataappagit 500.000 koruunilluunniit qaangerpagit "
 "Suila-tapisisassanngilatit. Taammammat titartakkami Suila-tapisiassarnik "
 "ersitsoqanngilaq."
-
-#: suila/templates/suila/person_detail.html
-msgid "Din årsindtægt er manuelt estimeret."
-msgstr "Ukiumut isertitariumaagassatit nammineq kisitaapput."
-
-#: suila/templates/suila/person_detail.html
-msgid ""
-"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
-"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
-"årlige Suila-tapit."
-msgstr ""
-"Ukiumut isertitariumaagassatit Akileraartarnermut Aqutsisoqarfimmit nammineq "
-"kisinneqarsimapput. Namminerluni kisitaq ukiumut Suila-"
-"tapisiariumaagassannut tunngavigineqarpoq."
-
-#: suila/templates/suila/person_detail.html
-msgid "Sidst ændret:"
-msgstr ""
 
 #: suila/templates/suila/person_detail.html
 msgid ""
@@ -813,23 +805,6 @@ msgstr "%(year)s-mi Suila-tapit tunniunneqartussatut naatsorsuutigineqartut"
 msgid "Forventet årsindkomst fra arbejde"
 msgstr "Ukiumut sulinermi isertitariumaagassatut naatsorsuutigineqartut"
 
-#: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
-#: suila/tests/test_status_tags.py
-msgid "Udbetalingspause"
-msgstr "Pisartakkanik unitsitsigallarneq"
-
-#: suila/templates/suila/person_detail.html
-msgid "Du har sat dine udbetalinger på pause."
-msgstr "Tigusartakkatit unitsikkallarpatit"
-
-#: suila/templates/suila/person_detail.html
-msgid ""
-"Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen, at dine "
-"udbetalinger skal sættes på pause."
-msgstr ""
-"Tunniunneqartartut unitsinneqarallarsimapput. Akileraartarnermut "
-"Aqutsisoqarfik tigusartakkavit unitsinneqarallarnissaanik paasitissimavat."
-
 #: suila/templates/suila/person_detail.html
 #, python-format
 msgid ""
@@ -892,6 +867,10 @@ msgid "Ændre årsindkomst"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
+msgid "Ændre status på udbetalinger"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
 msgid "Notater"
 msgstr "Nalunaarsukkat"
@@ -917,14 +896,6 @@ msgstr "Ukiumoortumik naatsorsuineq"
 #: suila/templates/suila/person_detail.html
 msgid "e-Boks-beskeder preview"
 msgstr ""
-
-#: suila/templates/suila/person_detail.html
-msgid "Genoptag udbetalinger"
-msgstr "Pisartakkatit aallarteqqikkit"
-
-#: suila/templates/suila/person_detail.html
-msgid "Pause i udbetalinger"
-msgstr "Tunniunneqartarnerinik unitsitigallarneq"
 
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_tax_scope_history.html
@@ -1300,6 +1271,42 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
+#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+msgid "Din årsindtægt er manuelt estimeret"
+msgstr "Ukiumut isertitariumaagassatit nammineq kisitaapput"
+
+#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+msgid ""
+"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
+"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
+"årlige Suila-tapit."
+msgstr ""
+"Ukiumut isertitariumaagassatit Akileraartarnermut Aqutsisoqarfimmit nammineq "
+"kisinneqarsimapput. Namminerluni kisitaq ukiumut Suila-"
+"tapisiariumaagassannut tunngavigineqarpoq."
+
+#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+#: suila/templates/suila/templatetags/pause_info_box.html
+msgid "Sidst ændret:"
+msgstr ""
+
+#: suila/templates/suila/templatetags/pause_info_box.html
+msgid "Du har sat dine udbetalinger på pause."
+msgstr "Tigusartakkatit unitsikkallarpatit"
+
+#: suila/templates/suila/templatetags/pause_info_box.html
+msgid ""
+"Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen, at dine "
+"udbetalinger skal sættes på pause."
+msgstr ""
+"Tunniunneqartartut unitsinneqarallarsimapput. Akileraartarnermut "
+"Aqutsisoqarfik tigusartakkavit unitsinneqarallarnissaanik paasitissimavat."
+
+#: suila/templates/suila/templatetags/pause_info_box.html
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
+msgid "Udbetalingspause"
+msgstr "Pisartakkanik unitsitsigallarneq"
+
 #: suila/templatetags/amount_tags.py
 msgid "-"
 msgstr "-"
@@ -1502,6 +1509,14 @@ msgstr "Ukiumut katillugit"
 #: suila/views.py
 msgid "Beløb"
 msgstr "Aningaasat"
+
+#: suila/views.py
+msgid "Starter udbetalingspause"
+msgstr ""
+
+#: suila/views.py
+msgid "Stopper udbetalingspause"
+msgstr ""
 
 #: suila/views.py
 msgid "År"

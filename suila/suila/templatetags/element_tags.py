@@ -46,3 +46,21 @@ def file_formset(context, formset, formset_name):
 @register.inclusion_tag("suila/templatetags/language_picker.html", takes_context=True)
 def language_picker(context):
     return {"request": context["request"]}  # pragma: no cover
+
+
+@register.inclusion_tag(
+    "suila/templatetags/manually_entered_income_info_box.html", takes_context=True
+)
+def manually_entered_income_info_box(context, mock):
+    return {  # pragma: no cover
+        "mock": mock,
+        **context.flatten(),
+    }
+
+
+@register.inclusion_tag("suila/templatetags/pause_info_box.html", takes_context=True)
+def pause_info_box(context, mock):
+    return {  # pragma: no cover
+        "mock": mock,
+        **context.flatten(),
+    }

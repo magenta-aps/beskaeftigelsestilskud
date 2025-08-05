@@ -205,3 +205,12 @@ class PersonAnnualIncomeEstimateForm(ModelForm):
     class Meta:
         model = Person
         fields = ["annual_income_estimate"]
+
+
+class PauseForm(ModelForm):
+    year = IntegerField(required=True)
+    note = CharField(required=False)
+
+    class Meta:
+        model = Person
+        fields = ["paused"]

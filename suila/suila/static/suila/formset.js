@@ -7,13 +7,13 @@ SPDX-License-Identifier: MPL-2.0
 $(function(){
     $.fn.extend({
         'formset': function(name, formPrototypeContainer, autoAdd) {
-            const management = {
-                total: $('#id_' + name + '-TOTAL_FORMS'),
-                initial: $('#id_' + name + '-INITIAL_FORMS'),
-                min: $('#id_' + name + '-MIN_NUM_FORMS'),
-                max: $('#id_' + name + '-MAX_NUM_FORMS')
-            };
             const formContainer = this;
+            const management = {
+                total: formContainer.siblings('input[name="' + name + '-TOTAL_FORMS"]'),
+                initial: formContainer.siblings('input[name="' + name + '-INITIAL_FORMS"]'),
+                min: formContainer.siblings('input[name="' + name + '-MIN_NUM_FORMS"]'),
+                max: formContainer.siblings('input[name="' + name + '-MAX_NUM_FORMS"]')
+            };
             const formPrototype = formPrototypeContainer.children().first();
 
             const updateTotal = function () {

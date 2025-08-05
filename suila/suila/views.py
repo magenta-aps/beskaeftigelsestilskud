@@ -52,6 +52,7 @@ from suila.forms import (
     IncomeSignalFilterForm,
     NoteAttachmentFormSet,
     NoteForm,
+    PauseForm,
     PersonAnnualIncomeEstimateForm,
 )
 from suila.integrations.eboks.client import EboksClient
@@ -269,7 +270,10 @@ class PersonDetailView(
                     "manually_entered_income_last_change": person.last_change(
                         "annual_income_estimate"
                     ),
+                    "paused_last_change": person.last_change("paused"),
+                    "now": timezone.now(),
                     "manually_entered_income_formset": NoteAttachmentFormSet(),
+                    "pause_formset": NoteAttachmentFormSet(),
                 }
             )
         else:
@@ -1077,10 +1081,12 @@ class PersonPauseUpdateView(
     PermissionsRequiredMixin,
     ViewLogMixin,
     UpdateView,
+    FormWithFormsetView,
 ):
     model = Person
+    form_class = PauseForm
+    formset_class = NoteAttachmentFormSet
     required_model_permissions = ["suila.change_person"]
-    fields = ["paused"]
 
     @classmethod
     def has_permissions(cls, **kwargs):
@@ -1094,6 +1100,30 @@ class PersonPauseUpdateView(
 
     def get_success_url(self):
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
+
+    def form_valid(self, form, formset):
+        year = form.cleaned_data["year"]
+        note = form.cleaned_data["note"]
+        paused = form.cleaned_data["paused"]
+
+        self.object.paused = paused
+        self.object.save()
+
+        if paused:
+            standard_note_text = gettext("Starter udbetalingspause")
+        else:
+            standard_note_text = gettext("Stopper udbetalingspause")
+
+        note_obj = Note.objects.create(
+            text=standard_note_text + (("; " + note) if note else ""),
+            personyear=PersonYear.objects.get(person=self.object, year=year),
+            author=self.request.user,
+        )
+
+        formset.instance = note_obj
+        formset.save()
+
+        return super().form_valid(form, formset)
 
 
 class PersonAnnualIncomeEstimateUpdateView(

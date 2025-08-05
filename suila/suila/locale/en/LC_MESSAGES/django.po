@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-31 11:00-0100\n"
+"POT-Creation-Date: 2025-08-06 11:24-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -347,6 +347,7 @@ msgid "Graf"
 msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
+#: suila/templates/suila/forms/pause_form.html
 msgid "Gem"
 msgstr ""
 
@@ -622,12 +623,21 @@ msgid "Benyt manuelt estimeret årsindkomst"
 msgstr "Use manually estimated annual income"
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
+#: suila/templates/suila/forms/pause_form.html
 msgid "Notat"
 msgstr "Note"
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Gem estimering"
 msgstr "Save income estimate"
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "I gang"
+msgstr "Ongoing"
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "På pause"
+msgstr "Paused"
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html
@@ -692,23 +702,6 @@ msgid ""
 msgstr ""
 "If your annual income is below DKK 70,000 or above DKK 500,000, you will not "
 "receive Suila-tapit, and therefore your figures will not appear in the graph."
-
-#: suila/templates/suila/person_detail.html
-msgid "Din årsindtægt er manuelt estimeret."
-msgstr "The annual income has been manually estimated."
-
-#: suila/templates/suila/person_detail.html
-msgid ""
-"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
-"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
-"årlige Suila-tapit."
-msgstr ""
-"Annual income has been manually estimated by the Tax Agency. The current "
-"Suila-tapit pay outs is based on the manual income estimate."
-
-#: suila/templates/suila/person_detail.html
-msgid "Sidst ændret:"
-msgstr "Last changed:"
 
 #: suila/templates/suila/person_detail.html
 msgid ""
@@ -787,23 +780,6 @@ msgstr "Expected amount to be paid for all of %(year)s"
 msgid "Forventet årsindkomst fra arbejde"
 msgstr "Expected annual income from employment"
 
-#: suila/templates/suila/person_detail.html suila/templatetags/status_tags.py
-#: suila/tests/test_status_tags.py
-msgid "Udbetalingspause"
-msgstr "Payment pause"
-
-#: suila/templates/suila/person_detail.html
-msgid "Du har sat dine udbetalinger på pause."
-msgstr "You have paused your Suila-tapit payment."
-
-#: suila/templates/suila/person_detail.html
-msgid ""
-"Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen, at dine "
-"udbetalinger skal sættes på pause."
-msgstr ""
-"Your Suila-tapit payment is paused. You have informed the Tax Agency that "
-"your payments should be paused."
-
 #: suila/templates/suila/person_detail.html
 #, python-format
 msgid ""
@@ -864,6 +840,10 @@ msgid "Ændre årsindkomst"
 msgstr "Edit annual income"
 
 #: suila/templates/suila/person_detail.html
+msgid "Ændre status på udbetalinger"
+msgstr "Change payout status"
+
+#: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
 msgid "Notater"
 msgstr "Notes"
@@ -889,14 +869,6 @@ msgstr "Annual statement"
 #: suila/templates/suila/person_detail.html
 msgid "e-Boks-beskeder preview"
 msgstr ""
-
-#: suila/templates/suila/person_detail.html
-msgid "Genoptag udbetalinger"
-msgstr "Resume payments"
-
-#: suila/templates/suila/person_detail.html
-msgid "Pause i udbetalinger"
-msgstr "Payments on hold"
 
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_tax_scope_history.html
@@ -1249,6 +1221,41 @@ msgstr "Two factor authentification is now active."
 msgid "OK"
 msgstr "OK"
 
+#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+msgid "Din årsindtægt er manuelt estimeret"
+msgstr "The annual income has been manually estimated"
+
+#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+msgid ""
+"Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er den "
+"manuelt beregnede årsindtægt, der ligger til grund for estimeringen af dit "
+"årlige Suila-tapit."
+msgstr ""
+"Annual income has been manually estimated by the Tax Agency. The current "
+"Suila-tapit pay outs is based on the manual income estimate."
+
+#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+#: suila/templates/suila/templatetags/pause_info_box.html
+msgid "Sidst ændret:"
+msgstr "Last changed:"
+
+#: suila/templates/suila/templatetags/pause_info_box.html
+msgid "Du har sat dine udbetalinger på pause."
+msgstr "You have paused your Suila-tapit payment."
+
+#: suila/templates/suila/templatetags/pause_info_box.html
+msgid ""
+"Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen, at dine "
+"udbetalinger skal sættes på pause."
+msgstr ""
+"Your Suila-tapit payment is paused. You have informed the Tax Agency that "
+"your payments should be paused."
+
+#: suila/templates/suila/templatetags/pause_info_box.html
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
+msgid "Udbetalingspause"
+msgstr "Payment pause"
+
 #: suila/templatetags/amount_tags.py
 msgid "-"
 msgstr "-"
@@ -1451,6 +1458,14 @@ msgstr "total amount"
 #: suila/views.py
 msgid "Beløb"
 msgstr "Amount"
+
+#: suila/views.py
+msgid "Starter udbetalingspause"
+msgstr "Starting payment pause"
+
+#: suila/views.py
+msgid "Stopper udbetalingspause"
+msgstr "Stopping payment pause"
 
 #: suila/views.py
 msgid "År"
