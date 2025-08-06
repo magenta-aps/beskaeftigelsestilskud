@@ -42,6 +42,7 @@ numpy==1.26.4
 oracledb==2.2.1
 packaging==24.1
 pandas==2.2.3
+paramiko==3.5.1
 psycopg2-binary==2.9.9
 pydot==3.0.2
 pycparser==2.22
