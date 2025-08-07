@@ -157,28 +157,30 @@
     </div>
 </div>
 
+{% if person_id %}
+{% if user|has_permissions:"suila.change_person" or can_pause  %}
 <div class="row mt-5">
     <h2> Handlinger </h2>
 </div>
 <div class="row mt-3">
-    {% if person_id %}
     <div class="d-flex align-items-center mb-3">
         {% if user|has_permissions:"suila.change_person" %}
         <div class="me-2">
             {% action_button _("Ændre årsindkomst") "edit" "annual_income_form" "suila/forms/annual_income_estimate_form.html" %}
         </div>
         {% endif %}
-        {% if user|has_permissions:"suila.change_person" or user.cpr == object.cpr  %}
+        {% if user|has_permissions:"suila.change_person" or can_pause  %}
         <div class="me-2">
             {% action_button _("Ændre status på udbetalinger") "swap_horiz" "pause_form" "suila/forms/pause_form.html" %}
         </div>
         {% endif %}
     </div>
-    {% endif %}
 </div>
+{% endif %}
+{% endif %}
 
 
-<div class="grid gap-3 mt-4">
+<div class="grid gap-3 mt-5">
     {% if user|has_permissions:"suila.view_note" %}
     <div class="g-col-4 jumbo">
         {% url "suila:person_detail_notes" pk=person.pk as person_notes_url %}

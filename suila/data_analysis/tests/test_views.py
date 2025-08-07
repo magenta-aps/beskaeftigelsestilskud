@@ -81,6 +81,7 @@ class TestSimulationJSONEncoder(TestCase):
             "foreign_address": None,
             "country_code": None,
             "paused": False,
+            "allow_pause": True,
             "annual_income_estimate": None,
             "cpr_status": None,
         }

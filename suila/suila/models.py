@@ -393,6 +393,13 @@ class Person(PermissionsMixin, models.Model):
         blank=False,
     )
 
+    # Når allow_pause == False, må en person ikke selv starte eller stoppe en pause
+    allow_pause = models.BooleanField(
+        default=True,
+        null=False,
+        blank=False,
+    )
+
     # If annual income is manually set here, we do not use the estimation engines.
     annual_income_estimate = models.DecimalField(
         max_digits=12,
