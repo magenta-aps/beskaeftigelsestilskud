@@ -10,12 +10,20 @@ from typing import Dict
 from bs4 import BeautifulSoup
 from common.models import User
 from django.test import TestCase
+from django.utils import timezone
 from ninja_extra.testing import TestClient
 
 from suila.api import PersonAPI
 from suila.api.personmonth import PersonMonthAPI
 from suila.api.personyear import PersonYearAPI
-from suila.models import MonthlyIncomeReport, Person, PersonMonth, PersonYear, Year
+from suila.models import (
+    MonthlyIncomeReport,
+    Person,
+    PersonMonth,
+    PersonYear,
+    TaxInformationPeriod,
+    Year,
+)
 
 
 class ApiTestCase(TestCase):
@@ -201,13 +209,32 @@ class PersonYearApiTest(ApiTestCase):
             person=cls.person1,
             year=cls.year1,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            tax_scope="FULD",
         )
         cls.personyear1b = PersonYear.objects.create(
             person=cls.person1,
             year=cls.year2,
             preferred_estimation_engine_a="MonthlyContinuationEngine",
-            tax_scope="DELVIS",
+        )
+
+        TaxInformationPeriod.objects.create(
+            person_year=cls.personyear1a,
+            tax_scope="FULL",
+            start_date=datetime(
+                cls.year1.year, 1, 1, tzinfo=timezone.get_current_timezone()
+            ),
+            end_date=datetime(
+                cls.year1.year, 12, 31, tzinfo=timezone.get_current_timezone()
+            ),
+        )
+        TaxInformationPeriod.objects.create(
+            person_year=cls.personyear1b,
+            tax_scope="LIM",
+            start_date=datetime(
+                cls.year2.year, 1, 1, tzinfo=timezone.get_current_timezone()
+            ),
+            end_date=datetime(
+                cls.year2.year, 12, 31, tzinfo=timezone.get_current_timezone()
+            ),
         )
         cls.expected1a = {
             "year": 2024,
@@ -239,13 +266,22 @@ class PersonYearApiTest(ApiTestCase):
             person=cls.person2,
             year=cls.year1,
             preferred_estimation_engine_a="TwelveMonthsSummationEngine",
-            tax_scope="DELVIS",
         )
         cls.personyear2b = PersonYear.objects.create(
             person=cls.person2,
             year=cls.year2,
             preferred_estimation_engine_a="TwoYearSummationEngine",
-            tax_scope="FULD",
+        )
+
+        TaxInformationPeriod.objects.create(
+            person_year=cls.personyear2a,
+            tax_scope="LIM",
+            start_date=datetime(
+                cls.year1.year, 1, 1, tzinfo=timezone.get_current_timezone()
+            ),
+            end_date=datetime(
+                cls.year1.year, 12, 31, tzinfo=timezone.get_current_timezone()
+            ),
         )
         cls.expected2a = {
             "year": 2024,
@@ -261,7 +297,7 @@ class PersonYearApiTest(ApiTestCase):
             "year": 2025,
             "cpr": "2233445566",
             "preferred_estimation_engine_a": "TwoYearSummationEngine",
-            "tax_scope": "FULD",
+            "tax_scope": "INGEN_MANDTAL",
             "in_quarantine": False,
             "quarantine_reason": "",
             "stability_score_a": None,

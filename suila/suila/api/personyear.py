@@ -12,7 +12,7 @@ from ninja_extra import ControllerBase, api_controller, paginate, permissions, r
 from ninja_extra.schemas import NinjaPaginationResponseSchema
 
 from suila.api.auth import RestPermission, get_auth_methods
-from suila.models import PersonYear
+from suila.models import PersonYear, TaxInformationPeriod, TaxScope
 
 
 class PersonYearOut(ModelSchema):
@@ -21,6 +21,7 @@ class PersonYearOut(ModelSchema):
     year: int = Field(..., alias="year.year")
     in_quarantine: bool = False
     quarantine_reason: str = ""
+    tax_scope: str = ""
 
     class Meta:
         model = PersonYear
@@ -28,7 +29,6 @@ class PersonYearOut(ModelSchema):
             "preferred_estimation_engine_a",
             "stability_score_a",
             "stability_score_b",
-            "tax_scope",
         ]
 
     @staticmethod
@@ -38,6 +38,23 @@ class PersonYearOut(ModelSchema):
     @staticmethod
     def resolve_quarantine_reason(obj: PersonYear) -> str:
         return obj.quarantine_reason
+
+    @staticmethod
+    def resolve_tax_scope(obj: PersonYear) -> str:
+
+        latest_tax_scope = (
+            TaxInformationPeriod.objects.filter(person_year=obj)
+            .order_by("-end_date")
+            .values_list("tax_scope", flat=True)
+            .first()
+        )
+
+        if latest_tax_scope == "FULL":
+            return TaxScope.FULDT_SKATTEPLIGTIG
+        elif latest_tax_scope == "LIM":
+            return TaxScope.DELVIST_SKATTEPLIGTIG
+        else:
+            return TaxScope.FORSVUNDET_FRA_MANDTAL
 
 
 class PersonYearFilterSchema(FilterSchema):
