@@ -9,6 +9,8 @@
   <input type="hidden" name="year" value="{{ year }}"/>
   <input type="hidden" name="month" value="{{ month }}"/>
 
+  {% manually_entered_income_info_box True %}
+
   <div class="form-check">
     <input class="form-check-input" type="radio" name="income_option" id="automatic_estimate" checked>
     <label class="form-check-label" for="automatic_estimate">

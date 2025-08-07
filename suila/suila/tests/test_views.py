@@ -1618,7 +1618,11 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
             "person": cls.person_year.person.pk,
             "paused": True,
             "year": cls.person_year.year.year,
-            "month": cls.person_month.month,
+            "note": "<reason for change>",
+            "attachments-TOTAL_FORMS": 0,
+            "attachments-INITIAL_FORMS": 0,
+            "attachments-MIN_NUM_FORMS": 0,
+            "attachments-MAX_NUM_FORMS": 1000,
         }
 
     def get_context_data(self):

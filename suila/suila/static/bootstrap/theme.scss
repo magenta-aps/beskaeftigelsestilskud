@@ -621,3 +621,25 @@ div.explainer p {
     border-color: $action-secondary;
     color: white;
 }
+
+// Toggle button
+.toggle-option {
+  flex: 1;
+  padding: 0.6 * $spacer 0;
+  text-align: center;
+  color: $action-secondary;
+  font-weight: normal;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.toggle-option.active {
+  background-color: $primary; 
+  color: white;
+  position: relative;
+}
+
+.toggle-option.active::after {
+  content: "✔";
+  position: absolute;
+  left: 10px;
+}

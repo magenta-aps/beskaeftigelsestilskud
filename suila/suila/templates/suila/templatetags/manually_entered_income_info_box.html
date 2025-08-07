@@ -1,0 +1,26 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+
+<div class="me-2 mb-3 info">
+    <b> {% translate "Din årsindtægt er manuelt estimeret" %} </b>
+    <p>
+        {% blocktrans trimmed %}
+            Din estimerede årsindtægt er manuelt beregnet af Skattestyrelsen. Det er
+            den manuelt beregnede årsindtægt, der ligger til grund for estimeringen
+            af dit årlige Suila-tapit.
+        {% endblocktrans %} 
+    </p>
+    <i>
+        {% blocktrans trimmed %}
+            Sidst ændret:
+        {% endblocktrans %}    
+        
+        {% if mock and not manually_entered_income %}       
+            {{ now }}
+        {% else %}
+            {{ manually_entered_income_last_change }}
+        {% endif %}
+    </i>
+</div>

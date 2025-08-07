@@ -1,0 +1,53 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+<form method="post" enctype="multipart/form-data" action="{% url 'suila:pause_person' pk=person_id %}">
+  {% csrf_token %}
+  
+  <input type="hidden" name="person" value="{{ person_id }}"/>
+  <input type="hidden" name="year" value="{{ year }}"/> 
+
+  {% pause_info_box True %}
+
+  <div class="mb-3">
+    <label class="form-label d-block">Status på udbetalinger</label>
+
+    <div class="toggle-container d-flex w-100 rounded-pill overflow-hidden" id="pauseToggle" style="background: #d8d8d8; cursor: pointer;">
+      <div class="toggle-option flex-fill text-center py-2 {% if not paused %}active{% endif %}" data-value="false">{% translate "I gang" %}</div>
+      <div class="toggle-option flex-fill text-center py-2 {% if paused %}active{% endif %}" data-value="true">{% translate "På pause" %}</div>
+    </div>
+    <input type="hidden" name="paused" id="pausedInput" value="{% if paused %}true{% else %}false{% endif %}">
+  </div> 
+
+  {% if user|has_permissions:"suila.change_person" %}  
+  <div class="mb-3">
+    <label for="note" class="form-label">{% translate "Notat" %}*</label>
+    <textarea name="note" id="note" class="form-control"
+              rows="3" autocomplete="off" required></textarea>
+  </div>
+  {% file_formset pause_formset "pause_formset" %}  
+  {% else %}
+  {{ pause_formset.management_form }}
+  {% endif %}
+
+  <div class="text-end">
+    <button type="submit" class="btn btn-primary">{% translate "Gem" %}</button>
+  </div>
+</form>
+
+<script nonce="{{ request.csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('pauseToggle');
+    const options = toggle.querySelectorAll('.toggle-option');
+    const hiddenInput = document.getElementById('pausedInput');
+
+    options.forEach(option => {
+      option.addEventListener('click', () => {
+        options.forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        hiddenInput.value = option.dataset.value;
+      });
+    });
+  });
+</script>

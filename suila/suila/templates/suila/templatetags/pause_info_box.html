@@ -1,0 +1,43 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+
+{% blocktrans trimmed asvar person_pause_text %}
+Du har sat dine udbetalinger på pause.
+{% endblocktrans %}
+
+{% blocktrans trimmed asvar skat_pause_text %}
+Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen,
+at dine udbetalinger skal sættes på pause.
+{% endblocktrans %}
+
+<div class="me-2 mb-3 info">
+    <b> {% translate "Udbetalingspause" %} </b>
+    <p>
+        {% if mock and not paused %}       
+            {% if user.cpr == object.cpr %}
+                {{ person_pause_text }}
+            {% else %}
+                {{ skat_pause_text }}
+            {% endif %}        
+        {% else %}
+            {% if user_who_pressed_pause == "self" %}
+                {{ person_pause_text }}
+            {% elif user_who_pressed_pause == "skattestyrelsen" %}
+                {{ skat_pause_text }}
+            {% endif %}        
+        {% endif %}
+    </p>
+    <i>
+        {% blocktrans trimmed %}
+            Sidst ændret:
+        {% endblocktrans %}           
+        {% if mock and not paused %}       
+            {{ now }}
+        {% else %}
+            {{ paused_last_change }}
+        {% endif %}
+</i>
+    </i>
+</div>
