@@ -22,7 +22,7 @@
   {% endif %}
 
   <div class="mb-3">
-    <label class="form-label d-block">Status på udbetalinger</label>
+    <label class="form-label d-block">{% translate "Status på udbetalinger" %}</label>
 
     <div class="toggle-container d-flex w-100 rounded-pill overflow-hidden" id="pauseToggle" style="background: #d8d8d8; cursor: pointer;">
       <div class="toggle-option flex-fill text-center py-2 {% if not paused %}active{% endif %}" data-value="false">{% translate "I gang" %}</div>
