@@ -10,8 +10,6 @@ from data_analysis.views import (
     JobListView,
     PersonAnalysisView,
     PersonListView,
-    PersonYearEstimationEngineAUpdateView,
-    PersonYearEstimationEngineUUpdateView,
     UpdateEngineViewPreferences,
 )
 from django.urls import URLPattern, URLResolver, path
@@ -38,15 +36,5 @@ urlpatterns: list[URLResolver | URLPattern] = [
         "csv_report/<str:filename>",
         CsvFileReportDownloadView.as_view(),
         name="csv_report_download",
-    ),
-    path(
-        "person_year/<int:pk>/set_estimation_engine_a/",
-        PersonYearEstimationEngineAUpdateView.as_view(),
-        name="set_personyear_estimation_engine_a",
-    ),
-    path(
-        "person_year/<int:pk>/set_estimation_engine_u/",
-        PersonYearEstimationEngineUUpdateView.as_view(),
-        name="set_personyear_estimation_engine_u",
     ),
 ]
