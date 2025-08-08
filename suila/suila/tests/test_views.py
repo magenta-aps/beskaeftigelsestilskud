@@ -1617,6 +1617,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         cls.data = {
             "person": cls.person_year.person.pk,
             "paused": True,
+            "allow_pause": True,
             "year": cls.person_year.year.year,
             "note": "<reason for change>",
             "attachments-TOTAL_FORMS": 0,
@@ -1752,6 +1753,49 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         context_data = self.get_context_data()
         self.assertIsNone(context_data["user_who_pressed_pause"])
         self.assertEqual(context_data["paused"], False)
+
+    def get_latest_note(self):
+        return (
+            Note.objects.filter(personyear=self.person_year)
+            .order_by("-created")
+            .values_list("text", flat=True)
+            .first()
+        )
+
+    def test_note(self):
+        self.client.force_login(self.admin_user)
+
+        self.client.post(self.url, data=self.data)
+        latest_note = self.get_latest_note()
+        self.assertTrue(self.data["paused"])
+        self.assertTrue(self.data["allow_pause"])
+        self.assertIn("Starter udbetalingspause", latest_note)
+        self.assertIn("Borger må genoptage udbetalinger", latest_note)
+
+        self.data["paused"] = False
+        self.client.post(self.url, data=self.data)
+        latest_note = self.get_latest_note()
+        self.assertFalse(self.data["paused"])
+        self.assertTrue(self.data["allow_pause"])
+        self.assertIn("Stopper udbetalingspause", latest_note)
+        self.assertIn("Borger må sætte udbetalinger på pause", latest_note)
+
+        self.data["paused"] = True
+        self.data["allow_pause"] = False
+        self.client.post(self.url, data=self.data)
+        latest_note = self.get_latest_note()
+        self.assertTrue(self.data["paused"])
+        self.assertFalse(self.data["allow_pause"])
+        self.assertIn("Starter udbetalingspause", latest_note)
+        self.assertIn("Borger må ikke genoptage udbetalinger", latest_note)
+
+        self.data["paused"] = False
+        self.client.post(self.url, data=self.data)
+        latest_note = self.get_latest_note()
+        self.assertFalse(self.data["paused"])
+        self.assertFalse(self.data["allow_pause"])
+        self.assertIn("Stopper udbetalingspause", latest_note)
+        self.assertIn("Borger må ikke sætte udbetalinger på pause", latest_note)
 
 
 class TestPersonAnnualIncomeEstimateUpdateView(

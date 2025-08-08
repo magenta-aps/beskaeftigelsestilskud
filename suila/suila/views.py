@@ -226,6 +226,7 @@ class PersonDetailView(
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
+        user = self.request.user
 
         # Get the "currently relevant" person month
         relevant_person_month: RelevantPersonMonth = self.get_relevant_person_month()
@@ -258,6 +259,8 @@ class PersonDetailView(
                     "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
                     "paused": person.paused,
+                    "allow_pause": person.allow_pause,
+                    "can_pause": person.allow_pause and (user.cpr == person.cpr),
                     "person_id": person.pk,
                     "next_year": person_year.year.year + 1,
                     "in_quarantine": person_year.in_quarantine,
@@ -1095,7 +1098,7 @@ class PersonPauseUpdateView(
         person = Person.objects.get(pk=int(request.POST.get("person")))
 
         if user.cpr == person.cpr:
-            return True
+            return True if person.allow_pause else False
         return super().has_permissions(**kwargs)
 
     def get_success_url(self):
@@ -1105,14 +1108,25 @@ class PersonPauseUpdateView(
         year = form.cleaned_data["year"]
         note = form.cleaned_data["note"]
         paused = form.cleaned_data["paused"]
+        allow_pause = form.cleaned_data["allow_pause"]
 
         self.object.paused = paused
+        self.object.allow_pause = allow_pause
         self.object.save()
 
         if paused:
-            standard_note_text = gettext("Starter udbetalingspause")
+            standard_note_text = gettext("Starter udbetalingspause") + ". "
         else:
-            standard_note_text = gettext("Stopper udbetalingspause")
+            standard_note_text = gettext("Stopper udbetalingspause") + ". "
+
+        if allow_pause and paused:
+            standard_note_text += gettext("Borger må genoptage udbetalinger")
+        elif allow_pause and not paused:
+            standard_note_text += gettext("Borger må sætte udbetalinger på pause")
+        elif not allow_pause and paused:
+            standard_note_text += gettext("Borger må ikke genoptage udbetalinger")
+        elif not allow_pause and not paused:  # pragma: no branch
+            standard_note_text += gettext("Borger må ikke sætte udbetalinger på pause")
 
         note_obj = Note.objects.create(
             text=standard_note_text + (("; " + note) if note else ""),

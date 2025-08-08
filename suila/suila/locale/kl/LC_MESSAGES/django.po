@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-06 11:24-0100\n"
+"POT-Creation-Date: 2025-08-07 10:33-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -645,6 +645,10 @@ msgstr ""
 #: suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Gem estimering"
 msgstr "Naatsorsukkat toqqukkit"
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "Lad borgeren sætte udbetalinger på pause"
+msgstr ""
 
 #: suila/templates/suila/forms/pause_form.html
 msgid "I gang"
@@ -1516,6 +1520,22 @@ msgstr ""
 
 #: suila/views.py
 msgid "Stopper udbetalingspause"
+msgstr ""
+
+#: suila/views.py
+msgid "Borger må genoptage udbetalinger"
+msgstr ""
+
+#: suila/views.py
+msgid "Borger må sætte udbetalinger på pause"
+msgstr ""
+
+#: suila/views.py
+msgid "Borger må ikke genoptage udbetalinger"
+msgstr ""
+
+#: suila/views.py
+msgid "Borger må ikke sætte udbetalinger på pause"
 msgstr ""
 
 #: suila/views.py

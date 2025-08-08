@@ -213,4 +213,4 @@ class PauseForm(ModelForm):
 
     class Meta:
         model = Person
-        fields = ["paused"]
+        fields = ["paused", "allow_pause"]
