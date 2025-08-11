@@ -178,6 +178,11 @@
             {% endif %}
         </div>
         {% endif %}
+        {% if user|has_permissions:"suila.change_person" %}
+        <div class="me-2">
+            {% action_button _("Skift estimeringsmotor") "settings" "estimation_engine_form" "suila/forms/estimation_engine_form.html" %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endif %}

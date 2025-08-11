@@ -44,6 +44,7 @@ from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
+from suila.data import engine_choices
 from suila.dates import get_payment_date
 from suila.forms import (
     CalculationParametersForm,
@@ -54,6 +55,7 @@ from suila.forms import (
     NoteForm,
     PauseForm,
     PersonAnnualIncomeEstimateForm,
+    PersonYearEstimationEngineForm,
 )
 from suila.integrations.eboks.client import EboksClient
 from suila.models import (
@@ -262,6 +264,7 @@ class PersonDetailView(
                     "allow_pause": person.allow_pause,
                     "can_pause": person.allow_pause and (user.cpr == person.cpr),
                     "person_id": person.pk,
+                    "person_year_id": person_year.pk,
                     "next_year": person_year.year.year + 1,
                     "in_quarantine": person_year.in_quarantine,
                     "quarantine_reason": person_year.quarantine_reason,
@@ -277,6 +280,10 @@ class PersonDetailView(
                     "now": timezone.now(),
                     "manually_entered_income_formset": NoteAttachmentFormSet(),
                     "pause_formset": NoteAttachmentFormSet(),
+                    "estimation_engine_formset": NoteAttachmentFormSet(),
+                    "engine_choices": engine_choices,
+                    "engine_a": person_year.preferred_estimation_engine_a,
+                    "engine_u": person_year.preferred_estimation_engine_u,
                 }
             )
         else:
@@ -1137,6 +1144,76 @@ class PersonPauseUpdateView(
         formset.instance = note_obj
         formset.save()
 
+        return super().form_valid(form, formset)
+
+
+class PersonYearEstimationEngineUpdateView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    ViewLogMixin,
+    UpdateView,
+    FormWithFormsetView,
+):
+    model = PersonYear
+    form_class = PersonYearEstimationEngineForm
+    formset_class = NoteAttachmentFormSet
+    required_model_permissions = ["suila.change_person"]
+
+    def get_success_url(self):
+        return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.person.pk})
+
+    def form_valid(self, form, formset):
+        preferred_estimation_engine_a = form.cleaned_data[
+            "preferred_estimation_engine_a"
+        ]
+        preferred_estimation_engine_u = form.cleaned_data[
+            "preferred_estimation_engine_u"
+        ]
+        preferred_estimation_engine_a_default = form.cleaned_data[
+            "preferred_estimation_engine_a_default"
+        ]
+        preferred_estimation_engine_u_default = form.cleaned_data[
+            "preferred_estimation_engine_u_default"
+        ]
+        note = form.cleaned_data["note"]
+        year = self.object.year.year
+
+        self.object.preferred_estimation_engine_a = preferred_estimation_engine_a
+        self.object.preferred_estimation_engine_u = preferred_estimation_engine_u
+        self.object.save()
+
+        if preferred_estimation_engine_a_default != preferred_estimation_engine_a:
+            standard_note_text_a = gettext(
+                "A-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
+            ).format(
+                engine=preferred_estimation_engine_a,
+                default_engine=preferred_estimation_engine_a_default,
+            )
+        else:
+            standard_note_text_a = ""
+
+        if preferred_estimation_engine_u_default != preferred_estimation_engine_u:
+            standard_note_text_u = gettext(
+                "U-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
+            ).format(
+                engine=preferred_estimation_engine_u,
+                default_engine=preferred_estimation_engine_u_default,
+            )
+        else:
+            standard_note_text_u = ""
+
+        note_text = "\n".join(
+            [t for t in [standard_note_text_a, standard_note_text_u, note] if t]
+        )
+
+        note_obj = Note.objects.create(
+            text=note_text,
+            personyear=PersonYear.objects.get(person=self.object.person, year=year),
+            author=self.request.user,
+        )
+
+        formset.instance = note_obj
+        formset.save()
         return super().form_valid(form, formset)
 
 

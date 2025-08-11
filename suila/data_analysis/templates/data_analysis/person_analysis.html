@@ -37,12 +37,8 @@
                 <td>{{ person_year.in_quarantine|yesno }}</td>
                 <td>{{ person_year.quarantine_reason }}</td>
                 <td>{{ person_year.stability_score_a|default_if_none:"-" }}</td>
-                <td>                    
-                    {% include "data_analysis/preferred_estimation_engine_form.html" with field_name="preferred_estimation_engine_a" url_name="data_analysis:set_personyear_estimation_engine_a" %}
-                </td>
-                <td>
-                    {% include "data_analysis/preferred_estimation_engine_form.html" with field_name="preferred_estimation_engine_u" url_name="data_analysis:set_personyear_estimation_engine_u" %}
-                </td>
+                <td>{{ person_year.preferred_estimation_engine_a }}</td>
+                <td>{{ person_year.preferred_estimation_engine_u }}</td>
             </tr>
             {% endfor %}
         </table>

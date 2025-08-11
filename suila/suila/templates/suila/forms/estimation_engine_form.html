@@ -1,0 +1,68 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+<form method="post" enctype="multipart/form-data" action="{% url 'suila:update_estimation_engine' pk=person_year_id %}">
+  {% csrf_token %}
+  
+  <input type="hidden" name="person" value="{{ person_id }}"/>
+  <input type="hidden" name="preferred_estimation_engine_a_default" value="{{ engine_a }}"/>
+  <input type="hidden" name="preferred_estimation_engine_u_default" value="{{ engine_u }}"/>
+
+  <div class="mb-3">
+    <label for="preferred_estimation_engine_a">{% translate "Vælg estimeringsmotor (A)" %}</label>
+    <select name="preferred_estimation_engine_a" id="preferred_estimation_engine_a" class="form-select">
+      {% for value, label in engine_choices %}
+        <option value="{{ value }}" {% if value == engine_a %}selected{% endif %}>
+          {% if value == engine_a %}&#10003;{% else %}&nbsp;&nbsp;&nbsp;{% endif %}{{ label }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="preferred_estimation_engine_u">{% translate "Vælg estimeringsmotor (U)" %}</label>
+    <select name="preferred_estimation_engine_u" id="preferred_estimation_engine_u" class="form-select">
+      {% for value, label in engine_choices %}
+        <option value="{{ value }}" {% if value == engine_u %}selected{% endif %}>
+          {% if value == engine_u %}&#10003;{% else %}&nbsp;&nbsp;&nbsp;{% endif %}{{ label }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="note" class="form-label">{% translate "Notat" %}*</label>
+    <textarea name="note" id="note" class="form-control"
+              rows="3" autocomplete="off" required></textarea>
+  </div>
+  {% file_formset estimation_engine_formset "estimation_engine_formset" %}  
+
+  <div class="text-end">
+    <button id="engine_form_submit_button" type="submit" class="btn btn-primary" disabled>{% translate "Gem" %} </button>
+  </div>
+</form>
+
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function() {
+  const $selectA = $('#preferred_estimation_engine_a');
+  const $selectU = $('#preferred_estimation_engine_u');
+  const $submitBtn = $('#engine_form_submit_button');
+
+  const defaultA = $selectA.val();
+  const defaultU = $selectU.val();
+
+  function checkIfDefaults() {
+    if ($selectA.val() === defaultA && $selectU.val() === defaultU) {
+      $submitBtn.prop('disabled', true);
+    } else {
+      $submitBtn.prop('disabled', false);
+    }
+  }
+
+  // Initial check
+  checkIfDefaults();
+
+  // Listen for changes
+  $selectA.on('change', checkIfDefaults);
+  $selectU.on('change', checkIfDefaults);
+});
+</script>

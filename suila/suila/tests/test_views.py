@@ -83,6 +83,12 @@ from suila.views import (
 )
 
 
+def get_latest_note():
+    return (
+        Note.objects.all().order_by("-created").values_list("text", flat=True).first()
+    )
+
+
 class TestRootView(TestViewMixin, TestCase):
 
     view_class = RootView
@@ -1603,6 +1609,99 @@ class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
 
 
+class PersonYearEstimationEngineUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
+    view_class = PersonDetailView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.person_year = PersonYear.objects.all()[0]
+        cls.person_month = PersonMonth.objects.get(person_year=cls.person_year, month=3)
+        cls.url = reverse(
+            "suila:update_estimation_engine", kwargs={"pk": cls.person_year.pk}
+        )
+        cls.data = {
+            "person": cls.person_year.person.pk,
+            "preferred_estimation_engine_a": "TwelveMonthsSummationEngine",
+            "preferred_estimation_engine_u": "TwelveMonthsSummationEngine",
+            "preferred_estimation_engine_a_default": cls.get_default(cls, "a"),
+            "preferred_estimation_engine_u_default": cls.get_default(cls, "u"),
+            "note": "<reason for change>",
+            "attachments-TOTAL_FORMS": 0,
+            "attachments-INITIAL_FORMS": 0,
+            "attachments-MIN_NUM_FORMS": 0,
+            "attachments-MAX_NUM_FORMS": 1000,
+        }
+
+    def get_default(self, income_type):
+        if income_type == "a":
+            return self.person_year.preferred_estimation_engine_a
+        elif income_type == "u":
+            return self.person_year.preferred_estimation_engine_u
+
+    def test_update_engines_as_admin(self):
+        # Change engine A from InYearExtrapolationEngine to TwelveMonthsSummationEngine
+        # Do not change Engine U
+        self.assertEqual(
+            self.person_year.preferred_estimation_engine_a, "InYearExtrapolationEngine"
+        )
+        self.assertEqual(
+            self.person_year.preferred_estimation_engine_u,
+            "TwelveMonthsSummationEngine",
+        )
+        self.client.force_login(self.admin_user)
+        self.client.post(self.url, data=self.data)
+        self.person_year.refresh_from_db()
+        self.assertEqual(
+            self.person_year.preferred_estimation_engine_a,
+            "TwelveMonthsSummationEngine",
+        )
+        self.assertEqual(
+            self.person_year.preferred_estimation_engine_u,
+            "TwelveMonthsSummationEngine",
+        )
+        latest_note = get_latest_note()
+        self.assertIn(
+            (
+                "A-indkomst estimeringsmotor ændret fra "
+                "InYearExtrapolationEngine til TwelveMonthsSummationEngine"
+            ),
+            latest_note,
+        )
+        self.assertNotIn(
+            "U-indkomst estimeringsmotor",
+            latest_note,
+        )
+
+        # Change engine U from TwelveMonthsSummationEngine to InYearExtrapolationEngine
+        # Do not change Engine A
+        self.data["preferred_estimation_engine_a"] = "TwelveMonthsSummationEngine"
+        self.data["preferred_estimation_engine_u"] = "InYearExtrapolationEngine"
+        self.data["preferred_estimation_engine_a_default"] = self.get_default("a")
+        self.client.post(self.url, data=self.data)
+        self.person_year.refresh_from_db()
+        latest_note = get_latest_note()
+        self.assertEqual(
+            self.person_year.preferred_estimation_engine_a,
+            "TwelveMonthsSummationEngine",
+        )
+        self.assertEqual(
+            self.person_year.preferred_estimation_engine_u,
+            "InYearExtrapolationEngine",
+        )
+        self.assertIn(
+            (
+                "U-indkomst estimeringsmotor ændret fra "
+                "TwelveMonthsSummationEngine til InYearExtrapolationEngine"
+            ),
+            latest_note,
+        )
+        self.assertNotIn(
+            "A-indkomst estimeringsmotor",
+            latest_note,
+        )
+
+
 class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
     view_class = PersonDetailView
 
@@ -1754,19 +1853,11 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.assertIsNone(context_data["user_who_pressed_pause"])
         self.assertEqual(context_data["paused"], False)
 
-    def get_latest_note(self):
-        return (
-            Note.objects.filter(personyear=self.person_year)
-            .order_by("-created")
-            .values_list("text", flat=True)
-            .first()
-        )
-
     def test_note(self):
         self.client.force_login(self.admin_user)
 
         self.client.post(self.url, data=self.data)
-        latest_note = self.get_latest_note()
+        latest_note = get_latest_note()
         self.assertTrue(self.data["paused"])
         self.assertTrue(self.data["allow_pause"])
         self.assertIn("Starter udbetalingspause", latest_note)
@@ -1774,7 +1865,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
 
         self.data["paused"] = False
         self.client.post(self.url, data=self.data)
-        latest_note = self.get_latest_note()
+        latest_note = get_latest_note()
         self.assertFalse(self.data["paused"])
         self.assertTrue(self.data["allow_pause"])
         self.assertIn("Stopper udbetalingspause", latest_note)
@@ -1783,7 +1874,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.data["paused"] = True
         self.data["allow_pause"] = False
         self.client.post(self.url, data=self.data)
-        latest_note = self.get_latest_note()
+        latest_note = get_latest_note()
         self.assertTrue(self.data["paused"])
         self.assertFalse(self.data["allow_pause"])
         self.assertIn("Starter udbetalingspause", latest_note)
@@ -1791,7 +1882,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
 
         self.data["paused"] = False
         self.client.post(self.url, data=self.data)
-        latest_note = self.get_latest_note()
+        latest_note = get_latest_note()
         self.assertFalse(self.data["paused"])
         self.assertFalse(self.data["allow_pause"])
         self.assertIn("Stopper udbetalingspause", latest_note)
