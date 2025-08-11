@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-08 10:59-0100\n"
+"POT-Creation-Date: 2025-08-08 10:36-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -351,6 +351,7 @@ msgid "Graf"
 msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
+#: suila/templates/suila/forms/estimation_engine_form.html
 #: suila/templates/suila/forms/pause_form.html
 msgid "Gem"
 msgstr ""
@@ -638,6 +639,7 @@ msgid "Benyt manuelt estimeret årsindkomst"
 msgstr ""
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
+#: suila/templates/suila/forms/estimation_engine_form.html
 #: suila/templates/suila/forms/pause_form.html
 msgid "Notat"
 msgstr ""
@@ -645,6 +647,14 @@ msgstr ""
 #: suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Gem estimering"
 msgstr "Naatsorsukkat toqqukkit"
+
+#: suila/templates/suila/forms/estimation_engine_form.html
+msgid "Vælg estimeringsmotor (A)"
+msgstr ""
+
+#: suila/templates/suila/forms/estimation_engine_form.html
+msgid "Vælg estimeringsmotor (U)"
+msgstr ""
 
 #: suila/templates/suila/forms/pause_form.html
 msgid "Lad borgeren sætte udbetalinger på pause"
@@ -882,6 +892,10 @@ msgstr "Pisartakkanik unitsitsigallarneq"
 
 #: suila/templates/suila/person_detail.html
 msgid "Ændre status på udbetalinger"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid "Skift estimeringsmotor"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -1541,6 +1555,16 @@ msgstr ""
 
 #: suila/views.py
 msgid "Borger må ikke sætte udbetalinger på pause"
+msgstr ""
+
+#: suila/views.py
+#, python-brace-format
+msgid "A-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
+msgstr ""
+
+#: suila/views.py
+#, python-brace-format
+msgid "U-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
 msgstr ""
 
 #: suila/views.py

@@ -21,7 +21,13 @@ from django.forms.fields import BooleanField
 from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
-from suila.models import Note, NoteAttachment, Person, WorkingTaxCreditCalculationMethod
+from suila.models import (
+    Note,
+    NoteAttachment,
+    Person,
+    PersonYear,
+    WorkingTaxCreditCalculationMethod,
+)
 
 
 class NoteForm(ModelForm):
@@ -214,3 +220,13 @@ class PauseForm(ModelForm):
     class Meta:
         model = Person
         fields = ["paused", "allow_pause"]
+
+
+class PersonYearEstimationEngineForm(ModelForm):
+    note = CharField(required=True)
+    preferred_estimation_engine_a_default = CharField(required=True)
+    preferred_estimation_engine_u_default = CharField(required=True)
+
+    class Meta:
+        model = PersonYear
+        fields = ["preferred_estimation_engine_a", "preferred_estimation_engine_u"]

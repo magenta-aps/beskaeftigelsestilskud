@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-08 10:59-0100\n"
+"POT-Creation-Date: 2025-08-08 10:36-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -347,6 +347,7 @@ msgid "Graf"
 msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
+#: suila/templates/suila/forms/estimation_engine_form.html
 #: suila/templates/suila/forms/pause_form.html
 msgid "Gem"
 msgstr ""
@@ -623,6 +624,7 @@ msgid "Benyt manuelt estimeret årsindkomst"
 msgstr "Use manually estimated annual income"
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
+#: suila/templates/suila/forms/estimation_engine_form.html
 #: suila/templates/suila/forms/pause_form.html
 msgid "Notat"
 msgstr "Note"
@@ -630,6 +632,14 @@ msgstr "Note"
 #: suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Gem estimering"
 msgstr "Save income estimate"
+
+#: suila/templates/suila/forms/estimation_engine_form.html
+msgid "Vælg estimeringsmotor (A)"
+msgstr "Choose estimation engine (A)"
+
+#: suila/templates/suila/forms/estimation_engine_form.html
+msgid "Vælg estimeringsmotor (U)"
+msgstr "Choose estimation engine (U)"
 
 #: suila/templates/suila/forms/pause_form.html
 msgid "Lad borgeren sætte udbetalinger på pause"
@@ -856,6 +866,10 @@ msgstr "Payment pause"
 #: suila/templates/suila/person_detail.html
 msgid "Ændre status på udbetalinger"
 msgstr "Change payout status"
+
+#: suila/templates/suila/person_detail.html
+msgid "Skift estimeringsmotor"
+msgstr "Change estimation engine"
 
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
@@ -1491,6 +1505,16 @@ msgstr "Citizen may not resume payments"
 #: suila/views.py
 msgid "Borger må ikke sætte udbetalinger på pause"
 msgstr "Citizen may not pause payments"
+
+#: suila/views.py
+#, python-brace-format
+msgid "A-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
+msgstr "A-income estimation engine changed from {default_engine} to {engine}"
+
+#: suila/views.py
+#, python-brace-format
+msgid "U-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
+msgstr "U-income estimation engine changed from {default_engine} to {engine}"
 
 #: suila/views.py
 msgid "År"
