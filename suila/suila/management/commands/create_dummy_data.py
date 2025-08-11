@@ -167,6 +167,11 @@ class Command(BaseCommand):
                 cpr="0601011991", defaults={"name": "Person without prisme items"}
             )[0]: [10000]
             * 12,
+            # Person with prisme-batch items
+            Person.objects.update_or_create(
+                cpr="0701011991", defaults={"name": "Person with prisme items"}
+            )[0]: [10000]
+            * 12,
         }
 
         tz = timezone.get_current_timezone()
@@ -201,13 +206,17 @@ class Command(BaseCommand):
                     },
                 )
 
-                person_year.tax_scope = random.choice(
-                    [
-                        TaxScope.FULDT_SKATTEPLIGTIG,
-                        TaxScope.DELVIST_SKATTEPLIGTIG,
-                        TaxScope.FORSVUNDET_FRA_MANDTAL,
-                    ]
-                )
+                if person.name == "Person with prisme items":
+                    person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
+                else:
+
+                    person_year.tax_scope = random.choice(
+                        [
+                            TaxScope.FULDT_SKATTEPLIGTIG,
+                            TaxScope.DELVIST_SKATTEPLIGTIG,
+                            TaxScope.FORSVUNDET_FRA_MANDTAL,
+                        ]
+                    )
 
                 person_year.save()
                 set_history_date(person_year, date)
@@ -236,7 +245,10 @@ class Command(BaseCommand):
                     cpr=person.cpr,
                 )
 
-                if date < month_before_last_month:
+                if (
+                    date < month_before_last_month
+                    and not person.name == "Person with prisme items"
+                ) or (date < last_month and person.name == "Person with prisme items"):
 
                     person_month = PersonMonth.objects.get(
                         person_year__person=person,

@@ -28,6 +28,12 @@ at dine udbetalinger skal sættes på pause.
                 {{ skat_pause_text }}
             {% endif %}        
         {% endif %}
+
+    {% blocktrans trimmed with date=pause_effect_date  %}
+    Pausen træder i kraft den {{date}}.
+    {% endblocktrans %}
+
+
     </p>
     <i>
         {% blocktrans trimmed %}
