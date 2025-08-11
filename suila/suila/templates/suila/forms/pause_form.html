@@ -18,7 +18,7 @@
       </label>
     </div>
   {% else %}
-    <input type="hidden" name="allow_pause" value="{{ allow_pause }}"/> 
+    <input type="hidden" id="allow_pause" name="allow_pause" value="{{ allow_pause }}"/> 
   {% endif %}
 
   <div class="mb-3">
@@ -43,22 +43,48 @@
   {% endif %}
 
   <div class="text-end">
-    <button type="submit" class="btn btn-primary">{% translate "Gem" %}</button>
+    <button type="submit" id="pause_form_submit_button" class="btn btn-primary">{% translate "Gem" %}</button>
   </div>
 </form>
 
 <script nonce="{{ request.csp_nonce }}">
-  document.addEventListener('DOMContentLoaded', function () {
-    const toggle = document.getElementById('pauseToggle');
-    const options = toggle.querySelectorAll('.toggle-option');
-    const hiddenInput = document.getElementById('pausedInput');
+$(function() {
+  const $toggle = $('#pauseToggle');
+  const $selectPause = $('#pausedInput');
+  const $selectAllowPause = $('#allow_pause');
+  const $submitBtn = $('#pause_form_submit_button');
 
-    options.forEach(option => {
-      option.addEventListener('click', () => {
-        options.forEach(o => o.classList.remove('active'));
-        option.classList.add('active');
-        hiddenInput.value = option.dataset.value;
-      });
-    });
+  const defaultPause = $selectPause.val();
+  const defaultAllowPause = $selectAllowPause.is(':checkbox')
+    ? $selectAllowPause.prop('checked')
+    : $selectAllowPause.val();
+
+  function checkIfDefaults() {
+    const currentPause = $selectPause.val();
+    const currentAllowPause = $selectAllowPause.is(':checkbox')
+      ? $selectAllowPause.prop('checked')
+      : $selectAllowPause.val();
+
+    $submitBtn.prop('disabled', currentPause === defaultPause && currentAllowPause === defaultAllowPause);
+  }
+
+  // Initial check
+  checkIfDefaults();
+
+  // Watch for checkbox/hidden allow_pause changes
+  $selectAllowPause.on('change', checkIfDefaults);
+
+  // Toggle click handler
+  $toggle.on('click', '.toggle-option', function () {
+    // UI highlight
+    $toggle.find('.toggle-option').removeClass('active');
+    $(this).addClass('active');
+
+    // Update hidden input value
+    $selectPause.val($(this).data('value')).trigger('change');
   });
+
+  // Watch for pause changes
+  $selectPause.on('change', checkIfDefaults);
+});
 </script>
