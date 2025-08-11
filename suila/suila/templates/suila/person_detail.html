@@ -171,7 +171,11 @@
         {% endif %}
         {% if user|has_permissions:"suila.change_person" or can_pause  %}
         <div class="me-2">
+            {% if user.cpr == person.cpr %}
+            {% action_button _("Udbetalingspause") "swap_horiz" "pause_form" "suila/forms/pause_form.html" %}
+            {% else %}
             {% action_button _("Ændre status på udbetalinger") "swap_horiz" "pause_form" "suila/forms/pause_form.html" %}
+            {% endif %}
         </div>
         {% endif %}
     </div>

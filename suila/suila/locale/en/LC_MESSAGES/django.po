@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-07 10:33-0100\n"
+"POT-Creation-Date: 2025-08-08 10:57-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -844,6 +844,12 @@ msgid "Ændre årsindkomst"
 msgstr "Edit annual income"
 
 #: suila/templates/suila/person_detail.html
+#: suila/templates/suila/templatetags/pause_info_box.html
+#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
+msgid "Udbetalingspause"
+msgstr "Payment pause"
+
+#: suila/templates/suila/person_detail.html
 msgid "Ændre status på udbetalinger"
 msgstr "Change payout status"
 
@@ -1254,11 +1260,6 @@ msgid ""
 msgstr ""
 "Your Suila-tapit payment is paused. You have informed the Tax Agency that "
 "your payments should be paused."
-
-#: suila/templates/suila/templatetags/pause_info_box.html
-#: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
-msgid "Udbetalingspause"
-msgstr "Payment pause"
 
 #: suila/templatetags/amount_tags.py
 msgid "-"
