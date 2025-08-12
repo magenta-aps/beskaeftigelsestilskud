@@ -1,10 +1,12 @@
-# SPDX-FileCopyrightText: 2023 Magenta ApS <info@magenta.dk>
+# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
 
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
+from requests import HTTPError
+from requests.exceptions import ConnectTimeout, ReadTimeout, SSLError, TooManyRedirects
 from tenQ.client import ClientException
 
 
@@ -48,3 +50,24 @@ class MetricsTest(TestCase):
         resp = self.client.get("/metrics/health/sftp")
         self.assertEqual(resp.status_code, 500)
         self.assertEqual(resp.content, b"ERROR")
+
+    @patch("metrics.views.EskatClient.get_tax_scopes")
+    def test_health_check_eskat(self, mock_get_tax_scopes):
+        mock_get_tax_scopes.return_value = {"foo": "bar"}
+        resp = self.client.get("/metrics/health/eskat")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content, b"OK")
+
+    @patch("metrics.views.EskatClient.get_tax_scopes")
+    def test_health_check_eskat_exception(self, mock_get_tax_scopes):
+        for exception_class in (
+            HTTPError,
+            SSLError,
+            ConnectTimeout,
+            ReadTimeout,
+            TooManyRedirects,
+        ):
+            mock_get_tax_scopes.side_effect = exception_class("Uh-oh!")
+            resp = self.client.get("/metrics/health/eskat")
+            self.assertEqual(resp.status_code, 500)
+            self.assertEqual(resp.content, b"ERROR")
