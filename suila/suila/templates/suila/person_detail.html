@@ -34,9 +34,49 @@
     </div>
 </div>
 
+{% if show_next_payment and not year_in_past %}
+    <div class="grid gap-3 mt-5">
+        <div class="g-col-3 emphasis">
+            <b>{% translate "Næste udbetalingsdato" %}</b>
+            <h1 class="mt-3">{{ next_payout_date|date }}</h1>
+        </div>
+        <div class="g-col-3 emphasis">
+            <b>{% translate "Næste forventede beløb til udbetaling" %}</b>
+            <h1 class="mt-3">
+                {% if paused or in_quarantine and quarantine_weight == 0 %}
+                    {{ 0|format_amount }} <i class="bi bi-exclamation-triangle-fill"></i>
+                {% else %}
+                    {{ benefit_calculated|format_amount }}
+                {% endif %}
+            </h1>
+        </div>
+        <div class="g-col-3 emphasis">
+            <b>
+                {% blocktrans trimmed with year=year %}
+                    Forventet beløb til udbetaling for hele {{ year }}
+                {% endblocktrans %}
+            </b>
+            <h1 class="mt-3">{{ estimated_year_benefit|format_amount }}</h1>
+        </div>
+        <div class="g-col-3 emphasis">
+            <b>{% translate "Forventet årsindkomst fra arbejde" %}</b>
+            <h1 class="mt-3">
+                {% if manually_entered_income %}
+                    {{ manually_entered_income|format_amount }}
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                {% else %}
+                    {{ estimated_year_result|format_amount }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+{% endif %}
+
 <div class="row mt-3">
     <div class="col-md-12">
         <div class="explainer">
+
+            <p>
             {% if not year_in_past %}
             {% blocktrans trimmed %}
             "Mit overblik" er dit overblik over kommende og tidligere udbetalinger af Suila-tapit for indeværende år.
@@ -45,8 +85,8 @@
             Her får du et overblik over de vigtigste beløb og datoer, og en oversigt over dine forventede månedlige
             Suila-tapit udbetalinger.
             {% endblocktrans %}
-            <br>
-            <br>
+            </p>
+            <p>
             {% blocktrans trimmed %}
             Bemærk, at beløbene er vejledende, og kan ændre sig helt frem til den endelige udbetaling.
             {% endblocktrans %}
@@ -55,6 +95,8 @@
             Her kan du få et overblik over dine udbetalinger af Suila-tapit for forgangne år.
             {% endblocktrans %}
             {% endif %}
+            </p>
+
             <p><b>{% translate "Modregning" %}</b></p>
             {% blocktrans trimmed %}
             Hvis du har gæld til det offentlige, kan der ske modregning af op til en tredjedel af beløbet inden
@@ -70,44 +112,6 @@
         </div>
     </div>
 </div>
-
-{% if show_next_payment and not year_in_past %}
-<div class="grid gap-3 mt-5">
-    <div class="g-col-3 emphasis">
-        <b>{% translate "Næste udbetalingsdato" %}</b>
-        <h1 class="mt-3">{{ next_payout_date|date }}</h1>
-    </div>
-    <div class="g-col-3 emphasis">
-        <b>{% translate "Næste forventede beløb til udbetaling" %}</b>
-        <h1 class="mt-3">
-            {% if paused or in_quarantine and quarantine_weight == 0 %}
-                {{ 0|format_amount }} <i class="bi bi-exclamation-triangle-fill"></i>
-            {% else %}
-                {{ benefit_calculated|format_amount }}
-            {% endif %}
-        </h1>
-    </div>
-    <div class="g-col-3 emphasis">
-        <b>
-            {% blocktrans trimmed with year=year %}
-            Forventet beløb til udbetaling for hele {{ year }}
-            {% endblocktrans %}
-        </b>
-        <h1 class="mt-3">{{ estimated_year_benefit|format_amount }}</h1>
-    </div>
-    <div class="g-col-3 emphasis">
-        <b>{% translate "Forventet årsindkomst fra arbejde" %}</b>
-        <h1 class="mt-3">
-        {% if manually_entered_income %}
-            {{ manually_entered_income|format_amount }}
-            <i class="bi bi-exclamation-triangle-fill"></i>
-        {% else %}
-            {{ estimated_year_result|format_amount }}
-        {% endif %}
-        </h1>
-    </div>
-</div>
-{% endif %}
 
 {% if in_quarantine and quarantine_weight == 0 %}
 <div class="grid gap-3 mt-5">

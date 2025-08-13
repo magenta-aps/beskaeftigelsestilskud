@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-08 10:36-0100\n"
+"POT-Creation-Date: 2025-08-12 06:41-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -722,6 +722,23 @@ msgstr ""
 "receive Suila-tapit, and therefore your figures will not appear in the graph."
 
 #: suila/templates/suila/person_detail.html
+msgid "Næste udbetalingsdato"
+msgstr "Next pay out date"
+
+#: suila/templates/suila/person_detail.html
+msgid "Næste forventede beløb til udbetaling"
+msgstr "Next expected amount for payment"
+
+#: suila/templates/suila/person_detail.html
+#, python-format
+msgid "Forventet beløb til udbetaling for hele %(year)s"
+msgstr "Expected amount to be paid for all of %(year)s"
+
+#: suila/templates/suila/person_detail.html
+msgid "Forventet årsindkomst fra arbejde"
+msgstr "Expected annual income from employment"
+
+#: suila/templates/suila/person_detail.html
 msgid ""
 "\"Mit overblik\" er dit overblik over kommende og tidligere udbetalinger af "
 "Suila-tapit for indeværende år."
@@ -780,23 +797,6 @@ msgstr ""
 "Suila-tapit is only paid to a NemKonto bank account. If you do not have a "
 "NemKonto, you must create one before you can receive Suila-tapit. If you do "
 "not have a NemKonto, please contact your bank."
-
-#: suila/templates/suila/person_detail.html
-msgid "Næste udbetalingsdato"
-msgstr "Next pay out date"
-
-#: suila/templates/suila/person_detail.html
-msgid "Næste forventede beløb til udbetaling"
-msgstr "Next expected amount for payment"
-
-#: suila/templates/suila/person_detail.html
-#, python-format
-msgid "Forventet beløb til udbetaling for hele %(year)s"
-msgstr "Expected amount to be paid for all of %(year)s"
-
-#: suila/templates/suila/person_detail.html
-msgid "Forventet årsindkomst fra arbejde"
-msgstr "Expected annual income from employment"
 
 #: suila/templates/suila/person_detail.html
 #, python-format
