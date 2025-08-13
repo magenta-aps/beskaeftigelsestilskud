@@ -25,7 +25,7 @@ LANG_INFO = dict(django.conf.locale.LANG_INFO, **EXTRA_LANG_INFO)
 django.conf.locale.LANG_INFO = LANG_INFO
 
 
-TIME_ZONE = "America/Godthab"
+TIME_ZONE = "America/Nuuk"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
