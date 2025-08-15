@@ -167,6 +167,13 @@ class Command(BaseCommand):
                 cpr="0601011991", defaults={"name": "Person without prisme items"}
             )[0]: [10000]
             * 12,
+            # Person without name
+            Person.objects.update_or_create(
+                cpr="0701011991",
+            )[
+                0
+            ]: [10000]
+            * 12,
         }
 
         tz = timezone.get_current_timezone()

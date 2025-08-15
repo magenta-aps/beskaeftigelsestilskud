@@ -7,10 +7,10 @@
 {% load cpr_tags %}
 
 {% block title %}
-{{ person.name }}
+{{ person.name|default_if_none:person.cpr }}
 {% endblock %}
 
 {% block content %}
 {% block person_data %}
-{% endblock  %}
+{% endblock %}
 {% endblock %}
