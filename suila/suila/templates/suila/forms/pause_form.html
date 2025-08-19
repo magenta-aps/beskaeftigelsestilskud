@@ -18,7 +18,7 @@
       </label>
     </div>
   {% else %}
-    <input type="hidden" id="allow_pause" name="allow_pause" value="{{ allow_pause }}"/> 
+    <input type="hidden" name="allow_pause" value="{{ allow_pause }}"/> 
   {% endif %}
 
   <div class="mb-3">
@@ -51,19 +51,21 @@
 $(function() {
   const $toggle = $('#pauseToggle');
   const $selectPause = $('#pausedInput');
-  const $selectAllowPause = $('#allow_pause');
+  const $selectAllowPause = $('[name=allow_pause]');
   const $submitBtn = $('#pause_form_submit_button');
 
   const defaultPause = $selectPause.val();
-  const defaultAllowPause = $selectAllowPause.is(':checkbox')
-    ? $selectAllowPause.prop('checked')
-    : $selectAllowPause.val();
+
+  const getSelectAllowPauseValue = function(){
+    return $selectAllowPause.is(':checkbox')
+      ? $selectAllowPause.prop('checked')
+      : $selectAllowPause.val();
+  }
+  const defaultAllowPause = getSelectAllowPauseValue();
 
   function checkIfDefaults() {
     const currentPause = $selectPause.val();
-    const currentAllowPause = $selectAllowPause.is(':checkbox')
-      ? $selectAllowPause.prop('checked')
-      : $selectAllowPause.val();
+    const currentAllowPause = getSelectAllowPauseValue();
 
     $submitBtn.prop('disabled', currentPause === defaultPause && currentAllowPause === defaultAllowPause);
   }
@@ -76,12 +78,14 @@ $(function() {
 
   // Toggle click handler
   $toggle.on('click', '.toggle-option', function () {
+
+  const $this = $(this);
     // UI highlight
     $toggle.find('.toggle-option').removeClass('active');
-    $(this).addClass('active');
+    $this.addClass('active');
 
     // Update hidden input value
-    $selectPause.val($(this).data('value')).trigger('change');
+    $selectPause.val($this.data('value')).trigger('change');
   });
 
   // Watch for pause changes
