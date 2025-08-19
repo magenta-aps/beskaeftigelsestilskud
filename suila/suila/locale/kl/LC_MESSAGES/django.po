@@ -1330,6 +1330,11 @@ msgstr ""
 "Tunniunneqartartut unitsinneqarallarsimapput. Akileraartarnermut "
 "Aqutsisoqarfik tigusartakkavit unitsinneqarallarnissaanik paasitissimavat."
 
+#: suila/templates/suila/templatetags/pause_info_box.html
+#, python-format
+msgid "Pausen træder i kraft den %(date)s."
+msgstr ""
+
 #: suila/templatetags/amount_tags.py
 msgid "-"
 msgstr "-"
