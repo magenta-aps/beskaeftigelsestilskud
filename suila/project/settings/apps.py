@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from project.settings.base import TESTING
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -19,7 +20,6 @@ INSTALLED_APPS = [
     "django_mitid_auth",
     "data_analysis",
     "data_update",
-    "debug_toolbar",
     "django_bootstrap_icons",
     "django_otp",
     "django_otp.plugins.otp_static",
@@ -32,3 +32,5 @@ INSTALLED_APPS = [
     "compressor",
     "crispy_forms",
 ]
+if not TESTING:
+    INSTALLED_APPS.append("debug_toolbar")

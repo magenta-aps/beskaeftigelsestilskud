@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from project.settings.base import TESTING
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -15,7 +16,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
     "django_session_timeout.middleware.SessionTimeoutMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django_otp.middleware.OTPMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
 ]
+if not TESTING:
+    MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
