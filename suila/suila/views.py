@@ -253,6 +253,27 @@ class PersonDetailView(
                 - person_year.catchsale_expenses
                 + (person_year.b_income - person_year.b_expenses)
             )
+
+            paused_last_change = person.last_change("paused")
+            now = timezone.now()
+            if paused_last_change and person.paused:
+                relevant_person_month_when_person_was_paused = (
+                    self.get_relevant_person_month(
+                        paused_last_change.year, paused_last_change.month
+                    )
+                )
+
+                pause_effect_date = get_pause_effect_date(
+                    relevant_person_month_when_person_was_paused.person_month
+                )
+            else:
+                pause_effect_date = get_pause_effect_date(person_month)
+
+            if pause_effect_date and pause_effect_date >= now.date():
+                show_pause_effect_date = True
+            else:
+                show_pause_effect_date = False
+
             context_data.update(
                 {
                     "show_next_payment": True,
@@ -276,15 +297,16 @@ class PersonDetailView(
                     "manually_entered_income_last_change": person.last_change(
                         "annual_income_estimate"
                     ),
-                    "paused_last_change": person.last_change("paused"),
-                    "now": timezone.now(),
+                    "paused_last_change": paused_last_change,
+                    "now": now,
                     "manually_entered_income_formset": NoteAttachmentFormSet(),
                     "pause_formset": NoteAttachmentFormSet(),
                     "estimation_engine_formset": NoteAttachmentFormSet(),
                     "engine_choices": engine_choices,
                     "engine_a": person_year.preferred_estimation_engine_a,
                     "engine_u": person_year.preferred_estimation_engine_u,
-                    "pause_effect_date": get_pause_effect_date(person_month),
+                    "pause_effect_date": pause_effect_date,
+                    "show_pause_effect_date": show_pause_effect_date,
                 }
             )
         else:
@@ -293,8 +315,12 @@ class PersonDetailView(
         self.log_view(self.object)
         return context_data
 
-    def get_relevant_person_month(self) -> RelevantPersonMonth | None:
-        max_date: date = date(self.year, self.month, 1) - relativedelta(months=2)
+    def get_relevant_person_month(
+        self, year=None, month=None
+    ) -> RelevantPersonMonth | None:
+        max_date: date = date(
+            year or self.year, month or self.month, 1
+        ) - relativedelta(months=2)
         try:
             person_months = PersonMonth.objects.filter(
                 person_year__person=self.object,
