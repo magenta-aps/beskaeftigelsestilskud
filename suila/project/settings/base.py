@@ -120,3 +120,12 @@ CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
 EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
     os.environ.get("EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS", "1")
 )
+
+
+def show_toolbar(request):
+    return strtobool(os.environ.get("SHOW_DEBUG_TOOLBAR", "False"))
+
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": show_toolbar,
+}
