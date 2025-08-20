@@ -1279,6 +1279,11 @@ msgstr ""
 "Your Suila-tapit payment is paused. You have informed the Tax Agency that "
 "your payments should be paused."
 
+#: suila/templates/suila/templatetags/pause_info_box.html
+#, python-format
+msgid "Pausen træder i kraft den %(date)s."
+msgstr "The payment pause becomes effective on %(date)s."
+
 #: suila/templatetags/amount_tags.py
 msgid "-"
 msgstr "-"

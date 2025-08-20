@@ -45,7 +45,7 @@ from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
 
 from suila.data import engine_choices
-from suila.dates import get_payment_date
+from suila.dates import get_pause_effect_date, get_payment_date
 from suila.forms import (
     CalculationParametersForm,
     CalculatorForm,
@@ -284,6 +284,7 @@ class PersonDetailView(
                     "engine_choices": engine_choices,
                     "engine_a": person_year.preferred_estimation_engine_a,
                     "engine_u": person_year.preferred_estimation_engine_u,
+                    "pause_effect_date": get_pause_effect_date(person_month),
                 }
             )
         else:
