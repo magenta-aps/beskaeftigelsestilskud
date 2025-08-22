@@ -5,6 +5,8 @@ from datetime import date
 
 from dateutil.relativedelta import TU, relativedelta
 
+from suila.models import PersonMonth
+
 
 def get_payment_date(year: int, month: int) -> date:
     # The "official" payment date is the third Tuesday two months after the month
@@ -14,7 +16,7 @@ def get_payment_date(year: int, month: int) -> date:
     return date(year, month, 1) + relativedelta(months=2, weekday=TU(+3))
 
 
-def get_pause_effect_date(person_month):
+def get_pause_effect_date(person_month: PersonMonth):
     """
     Returns the date on which a pause becomes effective
     """

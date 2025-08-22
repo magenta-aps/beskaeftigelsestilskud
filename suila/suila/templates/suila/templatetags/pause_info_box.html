@@ -29,9 +29,11 @@ at dine udbetalinger skal sættes på pause.
             {% endif %}        
         {% endif %}
 
-    {% blocktrans trimmed with date=pause_effect_date  %}
-    Pausen træder i kraft den {{date}}.
-    {% endblocktrans %}
+    {% if show_pause_effect_date %}
+        {% blocktrans trimmed with date=pause_effect_date  %}
+        Pausen træder i kraft den {{date}}.
+        {% endblocktrans %}
+    {% endif %}
 
 
     </p>
