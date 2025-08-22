@@ -257,14 +257,14 @@ class PersonDetailView(
             paused_last_change = person.last_change("paused")
             now = timezone.now()
             if paused_last_change and person.paused:
-                relevant_person_month_when_person_was_paused = (
+                person_month_when_person_was_paused: PersonMonth = (
                     self.get_relevant_person_month(
                         paused_last_change.year, paused_last_change.month
                     )
-                )
+                ).person_month
 
                 pause_effect_date = get_pause_effect_date(
-                    relevant_person_month_when_person_was_paused.person_month
+                    person_month_when_person_was_paused
                 )
             else:
                 pause_effect_date = get_pause_effect_date(person_month)
