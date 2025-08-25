@@ -65,6 +65,7 @@ from suila.models import (
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
+    PauseReasonChoices,
     Person,
     PersonMonth,
     PersonYear,
@@ -307,6 +308,8 @@ class PersonDetailView(
                     "engine_u": person_year.preferred_estimation_engine_u,
                     "pause_effect_date": pause_effect_date,
                     "show_pause_effect_date": show_pause_effect_date,
+                    "pause_reasons": PauseReasonChoices.choices,
+                    "pause_reason": person.pause_reason,
                 }
             )
         else:
@@ -1143,9 +1146,11 @@ class PersonPauseUpdateView(
         note = form.cleaned_data["note"]
         paused = form.cleaned_data["paused"]
         allow_pause = form.cleaned_data["allow_pause"]
+        pause_reason = form.cleaned_data["pause_reason"]
 
         self.object.paused = paused
         self.object.allow_pause = allow_pause
+        self.object.pause_reason = pause_reason if paused else None
         self.object.save()
 
         if paused:

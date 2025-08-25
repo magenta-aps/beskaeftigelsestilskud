@@ -32,6 +32,17 @@
   </div> 
 
   {% if user|has_permissions:"suila.change_person" %}  
+  <div class="mb-3" id="pause_reason_container" style="display: none;">
+      <label class="form-label d-block">{% translate "Begrundelse" %}</label>
+      <select name="pause_reason" id="pause_reason" class="form-select">
+        <option value="">{% translate "Vælg en begrundelse" %}</option>
+        {% for value, label in pause_reasons %}
+          <option value="{{ value }}" {% if value == pause_reason %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+  </div>
   <div class="mb-3">
     <label for="note" class="form-label">{% translate "Notat" %}*</label>
     <textarea name="note" id="note" class="form-control"
@@ -52,22 +63,39 @@ $(function() {
   const $toggle = $('#pauseToggle');
   const $selectPause = $('#pausedInput');
   const $selectAllowPause = $('[name=allow_pause]');
+  const $pauseReason = $('#pause_reason');
+  const $pauseReasonContainer = $('#pause_reason_container');
   const $submitBtn = $('#pause_form_submit_button');
 
   const defaultPause = $selectPause.val();
 
-  const getSelectAllowPauseValue = function(){
+  const getSelectAllowPauseValue = function() {
     return $selectAllowPause.is(':checkbox')
       ? $selectAllowPause.prop('checked')
       : $selectAllowPause.val();
   }
   const defaultAllowPause = getSelectAllowPauseValue();
+  const defaultReason = $pauseReason.val();
 
   function checkIfDefaults() {
     const currentPause = $selectPause.val();
     const currentAllowPause = getSelectAllowPauseValue();
-
-    $submitBtn.prop('disabled', currentPause === defaultPause && currentAllowPause === defaultAllowPause);
+    const currentReason = $pauseReason.val();
+    
+    $submitBtn.prop(
+      'disabled',
+      currentPause === defaultPause &&
+      currentAllowPause === defaultAllowPause &&
+      currentReason === defaultReason
+    );
+  
+    // Show/hide reason dropdown
+    if (currentPause === "true") {  
+      $pauseReasonContainer.show();
+    } else {
+      $pauseReasonContainer.hide();
+      $pauseReason.val(""); 
+    }
   }
 
   // Initial check
@@ -76,10 +104,12 @@ $(function() {
   // Watch for checkbox/hidden allow_pause changes
   $selectAllowPause.on('change', checkIfDefaults);
 
+  // Watch for reason changes
+  $pauseReason.on('change', checkIfDefaults);
+
   // Toggle click handler
   $toggle.on('click', '.toggle-option', function () {
-
-  const $this = $(this);
+    const $this = $(this);
     // UI highlight
     $toggle.find('.toggle-option').removeClass('active');
     $this.addClass('active');
@@ -90,5 +120,15 @@ $(function() {
 
   // Watch for pause changes
   $selectPause.on('change', checkIfDefaults);
+
+  // Validation: require reason only if pausing
+  $submitBtn.on('click', function(e) {
+    const isPausing = $selectPause.val() === "true";
+    if (isPausing && !$pauseReason.val()) {
+      e.preventDefault();
+      alert("{% translate 'Vælg en begrundelse for at pause en person.' %}");
+      $pauseReason.focus();
+    }
+  });
 });
 </script>
