@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-12 06:41-0100\n"
+"POT-Creation-Date: 2025-08-26 07:02-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -65,6 +65,42 @@ msgstr ""
 #: suila/forms.py
 msgid "Alle"
 msgstr "Tamaasa"
+
+#: suila/models.py
+msgid "Indikation af urigtige oplysninger i forskudsregistrering"
+msgstr "Siumoortumik nalunaarummi paasissutissanik eqqunngitsoqarpasippoq."
+
+#: suila/models.py
+msgid ""
+"Indikation af fejl i beregningsgrundlag - fejl i oplysninger fra indberetter"
+msgstr ""
+"Naatsorsuutinut tunngavigisaq kukkuneqarpasippoq – nalunaaruteqartumit "
+"paasissutissat kukkuneqarput."
+
+#: suila/models.py
+msgid "Indikation af fejl i beregningsgrundlag - manglende indberetninger"
+msgstr ""
+"Naatsorsuutinut tunngavigisaq kukkuneqarpasippoq – "
+"nalunaaruteqartoqarsimanngilaq."
+
+#: suila/models.py
+msgid "Indikation af ændringer i forventet årsindkomst"
+msgstr ""
+"Ukiumut aningaasarsiassat naatsorsuutigisamik allannguuteqarsimarpasipput."
+
+#: suila/models.py
+msgid "Indikation af ændringer i skattepligt til Grønland"
+msgstr ""
+"Kalaallit Nunaannut aningaasarsiat akileraaruteqaataasussat "
+"allannguuteqarpasipput."
+
+#: suila/models.py
+msgid "Indikation af systemfejl"
+msgstr "Qarasaasiatigut ajutoortoqarsimarpasippoq."
+
+#: suila/models.py
+msgid "Efter aftale med borgeren eller dennes repræsentant"
+msgstr "Innuttaasoq sinniisualuunniit isumaqatigiissuteqarfigalugu."
 
 #: suila/models.py
 msgid "Procentsats for Suila-tapit"
@@ -670,6 +706,14 @@ msgstr ""
 
 #: suila/templates/suila/forms/pause_form.html
 msgid "På pause"
+msgstr ""
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "Begrundelse"
+msgstr ""
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "Vælg en begrundelse for at pause en person."
 msgstr ""
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-12 06:41-0100\n"
+"POT-Creation-Date: 2025-08-26 07:02-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -63,6 +63,37 @@ msgstr "Select a valid option. %(value)s is not one of the available options."
 #: suila/forms.py
 msgid "Alle"
 msgstr "All"
+
+#: suila/models.py
+msgid "Indikation af urigtige oplysninger i forskudsregistrering"
+msgstr "Indication of incorrect information in the preliminary registration"
+
+#: suila/models.py
+msgid ""
+"Indikation af fejl i beregningsgrundlag - fejl i oplysninger fra indberetter"
+msgstr ""
+"Indication of error in calculation basis – error in information from the "
+"reporting party"
+
+#: suila/models.py
+msgid "Indikation af fejl i beregningsgrundlag - manglende indberetninger"
+msgstr "Indication of error in calculation basis – missing reports"
+
+#: suila/models.py
+msgid "Indikation af ændringer i forventet årsindkomst"
+msgstr "Indication of changes in expected annual income"
+
+#: suila/models.py
+msgid "Indikation af ændringer i skattepligt til Grønland"
+msgstr "Indication of changes in tax liability to Greenland"
+
+#: suila/models.py
+msgid "Indikation af systemfejl"
+msgstr "Indication of system error"
+
+#: suila/models.py
+msgid "Efter aftale med borgeren eller dennes repræsentant"
+msgstr "By agreement with the citizen or their representative"
 
 #: suila/models.py
 msgid "Procentsats for Suila-tapit"
@@ -656,6 +687,14 @@ msgstr "Ongoing"
 #: suila/templates/suila/forms/pause_form.html
 msgid "På pause"
 msgstr "Paused"
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "Begrundelse"
+msgstr "Reason"
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "Vælg en begrundelse for at pause en person."
+msgstr "Pick a reason for pausing a person."
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html

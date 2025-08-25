@@ -65,6 +65,7 @@ from suila.models import (
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
+    PauseReasonChoices,
     Person,
     PersonMonth,
     PersonYear,
@@ -307,6 +308,8 @@ class PersonDetailView(
                     "engine_u": person_year.preferred_estimation_engine_u,
                     "pause_effect_date": pause_effect_date,
                     "show_pause_effect_date": show_pause_effect_date,
+                    "pause_reasons": PauseReasonChoices.choices,
+                    "pause_reason": person.pause_reason,
                 }
             )
         else:
@@ -1143,15 +1146,17 @@ class PersonPauseUpdateView(
         note = form.cleaned_data["note"]
         paused = form.cleaned_data["paused"]
         allow_pause = form.cleaned_data["allow_pause"]
+        pause_reason = form.cleaned_data["pause_reason"]
 
         self.object.paused = paused
         self.object.allow_pause = allow_pause
+        self.object.pause_reason = pause_reason if paused else None
         self.object.save()
 
         if paused:
-            standard_note_text = gettext("Starter udbetalingspause") + ". "
+            standard_note_text = gettext("Starter udbetalingspause") + "\n"
         else:
-            standard_note_text = gettext("Stopper udbetalingspause") + ". "
+            standard_note_text = gettext("Stopper udbetalingspause") + "\n"
 
         if allow_pause and paused:
             standard_note_text += gettext("Borger må genoptage udbetalinger")
@@ -1162,8 +1167,12 @@ class PersonPauseUpdateView(
         elif not allow_pause and not paused:  # pragma: no branch
             standard_note_text += gettext("Borger må ikke sætte udbetalinger på pause")
 
+        if pause_reason:
+            standard_note_text += "\n"
+            standard_note_text += PauseReasonChoices(pause_reason).label
+
         note_obj = Note.objects.create(
-            text=standard_note_text + (("; " + note) if note else ""),
+            text=standard_note_text + (("\n" + note) if note else ""),
             personyear=PersonYear.objects.get(person=self.object, year=year),
             author=self.request.user,
         )

@@ -35,6 +35,7 @@ from django.db.models import (
     F,
     Func,
     Index,
+    IntegerChoices,
     OuterRef,
     Q,
     QuerySet,
@@ -87,6 +88,40 @@ class StatusChoices(TextChoices):
     RUNNING = "Kører"
     SUCCEEDED = "Gennemført"
     FAILED = "Fejl"
+
+
+class PauseReasonChoices(IntegerChoices):
+    INCORRECT_INFORMATION = (
+        1,
+        _("Indikation af urigtige oplysninger i forskudsregistrering"),
+    )
+    CALCULATION_ERROR = (
+        2,
+        _(
+            "Indikation af fejl i beregningsgrundlag - "
+            "fejl i oplysninger fra indberetter"
+        ),
+    )
+    MISSING_REPORTS = (
+        3,
+        _("Indikation af fejl i beregningsgrundlag - manglende indberetninger"),
+    )
+    INCOME_CHANGE = (
+        4,
+        _("Indikation af ændringer i forventet årsindkomst"),
+    )
+    GREENLAND_TAX = (
+        5,
+        _("Indikation af ændringer i skattepligt til Grønland"),
+    )
+    SYSTEM_ERROR = (
+        6,
+        _("Indikation af systemfejl"),
+    )
+    AGREEMENT_WITH_CITIZEN = (
+        7,
+        _("Efter aftale med borgeren eller dennes repræsentant"),
+    )
 
 
 class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
@@ -399,6 +434,14 @@ class Person(PermissionsMixin, models.Model):
         default=True,
         null=False,
         blank=False,
+    )
+
+    # The reason for pausing a citizen
+    pause_reason = models.IntegerField(
+        choices=PauseReasonChoices,
+        null=True,
+        blank=True,
+        default=None,
     )
 
     # If annual income is manually set here, we do not use the estimation engines.
