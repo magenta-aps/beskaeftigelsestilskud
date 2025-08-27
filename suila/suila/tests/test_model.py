@@ -988,9 +988,9 @@ class TestTaxInformationPeriod(ModelTest):
             # (`self.person2_person_year` have no `TaxInformationPeriod` objects, so the
             # annotation is always expected to be False, regardless of the month.)
             (1, [False, False]),  # no overlapping period
-            (2, [True, False]),  # partially overlapping period
+            (2, [False, False]),  # periodestart >= d 15
             (3, [True, False]),  # completely overlapping period
-            (4, [True, False]),  # partially overlapping period
+            (4, [False, False]),  # borgeren er der ikke den sidste dag i måneden
         ]
         for month, expected_result in test_cases:
             with self.subTest(month=month, expected_result=expected_result):
@@ -1013,6 +1013,57 @@ class TestTaxInformationPeriod(ModelTest):
                     expected_result,
                     transform=attrgetter("result"),
                 )
+
+    def get_person_month(self, month):
+        return PersonMonth.objects.annotate(
+            taxable=TaxInformationPeriod.get_person_month_filter_annotation(
+                self.year.year, month
+            )
+        ).get(
+            person_year=self.person_year,
+            month=month,
+        )
+
+    def test_get_person_month_filter_annotation_arrival(self):
+        # I en måned, hvor en ny skatteborger ankommer til Grønland,
+        # skal vedkommende anses for fuldt skattepligtig, hvis perioden starter
+        # senest den 15. Hvis periodestart >= d 15., skal vedkommende ikke have noget.
+        # https://redmine.magenta.dk/issues/65645#note-48
+        month = 2
+        person_month = self.get_person_month(month)
+        self.assertEqual(self.period1.start_date.day, 15)
+        self.assertFalse(person_month.taxable)
+
+        self.period1.start_date = self._get_datetime(2, 14)
+        self.period1.save()
+
+        person_month = self.get_person_month(month)
+        self.assertEqual(self.period1.start_date.day, 14)
+        self.assertTrue(person_month.taxable)
+
+    def test_get_person_month_filter_annotation_exit(self):
+        # Ved periodens slutning er afskæringsdatoen den sidste dag i måneden.
+        # Er skatteborgeren der ikke den sidste dag i måneden, skal der ikke udbetales
+        # noget for den måned.
+        # https://redmine.magenta.dk/issues/65645#note-48
+        month = 4
+        person_month = self.get_person_month(month)
+        self.assertEqual(self.period1.end_date.day, 15)
+        self.assertFalse(person_month.taxable)
+
+        self.period1.end_date = self._get_datetime(4, 30)
+        self.period1.save()
+
+        person_month = self.get_person_month(month)
+        self.assertEqual(self.period1.end_date.day, 30)
+        self.assertTrue(person_month.taxable)
+
+        self.period1.end_date = self._get_datetime(4, 29)
+        self.period1.save()
+
+        person_month = self.get_person_month(month)
+        self.assertEqual(self.period1.end_date.day, 29)
+        self.assertFalse(person_month.taxable)
 
     def test_get_person_month_filter_annotation_other_required_tax_scope(self):
         # Act

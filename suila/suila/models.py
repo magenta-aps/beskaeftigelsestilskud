@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import base64
+import calendar
 import logging
 import uuid
 from datetime import date, datetime
@@ -693,11 +694,17 @@ class TaxInformationPeriod(PermissionsMixin, models.Model):
     ) -> Exists:
         # Get the lower and upper bounds of the month we are looking for
         month_period = cls.get_period_for_month(year, month)
+        last_day = cls.get_last_day_for_month(year, month)
         # Construct subquery which searches for any tax information periods overlapping
         # the month we are looking for.
         queryset: QuerySet[TaxInformationPeriod] = cls.get_annotated_queryset(
             required_tax_scope=required_tax_scope,
         )
+
+        # Check if the last day is in the queryset.
+        # A minute is subtracted because Postgres ranges are [) by default:
+        # That means inclusive at the start, exclusive at the end.
+        queryset = queryset.filter(period__contains=last_day - relativedelta(minutes=1))
         subquery: QuerySet[TaxInformationPeriod] = queryset.filter(
             person_year=OuterRef("person_year"),
             period__overlap=month_period,
@@ -729,8 +736,26 @@ class TaxInformationPeriod(PermissionsMixin, models.Model):
             1,
             tzinfo=timezone.get_current_timezone(),
         )
-        month_end: datetime = month_start + relativedelta(months=1)
+        month_end: datetime = datetime(
+            year,
+            month,
+            15,
+            tzinfo=timezone.get_current_timezone(),
+        )
         return month_start, month_end
+
+    @classmethod
+    def get_last_day_for_month(cls, year: int, month: int) -> datetime:
+        """
+        Return the last day of the given month as a timezone-aware datetime.
+        """
+        last_day = calendar.monthrange(year, month)[1]
+        return datetime(
+            year,
+            month,
+            last_day,
+            tzinfo=timezone.get_current_timezone(),
+        )
 
 
 class PersonMonth(PermissionsMixin, models.Model):
