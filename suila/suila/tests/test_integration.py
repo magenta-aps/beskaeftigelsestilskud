@@ -383,3 +383,212 @@ class IncomeSpikeInJulyTest(IntegrationBaseTest):
                 self.assert_benefit(benefit_calculated, 379)
 
         self.assert_total_benefit(379 * 6)
+
+
+class CalculateBenefitTaxScopeTest(IntegrationBaseTest):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.cpr = "1234567892"
+        cls.person, cls.person_year = cls.make_person_and_person_year(cls, cls.cpr)
+
+        for month_number in range(7, 13):
+            month = PersonMonth.objects.create(
+                person_year=cls.person_year,
+                month=month_number,
+                import_date=date.today(),
+            )
+            MonthlyIncomeReport.objects.create(
+                person_month=month,
+                salary_income=Decimal(20000),
+                month=month.month,
+                year=cls.year.year,
+            )
+
+        TaxInformationPeriod.objects.create(
+            person_year=cls.person_year,
+            tax_scope="FULL",
+            start_date=cls._get_datetime(7, 1),  # 1. July
+            end_date=cls._get_datetime(12, 31),  # 31. December
+        )
+
+    def test_estimate_and_calculate_benefit(self):
+        """
+        Test example 1 from https://redmine.magenta.dk/issues/65645#note-4:
+
+        Eksempel: Borger skal have Suila-tapit, dukker op fra 1. juli
+
+        Personen tjener 20.000 kroner pr. måned svarende til en årsindkomst på 240.000
+        kroner og kommer til at tjene 120.000 som fuldt skattepligtig.
+
+        Fra 1. juli har vi
+
+        E = 6*20.000 = 120.000
+        B = 120.000* (12/6) = 240.000
+
+        Vedkommende vil derfor få 1312 kr. pr. måned i 6 måneder = 7872 kroner i alt.
+        """
+
+        for month in range(1, 13):
+            self.call_commands(month)
+
+            if month >= 7:
+                person_month = self.get_person_month(month)
+                benefit_calculated = person_month.benefit_calculated
+                self.assertEqual(person_month.estimated_year_result, 120_000)
+                self.assert_benefit(benefit_calculated, 1312)
+            else:
+                with self.assertRaises(PersonMonth.DoesNotExist):
+                    self.get_person_month(month)
+
+        self.assert_total_benefit(1312 * 6)
+
+    def test_estimate_and_calculate_benefit_default_engine(self):
+        """
+        Engine = InYearExtrapolationEngine is not so good at estimating annual income
+        for people who are new to the job-market. Therefore the monthly amount that we
+        pay out will not be nicely 1312 kr. every month.
+
+        But the final transferred amount should still be the same (1312 * 6)
+        """
+        self.person_year.preferred_estimation_engine_a = "InYearExtrapolationEngine"
+        self.person_year.save()
+
+        for month in range(1, 13):
+            self.call_commands(month)
+
+        self.assert_total_benefit(1312 * 6)
+
+
+class CalculateBenefitTaxScopeTest2(IntegrationBaseTest):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.cpr = "1234567893"
+        cls.person, cls.person_year = cls.make_person_and_person_year(cls, cls.cpr)
+
+        for month_number in range(9, 13):
+            month = PersonMonth.objects.create(
+                person_year=cls.person_year,
+                month=month_number,
+                import_date=date.today(),
+            )
+            MonthlyIncomeReport.objects.create(
+                person_month=month,
+                salary_income=Decimal(50_000),
+                month=month.month,
+                year=cls.year.year,
+            )
+
+        TaxInformationPeriod.objects.create(
+            person_year=cls.person_year,
+            tax_scope="FULL",
+            start_date=cls._get_datetime(9, 1),  # 1. September
+            end_date=cls._get_datetime(12, 31),  # 31. December
+        )
+
+    def test_estimate_and_calculate_benefit(self):
+        """
+        Test example 2 from https://redmine.magenta.dk/issues/65645#note-4:
+
+        Eksempel: Borger skal ikke have suila-tapit, dukker op 1. september
+
+        Borgeren får kr. 50.000 om måneden, svarende til en årsindkomst på 600.000
+        kroner.
+
+        Vi har
+
+        E = 200.000
+        B = 200.000 * (12 / 4) = 600.000
+
+        Vedkommende får derfor ingen suila-tapit.
+        """
+
+        for month in range(1, 13):
+            self.call_commands(month)
+
+            if month >= 9:
+                person_month = self.get_person_month(month)
+                benefit_calculated = person_month.benefit_calculated
+                self.assertEqual(person_month.estimated_year_result, 200_000)
+                self.assert_benefit(benefit_calculated, 0)
+            else:
+                with self.assertRaises(PersonMonth.DoesNotExist):
+                    self.get_person_month(month)
+
+        self.assert_total_benefit(0)
+
+
+class CalculateBenefitTaxScopeTest3(IntegrationBaseTest):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.cpr = "1234567892"
+        cls.person, cls.person_year = cls.make_person_and_person_year(cls, cls.cpr)
+
+        for month_number in range(7, 10):
+            month = PersonMonth.objects.create(
+                person_year=cls.person_year,
+                month=month_number,
+                import_date=date.today(),
+            )
+            MonthlyIncomeReport.objects.create(
+                person_month=month,
+                salary_income=Decimal(20000),
+                month=month.month,
+                year=cls.year.year,
+            )
+
+        TaxInformationPeriod.objects.create(
+            person_year=cls.person_year,
+            tax_scope="FULL",
+            start_date=cls._get_datetime(7, 1),  # 1. July
+            end_date=cls._get_datetime(9, 30),  # 30. September
+        )
+
+    def test_estimate_and_calculate_benefit(self):
+        """
+        We cannot know in advance if a citizen will disappear in the course of a year
+        Therefore we payout normally untill the citizen actually disappers. When the
+        citizen has disappeared we do not payout
+        """
+
+        for month in range(1, 13):
+            self.call_commands(month)
+
+            if month >= 7 and month <= 9:
+                person_month = self.get_person_month(month)
+                benefit_calculated = person_month.benefit_calculated
+                self.assertEqual(person_month.estimated_year_result, 120_000)
+                self.assert_benefit(benefit_calculated, 1312)
+            else:
+                with self.assertRaises(PersonMonth.DoesNotExist):
+                    self.get_person_month(month)
+
+        self.assert_total_benefit(1312 * 3)
+
+    def test_estimate_and_calculate_benefit_no_tax_period(self):
+        """
+        If the person is not taxable we do not payout (But we still estimate!)
+        """
+        TaxInformationPeriod.objects.all().delete()
+
+        for month in range(1, 13):
+            self.call_commands(month)
+
+            if month >= 7 and month <= 9:
+                person_month = self.get_person_month(month)
+                benefit_calculated = person_month.benefit_calculated
+                self.assertEqual(person_month.estimated_year_result, 120_000)
+                self.assert_benefit(benefit_calculated, 0)
+            else:
+                with self.assertRaises(PersonMonth.DoesNotExist):
+                    self.get_person_month(month)
+
+        self.assert_total_benefit(0)

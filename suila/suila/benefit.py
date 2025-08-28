@@ -77,6 +77,14 @@ def calculate_benefit(
     has_full_tax_scope_in_month: Exists = (
         TaxInformationPeriod.get_person_month_filter_annotation(year, month)
     )
+
+    full_tax_scope_months = (
+        TaxInformationPeriod.get_person_month_filter_annotation_for_entire_year(
+            year, month
+        )
+    )
+    month_qs = month_qs.annotate(full_tax_scope_months=full_tax_scope_months)
+
     month_qs = month_qs.annotate(
         has_full_tax_scope_in_month=has_full_tax_scope_in_month
     ).filter(
@@ -89,6 +97,7 @@ def calculate_benefit(
         index="person_year__person__cpr",
         dtypes={
             "has_signal": bool,
+            "full_tax_scope_months": int,
         },
     )
 
@@ -126,6 +135,8 @@ def calculate_benefit(
         .add(df["b_income"], fill_value=0)
         .sub(df["b_expenses"], fill_value=0)
         .sub(df["catchsale_expenses"], fill_value=0)
+        * 12
+        / df.full_tax_scope_months.fillna(12)
     )
 
     # If annual income is set on a Person object, use that.
@@ -137,7 +148,10 @@ def calculate_benefit(
 
     # Calculate benefit
     df["estimated_year_benefit"] = (
-        df.calculation_basis.fillna(0).map(calculate_benefit_func) * safety_factor
+        df.calculation_basis.fillna(0).map(calculate_benefit_func)
+        * safety_factor
+        / 12
+        * df.full_tax_scope_months.fillna(12)
     )
     df["actual_year_benefit"] = (
         df.actual_year_result.add(df["b_income"], fill_value=0)
