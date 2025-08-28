@@ -219,7 +219,7 @@ class PauseForm(ModelForm):
 
     class Meta:
         model = Person
-        fields = ["paused", "allow_pause"]
+        fields = ["paused", "allow_pause", "pause_reason"]
 
 
 class PersonYearEstimationEngineForm(ModelForm):

@@ -1746,6 +1746,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
     def post_pause(self, year=2020, month=5, day=2):
         response = self.client.post(self.url, data=self.data)
         self.set_history_date(self.person_year.person, date(year, month, day))
+        self.person_year.person.refresh_from_db()
         return response
 
     def test_pause_person_as_admin(self):
@@ -1754,7 +1755,6 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.client.force_login(self.admin_user)
         self.post_pause()
 
-        self.person_year.person.refresh_from_db()
         self.assertTrue(self.person_year.person.paused)
 
     def test_pause_person_as_staff(self):
@@ -1763,7 +1763,6 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.client.force_login(self.staff_user)
         self.post_pause()
 
-        self.person_year.person.refresh_from_db()
         self.assertTrue(self.person_year.person.paused)
 
     def test_pause_other_person_as_normal_user(self):
@@ -1786,7 +1785,6 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.client.force_login(self.normal_user)
         self.post_pause()
 
-        self.person_year.person.refresh_from_db()
         self.assertTrue(self.person_year.person.paused)
 
     def test_unpause_self_as_normal_user(self):
@@ -1800,7 +1798,6 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.data["paused"] = False
         self.post_pause()
 
-        self.person_year.person.refresh_from_db()
         self.assertFalse(self.person_year.person.paused)
 
     def test_unpause_person(self):
@@ -1813,7 +1810,6 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.data["paused"] = False
         self.post_pause()
 
-        self.person_year.person.refresh_from_db()
         self.assertFalse(self.person_year.person.paused)
 
     def test_history(self):
@@ -1932,6 +1928,17 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         # We should not show the date from which the pause becomes effective,
         # because it is now in the past
         self.assertEqual(context_data["show_pause_effect_date"], False)
+
+    def test_pause_reason(self):
+        self.client.force_login(self.admin_user)
+
+        self.data["pause_reason"] = 2
+        self.post_pause()
+        self.assertEqual(self.person_year.person.pause_reason, 2)
+
+        self.data["paused"] = False
+        self.post_pause()
+        self.assertEqual(self.person_year.person.pause_reason, None)
 
 
 class TestPersonAnnualIncomeEstimateUpdateView(
