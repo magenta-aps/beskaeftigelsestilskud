@@ -196,6 +196,17 @@ class JobListOptionsForm(BootstrapForm):
         required=False,
     )
 
+    filter_type = forms.ChoiceField(
+        choices=[
+            ("only", "Only"),
+            ("exclude", "Exclude"),
+        ],
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    filter_value = forms.CharField(required=False)
+
 
 class CsvReportOptionsForm(BootstrapForm):
     order_by = forms.ChoiceField(
