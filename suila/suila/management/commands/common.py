@@ -36,16 +36,18 @@ class SuilaBaseCommand(BaseCommand):
         except Exception as exc:
             logger.exception("SuilaBaseCommand error!")
             job_log.status = StatusChoices.FAILED
+            job_log.output = str(exc)
             if options.get("reraise", False):
                 raise exc
             else:
-                raise CommandError() from exc
+                raise CommandError(job_name) from exc
         finally:
             job_log.runtime_end = datetime.now(tz=timezone.utc)
             job_log.save(
                 update_fields=(
                     "status",
                     "runtime_end",
+                    "output",
                 )
             )
 

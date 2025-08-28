@@ -75,7 +75,25 @@
     <tr>
         <td>{{ object.name }}</td>
         <td>{{ object.runtime }}</td>
-        <td>{{ object.status }}</td>
+        <td>
+
+            {% if object.output %}
+            <a
+                tabindex="0"
+                class="text-danger"
+                role="button"
+                data-bs-toggle="popover"
+                data-bs-trigger="focus"
+                data-bs-title="Job {{ object.status }}"
+                data-bs-content="{{object.output}}"
+                data-bs-custom-class="joblog-popover-{{object.status|lower}}"
+            >
+                {{ object.status }}
+            </a>
+            {% else %}
+            <span>{{ object.status }}</span>
+            {% endif %}
+        </td>
         <td>{{ object.year_param|default_if_none:"-" }}</td>
         <td>{{ object.month_param|default_if_none:"-" }}</td>
         <td>{{ object.cpr_param|default_if_none:"-" }}</td>
