@@ -898,7 +898,7 @@ class CalculatorView(
             ]
             method = method_class(
                 **{
-                    key: value
+                    key: value or Decimal(0)
                     for key, value in form.cleaned_data.items()
                     if key
                     in {
