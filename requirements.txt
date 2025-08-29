@@ -7,7 +7,7 @@ beautifulsoup4==4.12.2
 certifi==2024.6.2
 cffi==1.16.0
 charset-normalizer==3.3.2
-coverage==7.3.0
+coverage==7.10.5
 cryptography==42.0.8
 defusedxml==0.7.1
 Django==5.1.3
