@@ -475,6 +475,23 @@ class JobListView(
     def get_queryset(self):
         qs = super().get_queryset()
         qs = qs.order_by(*self.get_ordering())
+
+        # Joblog filter
+        filter_type = self.request.GET.get("filter_type")
+        filter_value = self.request.GET.get("filter_value")
+        if filter_value:
+            match (filter_type):
+                case "only":
+                    qs = qs.filter(
+                        name__in=[jn.lower() for jn in filter_value.split(",")]
+                    )
+                case "exclude":
+                    qs = qs.exclude(
+                        name__in=[jn.lower() for jn in filter_value.split(",")]
+                    )
+                case _:
+                    pass
+
         return qs
 
     def get_context_data(self, **kwargs):

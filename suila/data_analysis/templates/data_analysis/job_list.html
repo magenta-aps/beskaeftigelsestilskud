@@ -14,10 +14,36 @@
 
 {% block content %}
 <div class="row my-1 mx-1">
-    <h1>{% translate "Jobliste" %} </h1>
+    <div class="d-flex justify-content-between">
+        <h1>{% translate "Jobliste" %} </h1>
+        <div class="align-self-center">
+            <form>
+                <div class="input-group mb-3">
+                    <select class="form-select" id="inputGroupSelect04" aria-label="Example select with button addon" style="min-width: 125px" name="filter_type">
+                        <option value="only" {% if request.GET.filter_type == "only" %}selected{% endif %}>Filter</option>
+                        <option value="exclude" {% if request.GET.filter_type == "exclude" %}selected{% endif %}>Exclude</option>
+                    </select>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Job name(s)..."
+                        aria-label="Job name(s)..."
+                        aria-describedby="joblog-search-btn"
+                        style="width: 250px"
+                        name="filter_value"
+                        value="{{ request.GET.filter_value }}"
+                    >
+                    <button class="btn btn-danger" type="submit" id="joblog-search-btn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 <div class="row my-1 mx-1">
-    <table class="table table-bordered"  id="table">
+    <table class="table table-bordered" id="table">
     <thead class="shadow-sm p-3 mb-5 bg-body rounded sticky-top">
     <tr>
         <th class="col-2">
