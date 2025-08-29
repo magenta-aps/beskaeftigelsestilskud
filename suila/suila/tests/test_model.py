@@ -73,8 +73,26 @@ class ModelTest(TestCase):
         cls.month4 = PersonMonth.objects.create(
             person_year=cls.person_year, month=4, import_date=date.today()
         )
+        cls.month5 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=5, import_date=date.today()
+        )
+        cls.month6 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=6, import_date=date.today()
+        )
+        cls.month7 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=7, import_date=date.today()
+        )
+        cls.month8 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=8, import_date=date.today()
+        )
+        cls.month9 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=9, import_date=date.today()
+        )
         cls.month10 = PersonMonth.objects.create(
             person_year=cls.person_year, month=10, import_date=date.today()
+        )
+        cls.month11 = PersonMonth.objects.create(
+            person_year=cls.person_year, month=11, import_date=date.today()
         )
         cls.month12 = PersonMonth.objects.create(
             person_year=cls.person_year, month=12, import_date=date.today()
@@ -594,6 +612,7 @@ class TestPersonMonth(UserModelTest):
         self.assertEqual(self.month2.prev, self.month1)
         self.assertEqual(self.year2month1.prev, self.month12)
         self.assertIsNone(self.month1.prev)
+        self.month11.delete()
         self.assertIsNone(self.month12.prev)
 
     def test_borger_permissions(self):
@@ -963,7 +982,7 @@ class TestTaxInformationPeriod(ModelTest):
                     month=month,
                     import_date=date.today(),
                 )
-                for month in range(1, 5)
+                for month in range(1, 13)
             ]
         )
         cls.period1 = TaxInformationPeriod.objects.create(
@@ -1087,3 +1106,73 @@ class TestTaxInformationPeriod(ModelTest):
             [False, False],
             transform=attrgetter("result"),
         )
+
+    def test_get_person_month_filter_annotation_for_entire_year(self):
+
+        # self.period1 runs from feb to April
+        self.period1.start_date = self._get_datetime(2, 10)
+        self.period1.end_date = self._get_datetime(4, 30)
+        self.period1.save()
+
+        # Meaning the person is fully-taxable for three months.
+        #
+        # January:
+        #    - The person is not fully-taxable in jan. but we assume that he is for the
+        #      remainder of the year. Therefore months_with_full_tax_scope = 11
+        # February:
+        #    - The person is fully-taxable in feb. and we assume that he is for the
+        #      remainder of the year. Therefore months_with_full_tax_scope = 11
+        # May:
+        #    - The person is not fully-taxable in may but we assume that he is for the
+        #      remainder of the year. He was also not fully taxable in january.
+        #      but he was fully taxable from feb. to april.
+        #      Therefore months_with_full_tax_scope = 10
+        expected_results = [
+            {"month": 1, "months_with_full_tax_scope": 11},
+            {"month": 2, "months_with_full_tax_scope": 11},
+            {"month": 3, "months_with_full_tax_scope": 11},
+            {"month": 4, "months_with_full_tax_scope": 11},
+            {"month": 5, "months_with_full_tax_scope": 10},
+            {"month": 6, "months_with_full_tax_scope": 9},
+            {"month": 7, "months_with_full_tax_scope": 8},
+            {"month": 8, "months_with_full_tax_scope": 7},
+            {"month": 9, "months_with_full_tax_scope": 6},
+            {"month": 10, "months_with_full_tax_scope": 5},
+            {"month": 11, "months_with_full_tax_scope": 4},
+            {"month": 12, "months_with_full_tax_scope": 3},
+        ]
+
+        for expected_result in expected_results:
+
+            # Act
+            month = expected_result["month"]
+
+            # self.person2_person_year always has zero months with full-tax scope
+            # because he does not have any taxinformation periods
+            # But we assume all future months to have full tax-scope
+            # So in january we assume he has 11 full-tax-scope-months. And so on.
+            months_with_full_tax_scope_person_2 = 12 - month
+
+            months_with_full_tax_scope = (
+                TaxInformationPeriod.get_person_month_filter_annotation_for_entire_year(
+                    self.year.year, month
+                )
+            )
+
+            annotated_queryset = (
+                PersonMonth.objects.filter(
+                    person_year__in=(self.person_year, self.person2_person_year),
+                    month=month,
+                )
+                .annotate(months_with_full_tax_scope=months_with_full_tax_scope)
+                .order_by("person_year")
+            )
+
+            self.assertQuerySetEqual(
+                annotated_queryset,
+                [
+                    expected_result["months_with_full_tax_scope"],
+                    months_with_full_tax_scope_person_2,
+                ],
+                transform=attrgetter("months_with_full_tax_scope"),
+            )
