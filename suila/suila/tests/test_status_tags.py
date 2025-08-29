@@ -4,9 +4,11 @@
 import datetime
 from unittest.mock import patch
 
+from dateutil.relativedelta import relativedelta
 from django.test import TestCase
 from django.utils.translation import gettext_lazy as _
 
+from suila.dates import get_payment_date
 from suila.models import (
     Person,
     PersonMonth,
@@ -55,6 +57,29 @@ class TestDisplayStatus(TestCase):
         result = display_status(self.person_month)
         # Assert
         self.assertDictEqual(result, {"name": "Beløb fastlagt", "established": True})
+
+    @patch("suila.templatetags.status_tags.datetime", wraps=datetime)
+    def test_prisme_batch_item_status_ignored_if_before_margin_date(
+        self, mock_datetime
+    ):
+        # Arrange: set current time before the expected "margin date" (payment date plus
+        # 3 days.)
+        mock_datetime.date.today.return_value = get_payment_date(
+            self.person_month.year, self.person_month.month
+        ) + relativedelta(days=2)
+
+        for status in PrismeBatchItem.PostingStatus:
+            with self.subTest(status=status):
+                # Arrange: add a Prisme batch item to the person month under test
+                self.person_month.prismebatchitem = PrismeBatchItem(status=status)
+                self.person_month.benefit_transferred = 123
+                # Act
+                result = display_status(self.person_month)
+                # Assert
+                self.assertDictEqual(
+                    result,
+                    {"name": _("Beløb fastlagt"), "established": True},
+                )
 
     @patch("suila.templatetags.status_tags.datetime", wraps=datetime)
     def test_before_current_month(self, mock_datetime):
