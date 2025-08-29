@@ -14,7 +14,7 @@ from suila.models import PersonMonth, PrismeBatchItem, TaxScope
 
 def is_awaiting_payment_transfer(
     person_month: PersonMonth,
-    margin_days: int = 3,
+    margin_days: int = 2,
 ) -> bool:
     """Return True if the given person month's benefit is currently awaiting transfer to
     the bank account of the citizen. Otherwise, return False.
@@ -24,7 +24,7 @@ def is_awaiting_payment_transfer(
     # posting status is defined in Prisme (and in Suila), but the benefit is not yet
     # visible to the recipient in their bank account. During that period, Suila should
     # continue to show the status "Beløb fastlagt" in order to avoid user confusion.
-    # We add a margin of 3 days (`margin_days`) to the payment date to give a little
+    # We add a margin of 2 days (`margin_days`) to the payment date to give a little
     # extra buffer for things to "settle" between Prisme, NemKonto, and individual bank
     # IT systems.
     payment_date = get_payment_date(person_month.year, person_month.month)
