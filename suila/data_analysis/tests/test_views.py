@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 import json
 import os
+import urllib
+import urllib.parse
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
@@ -553,6 +555,56 @@ class TestJobListView(TestViewMixin, TestCase):
         itemviews = list(pageview.itemviews.all())
         self.assertEqual(len(itemviews), 1)
         self.assertEqual(itemviews[0].item, self.joblog)
+
+    def test_view_filter(self):
+        # Create an extra JobLog entry for better filter test
+        joblog2 = JobLog.objects.create(
+            name=ManagementCommands.EXPORT_BENEFITS_TO_PRISME, cpr_param="222"
+        )
+
+        all_logs = [joblog2, self.joblog]
+
+        # Verify logs without filter
+        _, response = self.request_get(self.admin_user, "")
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(list(response.context_data["object_list"]), all_logs)
+
+        # Verify logs with exclude-filter
+        query_params = {
+            "filter_type": "exclude",
+            "filter_value": ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+        }
+        _, response_exclude = self.request_get(
+            self.admin_user, f"?{urllib.parse.urlencode(query_params)}"
+        )
+        self.assertIsInstance(response_exclude, TemplateResponse)
+        self.assertEqual(
+            list(response_exclude.context_data["object_list"]), [self.joblog]
+        )
+
+        # Verify logs with only-filter
+        query_params = {
+            "filter_type": "only",
+            "filter_value": ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+        }
+        _, response_only = self.request_get(
+            self.admin_user, f"?{urllib.parse.urlencode(query_params)}"
+        )
+        self.assertIsInstance(response_only, TemplateResponse)
+        self.assertEqual(list(response_only.context_data["object_list"]), [joblog2])
+
+        # Verify normal behaviour on invalid filter_type
+        query_params = {
+            "filter_type": "magenta",
+            "filter_value": "SomethingSomethingDarkSide",
+        }
+        _, response_invalid_filter_type = self.request_get(
+            self.admin_user, f"?{urllib.parse.urlencode(query_params)}"
+        )
+        self.assertIsInstance(response_invalid_filter_type, TemplateResponse)
+        self.assertEqual(
+            list(response_invalid_filter_type.context_data["object_list"]), all_logs
+        )
 
 
 class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase):
