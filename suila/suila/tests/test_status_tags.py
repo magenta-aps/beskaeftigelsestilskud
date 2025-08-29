@@ -63,10 +63,10 @@ class TestDisplayStatus(TestCase):
         self, mock_datetime
     ):
         # Arrange: set current time before the expected "margin date" (payment date plus
-        # 3 days.)
+        # 2 days.)
         mock_datetime.date.today.return_value = get_payment_date(
             self.person_month.year, self.person_month.month
-        ) + relativedelta(days=2)
+        ) + relativedelta(days=1)
 
         for status in PrismeBatchItem.PostingStatus:
             with self.subTest(status=status):
