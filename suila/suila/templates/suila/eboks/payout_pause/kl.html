@@ -1,0 +1,89 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "suila/eboks/base.html" %}
+
+{% block content %}
+    <style>
+        table.bordered, table.bordered th, table.bordered td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        div.cpr {
+            vertical-align: top;
+            text-align: right;
+        }
+        div.address {
+            font-size: 0.8rem;
+            font-family: calibri, sans-serif;
+            margin-bottom: 2cm;
+            margin-top: 1.5cm;
+
+            min-height: 4cm;
+            padding-top: 0.5cm;
+            padding-bottom: 0.5cm;
+        }
+    </style>
+
+    <table style="width: 100%">
+        <tr>
+            <td style="vertical-align: top">
+                <div class="address">
+                    <div style="padding-left: 20pt">
+                        {{ person.name }}<br/>
+                        {% if person.full_address %}
+                            {% for line in person.full_address_splitted %}
+                                {{ line }}<br/>
+                            {% endfor %}
+                        {% elif person.foreign_address %}
+                            {{ person.foreign_address }}
+                        {% endif %}
+                    </div>
+                    <img src="file:///static/suila/afsender.png" style="width: 192px;" alt="afsender"/>
+                </div>
+            </td>
+            <td style="text-align: right; vertical-align: top">
+                <div class="cpr">
+                    {{ person.cpr }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <h3 class="left">Suila-tapit pillugit paasissutissaq – Akileraartarnermut Aqutsisoqarfiup Suila-tapit tunniunneqartarneri unitsikkallarpai</h3>
+
+    <p>
+        Suila-tapisiassavit {{ year }} tunniunneqartarnerisa unitsikkallarneqarnerat 
+        pissutigalugu, Akileraartarnermut Aqutsisoqarfimmiit allakkanik ukuninnga 
+        nassinneqarputit, 
+    </p>
+    <p>
+        Akileraartarnermut Aqutsisoqarfiup Suila-tapit tunniunneqartarneri 
+        unitsikkallarpai, unitsitsigallarnerup Suila-tapit {{ year }} tunniunneqartut 
+        eqqortuunerannik kinguneqassasoq naatsorsuutigineqarmat.
+    </p>
+
+    <p>
+        Suila-tapisisinnaatitaaguit, ukiumut inaarummik naatsorsuutit aggustimi 
+        nassiunneqarnerannut atatillugu pisassaqaruit piffissami tassani tigussavatit.
+    </p>
+
+    <p>
+        Unitsitsigallarnermut pissutaasut: {{ pause_reason_kl }}
+    </p>
+
+    <h3 class="left"> Ima iliorsinnaavutit</h3>
+
+    <p>
+        Pisartagaqarninnut unitsitsigallarnerit atorunnaarsikkusukkukku 
+        tunngavilersuutitit Akileraartarnermut Aqutsisoqarfimmut nassiussinnaavatit 
+        uunga; suila@nanoq.gl Ukiumut isertitassatut naatsorsuutigisatit katillugit 
+        makkunannga; sulinermi akissarsiat, tunisanit iluanaarutit, namminersorluni 
+        inuussutissarsiummik ingerlatani iluanaarutit, suliffeqarfinnilu 
+        iluanaarutisiat. Tassunga atatillugu nassuiaatigissavat ukiumut 
+        isertitassatut sooq taama naatsorsuuteqarnerlutit. Malugiuk, 
+        saaffiginnissutippit suliarinera sapaatit akunnerinik sisamanik 
+        sivisussuseqarsinnaammat.
+    </p>
+
+{% endblock %}

@@ -51,7 +51,9 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.template.loader import get_template
 from django.utils import timezone
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import override
 from lxml import etree
 from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
@@ -2262,6 +2264,18 @@ class SuilaEboksMessage(EboksMessage):
                 "da": get_template("suila/eboks/afventer/da.html"),
             },
         },
+        "payout_pause": {
+            "content_type": settings.EBOKS["content_type_id"],  # type: ignore
+            "title": (
+                "Oplysning vedrørende Suila-tapit – "
+                "Skattestyrelsen har sat dine udbetalinger i bero"
+            ),
+            "template_folder": "suila/eboks/payout_pause",
+            "templates": {
+                "kl": get_template("suila/eboks/payout_pause/kl.html"),
+                "da": get_template("suila/eboks/payout_pause/da.html"),
+            },
+        },
     }
 
     welcome_letter = "opgørelse"
@@ -2301,10 +2315,11 @@ class SuilaEboksMessage(EboksMessage):
     )
 
     type = models.CharField(
-        max_length=10,
+        max_length=12,
         choices=(
             ("opgørelse", "Opgørelse"),
             ("afventer", "Afventer"),
+            ("payout_pause", "Udbetalingspause"),
         ),
         null=False,
         blank=False,
@@ -2340,6 +2355,12 @@ class SuilaEboksMessage(EboksMessage):
             )
             for y in year_range
         ]
+
+        with override("kl"):
+            pause_reason_kl = gettext(self.person.get_pause_reason_display())
+        with override("da"):
+            pause_reason_da = gettext(self.person.get_pause_reason_display())
+
         return {
             "person": self.person,
             "year": self.year,
@@ -2350,6 +2371,8 @@ class SuilaEboksMessage(EboksMessage):
             + self.person_year.b_income
             - self.person_year.b_expenses
             - self.person_year.catchsale_expenses,
+            "pause_reason": pause_reason_da,
+            "pause_reason_kl": pause_reason_kl,
             "income": {
                 "catchsale_income": [
                     Decimal(

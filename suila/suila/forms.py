@@ -215,6 +215,7 @@ class PersonAnnualIncomeEstimateForm(ModelForm):
 
 class PauseForm(ModelForm):
     year = IntegerField(required=True)
+    month = IntegerField(required=True)
     note = CharField(required=False)
 
     class Meta:

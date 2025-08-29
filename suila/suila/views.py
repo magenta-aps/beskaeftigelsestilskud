@@ -19,6 +19,7 @@ from common.view_mixins import BaseGetFormView, ViewLogMixin
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
+from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.db.models import CharField, F, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
@@ -1143,10 +1144,14 @@ class PersonPauseUpdateView(
 
     def form_valid(self, form, formset):
         year = form.cleaned_data["year"]
+        month = form.cleaned_data["month"]
         note = form.cleaned_data["note"]
         paused = form.cleaned_data["paused"]
         allow_pause = form.cleaned_data["allow_pause"]
         pause_reason = form.cleaned_data["pause_reason"]
+        suilamessage = None
+
+        default_paused = self.object.paused
 
         self.object.paused = paused
         self.object.allow_pause = allow_pause
@@ -1171,11 +1176,39 @@ class PersonPauseUpdateView(
             standard_note_text += "\n"
             standard_note_text += PauseReasonChoices(pause_reason).label
 
+        if not default_paused and paused and self.request.user.cpr != self.object.cpr:
+            suilamessage = SuilaEboksMessage.objects.create(
+                person_month=PersonMonth.objects.get(
+                    month=month,
+                    person_year__year__year=year,
+                    person_year__person=self.object,
+                ),
+                type="payout_pause",
+            )
+            if settings.ENVIRONMENT == "production":
+                with EboksClient.from_settings() as client:
+                    suilamessage.send(client)
+
+            suilamessage_filename = f"udbetalingspause_brev_{suilamessage.id}.pdf"
+
+            standard_note_text += "\n"
+            standard_note_text += gettext("Eboks besked sendt til borger")
+
         note_obj = Note.objects.create(
             text=standard_note_text + (("\n" + note) if note else ""),
             personyear=PersonYear.objects.get(person=self.object, year=year),
             author=self.request.user,
         )
+
+        if suilamessage:
+            NoteAttachment.objects.create(
+                note=note_obj,
+                file=ContentFile(
+                    suilamessage.pdf,
+                    name=suilamessage_filename,
+                ),
+                content_type="application/pdf",
+            )
 
         formset.instance = note_obj
         formset.save()
