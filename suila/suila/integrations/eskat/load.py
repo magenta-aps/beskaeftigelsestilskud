@@ -694,6 +694,7 @@ class TaxInformationHandler(Handler):
             for person_year_3 in chunk:
                 person_year_3.load = load
                 person_year_3.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
+                TaxInformationPeriod.objects.filter(person_year=person_year_3).delete()
             bulk_update_with_history(
                 chunk,
                 PersonYear,
