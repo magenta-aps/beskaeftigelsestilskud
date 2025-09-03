@@ -13,7 +13,7 @@ from functools import cached_property
 from io import BytesIO
 from itertools import batched
 from os.path import basename
-from typing import Iterable, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 import pandas as pd
 import pytz
@@ -124,6 +124,7 @@ class PauseReasonChoices(IntegerChoices):
         7,
         _("Efter aftale med borgeren eller dennes repræsentant"),
     )
+    DEATH = (8, _("Personen er registreret som afdød"))
 
 
 class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
@@ -546,6 +547,43 @@ class Person(PermissionsMixin, models.Model):
                     break
 
         return last_change
+
+    def on_civilstate_change(self, old_value: str | None, new_value: str | None):
+        if new_value == "D" and old_value != "D":
+            self.paused = True
+            self.pause_reason = PauseReasonChoices.DEATH
+            standard_note_text = (
+                _("Starter udbetalingspause")
+                + "\n"
+                + PauseReasonChoices(self.pause_reason).label
+            )
+            Note.objects.create(
+                text=standard_note_text,
+                personyear=PersonYear.objects.get(person=self, year=date.today().year),
+            )
+
+    @staticmethod
+    def pre_save(sender, instance: Person, *args, **kwargs):
+        if instance.history.exists():
+            prior = instance.history.all().order_by("-history_date")[0]
+            changed_fields: Dict[str, Tuple[Any, Any]] = {}
+            for field in Person._meta.local_concrete_fields:  # type: ignore
+                if not field.is_relation:
+                    key = field.name
+                    old_value = getattr(prior, key)
+                    new_value = getattr(instance, key)
+                    if old_value != new_value:
+                        changed_fields[key] = (old_value, new_value)
+
+            if "civil_state" in changed_fields:
+                instance.on_civilstate_change(*changed_fields["civil_state"])
+
+
+pre_save.connect(
+    Person.pre_save,
+    Person,
+    dispatch_uid="Person_pre_save",
+)
 
 
 class TaxScope(models.TextChoices):

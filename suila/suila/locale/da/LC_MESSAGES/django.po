@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-03 07:47-0100\n"
+"POT-Creation-Date: 2025-09-03 10:01-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -92,6 +92,10 @@ msgstr ""
 msgid "Efter aftale med borgeren eller dennes repræsentant"
 msgstr ""
 
+#: suila/models.py suila/templates/suila/templatetags/dead_info_box.html
+msgid "Personen er registreret som afdød"
+msgstr ""
+
 #: suila/models.py
 msgid "Procentsats for Suila-tapit"
 msgstr ""
@@ -138,6 +142,10 @@ msgstr ""
 
 #: suila/models.py
 msgid "CPR nummer"
+msgstr ""
+
+#: suila/models.py suila/views.py
+msgid "Starter udbetalingspause"
 msgstr ""
 
 #: suila/models.py suila/views.py
@@ -1135,10 +1143,6 @@ msgid "Afdød (CPR-status)"
 msgstr ""
 
 #: suila/templates/suila/templatetags/dead_info_box.html
-msgid "Personen er registreret som afdød"
-msgstr ""
-
-#: suila/templates/suila/templatetags/dead_info_box.html
 #: suila/templates/suila/templatetags/manually_entered_income_info_box.html
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Sidst ændret:"
@@ -1371,10 +1375,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "Beløb"
-msgstr ""
-
-#: suila/views.py
-msgid "Starter udbetalingspause"
 msgstr ""
 
 #: suila/views.py
