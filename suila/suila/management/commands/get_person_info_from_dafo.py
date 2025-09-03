@@ -117,7 +117,6 @@ class Command(SuilaBaseCommand):
         person.foreign_address = data.get("udlandsadresse")
         person.country_code = data.get("landekode")
         person.cpr_status = data.get("statuskode")
-
         person.save()
 
         self._write_verbose(

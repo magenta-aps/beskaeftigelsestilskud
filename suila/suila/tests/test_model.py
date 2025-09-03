@@ -22,6 +22,8 @@ from suila.models import (
     JobLog,
     ManagementCommands,
     MonthlyIncomeReport,
+    Note,
+    PauseReasonChoices,
     Person,
     PersonMonth,
     PersonYear,
@@ -49,7 +51,9 @@ class ModelTest(TestCase):
         )
         cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
         cls.year2 = Year.objects.create(year=2025)
-        cls.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
+        cls.person = Person.objects.create(
+            name="Jens Hansen", cpr="1234567890", civil_state="G"
+        )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
             year=cls.year,
@@ -485,6 +489,29 @@ class TestPerson(UserModelTest):
         # Step 5: Check that the property returns the timestamp from step 3
         self.assertEqual(
             person.last_change("annual_income_estimate"), expected_timestamp
+        )
+
+    def test_death(self):
+        # Change state to F (fraskilt)
+        self.person.civil_state = "F"
+        self.person.save()
+        # not paused
+        self.assertFalse(self.person.paused)
+
+        # Change state to D (død)
+        self.person.civil_state = "D"
+        self.person.save()
+        # paused
+        self.assertTrue(self.person.paused)
+        self.assertEqual(self.person.pause_reason, PauseReasonChoices.DEATH)
+        note = Note.objects.filter(
+            personyear__person=self.person, author__isnull=True
+        ).first()
+        self.assertIsNotNone(note)
+        self.assertEqual(
+            note.text,
+            f"Starter udbetalingspause\n"
+            f"{PauseReasonChoices(PauseReasonChoices.DEATH).label}",
         )
 
 
