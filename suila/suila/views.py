@@ -275,6 +275,8 @@ class PersonDetailView(
             else:
                 show_pause_effect_date = False
 
+            civil_state_last_change = person.last_change("civil_state")
+
             context_data.update(
                 {
                     "show_next_payment": True,
@@ -299,6 +301,7 @@ class PersonDetailView(
                         "annual_income_estimate"
                     ),
                     "paused_last_change": paused_last_change,
+                    "civil_state_last_change": civil_state_last_change,
                     "now": now,
                     "manually_entered_income_formset": NoteAttachmentFormSet(),
                     "pause_formset": NoteAttachmentFormSet(),

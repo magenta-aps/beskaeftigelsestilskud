@@ -179,6 +179,12 @@ class Command(BaseCommand):
                 cpr="0801011991", defaults={"name": "Person with prisme items"}
             )[0]: [10000]
             * 12,
+            # Person with prisme-batch items
+            Person.objects.update_or_create(
+                cpr="0901011991",
+                defaults={"name": "Person who is dead", "civil_state": "D"},
+            )[0]: [10000]
+            * 12,
         }
 
         tz = timezone.get_current_timezone()

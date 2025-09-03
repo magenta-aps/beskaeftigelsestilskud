@@ -515,6 +515,10 @@ class Person(PermissionsMixin, models.Model):
             return []
         return self.full_address.rsplit(", ", 1)
 
+    @property
+    def dead(self):
+        return self.civil_state == "D"
+
     def last_change(self, attribute):
         """
         Returns the date at which an attribute was last changed
@@ -528,15 +532,18 @@ class Person(PermissionsMixin, models.Model):
         """
         # Get all historical records, ordered newest first
         history_records = self.history_entries.order_by("-history_date")
-        last_change = None
-        for i in range(len(history_records) - 1):
-            new_record = history_records[i]
-            old_record = history_records[i + 1]
-            delta = new_record.diff_against(old_record)
+        if history_records.count() == 1:
+            last_change = history_records.first().history_date
+        else:
+            last_change = None
+            for i in range(len(history_records) - 1):
+                new_record = history_records[i]
+                old_record = history_records[i + 1]
+                delta = new_record.diff_against(old_record)
 
-            if attribute in delta.changed_fields:
-                last_change = new_record.history_date
-                break
+                if attribute in delta.changed_fields:
+                    last_change = new_record.history_date
+                    break
 
         return last_change
 

@@ -1,0 +1,13 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+
+<div class="me-2 mb-3 info">
+    <b>{% translate "Afdød (CPR-status)" %}</b>
+    <p>{% translate "Personen er registreret som afdød" %}</p>
+    <i>
+        {% translate "Sidst ændret:" %}
+        {{ civil_state_last_change }}
+    </i>
+</div>

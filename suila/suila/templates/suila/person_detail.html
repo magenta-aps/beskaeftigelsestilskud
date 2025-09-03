@@ -31,6 +31,9 @@
     {% if paused %}
         {% pause_info_box False %}
     {% endif %}
+    {% if person.dead %}
+        {% dead_info_box False %}
+    {% endif %}
     </div>
 </div>
 

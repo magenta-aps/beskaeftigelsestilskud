@@ -64,3 +64,11 @@ def pause_info_box(context, mock):
         "mock": mock,
         **context.flatten(),
     }
+
+
+@register.inclusion_tag("suila/templatetags/dead_info_box.html", takes_context=True)
+def dead_info_box(context, mock):
+    return {  # pragma: no cover
+        "mock": mock,
+        **context.flatten(),
+    }

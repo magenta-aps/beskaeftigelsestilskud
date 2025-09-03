@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-26 07:02-0100\n"
+"POT-Creation-Date: 2025-09-03 07:47-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1343,6 +1343,20 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
+#: suila/templates/suila/templatetags/dead_info_box.html
+msgid "Afdød (CPR-status)"
+msgstr ""
+
+#: suila/templates/suila/templatetags/dead_info_box.html
+msgid "Personen er registreret som afdød"
+msgstr ""
+
+#: suila/templates/suila/templatetags/dead_info_box.html
+#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+#: suila/templates/suila/templatetags/pause_info_box.html
+msgid "Sidst ændret:"
+msgstr ""
+
 #: suila/templates/suila/templatetags/manually_entered_income_info_box.html
 msgid "Din årsindtægt er manuelt estimeret"
 msgstr "Ukiumut isertitariumaagassatit nammineq kisitaapput"
@@ -1356,11 +1370,6 @@ msgstr ""
 "Ukiumut isertitariumaagassatit Akileraartarnermut Aqutsisoqarfimmit nammineq "
 "kisinneqarsimapput. Namminerluni kisitaq ukiumut Suila-"
 "tapisiariumaagassannut tunngavigineqarpoq."
-
-#: suila/templates/suila/templatetags/manually_entered_income_info_box.html
-#: suila/templates/suila/templatetags/pause_info_box.html
-msgid "Sidst ændret:"
-msgstr ""
 
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Du har sat dine udbetalinger på pause."
