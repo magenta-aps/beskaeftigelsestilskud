@@ -9,7 +9,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from suila.management.commands.load_eskat import Command as LoadEskatCommand
-from suila.models import ManagementCommands, PersonYear, Year
+from suila.models import ManagementCommands, PersonYear, TaxInformationPeriod, Year
 
 
 class TestLoadEskatCommand(TestCase):
@@ -105,6 +105,20 @@ class TestLoadEskatTaxInformationCommand(TestCase):
             },
         ]
 
+    def get_tax_info(self, cpr):
+
+        person_year = PersonYear.objects.get(person__cpr=cpr, year_id=2025)
+        tax_info_qs = TaxInformationPeriod.objects.filter(
+            person_year=person_year,
+            start_date__lte="2025-02-01",
+            end_date__gte="2025-02-01",
+        )
+
+        if tax_info_qs.count() > 0:
+            return tax_info_qs.first()
+        else:
+            return None
+
     @patch("suila.integrations.eskat.client.EskatClient.get")
     def test_tax_scope(self, eskat_get: MagicMock):
         # Import two people (cpr="1111111111" and cpr="2222222222")
@@ -112,10 +126,10 @@ class TestLoadEskatTaxInformationCommand(TestCase):
         call_command(ManagementCommands.LOAD_ESKAT, 2025, "taxinformation")
 
         # Assert that their tax-scopes were imported properly
-        person_1 = PersonYear.objects.get(person__cpr="1111111111", year__year=2025)
-        person_2 = PersonYear.objects.get(person__cpr="2222222222", year__year=2025)
-        self.assertEqual(person_1.tax_scope, "FULD")
-        self.assertEqual(person_2.tax_scope, "DELVIS")
+        person_1_tax_info = self.get_tax_info("1111111111")
+        person_2_tax_info = self.get_tax_info("2222222222")
+        self.assertEqual(person_1_tax_info.tax_scope, "FULL")
+        self.assertEqual(person_2_tax_info.tax_scope, "LIM")
 
         # Remove person2 from mandtal
         eskat_get.reset_mock()
@@ -127,8 +141,8 @@ class TestLoadEskatTaxInformationCommand(TestCase):
         call_command(ManagementCommands.LOAD_ESKAT, 2025, "taxinformation")
 
         # Validate that the person is now missing from mandtal
-        person_2.refresh_from_db()
-        self.assertEqual(person_2.tax_scope, "INGEN_MANDTAL")
+        person_2_tax_info = self.get_tax_info("2222222222")
+        self.assertEqual(person_2_tax_info, None)
 
         # Add the person to mandtal again
         eskat_get.reset_mock()
@@ -138,5 +152,5 @@ class TestLoadEskatTaxInformationCommand(TestCase):
         call_command(ManagementCommands.LOAD_ESKAT, 2025, "taxinformation")
 
         # Validate that the tax scope of the person is back to normal
-        person_2.refresh_from_db()
-        self.assertEqual(person_2.tax_scope, "DELVIS")
+        person_2_tax_info = self.get_tax_info("2222222222")
+        self.assertEqual(person_2_tax_info.tax_scope, "LIM")
