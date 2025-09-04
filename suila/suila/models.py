@@ -2602,27 +2602,18 @@ class SuilaEboksMessage(EboksMessage):
             return None
 
     @cached_property
-    def html_kl(self):
-        return self.html("kl")
-
-    @cached_property
-    def html_da(self):
-        return self.html("da")
-
-    @cached_property
-    def html_en(self):
-        return self.html("en")
+    def html_docs(self):
+        return [h for h in [self.html("kl"), self.html("da"), self.html("en")] if h]
 
     @cached_property
     def pdf(self) -> bytes:
         font_config = FontConfiguration()
         writer = PdfWriter()
         data = BytesIO()
-        for html in (self.html_kl, self.html_da, self.html_en):
-            if html:
-                pdf_data = HTML(string=html).write_pdf(font_config=font_config)
-                writer.append(BytesIO(pdf_data))
-                writer.write_stream(data)
+        for html in self.html_docs:
+            pdf_data = HTML(string=html).write_pdf(font_config=font_config)
+            writer.append(BytesIO(pdf_data))
+            writer.write_stream(data)
         data.seek(0)
         return data.read()
 

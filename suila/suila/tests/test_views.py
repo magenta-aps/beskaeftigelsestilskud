@@ -1978,10 +1978,10 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
 
         message = SuilaEboksMessage.objects.get(person_month=self.person_month)
 
-        self.assertIn("Indikation af fejl i beregningsgrundlag", message.html_da)
-        self.assertIn("Indication of error in calculation basis", message.html_en)
+        self.assertIn("Indikation af fejl i beregningsgrundlag", message.html("da"))
+        self.assertIn("Indication of error in calculation basis", message.html("en"))
         self.assertIn(
-            "Naatsorsuutinut tunngavigisaq kukkuneqarpasippoq", message.html_kl
+            "Naatsorsuutinut tunngavigisaq kukkuneqarpasippoq", message.html("kl")
         )
 
     @override_settings(SEND_EBOKS_LETTER_WHEN_PAUSING=True, ENVIRONMENT="test")

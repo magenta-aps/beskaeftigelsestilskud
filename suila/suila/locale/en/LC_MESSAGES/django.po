@@ -751,7 +751,7 @@ msgid ""
 "du sikker på, at du vil fortsætte?"
 msgstr ""
 "You are about the pause payouts for a citizen without allowing the citizen "
-"to resume payoutsThis will send an E-boks letter to the citizen. Are you "
+"to resume payouts. This will send an E-boks letter to the citizen. Are you "
 "sure?"
 
 #: suila/templates/suila/forms/pause_form.html
