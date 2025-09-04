@@ -129,3 +129,8 @@ def show_toolbar(request):
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": show_toolbar,
 }
+
+
+SEND_EBOKS_LETTER_WHEN_PAUSING = strtobool(
+    os.environ.get("SEND_EBOKS_LETTER_WHEN_PAUSING", "True")
+)

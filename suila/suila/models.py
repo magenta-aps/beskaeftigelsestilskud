@@ -51,7 +51,9 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
 from django.template.loader import get_template
 from django.utils import timezone
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import override
 from lxml import etree
 from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
@@ -2411,6 +2413,19 @@ class SuilaEboksMessage(EboksMessage):
                 "da": get_template("suila/eboks/afventer/da.html"),
             },
         },
+        "payout_pause": {
+            "content_type": settings.EBOKS["content_type_id"],  # type: ignore
+            "title": (
+                "Oplysning vedrørende Suila-tapit – "
+                "Skattestyrelsen har sat dine udbetalinger i bero"
+            ),
+            "template_folder": "suila/eboks/payout_pause",
+            "templates": {
+                "kl": get_template("suila/eboks/payout_pause/kl.html"),
+                "da": get_template("suila/eboks/payout_pause/da.html"),
+                "en": get_template("suila/eboks/payout_pause/en.html"),
+            },
+        },
     }
 
     welcome_letter = "opgørelse"
@@ -2443,6 +2458,20 @@ class SuilaEboksMessage(EboksMessage):
             "novembari",
             "decembari",
         ],
+        "en": [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ],
     }
 
     person_month = models.ForeignKey(
@@ -2450,10 +2479,11 @@ class SuilaEboksMessage(EboksMessage):
     )
 
     type = models.CharField(
-        max_length=10,
+        max_length=12,
         choices=(
             ("opgørelse", "Opgørelse"),
             ("afventer", "Afventer"),
+            ("payout_pause", "Udbetalingspause"),
         ),
         null=False,
         blank=False,
@@ -2479,6 +2509,12 @@ class SuilaEboksMessage(EboksMessage):
     def person(self):
         return self.person_month.person
 
+    def pause_reason(self, language: str):
+        if not self.person.pause_reason:
+            return "-"
+        with override(language):
+            return gettext(self.person.get_pause_reason_display())
+
     @cached_property
     def context(self):
         quant = Decimal("0.01")
@@ -2499,6 +2535,9 @@ class SuilaEboksMessage(EboksMessage):
             + self.person_year.b_income
             - self.person_year.b_expenses
             - self.person_year.catchsale_expenses,
+            "pause_reason_da": self.pause_reason("da"),
+            "pause_reason_kl": self.pause_reason("kl"),
+            "pause_reason_en": self.pause_reason("en"),
             "income": {
                 "catchsale_income": [
                     Decimal(
@@ -2552,12 +2591,15 @@ class SuilaEboksMessage(EboksMessage):
         }
 
     def html(self, language: str):
-        template = self.attrs["templates"][language]
-        context = {
-            **self.context,
-            "month_name": self.month_names[language][self.month - 1],
-        }
-        return template.render(context)
+        template = self.attrs["templates"].get(language)
+        if template:
+            context = {
+                **self.context,
+                "month_name": self.month_names[language][self.month - 1],
+            }
+            return template.render(context)
+        else:
+            return None
 
     @cached_property
     def html_kl(self):
@@ -2568,14 +2610,19 @@ class SuilaEboksMessage(EboksMessage):
         return self.html("da")
 
     @cached_property
+    def html_en(self):
+        return self.html("en")
+
+    @cached_property
     def pdf(self) -> bytes:
         font_config = FontConfiguration()
         writer = PdfWriter()
         data = BytesIO()
-        for html in (self.html_kl, self.html_da):
-            pdf_data = HTML(string=html).write_pdf(font_config=font_config)
-            writer.append(BytesIO(pdf_data))
-            writer.write_stream(data)
+        for html in (self.html_kl, self.html_da, self.html_en):
+            if html:
+                pdf_data = HTML(string=html).write_pdf(font_config=font_config)
+                writer.append(BytesIO(pdf_data))
+                writer.write_stream(data)
         data.seek(0)
         return data.read()
 
