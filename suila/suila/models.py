@@ -659,7 +659,7 @@ class Person(PermissionsMixin, models.Model):
             self.paused = False
             self.pause_reason = None
             note_text = ["Stopper udbetalingspause", "Personen er fundet"]
-        if note_text:
+        if note_text and self.pk:
             try:
                 Note.objects.create(
                     text="\n".join(note_text),
@@ -673,9 +673,9 @@ class Person(PermissionsMixin, models.Model):
     @staticmethod
     def pre_save(sender, instance: Person, *args, **kwargs):
         try:
+            changed_fields: Dict[str, Tuple[Any, Any]] = {}
             if instance.history.exists():
                 prior = instance.history.all().order_by("-history_date")[0]
-                changed_fields: Dict[str, Tuple[Any, Any]] = {}
                 for field in Person._meta.local_concrete_fields:  # type: ignore
                     if not field.is_relation:
                         key = field.name
@@ -683,9 +683,15 @@ class Person(PermissionsMixin, models.Model):
                         new_value = getattr(instance, key)
                         if old_value != new_value:
                             changed_fields[key] = (old_value, new_value)
-
-                if "cpr_status" in changed_fields:
-                    instance.on_cpr_status_change(*changed_fields["cpr_status"])
+            else:
+                for field in Person._meta.local_concrete_fields:  # type: ignore
+                    if not field.is_relation:
+                        key = field.name
+                        new_value = getattr(instance, key)
+                        if new_value is not None:
+                            changed_fields[key] = (None, new_value)
+            if "cpr_status" in changed_fields:
+                instance.on_cpr_status_change(*changed_fields["cpr_status"])
         except Exception as e:  # pragma: no cover
             # Signals don't propagate exceptions, so we must print it explicitly
             logger.exception(e)
