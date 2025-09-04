@@ -980,6 +980,18 @@ class TestTaxInformation(BaseTestCase):
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0].cpr, "0000001234")
 
+    def get_tax_scope(self, person_year, date="2024-06-01"):
+
+        tax_info_qs = TaxInformationPeriod.objects.filter(
+            person_year=person_year,
+            start_date__lte=date,
+            end_date__gte=date,
+        )
+        if tax_info_qs.count() > 0:
+            return tax_info_qs.first().tax_scope
+        else:
+            return None
+
     def test_tax_information_load(self):
         start_date = "2024-01-01T00:00:00"
         end_date = "2024-12-31T00:00:00"
@@ -1028,8 +1040,8 @@ class TestTaxInformation(BaseTestCase):
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
         self.assertEqual(
-            PersonYear.objects.filter(year__year=2024).first().tax_scope,
-            TaxScope.DELVIST_SKATTEPLIGTIG,
+            self.get_tax_scope(PersonYear.objects.filter(year__year=2024).first()),
+            "LIM",
         )
 
         TaxInformationHandler.create_or_update_objects(
@@ -1051,8 +1063,8 @@ class TestTaxInformation(BaseTestCase):
         self.assertEqual(PersonYear.objects.first().load.source, "test")
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
         self.assertEqual(
-            PersonYear.objects.filter(year__year=2024).first().tax_scope,
-            TaxScope.DELVIST_SKATTEPLIGTIG,
+            self.get_tax_scope(PersonYear.objects.filter(year__year=2024).first()),
+            "LIM",
         )
 
         TaxInformationHandler.update_missing(
@@ -1062,8 +1074,8 @@ class TestTaxInformation(BaseTestCase):
         )
         self.assertEqual(PersonYear.objects.filter(year__year=2024).count(), 1)
         self.assertEqual(
-            PersonYear.objects.filter(year__year=2024).first().tax_scope,
-            TaxScope.FORSVUNDET_FRA_MANDTAL,
+            self.get_tax_scope(PersonYear.objects.filter(year__year=2024).first()),
+            None,
         )
 
     def test_tax_information_load_skips_bogus_cpr(self):
