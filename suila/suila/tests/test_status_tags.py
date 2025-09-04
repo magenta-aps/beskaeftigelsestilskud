@@ -9,14 +9,7 @@ from django.test import TestCase
 from django.utils.translation import gettext_lazy as _
 
 from suila.dates import get_payment_date
-from suila.models import (
-    Person,
-    PersonMonth,
-    PersonYear,
-    PrismeBatchItem,
-    TaxScope,
-    Year,
-)
+from suila.models import Person, PersonMonth, PersonYear, PrismeBatchItem, Year
 from suila.templatetags.status_tags import display_status, format_tax_scope
 
 
@@ -132,15 +125,9 @@ class TestDisplayStatus(TestCase):
 class TestDisplayTaxScope(TestCase):
 
     def test_format_tax_scope(self):
-        self.assertEqual(
-            format_tax_scope(TaxScope.FULDT_SKATTEPLIGTIG), "Fuld skattepligtig"
-        )
+        self.assertEqual(format_tax_scope("FULL"), "Fuld skattepligtig")
 
-        self.assertEqual(
-            format_tax_scope(TaxScope.DELVIST_SKATTEPLIGTIG), "Delvist skattepligtig"
-        )
-        self.assertEqual(
-            format_tax_scope(TaxScope.FORSVUNDET_FRA_MANDTAL), "Ikke i mandtal"
-        )
+        self.assertEqual(format_tax_scope("LIM"), "Delvist skattepligtig")
+        self.assertEqual(format_tax_scope(None), "Ikke i mandtal")
 
         self.assertEqual(format_tax_scope("foo"), "")
