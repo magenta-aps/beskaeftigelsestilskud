@@ -35,7 +35,6 @@ from suila.models import (
     PersonYear,
     SuilaEboksMessage,
     TaxInformationPeriod,
-    TaxScope,
     Year,
 )
 
@@ -631,7 +630,6 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
             person=self.person,
             year=self.year,
             preferred_estimation_engine_a="InYearExtrapolationEngine",
-            tax_scope=TaxScope.FULDT_SKATTEPLIGTIG,
         )
         self.period = TaxInformationPeriod.objects.create(
             person_year=self.person_year,
