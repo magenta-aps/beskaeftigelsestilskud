@@ -25,6 +25,7 @@ from suila.models import (
     Note,
     PauseReasonChoices,
     Person,
+    PersonCprStatusChoices,
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
@@ -52,7 +53,9 @@ class ModelTest(TestCase):
         cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
         cls.year2 = Year.objects.create(year=2025)
         cls.person = Person.objects.create(
-            name="Jens Hansen", cpr="1234567890", civil_state="G"
+            name="Jens Hansen",
+            cpr="1234567890",
+            cpr_status=PersonCprStatusChoices.LIVING_IN_GREENLAND,
         )
         cls.person_year = PersonYear.objects.create(
             person=cls.person,
@@ -492,27 +495,75 @@ class TestPerson(UserModelTest):
         )
 
     def test_death(self):
-        # Change state to F (fraskilt)
-        self.person.civil_state = "F"
+        # Change state to living in Denmark
+        self.person.cpr_status = PersonCprStatusChoices.LIVING_IN_DENMARK
         self.person.save()
         # not paused
         self.assertFalse(self.person.paused)
 
-        # Change state to D (død)
-        self.person.civil_state = "D"
+        # Change state to dead
+        self.person.cpr_status = PersonCprStatusChoices.DEAD
         self.person.save()
         # paused
         self.assertTrue(self.person.paused)
         self.assertEqual(self.person.pause_reason, PauseReasonChoices.DEATH)
-        note = Note.objects.filter(
-            personyear__person=self.person, author__isnull=True
-        ).first()
+        note = (
+            Note.objects.filter(personyear__person=self.person)
+            .order_by("-created")
+            .first()
+        )
         self.assertIsNotNone(note)
         self.assertEqual(
             note.text,
             f"Starter udbetalingspause\n"
             f"{PauseReasonChoices(PauseReasonChoices.DEATH).label}",
         )
+
+    def test_missing(self):
+        # Change state to emigrated
+        self.person.cpr_status = PersonCprStatusChoices.EMIGRATED
+        self.person.save()
+        # not paused
+        self.assertFalse(self.person.paused)
+
+        # Change state to missing
+        self.person.cpr_status = PersonCprStatusChoices.MISSING
+        self.person.save()
+        # paused
+        self.assertTrue(self.person.paused)
+        self.assertEqual(self.person.pause_reason, PauseReasonChoices.MISSING)
+        note = (
+            Note.objects.filter(personyear__person=self.person)
+            .order_by("-created")
+            .first()
+        )
+        self.assertIsNotNone(note)
+        self.assertEqual(
+            note.text,
+            f"Starter udbetalingspause\n"
+            f"{PauseReasonChoices(PauseReasonChoices.MISSING).label}",
+        )
+
+        # Change state to living in Greenland
+        self.person.cpr_status = PersonCprStatusChoices.LIVING_IN_GREENLAND
+        self.person.save()
+        # not paused
+        self.assertFalse(self.person.paused)
+        self.assertIsNone(self.person.pause_reason)
+        note = (
+            Note.objects.filter(personyear__person=self.person)
+            .order_by("-created")
+            .first()
+        )
+        self.assertIsNotNone(note)
+        self.assertEqual(note.text, "Stopper udbetalingspause\nPersonen er fundet")
+
+    def test_on_cpr_status_change_same(self):
+        paused_before = self.person.paused
+        reason_before = self.person.pause_reason
+        self.person.on_cpr_status_change(self.person.cpr_status, self.person.cpr_status)
+        self.assertEqual(self.person.paused, paused_before)
+        self.assertEqual(self.person.pause_reason, reason_before)
 
 
 class TestPersonYear(UserModelTest):

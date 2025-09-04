@@ -125,6 +125,81 @@ class PauseReasonChoices(IntegerChoices):
         _("Efter aftale med borgeren eller dennes repræsentant"),
     )
     DEATH = (8, _("Personen er registreret som afdød"))
+    MISSING = (9, _("Personen er registreret som forsvundet"))
+
+
+class PersonCprStatusChoices(IntegerChoices):
+    LIVING_IN_DENMARK = (1, _("Fast bopæl i dansk kommune"))
+    HOMELESS_IN_DENMARK = (
+        3,
+        _("Uden fast bopæl i dansk kommune"),
+        # Personen er registreret på såkaldt “høj vejkode” (9900-9999).
+        # En “høj vejkode” er en vejkode for en administrativ (fiktiv) vej i en kommune.
+    )
+    LIVING_IN_GREENLAND = (5, _("Fast bopæl i grønlandsk kommune"))
+    HOMELESS_IN_GREENLAND = (
+        7,
+        _("Uden fast bopæl i grønlandsk kommune"),
+        # Personen er registreret på såkaldt “høj vejkode” (9900-9999).
+        # En “høj vejkode” er en vejkode for en administrativ (fiktiv) vej i en kommune.
+    )
+    ADMINISTRATIVE = (
+        20,
+        _("Administrativt personnummer"),
+        # Personen er registreret i en administrativ kommune (fiktiv kommune),
+        # og  personnummeret er blevet tildelt i forbindelse med offentlige
+        # myndigheders (i hovedsagen ATP eller Skattestyrelsens) sagsbehandling.
+        # Personen kan blandt andet senere blive registreret indrejst til
+        # en dansk eller grønlandsk kommune (status 1 eller 3),
+        # blive annulleret (status 30), blive slettet (status 50),
+        # få ændret personnummer (status 60) eller blive registreret død (status 90).
+    )
+    CANCELLED = (
+        30,
+        _("Annulleret personnummer"),
+        # Personens indrejse til en dansk eller grønlandsk kommune er annulleret,
+        # eller det administrative personnummer er annulleret.
+        # Et annulleret personnummer er ikke ugyldigt,
+        # og personens data slettes ikke ved annullering. Personen kan derfor
+        # fortsat være registreret som gift, som forælder,
+        # som forældremyndighedsindehaver mv.
+        # Personen kan blandt andet senere blive registreret indrejst til
+        # en dansk eller grønlandsk kommune (status 1 eller 3),
+        # blive registreret i en administrativ kommune (status 20),
+        # blive slettet (status 50), få ændret personnummer (status 60)
+        # eller blive registreret død (status 90).
+    )
+    DELETED = (
+        50,
+        _("Slettet personnummer"),
+        # Personen har samtidigt været tildelt mere end ét personnummer -
+        # såkaldt dobbeltnummer. Personnummeret vil være knyttet sammen med
+        # det personnummer, som er bevaret.
+    )
+    CHANGED = (
+        60,
+        _("Ændret personnummer"),
+        # Personen er tildelt nyt personnummer. I hovedsagen som følge af
+        # fejlregistrering af køn eller fødselsdato eller som følge af
+        # afgørelse om ny fødedato eller køn. Personnummeret vil være knyttet
+        # sammen med det nye gældende personnummer.
+    )
+    MISSING = (
+        70,
+        _("Forsvundet"),
+        # Personen er resultatløst eftersøgt.
+    )
+    EMIGRATED = (
+        80,
+        _("Udrejst"),
+        # Personen er registreret fraflyttet til udlandet fra en dansk
+        # eller grønlandsk kommune.
+    )
+    DEAD = (
+        90,
+        _("Død"),
+        # Personen er registreret som død.
+    )
 
 
 class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
@@ -518,7 +593,7 @@ class Person(PermissionsMixin, models.Model):
 
     @property
     def dead(self):
-        return self.civil_state == "D"
+        return self.cpr_status == PersonCprStatusChoices.DEAD
 
     def last_change(self, attribute):
         """
@@ -548,35 +623,64 @@ class Person(PermissionsMixin, models.Model):
 
         return last_change
 
-    def on_civilstate_change(self, old_value: str | None, new_value: str | None):
-        if new_value == "D" and old_value != "D":
+    def on_cpr_status_change(self, old_value: int | None, new_value: int | None):
+        note_text = None
+        if new_value == old_value:
+            return
+        elif new_value == PersonCprStatusChoices.DEAD:
             self.paused = True
             self.pause_reason = PauseReasonChoices.DEATH
-            standard_note_text = (
-                _("Starter udbetalingspause")
-                + "\n"
-                + PauseReasonChoices(self.pause_reason).label
-            )
-            Note.objects.create(
-                text=standard_note_text,
-                personyear=PersonYear.objects.get(person=self, year=date.today().year),
-            )
+            note_text = [
+                "Starter udbetalingspause",
+                str(PauseReasonChoices(self.pause_reason).label),
+            ]
+        elif new_value == PersonCprStatusChoices.MISSING:
+            self.paused = True
+            self.pause_reason = PauseReasonChoices.MISSING
+            note_text = [
+                "Starter udbetalingspause",
+                str(PauseReasonChoices(self.pause_reason).label),
+            ]
+        elif (
+            old_value == PersonCprStatusChoices.MISSING
+            and self.pause_reason == PauseReasonChoices.MISSING
+        ):
+            # Person er ikke længere forsvundet, og han blev sat på pause
+            # fordi han var forsvundet
+            self.paused = False
+            self.pause_reason = None
+            note_text = ["Stopper udbetalingspause", "Personen er fundet"]
+        if note_text:
+            try:
+                Note.objects.create(
+                    text="\n".join(note_text),
+                    personyear=PersonYear.objects.get(
+                        person=self, year=date.today().year
+                    ),
+                )
+            except PersonYear.DoesNotExist:
+                pass
 
     @staticmethod
     def pre_save(sender, instance: Person, *args, **kwargs):
-        if instance.history.exists():
-            prior = instance.history.all().order_by("-history_date")[0]
-            changed_fields: Dict[str, Tuple[Any, Any]] = {}
-            for field in Person._meta.local_concrete_fields:  # type: ignore
-                if not field.is_relation:
-                    key = field.name
-                    old_value = getattr(prior, key)
-                    new_value = getattr(instance, key)
-                    if old_value != new_value:
-                        changed_fields[key] = (old_value, new_value)
+        try:
+            if instance.history.exists():
+                prior = instance.history.all().order_by("-history_date")[0]
+                changed_fields: Dict[str, Tuple[Any, Any]] = {}
+                for field in Person._meta.local_concrete_fields:  # type: ignore
+                    if not field.is_relation:
+                        key = field.name
+                        old_value = getattr(prior, key)
+                        new_value = getattr(instance, key)
+                        if old_value != new_value:
+                            changed_fields[key] = (old_value, new_value)
 
-            if "civil_state" in changed_fields:
-                instance.on_civilstate_change(*changed_fields["civil_state"])
+                if "cpr_status" in changed_fields:
+                    instance.on_cpr_status_change(*changed_fields["cpr_status"])
+        except Exception as e:  # pragma: no cover
+            # Signals don't propagate exceptions, so we must print it explicitly
+            logger.exception(e)
+            raise
 
 
 pre_save.connect(

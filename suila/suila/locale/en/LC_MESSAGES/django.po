@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-03 10:01-0100\n"
+"POT-Creation-Date: 2025-09-04 09:44-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -100,6 +100,54 @@ msgid "Personen er registreret som afdød"
 msgstr ""
 
 #: suila/models.py
+msgid "Personen er registreret som forsvundet"
+msgstr ""
+
+#: suila/models.py
+msgid "Fast bopæl i dansk kommune"
+msgstr ""
+
+#: suila/models.py
+msgid "Uden fast bopæl i dansk kommune"
+msgstr ""
+
+#: suila/models.py
+msgid "Fast bopæl i grønlandsk kommune"
+msgstr ""
+
+#: suila/models.py
+msgid "Uden fast bopæl i grønlandsk kommune"
+msgstr ""
+
+#: suila/models.py
+msgid "Administrativt personnummer"
+msgstr ""
+
+#: suila/models.py
+msgid "Annulleret personnummer"
+msgstr ""
+
+#: suila/models.py
+msgid "Slettet personnummer"
+msgstr ""
+
+#: suila/models.py
+msgid "Ændret personnummer"
+msgstr ""
+
+#: suila/models.py
+msgid "Forsvundet"
+msgstr ""
+
+#: suila/models.py
+msgid "Udrejst"
+msgstr ""
+
+#: suila/models.py
+msgid "Død"
+msgstr ""
+
+#: suila/models.py
 msgid "Procentsats for Suila-tapit"
 msgstr ""
 
@@ -146,10 +194,6 @@ msgstr ""
 #: suila/models.py
 msgid "CPR nummer"
 msgstr "CPR number"
-
-#: suila/models.py suila/views.py
-msgid "Starter udbetalingspause"
-msgstr "Starting payment pause"
 
 #: suila/models.py suila/views.py
 msgid "Startdato"
@@ -1538,6 +1582,10 @@ msgstr "total amount"
 #: suila/views.py
 msgid "Beløb"
 msgstr "Amount"
+
+#: suila/views.py
+msgid "Starter udbetalingspause"
+msgstr "Starting payment pause"
 
 #: suila/views.py
 msgid "Stopper udbetalingspause"
