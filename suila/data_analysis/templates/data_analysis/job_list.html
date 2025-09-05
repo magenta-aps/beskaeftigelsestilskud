@@ -14,10 +14,28 @@
 
 {% block content %}
 <div class="row my-1 mx-1">
-    <h1>{% translate "Jobliste" %} </h1>
+    <div class="d-flex justify-content-between">
+        <h1>{% translate "Jobliste" %} </h1>
+        <div class="align-self-center">
+            <form class="joblist-form">
+                <div class="d-flex justify-content-start gap-2">
+                    <div class="align-self-center">
+                        <label><strong>{% translate "Filter jobnavn:" %}</strong></label>
+                    </div>
+                    <div class="input-group">
+                        {{ form.filter_type }}
+                        {{ form.filter_value }}
+                        <button class="btn btn-danger" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 <div class="row my-1 mx-1">
-    <table class="table table-bordered"  id="table">
+    <table class="table table-bordered">
     <thead class="shadow-sm p-3 mb-5 bg-body rounded sticky-top">
     <tr>
         <th class="col-2">
@@ -75,7 +93,25 @@
     <tr>
         <td>{{ object.name }}</td>
         <td>{{ object.runtime }}</td>
-        <td>{{ object.status }}</td>
+        <td>
+
+            {% if object.output %}
+            <a
+                tabindex="0"
+                class="text-danger"
+                role="button"
+                data-bs-toggle="popover"
+                data-bs-trigger="focus"
+                data-bs-title="Job {{ object.status }}"
+                data-bs-content="{{object.output}}"
+                data-bs-custom-class="joblog-popover-{{object.status|lower}}"
+            >
+                {{ object.status }}
+            </a>
+            {% else %}
+            <span>{{ object.status }}</span>
+            {% endif %}
+        </td>
         <td>{{ object.year_param|default_if_none:"-" }}</td>
         <td>{{ object.month_param|default_if_none:"-" }}</td>
         <td>{{ object.cpr_param|default_if_none:"-" }}</td>

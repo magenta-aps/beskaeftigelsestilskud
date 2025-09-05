@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 import json
 import os
+import urllib
+import urllib.parse
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
@@ -524,13 +526,19 @@ class TestJobListView(TestViewMixin, TestCase):
         cls.joblog = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_STABILITY_SCORE, cpr_param="111"
         )
+        cls.joblog2 = JobLog.objects.create(
+            name=ManagementCommands.EXPORT_BENEFITS_TO_PRISME, cpr_param="222"
+        )
+        cls.joblog3 = JobLog.objects.create(
+            name=ManagementCommands.LOAD_ESKAT, cpr_param="333"
+        )
 
     def test_get_returns_html(self):
         view, response = self.request_get(self.admin_user, "")
         self.assertIsInstance(response, TemplateResponse)
         object_list = response.context_data["object_list"]
-        self.assertEqual(object_list.count(), 1)
-        self.assertEqual(object_list[0].cpr_param, "111")
+        self.assertEqual(object_list.count(), 3)
+        self.assertEqual(object_list[len(object_list) - 1].cpr_param, "111")
 
     def test_view_borger_denied(self):
         with self.assertRaises(PermissionDenied):
@@ -551,8 +559,87 @@ class TestJobListView(TestViewMixin, TestCase):
         self.assertEqual(pageview.kwargs, {})
         self.assertEqual(pageview.params, {})
         itemviews = list(pageview.itemviews.all())
-        self.assertEqual(len(itemviews), 1)
-        self.assertEqual(itemviews[0].item, self.joblog)
+        self.assertEqual(len(itemviews), 3)
+        self.assertEqual(itemviews[len(itemviews) - 1].item, self.joblog)
+
+    def test_view_filter_empty(self):
+        _, response = self.request_get(self.admin_user, "")
+        self.assertIsInstance(response, TemplateResponse)
+        self.assertEqual(
+            list(response.context_data["object_list"]),
+            [self.joblog3, self.joblog2, self.joblog],
+        )
+
+    def test_view_filter_exclude(self):
+        _, response_exclude = self.request_get(
+            self.admin_user,
+            "?"
+            + urllib.parse.urlencode(
+                {
+                    "filter_type": "exclude",
+                    "filter_value": ",".join(
+                        [ManagementCommands.EXPORT_BENEFITS_TO_PRISME]
+                    ),
+                }
+            ),
+        )
+        self.assertIsInstance(response_exclude, TemplateResponse)
+        self.assertEqual(
+            list(response_exclude.context_data["object_list"]),
+            [self.joblog3, self.joblog],
+        )
+
+    def test_view_filter_only(self):
+        _, response_only = self.request_get(
+            self.admin_user,
+            "?"
+            + urllib.parse.urlencode(
+                {
+                    "filter_type": "only",
+                    "filter_value": ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+                }
+            ),
+        )
+        self.assertIsInstance(response_only, TemplateResponse)
+        self.assertEqual(
+            list(response_only.context_data["object_list"]), [self.joblog2]
+        )
+
+    def test_view_filter_invalid(self):
+        with self.assertRaises(ValueError):
+            self.request_get(
+                self.admin_user,
+                "?"
+                + urllib.parse.urlencode(
+                    {
+                        "filter_type": "magenta",
+                        "filter_value": "SomethingSomethingDarkSide",
+                    }
+                ),
+            )
+
+    def test_view_filter_no_whitespaces(self):
+        _, response_only = self.request_get(
+            self.admin_user,
+            "?"
+            + urllib.parse.urlencode(
+                {
+                    "filter_type": "only",
+                    "filter_value": ",".join(
+                        [
+                            ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+                            ManagementCommands.LOAD_ESKAT,
+                            "",  # This should be ignored
+                        ]
+                    ),
+                }
+            ),
+        )
+        self.assertIsInstance(response_only, TemplateResponse)
+        self.assertEqual(
+            list(response_only.context_data["object_list"]),
+            [self.joblog3, self.joblog2],
+        )
 
 
 class TestPersonListView(PersonYearEstimationSetupMixin, TestViewMixin, TestCase):

@@ -2197,6 +2197,7 @@ class JobLog(PermissionsMixin, models.Model):
     runtime = models.DateTimeField(auto_now_add=True)
     runtime_end = models.DateTimeField(default=None, null=True)
     status = models.TextField(default=StatusChoices.RUNNING, choices=StatusChoices)
+    output = models.TextField(default=None, null=True)
 
     # Job parameters
     year_param = models.IntegerField(default=None, null=True)

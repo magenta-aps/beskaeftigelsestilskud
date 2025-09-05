@@ -475,7 +475,26 @@ class JobListView(
     def get_queryset(self):
         qs = super().get_queryset()
         qs = qs.order_by(*self.get_ordering())
-        return qs
+
+        filter_type = self.request.GET.get("filter_type")
+        filter_value = self.request.GET.get("filter_value")
+
+        if not filter_type or not filter_value:
+            return qs
+
+        filters = Q()
+        for jn in filter_value.split(","):
+            jn = jn.strip()
+            if jn:  # skip empty strings
+                filters |= Q(name__icontains=jn)
+
+        if filter_type == "only":
+            return qs.filter(filters)
+
+        if filter_type == "exclude":
+            return qs.exclude(filters)
+
+        raise ValueError(f"invalid filter_type: {filter_type}")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
