@@ -95,7 +95,6 @@ class TestSimulationJSONEncoder(TestCase):
             "preferred_estimation_engine_u": "TwelveMonthsSummationEngine",
             "stability_score_a": None,
             "stability_score_b": None,
-            "tax_scope": "FULD",
             "year_id": 2020,
             "b_expenses": 0.0,
             "b_income": 0.0,
