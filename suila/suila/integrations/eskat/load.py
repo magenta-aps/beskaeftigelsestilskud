@@ -32,7 +32,6 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     TaxInformationPeriod,
-    TaxScope,
     Year,
 )
 
@@ -44,20 +43,20 @@ class Handler:
     @classmethod
     def create_person_years(
         cls,
-        year_cpr_taxscopes: Dict[int, Dict[str, TaxScope | None]],
+        year_cpr_numbers: Dict[int, List[str]],
         load: DataLoad,
         out: TextIO,
     ) -> Dict[str, PersonYear] | None:
         person_years_count = 0
         person_years = {}
 
-        for year, cpr_taxscopes in year_cpr_taxscopes.items():
+        for year, cpr_numbers in year_cpr_numbers.items():
             # Create or get Year objects
             year_obj, _ = Year.objects.get_or_create(year=year)
 
             # Create or update Person objects
             persons: dict[str, Person] = {}
-            for cpr in cpr_taxscopes.keys():
+            for cpr in cpr_numbers:
                 person = Person(cpr=cpr, load=load)
                 try:
                     # Validate CPR against custom validator
@@ -75,31 +74,18 @@ class Handler:
             )
             out.write(f"Processed {len(persons)} Person objects")
 
-            # Update existing items in DB that are in the input
-            to_update = []
+            # Get existing person years
             for person_year_1 in PersonYear.objects.filter(
                 year=year, person__in=persons.values()
             ).select_related("person"):
                 cpr = person_year_1.person.cpr
-                tax_scope = cpr_taxscopes[cpr]
-                if tax_scope is not None:  # only update if we have a taxscope to set
-                    person_year_1.load = load
-                    person_year_1.tax_scope = tax_scope
-                    to_update.append(person_year_1)
                 person_years[cpr] = person_year_1
-            if len(to_update) > 0:
-                bulk_update_with_history(
-                    to_update, PersonYear, fields=("load", "tax_scope"), batch_size=1000
-                )
 
             # Create new items in DB for items in the input
             to_create = []
             for cpr, person in persons.items():
                 if cpr not in person_years:
                     person_year_2 = PersonYear(person=person, year=year_obj, load=load)
-                    tax_scope = cpr_taxscopes[cpr]
-                    if tax_scope is not None:
-                        person_year_2.tax_scope = tax_scope
                     to_create.append(person_year_2)
                     person_years[cpr] = person_year_2
             created = bulk_create_with_history(to_create, PersonYear, batch_size=1000)
@@ -183,13 +169,11 @@ class AnnualIncomeHandler(Handler):
         out: TextIO,
     ) -> list[AnnualIncomeModel]:
         with transaction.atomic():
-            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
-                dict
-            )
+            year_cpr_numbers: Dict[int, List[str]] = defaultdict(list)
             for item in items:
                 if item.year is not None and item.cpr is not None:
-                    year_cpr_tax_scopes[item.year][item.cpr] = None
-            person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
+                    year_cpr_numbers[item.year].append(item.cpr)
+            person_years = cls.create_person_years(year_cpr_numbers, load, out)
 
             if person_years:
                 objs_to_create = {}
@@ -276,13 +260,11 @@ class ExpectedIncomeHandler(Handler):
         cls, year: int, items: Iterable["ExpectedIncome"], load: DataLoad, out: TextIO
     ) -> list[PersonYearAssessment]:
         with transaction.atomic():
-            year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(
-                dict
-            )
+            year_cpr_numbers: Dict[int, List[str]] = defaultdict(list)
             for item in items:
                 if item.year is not None and item.cpr is not None:
-                    year_cpr_tax_scopes[item.year][item.cpr] = None
-            person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
+                    year_cpr_numbers[item.year].append(item.cpr)
+            person_years = cls.create_person_years(year_cpr_numbers, load, out)
 
             if person_years:
                 objs_to_create = {}
@@ -389,7 +371,7 @@ class MonthlyIncomeHandler(Handler):
         cls, year: int, items: Iterable["MonthlyIncome"], load: DataLoad, out: TextIO
     ) -> list[PersonMonth]:
         data_months: Dict[int, Set[int]] = defaultdict(set)
-        year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
+        year_cpr_numbers: Dict[int, List[str]] = defaultdict(list)
         employers = []
         employer_cvrs = set()
         verified_monthly_income_reports: List["MonthlyIncome"] = []
@@ -402,7 +384,7 @@ class MonthlyIncomeHandler(Handler):
                 data_months[item.year].add(item.month)
 
             if item.year is not None and item.cpr is not None:
-                year_cpr_tax_scopes[item.year][item.cpr] = None
+                year_cpr_numbers[item.year].append(item.cpr)
 
             # Verify the MonthlyIncome-instance have required data
             if item.cpr and bool(re.fullmatch(r"\d{10}", item.cpr)):
@@ -425,7 +407,7 @@ class MonthlyIncomeHandler(Handler):
                     unique_fields=("cvr",),
                 )
 
-            person_years = cls.create_person_years(year_cpr_tax_scopes, load, out)
+            person_years = cls.create_person_years(year_cpr_numbers, load, out)
             if person_years:
                 # Create or update PersonMonth objects
                 person_months: list[PersonMonth] = []
@@ -566,7 +548,7 @@ class TaxInformationHandler(Handler):
     def create_or_update_objects(
         cls, year: int, items: Iterable["TaxInformation"], load: DataLoad, out: TextIO
     ):
-        year_cpr_tax_scopes: Dict[int, Dict[str, TaxScope | None]] = defaultdict(dict)
+        year_cpr_numbers: Dict[int, List[str]] = defaultdict(list)
         cpr_taxinfo_map: Dict[str, TaxInformation] = {}
 
         # Create a dictionary where the keys are CPRs and the values are lists of
@@ -577,11 +559,9 @@ class TaxInformationHandler(Handler):
         items_map = defaultdict(list)
 
         for item in items:
-            # Populate `year_cpr_tax_scopes`
+            # Populate `year_cpr_numbers`
             if item.year is not None and item.cpr is not None:
-                year_cpr_tax_scopes[item.year][item.cpr] = TaxScope.from_taxinformation(
-                    item
-                )
+                year_cpr_numbers[item.year].append(item.cpr)
             # Populate `cpr_taxinfo_map`
             if item.cpr is not None:
                 cpr_taxinfo_map[item.cpr] = item
@@ -592,7 +572,7 @@ class TaxInformationHandler(Handler):
                 logger.warning("Skipping %r (has no CPR or tax scope)", item)
 
         with transaction.atomic():
-            cls.create_person_years(year_cpr_tax_scopes, load, out)
+            cls.create_person_years(year_cpr_numbers, load, out)
             cls.update_person_location_code(year, cpr_taxinfo_map)
             cls.update_person_year_tax_information_periods(year, items_map)
 
@@ -692,12 +672,4 @@ class TaxInformationHandler(Handler):
         )
         for chunk in batched(to_update, 1000):
             for person_year_3 in chunk:
-                person_year_3.load = load
-                person_year_3.tax_scope = TaxScope.FORSVUNDET_FRA_MANDTAL
                 TaxInformationPeriod.objects.filter(person_year=person_year_3).delete()
-            bulk_update_with_history(
-                chunk,
-                PersonYear,
-                fields=("load", "tax_scope"),
-                batch_size=1000,
-            )

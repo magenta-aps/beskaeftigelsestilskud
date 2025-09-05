@@ -162,7 +162,6 @@ class TestImportU1ADataCommand(TestCase):
                 "preferred_estimation_engine_u": "TwelveMonthsSummationEngine",
                 "stability_score_a": None,
                 "stability_score_b": None,
-                "tax_scope": "FULD",
                 "year": self.year.year,
             },
         )

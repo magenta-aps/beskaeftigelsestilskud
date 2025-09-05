@@ -55,7 +55,6 @@ from suila.models import (
     PersonYear,
     PersonYearAssessment,
     TaxInformationPeriod,
-    TaxScope,
     Year,
 )
 from suila.tests.mixins import BaseEnvMixin
@@ -1270,7 +1269,7 @@ class TestHandlerCreatePersonYears(BaseEnvMixin, TestCase):
         out = MagicMock()
         # Act: call `create_person_years`
         Handler.create_person_years(
-            {self.year.year: {self.person.cpr: TaxScope.FULDT_SKATTEPLIGTIG}},
+            {self.year.year: [self.person.cpr]},
             load,
             out,
         )

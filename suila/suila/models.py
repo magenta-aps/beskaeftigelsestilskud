@@ -62,7 +62,6 @@ from weasyprint.text.fonts import FontConfiguration
 
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
-from suila.integrations.eskat.responses.data_models import TaxInformation
 from suila.model_mixins import PermissionsMixin
 
 logger = logging.getLogger(__name__)
@@ -692,21 +691,6 @@ pre_save.connect(
 )
 
 
-class TaxScope(models.TextChoices):
-    FULDT_SKATTEPLIGTIG = "FULD"
-    DELVIST_SKATTEPLIGTIG = "DELVIS"
-    FORSVUNDET_FRA_MANDTAL = "INGEN_MANDTAL"
-
-    @classmethod
-    def from_taxinformation(cls, taxinformation: TaxInformation) -> "TaxScope" | None:
-        tax_scope_str = taxinformation.tax_scope
-        if tax_scope_str == "FULL":
-            return TaxScope.FULDT_SKATTEPLIGTIG
-        if tax_scope_str == "LIM":
-            return TaxScope.DELVIST_SKATTEPLIGTIG
-        return None
-
-
 class PersonYear(PermissionsMixin, models.Model):
 
     class Meta:
@@ -750,11 +734,6 @@ class PersonYear(PermissionsMixin, models.Model):
     )
     stability_score_b = models.DecimalField(
         decimal_places=1, default=None, null=True, max_digits=2
-    )
-    tax_scope = models.CharField(
-        choices=TaxScope,
-        default=TaxScope.FULDT_SKATTEPLIGTIG,
-        max_length=20,
     )
     load = models.ForeignKey(
         DataLoad,
