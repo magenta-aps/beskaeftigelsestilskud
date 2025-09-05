@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-04 09:44-0100\n"
+"POT-Creation-Date: 2025-09-04 10:07-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1675,13 +1675,11 @@ msgid "Eboks besked sendt til borger"
 msgstr ""
 
 #: suila/views.py
-#, python-brace-format
-msgid "A-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
+msgid "A-indkomst estimeringsmotor ændret:"
 msgstr ""
 
 #: suila/views.py
-#, python-brace-format
-msgid "U-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
+msgid "U-indkomst estimeringsmotor ændret:"
 msgstr ""
 
 #: suila/views.py

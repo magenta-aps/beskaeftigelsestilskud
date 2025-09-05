@@ -1668,10 +1668,11 @@ class PersonYearEstimationEngineUpdateView(TimeContextMixin, TestViewMixin, Pers
         )
         latest_note = get_latest_note()
         self.assertIn(
-            (
-                "A-indkomst estimeringsmotor ændret fra "
-                "InYearExtrapolationEngine til TwelveMonthsSummationEngine"
-            ),
+            "A-indkomst estimeringsmotor ændret",
+            latest_note,
+        )
+        self.assertIn(
+            "InYearExtrapolationEngine -> TwelveMonthsSummationEngine",
             latest_note,
         )
         self.assertNotIn(
@@ -1696,10 +1697,11 @@ class PersonYearEstimationEngineUpdateView(TimeContextMixin, TestViewMixin, Pers
             "InYearExtrapolationEngine",
         )
         self.assertIn(
-            (
-                "U-indkomst estimeringsmotor ændret fra "
-                "TwelveMonthsSummationEngine til InYearExtrapolationEngine"
-            ),
+            "U-indkomst estimeringsmotor ændret",
+            latest_note,
+        )
+        self.assertIn(
+            "TwelveMonthsSummationEngine -> InYearExtrapolationEngine",
             latest_note,
         )
         self.assertNotIn(

@@ -34,6 +34,7 @@ from django.utils.decorators import method_decorator
 from django.utils.formats import number_format
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop, override
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django.views.generic.base import ContextMixin
@@ -1168,24 +1169,29 @@ class PersonPauseUpdateView(
             self.object.save()
 
             if paused:
-                standard_note_text = gettext("Starter udbetalingspause") + "\n"
+                standard_note_text = gettext_noop("Starter udbetalingspause") + "\n"
             else:
-                standard_note_text = gettext("Stopper udbetalingspause") + "\n"
+                standard_note_text = gettext_noop("Stopper udbetalingspause") + "\n"
 
             if allow_pause and paused:
-                standard_note_text += gettext("Borger må genoptage udbetalinger")
+                standard_note_text += gettext_noop("Borger må genoptage udbetalinger")
             elif allow_pause and not paused:
-                standard_note_text += gettext("Borger må sætte udbetalinger på pause")
+                standard_note_text += gettext_noop(
+                    "Borger må sætte udbetalinger på pause"
+                )
             elif not allow_pause and paused:
-                standard_note_text += gettext("Borger må ikke genoptage udbetalinger")
+                standard_note_text += gettext_noop(
+                    "Borger må ikke genoptage udbetalinger"
+                )
             elif not allow_pause and not paused:  # pragma: no branch
-                standard_note_text += gettext(
+                standard_note_text += gettext_noop(
                     "Borger må ikke sætte udbetalinger på pause"
                 )
 
             if pause_reason:
                 standard_note_text += "\n"
-                standard_note_text += PauseReasonChoices(pause_reason).label
+                with override("da"):
+                    standard_note_text += PauseReasonChoices(pause_reason).label
 
             # Send an eboks message (if person is not allowed to stop the pause himself)
             allow_pause_field_changed = allow_pause != default_allow_pause
@@ -1272,22 +1278,19 @@ class PersonYearEstimationEngineUpdateView(
         self.object.save()
 
         if preferred_estimation_engine_a_default != preferred_estimation_engine_a:
-            standard_note_text_a = gettext(
-                "A-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
-            ).format(
-                engine=preferred_estimation_engine_a,
-                default_engine=preferred_estimation_engine_a_default,
-            )
+            engine = preferred_estimation_engine_a
+            default_engine = preferred_estimation_engine_a_default
+            standard_note_text_a = gettext_noop("A-indkomst estimeringsmotor ændret:")
+            standard_note_text_a += f"\n{default_engine} -> {engine}"
+
         else:
             standard_note_text_a = ""
 
         if preferred_estimation_engine_u_default != preferred_estimation_engine_u:
-            standard_note_text_u = gettext(
-                "U-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
-            ).format(
-                engine=preferred_estimation_engine_u,
-                default_engine=preferred_estimation_engine_u_default,
-            )
+            engine = preferred_estimation_engine_u
+            default_engine = preferred_estimation_engine_u_default
+            standard_note_text_u = gettext_noop("U-indkomst estimeringsmotor ændret:")
+            standard_note_text_u += f"\n{default_engine} -> {engine}"
         else:
             standard_note_text_u = ""
 
@@ -1362,13 +1365,13 @@ class PersonAnnualIncomeEstimateUpdateView(
                 use_l10n=True,
                 force_grouping=True,
             )
-            standard_note_text = gettext("Benyt manuelt estimeret årsindkomst")
-            standard_note_text += f" ({annual_income_estimate_formatted} kr.)"
+            standard_note_text = gettext_noop("Benyt manuelt estimeret årsindkomst")
+            standard_note_text += f"\n({annual_income_estimate_formatted} kr.)"
         else:
-            standard_note_text = _("Benyt automatisk estimeret årsindkomst")
+            standard_note_text = gettext_noop("Benyt automatisk estimeret årsindkomst")
 
         note_obj = Note.objects.create(
-            text=standard_note_text + "; " + note,
+            text=standard_note_text + "\n" + note,
             personyear=PersonYear.objects.get(person=self.object, year=year),
             author=self.request.user,
         )
