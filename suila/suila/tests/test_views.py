@@ -1499,6 +1499,9 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 "personyear": personmonth.person_year,
                 "personmonth": personmonth,
                 "sum_income": Decimal("0.00"),
+                "pause_reason_da": "-",
+                "pause_reason_kl": "-",
+                "pause_reason_en": "-",
                 "income": {
                     # Passer med indkomster der sættes op i PersonEnv.setUpTestData
                     "catchsale_income": [
@@ -1721,12 +1724,35 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
             "paused": True,
             "allow_pause": True,
             "year": cls.person_year.year.year,
+            "month": cls.person_month.month,
             "note": "<reason for change>",
             "attachments-TOTAL_FORMS": 0,
             "attachments-INITIAL_FORMS": 0,
             "attachments-MIN_NUM_FORMS": 0,
             "attachments-MAX_NUM_FORMS": 1000,
         }
+
+    def setUp(self):
+        super().setUp()
+        patcher = patch("suila.views.EboksClient")
+        self.addCleanup(patcher.stop)
+        self.eboks_client_cls = patcher.start()
+
+        # Mock the context manager return value
+        self.eboks_client = (
+            self.eboks_client_cls.from_settings.return_value.__enter__.return_value
+        )
+
+        # Configure get_message_id
+        self.eboks_client.get_message_id.return_value = "uuid-123"
+
+        # Configure send_message response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "message_id": "uuid-123",
+            "recipients": [{"status": "SENT", "post_processing_status": ""}],
+        }
+        self.eboks_client.send_message.return_value = mock_response
 
     def get_context_data(self, year=2020, month=12, day=1):
         with self._time_context(year=year, month=month, day=day):
@@ -1939,6 +1965,34 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.data["paused"] = False
         self.post_pause()
         self.assertEqual(self.person_year.person.pause_reason, None)
+
+    @override_settings(SEND_EBOKS_LETTER_WHEN_PAUSING=True, ENVIRONMENT="production")
+    def test_send_eboks_message(self):
+        self.client.force_login(self.admin_user)
+        self.data["pause_reason"] = 2
+        self.data["allow_pause"] = False
+        self.post_pause()
+
+        self.eboks_client.send_message.assert_called_once()
+        self.eboks_client.get_message_id.assert_called_once()
+
+        message = SuilaEboksMessage.objects.get(person_month=self.person_month)
+
+        self.assertIn("Indikation af fejl i beregningsgrundlag", message.html("da"))
+        self.assertIn("Indication of error in calculation basis", message.html("en"))
+        self.assertIn(
+            "Naatsorsuutinut tunngavigisaq kukkuneqarpasippoq", message.html("kl")
+        )
+
+    @override_settings(SEND_EBOKS_LETTER_WHEN_PAUSING=True, ENVIRONMENT="test")
+    def test_do_not_send_eboks_message_on_test(self):
+        self.client.force_login(self.admin_user)
+        self.data["pause_reason"] = 2
+        self.data["allow_pause"] = False
+        self.post_pause()
+
+        self.eboks_client.send_message.assert_not_called()
+        self.eboks_client.get_message_id.assert_not_called()
 
 
 class TestPersonAnnualIncomeEstimateUpdateView(

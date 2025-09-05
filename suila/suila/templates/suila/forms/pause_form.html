@@ -7,6 +7,7 @@
   
   <input type="hidden" name="person" value="{{ person_id }}"/>
   <input type="hidden" name="year" value="{{ year }}"/> 
+  <input type="hidden" name="month" value="{{ month }}"/> 
 
   {% pause_info_box True %}
 
@@ -58,6 +59,15 @@
   </div>
 </form>
 
+
+{{ send_eboks_letter_when_pausing|json_script:"sendLetterVar" }}
+
+{% blocktrans trimmed asvar pause_eboks_msg %}
+Du er ved at sætte borgeren på pause uden at tillade borgeren at genoptage
+udbetalinger. Dette medfører at et e-Boks brev bliver sendt til borgeren.
+Er du sikker på, at du vil fortsætte?
+{% endblocktrans %}
+
 <script nonce="{{ request.csp_nonce }}">
 $(function() {
   const $toggle = $('#pauseToggle');
@@ -72,7 +82,7 @@ $(function() {
   const getSelectAllowPauseValue = function() {
     return $selectAllowPause.is(':checkbox')
       ? $selectAllowPause.prop('checked')
-      : $selectAllowPause.val();
+      : $selectAllowPause.val() === "True";
   }
   const defaultAllowPause = getSelectAllowPauseValue();
   const defaultReason = $pauseReason.val();
@@ -121,15 +131,32 @@ $(function() {
   // Watch for pause changes
   $selectPause.on('change', checkIfDefaults);
 
-  // Validation: require reason only if pausing and container visible
   $submitBtn.on('click', function(e) {
-    const isPausing = $selectPause.val() === "true";
+    const currentPause = $selectPause.val();
+    const currentAllowPause = getSelectAllowPauseValue();
+    const isPausing = currentPause === "true";
     const reasonVisible = $pauseReasonContainer.is(':visible');
+    const sendLetter = JSON.parse(document.getElementById("sendLetterVar").textContent);
 
+    // Require reason only if pausing and container visible
     if (isPausing && reasonVisible && !$pauseReason.val()) {
       e.preventDefault();
       alert("{% translate 'Vælg en begrundelse for at pause en person.' %}");
       $pauseReason.focus();
+      return;
+    }
+
+    // Ask confirmation if pausing without allow_pause when letter must be sent
+    const changed = (
+      currentPause !== defaultPause ||
+      currentAllowPause !== defaultAllowPause
+    );
+
+    if (sendLetter && changed && isPausing && !currentAllowPause) {
+      if (!confirm("{{ pause_eboks_msg }}")) {
+        e.preventDefault();
+        return;
+      }
     }
   });
 });

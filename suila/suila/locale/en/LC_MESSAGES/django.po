@@ -745,6 +745,16 @@ msgid "Begrundelse"
 msgstr "Reason"
 
 #: suila/templates/suila/forms/pause_form.html
+msgid ""
+"Du er ved at sætte borgeren på pause uden at tillade borgeren at genoptage "
+"udbetalinger. Dette medfører at et e-Boks brev bliver sendt til borgeren. Er "
+"du sikker på, at du vil fortsætte?"
+msgstr ""
+"You are about the pause payouts for a citizen without allowing the citizen "
+"to resume payouts. This will send an E-boks letter to the citizen. Are you "
+"sure?"
+
+#: suila/templates/suila/forms/pause_form.html
 msgid "Vælg en begrundelse for at pause en person."
 msgstr "Pick a reason for pausing a person."
 
@@ -1606,6 +1616,10 @@ msgstr "Citizen may not resume payments"
 #: suila/views.py
 msgid "Borger må ikke sætte udbetalinger på pause"
 msgstr "Citizen may not pause payments"
+
+#: suila/views.py
+msgid "Eboks besked sendt til borger"
+msgstr "Eboks message sent to citizen"
 
 #: suila/views.py
 #, python-brace-format
