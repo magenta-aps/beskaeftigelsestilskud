@@ -12,7 +12,7 @@ from ninja_extra import ControllerBase, api_controller, paginate, permissions, r
 from ninja_extra.schemas import NinjaPaginationResponseSchema
 
 from suila.api.auth import RestPermission, get_auth_methods
-from suila.models import PersonYear, TaxInformationPeriod, TaxScope
+from suila.models import PersonYear, TaxInformationPeriod
 
 
 class PersonYearOut(ModelSchema):
@@ -48,13 +48,7 @@ class PersonYearOut(ModelSchema):
             .values_list("tax_scope", flat=True)
             .first()
         )
-
-        if latest_tax_scope == "FULL":
-            return TaxScope.FULDT_SKATTEPLIGTIG
-        elif latest_tax_scope == "LIM":
-            return TaxScope.DELVIST_SKATTEPLIGTIG
-        else:
-            return TaxScope.FORSVUNDET_FRA_MANDTAL
+        return latest_tax_scope or "INGEN_MANDTAL"
 
 
 class PersonYearFilterSchema(FilterSchema):
