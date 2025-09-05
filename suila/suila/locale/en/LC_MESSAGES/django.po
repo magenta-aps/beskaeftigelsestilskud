@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-04 09:44-0100\n"
+"POT-Creation-Date: 2025-09-04 10:07-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -97,7 +97,7 @@ msgstr "By agreement with the citizen or their representative"
 
 #: suila/models.py suila/templates/suila/templatetags/dead_info_box.html
 msgid "Personen er registreret som afdød"
-msgstr ""
+msgstr "The person is registered as deceased"
 
 #: suila/models.py
 msgid "Personen er registreret som forsvundet"
@@ -1622,14 +1622,12 @@ msgid "Eboks besked sendt til borger"
 msgstr "Eboks message sent to citizen"
 
 #: suila/views.py
-#, python-brace-format
-msgid "A-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
-msgstr "A-income estimation engine changed from {default_engine} to {engine}"
+msgid "A-indkomst estimeringsmotor ændret:"
+msgstr "A-income estimation engine changed:"
 
 #: suila/views.py
-#, python-brace-format
-msgid "U-indkomst estimeringsmotor ændret fra {default_engine} til {engine}"
-msgstr "U-income estimation engine changed from {default_engine} to {engine}"
+msgid "U-indkomst estimeringsmotor ændret:"
+msgstr "U-income estimation engine changed:"
 
 #: suila/views.py
 msgid "År"
