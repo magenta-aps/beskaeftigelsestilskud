@@ -19,7 +19,9 @@ from common.view_mixins import BaseGetFormView, ViewLogMixin
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
+from django.core.files.base import ContentFile
 from django.core.management import call_command
+from django.db import transaction
 from django.db.models import CharField, F, IntegerChoices, Max, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
@@ -277,6 +279,8 @@ class PersonDetailView(
 
             civil_state_last_change = person.last_change("civil_state")
 
+            send_eboks_letter_when_pausing = settings.SEND_EBOKS_LETTER_WHEN_PAUSING
+
             context_data.update(
                 {
                     "show_next_payment": True,
@@ -313,6 +317,7 @@ class PersonDetailView(
                     "show_pause_effect_date": show_pause_effect_date,
                     "pause_reasons": PauseReasonChoices.choices,
                     "pause_reason": person.pause_reason,
+                    "send_eboks_letter_when_pausing": send_eboks_letter_when_pausing,
                 }
             )
         else:
@@ -1145,43 +1150,88 @@ class PersonPauseUpdateView(
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form, formset):
-        year = form.cleaned_data["year"]
-        note = form.cleaned_data["note"]
-        paused = form.cleaned_data["paused"]
-        allow_pause = form.cleaned_data["allow_pause"]
-        pause_reason = form.cleaned_data["pause_reason"]
+        with transaction.atomic():
+            year = form.cleaned_data["year"]
+            month = form.cleaned_data["month"]
+            note = form.cleaned_data["note"]
+            paused = form.cleaned_data["paused"]
+            allow_pause = form.cleaned_data["allow_pause"]
+            pause_reason = form.cleaned_data["pause_reason"]
+            suilamessage = None
 
-        self.object.paused = paused
-        self.object.allow_pause = allow_pause
-        self.object.pause_reason = pause_reason if paused else None
-        self.object.save()
+            default_allow_pause = self.object.allow_pause
+            default_paused = self.object.paused
 
-        if paused:
-            standard_note_text = gettext("Starter udbetalingspause") + "\n"
-        else:
-            standard_note_text = gettext("Stopper udbetalingspause") + "\n"
+            self.object.paused = paused
+            self.object.allow_pause = allow_pause
+            self.object.pause_reason = pause_reason if paused else None
+            self.object.save()
 
-        if allow_pause and paused:
-            standard_note_text += gettext("Borger må genoptage udbetalinger")
-        elif allow_pause and not paused:
-            standard_note_text += gettext("Borger må sætte udbetalinger på pause")
-        elif not allow_pause and paused:
-            standard_note_text += gettext("Borger må ikke genoptage udbetalinger")
-        elif not allow_pause and not paused:  # pragma: no branch
-            standard_note_text += gettext("Borger må ikke sætte udbetalinger på pause")
+            if paused:
+                standard_note_text = gettext("Starter udbetalingspause") + "\n"
+            else:
+                standard_note_text = gettext("Stopper udbetalingspause") + "\n"
 
-        if pause_reason:
-            standard_note_text += "\n"
-            standard_note_text += PauseReasonChoices(pause_reason).label
+            if allow_pause and paused:
+                standard_note_text += gettext("Borger må genoptage udbetalinger")
+            elif allow_pause and not paused:
+                standard_note_text += gettext("Borger må sætte udbetalinger på pause")
+            elif not allow_pause and paused:
+                standard_note_text += gettext("Borger må ikke genoptage udbetalinger")
+            elif not allow_pause and not paused:  # pragma: no branch
+                standard_note_text += gettext(
+                    "Borger må ikke sætte udbetalinger på pause"
+                )
 
-        note_obj = Note.objects.create(
-            text=standard_note_text + (("\n" + note) if note else ""),
-            personyear=PersonYear.objects.get(person=self.object, year=year),
-            author=self.request.user,
-        )
+            if pause_reason:
+                standard_note_text += "\n"
+                standard_note_text += PauseReasonChoices(pause_reason).label
 
-        formset.instance = note_obj
-        formset.save()
+            # Send an eboks message (if person is not allowed to stop the pause himself)
+            allow_pause_field_changed = allow_pause != default_allow_pause
+            paused_field_changed = paused != default_paused
+            if (
+                not allow_pause
+                and paused
+                and (paused_field_changed or allow_pause_field_changed)
+                and self.request.user.cpr != self.object.cpr
+                and settings.SEND_EBOKS_LETTER_WHEN_PAUSING
+            ):
+                suilamessage = SuilaEboksMessage.objects.create(
+                    person_month=PersonMonth.objects.get(
+                        month=month,
+                        person_year__year__year=year,
+                        person_year__person=self.object,
+                    ),
+                    type="payout_pause",
+                )
+
+                if settings.ENVIRONMENT == "production":
+                    with EboksClient.from_settings() as client:
+                        suilamessage.send(client)
+
+                suilamessage_filename = f"udbetalingspause_brev_{suilamessage.id}.pdf"
+                standard_note_text += "\n"
+                standard_note_text += gettext("Eboks besked sendt til borger")
+
+            note_obj = Note.objects.create(
+                text=standard_note_text + (("\n" + note) if note else ""),
+                personyear=PersonYear.objects.get(person=self.object, year=year),
+                author=self.request.user,
+            )
+
+            if suilamessage:
+                NoteAttachment.objects.create(
+                    note=note_obj,
+                    file=ContentFile(
+                        suilamessage.pdf,
+                        name=suilamessage_filename,
+                    ),
+                    content_type="application/pdf",
+                )
+
+            formset.instance = note_obj
+            formset.save()
 
         return super().form_valid(form, formset)
 
