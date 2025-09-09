@@ -43,6 +43,10 @@ form.joblist-form select {
     min-width: 125px !important;
 }
 
+form.joblist-form .filter_label {
+    min-width: 125px !important;
+}
+
 iframe.eboks {
     width: 100%;
     min-height: 600pt;
