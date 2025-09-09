@@ -4,7 +4,6 @@
 {% extends "common/base.html" %}
 {% load i18n %}
 {% load static %}
-{% load cpr_tags %}
 
 {% block title %}
 {{ person.name|default_if_none:person.cpr }}
