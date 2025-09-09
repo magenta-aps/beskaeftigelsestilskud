@@ -206,7 +206,7 @@
     <tr>
         <td>
             <a href="{% url 'data_analysis:person_analysis' pk=object.person.pk %}?year_start={{ year }}&year_end={{ year }}">
-                {{ object.person.cpr }}
+                {{ object.person.cpr|format_cpr }}
             </a>
         </td>
 

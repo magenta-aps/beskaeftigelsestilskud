@@ -7,7 +7,7 @@
 {% load cpr_tags %}
 
 {% block title %}
-{{ person.name|default_if_none:person.cpr }}
+{{ person.name|default_if_none:person.cpr|format_cpr }}
 {% endblock %}
 
 {% block content %}
