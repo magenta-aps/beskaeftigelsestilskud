@@ -28,7 +28,7 @@ class Command(SuilaBaseCommand):
         else:
             employers = Employer.objects.all()
 
-        pitu_client = self._get_pitu_client()
+        pitu_client = PituClient.from_settings()
 
         # TODO: optimize this loop
         # - only update `Employer` objects whose `name` is NULL,
@@ -38,7 +38,7 @@ class Command(SuilaBaseCommand):
 
         for employer in employers:
             try:
-                employer_data = pitu_client.get(f"/{employer.cvr}")
+                employer_data = pitu_client.get_company_info(employer.cvr)
             except HTTPError as e:
                 if e.response.status_code == 404:
                     self._write_verbose(
@@ -63,9 +63,6 @@ class Command(SuilaBaseCommand):
 
         self._write_verbose("Done")
         pitu_client.close()
-
-    def _get_pitu_client(self) -> PituClient:
-        return PituClient.from_settings()
 
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:

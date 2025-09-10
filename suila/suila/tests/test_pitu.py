@@ -14,8 +14,8 @@ pitu_test_settings = {
     "root_ca": "test_ca",
     "client_header": "test_header",
     "base_url": "test_url",
-    "service": "test_service",
-    "cvr_service": "test_cvr_service",
+    "person_info_service": "test_service",
+    "company_info_service": "test_cvr_service",
 }
 
 response_mock = MagicMock()
@@ -35,7 +35,7 @@ class PituTest(TestCase):
         cls.pitu_client._session = session_mock
 
     def test_pitu_client(self):
-        self.assertEqual(self.pitu_client.service, "test_service")
+        self.assertEqual(self.pitu_client.person_info_service, "test_service")
         self.assertEqual(self.pitu_client.cert, ("test_cert", "test_key"))
         self.assertEqual(self.pitu_client.root_ca, "test_ca")
         self.assertEqual(self.pitu_client.base_url, "test_url")

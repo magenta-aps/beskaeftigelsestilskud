@@ -57,10 +57,10 @@ class PituClient:
     def close(self):
         self.session.close()
 
-    def get_person_info(self, cpr):
+    def get_person_info(self, cpr: str):
         return self.get(f"/personLookup/1/cpr/{cpr}", service=self.person_info_service)
 
-    def get_company_info(self, cvr):
+    def get_company_info(self, cvr: int | str):
         return self.get(f"/{cvr}", service=self.company_info_service)
 
     def get_subscription_results(
