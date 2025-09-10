@@ -31,6 +31,7 @@ class PituTest(TestCase):
         self.pitu_client = PituClient.from_settings()
         self.pitu_client.session = self.session_mock
         self.pitu_client._session = self.session_mock
+        self.response_mock.json.side_effect = None
 
     def test_pitu_client(self):
         self.assertEqual(self.pitu_client.person_info_service, "test_service")
@@ -115,7 +116,7 @@ class PituTest(TestCase):
             any_order=True,
         )
 
-    def test_get_subscription_results_2(self):
+    def test_get_subscription_results_timed(self):
         cprs = [str(x).zfill(10) for x in range(1, 250)]
         envelope_prototype = {
             "path": None,
@@ -176,4 +177,49 @@ class PituTest(TestCase):
                 ),
             ],
             any_order=True,
+        )
+
+    def test_get_subscription_results_no_key(self):
+        envelope = {
+            "path": None,
+            "terms": "https://doc.test.data.gl/terms",
+            "requestTimestamp": None,
+            "responseTimestamp": None,
+            "newestResultTimestamp": "2025-09-09T16:01:00Z",
+            "username": None,
+            "page": 1,
+            "pageSize": 100,
+            # "results": [],  we test for handling when this is missing
+        }
+        self.response_mock.json.side_effect = [envelope]
+        with self.assertRaises(Exception) as cm:
+            self.pitu_client.get_subscription_results()
+        exception = cm.exception
+        self.assertEqual(exception.args, (f"Unexpected None in cprList: {envelope}",))
+
+    def test_get_subscription_results_infinite(self):
+        # Dafo returns no end to the cprs (maybe repeating responses?)
+        # Shouldn't happen, but we guard against it anyway
+        envelope = {
+            "path": None,
+            "terms": "https://doc.test.data.gl/terms",
+            "requestTimestamp": None,
+            "responseTimestamp": None,
+            "newestResultTimestamp": "2025-09-09T16:01:00Z",
+            "username": None,
+            "page": 1,
+            "pageSize": 100,
+            "results": [str(x).zfill(10) for x in range(1, 101)],
+        }
+        self.response_mock.json.return_value = envelope
+        with self.assertRaises(Exception) as cm:
+            self.pitu_client.get_subscription_results()
+        exception = cm.exception
+        self.assertEqual(
+            exception.args,
+            (
+                "Looped for more than 10000 pages of results. "
+                "Something is wrong. "
+                "Collected 100 unique cprs out of 1000100 total returned cprs",
+            ),
         )

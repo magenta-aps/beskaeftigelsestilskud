@@ -46,10 +46,13 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
 
     def setUp(self):
         self.pitu_client_patcher = patch(
-            "suila.management.commands" ".get_employer_info_from_dafo.PituClient.get"
+            "suila.management.commands.get_employer_info_from_dafo.PituClient.get"
         )
         self.method_mock = self.pitu_client_patcher.start()
         self.method_mock.return_value = self._mock_result
+
+    def tearDown(self):
+        self.pitu_client_patcher.stop()
 
     @classmethod
     def setUpTestData(cls):

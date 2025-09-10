@@ -77,7 +77,8 @@ class PituClient:
             params["timestamp.GTE"] = last_update_time.isoformat()
 
         cpr_list: List[str] = []
-        for page in range(1, 10000):
+        page = 1
+        while True:
             page_params = params.copy()
             page_params["page"] = page
             results = self.get("/findCprDataEvent/fetchEvents", page_params, service)
@@ -87,4 +88,11 @@ class PituClient:
             cpr_list.extend(batch_cpr_list)
             if len(batch_cpr_list) < page_size:
                 break
+            if page > 10000:
+                raise Exception(
+                    f"Looped for more than 10000 pages of results. "
+                    f"Something is wrong. Collected {len(set(cpr_list))} unique "
+                    f"cprs out of {len(cpr_list)} total returned cprs"
+                )
+            page += 1
         return set(cpr_list)
