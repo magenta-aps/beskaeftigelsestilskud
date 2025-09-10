@@ -78,8 +78,9 @@ class PituClient:
 
         cpr_list: List[str] = []
         for page in range(1, 10000):
-            params["page"] = page
-            results = self.get("/findCprDataEvent/fetchEvents", params, service)
+            page_params = params.copy()
+            page_params["page"] = page
+            results = self.get("/findCprDataEvent/fetchEvents", page_params, service)
             batch_cpr_list: List[str] | None = results.get("results")
             if batch_cpr_list is None:
                 raise Exception(f"Unexpected None in cprList: {results}")
