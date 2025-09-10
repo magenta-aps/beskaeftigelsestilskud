@@ -137,7 +137,7 @@ class PituTest(TestCase):
             envelope_list.append(envelope)
         self.response_mock.json.side_effect = envelope_list.copy()
         now = datetime.now()
-        results = self.pitu_client.get_subscription_results(datetime.now())
+        results = self.pitu_client.get_subscription_results(now)
         self.assertEqual(results, set(cprs))
         self.session_mock.get.assert_has_calls(
             [
