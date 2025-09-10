@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import copy
 from datetime import datetime
 from typing import List, Set
 
@@ -22,9 +21,11 @@ class PituClient:
         timeout=60,
         person_info_service=None,
         person_subscription_service=None,
+        company_info_service=None,
     ):
         self.person_info_service = person_info_service
         self.person_subscription_service = person_subscription_service
+        self.company_info_service = company_info_service
         self.client_header = client_header
         self.cert = (certificate, private_key)
         self.root_ca = root_ca
@@ -37,9 +38,7 @@ class PituClient:
 
     @classmethod
     def from_settings(cls):
-        pitu_settings: dict = copy.copy(settings.PITU)
-        del pitu_settings["cvr_service"]
-        return cls(**pitu_settings)
+        return cls(**settings.PITU)
 
     def get(self, path, params=None, service=None):
         if params is None:
@@ -60,6 +59,9 @@ class PituClient:
 
     def get_person_info(self, cpr):
         return self.get(f"/personLookup/1/cpr/{cpr}", service=self.person_info_service)
+
+    def get_company_info(self, cvr):
+        return self.get(f"/{cvr}", service=self.company_info_service)
 
     def get_subscription_results(
         self, last_update_time: datetime | None = None
