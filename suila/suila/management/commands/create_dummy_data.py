@@ -25,16 +25,10 @@ from suila.models import (
     PrismeBatch,
     PrismeBatchItem,
     TaxInformationPeriod,
-    TaxScope,
     Year,
 )
 
 User = get_user_model()
-
-tax_scope_dict = {
-    TaxScope.FULDT_SKATTEPLIGTIG: "FULL",
-    TaxScope.DELVIST_SKATTEPLIGTIG: "LIM",
-}
 
 
 def days_in_month(year: int, month: int) -> int:
@@ -220,23 +214,16 @@ class Command(BaseCommand):
                 )
 
                 if person.name == "Person with prisme items":
-                    person_year.tax_scope = TaxScope.FULDT_SKATTEPLIGTIG
+                    tax_scope = "FULL"
                 else:
-                    person_year.tax_scope = random.choice(
-                        [
-                            TaxScope.FULDT_SKATTEPLIGTIG,
-                            TaxScope.DELVIST_SKATTEPLIGTIG,
-                            TaxScope.FORSVUNDET_FRA_MANDTAL,
-                        ]
-                    )
+                    tax_scope = random.choice(["FULL", "LIM", None])
 
-                person_year.save()
                 set_history_date(person_year, date)
 
-                if not person_year.tax_scope == TaxScope.FORSVUNDET_FRA_MANDTAL:
+                if tax_scope:
                     TaxInformationPeriod.objects.update_or_create(
                         person_year=person_year,
-                        tax_scope=tax_scope_dict[person_year.tax_scope],
+                        tax_scope=tax_scope,
                         start_date=datetime.datetime(year, month, 1, tzinfo=tz),
                         end_date=datetime.datetime(
                             year, month, days_in_month(year, month), tzinfo=tz

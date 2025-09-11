@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django_stubs_ext import StrOrPromise
 
 from suila.dates import get_payment_date
-from suila.models import PersonMonth, PrismeBatchItem, TaxScope
+from suila.models import PersonMonth, PrismeBatchItem
 
 
 def is_awaiting_payment_transfer(
@@ -70,10 +70,10 @@ def display_status(person_month: PersonMonth) -> dict:
 
 @register.filter
 def format_tax_scope(tax_scope: str) -> StrOrPromise:
-    if tax_scope in (TaxScope.FULDT_SKATTEPLIGTIG, "FULL"):
+    if tax_scope == "FULL":
         return _("Fuld skattepligtig")
-    elif tax_scope in (TaxScope.DELVIST_SKATTEPLIGTIG, "LIM"):
+    elif tax_scope == "LIM":
         return _("Delvist skattepligtig")
-    elif tax_scope in (TaxScope.FORSVUNDET_FRA_MANDTAL, None):
+    elif tax_scope is None:
         return _("Ikke i mandtal")
     return ""
