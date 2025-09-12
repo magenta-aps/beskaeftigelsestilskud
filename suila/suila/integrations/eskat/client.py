@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List
 
 import requests
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from requests import Response, Session
 from requests_ntlm import HttpNtlmAuth
 
@@ -98,6 +99,11 @@ class EskatClient:
 
     @staticmethod
     def from_settings() -> "EskatClient":
+        if not settings.ESKAT_BASE_URL:  # type: ignore[misc]
+            raise ImproperlyConfigured(
+                "ESKAT_BASE_URL is not set - cannot initialize eskat client"
+            )
+
         return EskatClient(
             settings.ESKAT_BASE_URL,  # type: ignore[misc]
             settings.ESKAT_USERNAME,  # type: ignore[misc]
