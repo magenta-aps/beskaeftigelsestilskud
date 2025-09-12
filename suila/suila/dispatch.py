@@ -248,9 +248,7 @@ class JobDispatcher:
         # If allowed, check if job dependencies are met
         try:
             self.check_dependencies(name)
-        except DependenciesNotMet:
-            logger.warning(f"DependencyNotMet exception for job: {name}")
-        else:
+
             logger.info(
                 f"\n{datetime.date(self.year, self.month, self.day)}: "
                 f"Running job {name} ..."
@@ -263,3 +261,9 @@ class JobDispatcher:
                 reraise=self.reraise,
                 **kwargs,
             )
+        except DependenciesNotMet:
+            logger.warning(f"DependencyNotMet exception for job: {name}")
+        except management.CommandError:
+            logger.exception(f"CommandError exception for job: {name}")
+            # NOTE: We just log these errors, since jobs shouldn't prevent us from
+            #       running other jobs through the JobDispatcher afterwards
