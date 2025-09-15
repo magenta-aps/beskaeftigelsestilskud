@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from django.conf import settings
 from requests.exceptions import HTTPError
 
 from suila.integrations.pitu.client import PituClient
@@ -29,7 +28,7 @@ class Command(SuilaBaseCommand):
         else:
             employers = Employer.objects.all()
 
-        pitu_client = self._get_pitu_client()
+        pitu_client = PituClient.from_settings()
 
         # TODO: optimize this loop
         # - only update `Employer` objects whose `name` is NULL,
@@ -39,7 +38,7 @@ class Command(SuilaBaseCommand):
 
         for employer in employers:
             try:
-                employer_data = pitu_client.get(f"/{employer.cvr}")
+                employer_data = pitu_client.get_company_info(employer.cvr)
             except HTTPError as e:
                 if e.response.status_code == 404:
                     self._write_verbose(
@@ -64,19 +63,6 @@ class Command(SuilaBaseCommand):
 
         self._write_verbose("Done")
         pitu_client.close()
-
-    def _get_pitu_client(self) -> PituClient:
-        # Use different value than `PITU_SERVICE` for the `service` kwarg, as
-        # `PITU_SERVICE` specifies the CPR service (not CVR.)
-        pitu_settings: dict = settings.PITU  # type: ignore[misc]
-        return PituClient(
-            base_url=pitu_settings["base_url"],
-            service=pitu_settings["cvr_service"],
-            client_header=pitu_settings["client_header"],
-            certificate=pitu_settings["certificate"],
-            private_key=pitu_settings["private_key"],
-            root_ca=pitu_settings["root_ca"],
-        )
 
     def _write_verbose(self, msg, **kwargs):
         if self._verbose:
