@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.test import TestCase
-from django.test.utils import override_settings
 from requests.exceptions import HTTPError
 
 from suila.models import Employer
@@ -41,18 +40,19 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
         "root_ca": "test_ca",
         "client_header": "test_header",
         "base_url": "test_url",
-        "service": "test_cpr_service",
-        "cvr_service": "test_cvr_service",
+        "person_info_service": "test_cpr_service",
+        "company_info_service": "test_cvr_service",
     }
 
     def setUp(self):
         self.pitu_client_patcher = patch(
-            "suila.management.commands.get_employer_info_from_dafo.PituClient"
+            "suila.management.commands.get_employer_info_from_dafo.PituClient.get"
         )
-        self.pitu_client_mock = self.pitu_client_patcher.start()
-        self.client_mock = MagicMock()
-        self.client_mock.get.return_value = self._mock_result
-        self.pitu_client_mock.return_value = self.client_mock
+        self.method_mock = self.pitu_client_patcher.start()
+        self.method_mock.return_value = self._mock_result
+
+    def tearDown(self):
+        self.pitu_client_patcher.stop()
 
     @classmethod
     def setUpTestData(cls):
@@ -78,18 +78,6 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
             [{"cvr": self.cvr, "name": "Firmanavn ApS"}],
         )
 
-    @override_settings(PITU=_mock_pitu_settings)
-    def test_pitu_client_initialization(self):
-        self._run()
-        self.pitu_client_mock.assert_called_with(
-            base_url="test_url",
-            service="test_cvr_service",
-            client_header="test_header",
-            certificate="test_cert",
-            private_key="test_key",
-            root_ca="test_ca",
-        )
-
     def test_no_employers(self):
         stdout = StringIO()
         self._run(cvr="1234", stdout=stdout, verbosity=3)
@@ -98,16 +86,14 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
     def test_http_404(self):
         stdout = StringIO()
         response = MagicMock(status_code=404)
-        self.client_mock.get.side_effect = HTTPError(response=response)
-        self.pitu_client_mock.return_value = self.client_mock
+        self.method_mock.side_effect = HTTPError(response=response)
         self._run(stdout=stdout, verbosity=3)
         self.assertIn("Could not find employer", stdout.getvalue())
 
     def test_unexpected_http_error(self):
         stdout = StringIO()
         response = MagicMock(status_code=303)
-        self.client_mock.get.side_effect = HTTPError(response=response)
-        self.pitu_client_mock.return_value = self.client_mock
+        self.method_mock.side_effect = HTTPError(response=response)
         self._run(stdout=stdout, verbosity=3)
         self.assertIn("Unexpected 303 error", stdout.getvalue())
 
@@ -115,8 +101,7 @@ class TestGetPersonInfoFromDafoCommand(TestCase):
         stdout = StringIO()
         mock_result = self._mock_result
         mock_result.pop("navn")
-        self.client_mock.get.return_value = self._mock_result
-        self.pitu_client_mock.return_value = self.client_mock
+        self.method_mock.return_value = self._mock_result
         self._run(stdout=stdout, verbosity=3)
         self.assertIn("No employer name", stdout.getvalue())
 

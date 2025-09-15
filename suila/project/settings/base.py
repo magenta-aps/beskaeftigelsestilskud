@@ -93,8 +93,9 @@ PITU = {
     "root_ca": os.environ.get("PITU_SERVER_CERT"),
     "client_header": os.environ.get("PITU_UXP_CLIENT"),
     "base_url": os.environ.get("PITU_URL"),
-    "service": os.environ.get("PITU_SERVICE"),
-    "cvr_service": os.environ.get("PITU_CVR_SERVICE"),
+    "person_info_service": os.environ.get("PITU_SERVICE"),
+    "company_info_service": os.environ.get("PITU_CVR_SERVICE"),
+    "person_subscription_service": os.environ.get("PITU_CPR_SUBSCRIPTION_SERVICE"),
 }
 
 if TESTING:

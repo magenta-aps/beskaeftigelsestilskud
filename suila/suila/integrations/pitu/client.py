@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import copy
+from datetime import datetime
+from typing import List, Set
 
 from django.conf import settings
 from requests import Session
@@ -18,9 +19,13 @@ class PituClient:
         base_url=None,
         root_ca=True,
         timeout=60,
-        service=None,
+        person_info_service=None,
+        person_subscription_service=None,
+        company_info_service=None,
     ):
-        self.service = service
+        self.person_info_service = person_info_service
+        self.person_subscription_service = person_subscription_service
+        self.company_info_service = company_info_service
         self.client_header = client_header
         self.cert = (certificate, private_key)
         self.root_ca = root_ca
@@ -33,16 +38,18 @@ class PituClient:
 
     @classmethod
     def from_settings(cls):
-        pitu_settings: dict = copy.copy(settings.PITU)
-        del pitu_settings["cvr_service"]
-        return cls(**pitu_settings)
+        return cls(**settings.PITU)
 
-    def get(self, path, params={}):
+    def get(self, path, params=None, service=None):
+        if params is None:
+            params = {}
+        if service is None:
+            service = self.person_info_service
         r = self.session.get(
             self.base_url + path,
             params=params,
             timeout=self.timeout,
-            headers={"Uxp-Service": self.service},
+            headers={"Uxp-Service": service},
         )
         r.raise_for_status()
         return r.json()
@@ -50,5 +57,42 @@ class PituClient:
     def close(self):
         self.session.close()
 
-    def get_person_info(self, cpr):
-        return self.get(f"/personLookup/1/cpr/{cpr}")
+    def get_person_info(self, cpr: str):
+        return self.get(f"/personLookup/1/cpr/{cpr}", service=self.person_info_service)
+
+    def get_company_info(self, cvr: int | str):
+        return self.get(f"/{cvr}", service=self.company_info_service)
+
+    def get_subscription_results(
+        self, last_update_time: datetime | None = None
+    ) -> Set[str]:
+        subscription_id: str = "suilaCprEvent"
+        service = self.person_subscription_service
+        page_size = 100
+        params = {
+            "pageSize": page_size,
+            "subscription": subscription_id,
+        }
+        if last_update_time is not None:
+            params["timestamp.GTE"] = last_update_time.isoformat()
+
+        cpr_list: List[str] = []
+        page = 1
+        while True:
+            page_params = params.copy()
+            page_params["page"] = page
+            results = self.get("/findCprDataEvent/fetchEvents", page_params, service)
+            batch_cpr_list: List[str] | None = results.get("results")
+            if batch_cpr_list is None:
+                raise Exception(f"Unexpected None in cprList: {results}")
+            cpr_list.extend(batch_cpr_list)
+            if len(batch_cpr_list) < page_size:
+                break
+            if page > 10000:
+                raise Exception(
+                    f"Looped for more than 10000 pages of results. "
+                    f"Something is wrong. Collected {len(set(cpr_list))} unique "
+                    f"cprs out of {len(cpr_list)} total returned cprs"
+                )
+            page += 1
+        return set(cpr_list)
