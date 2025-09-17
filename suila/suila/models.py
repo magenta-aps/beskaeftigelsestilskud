@@ -80,6 +80,7 @@ class ManagementCommands(TextChoices):
     LOAD_PRISME_B_TAX = "load_prisme_b_tax"
     IMPORT_U1A_DATA = "import_u1a_data"
     GET_PERSON_INFO_FROM_DAFO = "get_person_info_from_dafo"
+    GET_UPDATED_PERSON_INFO_FROM_DAFO = "get_updated_person_info_from_dafo"
     ESTIMATE_INCOME = "estimate_income"
     CALCULATE_BENEFIT = "calculate_benefit"
     EXPORT_BENEFITS_TO_PRISME = "export_benefits_to_prisme"
@@ -2186,6 +2187,7 @@ class JobLog(PermissionsMixin, models.Model):
     type_param = models.TextField(default=None, null=True)
     verbosity_param = models.IntegerField(default=None, null=True)
     skew_param = models.BooleanField(default=None, null=True)
+    since_param = models.CharField(max_length=30, default=None, null=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

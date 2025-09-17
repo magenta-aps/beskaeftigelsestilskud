@@ -64,6 +64,10 @@ class JobDispatcher:
                 day >= get_calculation_date(year, month).day
             ),
         },
+        ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO: {
+            "type": "daily",
+            "validator": lambda year, month, day: (True),
+        },
         # "estimation"-jobs
         ManagementCommands.ESTIMATE_INCOME: {
             "type": "monthly",
@@ -107,6 +111,7 @@ class JobDispatcher:
             ManagementCommands.LOAD_PRISME_B_TAX: [],
             ManagementCommands.IMPORT_U1A_DATA: [],
             ManagementCommands.GET_PERSON_INFO_FROM_DAFO: [],
+            ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO: [],
             ManagementCommands.ESTIMATE_INCOME: [
                 ManagementCommands.LOAD_ESKAT,
             ],
