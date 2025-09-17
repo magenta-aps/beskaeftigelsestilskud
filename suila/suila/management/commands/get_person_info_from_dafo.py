@@ -4,7 +4,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, Tuple, TypeGuard
 
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from requests.exceptions import HTTPError
 
 from suila.integrations.pitu.client import PituClient
@@ -46,32 +46,18 @@ class Command(SuilaBaseCommand):
                 self._write_verbose("Could not find any persons in the database.")
                 return self._write_verbose("Done")
 
-        pitu_client = self._get_pitu_client()
+        self.pitu_client = self._get_pitu_client()
+        self.update_persons(persons, kwargs["maxworkers"])
 
-        def fetch_person(person: Person) -> Tuple[Person, Any] | None:
-            try:
-                return person, pitu_client.get_person_info(person.cpr)
-            except HTTPError as e:
-                if e.response.status_code == 404:
-                    self._write_verbose(
-                        f"Could not find person with CPR={person.cpr} in DAFO"
-                    )
-                else:
-                    self._write_verbose(
-                        (
-                            f"Unexpected {e.response.status_code} "
-                            f"error: {str(e.response.content)}"
-                        )
-                    )
-                return None  # Indicate failure
+        self._write_verbose("Done")
+        self.pitu_client.close()
 
-        maxworkers: int = kwargs["maxworkers"]
+    def update_persons(self, persons: QuerySet[Person], maxworkers: int = 5):
         self._write_verbose(f"Starting person update-workers (max_worker={maxworkers})")
         with ThreadPoolExecutor(max_workers=maxworkers) as executor:
             future_to_person = {
-                executor.submit(fetch_person, person): person for person in persons
+                executor.submit(self.fetch_person, person): person for person in persons
             }
-
             for future in as_completed(future_to_person):
                 try:
                     future_tuple = future.result()
@@ -81,8 +67,22 @@ class Command(SuilaBaseCommand):
                 except Exception as e:
                     self._write_verbose(f"Error processing person: {e}")
 
-        self._write_verbose("Done")
-        pitu_client.close()
+    def fetch_person(self, person: Person) -> Tuple[Person, Any] | None:
+        try:
+            return person, self.pitu_client.get_person_info(person.cpr)
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                self._write_verbose(
+                    f"Could not find person with CPR={person.cpr} in DAFO"
+                )
+            else:
+                self._write_verbose(
+                    (
+                        f"Unexpected {e.response.status_code} "
+                        f"error: {str(e.response.content)}"
+                    )
+                )
+            return None  # Indicate failure
 
     def _get_pitu_client(self) -> PituClient:
         # Use default configuration (CPR service) for Pitu client

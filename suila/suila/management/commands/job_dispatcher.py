@@ -9,7 +9,7 @@ from django.conf import settings
 
 from suila.dispatch import JobDispatcher
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import ManagementCommands
+from suila.models import JobLog, ManagementCommands
 
 
 class Command(SuilaBaseCommand):
@@ -132,6 +132,20 @@ class Command(SuilaBaseCommand):
             ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
             cpr=cpr,
             verbosity=verbosity,
+        )
+
+        runtimes = (
+            JobLog.objects.filter(
+                name=ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO
+            )
+            .order_by("-runtime")
+            .values_list("runtime", flat=True)[:1]
+        )
+        last_run: str = runtimes[0].isoformat() if runtimes else ""
+        job_dispatcher.call_job(
+            ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+            verbosity=verbosity,
+            since=last_run,
         )
 
         # Estimate income

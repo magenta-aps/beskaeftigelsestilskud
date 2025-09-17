@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from concurrent.futures import Future
+from datetime import datetime, timedelta
 from io import StringIO
-from typing import Any, Dict
+from typing import Any, Dict, Set
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
@@ -680,17 +681,61 @@ class GetPersonInfoFromDAFO(TransactionTestCase):
         )
         self.assertIn('no "fornavn" and "efternavn" in person_data', stdout.getvalue())
 
+    @patch(
+        "suila.management.commands."
+        "get_updated_person_info_from_dafo.Command._get_pitu_client"
+    )
+    def test_get_updated_since(self, mock_get_pitu_client: MagicMock):
+        mock_get_pitu_client.return_value = self._get_mock_pitu_client()
+        person1 = self._create_person(
+            "0101709988",
+            name="Test One Magenta",
+            full_address="Silkeborgvej 260, 8230 Åbyhøj",
+            country_code="DK",
+        )
+        person2 = self._create_person(
+            "0102808877",
+            name="Test Two Magenta",
+            full_address="Silkeborgvej 260, 8230 Åbyhøj",
+            country_code="DK",
+        )
+        call_command(
+            ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+            since=(datetime.now() - timedelta(days=1)).isoformat(),
+        )
+        mock_get_pitu_client.return_value.get_person_info.assert_called_with(
+            person1.cpr
+        )
+        self.assertNotIn(
+            call(person2.cpr),
+            mock_get_pitu_client.return_value.get_person_info.mock_calls,
+        )
+
     # PRIVATE helper methods
     def _get_mock_pitu_client(self) -> MagicMock:
         mock_get_person_info = MagicMock(
             side_effect=GetPersonInfoFromDAFO._mock_get_person_info
         )
-        mock_pitu_client = MagicMock(get_person_info=mock_get_person_info)
-
+        mock_get_subscription_results = MagicMock(
+            side_effect=GetPersonInfoFromDAFO._mock_get_subscription_results
+        )
+        mock_pitu_client = MagicMock(
+            get_person_info=mock_get_person_info,
+            get_subscription_results=mock_get_subscription_results,
+        )
         return mock_pitu_client
 
     def _create_person(self, cpr: str, **kwargs):
         return Person.objects.create(cpr=cpr, **kwargs)
+
+    @staticmethod
+    def _mock_get_subscription_results(last_update_time: datetime | None) -> Set[str]:
+        updated = set()
+        if last_update_time < datetime.now() - timedelta(hours=12):
+            updated.add("0101709988")
+        if last_update_time < datetime.now() - timedelta(days=1, hours=12):
+            updated.add("0102808877")
+        return updated
 
     @staticmethod
     def _mock_get_person_info(cpr: str) -> Dict[str, Any]:

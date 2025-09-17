@@ -6,7 +6,7 @@ import calendar
 from datetime import date, timedelta
 from decimal import Decimal
 from io import StringIO
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -88,9 +88,16 @@ class TestJobDispatcherCommands(TestCase):
                     reraise=False,
                     verbosity=1,
                 ),
+                call(
+                    ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                    since=ANY,
+                ),
             ]
 
-            mock_call_command.assert_has_calls(expected_calls)
+            mock_call_command.assert_has_calls(expected_calls, any_order=True)
             self.assertEqual(mock_call_command.call_count, len(expected_calls))
             mock_call_command.reset_mock()
 
@@ -135,9 +142,16 @@ class TestJobDispatcherCommands(TestCase):
                     reraise=False,
                     verbosity=1,
                 ),
+                call(
+                    ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+                    traceback=False,
+                    reraise=False,
+                    verbosity=1,
+                    since=ANY,
+                ),
             ]
 
-            mock_call_command.assert_has_calls(expected_calls)
+            mock_call_command.assert_has_calls(expected_calls, any_order=True)
             self.assertEqual(mock_call_command.call_count, len(expected_calls))
             mock_call_command.reset_mock()
 
@@ -146,8 +160,18 @@ class TestJobDispatcherCommands(TestCase):
 
             self._call_job_dispatcher_on_date(test_date, mock_timezone_now)
 
-            mock_call_command.assert_has_calls([])
-            self.assertEqual(mock_call_command.call_count, 0)
+            mock_call_command.assert_has_calls(
+                [
+                    call(
+                        ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+                        traceback=False,
+                        reraise=False,
+                        verbosity=1,
+                        since=ANY,
+                    ),
+                ]
+            )
+            self.assertEqual(mock_call_command.call_count, 1)
             mock_call_command.reset_mock()
 
     @patch("suila.management.commands.job_dispatcher.JobDispatcher")
@@ -348,10 +372,17 @@ class TestJobDispatcherCommands(TestCase):
                     reraise=False,
                     verbosity=1,
                 ),
+                call(
+                    ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+                    verbosity=1,
+                    traceback=False,
+                    reraise=False,
+                    since=ANY,
+                ),
             ]
 
             self.assertEqual(mock_call_command.call_count, len(expected_calls))
-            mock_call_command.assert_has_calls(expected_calls)
+            mock_call_command.assert_has_calls(expected_calls, any_order=True)
             mock_call_command.reset_mock()
 
     def run_job_dispatcher(
