@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Set
 
 from django.conf import settings
-from requests import Session
+from requests import ReadTimeout, Session
 
 
 class PituClient:
@@ -81,7 +81,20 @@ class PituClient:
         while True:
             page_params = params.copy()
             page_params["page"] = page
-            results = self.get("/findCprDataEvent/fetchEvents", page_params, service)
+            retries = 5
+            exception: BaseException | None = None
+            for retry in range(retries):
+                try:
+                    results = self.get(
+                        "/findCprDataEvent/fetchEvents", page_params, service
+                    )
+                    exception = None
+                    break
+                except ReadTimeout as e:
+                    exception = e
+
+            if exception is not None:
+                raise exception
             batch_cpr_list: List[str] | None = results.get("results")
             if batch_cpr_list is None:
                 raise Exception(f"Unexpected None in cprList: {results}")
