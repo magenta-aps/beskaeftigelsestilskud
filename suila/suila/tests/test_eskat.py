@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs
 
 import requests
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.test.testcases import SimpleTestCase
@@ -88,6 +89,11 @@ class EskatTest(TestCase):
         self.assertEqual(client.base_url, "https://eskattest/eTaxCommonDataApi")
         self.assertEqual(client.username, "testuser")
         self.assertEqual(client.password, "testpass")
+
+    @override_settings(ESKAT_BASE_URL=None)
+    def test_from_settings_missing_eskat_url(self):
+        with self.assertRaises(ImproperlyConfigured):
+            EskatClient.from_settings()
 
     def test_get_session(self):
         client = EskatClient.from_settings()
