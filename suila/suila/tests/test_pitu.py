@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, call
 
 from django.test import TestCase
 from django.test.utils import override_settings
+from requests import ReadTimeout
 
 from suila.integrations.pitu.client import PituClient
 
@@ -223,3 +224,28 @@ class PituTest(TestCase):
                 "Collected 100 unique cprs out of 1000100 total returned cprs",
             ),
         )
+
+    def test_subscription_results_timeout(self):
+        self.response_mock.json.side_effect = [
+            ReadTimeout,
+            ReadTimeout,
+            ReadTimeout,
+            ReadTimeout,
+            ReadTimeout,
+            ReadTimeout,
+            ReadTimeout,
+            ReadTimeout,
+        ]
+        with self.assertRaises(ReadTimeout):
+            self.pitu_client.get_subscription_results()
+
+        self.response_mock.json.side_effect = [
+            ReadTimeout,
+            ReadTimeout,
+            ReadTimeout,
+            {},
+        ]
+        with self.assertRaises(Exception) as cm:
+            self.pitu_client.get_subscription_results()
+        exception = cm.exception
+        self.assertEqual(str(exception), "Unexpected None in cprList: {}")
