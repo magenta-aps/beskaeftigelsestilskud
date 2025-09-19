@@ -88,6 +88,7 @@ class PituClient:
                     results = self.get(
                         "/findCprDataEvent/fetchEvents", page_params, service
                     )
+                    exception = None
                     break
                 except ReadTimeout as e:
                     exception = e
