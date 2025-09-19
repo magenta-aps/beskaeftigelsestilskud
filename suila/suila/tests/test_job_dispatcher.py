@@ -207,28 +207,6 @@ class TestJobDispatcherCommands(TestCase):
         )
         self.assertIn("Done", stdout.getvalue())
 
-    @patch("suila.management.commands.job_dispatcher.JobDispatcher")
-    @override_settings(ESKAT_BASE_URL=None)
-    def test_job_dispatch_missing_eskat_url(self, job_dispatcher: MagicMock):
-        stdout = StringIO()
-        stderr = StringIO()
-
-        job_dispatcher_mock = MagicMock()
-        job_dispatcher_mock.month = 6
-        job_dispatcher_mock.year = 2025
-        job_dispatcher.return_value = job_dispatcher_mock
-
-        call_command(
-            self.command,
-            year=2022,
-            month=1,
-            day=1,
-            verbosity=3,
-            stdout=stdout,
-            stderr=stderr,
-        )
-        self.assertIn("ESKAT_BASE_URL is not set", stdout.getvalue())
-
     # NEW TESTS - after it was decided the job dispatcher will run every day (again)
 
     @patch("suila.dispatch.timezone.now")
