@@ -1,0 +1,33 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+<div class="d-flex justify-content-between">
+    <div>
+        {{ page_obj.start_index }}-{{ page_obj.end_index }} af {{ paginator.count }} resultater
+    </div>
+
+    <div class="pagination">
+        <span class="step-links btn-group">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query_params_extra %}&{{ query_params_extra|safe }}{% endif %}"
+                class="btn btn-outline-primary px-2 pt-2 pb-0">
+                <span class="material-icons">arrow_back</span>
+            </a>
+            {% endif %}
+
+            {% for pi in paginator.page_range %}
+            <a href="?page={{ pi }}{% if query_params_extra %}&{{ query_params_extra|safe }}{% endif %}"
+                class="btn btn-outline-primary{% if page_obj.number == pi %} active{% endif %}">
+                {{ pi }}
+            </a>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query_params_extra %}&{{ query_params_extra|safe }}{% endif %}"
+                class="btn btn-outline-primary px-2 pt-2 pb-0">
+                <span class="material-icons">arrow_forward</span>
+            </a>
+            {% endif %}
+        </span>
+    </div>
+</div>
