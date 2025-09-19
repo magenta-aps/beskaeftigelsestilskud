@@ -81,15 +81,18 @@ class PituClient:
         while True:
             page_params = params.copy()
             page_params["page"] = page
-            for retry in range(5):
+            retries = 5
+            exception = None
+            for retry in range(retries):
                 try:
                     results = self.get(
                         "/findCprDataEvent/fetchEvents", page_params, service
                     )
                     break
-                except ReadTimeout:
-                    if retry == 4:
-                        raise
+                except ReadTimeout as e:
+                    exception = e
+            else:
+                raise exception
             batch_cpr_list: List[str] | None = results.get("results")
             if batch_cpr_list is None:
                 raise Exception(f"Unexpected None in cprList: {results}")
