@@ -7,6 +7,7 @@ from io import StringIO
 from itertools import cycle
 
 from bs4 import BeautifulSoup
+from common.models import User
 from common.tests.test_mixins import TestViewMixin
 from common.utils import (
     add_parameters_to_url,
@@ -15,6 +16,7 @@ from common.utils import (
     camelcase_to_snakecase,
     get_income_as_dataframe,
     get_people_in_quarantine,
+    get_user_who_pressed_pause,
     map_between_zero_and_one,
     to_dataframe,
 )
@@ -56,6 +58,24 @@ class TestUtils(TestCase):
         self.assertEqual(
             camelcase_to_snakecase("hepHeyGLFoobar42"), "hep_hey_gl_foobar42"
         )
+
+    def test_get_user_who_pressed_pause(self):
+        person = Person.objects.create(
+            name="Jens Hansen", cpr="1234567890", paused=False
+        )
+        user = User.objects.create(username="test")
+        person.paused = True
+        person.save()
+        history_item = person.history.order_by("-history_date").first()
+        history_item.history_user = user
+        history_item.save()
+        self.assertEqual(get_user_who_pressed_pause(person), "skattestyrelsen")
+
+    def test_get_user_who_pressed_pause_none(self):
+        person = Person.objects.create(
+            name="Jens Hansen", cpr="1234567890", paused=True
+        )
+        self.assertIsNone(get_user_who_pressed_pause(person))
 
 
 class TestStabilityScoreUtils(TestCase):

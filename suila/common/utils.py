@@ -483,7 +483,12 @@ def get_user_who_pressed_pause(person: Person) -> str | None:
         delta = new_record.diff_against(old_record)
 
         if "paused" in delta.changed_fields:
-            user_who_changed_object = User.objects.get(id=new_record.history_user_id)
+            try:
+                user_who_changed_object = User.objects.get(
+                    id=new_record.history_user_id
+                )
+            except User.DoesNotExist:
+                break
 
             if user_who_changed_object.cpr == person.cpr:
                 user_who_pressed_pause = "self"
