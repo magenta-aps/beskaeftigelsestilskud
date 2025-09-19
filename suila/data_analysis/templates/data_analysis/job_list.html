@@ -122,25 +122,8 @@
     </tbody>
     </table>
 
-    <div class="pagination">
-    <span class="step-links btn-group">
-        {% if page_obj.has_previous %}
-            <a href="?page=1&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">1</a>
-            {% if page_obj.previous_page_number != 1 %}
-                <a href="?page={{ page_obj.previous_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.previous_page_number }}</a>
-            {% endif %}
-        {% endif %}
-        <a class="current btn btn-outline-primary active">
-            {{ page_obj.number }}
-        </a>
-        {% if page_obj.has_next %}
-            {% if page_obj.next_page_number != page_obj.paginator.num_pages %}
-            <a href="?page={{ page_obj.next_page_number }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.next_page_number }}</a>
-            {% endif %}
-            <a href="?page={{ page_obj.paginator.num_pages }}&{{ form.cleaned_data|urlparams|safe }}" class="btn btn-outline-primary">{{ page_obj.paginator.num_pages }}</a>
-        {% endif %}
-    </span>
-    </div>
+    {% include "suila/pagination.html" with page_obj=page_obj paginator=paginator query_params_extra=form.cleaned_data|urlparams|safe %}
+
 </div>
 
 {% endblock %}
