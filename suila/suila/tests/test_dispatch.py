@@ -6,7 +6,7 @@ import datetime
 from unittest import mock
 from unittest.mock import MagicMock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from suila.dispatch import JobDispatcher
 from suila.exceptions import DependenciesNotMet
@@ -154,3 +154,12 @@ class TestJobDispatcher(TestCase):
         }
 
         self.assertFalse(self.job_dispatcher.allow_job("something-darkside"))
+
+    @mock.patch("suila.dispatch.logger")
+    @override_settings(ESKAT_BASE_URL=None)
+    def test_call_job_cmd_error(self, mock_logger: MagicMock):
+        job_dispatcher = JobDispatcher()
+        job_dispatcher.call_job(ManagementCommands.LOAD_ESKAT, 2025, "monthlyincome")
+        mock_logger.exception.assert_called_once_with(
+            f"CommandError exception for job: {ManagementCommands.LOAD_ESKAT}"
+        )
