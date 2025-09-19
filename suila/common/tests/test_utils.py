@@ -73,8 +73,10 @@ class TestUtils(TestCase):
 
     def test_get_user_who_pressed_pause_none(self):
         person = Person.objects.create(
-            name="Jens Hansen", cpr="1234567890", paused=True
+            name="Jens Hansen", cpr="1234567890", paused=False
         )
+        person.paused = True
+        person.save()
         self.assertIsNone(get_user_who_pressed_pause(person))
 
 
