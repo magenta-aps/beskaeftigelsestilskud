@@ -163,3 +163,11 @@ class TestJobDispatcher(TestCase):
         mock_logger.exception.assert_called_once_with(
             f"CommandError exception for job: {ManagementCommands.LOAD_ESKAT}"
         )
+
+    @mock.patch("suila.dispatch.logger")
+    def test_call_job_params_error(self, mock_logger: MagicMock):
+        job_dispatcher = JobDispatcher()
+        job_dispatcher.call_job(ManagementCommands.LOAD_ESKAT)
+        mock_logger.exception.assert_called_once_with(
+            f"Invalid parameters for job: {ManagementCommands.LOAD_ESKAT}"
+        )
