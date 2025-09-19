@@ -4,7 +4,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from requests import HTTPError
 from requests.exceptions import ConnectTimeout, ReadTimeout, SSLError, TooManyRedirects
 from tenQ.client import ClientException
@@ -52,6 +52,7 @@ class MetricsTest(TestCase):
         self.assertEqual(resp.content, b"ERROR")
 
     @patch("metrics.views.EskatClient.get_tax_scopes")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
     def test_health_check_eskat(self, mock_get_tax_scopes):
         mock_get_tax_scopes.return_value = {"foo": "bar"}
         resp = self.client.get("/metrics/health/eskat")
@@ -59,6 +60,7 @@ class MetricsTest(TestCase):
         self.assertEqual(resp.content, b"OK")
 
     @patch("metrics.views.EskatClient.get_tax_scopes")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
     def test_health_check_eskat_exception(self, mock_get_tax_scopes):
         for exception_class in (
             HTTPError,

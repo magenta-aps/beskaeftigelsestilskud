@@ -6,7 +6,7 @@ from io import StringIO
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from suila.management.commands.load_eskat import Command as LoadEskatCommand
 from suila.models import ManagementCommands, PersonYear, TaxInformationPeriod, Year
@@ -120,6 +120,7 @@ class TestLoadEskatTaxInformationCommand(TestCase):
             return None
 
     @patch("suila.integrations.eskat.client.EskatClient.get")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
     def test_tax_scope(self, eskat_get: MagicMock):
         # Import two people (cpr="1111111111" and cpr="2222222222")
         eskat_get.side_effect = self.json_data
