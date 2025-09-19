@@ -232,14 +232,19 @@ class JobDispatcher:
     def call_job(self, name, *args, **kwargs):
         # Gather job_params
         job_params = {}
-        for param, value in kwargs.items():
-            job_params[param + "_param"] = value
 
-        match (name):
-            case ManagementCommands.CALCULATE_STABILITY_SCORE:
-                job_params["year_param"] = args[0]
-            case ManagementCommands.LOAD_ESKAT:
-                job_params["type_param"] = args[1]
+        try:
+            for param, value in kwargs.items():
+                job_params[param + "_param"] = value
+
+            match (name):
+                case ManagementCommands.CALCULATE_STABILITY_SCORE:
+                    job_params["year_param"] = args[0]
+                case ManagementCommands.LOAD_ESKAT:
+                    job_params["type_param"] = args[1]
+        except IndexError:
+            logger.exception(f"Invalid parameters for job: {name}")
+            return
 
         # Check if the job is allowed to be called
         if not self.allow_job(name, job_params):
