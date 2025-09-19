@@ -82,7 +82,7 @@ class PituClient:
             page_params = params.copy()
             page_params["page"] = page
             retries = 5
-            exception = None
+            exception: BaseException | None = None
             for retry in range(retries):
                 try:
                     results = self.get(
@@ -91,7 +91,8 @@ class PituClient:
                     break
                 except ReadTimeout as e:
                     exception = e
-            else:
+
+            if exception is not None:
                 raise exception
             batch_cpr_list: List[str] | None = results.get("results")
             if batch_cpr_list is None:
