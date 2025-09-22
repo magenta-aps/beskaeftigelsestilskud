@@ -282,6 +282,12 @@ class PersonDetailView(
 
             send_eboks_letter_when_pausing = settings.SEND_EBOKS_LETTER_WHEN_PAUSING
 
+            pause_reasons = [
+                c
+                for c in PauseReasonChoices.choices
+                if c[0] not in [PauseReasonChoices.DEATH, PauseReasonChoices.MISSING]
+            ]
+
             context_data.update(
                 {
                     "show_next_payment": True,
@@ -316,7 +322,7 @@ class PersonDetailView(
                     "engine_u": person_year.preferred_estimation_engine_u,
                     "pause_effect_date": pause_effect_date,
                     "show_pause_effect_date": show_pause_effect_date,
-                    "pause_reasons": PauseReasonChoices.choices,
+                    "pause_reasons": pause_reasons,
                     "pause_reason": person.pause_reason,
                     "send_eboks_letter_when_pausing": send_eboks_letter_when_pausing,
                 }
