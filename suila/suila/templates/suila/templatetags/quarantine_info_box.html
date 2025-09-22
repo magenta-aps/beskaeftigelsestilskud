@@ -1,0 +1,14 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+
+<div class="me-2 mb-3 info">
+    <b> {% translate quarantine_reason %} </b>
+    <p>
+        {% blocktrans trimmed  with year=next_year %}
+        Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit
+        i januar {{ year }}.
+        {% endblocktrans %}
+    </p>
+</div>

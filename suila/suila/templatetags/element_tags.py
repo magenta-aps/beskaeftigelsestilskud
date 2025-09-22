@@ -71,3 +71,12 @@ def dead_info_box(context):
     return {  # pragma: no cover
         **context.flatten(),
     }
+
+
+@register.inclusion_tag(
+    "suila/templatetags/quarantine_info_box.html", takes_context=True
+)
+def quarantine_info_box(context):
+    return {  # pragma: no cover
+        **context.flatten(),
+    }
