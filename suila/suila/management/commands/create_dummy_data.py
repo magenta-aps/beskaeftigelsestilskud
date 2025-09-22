@@ -20,6 +20,7 @@ from suila.models import (
     ManagementCommands,
     MonthlyIncomeReport,
     Person,
+    PersonCprStatusChoices,
     PersonMonth,
     PersonYear,
     PrismeBatch,
@@ -176,7 +177,11 @@ class Command(BaseCommand):
             # Person with prisme-batch items
             Person.objects.update_or_create(
                 cpr="0901011991",
-                defaults={"name": "Person who is dead", "civil_state": "D"},
+                defaults={
+                    "name": "Person who is dead",
+                    "civil_state": "D",
+                    "cpr_status": PersonCprStatusChoices.DEAD,
+                },
             )[0]: [10000]
             * 12,
         }
