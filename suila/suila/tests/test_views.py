@@ -44,6 +44,7 @@ from suila.models import (
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
+    PauseReasonChoices,
     Person,
     PersonMonth,
     PersonYear,
@@ -1716,7 +1717,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.person_year = PersonYear.objects.all()[0]
+        cls.person_year = cls.person1.personyear_set.order_by("-year").first()
         cls.person_month = PersonMonth.objects.get(person_year=cls.person_year, month=3)
         cls.url = reverse(
             "suila:pause_person", kwargs={"pk": cls.person_year.person.pk}
@@ -1839,6 +1840,30 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.post_pause()
 
         self.assertFalse(self.person_year.person.paused)
+
+    def test_unpause_dead_person(self):
+        person = self.person1
+        person.paused = True
+        person.pause_reason = PauseReasonChoices.DEATH
+        person.save()
+        self.assertTrue(person.paused)
+
+        self.client.force_login(self.admin_user)
+        self.data["paused"] = False
+        self.post_pause()
+        self.assertTrue(person.paused)
+
+    def test_unpause_missing_person(self):
+        person = self.person_year
+        person.paused = True
+        person.pause_reason = PauseReasonChoices.MISSING
+        person.save()
+        self.assertTrue(person.paused)
+
+        self.client.force_login(self.admin_user)
+        self.data["paused"] = False
+        self.post_pause()
+        self.assertTrue(person.paused)
 
     def test_history(self):
         self.client.force_login(self.staff_user)
@@ -1966,12 +1991,13 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
 
         self.data["paused"] = False
         self.post_pause()
+        self.person_year.person.refresh_from_db()
         self.assertEqual(self.person_year.person.pause_reason, None)
 
     @override_settings(SEND_EBOKS_LETTER_WHEN_PAUSING=True, ENVIRONMENT="production")
     def test_send_eboks_message(self):
         self.client.force_login(self.admin_user)
-        self.data["pause_reason"] = 2
+        self.data["pause_reason"] = PauseReasonChoices.CALCULATION_ERROR
         self.data["allow_pause"] = False
         self.post_pause()
 

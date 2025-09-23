@@ -5,6 +5,7 @@ from decimal import Decimal
 from urllib.parse import quote_plus, unquote_plus
 
 from common.form_mixins import BootstrapForm
+from django.core.exceptions import ValidationError
 from django.forms import (
     CharField,
     ChoiceField,
@@ -24,6 +25,7 @@ from django.utils.translation import gettext_lazy as _
 from suila.models import (
     Note,
     NoteAttachment,
+    PauseReasonChoices,
     Person,
     PersonYear,
     WorkingTaxCreditCalculationMethod,
@@ -221,6 +223,16 @@ class PauseForm(ModelForm):
     class Meta:
         model = Person
         fields = ["paused", "allow_pause", "pause_reason"]
+
+    def clean(self):
+        if self.instance.paused and self.instance.pause_reason in (
+            PauseReasonChoices.MISSING,
+            PauseReasonChoices.DEATH,
+        ):
+            raise ValidationError("Dead or missing persons cannot be unpaused.")
+        if self.cleaned_data["paused"] is False:
+            self.cleaned_data["pause_reason"] = None
+        return super().clean()
 
 
 class PersonYearEstimationEngineForm(ModelForm):

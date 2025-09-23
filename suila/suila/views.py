@@ -298,6 +298,11 @@ class PersonDetailView(
                     "paused": person.paused,
                     "allow_pause": person.allow_pause,
                     "can_pause": person.allow_pause and (user.cpr == person.cpr),
+                    "can_unpause": not (  # Paused person who is dead or missing
+                        person.paused  # may not be unpaused
+                        and person.pause_reason
+                        in (PauseReasonChoices.MISSING, PauseReasonChoices.DEATH)
+                    ),
                     "person_id": person.pk,
                     "person_year_id": person_year.pk,
                     "next_year": person_year.year.year + 1,
@@ -981,9 +986,9 @@ class FormWithFormsetView(FormView):
         )
 
     def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
         form = self.get_form()
         formset = self.get_formset()
-        self.object = self.get_object()
         for subform in formset:
             if hasattr(subform, "set_parent_form"):
                 subform.set_parent_form(form)  # pragma: no cover
@@ -1142,13 +1147,14 @@ class PersonPauseUpdateView(
     form_class = PauseForm
     formset_class = NoteAttachmentFormSet
     required_model_permissions = ["suila.change_person"]
+    template_name = "suila/forms/pause_form.html"
 
     @classmethod
     def has_permissions(cls, **kwargs):
         request = kwargs.get("request")
+        request_kwargs = kwargs.get("request_kwargs", {})
         user = kwargs.get("user", request.user)
-        person = Person.objects.get(pk=int(request.POST.get("person")))
-
+        person = Person.objects.get(pk=int(request_kwargs["pk"]))
         if user.cpr == person.cpr:
             return True if person.allow_pause else False
         return super().has_permissions(**kwargs)
@@ -1157,22 +1163,24 @@ class PersonPauseUpdateView(
         return reverse_lazy("suila:person_detail", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form, formset):
+        # We want the object's original state so we can use it for comparison,
+        # but at this stage self.object has been tainted with form data, so we need
+        # to re-fetch it from the database.
+        self.object: Person = self.get_object()
+        default_allow_pause = self.object.allow_pause
+        default_paused = self.object.paused
+
         with transaction.atomic():
             year = form.cleaned_data["year"]
             month = form.cleaned_data["month"]
             note = form.cleaned_data["note"]
-            paused = form.cleaned_data["paused"]
-            allow_pause = form.cleaned_data["allow_pause"]
-            pause_reason = form.cleaned_data["pause_reason"]
+
             suilamessage = None
 
-            default_allow_pause = self.object.allow_pause
-            default_paused = self.object.paused
-
-            self.object.paused = paused
-            self.object.allow_pause = allow_pause
-            self.object.pause_reason = pause_reason if paused else None
-            self.object.save()
+            self.object = form.save()
+            paused = self.object.paused
+            allow_pause = self.object.allow_pause
+            pause_reason = self.object.pause_reason
 
             if paused:
                 standard_note_text = gettext_noop("Starter udbetalingspause") + "\n"
