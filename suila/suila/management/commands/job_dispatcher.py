@@ -5,8 +5,6 @@
 # Job which runs all other relevant management jobs on the proper days.
 # Intended to be run daily
 
-from django.conf import settings
-
 from suila.dispatch import JobDispatcher
 from suila.management.commands.common import SuilaBaseCommand
 from suila.models import JobLog, ManagementCommands
@@ -85,9 +83,7 @@ class Command(SuilaBaseCommand):
 
         effect_year = year if month > 2 else year - 1
         effect_month = month - 2 if month > 2 else month - 2 + 12
-
         cpr = options["cpr"]
-        ESKAT_BASE_URL = settings.ESKAT_BASE_URL  # type: ignore[misc]
 
         job_dispatcher.call_job(
             ManagementCommands.CALCULATE_STABILITY_SCORE, year - 1, verbosity=verbosity
@@ -98,22 +94,17 @@ class Command(SuilaBaseCommand):
             verbosity=verbosity,
         )
 
-        # Call "load_eskat" for 3 different "types"
-        if not ESKAT_BASE_URL:
-            self._write_verbose(
-                "ESKAT_BASE_URL is not set - cannot load data from eskat"
+        # Call "load_eskat" for all "types"
+        for typ in self.load_eskat_types:
+            job_dispatcher.call_job(
+                ManagementCommands.LOAD_ESKAT,
+                effect_year,
+                typ,
+                month=None,
+                verbosity=verbosity,
+                cpr=cpr,
+                skew=False,
             )
-        else:
-            for typ in self.load_eskat_types:
-                job_dispatcher.call_job(
-                    ManagementCommands.LOAD_ESKAT,
-                    effect_year,
-                    typ,
-                    month=None,
-                    verbosity=verbosity,
-                    cpr=cpr,
-                    skew=False,
-                )
 
         # Load Prisme b-tax data
         job_dispatcher.call_job(ManagementCommands.LOAD_PRISME_B_TAX, year, month)

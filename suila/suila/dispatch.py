@@ -232,14 +232,19 @@ class JobDispatcher:
     def call_job(self, name, *args, **kwargs):
         # Gather job_params
         job_params = {}
-        for param, value in kwargs.items():
-            job_params[param + "_param"] = value
 
-        match (name):
-            case ManagementCommands.CALCULATE_STABILITY_SCORE:
-                job_params["year_param"] = args[0]
-            case ManagementCommands.LOAD_ESKAT:
-                job_params["type_param"] = args[1]
+        try:
+            for param, value in kwargs.items():
+                job_params[param + "_param"] = value
+
+            match (name):
+                case ManagementCommands.CALCULATE_STABILITY_SCORE:
+                    job_params["year_param"] = args[0]
+                case ManagementCommands.LOAD_ESKAT:
+                    job_params["type_param"] = args[1]
+        except IndexError:
+            logger.exception(f"Invalid parameters for job: {name}")
+            return
 
         # Check if the job is allowed to be called
         if not self.allow_job(name, job_params):
@@ -248,9 +253,7 @@ class JobDispatcher:
         # If allowed, check if job dependencies are met
         try:
             self.check_dependencies(name)
-        except DependenciesNotMet:
-            logger.warning(f"DependencyNotMet exception for job: {name}")
-        else:
+
             logger.info(
                 f"\n{datetime.date(self.year, self.month, self.day)}: "
                 f"Running job {name} ..."
@@ -263,3 +266,9 @@ class JobDispatcher:
                 reraise=self.reraise,
                 **kwargs,
             )
+        except DependenciesNotMet:
+            logger.warning(f"DependencyNotMet exception for job: {name}")
+        except management.CommandError:
+            logger.exception(f"CommandError exception for job: {name}")
+            # NOTE: We just log these errors, since jobs shouldn't prevent us from
+            #       running other jobs through the JobDispatcher afterwards
