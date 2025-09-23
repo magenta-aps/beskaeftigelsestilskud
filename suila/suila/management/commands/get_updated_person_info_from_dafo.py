@@ -21,7 +21,10 @@ class Command(GetPersonInfoFromDafoCommand):
     def _handle(self, *args, **kwargs):
         """Updates all Person objects based on CPR data from DAFO/Pitu"""
         self.force = kwargs["force"]
-        self.since = datetime.fromisoformat(kwargs["since"])
+        if kwargs["since"]:
+            self.since = datetime.fromisoformat(kwargs["since"])
+        else:
+            self.since = None
         self._verbose = kwargs["verbosity"] > 1
         self._write_verbose("Loading updated CPRS from DAFO ...")
         self.pitu_client = self._get_pitu_client()

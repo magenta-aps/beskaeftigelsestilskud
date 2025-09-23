@@ -711,6 +711,45 @@ class GetPersonInfoFromDAFO(TransactionTestCase):
             mock_get_pitu_client.return_value.get_person_info.mock_calls,
         )
 
+    @patch(
+        "suila.management.commands."
+        "get_updated_person_info_from_dafo.Command._get_pitu_client"
+    )
+    def test_get_person_info_empty_since(self, mock_get_pitu_client: MagicMock):
+        # Setup: create persons
+        person1 = self._create_person("0101709988")
+        person2 = self._create_person("0102808877")
+
+        # Mock client: return both CPRs
+        mock_client = self._get_mock_pitu_client()
+        mock_client.get_subscription_results.return_value = [
+            person1.cpr,
+            person2.cpr,
+        ]
+        mock_get_pitu_client.return_value = mock_client
+
+        # Call command with empty since
+        call_command(
+            ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+            since="",
+        )
+
+        # Assert subscription results was called with None
+        mock_client.get_subscription_results.assert_called_once_with(None)
+
+        # Assert both CPRs were processed
+        self.assertIn(
+            person1.cpr,
+            mock_client.get_subscription_results.return_value,
+        )
+        self.assertIn(
+            person2.cpr,
+            mock_client.get_subscription_results.return_value,
+        )
+
+        # Ensure client closed
+        mock_client.close.assert_called_once()
+
     # PRIVATE helper methods
     def _get_mock_pitu_client(self) -> MagicMock:
         mock_get_person_info = MagicMock(
@@ -731,10 +770,14 @@ class GetPersonInfoFromDAFO(TransactionTestCase):
     @staticmethod
     def _mock_get_subscription_results(last_update_time: datetime | None) -> Set[str]:
         updated = set()
-        if last_update_time < datetime.now() - timedelta(hours=12):
+        if not last_update_time:
             updated.add("0101709988")
-        if last_update_time < datetime.now() - timedelta(days=1, hours=12):
             updated.add("0102808877")
+        else:
+            if last_update_time < datetime.now() - timedelta(hours=12):
+                updated.add("0101709988")
+            if last_update_time < datetime.now() - timedelta(days=1, hours=12):
+                updated.add("0102808877")
         return updated
 
     @staticmethod
