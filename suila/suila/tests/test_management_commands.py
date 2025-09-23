@@ -15,6 +15,7 @@ from django.core.management import call_command
 from django.db import connections
 from django.forms import model_to_dict
 from django.test import TestCase, TransactionTestCase
+from django.utils import timezone
 from requests.exceptions import HTTPError
 
 from suila.models import JobLog, ManagementCommands, Person, PersonYear, StatusChoices
@@ -699,11 +700,17 @@ class GetPersonInfoFromDAFO(TransactionTestCase):
             full_address="Silkeborgvej 260, 8230 Åbyhøj",
             country_code="DK",
         )
-        JobLog.objects.create(
-            job_name=ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
-            runtime=datetime.now() - timedelta(days=1),
+        JobLog.objects.filter(
+            name=ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO
+        ).delete()
+        last_run = JobLog.objects.create(
+            name=ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
             status=StatusChoices.SUCCEEDED,
         )
+        last_run.runtime = timezone.now() - timedelta(
+            days=1
+        )  # runtime has auto_now_add=True, so we can't set it in create()
+        last_run.save()
         call_command(
             ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
         )
@@ -735,9 +742,9 @@ class GetPersonInfoFromDAFO(TransactionTestCase):
     @staticmethod
     def _mock_get_subscription_results(last_update_time: datetime | None) -> Set[str]:
         updated = set()
-        if last_update_time < datetime.now() - timedelta(hours=12):
+        if last_update_time < timezone.now() - timedelta(hours=12):
             updated.add("0101709988")
-        if last_update_time < datetime.now() - timedelta(days=1, hours=12):
+        if last_update_time < timezone.now() - timedelta(days=1, hours=12):
             updated.add("0102808877")
         return updated
 
