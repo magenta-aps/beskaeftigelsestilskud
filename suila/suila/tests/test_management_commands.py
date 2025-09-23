@@ -17,7 +17,7 @@ from django.forms import model_to_dict
 from django.test import TestCase, TransactionTestCase
 from requests.exceptions import HTTPError
 
-from suila.models import ManagementCommands, Person, PersonYear
+from suila.models import JobLog, ManagementCommands, Person, PersonYear, StatusChoices
 
 
 class CalculateStabilityScoreTest(BaseTestCase):
@@ -699,9 +699,13 @@ class GetPersonInfoFromDAFO(TransactionTestCase):
             full_address="Silkeborgvej 260, 8230 Åbyhøj",
             country_code="DK",
         )
+        JobLog.objects.create(
+            job_name=ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
+            runtime=datetime.now() - timedelta(days=1),
+            status=StatusChoices.SUCCEEDED,
+        )
         call_command(
             ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
-            since=(datetime.now() - timedelta(days=1)).isoformat(),
         )
         mock_get_pitu_client.return_value.get_person_info.assert_called_with(
             person1.cpr

@@ -6,7 +6,7 @@ import calendar
 from datetime import date, timedelta
 from decimal import Decimal
 from io import StringIO
-from unittest.mock import ANY, MagicMock, call, patch
+from unittest.mock import MagicMock, call, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -93,7 +93,6 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                     verbosity=1,
-                    since=ANY,
                 ),
             ]
 
@@ -147,7 +146,6 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                     verbosity=1,
-                    since=ANY,
                 ),
             ]
 
@@ -167,7 +165,6 @@ class TestJobDispatcherCommands(TestCase):
                         traceback=False,
                         reraise=False,
                         verbosity=1,
-                        since=ANY,
                     ),
                 ]
             )
@@ -355,7 +352,6 @@ class TestJobDispatcherCommands(TestCase):
                     verbosity=1,
                     traceback=False,
                     reraise=False,
-                    since=ANY,
                 ),
             ]
 
