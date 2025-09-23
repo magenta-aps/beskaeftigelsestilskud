@@ -224,31 +224,11 @@ services:
       - /etc/hosts:/hosts:rw
     command: [ "bash", "/hosts.sh" ]
 
-  crowdsec:
-    image: crowdsecurity/crowdsec:v1.6.8
-    container_name: crowdsec
-    restart: unless-stopped
-    expose:
-      - 8080 # http api for bouncers
-      - 6060 # metrics endpoint for prometheus
-      - 7422 # appsec waf endpoint
-    volumes:
-      - crowdsec-data:/var/lib/crowdsec/data
-      - ./dev-environment/crowdsec/traefik.yaml:/etc/crowdsec/acquis.d/traefik.yaml:ro
-      # For at vi kan læse docker log fra host ind i containeren
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - GID=1000
-      - COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios crowdsecurity/sshd crowdsecurity/linux crowdsecurity/appsec-generic-rules crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs
-    networks:
-      - default
-
 volumes:
   postgres-data:
   matomo-data:
   matomo-config:
   file-data:
-  crowdsec-data:
 
 networks:
   default:

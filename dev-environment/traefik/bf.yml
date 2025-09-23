@@ -35,8 +35,6 @@ http:
         - "websecure"
       rule: Host(`suila-traefik`)
       service: "suila-web-public"
-      middlewares:
-        - "crowdsec"
       tls: {}
 
 #    private:
@@ -44,8 +42,6 @@ http:
 #        - "websecure"
 #      rule: "Host(`suila-traefik`)"
 #      service: "suila-web-private"
-#      middlewares:
-#        - "crowdsec"
 #      tls: {}
 
     matomo:
@@ -84,25 +80,6 @@ http:
     api-path:
       addPrefix:
         prefix: "/api"
-    crowdsec:
-      plugin:
-        bouncer:
-          defaultDecisionSeconds: 5
-          crowdsecMode: live
-          crowdsecAppsecEnabled: false # <--- here you can enable appsec waf
-          crowdsecAppsecHost: crowdsec:7422
-          crowdsecAppsecFailureBlock: true
-          crowdsecAppsecUnreachableBlock: true
-          # Kør `docker exec crowdsec cscli bouncers add traefik-bouncer`
-          # og indsæt genereret key her
-          crowdsecLapiKey: some_api_key
-          # Sæt derefter `enabled` til `true`
-          enabled: false
-          # Hvis API-key er forkert, og enabled er `true`, kan det resultere i
-          # at _alle_ requests bliver afvist
-          crowdsecLapiHost: crowdsec:8080
-          crowdsecLapiScheme: http
-          crowdsecLapiTLSInsecureVerify: false
 
 tls:
   stores:
