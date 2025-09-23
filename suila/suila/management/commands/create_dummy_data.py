@@ -190,7 +190,7 @@ class Command(BaseCommand):
 
         line_no = 1
         for person, salary in persons.items():
-            set_history_date(person, dates[0])
+            set_history_date(person, dates[2])
             for date in dates:
                 year = date.year
                 month = date.month
