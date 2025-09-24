@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-04 10:07-0100\n"
+"POT-Creation-Date: 2025-09-24 12:38-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,7 +96,7 @@ msgstr ""
 msgid "Personen er registreret som afdød"
 msgstr ""
 
-#: suila/models.py
+#: suila/models.py suila/templates/suila/templatetags/missing_info_box.html
 msgid "Personen er registreret som forsvundet"
 msgstr ""
 
@@ -795,13 +795,6 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-#, python-format
-msgid ""
-"Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
-"%(year)s."
-msgstr ""
-
-#: suila/templates/suila/person_detail.html
 msgid "Bemærk!"
 msgstr ""
 
@@ -1195,6 +1188,7 @@ msgstr ""
 
 #: suila/templates/suila/templatetags/dead_info_box.html
 #: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+#: suila/templates/suila/templatetags/missing_info_box.html
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Sidst ændret:"
 msgstr ""
@@ -1210,6 +1204,10 @@ msgid ""
 "årlige Suila-tapit."
 msgstr ""
 
+#: suila/templates/suila/templatetags/missing_info_box.html
+msgid "Forsvundet (CPR-status)"
+msgstr ""
+
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Du har sat dine udbetalinger på pause."
 msgstr ""
@@ -1223,6 +1221,13 @@ msgstr ""
 #: suila/templates/suila/templatetags/pause_info_box.html
 #, python-format
 msgid "Pausen træder i kraft den %(date)s."
+msgstr ""
+
+#: suila/templates/suila/templatetags/quarantine_info_box.html
+#, python-format
+msgid ""
+"Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
+"%(year)s."
 msgstr ""
 
 #: suila/templatetags/amount_tags.py
