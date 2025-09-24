@@ -18,6 +18,7 @@ from suila.benefit import (
     get_payout_date,
     get_payout_df,
 )
+from suila.exceptions import CalculationMethodNotSet
 from suila.models import PersonMonth, PersonYear, PrismeBatch, PrismeBatchItem
 
 
@@ -123,6 +124,12 @@ class CalculateBenefitTest(BaseTestCase):
             self.assertEqual(
                 df.loc[self.person1.cpr, "benefit_calculated"], correct_benefit
             )
+
+    def test_calculate_benefit_without_calculation_method(self):
+        self.year.calculation_method = None
+        self.year.save()
+        with self.assertRaises(CalculationMethodNotSet):
+            calculate_benefit(1, self.year.year)
 
     def test_calculate_benefit_with_safety_factor(self):
         safety_factor = settings.CALCULATION_SAFETY_FACTOR  # type: ignore
