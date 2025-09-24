@@ -151,6 +151,9 @@ class GetPersonInfoFromDAFO(TransactionTestCase):
         self.submit_mock = self.submit_patcher.start()
         self.pitu_client_mock = self.pitu_client_patcher.start()
 
+        self.addCleanup(self.submit_mock.stop)
+        self.addCleanup(self.pitu_client_mock.stop)
+
         # Mock ThreadPoolExecutor.submit to close connections when done
         # This allows for proper teardown of the test database
         def on_done(future):

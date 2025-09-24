@@ -586,6 +586,10 @@ class EboksManagementCommandTestMixin:
         self.quarantine_mock = self.quarantine_patcher.start()
         self.eboks_client_mock = self.eboks_client_patcher.start()
 
+        self.addCleanup(self.submit_patcher.stop)
+        self.addCleanup(self.quarantine_patcher.stop)
+        self.addCleanup(self.eboks_client_patcher.stop)
+
         # Mock the quarantine dataframe. By default a person is NOT in quarantine
         self.quarantine_mock.return_value = self.quarantine_df(False)
 
