@@ -4,12 +4,6 @@ entryPoints:
   websecure:
     address: ":443"
 
-experimental:
-  plugins:
-    bouncer:
-      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
-      version: v1.4.2
-
 providers:
   file:
     filename: "/etc/traefik/dynamic/bf.yml"
