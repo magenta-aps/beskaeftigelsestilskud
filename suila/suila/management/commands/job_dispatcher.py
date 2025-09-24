@@ -158,8 +158,8 @@ class Command(SuilaBaseCommand):
         # Send eboks messages
         job_dispatcher.call_job(
             ManagementCommands.SEND_EBOKS,
-            year=effect_year,
-            month=effect_month,
+            effect_year,
+            effect_month,
             verbosity=verbosity,
         )
 
