@@ -1,27 +1,26 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from datetime import datetime
 
 from django.db.models import Q
 
 from suila.management.commands.get_person_info_from_dafo import (
     Command as GetPersonInfoFromDafoCommand,
 )
-from suila.models import Person
+from suila.models import ManagementCommands, Person
 
 
 class Command(GetPersonInfoFromDafoCommand):
     filename = __file__
 
     def add_arguments(self, parser):
-        parser.add_argument("--since", type=str, required=True)
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
         """Updates all Person objects based on CPR data from DAFO/Pitu"""
         self.force = kwargs["force"]
-        self.since = datetime.fromisoformat(kwargs["since"])
+        last = self.get_last_run(ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO)
+        self.since = last.runtime if last else None
         self._verbose = kwargs["verbosity"] > 1
         self._write_verbose("Loading updated CPRS from DAFO ...")
         self.pitu_client = self._get_pitu_client()
