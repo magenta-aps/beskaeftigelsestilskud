@@ -67,3 +67,11 @@ class SuilaBaseCommand(BaseCommand):
             job_kwargs["status"] = kwargs["status"]
 
         return JobLog.objects.create(name=job_name, **job_kwargs)
+
+    @staticmethod
+    def get_last_run(job_name, status=StatusChoices.SUCCEEDED) -> JobLog | None:
+        return (
+            JobLog.objects.filter(name=job_name, status=status)
+            .order_by("-runtime")
+            .first()
+        )

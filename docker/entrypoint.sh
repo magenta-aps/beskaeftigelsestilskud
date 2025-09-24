@@ -82,11 +82,11 @@ if [ "${MAKEMESSAGES,,}" = true ]; then
   python manage.py compilemessages --locale=da --locale=kl --locale=en --verbosity=2
 fi
 if [ "${TEST,,}" = true ]; then
-    echo 'running tests'
-    coverage run manage.py test --parallel 4
-    coverage combine
-    coverage report --show-missing
-  fi
+  echo 'running tests'
+  coverage run manage.py test
+  coverage combine
+  coverage report --show-missing
+fi
 
 python manage.py sql_sequence_reset
 
