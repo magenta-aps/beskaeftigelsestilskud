@@ -233,7 +233,7 @@ class Simulation:
                         + (person_year.b_income - person_year.b_expenses)
                     )
                     actual_year_benefit = (
-                        person_year.year.calculation_method.calculate_float(
+                        person_year.year.get_calculation_method().calculate_float(
                             estimated_year_result
                         )
                     )

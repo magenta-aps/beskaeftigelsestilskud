@@ -39,6 +39,47 @@ from suila.models import (
 )
 
 
+class YearGetCalculationMethodTest(TestCase):
+    def setUp(self):
+        # Create a couple of StandardWorkBenefitCalculationMethod objects
+        self.method1 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=10,
+            personal_allowance=1000,
+            standard_allowance=500,
+            max_benefit=10000,
+            scaledown_rate_percent=5,
+            scaledown_ceiling=20000,
+        )
+        self.method2 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=20,
+            personal_allowance=2000,
+            standard_allowance=1000,
+            max_benefit=20000,
+            scaledown_rate_percent=10,
+            scaledown_ceiling=30000,
+        )
+
+    def test_returns_own_calculation_method(self):
+        year = Year.objects.create(year=2020, calculation_method=self.method1)
+        self.assertEqual(year.get_calculation_method(), self.method1)
+
+    def test_falls_back_to_latest_year_with_method(self):
+        Year.objects.create(year=2020)  # no method
+        latest_year = Year.objects.create(year=2021, calculation_method=self.method1)
+        year_without_method = Year.objects.get(year=2020)
+
+        self.assertEqual(year_without_method.get_calculation_method(), self.method1)
+        self.assertEqual(latest_year.get_calculation_method(), self.method1)
+
+    def test_falls_back_to_highest_pk_standard_method(self):
+        Year.objects.create(year=2020)  # no method anywhere
+
+        year_without_method = Year.objects.get(year=2020)
+
+        # Falls back to highest pk StandardWorkBenefitCalculationMethod (self.method2)
+        self.assertEqual(year_without_method.get_calculation_method(), self.method2)
+
+
 class ModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):

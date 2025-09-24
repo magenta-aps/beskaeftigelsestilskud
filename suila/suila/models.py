@@ -476,6 +476,27 @@ class Year(PermissionsMixin, models.Model):
     def __str__(self):
         return str(self.year)
 
+    def get_calculation_method(self):
+        """
+        Returns the calculation method for this Year, with fallbacks:
+          1. This Year's calculation_method (if set)
+          2. The calculation_method of the latest Year with one set
+          3. The StandardWorkBenefitCalculationMethod with the highest pk
+        """
+        if self.calculation_method:
+            return self.calculation_method
+
+        latest_with_method = (
+            Year.objects.exclude(calculation_method_object_id__isnull=True)
+            .exclude(calculation_method_content_type__isnull=True)
+            .order_by("-year")
+            .first()
+        )
+        if latest_with_method and latest_with_method.calculation_method:
+            return latest_with_method.calculation_method
+
+        return StandardWorkBenefitCalculationMethod.objects.order_by("-pk").first()
+
 
 class Person(PermissionsMixin, models.Model):
     class Meta:
