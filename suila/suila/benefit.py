@@ -13,6 +13,7 @@ from django.db.models import Exists
 from more_itertools import one
 from numpy import float64
 
+from suila.exceptions import CalculationMethodNotSet
 from suila.models import PersonMonth, PersonYear, TaxInformationPeriod, Year
 
 
@@ -64,6 +65,10 @@ def calculate_benefit(
     else:
         safety_factor = float(settings.CALCULATION_SAFETY_FACTOR)  # type: ignore
     calculation_method = Year.objects.get(year=year).calculation_method
+
+    if not calculation_method:
+        raise CalculationMethodNotSet(Year.year)
+
     calculate_benefit_func = calculation_method.calculate_float  # type: ignore
     benefit_cols_this_year = [f"benefit_transferred_month_{m}" for m in range(1, month)]
 

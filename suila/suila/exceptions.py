@@ -17,3 +17,9 @@ class BTaxFilesNotFound(Exception):
             error_message = "There are no new btax files"
 
         super().__init__(error_message)
+
+
+class CalculationMethodNotSet(Exception):
+    def __init__(self, year):
+        error_message = f"calculation parameters for {year} are not set."
+        super().__init__(error_message)
