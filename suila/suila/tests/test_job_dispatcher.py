@@ -76,8 +76,8 @@ class TestJobDispatcherCommands(TestCase):
             expected_calls = [
                 call(
                     ManagementCommands.SEND_EBOKS,
-                    year=test_date.year - 1,
-                    month=test_date.month - 2 + 12,
+                    test_date.year - 1,
+                    test_date.month - 2 + 12,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
@@ -121,8 +121,8 @@ class TestJobDispatcherCommands(TestCase):
                 ),
                 call(
                     ManagementCommands.SEND_EBOKS,
-                    year=test_date.year - 1,
-                    month=test_date.month - 2 + 12,
+                    test_date.year - 1,
+                    test_date.month - 2 + 12,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
@@ -310,8 +310,8 @@ class TestJobDispatcherCommands(TestCase):
                 expected_calls += [
                     call(
                         ManagementCommands.SEND_EBOKS,
-                        year=test_date.year,
-                        month=test_date.month - 2,
+                        test_date.year,
+                        test_date.month - 2,
                         traceback=False,
                         reraise=False,
                         verbosity=1,
