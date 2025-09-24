@@ -1740,6 +1740,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         patcher = patch("suila.views.EboksClient")
         self.addCleanup(patcher.stop)
         self.eboks_client_cls = patcher.start()
+        self.addCleanup(self.eboks_client_cls.stop)
 
         # Mock the context manager return value
         self.eboks_client = (
