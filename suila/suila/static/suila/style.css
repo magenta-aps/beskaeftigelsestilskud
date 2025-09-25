@@ -77,3 +77,44 @@ iframe.eboks {
 .popover-arrow:has(+ .popover-header) {
     top: 10px !important
 }
+
+/* Pagination */
+
+.pagination .pagination-page-links,
+.pagination .pagination-arrow-links {
+    padding: 0.5rem 1rem
+}
+
+.pagination .pagination-page-links {
+    color: var(--bs-primary);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.pagination .pagination-page-links:hover {
+    background-color: #e3d9d3;
+}
+
+.pagination .pagination-page-links.active {
+    background-color: #dacac4;
+}
+
+.pagination .pagination-arrow-links {
+    padding: 0.5rem 0.5rem 0 0.5rem;
+
+    background-color: var(--bs-primary) !important;
+    color: var(--bs-light);
+}
+
+.pagination .pagination-arrow-links .material-icons {
+    font-size: 1.5rem !important;
+}
+
+.pagination span.pagination-arrow-links {
+    background-color: transparent !important;
+    color: var(--bs-grey)
+}
+
+.pagination .pagination-ellipsis {
+    padding: 0.5rem
+}
