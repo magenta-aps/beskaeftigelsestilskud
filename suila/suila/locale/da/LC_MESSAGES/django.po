@@ -1502,3 +1502,6 @@ msgstr ""
 #: suila/views.py
 msgid "Beregningsparametrene blev opdateret"
 msgstr ""
+
+msgid "This field is required."
+msgstr "Dette felt er påkrævet."
