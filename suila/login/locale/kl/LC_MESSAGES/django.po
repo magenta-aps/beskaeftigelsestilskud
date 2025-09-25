@@ -63,7 +63,7 @@ msgstr "Iserfissaq"
 
 #: login/templates/login/login_failed.html
 msgid "Login mislykkedes"
-msgstr ""
+msgstr "Isernissat iluatsinngilaq"
 
 #: login/templates/login/login_failed.html
 #: login/templates/login/login_no_cpr.html
