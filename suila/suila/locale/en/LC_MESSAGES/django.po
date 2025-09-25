@@ -832,6 +832,11 @@ msgid ""
 "tapit. Du modtager i stedet én samlet udbetaling for månederne januar til "
 "november %(this_year)s i januar %(next_year)s."
 msgstr ""
+"If, during the year, the Tax Agency continues to receive information "
+"indicating that you are expected to earn DKK 475,000-500,000, you will not "
+"receive monthly Suila-tapit payments. Instead, you will receive one lump-sum "
+"payment for the months January %(this_year)s to November %(this_year)s in "
+"January %(next_year)s."
 
 #: suila/templates/suila/graph.html
 msgid ""
