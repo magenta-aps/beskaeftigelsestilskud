@@ -597,6 +597,10 @@ class Person(PermissionsMixin, models.Model):
     def dead(self):
         return self.cpr_status == PersonCprStatusChoices.DEAD
 
+    @property
+    def missing(self):
+        return self.cpr_status == PersonCprStatusChoices.MISSING
+
     def last_change(self, attribute):
         """
         Returns the date at which an attribute was last changed

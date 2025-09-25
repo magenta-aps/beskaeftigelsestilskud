@@ -34,6 +34,9 @@
     {% if person.dead %}
         {% dead_info_box %}
     {% endif %}
+    {% if person.missing %}
+        {% missing_info_box %}
+    {% endif %}
     {% if in_quarantine and quarantine_weight == 0 %}
         {% quarantine_info_box %}
     {% endif %}
