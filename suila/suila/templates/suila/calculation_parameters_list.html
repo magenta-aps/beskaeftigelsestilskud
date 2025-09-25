@@ -94,6 +94,7 @@
     </script>
 {% endblock %}
 {% block content %}
+    {% now "Y" as this_year %}
     <form action="" method="post" id="calculation-parameters">
     {% csrf_token %}
     <div class="row my-1 mx-1">
@@ -102,13 +103,23 @@
     <div class="row my-1 mx-1">
         <p>
         {% blocktranslate trimmed %}
-        Der kan tilføjes og ændres værdier for det efterfølgende år til og med 31/12 i indeværende år.
+        Hvert år skal der oprettes et nyt skatteår, inden udgangen af året.
         {% endblocktranslate %}
         </p>
         <p>
-        {% blocktranslate trimmed with year1=next_year year2=next_year|add:1 %}
-        d. 1/1 låses værdierne, og et nyt felt for det efterfølgende år bliver tilgængeligt.
-        Fx 1/1/{{ year1 }} er det ikke længere muligt at ændre værdierne for {{ year1 }} og det bliver muligt at tilføje værdier for {{ year2 }}.
+        {% blocktranslate trimmed %}
+        Du kan frit tilføje og ændre værdier for det kommende år frem til 31. december i indeværende år.
+        {% endblocktranslate %}
+        </p>
+        <p>
+        {% blocktranslate trimmed %}
+        Fra 1. januar bliver værdierne låst for indeværende år, og et nyt felt for det efterfølgende år bliver tilgængeligt.
+        {% endblocktranslate %}
+        </p>
+        <p>
+        {% blocktranslate trimmed with year0=this_year year1=this_year|add:1 year2=this_year|add:2 %}
+            For eksempel, senest den 31. december {{ year0 }} skal du oprette et skatteår for {{ year1 }}. Fra den 1. januar
+            {{ year1 }} kan du ikke længere ændre værdierne for {{ year1 }}, men du kan tilføje værdier for {{ year2 }}.
         {% endblocktranslate %}
         </p>
     </div>
@@ -145,7 +156,7 @@
             <tbody>
             <tr>
                 <td>
-                    {{ next_year }}
+                    {{ this_year|add:1 }}
                 </td>
                 <td>
                     {{ form.benefit_rate_percent }}

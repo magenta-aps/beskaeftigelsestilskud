@@ -1517,7 +1517,6 @@ class CalculationParametersListView(
                     {method.pk: method.graph_points for method in methods},
                     cls=SuilaJSONEncoder,
                 ),
-                "next_year": self.next_year(),
             }
         )
 

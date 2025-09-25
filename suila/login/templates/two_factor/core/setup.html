@@ -10,13 +10,13 @@
 
 {% block content %}
 <p>
-    {% blocktrans trimmed %}
+    {% blocktranslate trimmed %}
     For at begynde at bruge en token-generator skal du bruge din smartphone til at scanne QR-koden nedenfor.
     Brug for eksempel Authy eller Google Authenticator.
-    {% endblocktrans %}
+    {% endblocktranslate %}
 </p>
 <p><img src="{{ QR_URL }}" alt="QR Code" class="bg-white"/></p>
-<p>{% blocktrans %}Indtast derefter koden, der er genereret af appen.{% endblocktrans %}</p>
+<p>{% blocktranslate %}Indtast derefter koden, der er genereret af appen.{% endblocktranslate %}</p>
 <form action="" method="post">
     {% csrf_token %}
     {% include "two_factor/_wizard_forms.html" %}
