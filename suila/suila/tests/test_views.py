@@ -2229,7 +2229,12 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
         self.client.force_login(self.admin_user)
         response = self.client.get(self.url)
         items = response.context_data["object_list"]
-        self.assertQuerySetEqual(items, [self.year2, self.year1])
+        self.assertQuerySetEqual(
+            items,
+            [
+                self.year2,
+            ],
+        )
         response.render()
         soup = BeautifulSoup(response.content, "html.parser")
         table_text = [
@@ -2245,16 +2250,6 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
                     "2025",
                     "17,500",
                     "60000,00",
-                    "10000,00",
-                    "15750,00",
-                    "6,300",
-                    "250000,00",
-                    "Graf",
-                ],
-                [
-                    "2024",
-                    "17,500",
-                    "58000,00",
                     "10000,00",
                     "15750,00",
                     "6,300",
