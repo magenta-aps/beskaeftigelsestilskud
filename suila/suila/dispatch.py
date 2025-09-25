@@ -97,12 +97,13 @@ class JobDispatcher:
         },
     }
 
-    def __init__(self, day=None, month=None, year=None, reraise=False):
+    def __init__(self, day=None, month=None, year=None, reraise=False, stdout=None):
         self.now = timezone.now()
         self.year = year or self.now.year
         self.month = month or self.now.month
         self.day = day or self.now.day
         self.reraise = reraise
+        self.stdout = stdout
 
         self.dependencies = {
             ManagementCommands.CALCULATE_STABILITY_SCORE: [],
@@ -264,6 +265,7 @@ class JobDispatcher:
                 *args,
                 traceback=self.reraise,
                 reraise=self.reraise,
+                stdout=self.stdout,
                 **kwargs,
             )
         except DependenciesNotMet:

@@ -76,6 +76,7 @@ class Command(SuilaBaseCommand):
             month=options["month"],
             year=options["year"],
             reraise=options["reraise"],
+            stdout=self.stdout,
         )
 
         year = job_dispatcher.year
