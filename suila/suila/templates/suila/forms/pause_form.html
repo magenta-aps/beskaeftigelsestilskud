@@ -12,7 +12,7 @@
     <div class="form-check mb-3">
       <input class="form-check-input" type="checkbox" name="allow_pause" id="allow_pause" {% if allow_pause %} checked {% endif %}>
       <label class="form-check-label" for="allow_pause">
-        {% translate "Lad borgeren sætte udbetalinger på pause" %}
+        {% translate "Borgeren kan sætte udbetalinger på pause og genoptage dem." %}
       </label>
     </div>
   {% else %}
@@ -59,11 +59,11 @@
 
 {{ send_eboks_letter_when_pausing|json_script:"sendLetterVar" }}
 
-{% blocktrans trimmed asvar pause_eboks_msg %}
+{% blocktranslate asvar pause_eboks_msg trimmed %}
 Du er ved at sætte borgeren på pause uden at tillade borgeren at genoptage
 udbetalinger. Dette medfører at et e-Boks brev bliver sendt til borgeren.
 Er du sikker på, at du vil fortsætte?
-{% endblocktrans %}
+{% endblocktranslate %}
 
 <script nonce="{{ request.csp_nonce }}">
 $(function() {
@@ -138,7 +138,7 @@ $(function() {
     // Require reason only if pausing and container visible
     if (isPausing && reasonVisible && !$pauseReason.val()) {
       e.preventDefault();
-      alert("{% translate 'Vælg en begrundelse for at pause en person.' %}");
+      alert("{% translate 'Vælg en begrundelse for at sætte udbetalinger på pause.' %}");
       $pauseReason.focus();
       return;
     }
