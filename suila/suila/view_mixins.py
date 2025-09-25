@@ -19,7 +19,9 @@ class PermissionsRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if self.required_model_permissions:
             if not self.has_permissions(
-                request=request, required_permissions=self.required_model_permissions
+                request=request,
+                required_permissions=self.required_model_permissions,
+                request_kwargs=kwargs,
             ):
                 raise PermissionDenied()
         return super().dispatch(request, *args, **kwargs)
@@ -39,6 +41,7 @@ class PermissionsRequiredMixin:
         user: User | AnonymousUser | None = None,
         request: HttpRequest | None = None,
         required_permissions: Optional[Iterable[str]] = None,
+        request_kwargs: Optional[dict] = None,
     ) -> bool:
         if user is None:
             if request is None:

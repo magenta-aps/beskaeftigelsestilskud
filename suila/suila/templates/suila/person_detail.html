@@ -167,14 +167,16 @@
             {% action_button _("Ændre årsindkomst") "edit" "annual_income_form" "suila/forms/annual_income_estimate_form.html" %}
         </div>
         {% endif %}
-        {% if user|has_permissions:"suila.change_person" or can_pause  %}
-        <div class="me-2">
-            {% if user.cpr == person.cpr %}
-            {% action_button _("Udbetalingspause") "swap_horiz" "pause_form" "suila/forms/pause_form.html" %}
-            {% else %}
-            {% action_button _("Ændre status på udbetalinger") "swap_horiz" "pause_form" "suila/forms/pause_form.html" %}
+        {% if can_unpause %}
+            {% if user|has_permissions:"suila.change_person" or can_pause %}
+            <div class="me-2">
+                {% if user.cpr == person.cpr %}
+                {% action_button _("Udbetalingspause") "swap_horiz" "pause_form" "suila/forms/pause_form.html" %}
+                {% else %}
+                {% action_button _("Ændre status på udbetalinger") "swap_horiz" "pause_form" "suila/forms/pause_form.html" %}
+                {% endif %}
+            </div>
             {% endif %}
-        </div>
         {% endif %}
         {% if user|has_permissions:"suila.change_person" %}
         <div class="me-2">
