@@ -6,7 +6,7 @@ import calendar
 from datetime import date, timedelta
 from decimal import Decimal
 from io import StringIO
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -81,12 +81,14 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    stdout=ANY,
                 ),
                 call(
                     ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    stdout=ANY,
                 ),
             ]
             mock_call_command.assert_has_calls(expected_calls, any_order=True)
@@ -111,6 +113,7 @@ class TestJobDispatcherCommands(TestCase):
                     verbosity=1,
                     traceback=False,
                     reraise=False,
+                    stdout=ANY,
                 ),
                 call(
                     ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
@@ -118,6 +121,7 @@ class TestJobDispatcherCommands(TestCase):
                     verbosity=1,
                     traceback=False,
                     reraise=False,
+                    stdout=ANY,
                 ),
                 call(
                     ManagementCommands.SEND_EBOKS,
@@ -126,18 +130,21 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    stdout=ANY,
                 ),
                 call(
                     ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    stdout=ANY,
                 ),
                 call(
                     ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    stdout=ANY,
                 ),
             ]
 
@@ -233,6 +240,7 @@ class TestJobDispatcherCommands(TestCase):
                         traceback=False,
                         reraise=False,
                         verbosity=1,
+                        stdout=ANY,
                     ),
                     call(
                         ManagementCommands.LOAD_ESKAT,
@@ -244,6 +252,7 @@ class TestJobDispatcherCommands(TestCase):
                         traceback=False,
                         reraise=False,
                         verbosity=1,
+                        stdout=ANY,
                     ),
                     call(
                         ManagementCommands.LOAD_ESKAT,
@@ -255,6 +264,7 @@ class TestJobDispatcherCommands(TestCase):
                         traceback=False,
                         reraise=False,
                         verbosity=1,
+                        stdout=ANY,
                     ),
                     call(
                         ManagementCommands.LOAD_PRISME_B_TAX,
@@ -262,6 +272,7 @@ class TestJobDispatcherCommands(TestCase):
                         test_date.month,
                         traceback=False,
                         reraise=False,
+                        stdout=ANY,
                     ),
                     call(
                         ManagementCommands.IMPORT_U1A_DATA,
@@ -270,6 +281,7 @@ class TestJobDispatcherCommands(TestCase):
                         verbosity=1,
                         traceback=False,
                         reraise=False,
+                        stdout=ANY,
                     ),
                     call(
                         ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
@@ -277,6 +289,7 @@ class TestJobDispatcherCommands(TestCase):
                         verbosity=1,
                         traceback=False,
                         reraise=False,
+                        stdout=ANY,
                     ),
                     # Estimation-jobs
                     call(
@@ -286,6 +299,7 @@ class TestJobDispatcherCommands(TestCase):
                         verbosity=1,
                         traceback=False,
                         reraise=False,
+                        stdout=ANY,
                     ),
                     call(
                         ManagementCommands.CALCULATE_BENEFIT,
@@ -295,6 +309,7 @@ class TestJobDispatcherCommands(TestCase):
                         verbosity=1,
                         traceback=False,
                         reraise=False,
+                        stdout=ANY,
                     ),
                     call(
                         ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
@@ -303,6 +318,7 @@ class TestJobDispatcherCommands(TestCase):
                         traceback=False,
                         reraise=False,
                         verbosity=1,
+                        stdout=ANY,
                     ),
                 ]
 
@@ -315,6 +331,7 @@ class TestJobDispatcherCommands(TestCase):
                         traceback=False,
                         reraise=False,
                         verbosity=1,
+                        stdout=ANY,
                     ),
                 ]
 
@@ -326,12 +343,14 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    stdout=ANY,
                 ),
                 call(
                     ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
                     verbosity=1,
                     traceback=False,
                     reraise=False,
+                    stdout=ANY,
                 ),
             ]
 

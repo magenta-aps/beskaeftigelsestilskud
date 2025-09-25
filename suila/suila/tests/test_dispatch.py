@@ -4,7 +4,7 @@
 
 import datetime
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import ANY, MagicMock
 
 from django.test import TestCase, override_settings
 
@@ -90,6 +90,7 @@ class TestJobDispatcher(TestCase):
             mucki="bar",
             traceback=False,
             reraise=False,
+            stdout=ANY,
         )
         management_mock.call_command.reset_mock()
 
