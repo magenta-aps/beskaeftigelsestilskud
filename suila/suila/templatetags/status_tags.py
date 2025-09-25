@@ -73,7 +73,7 @@ def format_tax_scope(tax_scope: str) -> StrOrPromise:
     if tax_scope == "FULL":
         return _("Fuld skattepligtig")
     elif tax_scope == "LIM":
-        return _("Delvist skattepligtig")
+        return _("Begrænset skattepligtig")
     elif tax_scope is None:
         return _("Ikke i mandtal")
     return ""
