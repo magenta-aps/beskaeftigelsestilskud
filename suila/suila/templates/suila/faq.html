@@ -23,7 +23,7 @@
         </p>
         <p>
             {% blocktrans trimmed %}
-            Suila-tapit udbetales, når systemet modtager signaler fra arbejdsmarkedet. De fire signaler er:
+            Suila-tapit udbetales, når Skattestyrelsen modtager signaler fra arbejdsmarkedet. De fire signaler er:
             {% endblocktrans %}
         </p>
         <ol>
@@ -39,14 +39,15 @@
             475.000 - 500.000 kr. først modtage Suila-tapit, når Skattestyrelsen kan afklare, om den forventede
             årsindkomst holder sig under 500.000 kr.
             {% endblocktrans %}
-            <br>
+        </p>
+        <p class="mt-3">
             {% blocktrans trimmed %}
             Bemærk, at der går to måneder fra den måned, din indkomst vedrører, til din udbetaling af Suila-tapit.
             Fx udbetales Suila-tapit for januar måned i marts, for februar måned i april, osv.
             {% endblocktrans %}
         </p>
         <div class="my-5">
-            <iframe nonce="{{ request.csp_nonce }}" width="561" height="315" src="https://www.youtube.com/embed/9dbICMOXhM4" title="" frameBorder="0"   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"  allowFullScreen></iframe>
+            <iframe nonce="{{ request.csp_nonce }}" width="561" height="315" src="{% translate "https://www.youtube.com/embed/9dbICMOXhM4" %}" title="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
         </div>
         <h2 class="my-5">
             {% translate "Hvis du ikke har modtaget Suila-tapit, kan der være følgende forklaringer:" %}
@@ -65,7 +66,7 @@
                         {% blocktrans trimmed with url=person_income_url %}
                         Din arbejdsgiver eller dit indhandlingssted har ikke indberettet din indkomst.
                         Eller har indberettet for sent eller forkert. Måske har de slet ikke indberettet.
-                        På siden <a href="{{ url }}">"Mine signaler"</a> kan du se hvilke oplysninger Skattestyrelsen
+                        På siden <a href="{{ url }}">"Mine signaler"</a> kan du se, hvilke oplysninger Skattestyrelsen
                         har om dine indkomster.
                         Hvis der mangler signal om indkomst fra arbejde og indhandling, så kontakt din arbejdsgiver
                         eller dit indhandlingssted.
@@ -110,16 +111,17 @@
                         </b>
                         <br>
                         {% blocktrans trimmed %}
-                        Da Skattestyrelsen har registeret, at du har en forventet årsindkomst på 475.000 – 500.000 kr.,
+                        Da Skattestyrelsen har registreret, at du har en forventet årsindkomst på 475.000 – 500.000 kr.,
                         udbetales beløbet ikke endnu. Det betyder følgende:
                         {% endblocktrans %}
                         <ul>
                             <li>
-                                {% blocktrans trimmed %}
+                                {% now "Y" as this_year %}
+                                {% blocktrans trimmed with this_year=this_year next_year=year|add:1 %}
                                 Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der viser, at du
                                 forventer at have en årsindkomst på 475.000-500.000 kr., vil du ikke modtage Suila-tapit
-                                en gang om måneden. Du modtager i stedet én samlet udbetaling for månederne januar 2025
-                                til november 2025 i januar 2026.
+                                en gang om måneden. Du modtager i stedet én samlet udbetaling for månederne januar
+                                {{ this_year }} til november {{ this_year }} i januar {{ next_year }}.
                                 {% endblocktrans %}
                             </li>
                             <li>
@@ -160,9 +162,10 @@
                 <div id="forskelligeSignaler" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
                         {% blocktrans trimmed %}
-                        Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, der varierer meget
-                        fra måned til måned. Eller indkomster fra udbytte. Det giver Skattestyrelsen signaler, der peger
-                        i forskellige retninger. Udbetaling afventer et klarere signal.
+                            Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, der varierer
+                            meget fra måned til måned eller indkomster fra udbytte. Fx indkomster fra udbytte.
+                            Det giver Skattestyrelsen signaler, der peger i forskellige retninger.
+                            Udbetaling afventer et klarere signal.
                         {% endblocktrans %}
                     </div>
                 </div>
@@ -177,10 +180,10 @@
                 <div id="etAndetSignal" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
                         {% blocktrans trimmed %}
-                        Suila-tapit er et beskæftigelsesfradrag der udbetales til borgere med indkomster i form af
-                        lønindkomst, indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget
-                        udbyttebetaling. Hvis dine indkomster stammer fx fra uddannelsesstøtte, alderspension eller
-                        sociale ydelser, er du ikke berettiget til Suila-tapit.
+                            Suila-tapit er et beskæftigelsesfradrag, der udbetales til borgere med indkomster i form
+                            af lønindkomst, indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget
+                            udbyttebetaling. Hvis dine indkomster stammer fra fx uddannelsesstøtte, alderspension
+                            eller sociale ydelser, er du ikke berettiget til Suila-tapit.
                         {% endblocktrans %}
                     </div>
                 </div>

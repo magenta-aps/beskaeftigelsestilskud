@@ -2217,7 +2217,7 @@ class EboksMessage(PermissionsMixin, models.Model):
     )
     recipient_status = models.CharField(
         choices=(
-            ("", _("Gyldig E-boks modtager")),
+            ("", _("Gyldig e-Boks modtager")),
             ("exempt", _("Fritaget modtager")),
             ("invalid", _("Ugyldig E-boks modtager (sendes til efterbehandling)")),
             ("dead", _("Afdød")),

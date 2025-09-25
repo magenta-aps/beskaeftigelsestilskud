@@ -51,21 +51,22 @@
     </table>
 
     <h3 class="left">Suila-tapinik naatsorsuineq</h3>
+    {% now "Y" as this_year %}
 
     <p>
         Suila-tapit tassaavoq sulinermut ilanngaat tunniunneqartoq. Akileraartarnermik aaqqissuusseqqinnerup ilaatut
-        akuersissutigineqarluni 1. januar 2025 aallarnerfigalugu atuutilerpoq. Suila-tapit tunniunneqartarpoq
+        akuersissutigineqarluni 1. januar {{ this_year }} aallarnerfigalugu atuutilerpoq. Suila-tapit tunniunneqartarpoq
         innuttaasunut akissarsiortutut aningaasarsialinnut, tunisinikkut isertitalinnut, namminersorluni
         inuussutissarsiummik ingerlataqarnikkut sinneqartoorutilinnut kiisalu iluanaarutisianik tunineqarsimasunut.
     </p>
     <p>
-        2025-mi aningaasarsiatit tunngavigalugit, 2024-milu aningaasarsiannut sanilliussinikkut 2025-mi ukiumut
+        {{ this_year }}-mi aningaasarsiatit tunngavigalugit, {{ this_year|add:-1 }}-milu aningaasarsiannut sanilliussinikkut {{ this_year }}-mi ukiumut
         aningaasarsiariumaagassattut naatsorsuutigineqartut Akileraartarnermut Aqutsisoqarfiup naatsorsorpai.
     </p>
 
     <table style="width: 100%">
         <tr>
-            <td>Suila-tapit 2025-mi januarimut tunngatillugu tunniunneqartussaq</td>
+            <td>Suila-tapit {{ this_year }}-mi januarimut tunngatillugu tunniunneqartussaq</td>
             <td style="text-align: right">Paasissutissat utaqqineqarput</td>
         </tr>
         <tr>
@@ -75,7 +76,7 @@
     </table>
 
     <p>
-        Maanna allagarsisinneqarninnut pissutaavoq, Akileraartarnermut Aqutsisoqarfiup takusinnaammagu 2025-mi
+        Maanna allagarsisinneqarninnut pissutaavoq, Akileraartarnermut Aqutsisoqarfiup takusinnaammagu {{ this_year }}-mi
         aningaasarsiariumaagassattut naatsorsuutigineqartut ima amerlatigisut, allaat Suila-tapinik
         tunineqarsinnaanermut killigitinneqartumut qanittuararsuullutik. Imaassinnaavoq Suila-tapinik
         tunineqarsinnaassasutit, kisianni Akileraartarnermut Aqutsisoqarfiup tamanna pillugu paasissutissaatai suli
@@ -92,10 +93,11 @@
     </p>
     <ul>
         <li>
-            Ukiumut aningaasarsiariumaagassatut naatsorsuutigisavit 475.000 – 500.000 kr.-iuinnarnissaat paasissutissat
-            Akileraartarnermut Aqutsisoqarfiup ukiup ingerlanerani tigusaasa takutippassuk, taava Suila-tapit
-            qaammatikkaartumik ilinnut tunniunneqartassanngilaq. Tassunga taarsiullugu qaammatinut januar 2025-miit
-            november 2025-mut tunniutassat 2026-mi januarimi ataatsikkut tigujumaarpatit.
+            Akileraartnermut Aqutsisoqarfik nalunaarfigineqarsimappat ukiumut isertitariumaagassatit 475.000 koruunit
+            500.000 koruunillu akornanniittut, qaammatikkaartumik Suila-tapinik tunineqartassanngilatit.
+            Tassunga pissutaavoq Suila-tapisisinnaanermut isertitatut 500.000 koruunit killigitinneqarmata.
+            Tassunga taarsiullugu ukioq {{ this_year }}-mi qaammatini januarimiit novemberip tungaanut tapisiassatit
+            ukioq {{ this_year|add:1 }}-mi januarimi tunniunneqarumaarput.
         </li>
         <li>
             Ukiumut aningaasarsiariumaagassatut naatsorsuutigisavit 475.000 kr.-init ikinnerunissaat paasissutissat
@@ -169,7 +171,7 @@
         paasiniaassaatit.
     </p>
     <p>
-        Akileraarutit B-t akilersimasat pillugit paasissutissat illit 2025-mut siumoortumik nalunaarsukkatit
+        Akileraarutit B-t akilersimasat pillugit paasissutissat illit {{ this_year }}-mut siumoortumik nalunaarsukkatit
         tunngavigalugit akileraarutinik B-nik akiliininneersuupput. Siumoortumik nalunaarsuineq eqqunngitsuusorigukku,
         taanna Sullissivik.gl-ikkut sukkulluunniit allanngortissinnaavat. Iluanaarutisiat pillugit paasissutissat
         selskabit ilinnut iluanaarutisiaqartitsisimanerminnik nalunaarutaanneersuupput. Iluanaarutisianik siorna

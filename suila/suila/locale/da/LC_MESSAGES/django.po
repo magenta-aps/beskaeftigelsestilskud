@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-24 12:38-0100\n"
+"POT-Creation-Date: 2025-09-25 07:43-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -254,7 +254,7 @@ msgid "Afsendelse fejlet"
 msgstr ""
 
 #: suila/models.py
-msgid "Gyldig E-boks modtager"
+msgid "Gyldig e-Boks modtager"
 msgstr ""
 
 #: suila/models.py
@@ -440,8 +440,8 @@ msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid ""
-"Suila-tapit udbetales, når systemet modtager signaler fra arbejdsmarkedet. "
-"De fire signaler er:"
+"Suila-tapit udbetales, når Skattestyrelsen modtager signaler fra "
+"arbejdsmarkedet. De fire signaler er:"
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -482,6 +482,10 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/faq.html
+msgid "https://www.youtube.com/embed/9dbICMOXhM4"
+msgstr ""
+
+#: suila/templates/suila/faq.html
 msgid ""
 "Hvis du ikke har modtaget Suila-tapit, kan der være følgende forklaringer:"
 msgstr ""
@@ -496,7 +500,7 @@ msgid ""
 "Din arbejdsgiver eller dit indhandlingssted har ikke indberettet din "
 "indkomst. Eller har indberettet for sent eller forkert. Måske har de slet "
 "ikke indberettet. På siden <a href=\"%(url)s\">\"Mine signaler\"</a> kan du "
-"se hvilke oplysninger Skattestyrelsen har om dine indkomster. Hvis der "
+"se, hvilke oplysninger Skattestyrelsen har om dine indkomster. Hvis der "
 "mangler signal om indkomst fra arbejde og indhandling, så kontakt din "
 "arbejdsgiver eller dit indhandlingssted."
 msgstr ""
@@ -527,16 +531,18 @@ msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid ""
-"Da Skattestyrelsen har registeret, at du har en forventet årsindkomst på "
+"Da Skattestyrelsen har registreret, at du har en forventet årsindkomst på "
 "475.000 – 500.000 kr., udbetales beløbet ikke endnu. Det betyder følgende:"
 msgstr ""
 
 #: suila/templates/suila/faq.html
+#, python-format
 msgid ""
 "Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der "
 "viser, at du forventer at have en årsindkomst på 475.000-500.000 kr., vil du "
 "ikke modtage Suila-tapit en gang om måneden. Du modtager i stedet én samlet "
-"udbetaling for månederne januar 2025 til november 2025 i januar 2026."
+"udbetaling for månederne januar %(this_year)s til november %(this_year)s i "
+"januar %(next_year)s."
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -571,9 +577,9 @@ msgstr ""
 #: suila/templates/suila/faq.html
 msgid ""
 "Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, "
-"der varierer meget fra måned til måned. Eller indkomster fra udbytte. Det "
-"giver Skattestyrelsen signaler, der peger i forskellige retninger. "
-"Udbetaling afventer et klarere signal."
+"der varierer meget fra måned til måned eller indkomster fra udbytte. Fx "
+"indkomster fra udbytte. Det giver Skattestyrelsen signaler, der peger i "
+"forskellige retninger. Udbetaling afventer et klarere signal."
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -582,10 +588,10 @@ msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid ""
-"Suila-tapit er et beskæftigelsesfradrag der udbetales til borgere med "
+"Suila-tapit er et beskæftigelsesfradrag, der udbetales til borgere med "
 "indkomster i form af lønindkomst, indhandlingsbeløb, overskud ved "
 "selvstændig virksomhed samt modtaget udbyttebetaling. Hvis dine indkomster "
-"stammer fx fra uddannelsesstøtte, alderspension eller sociale ydelser, er du "
+"stammer fra fx uddannelsesstøtte, alderspension eller sociale ydelser, er du "
 "ikke berettiget til Suila-tapit."
 msgstr ""
 
@@ -645,7 +651,7 @@ msgid "Vælg estimeringsmotor (U)"
 msgstr ""
 
 #: suila/templates/suila/forms/pause_form.html
-msgid "Lad borgeren sætte udbetalinger på pause"
+msgid "Borgeren kan sætte udbetalinger på pause og genoptage dem."
 msgstr ""
 
 #: suila/templates/suila/forms/pause_form.html
@@ -672,7 +678,7 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/forms/pause_form.html
-msgid "Vælg en begrundelse for at pause en person."
+msgid "Vælg en begrundelse for at sætte udbetalinger på pause."
 msgstr ""
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
@@ -841,10 +847,6 @@ msgid "Udbetalingspause"
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
-msgid "Ændre status på udbetalinger"
-msgstr ""
-
-#: suila/templates/suila/person_detail.html
 msgid "Skift estimeringsmotor"
 msgstr ""
 
@@ -936,7 +938,7 @@ msgstr ""
 #: suila/templates/suila/person_detail.html
 msgid ""
 "Fejl i udbetaling: Der er opstået en fejl under udbetaling af din Suila-"
-"tapit. Kontakt Borgerservice for yderligere information."
+"tapit. Kontakt Skattestyrelsen for yderligere information."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
@@ -944,6 +946,12 @@ msgid ""
 "Afventer udbetaling: Din forventede årsindkomst er 475.000 kr. – 500.000 kr. "
 "Dine Suila-tapit udbetalinger starter, når Skattestyrelsen er mere sikker "
 "på, om din årsindkomst berettiger dig til Suila-tapit."
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
+msgid ""
+"Udbetalingspause: Der er ikke udbetalt Suila-tapit denne måned, da dine "
+"udbetalinger har været sat på pause af dig selv eller Skattestyrelsen."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html
@@ -1051,7 +1059,7 @@ msgid "Oversigt over dine signaler"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
-msgid "Her ser du en liste med de signaler Skattestyrelsen har modtaget."
+msgid "Her ser du en liste med de signaler, Skattestyrelsen har modtaget."
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -1149,12 +1157,12 @@ msgstr ""
 #: suila/templates/suila/person_no_year_text.html
 #, python-format
 msgid ""
-"Du kan kontakte Borgerservice hos Skattestyrelsen, hvis du har spørgsmål. "
+"Du kan kontakte Skattestyrelsen, hvis du har spørgsmål. "
 "Find mere information på <a href=\"%(link)s\">aka.gl</a>"
 msgstr ""
 
 #: suila/templates/suila/person_search.html
-msgid "Liste over borgere"
+msgid "Borgersøgning"
 msgstr ""
 
 #: suila/templates/suila/person_search.html
@@ -1219,15 +1227,25 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/templatetags/pause_info_box.html
+msgid ""
+"Skattestyrelsen har sat dine Suila-tapit-udbetalinger på pause. Pausen "
+"skyldes, at din forventede årsindkomst er tæt på indtægtsgrænsen for Suila-"
+"tapit, eller at Skattestyrelsen har modtaget andre oplysninger om din "
+"forventede årsindkomst."
+msgstr ""
+
+#: suila/templates/suila/templatetags/pause_info_box.html
 #, python-format
-msgid "Pausen træder i kraft den %(date)s."
+msgid "Udbetalingspausen vil være gældende fra d. %(date)s."
 msgstr ""
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 #, python-format
 msgid ""
-"Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit i januar "
-"%(year)s."
+"Din forventede årsindkomst er tæt på 500.000 kr., som er grænsen for at "
+"modtage Suila-tapit.<br/> Skattestyrelsen afventer yderligere "
+"indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/"
+"> Næste vurdering foretages i januar %(year)s."
 msgstr ""
 
 #: suila/templatetags/amount_tags.py
@@ -1360,7 +1378,7 @@ msgid "Fuld skattepligtig"
 msgstr ""
 
 #: suila/templatetags/status_tags.py
-msgid "Delvist skattepligtig"
+msgid "Begrænset skattepligtig"
 msgstr ""
 
 #: suila/templatetags/status_tags.py
@@ -1434,7 +1452,15 @@ msgid "Beløb"
 msgstr ""
 
 #: suila/views.py
+msgid "Borgeren har sat udbetalinger på pause"
+msgstr ""
+
+#: suila/views.py
 msgid "Starter udbetalingspause"
+msgstr ""
+
+#: suila/views.py
+msgid "Borgeren har genoptaget udbetalinger"
 msgstr ""
 
 #: suila/views.py
