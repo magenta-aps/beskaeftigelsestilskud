@@ -8,8 +8,6 @@
   <input type="hidden" name="year" value="{{ year }}"/> 
   <input type="hidden" name="month" value="{{ month }}"/> 
 
-  {% pause_info_box True %}
-
   {% if user|has_permissions:"suila.change_person" %}  
     <div class="form-check mb-3">
       <input class="form-check-input" type="checkbox" name="allow_pause" id="allow_pause" {% if allow_pause %} checked {% endif %}>
