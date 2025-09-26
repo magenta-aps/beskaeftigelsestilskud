@@ -503,7 +503,6 @@ class Person(PermissionsMixin, models.Model):
         validators=(RegexValidator(regex=r"\d{10}"),),
         verbose_name=_("CPR nummer"),
         help_text=_("CPR nummer"),
-        db_index=True,
     )
 
     # Når en person er på pause udbetaler vi ved årsopgørelsen (dvs. December).
