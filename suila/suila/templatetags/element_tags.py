@@ -51,17 +51,15 @@ def language_picker(context):
 @register.inclusion_tag(
     "suila/templatetags/manually_entered_income_info_box.html", takes_context=True
 )
-def manually_entered_income_info_box(context, mock):
+def manually_entered_income_info_box(context):
     return {  # pragma: no cover
-        "mock": mock,
         **context.flatten(),
     }
 
 
 @register.inclusion_tag("suila/templatetags/pause_info_box.html", takes_context=True)
-def pause_info_box(context, mock):
+def pause_info_box(context):
     return {  # pragma: no cover
-        "mock": mock,
         **context.flatten(),
     }
 

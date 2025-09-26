@@ -17,10 +17,6 @@
             Sidst ændret:
         {% endblocktrans %}    
         
-        {% if mock and not manually_entered_income %}       
-            {{ now }}
-        {% else %}
-            {{ manually_entered_income_last_change }}
-        {% endif %}
+        {{ manually_entered_income_last_change }}
     </i>
 </div>
