@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-25 09:05-0100\n"
+"POT-Creation-Date: 2025-09-26 12:55-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1062,6 +1062,18 @@ msgid ""
 "Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker "
 "oplysninger om udbytte fra tidligere år beregningen af din forventede "
 "indkomst for i år."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid "Pensionsindbetalinger"
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysninger om pensionsindbetalinger stammer fra pensionsselskaberne og "
+"vedrører beløb, som din arbejdsgiver har indbetalt til pensionsopsparing som "
+"en del af din løn. Øvrige pensionsindbetalinger vises ikke, da de ikke "
+"indgår i estimeringen af din årsindkomst."
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html

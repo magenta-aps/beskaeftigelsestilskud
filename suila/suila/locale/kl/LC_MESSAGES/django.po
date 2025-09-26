@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-25 09:05-0100\n"
+"POT-Creation-Date: 2025-09-26 12:55-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -106,7 +106,7 @@ msgstr "Innuttaasoq sinniisualuunniit isumaqatigiissuteqarfigalugu."
 msgid "Personen er registreret som afdød"
 msgstr "Innuttaasoq toqusimasutut nalunaarsorneqarsimavoq"
 
-#: suila/models.py
+#: suila/models.py suila/templates/suila/templatetags/missing_info_box.html
 msgid "Personen er registreret som forsvundet"
 msgstr "Innutaasoq maqaasineqartutut nalunaarsorneqarsimavoq"
 
@@ -450,7 +450,7 @@ msgstr ""
 #: suila/templates/suila/forms/estimation_engine_form.html
 #: suila/templates/suila/forms/pause_form.html
 msgid "Gem"
-msgstr ""
+msgstr "Toqqoruk"
 
 #: suila/templates/suila/calculation_parameters_list.html
 msgid "Beregningsgraf"
@@ -757,11 +757,11 @@ msgstr "Naatsorsukkat toqqukkit"
 
 #: suila/templates/suila/forms/estimation_engine_form.html
 msgid "Vælg estimeringsmotor (A)"
-msgstr ""
+msgstr "Kisitsissut toqqaruk (A)"
 
 #: suila/templates/suila/forms/estimation_engine_form.html
 msgid "Vælg estimeringsmotor (U)"
-msgstr ""
+msgstr "Kisitsissut toqqaruk (U)"
 
 #: suila/templates/suila/forms/pause_form.html
 msgid "Borgeren kan sætte udbetalinger på pause og genoptage dem."
@@ -1009,11 +1009,11 @@ msgstr "Ukiumut isertitat allanngortikkit"
 #: suila/templates/suila/templatetags/pause_info_box.html
 #: suila/templatetags/status_tags.py suila/tests/test_status_tags.py
 msgid "Udbetalingspause"
-msgstr "Pisartakkanik unitsitsigallarneq"
+msgstr "Suila-tapinik unitsitsigallarneq"
 
 #: suila/templates/suila/person_detail.html
 msgid "Skift estimeringsmotor"
-msgstr "Kisitsinermi atorneqartoq allanngortiguk"
+msgstr "Kisitsissut taarseruk"
 
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_notes.html
@@ -1045,7 +1045,7 @@ msgstr ""
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_tax_scope_history.html
 msgid "Mandtal"
-msgstr ""
+msgstr "Inunnik nalunaarsuivik"
 
 #: suila/templates/suila/person_detail.html
 #, python-format
@@ -1269,6 +1269,22 @@ msgstr ""
 "naatsorsukkani ukioq kingulleq iluanaarutisiarisimasatit sunnerneqassapput."
 
 #: suila/templates/suila/person_detail_income.html
+msgid "Pensionsindbetalinger"
+msgstr "Soraarnerussutisiassanut akiliutit"
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysninger om pensionsindbetalinger stammer fra pensionsselskaberne og "
+"vedrører beløb, som din arbejdsgiver har indbetalt til pensionsopsparing som "
+"en del af din løn. Øvrige pensionsindbetalinger vises ikke, da de ikke "
+"indgår i estimeringen af din årsindkomst."
+msgstr ""
+"Paasissutissat Soraarnerussutiaqalernissannut ileqqaakkannut tunngasut, "
+"sulisitsisuit aningaasarsiannut ilanngullugit nalunaarsugaanneerput. Taakkua "
+"saniatigut ileqqaarsimasatit kisitsinermi ilanngunneqanngillat, "
+"isertitariumaagassarnut paasissutissanut ilaanngimmata."
+
+#: suila/templates/suila/person_detail_income.html
 msgid "Oversigt over dine signaler"
 msgstr "Nalunaarutaasimasut allattorsimaneri"
 
@@ -1427,6 +1443,7 @@ msgstr ""
 
 #: suila/templates/suila/templatetags/dead_info_box.html
 #: suila/templates/suila/templatetags/manually_entered_income_info_box.html
+#: suila/templates/suila/templatetags/missing_info_box.html
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Sidst ændret:"
 msgstr ""
@@ -1615,15 +1632,15 @@ msgstr "Tunniunneqartussat aalajangerneqarsimapput"
 
 #: suila/templatetags/status_tags.py
 msgid "Fuld skattepligtig"
-msgstr ""
+msgstr "Tamakkiisumik akileraartartoq"
 
 #: suila/templatetags/status_tags.py
 msgid "Begrænset skattepligtig"
-msgstr ""
+msgstr "Killilimmik akileraartartoq"
 
 #: suila/templatetags/status_tags.py
 msgid "Ikke i mandtal"
-msgstr ""
+msgstr "Inunnik nalunaarsuivimmiinngilaq"
 
 #: suila/tests/test_views.py suila/views.py
 #, python-format
