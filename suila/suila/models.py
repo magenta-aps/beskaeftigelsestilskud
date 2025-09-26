@@ -845,6 +845,12 @@ class PersonYear(PermissionsMixin, models.Model):
                         "ligger tæt på den nedre grænse for at modtage "
                         "Suila-tapit."
                     ).format(year=self.year.year - 1)
+                if new_value == QuarantineReason.RECEIVED_TOO_MUCH:
+                    note_text = (
+                        "Suila har automatisk sat borgerens udbetalinger "
+                        "på pause, da borgeren er estimeret til ikke "
+                        "at være berettiget til Suila-tapit i {year}"
+                    ).format(year=self.year.year - 1)
                 if new_value == QuarantineReason.NONE:
                     if old_value == QuarantineReason.UPPER_THRESHOLD:
                         note_text = (
@@ -861,6 +867,12 @@ class PersonYear(PermissionsMixin, models.Model):
                             "årsindkomst er estimeret til at ligge "
                             "over den nedre grænse for at modtage "
                             "Suila-tapit."
+                        )
+                    if old_value == QuarantineReason.RECEIVED_TOO_MUCH:
+                        note_text = (
+                            "Borgerens udbetalinger er automatisk blevet "
+                            "genoptaget af Suila, da borgeren er estimeret "
+                            "til at være berettiget til Suila-tapit."
                         )
                 if note_text:
                     Note.objects.create(text=note_text, personyear=self)

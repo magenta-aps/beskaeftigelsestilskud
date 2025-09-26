@@ -724,6 +724,25 @@ class TestPersonYear(UserModelTest):
 
         with patch(
             "suila.models.PersonYear.quarantine_df",
+            new_callable=PropertyMock(
+                side_effect=modify_df(QuarantineReason.RECEIVED_TOO_MUCH)
+            ),
+        ):
+            self.person_year2.update_quarantine()
+            self.assertEqual(
+                self.person_year2.quarantine, QuarantineReason.RECEIVED_TOO_MUCH
+            )
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Suila har automatisk sat borgerens udbetalinger "
+                "på pause, da borgeren er estimeret til ikke "
+                "at være berettiget til Suila-tapit i {year}".format(
+                    year=self.year2.year - 1
+                ),
+            )
+
+        with patch(
+            "suila.models.PersonYear.quarantine_df",
             new_callable=PropertyMock(side_effect=modify_df(QuarantineReason.NONE)),
         ):
             self.person_year2.quarantine = QuarantineReason.UPPER_THRESHOLD
@@ -752,7 +771,16 @@ class TestPersonYear(UserModelTest):
                 "Suila-tapit.",
             )
 
-        print("SUCCESS")
+            self.person_year2.quarantine = QuarantineReason.RECEIVED_TOO_MUCH
+            self.person_year2.save()
+            self.person_year2.update_quarantine()
+            self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Borgerens udbetalinger er automatisk blevet "
+                "genoptaget af Suila, da borgeren er estimeret "
+                "til at være berettiget til Suila-tapit.",
+            )
 
 
 class TestPersonMonth(UserModelTest):
