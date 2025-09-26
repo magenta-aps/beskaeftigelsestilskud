@@ -15,7 +15,6 @@ from common.models import User
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model, QuerySet
-from django.utils.translation import gettext_lazy as _
 from pandas import DataFrame
 
 from suila.models import (
@@ -25,6 +24,7 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
+    QuarantineReason,
     Year,
 )
 
@@ -365,6 +365,9 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
     quarantine_if_wrong_payout = settings.QUARANTINE_IF_WRONG_PAYOUT  # type: ignore
     quarantine_if_too_much = settings.QUARANTINE_IF_EARNS_TOO_MUCH  # type: ignore
     quarantine_if_too_little = settings.QUARANTINE_IF_EARNS_TOO_LITTLE  # type: ignore
+    print(f"quarantine_if_wrong_payout: {quarantine_if_wrong_payout}")
+    print(f"quarantine_if_too_much: {quarantine_if_too_much}")
+    print(f"quarantine_if_too_little: {quarantine_if_too_little}")
 
     qs = PersonMonth.objects.filter(
         month=12,
@@ -391,29 +394,42 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
     df["earns_too_much"] = df_2.earns_too_much.reindex(df.index, fill_value=False)
 
     df["in_quarantine"] = False
-    df["quarantine_reason"] = "-"
+    df["quarantine_reason"] = QuarantineReason.NONE
 
     if quarantine_if_wrong_payout:
         df.in_quarantine = df.in_quarantine | df.wrong_payout
-        df.loc[df.wrong_payout, "quarantine_reason"] = str(
-            _("Du modtog for meget tilskud i {year}").format(year=year - 1)
+        df.loc[df.wrong_payout, "quarantine_reason"] = (
+            QuarantineReason.RECEIVED_TOO_MUCH
         )
+
+        # str(
+        #     _("Du modtog for meget tilskud i {year}").format(year=year - 1)
+        # )
 
     if quarantine_if_too_much:
         df.in_quarantine = df.in_quarantine | df.earns_too_much
-        df.loc[df.earns_too_much, "quarantine_reason"] = str(
-            _("Du tjente for tæt på øverste grænse i {year}").format(year=year - 1)
+        df.loc[df.earns_too_much, "quarantine_reason"] = (
+            QuarantineReason.UPPER_THRESHOLD
         )
+
+        # str(
+        #     _("Du tjente for tæt på øverste grænse i {year}").format(year=year - 1)
+        # )
 
     if quarantine_if_too_little:
         df.in_quarantine = df.in_quarantine | df.earns_too_little
-        df.loc[df.earns_too_little, "quarantine_reason"] = str(
-            _("Du tjente for tæt på bundgrænsen i {year}").format(year=year - 1)
+        df.loc[df.earns_too_little, "quarantine_reason"] = (
+            QuarantineReason.LOWER_THRESHOLD
         )
 
+        # str(
+        #     _("Du tjente for tæt på bundgrænsen i {year}").format(year=year - 1)
+        # ))
+
     df = df.reindex(cpr_numbers)
-    df["quarantine_reason"] = df.quarantine_reason.fillna("-")
+    df["quarantine_reason"] = df.quarantine_reason.fillna(QuarantineReason.NONE)
     df["in_quarantine"] = df.in_quarantine.fillna(False)
+    print(df.to_string())
     return df
 
 

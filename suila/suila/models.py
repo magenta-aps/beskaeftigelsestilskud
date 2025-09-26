@@ -204,6 +204,13 @@ class PersonCprStatusChoices(IntegerChoices):
     )
 
 
+class QuarantineReason(IntegerChoices):
+    NONE = 0, _("Ingen")
+    RECEIVED_TOO_MUCH = 1, _("Du modtog for meget tilskud i {year}")
+    LOWER_THRESHOLD = 2, _("Du tjente for tæt på bundgrænsen i {year}")
+    UPPER_THRESHOLD = 3, _("Du tjente for tæt på øverste grænse i {year}")
+
+
 class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
     class Meta:
         abstract = True
@@ -784,6 +791,10 @@ class PersonYear(PermissionsMixin, models.Model):
         max_digits=12,
         decimal_places=2,
     )
+    quarantine = models.IntegerField(
+        choices=QuarantineReason,
+        default=QuarantineReason.NONE,
+    )
 
     def __str__(self):
         return f"{self.person} ({self.year})"
@@ -806,7 +817,9 @@ class PersonYear(PermissionsMixin, models.Model):
         return (
             ""
             if not settings.ENFORCE_QUARANTINE  # type: ignore
-            else self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
+            else QuarantineReason(
+                self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
+            ).label.format(year=self.year.year - 1)
         )
 
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
