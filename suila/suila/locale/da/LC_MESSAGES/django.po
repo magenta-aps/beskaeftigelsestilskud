@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-26 12:55-0100\n"
+"POT-Creation-Date: 2025-09-26 13:13-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -587,9 +587,9 @@ msgstr ""
 #: suila/templates/suila/faq.html
 msgid ""
 "Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, "
-"der varierer meget fra måned til måned eller indkomster fra udbytte. Fx "
-"indkomster fra udbytte. Det giver Skattestyrelsen signaler, der peger i "
-"forskellige retninger. Udbetaling afventer et klarere signal."
+"der varierer meget fra måned til måned eller indkomster fra udbytte. Det "
+"giver Skattestyrelsen signaler, der peger i forskellige retninger. Udbetaling "
+"afventer et klarere signal."
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -730,13 +730,14 @@ msgid "Kan du ikke se dine tal?"
 msgstr ""
 
 #: suila/templates/suila/graph.html
+#, python-format
 msgid ""
 "Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at du "
 "forventer at have en årsindkomst på 475.000-500.000 kr., vil du ikke modtage "
 "Suila-tapit en gang om måneden. Det er, fordi din estimerede årsindkomst er "
 "tæt på den øvre grænse på 500.000 kr. for at være berettiget til Suila-"
-"tapit. Du modtager i stedet én samlet udbetaling for månederne januar 2025 "
-"til november 2025 i januar 2026."
+"tapit. Du modtager i stedet én samlet udbetaling for månederne januar til "
+"november %(this_year)s i januar %(next_year)s."
 msgstr ""
 
 #: suila/templates/suila/graph.html
@@ -1103,6 +1104,13 @@ msgid ""
 "Data på Suila.gl opdateres når selskaber indberetter udbetalt udbytte. Vær "
 "opmærksom på, at data vises med forsinkelse. Hver måned trækkes de senest "
 "tilgængelige data i forbindelse med din udbetaling."
+msgstr ""
+
+#: suila/templates/suila/person_detail_income.html
+msgid ""
+"Oplysninger om arbejdsgiverbetalt pension vises, når Skattestyrelsen har "
+"modtaget oplysninger fra alle grønlandske og udvalgte danske "
+"pensionsselskaber."
 msgstr ""
 
 #: suila/templates/suila/person_detail_notes.html
