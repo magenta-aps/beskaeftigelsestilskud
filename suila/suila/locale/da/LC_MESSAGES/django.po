@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-26 13:13-0100\n"
+"POT-Creation-Date: 2025-09-26 13:37-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -306,6 +306,10 @@ msgid "Se videoen om Suila-tapit"
 msgstr ""
 
 #: suila/templates/suila/about.html
+msgid "https://www.youtube.com/embed/Ti86S9FA6t0"
+msgstr ""
+
+#: suila/templates/suila/about.html
 msgid "Få mere information om Suila-tapit"
 msgstr ""
 
@@ -588,8 +592,8 @@ msgstr ""
 msgid ""
 "Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, "
 "der varierer meget fra måned til måned eller indkomster fra udbytte. Det "
-"giver Skattestyrelsen signaler, der peger i forskellige retninger. Udbetaling "
-"afventer et klarere signal."
+"giver Skattestyrelsen signaler, der peger i forskellige retninger. "
+"Udbetaling afventer et klarere signal."
 msgstr ""
 
 #: suila/templates/suila/faq.html
