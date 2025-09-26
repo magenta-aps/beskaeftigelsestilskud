@@ -510,7 +510,6 @@ class Person(PermissionsMixin, models.Model):
         validators=(RegexValidator(regex=r"\d{10}"),),
         verbose_name=_("CPR nummer"),
         help_text=_("CPR nummer"),
-        db_index=True,
     )
 
     # Når en person er på pause udbetaler vi ved årsopgørelsen (dvs. December).
@@ -846,8 +845,6 @@ class PersonYear(PermissionsMixin, models.Model):
                         "ligger tæt på den nedre grænse for at modtage "
                         "Suila-tapit."
                     ).format(year=self.year.year - 1)
-                if new_value == QuarantineReason.RECEIVED_TOO_MUCH:
-                    note_text = "For meget"
                 if new_value == QuarantineReason.NONE:
                     if old_value == QuarantineReason.UPPER_THRESHOLD:
                         note_text = (

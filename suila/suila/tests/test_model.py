@@ -694,8 +694,7 @@ class TestPersonYear(UserModelTest):
                 side_effect=modify_df(QuarantineReason.UPPER_THRESHOLD)
             ),
         ):
-            print(self.person_year2.quarantine_df)
-            self.person_year.update_quarantine()
+            self.person_year2.update_quarantine()
             self.assertEqual(
                 self.person_year2.quarantine, QuarantineReason.UPPER_THRESHOLD
             )
@@ -712,8 +711,7 @@ class TestPersonYear(UserModelTest):
                 side_effect=modify_df(QuarantineReason.LOWER_THRESHOLD)
             ),
         ):
-            print(self.person_year2.quarantine_df)
-            self.person_year.update_quarantine()
+            self.person_year2.update_quarantine()
             self.assertEqual(
                 self.person_year2.quarantine, QuarantineReason.LOWER_THRESHOLD
             )
@@ -726,32 +724,32 @@ class TestPersonYear(UserModelTest):
 
         with patch(
             "suila.models.PersonYear.quarantine_df",
-            new_callable=PropertyMock(
-                side_effect=modify_df(QuarantineReason.RECEIVED_TOO_MUCH)
-            ),
-        ):
-            print(self.person_year2.quarantine_df)
-            self.person_year.update_quarantine()
-            self.assertEqual(
-                self.person_year2.quarantine, QuarantineReason.RECEIVED_TOO_MUCH
-            )
-            self.assertEqual(
-                self.person_year2.note_set.order_by("-created").first().text,
-                "For meget",
-            )
-
-        with patch(
-            "suila.models.PersonYear.quarantine_df",
             new_callable=PropertyMock(side_effect=modify_df(QuarantineReason.NONE)),
         ):
-            print(self.person_year2.quarantine_df)
-            self.person_year.update_quarantine()
-            self.assertEqual(
-                self.person_year2.quarantine, QuarantineReason.RECEIVED_TOO_MUCH
-            )
+            self.person_year2.quarantine = QuarantineReason.UPPER_THRESHOLD
+            self.person_year2.save()
+            self.person_year2.update_quarantine()
+            self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
             self.assertEqual(
                 self.person_year2.note_set.order_by("-created").first().text,
-                "For meget",
+                "Borgerens udbetalinger er automatisk "
+                "genoptaget af Suila, da den forventede "
+                "årsindkomst er estimeret til at ligge "
+                "under den øvre grænse for at modtage "
+                "Suila-tapit.",
+            )
+
+            self.person_year2.quarantine = QuarantineReason.LOWER_THRESHOLD
+            self.person_year2.save()
+            self.person_year2.update_quarantine()
+            self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Borgerens udbetalinger er automatisk "
+                "genoptaget af Suila, da den forventede "
+                "årsindkomst er estimeret til at ligge "
+                "over den nedre grænse for at modtage "
+                "Suila-tapit.",
             )
 
         print("SUCCESS")
