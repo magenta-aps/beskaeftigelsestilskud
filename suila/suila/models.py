@@ -874,7 +874,7 @@ class PersonYear(PermissionsMixin, models.Model):
                             "genoptaget af Suila, da borgeren er estimeret "
                             "til at være berettiget til Suila-tapit."
                         )
-                if note_text:
+                if note_text:  # pragma: no branch
                     Note.objects.create(text=note_text, personyear=self)
 
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
