@@ -558,6 +558,12 @@ class TestPerson(UserModelTest):
         self.assertIsNotNone(note)
         self.assertEqual(note.text, "Stopper udbetalingspause\nPersonen er fundet")
 
+    def test_missing_from_start(self):
+        person = Person.objects.create(
+            cpr="0102034444", paused=False, cpr_status=PersonCprStatusChoices.MISSING
+        )
+        self.assertTrue(person.paused)
+
     def test_on_cpr_status_change_same(self):
         paused_before = self.person.paused
         reason_before = self.person.pause_reason
