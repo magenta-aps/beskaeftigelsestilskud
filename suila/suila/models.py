@@ -480,6 +480,9 @@ class Year(PermissionsMixin, models.Model):
 class Person(PermissionsMixin, models.Model):
     class Meta:
         permissions = (("view_data_analysis", "Can view data analysis"),)
+        indexes = [
+            Index(fields=("cpr",)),
+        ]
 
     exclude_serialization = ("welcome_letter_id", "welcome_letter_sent_at")
     history = HistoricalRecords(
@@ -500,6 +503,7 @@ class Person(PermissionsMixin, models.Model):
         validators=(RegexValidator(regex=r"\d{10}"),),
         verbose_name=_("CPR nummer"),
         help_text=_("CPR nummer"),
+        db_index=True,
     )
 
     # Når en person er på pause udbetaler vi ved årsopgørelsen (dvs. December).
