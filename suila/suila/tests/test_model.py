@@ -673,9 +673,6 @@ class TestPersonYear(UserModelTest):
         )
 
     def test_update_quarantine(self):
-        print("======================")
-        print("test_update_quarantine")
-        print(self.person_year2.quarantine_df)
         self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
         original_quarantine_df = self.person_year2.quarantine_df
 
