@@ -822,6 +822,52 @@ class PersonYear(PermissionsMixin, models.Model):
             ).label.format(year=self.year.year - 1)
         )
 
+    def update_quarantine(self):
+        if settings.ENFORCE_QUARANTINE:
+            new_value = QuarantineReason(
+                self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
+            )
+            old_value = self.quarantine
+            if new_value != old_value:
+                self.quarantine = new_value
+                self.save(update_fields=("quarantine",))
+                note_text = None
+                if new_value == QuarantineReason.UPPER_THRESHOLD:
+                    note_text = (
+                        "Suila har automatisk sat borgerens udbetalinger "
+                        "på pause, da borgerens årsindkomst i {year} "
+                        "ligger tæt på den øvre grænse for at modtage "
+                        "Suila-tapit."
+                    ).format(year=self.year.year - 1)
+                if new_value == QuarantineReason.LOWER_THRESHOLD:
+                    note_text = (
+                        "Suila har automatisk sat borgerens udbetalinger "
+                        "på pause, da borgerens årsindkomst i {year} "
+                        "ligger tæt på den nedre grænse for at modtage "
+                        "Suila-tapit."
+                    ).format(year=self.year.year - 1)
+                if new_value == QuarantineReason.RECEIVED_TOO_MUCH:
+                    note_text = "For meget"
+                if new_value == QuarantineReason.NONE:
+                    if old_value == QuarantineReason.UPPER_THRESHOLD:
+                        note_text = (
+                            "Borgerens udbetalinger er automatisk "
+                            "genoptaget af Suila, da den forventede "
+                            "årsindkomst er estimeret til at ligge "
+                            "under den øvre grænse for at modtage "
+                            "Suila-tapit."
+                        )
+                    if old_value == QuarantineReason.LOWER_THRESHOLD:
+                        note_text = (
+                            "Borgerens udbetalinger er automatisk "
+                            "genoptaget af Suila, da den forventede "
+                            "årsindkomst er estimeret til at ligge "
+                            "over den nedre grænse for at modtage "
+                            "Suila-tapit."
+                        )
+                if note_text:
+                    Note.objects.create(text=note_text, personyear=self)
+
     def amount_sum_by_type(self, income_type: IncomeType | None) -> Decimal:
         sum = Decimal(0)
         if income_type in (IncomeType.A, None):

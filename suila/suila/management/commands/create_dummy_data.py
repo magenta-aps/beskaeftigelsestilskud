@@ -234,6 +234,7 @@ class Command(BaseCommand):
                             year, month, days_in_month(year, month), tzinfo=tz
                         ),
                     )
+                person_year.update_quarantine()
 
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
 

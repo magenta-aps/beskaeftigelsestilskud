@@ -365,9 +365,6 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
     quarantine_if_wrong_payout = settings.QUARANTINE_IF_WRONG_PAYOUT  # type: ignore
     quarantine_if_too_much = settings.QUARANTINE_IF_EARNS_TOO_MUCH  # type: ignore
     quarantine_if_too_little = settings.QUARANTINE_IF_EARNS_TOO_LITTLE  # type: ignore
-    print(f"quarantine_if_wrong_payout: {quarantine_if_wrong_payout}")
-    print(f"quarantine_if_too_much: {quarantine_if_too_much}")
-    print(f"quarantine_if_too_little: {quarantine_if_too_little}")
 
     qs = PersonMonth.objects.filter(
         month=12,
@@ -429,7 +426,6 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
     df = df.reindex(cpr_numbers)
     df["quarantine_reason"] = df.quarantine_reason.fillna(QuarantineReason.NONE)
     df["in_quarantine"] = df.in_quarantine.fillna(False)
-    print(df.to_string())
     return df
 
 

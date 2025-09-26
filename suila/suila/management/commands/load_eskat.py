@@ -13,7 +13,7 @@ from suila.integrations.eskat.load import (
     TaxInformationHandler,
 )
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import DataLoad
+from suila.models import DataLoad, PersonYear
 
 
 class Command(SuilaBaseCommand):
@@ -113,6 +113,8 @@ class Command(SuilaBaseCommand):
                         load,
                         out,
                     )
+            for person_year in PersonYear.objects.filter(year__year=year):
+                person_year.update_quarantine()
         if typ == "taxinformation":
             tax_information_data = list(
                 client.get_tax_information(year, cpr=cpr, chunk_size=fetch_chunk_size)
