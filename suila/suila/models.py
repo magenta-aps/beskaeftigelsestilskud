@@ -673,6 +673,8 @@ class Person(PermissionsMixin, models.Model):
     @staticmethod
     def pre_save(sender, instance: Person, *args, **kwargs):
         try:
+            # Dict of changed fields.
+            # {fieldname: (old-value, new-value)}
             changed_fields: Dict[str, Tuple[Any, Any]] = {}
             if instance.history.exists():
                 prior = instance.history.all().order_by("-history_date")[0]
@@ -684,7 +686,10 @@ class Person(PermissionsMixin, models.Model):
                         if old_value != new_value:
                             changed_fields[key] = (old_value, new_value)
             else:
+                # New instance
                 for field in Person._meta.local_concrete_fields:  # type: ignore
+                    # Loop over model fields (skipping foreignkeys)
+                    # update `changed_fields` with fields that are not None
                     if not field.is_relation:
                         key = field.name
                         new_value = getattr(instance, key)
