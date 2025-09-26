@@ -399,29 +399,17 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
             QuarantineReason.RECEIVED_TOO_MUCH
         )
 
-        # str(
-        #     _("Du modtog for meget tilskud i {year}").format(year=year - 1)
-        # )
-
     if quarantine_if_too_much:
         df.in_quarantine = df.in_quarantine | df.earns_too_much
         df.loc[df.earns_too_much, "quarantine_reason"] = (
             QuarantineReason.UPPER_THRESHOLD
         )
 
-        # str(
-        #     _("Du tjente for tæt på øverste grænse i {year}").format(year=year - 1)
-        # )
-
     if quarantine_if_too_little:
         df.in_quarantine = df.in_quarantine | df.earns_too_little
         df.loc[df.earns_too_little, "quarantine_reason"] = (
             QuarantineReason.LOWER_THRESHOLD
         )
-
-        # str(
-        #     _("Du tjente for tæt på bundgrænsen i {year}").format(year=year - 1)
-        # ))
 
     df = df.reindex(cpr_numbers)
     df["quarantine_reason"] = df.quarantine_reason.fillna(QuarantineReason.NONE)

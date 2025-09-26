@@ -205,7 +205,7 @@ class PersonCprStatusChoices(IntegerChoices):
 
 
 class QuarantineReason(IntegerChoices):
-    NONE = 0, _("Ingen")
+    NONE = 0, "-"
     RECEIVED_TOO_MUCH = 1, _("Du modtog for meget tilskud i {year}")
     LOWER_THRESHOLD = 2, _("Du tjente for tæt på bundgrænsen i {year}")
     UPPER_THRESHOLD = 3, _("Du tjente for tæt på øverste grænse i {year}")
