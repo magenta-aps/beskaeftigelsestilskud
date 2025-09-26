@@ -480,6 +480,9 @@ class Year(PermissionsMixin, models.Model):
 class Person(PermissionsMixin, models.Model):
     class Meta:
         permissions = (("view_data_analysis", "Can view data analysis"),)
+        indexes = [
+            Index(fields=("cpr",)),
+        ]
 
     exclude_serialization = ("welcome_letter_id", "welcome_letter_sent_at")
     history = HistoricalRecords(
