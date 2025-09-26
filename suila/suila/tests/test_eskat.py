@@ -530,6 +530,7 @@ class TestExpectedIncome(BaseTestCase):
     ESKAT_USERNAME="testuser",
     ESKAT_PASSWORD="testpass",
     ESKAT_VERIFY=False,
+    ENFORCE_QUARANTINE=False,
 )
 class TestMonthlyIncome(BaseTestCase):
 

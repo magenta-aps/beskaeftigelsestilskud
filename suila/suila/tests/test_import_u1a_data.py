@@ -163,6 +163,7 @@ class TestImportU1ADataCommand(TestCase):
                 "stability_score_a": None,
                 "stability_score_b": None,
                 "year": self.year.year,
+                "quarantine": ANY,
             },
         )
 
