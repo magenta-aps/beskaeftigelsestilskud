@@ -83,7 +83,7 @@ if [ "${MAKEMESSAGES,,}" = true ]; then
 fi
 if [ "${TEST,,}" = true ]; then
   echo 'running tests'
-  coverage run manage.py test suila.tests.test_model.TestPersonYear.test_update_quarantine
+  coverage run manage.py test
   coverage combine
   coverage report --show-missing
 fi
