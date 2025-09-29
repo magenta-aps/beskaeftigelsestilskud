@@ -4,11 +4,12 @@
 import logging
 import os
 from csv import DictWriter
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
 from io import BytesIO, StringIO
 from typing import Generator
 
+from common.utils import add_or_subtract_working_days
 from dateutil.relativedelta import TU, relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
@@ -246,8 +247,8 @@ class BatchExport:
         # after the month we are exporting.)
         # Note, the payment date in Prisme not necessarily the same as the third Monday
         # in the month.
-        return get_payment_date(person_month.year, person_month.month) - timedelta(
-            days=1
+        return add_or_subtract_working_days(
+            get_payment_date(person_month.year, person_month.month), -1
         )
 
     def get_posting_date(self, person_month: PersonMonth) -> date:

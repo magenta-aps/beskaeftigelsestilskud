@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import datetime
 
-from common.utils import add_working_days
+from common.utils import add_or_subtract_working_days
 from django.template.defaultfilters import register
 from django.utils.translation import gettext_lazy as _
 from django_stubs_ext import StrOrPromise
@@ -28,7 +28,7 @@ def is_awaiting_payment_transfer(
     # extra buffer for things to "settle" between Prisme, NemKonto, and individual bank
     # IT systems.
     payment_date = get_payment_date(person_month.year, person_month.month)
-    margin_date = add_working_days(payment_date, margin_days)
+    margin_date = add_or_subtract_working_days(payment_date, margin_days)
     today = datetime.date.today()
     # Find out if we are still not past the margin date
     if today <= margin_date:
