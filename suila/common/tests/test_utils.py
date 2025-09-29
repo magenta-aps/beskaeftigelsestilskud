@@ -11,6 +11,7 @@ from common.models import User
 from common.tests.test_mixins import TestViewMixin
 from common.utils import (
     add_parameters_to_url,
+    add_working_days,
     calculate_stability_score,
     calculate_stability_score_for_entire_year,
     camelcase_to_snakecase,
@@ -453,3 +454,30 @@ class BTaxUtilsTest(TestCase):
         self.assertEqual(timestamp.year, 2025)
         self.assertEqual(timestamp.month, 5)
         self.assertEqual(timestamp.day, 9)
+
+
+class AddWorkingDaysTest(TestCase):
+    def test_add_working_days(self):
+
+        # 2025-10-3 is a friday.
+        # So adding two working days gives Tuesday the 7th
+        self.assertEqual(
+            add_working_days(date(2025, 10, 3), 2),
+            date(2025, 10, 7),
+        )
+
+        # 2025-12-24 is a christmas eve.
+        # Second day of christmas is on a Friday.
+        # So adding two working days gives Tuesday the 30th
+        self.assertEqual(
+            add_working_days(date(2025, 12, 24), 2),
+            date(2025, 12, 30),
+        )
+
+        # 2026-05-01 is Great Prayer Day. Which Greenland still celebrates
+        # Great prayer day is on a friday
+        # So adding two working days to the thursday before gives Tuesday the 5th
+        self.assertEqual(
+            add_working_days(date(2026, 4, 30), 2),
+            date(2026, 5, 5),
+        )
