@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 import dataclasses
 import re
+from datetime import date
 from decimal import Decimal
 from typing import Any, Collection, Dict, Iterable, TypeVar
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
+import holidays
 import numpy as np
 import pandas as pd
 from common.models import User
@@ -496,3 +498,8 @@ def get_user_who_pressed_pause(person: Person) -> str | None:
                 user_who_pressed_pause = "skattestyrelsen"
             break
     return user_who_pressed_pause
+
+
+def add_working_days(original_date: date, days_to_add: int) -> date:
+    holiday_calendar = holidays.GL()  # type: ignore
+    return holiday_calendar.get_nth_working_day(original_date, days_to_add)
