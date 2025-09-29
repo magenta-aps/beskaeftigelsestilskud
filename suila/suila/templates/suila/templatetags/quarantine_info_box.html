@@ -4,11 +4,12 @@
 {% load i18n %}
 
 <div class="me-2 mb-3 info">
-    <b> {% translate quarantine_reason %} </b>
+    <b>{% translate quarantine_reason %}</b>
     <p>
-        {% blocktrans trimmed  with year=next_year %}
-        Dine udbetalinger er blevet sat i bero. Du får udbetalt Suila-tapit
-        i januar {{ year }}.
-        {% endblocktrans %}
+        {% blocktranslate trimmed with year=next_year %}
+            Din forventede årsindkomst er tæt på 500.000 kr., som er grænsen for at modtage Suila-tapit.<br/>
+            Skattestyrelsen afventer yderligere indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/>
+            Næste vurdering foretages i januar {{ year }}.
+        {% endblocktranslate %}
     </p>
 </div>

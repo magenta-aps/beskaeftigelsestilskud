@@ -127,7 +127,7 @@ class TestDisplayTaxScope(TestCase):
     def test_format_tax_scope(self):
         self.assertEqual(format_tax_scope("FULL"), "Fuld skattepligtig")
 
-        self.assertEqual(format_tax_scope("LIM"), "Delvist skattepligtig")
+        self.assertEqual(format_tax_scope("LIM"), "Begrænset skattepligtig")
         self.assertEqual(format_tax_scope(None), "Ikke i mandtal")
 
         self.assertEqual(format_tax_scope("foo"), "")

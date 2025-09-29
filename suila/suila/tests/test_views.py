@@ -2171,7 +2171,7 @@ class TestPersonTaxScopeHistoryView(TestViewMixin, PersonEnv):
         soup = str(BeautifulSoup(response.content, features="lxml"))
         self.assertIn("Fuld skattepligtig", soup)
         self.assertIn("Ikke i mandtal", soup)
-        self.assertIn("Delvist skattepligtig", soup)
+        self.assertIn("Begrænset skattepligtig", soup)
 
     def test_pagination(self):
         # 1. No pagination when fewer than 5 periods are defined

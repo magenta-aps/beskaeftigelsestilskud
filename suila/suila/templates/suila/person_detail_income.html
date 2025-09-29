@@ -29,30 +29,40 @@
             <li class="my-3">
                 <b>{% translate "A-indkomst og indhandling" %}</b>
                 <br>
-                {% blocktrans trimmed %}
+                {% blocktranslate trimmed %}
                 Oplysningerne om A-indkomst stammer fra arbejdsgiveres lønindberetninger
                 og oplysninger om indhandling fra indhandlingssteder sendt til
                 Skattestyrelsen. Hvis du mener, at oplysningerne er forkerte, så henvend
                 dig til din arbejdsgiver eller dit indhandlingssted.
-                {% endblocktrans %}
+                {% endblocktranslate %}
             </li>
             <li class="my-3">
                 <b>{% translate "B-indkomst" %}</b>
                 <br>
-                {% blocktrans trimmed %}
+                {% blocktranslate trimmed %}
                 Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på baggrund af din
                 forskudsregistrering. Du kan altid ændre din forskudsregistrering på
                 <a href="https://sullissivik.gl" target="_blank">Sullissivik.gl</a>, hvis du mener at den er forkert.
-                {% endblocktrans %}
+                {% endblocktranslate %}
             </li>
             <li class="my-3">
                 <b>{% translate "Udbytte" %}</b>
                 <br>
-                {% blocktrans trimmed %}
-                Oplysning om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har
-                modtaget udbytte sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde
-                påvirker oplysninger om udbytte fra tidligere år beregningen af din forventede indkomst for i år.
-                {% endblocktrans %}
+                {% blocktranslate trimmed %}
+                    Oplysning om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har
+                    modtaget udbytte sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde
+                    påvirker oplysninger om udbytte fra tidligere år beregningen af din forventede indkomst for i år.
+                {% endblocktranslate %}
+            </li>
+            <li class="my-3">
+                <b>{% translate "Pensionsindbetalinger" %}</b>
+                <br>
+                {% blocktranslate trimmed %}
+                    Oplysninger om pensionsindbetalinger stammer fra pensionsselskaberne
+                    og vedrører beløb, som din arbejdsgiver har indbetalt til
+                    pensionsopsparing som en del af din løn. Øvrige pensionsindbetalinger
+                    vises ikke, da de ikke indgår i estimeringen af din årsindkomst.
+                {% endblocktranslate %}
             </li>
         </ul>
     </div>
@@ -60,9 +70,9 @@
 <div class="col-12 mt-5 mt-xl-0">
     <h2 class="mb-3">{% translate "Oversigt over dine signaler" %}</h2>
     <p>
-        {% blocktrans trimmed %}
-        Her ser du en liste med de signaler Skattestyrelsen har modtaget.
-        {% endblocktrans %}
+        {% blocktranslate trimmed %}
+        Her ser du en liste med de signaler, Skattestyrelsen har modtaget.
+        {% endblocktranslate %}
     </p>
     <ul class="detail-table nav">
         {% for person_year in available_person_years %}
@@ -93,29 +103,37 @@
             <div class="g-col-4 sidebar">
                 <h3>{% translate "A-indkomst og indhandling" %}</h3>
                 <p>
-                    {% blocktrans trimmed %}
+                    {% blocktranslate trimmed %}
                     Data på Suila.gl opdateres når arbejdsgiverne indberetter løn og når
                     indhandlingssteder indrapporterer indhandling. Vær opmærksom på, at
                     data vises med forsinkelse. Hver måned trækkes de senest
                     tilgængelige data i forbindelse med din udbetaling.
-                    {% endblocktrans %}
+                    {% endblocktranslate %}
                 </p>
                 <h3>{% translate "B-indkomst" %}</h3>
                 <p>
-                    {% blocktrans trimmed %}
+                    {% blocktranslate trimmed %}
                     Oplysning om B-indkomst kan vises med forsinkelse. Systemet trækker
                     de senest tilgængelige oplysninger lige inden den månedlige
                     udbetaling beregnes.
-                    {% endblocktrans %}
+                    {% endblocktranslate %}
                 </p>
                 <h3>{% translate "Udbytte" %}</h3>
                 <p>
-                    {% blocktrans trimmed %}
+                    {% blocktranslate trimmed %}
                     Data på Suila.gl opdateres når selskaber indberetter udbetalt
                     udbytte. Vær opmærksom på, at data vises med forsinkelse. Hver måned
                     trækkes de senest tilgængelige data i forbindelse med din
                     udbetaling.
-                    {% endblocktrans %}
+                    {% endblocktranslate %}
+                </p>
+                <h3>{% translate "Pensionsindbetalinger" %}</h3>
+                <p>
+                    {% blocktranslate trimmed %}
+                    Oplysninger om arbejdsgiverbetalt pension vises, når Skattestyrelsen
+                    har modtaget oplysninger fra alle grønlandske og udvalgte
+                    danske pensionsselskaber.
+                    {% endblocktranslate %}
                 </p>
             </div>
         </div>

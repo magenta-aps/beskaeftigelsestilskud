@@ -1171,6 +1171,8 @@ class PersonPauseUpdateView(
         default_paused = self.object.paused
 
         with transaction.atomic():
+            user_cpr = getattr(self.request.user, "cpr", None)
+            is_citizen = user_cpr is not None and user_cpr == self.object.cpr
             year = form.cleaned_data["year"]
             month = form.cleaned_data["month"]
             note = form.cleaned_data["note"]
@@ -1183,9 +1185,19 @@ class PersonPauseUpdateView(
             pause_reason = self.object.pause_reason
 
             if paused:
-                standard_note_text = gettext_noop("Starter udbetalingspause") + "\n"
+                if is_citizen:
+                    standard_note_text = (
+                        gettext_noop("Borgeren har sat udbetalinger på pause") + "\n"
+                    )
+                else:
+                    standard_note_text = gettext_noop("Starter udbetalingspause") + "\n"
             else:
-                standard_note_text = gettext_noop("Stopper udbetalingspause") + "\n"
+                if is_citizen:
+                    standard_note_text = (
+                        gettext_noop("Borgeren har genoptaget udbetalinger") + "\n"
+                    )
+                else:
+                    standard_note_text = gettext_noop("Stopper udbetalingspause") + "\n"
 
             if allow_pause and paused:
                 standard_note_text += gettext_noop("Borger må genoptage udbetalinger")
@@ -1508,7 +1520,6 @@ class CalculationParametersListView(
                     {method.pk: method.graph_points for method in methods},
                     cls=SuilaJSONEncoder,
                 ),
-                "next_year": self.next_year(),
             }
         )
 

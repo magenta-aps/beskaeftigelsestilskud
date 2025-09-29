@@ -17,14 +17,14 @@
 <div class="row mt-5">
     <div class="col-12">
         <p>
-            {% blocktrans trimmed %}
+            {% blocktranslate trimmed %}
             Få svar på de mest sandsynlige årsager til, at du ikke har fået udbetalt Suila-tapit.
-            {% endblocktrans %}
+            {% endblocktranslate %}
         </p>
         <p>
-            {% blocktrans trimmed %}
-            Suila-tapit udbetales, når systemet modtager signaler fra arbejdsmarkedet. De fire signaler er:
-            {% endblocktrans %}
+            {% blocktranslate trimmed %}
+            Suila-tapit udbetales, når Skattestyrelsen modtager signaler fra arbejdsmarkedet. De fire signaler er:
+            {% endblocktranslate %}
         </p>
         <ol>
             <li>{% translate "A-indkomst fra lønarbejde, som arbejdsgiverne indberetter i Sulinal." %}</li>
@@ -33,20 +33,21 @@
             <li>{% translate "Indberetning af udbytte. Når selskaberne indberetter udbytte, giver dette signal om en indkomst." %}</li>
         </ol>
         <p class="mt-3">
-            {% blocktrans trimmed %}
+            {% blocktranslate trimmed %}
             Ud fra signalerne om indkomst beregnes en forventet årsindkomst. Suila-tapit udbetales til borgere med en
             forventet årsindkomst på 70.000 kr. – 500.000 kr. Dog vil borgere med en forventet årsindkomst på
             475.000 - 500.000 kr. først modtage Suila-tapit, når Skattestyrelsen kan afklare, om den forventede
             årsindkomst holder sig under 500.000 kr.
-            {% endblocktrans %}
-            <br>
-            {% blocktrans trimmed %}
+            {% endblocktranslate %}
+        </p>
+        <p class="mt-3">
+            {% blocktranslate trimmed %}
             Bemærk, at der går to måneder fra den måned, din indkomst vedrører, til din udbetaling af Suila-tapit.
             Fx udbetales Suila-tapit for januar måned i marts, for februar måned i april, osv.
-            {% endblocktrans %}
+            {% endblocktranslate %}
         </p>
         <div class="my-5">
-            <iframe nonce="{{ request.csp_nonce }}" width="561" height="315" src="https://www.youtube.com/embed/9dbICMOXhM4" title="" frameBorder="0"   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"  allowFullScreen></iframe>
+            <iframe nonce="{{ request.csp_nonce }}" width="561" height="315" src="{% translate "https://www.youtube.com/embed/9dbICMOXhM4" %}" title="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
         </div>
         <h2 class="my-5">
             {% translate "Hvis du ikke har modtaget Suila-tapit, kan der være følgende forklaringer:" %}
@@ -62,14 +63,14 @@
                 <div id="manglendeSignal" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
                         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
-                        {% blocktrans trimmed with url=person_income_url %}
+                        {% blocktranslate trimmed with url=person_income_url %}
                         Din arbejdsgiver eller dit indhandlingssted har ikke indberettet din indkomst.
                         Eller har indberettet for sent eller forkert. Måske har de slet ikke indberettet.
-                        På siden <a href="{{ url }}">"Mine signaler"</a> kan du se hvilke oplysninger Skattestyrelsen
+                        På siden <a href="{{ url }}">"Mine signaler"</a> kan du se, hvilke oplysninger Skattestyrelsen
                         har om dine indkomster.
                         Hvis der mangler signal om indkomst fra arbejde og indhandling, så kontakt din arbejdsgiver
                         eller dit indhandlingssted.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
@@ -82,7 +83,7 @@
                 </h2>
                 <div id="ikkeModtagetSignal" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
-                        {% blocktrans trimmed %}
+                        {% blocktranslate trimmed %}
                         Du er selvstændig erhvervsdrivende og har ikke indbetalt løbende B-skatter. Eller du har betalt
                         et beløb, der er så stort, at Skattestyrelsens beregning viser, at du forventes at komme til at
                         tjene over 500.000 kr. om året. Med forskudsregistrering på
@@ -90,7 +91,7 @@
                         om dine indkomster som selvstændig erhvervsdrivende. Ud fra din forskudsregistrering sender
                         Skattestyrelsen månedlig opkrævning af B-skatter. Når du betaler dem, giver du os signal om din
                         indkomst.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
@@ -104,49 +105,50 @@
                 <div id="hoejIndkomst" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
                         <b>
-                        {% blocktrans trimmed %}
+                        {% blocktranslate trimmed %}
                         Ved forventet årsindkomst mellem 475.000-500.000 kr.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                         </b>
                         <br>
-                        {% blocktrans trimmed %}
-                        Da Skattestyrelsen har registeret, at du har en forventet årsindkomst på 475.000 – 500.000 kr.,
+                        {% blocktranslate trimmed %}
+                        Da Skattestyrelsen har registreret, at du har en forventet årsindkomst på 475.000 – 500.000 kr.,
                         udbetales beløbet ikke endnu. Det betyder følgende:
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                         <ul>
                             <li>
-                                {% blocktrans trimmed %}
+                                {% now "Y" as this_year %}
+                                {% blocktranslate trimmed with this_year=this_year next_year=year|add:1 %}
                                 Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der viser, at du
                                 forventer at have en årsindkomst på 475.000-500.000 kr., vil du ikke modtage Suila-tapit
-                                en gang om måneden. Du modtager i stedet én samlet udbetaling for månederne januar 2025
-                                til november 2025 i januar 2026.
-                                {% endblocktrans %}
+                                en gang om måneden. Du modtager i stedet én samlet udbetaling for månederne januar
+                                {{ this_year }} til november {{ this_year }} i januar {{ next_year }}.
+                                {% endblocktranslate %}
                             </li>
                             <li>
-                                {% blocktrans trimmed %}
+                                {% blocktranslate trimmed %}
                                 Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at din forventede
                                 årsindkomst er under 475.000 kr., vil Skattestyrelsen igangsætte månedlige udbetalinger.
                                 Det sker den tredje tirsdag i hver måned.
-                                {% endblocktrans %}
+                                {% endblocktranslate %}
                             </li>
                             <li>
-                                {% blocktrans trimmed %}
+                                {% blocktranslate trimmed %}
                                 Hvis din samlede indkomst viser sig at være over 500.000 kr., er du ikke i målgruppen
                                 for Suila-tapit.
-                                {% endblocktrans %}
+                                {% endblocktranslate %}
                             </li>
                         </ul>
                         <b>
-                        {% blocktrans trimmed %}
+                        {% blocktranslate trimmed %}
                         Ved forventet årsindkomst der overstiger 500.000 kr.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                         </b>
                         <br>
-                        {% blocktrans trimmed %}
+                        {% blocktranslate trimmed %}
                         Din forventede indkomst er for høj til, at du er i målgruppen for Suila-tapit. Skattestyrelsen
                         forventer, at din årsindkomst overstiger 500.000 kr. Det er beregnet på baggrund af de
                         informationer Skattestyrelsen har om dine indtægter.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
@@ -159,11 +161,12 @@
                 </h2>
                 <div id="forskelligeSignaler" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
-                        {% blocktrans trimmed %}
-                        Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, der varierer meget
-                        fra måned til måned. Eller indkomster fra udbytte. Det giver Skattestyrelsen signaler, der peger
-                        i forskellige retninger. Udbetaling afventer et klarere signal.
-                        {% endblocktrans %}
+                        {% blocktranslate trimmed %}
+                            Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, der varierer
+                            meget fra måned til måned eller indkomster fra udbytte.
+                            Det giver Skattestyrelsen signaler, der peger i forskellige retninger.
+                            Udbetaling afventer et klarere signal.
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
@@ -176,12 +179,12 @@
                 </h2>
                 <div id="etAndetSignal" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
-                        {% blocktrans trimmed %}
-                        Suila-tapit er et beskæftigelsesfradrag der udbetales til borgere med indkomster i form af
-                        lønindkomst, indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget
-                        udbyttebetaling. Hvis dine indkomster stammer fx fra uddannelsesstøtte, alderspension eller
-                        sociale ydelser, er du ikke berettiget til Suila-tapit.
-                        {% endblocktrans %}
+                        {% blocktranslate trimmed %}
+                            Suila-tapit er et beskæftigelsesfradrag, der udbetales til borgere med indkomster i form
+                            af lønindkomst, indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget
+                            udbyttebetaling. Hvis dine indkomster stammer fra fx uddannelsesstøtte, alderspension
+                            eller sociale ydelser, er du ikke berettiget til Suila-tapit.
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
@@ -194,10 +197,10 @@
                 </h2>
                 <div id="ikkeNemKonto" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
-                        {% blocktrans trimmed %}
+                        {% blocktranslate trimmed %}
                         Kontakt din bank for at få NemKonto. Hvis du mangler MitID for at få NemKonto, så kontakt
                         Borgerservice i kommunen.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
@@ -210,10 +213,10 @@
                 </h2>
                 <div id="under100" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
-                        {% blocktrans trimmed %}
+                        {% blocktranslate trimmed %}
                         Det er kun beløb på 100 kr. eller mere, der udbetales månedligt. Hvis det samlede beløb, du skal
                         have udbetalt, er mindre end 100 kr., vil udbetalingen blive overført til næste måned.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
@@ -226,9 +229,9 @@
                 </h2>
                 <div id="ikkeFuldtSkattepligtig" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body">
-                        {% blocktrans trimmed %}
+                        {% blocktranslate trimmed %}
                         Du kan kun få Suila-tapit, hvis du er fuldt skattepligtig til Grønland.
-                        {% endblocktrans %}
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>

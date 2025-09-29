@@ -51,20 +51,21 @@
     </table>
 
     <h3 class="left">Suila-tapit opgørelse</h3>
+    {% now "Y" as this_year %}
 
     <p>
         Suila-tapit er navnet for udbetalt beskæftigelsesfradrag. Det blev vedtaget som en del af skattereformen med
-        virkning fra 1. januar 2025. Suila-tapit udbetales til borgere med indkomster i form af lønindkomst,
+        virkning fra 1. januar {{ this_year }}. Suila-tapit udbetales til borgere med indkomster i form af lønindkomst,
         indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget udbyttebetaling.
     </p>
     <p>
-        På baggrund af din indkomst i 2025 og sammenholdt med dine indkomster i 2024, har Skattestyrelsen beregnet en
-        forventet årsindkomst for 2025.
+        På baggrund af din indkomst i {{ this_year }} og sammenholdt med dine indkomster i {{ this_year|add:-1 }}, har Skattestyrelsen beregnet en
+        forventet årsindkomst for {{ this_year }}.
     </p>
 
     <table style="width: 100%">
         <tr>
-            <td>Udbetaling af Suila-tapit for januar 2025</td>
+            <td>Udbetaling af Suila-tapit for januar {{ this_year }}</td>
             <td style="text-align: right">Afventer oplysninger</td>
         </tr>
         <tr>
@@ -74,7 +75,7 @@
     </table>
 
     <p>
-        Du modtager dette brev fordi Skattestyrelsen har registreret at din forventede indkomst i 2025 vil være tæt på
+        Du modtager dette brev fordi Skattestyrelsen har registreret at din forventede indkomst i {{ this_year }} vil være tæt på
         grænsen for at modtage Suila-tapit. Du kan være berettiget til Suila-tapit, men Skattestyrelsens oplysninger
         herom er endnu usikre. Derfor afventer udbetaling af Suila-tapit yderligere oplysninger om dine indkomster.
     </p>
@@ -87,9 +88,10 @@
     </p>
     <ul>
         <li>
-            Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der viser, at du forventer at have en
-            årsindkomst på 475.000-500.000 kr., vil du ikke modtage Suila-tapit en gang om måneden. Du modtager i stedet
-            én samlet udbetaling for månederne januar 2025 til november 2025 i januar 2026.
+            Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der viser, at du
+            forventer at have en årsindkomst på 475.000-500.000 kr., vil du ikke modtage Suila-tapit
+            en gang om måneden. Du modtager i stedet én samlet udbetaling for månederne januar
+            {{ this_year }} til november {{ this_year }} i januar {{ this_year|add:1 }}.
         </li>
         <li>
             Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at din forventede årsindkomst er under
@@ -161,7 +163,7 @@
     </p>
     <p>
         Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på baggrund af din forskudsregistrering
-        for 2025. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener at den er forkert.
+        for {{ this_year }}. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener at den er forkert.
         Oplysning om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har modtaget
         udbytte sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker oplysninger
         om udbytte fra tidligere år beregningen af din forventede årsindkomst for i år.
