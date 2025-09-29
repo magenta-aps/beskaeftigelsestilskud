@@ -211,7 +211,7 @@ Unittest:
   script:
     - cd /app
     - echo "CI_PROJECT_DIR = ${CI_PROJECT_DIR}"
-    - coverage run manage.py test --parallel
+    - coverage run manage.py test --exclude suila/tests/test_integration.py --parallel
     - coverage combine
     - coverage report --show-missing --fail-under=100
     - coverage xml
@@ -221,6 +221,15 @@ Unittest:
       coverage_report:
         coverage_format: cobertura
         path: /app/coverage.xml
+
+Integration Tests:
+  <<: *test-default
+  stage: test
+  extends:
+    - .rules:semver-all
+  script:
+    - cd /app
+    - python manage.py test suila/tests/test_integration.py --parallel
 
 Mypy:
   <<: *test-default
@@ -251,7 +260,7 @@ Release image:
   extends:
     - .rules:semver-all
   needs:
-    ["Build", "Unittest", "Django check", "Mypy"]
+    ["Build", "Unittest", "Django check", "Mypy", "Integration Tests"]
   script:
     - skopeo copy
       --src-creds=${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}
