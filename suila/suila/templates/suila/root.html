@@ -21,9 +21,9 @@ $(document).ready(function () {
 {% endblock %}
 
 {% block title %}
-{% blocktrans trimmed with name=user.get_full_name %}
+{% blocktranslate trimmed with name=user.get_full_name %}
 Velkommen {{ name }}
-{% endblocktrans %}
+{% endblocktranslate %}
 {% endblock %}
 
 {% block content %}

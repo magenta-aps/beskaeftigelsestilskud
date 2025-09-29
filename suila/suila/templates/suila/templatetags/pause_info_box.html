@@ -3,14 +3,20 @@
 
 {% load i18n %}
 
-{% blocktrans trimmed asvar person_pause_text %}
+{% blocktranslate asvar person_pause_text trimmed %}
 Du har sat dine udbetalinger på pause.
-{% endblocktrans %}
+{% endblocktranslate %}
 
-{% blocktrans trimmed asvar skat_pause_text %}
+{% blocktranslate asvar skat_pause_text trimmed %}
 Dine udbetalinger er sat på pause. Du har oplyst Skattestyrelsen,
 at dine udbetalinger skal sættes på pause.
-{% endblocktrans %}
+{% endblocktranslate %}
+
+{% blocktranslate asvar threshold_pause_text trimmed %}
+Skattestyrelsen har sat dine Suila-tapit-udbetalinger på pause.
+Pausen skyldes, at din forventede årsindkomst er tæt på indtægtsgrænsen for Suila-tapit,
+eller at Skattestyrelsen har modtaget andre oplysninger om din forventede årsindkomst.
+{% endblocktranslate %}
 
 <div class="me-2 mb-3 info">
     <b> {% translate "Udbetalingspause" %} </b>
@@ -22,17 +28,17 @@ at dine udbetalinger skal sættes på pause.
         {% endif %}        
 
     {% if show_pause_effect_date %}
-        {% blocktrans trimmed with date=pause_effect_date  %}
-        Pausen træder i kraft den {{date}}.
-        {% endblocktrans %}
+        {% blocktranslate trimmed with date=pause_effect_date  %}
+            Udbetalingspausen vil være gældende fra d. {{date}}.
+        {% endblocktranslate %}
     {% endif %}
 
 
     </p>
     <i>
-        {% blocktrans trimmed %}
+        {% blocktranslate trimmed %}
             Sidst ændret:
-        {% endblocktrans %}           
+        {% endblocktranslate %}           
         {{ paused_last_change }}
     </i>
 </div>
