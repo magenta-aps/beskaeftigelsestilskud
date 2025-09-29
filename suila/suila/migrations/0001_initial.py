@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
                     "recipient_status",
                     models.CharField(
                         choices=[
-                            ("", "Gyldig e-Boks modtager"),
+                            ("", "Gyldig E-boks modtager"),
                             ("exempt", "Fritaget modtager"),
                             (
                                 "invalid",
