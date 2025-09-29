@@ -25,11 +25,11 @@
     <div class="d-flex align-items-stretch gap-2">
     {% if manually_entered_income %}
     {% if person_id %}
-        {% manually_entered_income_info_box False %}
+        {% manually_entered_income_info_box %}
     {% endif %}
     {% endif %}
     {% if paused %}
-        {% pause_info_box False %}
+        {% pause_info_box %}
     {% endif %}
     {% if person.dead %}
         {% dead_info_box %}
