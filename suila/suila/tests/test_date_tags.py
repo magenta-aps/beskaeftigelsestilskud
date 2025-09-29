@@ -36,4 +36,4 @@ class TestGetPaymentDate(SimpleTestCase):
         self.mock_person_month.month = 1
 
     def test_valid_input(self):
-        self.assertEqual(get_payment_date(self.mock_person_month), date(2025, 3, 18))
+        self.assertEqual(get_payment_date(self.mock_person_month), date(2025, 3, 31))

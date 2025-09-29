@@ -500,6 +500,6 @@ def get_user_who_pressed_pause(person: Person) -> str | None:
     return user_who_pressed_pause
 
 
-def add_working_days(original_date: date, days_to_add: int) -> date:
+def add_or_subtract_working_days(original_date: date, days_to_add: int) -> date:
     holiday_calendar = holidays.GL()  # type: ignore
     return holiday_calendar.get_nth_working_day(original_date, days_to_add)

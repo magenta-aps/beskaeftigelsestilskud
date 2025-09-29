@@ -10,8 +10,8 @@ from bs4 import BeautifulSoup
 from common.models import User
 from common.tests.test_mixins import TestViewMixin
 from common.utils import (
+    add_or_subtract_working_days,
     add_parameters_to_url,
-    add_working_days,
     calculate_stability_score,
     calculate_stability_score_for_entire_year,
     camelcase_to_snakecase,
@@ -457,12 +457,12 @@ class BTaxUtilsTest(TestCase):
 
 
 class AddWorkingDaysTest(TestCase):
-    def test_add_working_days(self):
+    def test_add_or_subtract_working_days(self):
 
         # 2025-10-3 is a friday.
         # So adding two working days gives Tuesday the 7th
         self.assertEqual(
-            add_working_days(date(2025, 10, 3), 2),
+            add_or_subtract_working_days(date(2025, 10, 3), 2),
             date(2025, 10, 7),
         )
 
@@ -470,7 +470,7 @@ class AddWorkingDaysTest(TestCase):
         # Second day of christmas is on a Friday.
         # So adding two working days gives Tuesday the 30th
         self.assertEqual(
-            add_working_days(date(2025, 12, 24), 2),
+            add_or_subtract_working_days(date(2025, 12, 24), 2),
             date(2025, 12, 30),
         )
 
@@ -478,6 +478,13 @@ class AddWorkingDaysTest(TestCase):
         # Great prayer day is on a friday
         # So adding two working days to the thursday before gives Tuesday the 5th
         self.assertEqual(
-            add_working_days(date(2026, 4, 30), 2),
+            add_or_subtract_working_days(date(2026, 4, 30), 2),
             date(2026, 5, 5),
+        )
+
+        # The function can also be used to subtract working days
+        # 2025-09-29 is a monday, so subtracting one day gives friday the 26th:
+        self.assertEqual(
+            add_or_subtract_working_days(date(2025, 9, 29), -1),
+            date(2025, 9, 26),
         )
