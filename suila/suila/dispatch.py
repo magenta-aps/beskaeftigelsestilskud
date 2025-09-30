@@ -115,14 +115,15 @@ class JobDispatcher:
             ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO: [],
             ManagementCommands.ESTIMATE_INCOME: [
                 ManagementCommands.LOAD_ESKAT,
+                ManagementCommands.LOAD_PRISME_B_TAX,
+                ManagementCommands.IMPORT_U1A_DATA,
+                ManagementCommands.GET_PERSON_INFO_FROM_DAFO,
+                ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO,
             ],
             ManagementCommands.CALCULATE_BENEFIT: [
-                ManagementCommands.LOAD_ESKAT,
                 ManagementCommands.ESTIMATE_INCOME,
             ],
             ManagementCommands.EXPORT_BENEFITS_TO_PRISME: [
-                ManagementCommands.LOAD_ESKAT,
-                ManagementCommands.ESTIMATE_INCOME,
                 ManagementCommands.CALCULATE_BENEFIT,
             ],
             ManagementCommands.SEND_EBOKS: [
