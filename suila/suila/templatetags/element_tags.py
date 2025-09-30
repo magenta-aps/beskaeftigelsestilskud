@@ -64,6 +64,24 @@ def pause_info_box(context):
     }
 
 
+@register.inclusion_tag(
+    "suila/templatetags/pause_effect_date_info_box.html", takes_context=True
+)
+def pause_effect_date_info_box(context):
+    return {  # pragma: no cover
+        **context.flatten(),
+    }
+
+
+@register.inclusion_tag(
+    "suila/templatetags/resume_payments_date_info_box.html", takes_context=True
+)
+def resume_payments_date_info_box(context):
+    return {  # pragma: no cover
+        **context.flatten(),
+    }
+
+
 @register.inclusion_tag("suila/templatetags/dead_info_box.html", takes_context=True)
 def dead_info_box(context):
     return {  # pragma: no cover

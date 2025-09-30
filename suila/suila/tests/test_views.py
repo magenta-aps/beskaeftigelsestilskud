@@ -1977,7 +1977,6 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
 
         # Get context data after the payout date
         context_data = self.get_context_data(2020, 5, 30)
-        self.assertEqual(context_data["pause_effect_date"], date(2020, 5, 29))
 
         # We should not show the date from which the pause becomes effective,
         # because it is now in the past

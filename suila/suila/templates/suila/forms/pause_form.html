@@ -8,17 +8,6 @@
   <input type="hidden" name="year" value="{{ year }}"/> 
   <input type="hidden" name="month" value="{{ month }}"/> 
 
-  {% if user|has_permissions:"suila.change_person" %}  
-    <div class="form-check mb-3">
-      <input class="form-check-input" type="checkbox" name="allow_pause" id="allow_pause" {% if allow_pause %} checked {% endif %}>
-      <label class="form-check-label" for="allow_pause">
-        {% translate "Borgeren kan sætte udbetalinger på pause og genoptage dem." %}
-      </label>
-    </div>
-  {% else %}
-    <input type="hidden" name="allow_pause" value="{{ allow_pause }}"/> 
-  {% endif %}
-
   <div class="mb-3">
     <label class="form-label d-block">{% translate "Status på udbetalinger" %}</label>
 
@@ -41,6 +30,28 @@
         {% endfor %}
       </select>
   </div>
+
+  {% if paused %}  
+    <div class="mb-3" id="resume_payment_date_container" style="display: none;">
+      {% resume_payments_date_info_box %}
+    </div>
+  {% else %}  
+    <div class="mb-3" id="pause_effect_date_container" style="display: none;">
+      {% pause_effect_date_info_box %}
+    </div>
+  {% endif %}
+
+  {% if user|has_permissions:"suila.change_person" %}  
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" name="allow_pause" id="allow_pause" {% if allow_pause %} checked {% endif %}>
+      <label class="form-check-label" for="allow_pause">
+        {% translate "Borgeren kan sætte udbetalinger på pause og genoptage dem." %}
+      </label>
+    </div>
+  {% else %}
+    <input type="hidden" name="allow_pause" value="{{ allow_pause }}"/> 
+  {% endif %} 
+
   <div class="mb-3">
     <label for="note" class="form-label">{% translate "Notat" %}*</label>
     <textarea name="note" id="note" class="form-control"
@@ -74,6 +85,9 @@ $(function() {
   const $pauseReasonContainer = $('#pause_reason_container');
   const $submitBtn = $('#pause_form_submit_button');
 
+  const $ResumePaymentDateContainer = $('#resume_payment_date_container');
+  const $PauseEffectDateContainer = $('#pause_effect_date_container');
+
   const defaultPause = $selectPause.val();
 
   const getSelectAllowPauseValue = function() {
@@ -99,8 +113,12 @@ $(function() {
     // Show/hide reason dropdown
     if (currentPause === "true") {  
       $pauseReasonContainer.show();
+      $ResumePaymentDateContainer.hide();
+      $PauseEffectDateContainer.show();
     } else {
       $pauseReasonContainer.hide();
+      $ResumePaymentDateContainer.show();
+      $PauseEffectDateContainer.hide();
       $pauseReason.val(""); 
     }
   }
