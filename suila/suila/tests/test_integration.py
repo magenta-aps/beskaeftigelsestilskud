@@ -55,17 +55,17 @@ class PrismeMocks:
         self.addCleanup(self.get_file_in_prisme_folder_mock.stop)
         self.addCleanup(self.list_prisme_folder_mock.stop)
 
-    def generate_btax_files(self, month, year):
+    def generate_btax_files(self, month, year, effect_month, effect_year):
         btax_file_content = (
             "BTAX;"
             f"{self.cpr};"
             ";"
-            f"{self.year};"
+            f"{effect_year};"
             "-3439;"
             "2000004544;"
             "3439;"
-            f"{self.year}/{str(month).zfill(2)}/20;"
-            f"{str(month).zfill(3)}"
+            f"{effect_year}/{str(effect_month).zfill(2)}/20;"
+            f"{str(effect_month).zfill(3)}"
         )
 
         btax_files = [f"BSKAT_2022_207022_27-{month}-{year}_120035.csv"]
@@ -516,10 +516,10 @@ class IntegrationBaseTest(
         for day in get_days_in_month(year, month):
 
             if (
-                month in months_to_generate_btax_files_for
+                effect_month in months_to_generate_btax_files_for
                 and day == day_to_generate_btax_file_on
             ):
-                self.generate_btax_files(month, year)
+                self.generate_btax_files(month, year, effect_month, effect_year)
 
             with patch(
                 "django.utils.timezone.now",
