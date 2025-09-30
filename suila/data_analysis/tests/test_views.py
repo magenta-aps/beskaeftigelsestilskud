@@ -7,7 +7,7 @@ import urllib
 import urllib.parse
 from datetime import date
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from common.models import EngineViewPreferences, PageView, User
 from common.tests.test_mixins import TestViewMixin
@@ -99,6 +99,7 @@ class TestSimulationJSONEncoder(TestCase):
             "b_expenses": 0.0,
             "b_income": 0.0,
             "catchsale_expenses": 0.0,
+            "quarantine": ANY,
         }
 
     def test_can_serialize_dataclass(self):

@@ -5,7 +5,7 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from operator import attrgetter
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytz
 from common.tests.test_mixins import UserMixin
@@ -32,6 +32,7 @@ from suila.models import (
     PrismeAccountAlias,
     PrismeBatch,
     PrismeBatchItem,
+    QuarantineReason,
     StandardWorkBenefitCalculationMethod,
     StatusChoices,
     TaxInformationPeriod,
@@ -670,6 +671,113 @@ class TestPersonYear(UserModelTest):
             self.person_year.b_expenses,
             Decimal(1200),
         )
+
+    def test_update_quarantine(self):
+        self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
+        original_quarantine_df = self.person_year2.quarantine_df
+
+        def modify_df(value: QuarantineReason):
+            def inner():
+                df = original_quarantine_df
+                df["in_quarantine"] = value != QuarantineReason.NONE
+                df["quarantine_reason"] = value
+                return df
+
+            return inner
+
+        with patch(
+            "suila.models.PersonYear.quarantine_df",
+            new_callable=PropertyMock(
+                side_effect=modify_df(QuarantineReason.UPPER_THRESHOLD)
+            ),
+        ):
+            self.person_year2.update_quarantine()
+            self.assertEqual(
+                self.person_year2.quarantine, QuarantineReason.UPPER_THRESHOLD
+            )
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Suila har automatisk sat borgerens udbetalinger på pause, "
+                "da borgerens årsindkomst i {year} ligger tæt på den øvre "
+                "grænse for at modtage Suila-tapit.".format(year=self.year2.year - 1),
+            )
+
+        with patch(
+            "suila.models.PersonYear.quarantine_df",
+            new_callable=PropertyMock(
+                side_effect=modify_df(QuarantineReason.LOWER_THRESHOLD)
+            ),
+        ):
+            self.person_year2.update_quarantine()
+            self.assertEqual(
+                self.person_year2.quarantine, QuarantineReason.LOWER_THRESHOLD
+            )
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Suila har automatisk sat borgerens udbetalinger på pause, "
+                "da borgerens årsindkomst i {year} ligger tæt på den nedre "
+                "grænse for at modtage Suila-tapit.".format(year=self.year2.year - 1),
+            )
+
+        with patch(
+            "suila.models.PersonYear.quarantine_df",
+            new_callable=PropertyMock(
+                side_effect=modify_df(QuarantineReason.RECEIVED_TOO_MUCH)
+            ),
+        ):
+            self.person_year2.update_quarantine()
+            self.assertEqual(
+                self.person_year2.quarantine, QuarantineReason.RECEIVED_TOO_MUCH
+            )
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Suila har automatisk sat borgerens udbetalinger "
+                "på pause, da borgeren er estimeret til ikke "
+                "at være berettiget til Suila-tapit i {year}".format(
+                    year=self.year2.year - 1
+                ),
+            )
+
+        with patch(
+            "suila.models.PersonYear.quarantine_df",
+            new_callable=PropertyMock(side_effect=modify_df(QuarantineReason.NONE)),
+        ):
+            self.person_year2.quarantine = QuarantineReason.UPPER_THRESHOLD
+            self.person_year2.save()
+            self.person_year2.update_quarantine()
+            self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Borgerens udbetalinger er automatisk "
+                "genoptaget af Suila, da den forventede "
+                "årsindkomst er estimeret til at ligge "
+                "under den øvre grænse for at modtage "
+                "Suila-tapit.",
+            )
+
+            self.person_year2.quarantine = QuarantineReason.LOWER_THRESHOLD
+            self.person_year2.save()
+            self.person_year2.update_quarantine()
+            self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Borgerens udbetalinger er automatisk "
+                "genoptaget af Suila, da den forventede "
+                "årsindkomst er estimeret til at ligge "
+                "over den nedre grænse for at modtage "
+                "Suila-tapit.",
+            )
+
+            self.person_year2.quarantine = QuarantineReason.RECEIVED_TOO_MUCH
+            self.person_year2.save()
+            self.person_year2.update_quarantine()
+            self.assertEqual(self.person_year2.quarantine, QuarantineReason.NONE)
+            self.assertEqual(
+                self.person_year2.note_set.order_by("-created").first().text,
+                "Borgerens udbetalinger er automatisk blevet "
+                "genoptaget af Suila, da borgeren er estimeret "
+                "til at være berettiget til Suila-tapit.",
+            )
 
 
 class TestPersonMonth(UserModelTest):
