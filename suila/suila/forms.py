@@ -232,6 +232,10 @@ class PauseForm(ModelForm):
             raise ValidationError("Dead or missing persons cannot be unpaused.")
         if self.cleaned_data["paused"] is False:
             self.cleaned_data["pause_reason"] = None
+
+        if self.cleaned_data["paused"] is False:
+            self.cleaned_data["allow_pause"] = True
+
         return super().clean()
 
 

@@ -1206,13 +1206,9 @@ class PersonPauseUpdateView(
                 standard_note_text += gettext_noop(
                     "Borger må sætte udbetalinger på pause"
                 )
-            elif not allow_pause and paused:
+            elif not allow_pause and paused:  # pragma: no branch
                 standard_note_text += gettext_noop(
                     "Borger må ikke genoptage udbetalinger"
-                )
-            elif not allow_pause and not paused:  # pragma: no branch
-                standard_note_text += gettext_noop(
-                    "Borger må ikke sætte udbetalinger på pause"
                 )
 
             if pause_reason:
