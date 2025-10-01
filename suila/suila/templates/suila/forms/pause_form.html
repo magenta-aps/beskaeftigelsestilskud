@@ -48,8 +48,6 @@
         {% translate "Borgeren kan sætte udbetalinger på pause og genoptage dem." %}
       </label>
     </div>
-  {% else %}
-    <input type="hidden" name="allow_pause" value="{{ allow_pause }}"/> 
   {% endif %} 
 
   <div class="mb-3">
@@ -59,6 +57,7 @@
   </div>
   {% file_formset pause_formset "pause_formset" %}  
   {% else %}
+  <input type="hidden" name="allow_pause" value="{{ allow_pause }}"/> 
   {{ pause_formset.management_form }}
   {% endif %}
 
