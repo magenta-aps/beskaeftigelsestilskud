@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 13:02-0100\n"
+"POT-Creation-Date: 2025-10-01 06:59-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -762,10 +762,6 @@ msgid "Vælg estimeringsmotor (U)"
 msgstr "Choose estimation engine (U)"
 
 #: suila/templates/suila/forms/pause_form.html
-msgid "Borgeren kan sætte udbetalinger på pause og genoptage dem."
-msgstr ""
-
-#: suila/templates/suila/forms/pause_form.html
 msgid "Status på udbetalinger"
 msgstr "Payment status"
 
@@ -780,6 +776,10 @@ msgstr "Paused"
 #: suila/templates/suila/forms/pause_form.html
 msgid "Begrundelse"
 msgstr "Reason"
+
+#: suila/templates/suila/forms/pause_form.html
+msgid "Borgeren kan sætte udbetalinger på pause og genoptage dem."
+msgstr ""
 
 #: suila/templates/suila/forms/pause_form.html
 msgid ""
@@ -1441,6 +1441,12 @@ msgstr ""
 msgid "Forsvundet (CPR-status)"
 msgstr ""
 
+#: suila/templates/suila/templatetags/pause_effect_date_info_box.html
+#: suila/templates/suila/templatetags/pause_info_box.html
+#, python-format
+msgid "Udbetalingspausen vil være gældende fra d. %(date)s."
+msgstr ""
+
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Du har sat dine udbetalinger på pause."
 msgstr "You have paused your Suila-tapit payment."
@@ -1465,11 +1471,6 @@ msgstr ""
 "payments, or because the Tax Agency has received other information about "
 "your expected annual income."
 
-#: suila/templates/suila/templatetags/pause_info_box.html
-#, python-format
-msgid "Udbetalingspausen vil være gældende fra d. %(date)s."
-msgstr ""
-
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 #, python-format
 msgid ""
@@ -1477,6 +1478,11 @@ msgid ""
 "modtage Suila-tapit.<br/> Skattestyrelsen afventer yderligere "
 "indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/"
 "> Næste vurdering foretages i januar %(year)s."
+msgstr ""
+
+#: suila/templates/suila/templatetags/resume_payments_date_info_box.html
+#, python-format
+msgid "Suila-tapit udbetalinger vil blive genoptaget fra d. %(date)s."
 msgstr ""
 
 #: suila/templatetags/amount_tags.py
