@@ -185,8 +185,8 @@ class TestPostingStatusImport(PostingStatusImportTestCase):
                 # Act
                 result = instance._filter_prisme_batch_items_on_date(qs, max_date)
                 # Assert
-                self.assertQuerySetEqual(
-                    expected_pks, result.values_list("pk", flat=True)
+                self.assertEqual(
+                    sorted(expected_pks), sorted(result.values_list("pk", flat=True))
                 )
 
     @override_settings(PRISME={"machine_id": 1234, "posting_status_folder": "foo"})
