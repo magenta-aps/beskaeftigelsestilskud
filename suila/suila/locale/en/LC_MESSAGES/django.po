@@ -158,9 +158,8 @@ msgid "Du tjente for tæt på bundgrænsen i {year}"
 msgstr ""
 
 #: suila/models.py
-#, python-brace-format
-msgid "Du tjente for tæt på øverste grænse i {year}"
-msgstr ""
+msgid "Din forventede årsindkomst er tæt på Suila-tapit grænsen"
+msgstr "Your expected annual income is close to the Suila-tapit threshold."
 
 #: suila/models.py
 msgid "Procentsats for Suila-tapit"
@@ -1131,8 +1130,8 @@ msgstr "e-Boks-messages"
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid ""
-"Her ser du en liste med de e-Boks-beskeder, vi kan sende til borgeren. Dette "
-"er for at vi kan verificere at de ser korrekte ud."
+"Nedenfor ses en liste over de e-Boks-beskeder, der kan sendes til borgeren "
+"med henblik på at verificere opsætningen og oplysningerne."
 msgstr ""
 "Here is a list of the e-Boks messages we can send. These are provided to "
 "validate the authenticity."
@@ -1188,7 +1187,7 @@ msgstr "Yes"
 
 #: suila/templates/suila/person_detail_income.html
 msgid "Her stammer oplysningerne fra"
-msgstr "Here is where the information comes from:"
+msgstr "Here is where the information comes from"
 
 #: suila/templates/suila/person_detail_income.html
 msgid "A-indkomst og indhandling"
@@ -1250,6 +1249,10 @@ msgid ""
 "en del af din løn. Øvrige pensionsindbetalinger vises ikke, da de ikke "
 "indgår i estimeringen af din årsindkomst."
 msgstr ""
+"Information about pension contributions originates from the pension "
+"providers and concerns amounts your employer has paid into a pension savings "
+"scheme as part of your salary. Other types of pension contributions are not "
+"shown, as they are not included in the estimation of your annual income."
 
 #: suila/templates/suila/person_detail_income.html
 msgid "Oversigt over dine signaler"
@@ -1479,6 +1482,10 @@ msgid ""
 "indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/"
 "> Næste vurdering foretages i januar %(year)s."
 msgstr ""
+"Your expected annual income is close to DKK 500,000, which is the threshold "
+"for receiving Suila-tapit.<br/>The Tax Agency is awaiting further income "
+"information to determine whether you are eligible for Suila-tapit.<br/>The "
+"next assessment will take place in January %(year)s."
 
 #: suila/templates/suila/templatetags/resume_payments_date_info_box.html
 #, python-format
@@ -1616,7 +1623,7 @@ msgstr "Fully tax liable"
 
 #: suila/templatetags/status_tags.py
 msgid "Begrænset skattepligtig"
-msgstr ""
+msgstr "Limited tax liability"
 
 #: suila/templatetags/status_tags.py
 msgid "Ikke i mandtal"
