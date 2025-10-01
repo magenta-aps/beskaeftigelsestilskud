@@ -159,7 +159,7 @@ class TestJobDispatcher(TestCase):
     @mock.patch("suila.dispatch.logger")
     @override_settings(ESKAT_BASE_URL=None)
     def test_call_job_cmd_error(self, mock_logger: MagicMock):
-        job_dispatcher = JobDispatcher()
+        job_dispatcher = JobDispatcher(day=25)  # Pick a day AFTER the calculation date
         job_dispatcher.call_job(ManagementCommands.LOAD_ESKAT, 2025, "monthlyincome")
         mock_logger.exception.assert_called_once_with(
             f"CommandError exception for job: {ManagementCommands.LOAD_ESKAT}"
