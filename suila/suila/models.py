@@ -208,7 +208,7 @@ class QuarantineReason(IntegerChoices):
     NONE = 0, "-"
     RECEIVED_TOO_MUCH = 1, _("Du modtog for meget tilskud i {year}")
     LOWER_THRESHOLD = 2, _("Du tjente for tæt på bundgrænsen i {year}")
-    UPPER_THRESHOLD = 3, _("Du tjente for tæt på øverste grænse i {year}")
+    UPPER_THRESHOLD = 3, _("Din forventede årsindkomst er tæt på Suila-tapit grænsen")
 
 
 class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
@@ -813,16 +813,18 @@ class PersonYear(PermissionsMixin, models.Model):
 
     @property
     def quarantine_reason(self) -> str:
-        return (
-            ""
-            if not settings.ENFORCE_QUARANTINE  # type: ignore
-            else QuarantineReason(
+        if settings.ENFORCE_QUARANTINE:  # type: ignore
+            label = QuarantineReason(
                 self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
-            ).label.format(year=self.year.year - 1)
-        )
+            ).label
+            if "{year}" in label:
+                label = label.format(year=self.year.year - 1)
+        else:
+            label = ""
+        return label
 
     def update_quarantine(self):
-        if settings.ENFORCE_QUARANTINE:
+        if settings.ENFORCE_QUARANTINE:  # type: ignore
             new_value = QuarantineReason(
                 self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
             )

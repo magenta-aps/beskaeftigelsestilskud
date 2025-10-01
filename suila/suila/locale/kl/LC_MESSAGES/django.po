@@ -165,9 +165,10 @@ msgid "Du tjente for tæt på bundgrænsen i {year}"
 msgstr ""
 
 #: suila/models.py
-#, python-brace-format
-msgid "Du tjente for tæt på øverste grænse i {year}"
+msgid "Din forventede årsindkomst er tæt på Suila-tapit grænsen"
 msgstr ""
+"Ukiumut isertitariumaagassatit Suila-tapisisinnaanissavit killinganut "
+"qanippallaarput."
 
 #: suila/models.py
 msgid "Procentsats for Suila-tapit"
@@ -1179,8 +1180,8 @@ msgstr "e-Boksimukartut"
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid ""
-"Her ser du en liste med de e-Boks-beskeder, vi kan sende til borgeren. Dette "
-"er for at vi kan verificere at de ser korrekte ud."
+"Nedenfor ses en liste over de e-Boks-beskeder, der kan sendes til borgeren "
+"med henblik på at verificere opsætningen og oplysningerne."
 msgstr "Uani e-Boksimut nassiunneqartussat eqqortuunersut takusinnaavatit."
 
 #: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
@@ -1546,6 +1547,11 @@ msgid ""
 "indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/"
 "> Næste vurdering foretages i januar %(year)s."
 msgstr ""
+"Ukiumut isertitariumaagassatit 500.000 kr.-inut, tassa "
+"Suila-tapisisinnaanissannut killigitaasunut qanippallaarput.<br/>"
+"Akileraartarnermut Aqutsisoqarfiup Suila-tapisisinnaanersutit "
+"nalilersoqqinniarlugu isertitannut tunngatillugu paasissutissanik pinissani "
+"utaqqimaarallarpaa.<br/>Nalilersueqqinneq januarimi piumaarpoq %(year)s."
 
 #: suila/templates/suila/templatetags/resume_payments_date_info_box.html
 #, python-format
