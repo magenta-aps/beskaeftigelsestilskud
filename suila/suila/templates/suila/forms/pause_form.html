@@ -30,6 +30,9 @@
         {% endfor %}
       </select>
   </div>
+  {% else %}
+  {{ pause_formset.management_form }}
+  {% endif %}
 
   {% if paused %}  
     <div class="mb-3" id="resume_payment_date_container" style="display: none;">
@@ -58,9 +61,6 @@
               rows="3" autocomplete="off" required></textarea>
   </div>
   {% file_formset pause_formset "pause_formset" %}  
-  {% else %}
-  {{ pause_formset.management_form }}
-  {% endif %}
 
   <div class="text-end">
     <button type="submit" id="pause_form_submit_button" class="btn btn-primary">{% translate "Gem" %}</button>
