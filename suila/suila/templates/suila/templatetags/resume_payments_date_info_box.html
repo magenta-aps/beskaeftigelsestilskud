@@ -1,0 +1,12 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+
+<div class="me-2 mb-3 info">
+    <p>
+        {% blocktranslate trimmed with date=pause_effect_date  %}
+            Suila-tapit udbetalinger vil blive genoptaget fra d. {{date}}.
+        {% endblocktranslate %}
+    </p>
+</div>

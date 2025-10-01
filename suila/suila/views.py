@@ -277,6 +277,7 @@ class PersonDetailView(
                 show_pause_effect_date = True
             else:
                 show_pause_effect_date = False
+                pause_effect_date = now.date()
 
             civil_state_last_change = person.last_change("civil_state")
 
