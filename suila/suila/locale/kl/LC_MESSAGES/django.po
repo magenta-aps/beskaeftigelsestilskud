@@ -1512,7 +1512,7 @@ msgstr ""
 #: suila/templates/suila/templatetags/pause_info_box.html
 #, python-format
 msgid "Udbetalingspausen vil være gældende fra d. %(date)s."
-msgstr ""
+msgstr "Unitsitsigallarneq %(date)s atuutilissaaq."
 
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Du har sat dine udbetalinger på pause."
@@ -1556,7 +1556,7 @@ msgstr ""
 #: suila/templates/suila/templatetags/resume_payments_date_info_box.html
 #, python-format
 msgid "Suila-tapit udbetalinger vil blive genoptaget fra d. %(date)s."
-msgstr ""
+msgstr "Suila-tapinik tunniussisarneq aallarteqqissaaq ulloq %(date)s."
 
 #: suila/templatetags/amount_tags.py
 msgid "-"
