@@ -14,7 +14,10 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
+from suila.integrations.prisme.benefits import BatchExport
+from suila.integrations.prisme.g68g69 import G68G69TransactionWriter
 from suila.models import (
     Employer,
     ManagementCommands,
@@ -64,8 +67,8 @@ def get_dates_to_create():
     for i in range(1):
         dates.append(get_next_month(dates[-1]))
 
-    # Create the past 12 months
-    for i in range(12):
+    # Create the entirety of the last year (for determining quarantine)
+    for i in range(today.month - 1 + 12):
         dates.insert(0, get_last_month(dates[0]))
 
     return dates
@@ -105,6 +108,33 @@ def cleanup_dummy_files():
     except Exception as e:  # pragma: no cover
         print(f"Unexpected exception in cleanup_dummy_files: {e}")
         pass
+
+
+def generate_g68_content(person_month, prisme_batch):
+    writer = G68G69TransactionWriter(
+        0,
+        settings.PRISME["user_number"],
+        settings.PRISME["machine_id"],
+    )
+
+    exporter = BatchExport(person_month.person_year.year.year, person_month.month)
+
+    invoice_no: str = f"{prisme_batch.pk:015d}{writer.line_no:05d}"
+    date_formatted: str = person_month.year_month.strftime("%b%y").upper()
+    cpr = person_month.person_year.person.cpr
+
+    return writer.serialize_transaction_pair(
+        TransaktionstypeEnum.AndenDestinationTilladt,
+        UdbetalingsberettigetIdentKodeEnum.CPR,
+        cpr,
+        955,
+        person_month.benefit_calculated,  # type: ignore[arg-type]
+        exporter.get_payment_date(person_month),
+        exporter.get_posting_date(person_month),
+        f"SUILA-TAPIT-{cpr}-{date_formatted}",
+        invoice_no,
+        exporter.get_transaction_text(person_month),
+    ).g68
 
 
 class Command(BaseCommand):
@@ -278,12 +308,8 @@ class Command(BaseCommand):
                             defaults={
                                 "status": "posted",
                                 "paused": person_month.person_year.person.paused,
-                                "g68_content": (
-                                    "000G6800004011&020900&0300&"
-                                    "07000000000000000000&0800000031700&"
-                                    "09+&1002&1100000101001111&1220250414&"
-                                    "16202504080080400004&"
-                                    "1700000000000027100004&40www.suila.gl takuuk"
+                                "g68_content": generate_g68_content(
+                                    person_month, prisme_batch
                                 ),
                             },
                         )
