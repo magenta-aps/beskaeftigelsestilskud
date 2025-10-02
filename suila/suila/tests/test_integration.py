@@ -16,9 +16,12 @@ from requests.models import Response
 from tenQ.writer.g68 import G68Transaction, Udbetalingsbeløb
 
 from suila.models import (
+    JobLog,
+    ManagementCommands,
     PersonMonth,
     PersonYear,
     StandardWorkBenefitCalculationMethod,
+    StatusChoices,
     TaxInformationPeriod,
     Year,
 )
@@ -916,3 +919,48 @@ class CalculateBenefitTaxScopeTestNoTaxPeriod(IntegrationBaseTest):
                     self.get_person_month(month)
 
         self.assert_total_benefit(0)
+
+
+class BtaxTests(IntegrationBaseTest):
+
+    def setUp(self):
+        super().setUp()
+
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(self.cpr, month_number, income=20000)
+
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        self.add_annualincome_record(self.cpr, salary=20000 * 12)
+        self.add_expectedincome_record(self.cpr, b_income=0)
+        self.add_u1a_record(self.cpr, udbytte=0)
+
+    def test_that_job_dispatcher_stops_if_there_are_no_new_btax_files(self):
+
+        # In March 2024 the calculation date is 8/3/2024.
+        # This tests simulates what happens if btax files are not present on that date
+        # Note: We call commands for month=1 because we run with a 2-month difference.
+        self.call_commands(1, day_to_generate_btax_file_on=10)
+
+        calculation_jobs = JobLog.objects.filter(
+            name=ManagementCommands.CALCULATE_BENEFIT
+        )
+        btax_jobs = JobLog.objects.filter(name=ManagementCommands.LOAD_PRISME_B_TAX)
+        succeeded_btax_jobs = btax_jobs.filter(status=StatusChoices.SUCCEEDED)
+        failed_btax_jobs = btax_jobs.filter(status=StatusChoices.FAILED)
+
+        # We expect load_prisme_btax to be called three times. The first two times fail
+        self.assertEqual(len(btax_jobs), 3)
+        self.assertEqual(len(succeeded_btax_jobs), 1)
+        self.assertEqual(len(failed_btax_jobs), 2)
+        self.assertEqual(failed_btax_jobs[0].output, "There are no new btax files")
+        self.assertEqual(failed_btax_jobs[1].output, "There are no new btax files")
+
+        # We expect calculate_benefit to be called only once.
+        self.assertEqual(len(calculation_jobs), 1)
+
+        # Although it was called two days after the calculation-date
+        # Because btax files appeared two days too late
+        self.assertEqual(calculation_jobs[0].runtime.day, 10)
+
+        # We expect benefit to be transferred to Prisme
+        self.assertGreater(self.get_amount_sent_to_prisme(1), 0)
