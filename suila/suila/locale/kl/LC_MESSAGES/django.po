@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-01 06:59-0100\n"
+"POT-Creation-Date: 2025-10-01 09:46-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1547,9 +1547,9 @@ msgid ""
 "indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/"
 "> Næste vurdering foretages i januar %(year)s."
 msgstr ""
-"Ukiumut isertitariumaagassatit 500.000 kr.-inut, tassa "
-"Suila-tapisisinnaanissannut killigitaasunut qanippallaarput.<br/>"
-"Akileraartarnermut Aqutsisoqarfiup Suila-tapisisinnaanersutit "
+"Ukiumut isertitariumaagassatit 500.000 kr.-inut, tassa Suila-"
+"tapisisinnaanissannut killigitaasunut qanippallaarput.<br/"
+">Akileraartarnermut Aqutsisoqarfiup Suila-tapisisinnaanersutit "
 "nalilersoqqinniarlugu isertitannut tunngatillugu paasissutissanik pinissani "
 "utaqqimaarallarpaa.<br/>Nalilersueqqinneq januarimi piumaarpoq %(year)s."
 
@@ -1789,10 +1789,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "Borger må ikke genoptage udbetalinger"
-msgstr ""
-
-#: suila/views.py
-msgid "Borger må ikke sætte udbetalinger på pause"
 msgstr ""
 
 #: suila/views.py

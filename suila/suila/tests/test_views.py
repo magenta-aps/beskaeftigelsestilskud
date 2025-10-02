@@ -1952,7 +1952,7 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.assertFalse(self.data["paused"])
         self.assertFalse(self.data["allow_pause"])
         self.assertIn("Stopper udbetalingspause", latest_note)
-        self.assertIn("Borger må ikke sætte udbetalinger på pause", latest_note)
+        self.assertIn("Borger må sætte udbetalinger på pause", latest_note)
 
     def test_pause_effect_date(self):
         # Simulate that we pressed pause on the second of May

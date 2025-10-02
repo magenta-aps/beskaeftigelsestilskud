@@ -42,7 +42,7 @@
   {% endif %}
 
   {% if user|has_permissions:"suila.change_person" %}  
-    <div class="form-check mb-3">
+    <div class="form-check mb-3" id="allow_pause_container">
       <input class="form-check-input" type="checkbox" name="allow_pause" id="allow_pause" {% if allow_pause %} checked {% endif %}>
       <label class="form-check-label" for="allow_pause">
         {% translate "Borgeren kan sætte udbetalinger på pause og genoptage dem." %}
@@ -80,6 +80,7 @@ $(function() {
   const $toggle = $('#pauseToggle');
   const $selectPause = $('#pausedInput');
   const $selectAllowPause = $('[name=allow_pause]');
+  const $selectAllowPauseContainer = $('#allow_pause_container');
   const $pauseReason = $('#pause_reason');
   const $pauseReasonContainer = $('#pause_reason_container');
   const $submitBtn = $('#pause_form_submit_button');
@@ -114,10 +115,12 @@ $(function() {
       $pauseReasonContainer.show();
       $resumePaymentDateContainer.hide();
       $pauseEffectDateContainer.show();
+      $selectAllowPauseContainer.show();
     } else {
       $pauseReasonContainer.hide();
       $resumePaymentDateContainer.show();
       $pauseEffectDateContainer.hide();
+      $selectAllowPauseContainer.hide();
       $pauseReason.val(""); 
     }
   }

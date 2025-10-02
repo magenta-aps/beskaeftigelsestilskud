@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-01 06:59-0100\n"
+"POT-Creation-Date: 2025-10-01 09:46-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1722,10 +1722,6 @@ msgstr "Citizen may pause payments"
 #: suila/views.py
 msgid "Borger må ikke genoptage udbetalinger"
 msgstr "Citizen may not resume payments"
-
-#: suila/views.py
-msgid "Borger må ikke sætte udbetalinger på pause"
-msgstr "Citizen may not pause payments"
 
 #: suila/views.py
 msgid "Eboks besked sendt til borger"
