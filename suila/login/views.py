@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-from functools import cached_property
 
 from common.utils import add_parameters_to_url
 from django.conf import settings
@@ -127,7 +126,7 @@ class BeskLoginView(LoginView):
             }
         )
 
-    @cached_property
+    @property
     def back(self):
         return self.request.GET.get("back") or self.request.GET.get(REDIRECT_FIELD_NAME)
 
