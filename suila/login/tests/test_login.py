@@ -32,7 +32,9 @@ class LoginTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.group = Group.objects.create(name="Borgerservice")
-        cls.user = User.objects.create(username="test")
+        cls.user = User.objects.create(
+            username="test", is_staff=False, is_superuser=False
+        )
         cls.user.set_password("test")
         cls.user.save()
         cls.user.groups.add(cls.group)
@@ -53,6 +55,44 @@ class LoginTest(TestCase):
         response = self.client.get(reverse("login:login") + "?back=/foobar")
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], "/foobar")
+
+    @override_settings(PUBLIC=False, BYPASS_2FA=True, REQUIRE_2FA=False)
+    def test_djangoadmin_login(self):
+        response = self.client.post(
+            reverse("login:login") + "?next=/admin/",
+            {
+                "auth-username": "test",
+                "auth-password": "test",
+                "besk_login_view-current_step": "auth",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+
+        admin = User.objects.create(username="admin", is_superuser=True)
+        admin.set_password("admin")
+        admin.save()
+        response = self.client.post(
+            reverse("login:login") + "?next=/admin/",
+            {
+                "auth-username": "admin",
+                "auth-password": "admin",
+                "besk_login_view-current_step": "auth",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+
+        staff = User.objects.create(username="staff", is_staff=True)
+        staff.set_password("staff")
+        staff.save()
+        response = self.client.post(
+            reverse("login:login") + "?next=/admin/",
+            {
+                "auth-username": "staff",
+                "auth-password": "staff",
+                "besk_login_view-current_step": "auth",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
 
     @override_settings(PUBLIC=True)
     def test_saml_postlogin(self):

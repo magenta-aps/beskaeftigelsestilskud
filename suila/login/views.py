@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+
 from common.utils import add_parameters_to_url
 from django.conf import settings
 from django.contrib.auth import (
@@ -12,7 +13,7 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpRequest, HttpResponse
-from django.http.response import HttpResponseNotFound
+from django.http.response import HttpResponseForbidden, HttpResponseNotFound
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import RedirectView
@@ -37,6 +38,15 @@ class BeskLoginView(LoginView):
             del form_list[self.TOKEN_STEP]
 
         return form_list
+
+    def done(self, form_list, **kwargs):
+        redir = self.get_success_url()
+        user = self.get_user()
+        if redir.startswith("/admin") and not (user.is_staff or user.is_superuser):
+            return HttpResponseForbidden(
+                "You do not have permission to access this page."
+            )
+        return super().done(form_list, **kwargs)
 
     def get_form(self, step=None, data=None, files=None):
         """
