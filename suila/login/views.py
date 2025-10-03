@@ -12,7 +12,7 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpRequest, HttpResponse
-from django.http.response import HttpResponseNotFound
+from django.http.response import HttpResponseForbidden, HttpResponseNotFound
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import RedirectView
@@ -84,6 +84,12 @@ class BeskLoginView(LoginView):
 
         backpage = self.request.COOKIES.get("back")
         if backpage:
+            if backpage.startswith("/admin") and not (
+                request.user.is_staff or request.user.is_superuser
+            ):
+                return HttpResponseForbidden(
+                    "You do not have permission to access this page."
+                )
             return redirect(backpage)
         return redirect("suila:root")
 
