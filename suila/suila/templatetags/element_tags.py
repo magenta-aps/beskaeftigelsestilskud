@@ -103,3 +103,12 @@ def quarantine_info_box(context):
     return {  # pragma: no cover
         **context.flatten(),
     }
+
+
+@register.inclusion_tag(
+    "suila/templatetags/estimation_engine_info_box.html", takes_context=True
+)
+def estimation_engine_info_box(context):
+    return {  # pragma: no cover
+        **context.flatten(),
+    }

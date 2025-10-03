@@ -64,6 +64,7 @@ from suila.integrations.eboks.client import EboksClient
 from suila.models import (
     BTaxPayment,
     Employer,
+    IncomeType,
     ManagementCommands,
     MonthlyIncomeReport,
     Note,
@@ -289,6 +290,21 @@ class PersonDetailView(
                 if c[0] not in [PauseReasonChoices.DEATH, PauseReasonChoices.MISSING]
             ]
 
+            engine_a = person_year.preferred_estimation_engine_a
+            engine_u = person_year.preferred_estimation_engine_u
+
+            last_calculation_engines = person_year.engines_used_for_latest_calculation
+
+            last_engine_a = last_calculation_engines[IncomeType.A]
+            last_engine_u = last_calculation_engines[IncomeType.U]
+
+            if (last_engine_a and last_engine_a != engine_a) or (
+                last_engine_u and last_engine_u != engine_u
+            ):
+                estimation_engine_changed = True
+            else:
+                estimation_engine_changed = False
+
             context_data.update(
                 {
                     "show_next_payment": True,
@@ -324,13 +340,14 @@ class PersonDetailView(
                     "pause_formset": NoteAttachmentFormSet(),
                     "estimation_engine_formset": NoteAttachmentFormSet(),
                     "engine_choices": engine_choices,
-                    "engine_a": person_year.preferred_estimation_engine_a,
-                    "engine_u": person_year.preferred_estimation_engine_u,
+                    "engine_a": engine_a,
+                    "engine_u": engine_u,
                     "pause_effect_date": pause_effect_date,
                     "show_pause_effect_date": show_pause_effect_date,
                     "pause_reasons": pause_reasons,
                     "pause_reason": person.pause_reason,
                     "send_eboks_letter_when_pausing": send_eboks_letter_when_pausing,
+                    "estimation_engine_changed": estimation_engine_changed,
                 }
             )
         else:

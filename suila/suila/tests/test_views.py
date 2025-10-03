@@ -24,6 +24,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.http import Http404
 from django.template.response import TemplateResponse
 from django.test import TestCase, override_settings
@@ -41,6 +42,7 @@ from suila.models import (
     BTaxPayment,
     Employer,
     IncomeEstimate,
+    ManagementCommands,
     MonthlyIncomeReport,
     Note,
     NoteAttachment,
@@ -1627,6 +1629,10 @@ class PersonYearEstimationEngineUpdateView(TimeContextMixin, TestViewMixin, Pers
         cls.url = reverse(
             "suila:update_estimation_engine", kwargs={"pk": cls.person_year.pk}
         )
+        cls.person_detail_url = (
+            reverse("suila:person_detail", kwargs={"pk": cls.person_year.person.pk})
+            + f"?year={cls.person_year.year.year}"
+        )
         cls.data = {
             "person": cls.person_year.person.pk,
             "preferred_estimation_engine_a": "TwelveMonthsSummationEngine",
@@ -1709,6 +1715,113 @@ class PersonYearEstimationEngineUpdateView(TimeContextMixin, TestViewMixin, Pers
             "A-indkomst estimeringsmotor",
             latest_note,
         )
+
+    def test_estimation_engine_changed_info_box(self):
+        self.client.force_login(self.admin_user)
+
+        # Calculate benefit using the current engine
+        call_command(
+            ManagementCommands.CALCULATE_BENEFIT,
+            self.person_year.year.year,
+            self.person_month.month,
+        )
+
+        # Validate that the info-box will not be shown
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], False)
+
+        # Change the engine
+        self.client.post(self.url, data=self.data)
+
+        # Now we should show the info-box, because we used different engines when
+        # benefit was calculated the last time
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], True)
+
+        # Calculate benefit for someone else
+        call_command(
+            ManagementCommands.CALCULATE_BENEFIT,
+            self.person_year.year.year,
+            self.person_month.month,
+            cpr="0606065588",
+        )
+
+        # The info-box is still there
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], True)
+
+        # Calculate benefit for everyone
+        call_command(
+            ManagementCommands.CALCULATE_BENEFIT,
+            self.person_year.year.year,
+            self.person_month.month,
+        )
+
+        # The info-box has disappeared
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], False)
+
+    def test_estimation_engine_changed_info_box_disappears_when_recalculated(self):
+        self.client.force_login(self.admin_user)
+
+        # Calculate benefit using the current engine
+        call_command(
+            ManagementCommands.CALCULATE_BENEFIT,
+            self.person_year.year.year,
+            self.person_month.month,
+        )
+
+        # Validate that the info-box will not be shown
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], False)
+
+        # Change the engine
+        self.client.post(self.url, data=self.data)
+
+        # Now we should show the info-box, because we used different engines when
+        # benefit was calculated the last time
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], True)
+
+        # Calculate benefit for this person only
+        call_command(
+            ManagementCommands.CALCULATE_BENEFIT,
+            self.person_year.year.year,
+            self.person_month.month,
+            cpr=self.person_year.person.cpr,
+        )
+
+        # The info-box has disappeared because the person was recalculated
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], False)
+
+    def test_that_we_do_not_show_info_box_if_person_did_not_exist_yet(self):
+        self.client.force_login(self.admin_user)
+
+        # Simulate that benefit was calculated in 1999
+        with patch(
+            "django.utils.timezone.now",
+            return_value=datetime(
+                1999, 1, 1, 0, 0, 0, tzinfo=timezone.get_current_timezone()
+            ),
+        ):
+            call_command(
+                ManagementCommands.CALCULATE_BENEFIT,
+                self.person_year.year.year,
+                self.person_month.month,
+            )
+
+        # Validate that the info-box will not be shown
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], False)
+
+        # Change the engine
+        self.client.post(self.url, data=self.data)
+
+        # We still do not show the info box. Because the person did not exist
+        # at calculation time. So no calculation was made using the old engines
+        context_data = self.client.get(self.person_detail_url).context_data
+        self.assertEqual(context_data["estimation_engine_changed"], False)
 
 
 class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):

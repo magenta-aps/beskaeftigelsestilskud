@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-01 09:46-0100\n"
+"POT-Creation-Date: 2025-10-01 10:59-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1426,6 +1426,17 @@ msgstr ""
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Sidst ændret:"
 msgstr "Last changed:"
+
+#: suila/templates/suila/templatetags/estimation_engine_info_box.html
+msgid "Ændring i estimering af årsindkomst"
+msgstr ""
+
+#: suila/templates/suila/templatetags/estimation_engine_info_box.html
+msgid ""
+"Skattestyrelsen har ændret metoden til estimering af din årsindkomst. Den "
+"nye estimering af din årsindkomst og din årlige Suila-tapit vil blive vist, "
+"næste gang Suila modtager signal fra arbejdsmarkedet."
+msgstr ""
 
 #: suila/templates/suila/templatetags/manually_entered_income_info_box.html
 msgid "Din årsindtægt er manuelt estimeret"

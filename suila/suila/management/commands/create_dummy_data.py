@@ -75,6 +75,9 @@ def get_dates_to_create():
 
 
 def set_history_date(obj, date):
+    today = datetime.date.today()
+    if date > today:
+        date = today
     entry = obj.history.all().order_by("-history_date")[0]
     entry.history_date = pytz.utc.localize(
         datetime.datetime(date.year, date.month, date.day, 0, 0, 0)

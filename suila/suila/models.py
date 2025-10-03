@@ -823,6 +823,38 @@ class PersonYear(PermissionsMixin, models.Model):
             label = ""
         return label
 
+    @property
+    def engines_used_for_latest_calculation(self):
+
+        last_job = (
+            JobLog.objects.filter(
+                name=ManagementCommands.CALCULATE_BENEFIT,
+                status=StatusChoices.SUCCEEDED,
+            )
+            .filter(Q(cpr_param__isnull=True) | Q(cpr_param=self.person.cpr))
+            .order_by("-runtime")
+            .first()
+        )
+
+        if not last_job:
+            historical_object = None
+        else:
+            try:
+                historical_object = self.history.as_of(last_job.runtime)
+            except self.DoesNotExist:
+                historical_object = None
+
+        if historical_object:
+            return {
+                IncomeType.A: historical_object.preferred_estimation_engine_a,
+                IncomeType.U: historical_object.preferred_estimation_engine_u,
+            }
+        else:
+            return {
+                IncomeType.A: None,
+                IncomeType.U: None,
+            }
+
     def update_quarantine(self):
         if settings.ENFORCE_QUARANTINE:  # type: ignore
             new_value = QuarantineReason(
