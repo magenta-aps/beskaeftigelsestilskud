@@ -40,6 +40,9 @@
     {% if in_quarantine and quarantine_weight == 0 %}
         {% quarantine_info_box %}
     {% endif %}
+    {% if estimation_engine_changed %}
+        {% estimation_engine_info_box %}
+    {% endif %}
     </div>
 </div>
 
