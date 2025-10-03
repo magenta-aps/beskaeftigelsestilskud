@@ -8,9 +8,10 @@ from django.template.defaultfilters import register
 from django.utils import dates
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
+from tenQ.writer.g68 import G68Transaction, Udbetalingsdato
 
 from suila.dates import get_payment_date as _get_payment_date
-from suila.models import PersonMonth
+from suila.models import PersonMonth, PrismeBatchItem
 
 logger = logging.getLogger(__name__)
 
@@ -62,4 +63,10 @@ def month_name(month: int) -> str | None:
 
 @register.filter
 def get_payment_date(person_month: PersonMonth) -> date:
-    return _get_payment_date(person_month.year, person_month.month)
+    try:
+        for field in G68Transaction.parse(person_month.prismebatchitem.g68_content):
+            if isinstance(field, Udbetalingsdato):
+                return field.val
+        return _get_payment_date(person_month.year, person_month.month)
+    except PrismeBatchItem.DoesNotExist:
+        return _get_payment_date(person_month.year, person_month.month)
