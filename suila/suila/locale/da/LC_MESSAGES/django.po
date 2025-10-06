@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-01 10:59-0100\n"
+"POT-Creation-Date: 2025-10-06 05:37-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -968,13 +968,6 @@ msgstr ""
 msgid ""
 "Fejl i udbetaling: Der er opstået en fejl under udbetaling af din Suila-"
 "tapit. Kontakt Skattestyrelsen for yderligere information."
-msgstr ""
-
-#: suila/templates/suila/person_detail.html
-msgid ""
-"Afventer udbetaling: Din forventede årsindkomst er 475.000 kr. – 500.000 kr. "
-"Dine Suila-tapit udbetalinger starter, når Skattestyrelsen er mere sikker "
-"på, om din årsindkomst berettiger dig til Suila-tapit."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
