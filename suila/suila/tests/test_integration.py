@@ -15,6 +15,7 @@ from django.utils import timezone
 from requests.models import Response
 from tenQ.writer.g68 import G68Transaction, Udbetalingsbeløb
 
+from suila.benefit import get_eboks_date
 from suila.models import (
     JobLog,
     ManagementCommands,
@@ -1004,3 +1005,72 @@ class BtaxTests(IntegrationBaseTest):
 
         # We expect benefit to be transferred to Prisme
         self.assertGreater(self.get_amount_sent_to_prisme(1), 0)
+
+
+class YearlyJobTests(IntegrationBaseTest):
+
+    def setUp(self):
+        super().setUp()
+
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(self.cpr, month_number, income=20000)
+
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        self.add_annualincome_record(self.cpr, salary=20000 * 12)
+        self.add_expectedincome_record(self.cpr, b_income=0)
+        self.add_u1a_record(self.cpr, udbytte=0)
+
+    def test_that_yearly_jobs_run_in_february(self):
+        # Yearly jobs run in febraury AFTER the last payout of the year
+        self.call_commands(12)
+
+        yearly_jobs = JobLog.objects.filter(
+            name__in=[
+                ManagementCommands.CALCULATE_STABILITY_SCORE,
+                ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
+            ]
+        )
+
+        self.assertEqual(yearly_jobs.count(), 2)
+
+        for job in yearly_jobs:
+            self.assertGreaterEqual(
+                job.runtime.day, get_eboks_date(self.year + 1, 2).day + 1
+            )
+            self.assertEqual(job.status, StatusChoices.SUCCEEDED)
+
+    def test_that_yearly_jobs_run_in_march(self):
+        # If yearly jobs did not run in february, they will run in march
+        self.call_commands(1)
+
+        yearly_jobs = JobLog.objects.filter(
+            name__in=[
+                ManagementCommands.CALCULATE_STABILITY_SCORE,
+                ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE,
+            ]
+        )
+
+        self.assertEqual(yearly_jobs.count(), 2)
+
+        for job in yearly_jobs:
+            self.assertGreaterEqual(job.runtime.day, 1)
+            self.assertEqual(job.status, StatusChoices.SUCCEEDED)
+
+    def test_that_jobs_do_not_run_in_march_if_yearly_jobs_fail(self):
+
+        # If autoselect fails, we should not run ESTIMATE_INCOME
+        with patch(
+            "suila.management.commands.autoselect_estimation_engine.Command._handle",
+            side_effect=Exception,
+        ):
+
+            self.call_commands(1)
+            estimation_jobs = JobLog.objects.filter(
+                name=ManagementCommands.ESTIMATE_INCOME
+            )
+            self.assertEqual(estimation_jobs.count(), 0)
+
+        # If autoselect succeeds, we should run ESTIMATE_INCOME normally
+        self.call_commands(1)
+        estimation_jobs = JobLog.objects.filter(name=ManagementCommands.ESTIMATE_INCOME)
+        self.assertEqual(estimation_jobs.count(), 1)

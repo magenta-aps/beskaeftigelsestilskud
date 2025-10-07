@@ -21,6 +21,10 @@ class Command(SuilaBaseCommand):
         self._verbose = kwargs["verbosity"] > 1
 
         person_qs = Person.objects.all()
+
+        if not person_qs:
+            return
+
         first_year = (
             PersonYear.objects.order_by("year").values_list("year_id").first()[0]
         )
