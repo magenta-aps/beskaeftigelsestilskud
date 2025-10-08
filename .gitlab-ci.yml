@@ -98,9 +98,11 @@ variables:
   stage: lint
   needs: []
   image: python:3.12
+  interruptible: true
 
 Lint Commits:
   extends: .lint:commits
+  interruptible: true
   variables:
     CONFIG: '{ extends: [''@commitlint/config-conventional''], ignores: [(message) => message.includes(''suggestion(s)'')], }'
 
@@ -146,6 +148,7 @@ Lint Javascript:
 ############
 .test-default: &test-default
   stage: test
+  interruptible: true
   dependencies: []
   needs: [ "Build" ]
   services:
