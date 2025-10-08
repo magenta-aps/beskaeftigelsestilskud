@@ -6,18 +6,16 @@
 {% load render_table from django_tables2 %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item">{% translate "Borgersøgning" %}</li>
+<li class="breadcrumb-item">{% translate "Borgere på udbetalingspause" %}</li>
 {% endblock %}
 
 {% block title %}
-{% translate "Borgersøgning" %}
+{% translate "Borgere på udbetalingspause" %}
 {% endblock %}
 
 {% block content %}
 <div class="row mt-5">
     {% table_filters filter %}
-    {% if filter.form.is_valid %}
     {% render_table table %}
-    {% endif %}
 </div>
 {% endblock %}

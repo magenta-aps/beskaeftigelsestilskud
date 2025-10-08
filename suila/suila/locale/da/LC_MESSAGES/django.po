@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-06 05:37-0100\n"
+"POT-Creation-Date: 2025-10-09 08:17-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1202,10 +1202,16 @@ msgid ""
 "information på <a href=\"%(link)s\">www.aka.gl</a>"
 msgstr ""
 
+#: suila/templates/suila/person_pause_list.html
+msgid "Borgere på udbetalingspause"
+msgstr ""
+
+#: suila/templates/suila/person_pause_list.html
 #: suila/templates/suila/person_search.html
 msgid "Filtre"
 msgstr ""
 
+#: suila/templates/suila/person_pause_list.html
 #: suila/templates/suila/person_search.html
 msgid "Søg"
 msgstr ""
@@ -1463,6 +1469,22 @@ msgstr ""
 
 #: suila/views.py
 msgid "Adresse"
+msgstr ""
+
+#: suila/views.py
+msgid "Må selv genoptage udbetalinger"
+msgstr ""
+
+#: suila/views.py
+msgid "Startdato for udbetalingspause"
+msgstr ""
+
+#: suila/views.py
+msgid "Årsag til pause"
+msgstr ""
+
+#: suila/views.py
+msgid "Seneste notat"
 msgstr ""
 
 #: suila/views.py

@@ -42,7 +42,13 @@ from django.views.generic.detail import BaseDetailView
 from django.views.generic.edit import UpdateView
 from django_filters import Filter, FilterSet
 from django_filters.views import FilterView
-from django_tables2 import Column, SingleTableMixin, Table, TemplateColumn
+from django_tables2 import (
+    BooleanColumn,
+    Column,
+    SingleTableMixin,
+    Table,
+    TemplateColumn,
+)
 from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
@@ -110,12 +116,60 @@ class PersonTable(Table):
     full_address = Column(verbose_name=_("Adresse"))
 
 
+class PersonPauseTable(Table):
+    name = NameColumn(verbose_name=_("Navn"))
+    cpr = Column(
+        verbose_name=_("CPR-nummer"),
+        orderable=True,
+    )
+    allow_pause = BooleanColumn(
+        verbose_name=_("Må selv genoptage udbetalinger"),
+        orderable=True,
+    )
+    pause_start_date = Column(
+        verbose_name=_("Startdato for udbetalingspause"),
+        empty_values=(),
+        orderable=False,
+    )
+    pause_reason = Column(
+        verbose_name=_("Årsag til pause"),
+        orderable=True,
+        default="-",
+    )
+    pause_note = Column(
+        verbose_name=_("Seneste notat"),
+        empty_values=(),
+        orderable=False,
+    )
+
+    def render_pause_start_date(self, value, record):
+        return record.last_change("paused").date()
+
+    def render_pause_note(self, value, record):
+        last_note = (
+            Note.objects.filter(
+                personyear__person__pk=record.pk,
+                text__icontains="udbetalingspause",
+            )
+            .order_by("-created")
+            .first()
+        )
+        if not last_note:
+            return "-"
+        parts = last_note.text.split("\n")
+        return parts[-1].strip()
+
+
 class CPRFilter(Filter):
     field_class = CPRField
 
 
 class PersonFilterSet(FilterSet):
     cpr = CPRFilter("_cpr", label=_("CPR-nummer"), required=True)
+
+
+class PersonPauseFilterSet(FilterSet):
+    cpr = CPRFilter("_cpr", label=_("CPR-nummer"), required=False)
 
 
 class YearMonthMixin:
@@ -182,6 +236,32 @@ class PersonSearchView(
         # Set initial sorting (can be overridden by user)
         qs = qs.order_by("_cpr")
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.log_view(context["table"].page.object_list.data)
+        return context
+
+
+class PersonPauseListView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    SingleTableMixin,
+    ViewLogMixin,
+    FilterView,
+):
+    model = Person
+    table_class = PersonPauseTable
+    filterset_class = PersonPauseFilterSet
+    template_name = "suila/person_pause_list.html"
+    matomo_pagename = "Person_pause_list"
+
+    required_model_permissions = [
+        "suila.view_person",
+    ]
+
+    def get_queryset(self):
+        return Person.objects.filter(paused=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

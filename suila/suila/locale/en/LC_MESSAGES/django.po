@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-06 05:37-0100\n"
+"POT-Creation-Date: 2025-10-09 08:17-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1381,10 +1381,16 @@ msgstr ""
 "Please, contact the service desk at the Tax Agency if you have any "
 "questions. Find more information at <a href=\"%(link)s\">aka.gl</a>"
 
+#: suila/templates/suila/person_pause_list.html
+msgid "Borgere på udbetalingspause"
+msgstr "Citizens on payment pause"
+
+#: suila/templates/suila/person_pause_list.html
 #: suila/templates/suila/person_search.html
 msgid "Filtre"
 msgstr "Filters"
 
+#: suila/templates/suila/person_pause_list.html
 #: suila/templates/suila/person_search.html
 msgid "Søg"
 msgstr "Search"
@@ -1655,6 +1661,22 @@ msgstr "CPR-number"
 #: suila/views.py
 msgid "Adresse"
 msgstr "Address"
+
+#: suila/views.py
+msgid "Må selv genoptage udbetalinger"
+msgstr "Can resume payments"
+
+#: suila/views.py
+msgid "Startdato for udbetalingspause"
+msgstr "Start date for payout pause"
+
+#: suila/views.py
+msgid "Årsag til pause"
+msgstr "Cause"
+
+#: suila/views.py
+msgid "Seneste notat"
+msgstr "Latest note"
 
 #: suila/views.py
 msgid "Status"
