@@ -126,11 +126,11 @@ class EskatMocks:
         self.eskat_session_patcher = patch(
             "suila.integrations.eskat.client.requests.Session"
         )
-        MockEskatSessionClass = self.eskat_session_patcher.start()
-        self.addCleanup(MockEskatSessionClass.stop)
+        self.eskat_session_mock = self.eskat_session_patcher.start()
+        self.addCleanup(self.eskat_session_mock.stop)
 
         # The instance returned when get_session() calls Session()
-        mock_eskat_session_instance = MockEskatSessionClass.return_value
+        mock_eskat_session_instance = self.eskat_session_mock.return_value
 
         def eskat_response_mocker(url, *args, **kwargs):
 
@@ -919,6 +919,46 @@ class CalculateBenefitTaxScopeTestNoTaxPeriod(IntegrationBaseTest):
                     self.get_person_month(month)
 
         self.assert_total_benefit(0)
+
+
+class EskatFailureTest(IntegrationBaseTest):
+
+    def setUp(self):
+        super().setUp()
+
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(self.cpr, month_number, income=8000)
+
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        self.add_annualincome_record(self.cpr, salary=8000 * 12)
+        self.add_expectedincome_record(self.cpr, b_income=0)
+        self.add_u1a_record(self.cpr, udbytte=0)
+
+    def test_eskat_fails(self):
+        self.eskat_session_mock.side_effect = Exception
+        self.call_commands(1)
+
+        for job_name in [
+            ManagementCommands.ESTIMATE_INCOME,
+            ManagementCommands.CALCULATE_BENEFIT,
+            ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+            ManagementCommands.SEND_EBOKS,
+        ]:
+
+            self.assertEqual(JobLog.objects.filter(name=job_name).count(), 0)
+
+    def test_eskat_succeeds(self):
+        self.eskat_session_patcher.side_effect = None
+        self.call_commands(1)
+
+        for job_name in [
+            ManagementCommands.ESTIMATE_INCOME,
+            ManagementCommands.CALCULATE_BENEFIT,
+            ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
+            ManagementCommands.SEND_EBOKS,
+        ]:
+
+            self.assertEqual(JobLog.objects.filter(name=job_name).count(), 1)
 
 
 class BtaxTests(IntegrationBaseTest):
