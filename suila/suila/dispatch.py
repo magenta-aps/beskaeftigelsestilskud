@@ -26,13 +26,13 @@ class JobDispatcher:
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
             "type": "yearly",
             "validator": lambda year, month, day: (
-                month == 2 and day >= get_eboks_date(year, month).day + 1
+                month == 2 and day >= get_eboks_date(year, month).day + 1 or month == 3
             ),
         },
         ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: {
             "type": "yearly",
             "validator": lambda year, month, day: (
-                month == 2 and day >= get_eboks_date(year, month).day + 1
+                month == 2 and day >= get_eboks_date(year, month).day + 1 or month == 3
             ),
         },
         # Daily jobs
@@ -132,6 +132,11 @@ class JobDispatcher:
             ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],
         }
 
+        if self.month == 3:
+            self.dependencies[ManagementCommands.ESTIMATE_INCOME] += [
+                ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE
+            ]
+
     def get_job_ran_filters(
         self, job_name: str, job_params: Optional[Dict[str, str]] = None
     ):
@@ -184,7 +189,14 @@ class JobDispatcher:
 
     def check_dependencies(self, name):
         for dependency in self.dependencies[name]:
-            if not self.job_ran_month(dependency, self.year, self.month):
+            job_type = self.jobs[dependency]["type"]
+            if job_type == self.JOB_TYPE_MONTHLY and not self.job_ran_month(
+                dependency, self.year, self.month
+            ):
+                raise DependenciesNotMet(name, dependency)
+            elif job_type == self.JOB_TYPE_YEARLY and not self.job_ran_year(
+                dependency, self.year
+            ):
                 raise DependenciesNotMet(name, dependency)
 
     def allow_job(self, name, job_params: Optional[Dict[str, str]] = None) -> bool:

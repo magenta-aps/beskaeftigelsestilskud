@@ -22,8 +22,11 @@ class Command(SuilaBaseCommand):
         self._verbose = kwargs["verbosity"] > 1
         self._write_verbose(f"Calculating stability score for {kwargs['year']}")
 
-        df_stability_score = calculate_stability_score_for_entire_year(kwargs["year"])
         person_years = PersonYear.objects.filter(year__year=kwargs["year"])
+        if not person_years:
+            return
+
+        df_stability_score = calculate_stability_score_for_entire_year(kwargs["year"])
 
         person_year_objects_to_update = []
         for person_year in person_years:
