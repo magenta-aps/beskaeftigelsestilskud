@@ -1,0 +1,27 @@
+{# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+
+{% if filter %}
+<b>{% translate "Filtre" %}</b>
+<div class="mb-5">
+    <form action="" method="get" class="form filter-form">
+        <div class="row mt-3">
+            <div class="col-3">
+                {% bootstrap_form filter.form %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <button type="submit" class="btn btn-primary d-flex align-items-center">
+                    <span class="material-icons">search</span>
+                    <span class="text-nowrap ms-1">{% translate "Søg" %}</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endif %}

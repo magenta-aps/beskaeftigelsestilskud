@@ -23,6 +23,7 @@ from suila.views import (
     PersonDetailNotesView,
     PersonDetailView,
     PersonGraphView,
+    PersonPauseListView,
     PersonPauseUpdateView,
     PersonSearchView,
     PersonTaxScopeHistoryView,
@@ -45,6 +46,9 @@ urlpatterns: List[URLResolver | URLPattern] = [
         name="about",
     ),
     path("persons/", PersonSearchView.as_view(), name="person_search"),
+    path(
+        "persons/paused/", PersonPauseListView.as_view(), name="person_pause_overview"
+    ),
     path("persons/<int:pk>/", PersonDetailView.as_view(), name="person_detail"),
     path("persons/<int:pk>/graph/", PersonGraphView.as_view(), name="person_graph"),
     path(
