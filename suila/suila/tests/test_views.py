@@ -79,6 +79,7 @@ from suila.views import (
     PersonFilterSet,
     PersonGraphView,
     PersonMonthTable,
+    PersonPauseListView,
     PersonSearchView,
     PersonTable,
     PersonTaxScopeHistoryView,
@@ -253,6 +254,44 @@ class TestCPRField(SimpleTestCase):
         for variation in ("0101012222", "010101-2222"):
             with self.subTest(variation):
                 self.assertEqual(instance.clean(variation), "0101012222")
+
+
+class TestPersonPauseListView(TimeContextMixin, PersonEnv):
+    view_class = PersonPauseListView
+
+    def test_list_view(self):
+        view, response = self.request_get(self.admin_user)
+        context = view.get_context_data()
+        qs = view.get_queryset()
+
+        self.assertEqual(qs.count(), 0)
+
+        self.person1.paused = True
+        self.person1.save()
+
+        view, response = self.request_get(self.admin_user)
+        qs = view.get_queryset()
+        self.assertEqual(qs.count(), 1)
+
+        context = view.get_context_data()
+
+        row = context["table"].rows[0]
+        pause_start_date = row.get_cell_value("pause_start_date")
+
+        self.assertEqual(row.get_cell_value("cpr"), self.person1.cpr)
+        self.assertEqual(row.get_cell_value("name"), self.person1.name)
+        self.assertEqual(row.get_cell_value("allow_pause"), "True")
+        self.assertEqual(pause_start_date.day, timezone.now().day)
+        self.assertEqual(pause_start_date.month, timezone.now().month)
+        self.assertEqual(pause_start_date.year, timezone.now().year)
+        self.assertEqual(row.get_cell_value("pause_note"), "-")
+
+        Note.objects.create(personyear=self.person_year, text="udbetalingspause\nfoo")
+
+        view, response = self.request_get(self.admin_user)
+        context = view.get_context_data()
+        row = context["table"].rows[0]
+        self.assertEqual(row.get_cell_value("pause_note"), "foo")
 
 
 class TestPersonSearchView(TimeContextMixin, PersonEnv):

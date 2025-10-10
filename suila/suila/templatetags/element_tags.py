@@ -112,3 +112,10 @@ def estimation_engine_info_box(context):
     return {  # pragma: no cover
         **context.flatten(),
     }
+
+
+@register.inclusion_tag("suila/templatetags/table_filters.html")
+def table_filters(filters):
+    return {  # pragma: no cover
+        "filter": filters,
+    }
