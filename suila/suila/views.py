@@ -254,7 +254,7 @@ class PersonPauseListView(
     table_class = PersonPauseTable
     filterset_class = PersonPauseFilterSet
     template_name = "suila/person_pause_list.html"
-    matomo_pagename = "Person_pause_list"
+    matomo_pagename = "Person - pauseliste"
 
     required_model_permissions = [
         "suila.view_person",
