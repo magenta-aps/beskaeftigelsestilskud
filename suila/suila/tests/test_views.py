@@ -318,12 +318,11 @@ class TestPersonSearchView(TimeContextMixin, PersonEnv):
             self.assertIn("filter", response.context_data)
             self.assertIsInstance(response.context_data["filter"], PersonFilterSet)
 
-    def test_borger_see_only_self(self):
+    def test_borger_permission_denied(self):
         with self._time_context(year=2020):
-            view, response = self.request_get(self.normal_user)
-        qs = view.get_queryset()
-        self.assertEqual(qs.count(), 1)
-        self.assertEqual(qs.first(), self.person1)
+
+            with self.assertRaises(PermissionDenied):
+                view, response = self.request_get(self.normal_user)
 
     def test_staff_see_all(self):
         view, response = self.request_get(self.staff_user)
@@ -333,9 +332,9 @@ class TestPersonSearchView(TimeContextMixin, PersonEnv):
         self.assertEqual(qs[1], self.person2)
         self.assertEqual(qs[2], self.person3)
 
-    def test_other_see_none(self):
-        view, response = self.request_get(self.other_user)
-        self.assertEqual(view.get_queryset().count(), 0)
+    def test_other_permission_denied(self):
+        with self.assertRaises(PermissionDenied):
+            view, response = self.request_get(self.other_user)
 
     def test_anonymous_see_none(self):
         view = self.view(self.no_user)

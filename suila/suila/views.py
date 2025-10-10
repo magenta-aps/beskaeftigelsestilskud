@@ -224,6 +224,7 @@ class PersonSearchView(
     filterset_class = PersonFilterSet
     template_name = "suila/person_search.html"
     matomo_pagename = "Personsøgning"
+    required_model_permissions = ["suila.view_person"]
 
     def get_queryset(self):
         qs = Person.filter_user_permissions(
