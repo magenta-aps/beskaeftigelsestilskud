@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-09 08:17-0100\n"
+"POT-Creation-Date: 2025-10-10 07:49-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1446,16 +1446,6 @@ msgstr ""
 msgid "Borgere på udbetalingspause"
 msgstr ""
 
-#: suila/templates/suila/person_pause_list.html
-#: suila/templates/suila/person_search.html
-msgid "Filtre"
-msgstr "Immikkoortitikkat"
-
-#: suila/templates/suila/person_pause_list.html
-#: suila/templates/suila/person_search.html
-msgid "Søg"
-msgstr "Ujaasigit"
-
 #: suila/templates/suila/root.html
 #, python-format
 msgid "Velkommen %(name)s"
@@ -1562,6 +1552,14 @@ msgstr ""
 #, python-format
 msgid "Suila-tapit udbetalinger vil blive genoptaget fra d. %(date)s."
 msgstr "Suila-tapinik tunniussisarneq aallarteqqissaaq ulloq %(date)s."
+
+#: suila/templates/suila/templatetags/table_filters.html
+msgid "Filtre"
+msgstr "Immikkoortitikkat"
+
+#: suila/templates/suila/templatetags/table_filters.html
+msgid "Søg"
+msgstr "Ujaasigit"
 
 #: suila/templatetags/amount_tags.py
 msgid "-"
