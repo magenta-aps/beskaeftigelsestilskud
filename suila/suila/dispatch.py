@@ -24,73 +24,73 @@ class JobDispatcher:
     jobs: Dict[str, Dict] = {
         # "year"-Jobs
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
-            "type": "yearly",
+            "type": JOB_TYPE_YEARLY,
             "validator": lambda year, month, day: (
                 month == 2 and day >= get_eboks_date(year, month).day + 1 or month == 3
             ),
         },
         ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: {
-            "type": "yearly",
+            "type": JOB_TYPE_YEARLY,
             "validator": lambda year, month, day: (
                 month == 2 and day >= get_eboks_date(year, month).day + 1 or month == 3
             ),
         },
         # Daily jobs
         ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: {
-            "type": "daily",
+            "type": JOB_TYPE_DAILY,
         },
         # "load"-jobs
         ManagementCommands.LOAD_ESKAT: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.LOAD_PRISME_B_TAX: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.IMPORT_U1A_DATA: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.GET_PERSON_INFO_FROM_DAFO: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.GET_UPDATED_PERSON_INFO_FROM_DAFO: {
-            "type": "daily",
+            "type": JOB_TYPE_DAILY,
             "validator": lambda year, month, day: (True),
         },
         # "estimation"-jobs
         ManagementCommands.ESTIMATE_INCOME: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_calculation_date(year, month).day
             ),
         },
         # "calculation"-jobs
         ManagementCommands.CALCULATE_BENEFIT: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_calculation_date(year, month).day
             ),
         },
         # "export"-jobs
         ManagementCommands.EXPORT_BENEFITS_TO_PRISME: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_calculation_date(year, month).day
             ),
         },
         ManagementCommands.SEND_EBOKS: {
-            "type": "monthly",
+            "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_eboks_date(year, month).day
             ),
