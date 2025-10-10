@@ -12,16 +12,17 @@ from django.utils import timezone
 from suila.benefit import get_calculation_date, get_eboks_date
 from suila.exceptions import DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
+from suila.types import JOB_NAME, JOB_TYPE
 
 logger = logging.getLogger(__name__)
 
 
 class JobDispatcher:
-    JOB_TYPE_YEARLY = "yearly"
-    JOB_TYPE_MONTHLY = "monthly"
-    JOB_TYPE_DAILY = "daily"
+    JOB_TYPE_YEARLY: JOB_TYPE = "yearly"
+    JOB_TYPE_MONTHLY: JOB_TYPE = "monthly"
+    JOB_TYPE_DAILY: JOB_TYPE = "daily"
 
-    jobs: Dict[str, Dict] = {
+    jobs: Dict[JOB_NAME, Dict] = {
         # "year"-Jobs
         ManagementCommands.CALCULATE_STABILITY_SCORE: {
             "type": JOB_TYPE_YEARLY,
@@ -105,7 +106,7 @@ class JobDispatcher:
         self.reraise = reraise
         self.stdout = stdout
 
-        self.dependencies = {
+        self.dependencies: dict[JOB_NAME : list[JOB_NAME]] = {
             ManagementCommands.CALCULATE_STABILITY_SCORE: [],
             ManagementCommands.AUTOSELECT_ESTIMATION_ENGINE: [],
             ManagementCommands.LOAD_ESKAT: [],
@@ -187,17 +188,17 @@ class JobDispatcher:
             **filters_kwargs,
         ).exists()
 
-    def check_dependencies(self, name):
-        for dependency in self.dependencies[name]:
-            job_type = self.jobs[dependency]["type"]
+    def check_dependencies(self, job_name: JOB_NAME):
+        for dependency_job_name in self.dependencies[job_name]:
+            job_type: JOB_TYPE = self.jobs[dependency_job_name]["type"]
             if job_type == self.JOB_TYPE_MONTHLY and not self.job_ran_month(
-                dependency, self.year, self.month
+                dependency_job_name, self.year, self.month
             ):
-                raise DependenciesNotMet(name, dependency)
+                raise DependenciesNotMet(job_name, dependency_job_name)
             elif job_type == self.JOB_TYPE_YEARLY and not self.job_ran_year(
-                dependency, self.year
+                dependency_job_name, self.year
             ):
-                raise DependenciesNotMet(name, dependency)
+                raise DependenciesNotMet(job_name, dependency_job_name)
 
     def allow_job(self, name, job_params: Optional[Dict[str, str]] = None) -> bool:
         """
