@@ -130,7 +130,7 @@ class TestPauseEffectDate(TestCase):
         )
 
     def test_get_payment_date(self):
-        self.assertEqual(get_payment_date(2025, 8), date(2025, 10, 31))
+        self.assertEqual(get_payment_date(2025, 8), date(2025, 10, 21))
 
     def test_get_last_working_day(self):
         self.assertEqual(get_last_working_day(2025, 10), date(2025, 10, 31))

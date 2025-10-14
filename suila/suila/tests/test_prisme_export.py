@@ -248,7 +248,7 @@ class TestBatchExport(TestCase):
         # after the `PersonMonth` to export.
         for field in G68Transaction.parse(prisme_batch_item.g68_content):
             if isinstance(field, Udbetalingsdato):
-                self.assertEqual(field.val, date(2025, 3, 28))  # March 28, 2025
+                self.assertEqual(field.val, date(2025, 3, 17))  # March 17, 2025
         # Assert: the G68 "posteringsdato" (field 110) is the second Tuesday of the
         # month two months after the `PersonMonth` to export.
         posteringsdato = self._get_floating_field(prisme_batch_item.g69_content, 110)
@@ -260,7 +260,7 @@ class TestBatchExport(TestCase):
         # Act
         export = self._get_instance()
         # Assert
-        self.assertEqual(export.get_payment_date(february), date(2025, 4, 29))
+        self.assertEqual(export.get_payment_date(february), date(2025, 4, 14))
 
     def test_get_posting_date(self):
         # Arrange
