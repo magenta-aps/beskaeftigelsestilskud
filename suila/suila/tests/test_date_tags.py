@@ -43,7 +43,7 @@ class TestGetPaymentDate(BaseEnvMixin, TestCase):
     def test_valid_input(self):
         self.assertEqual(self.year.year, 2020)
         self.assertEqual(self.person_month.month, 1)
-        self.assertEqual(get_payment_date(self.person_month), date(2020, 3, 31))
+        self.assertEqual(get_payment_date(self.person_month), date(2020, 3, 17))
 
     def test_get_payout_date_from_prisme_item(self):
 
@@ -93,4 +93,4 @@ class TestGetPaymentDate(BaseEnvMixin, TestCase):
 
         # Fallback to _get_payment_date(person_month.year, person_month.month)
         # Because there is no payout date in the g68_content
-        self.assertEqual(get_payment_date(self.person_month), date(2020, 3, 31))
+        self.assertEqual(get_payment_date(self.person_month), date(2020, 3, 17))
