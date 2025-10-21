@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-22 09:45-0100\n"
+"POT-Creation-Date: 2025-10-22 06:07-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -550,64 +550,42 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/faq.html
-msgid "Signal om høj indkomst"
+msgid "Forventet indkomst tæt på Suila-tapit grænsen"
 msgstr ""
 
-#: suila/templates/suila/faq.html
-msgid "Ved forventet årsindkomst mellem 475.000-500.000 kr."
-msgstr ""
-
-#: suila/templates/suila/faq.html
-msgid ""
-"Da Skattestyrelsen har registreret, at du har en forventet årsindkomst på "
-"475.000 – 500.000 kr., udbetales beløbet ikke endnu. Det betyder følgende:"
-msgstr ""
-
-#: suila/templates/suila/faq.html
+#: suila/templates/suila/faq.html suila/templates/suila/graph.html
 #, python-format
 msgid ""
-"Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der "
-"viser, at du forventer at have en årsindkomst på 475.000-500.000 kr., vil du "
-"ikke modtage Suila-tapit en gang om måneden. Du modtager i stedet én samlet "
-"udbetaling for månederne januar %(this_year)s til november %(this_year)s i "
-"januar %(next_year)s."
+"Hvis Skattestyrelsens oplysninger fra %(last_year)s viser, at din "
+"årsindkomst nærmede sig 500.000 kr., og din månedlige indkomst varierede "
+"meget i løbet af året, vil du ikke modtage Suila-tapit månedligt i "
+"%(this_year)s."
+msgstr ""
+
+#: suila/templates/suila/faq.html suila/templates/suila/graph.html
+#, python-format
+msgid ""
+"Hvis Skattestyrelsen i løbet af %(this_year)s modtager oplysninger, der "
+"viser, at din forventede årsindkomst er under 500.000 kr., og der samtidig "
+"kommer et signal fra arbejdsmarkedet, vil Skattestyrelsen igangsætte "
+"månedlige udbetalinger fra januar %(next_year)s."
+msgstr ""
+
+#: suila/templates/suila/faq.html
+msgid "Signal om indkomst under 70.000 kr. eller over 500.000 kr."
 msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid ""
 "Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at din "
-"forventede årsindkomst er under 475.000 kr., vil Skattestyrelsen igangsætte "
-"månedlige udbetalinger. Det sker den tredje tirsdag i hver måned."
+"forventede årsindkomst er under 70.000 kr. eller over 500.000 kr., er du "
+"ikke berettiget til Suila-tapit."
 msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid ""
-"Hvis din samlede indkomst viser sig at være over 500.000 kr., er du ikke i "
-"målgruppen for Suila-tapit."
-msgstr ""
-
-#: suila/templates/suila/faq.html
-msgid "Ved forventet årsindkomst der overstiger 500.000 kr."
-msgstr ""
-
-#: suila/templates/suila/faq.html
-msgid ""
-"Din forventede indkomst er for høj til, at du er i målgruppen for Suila-"
-"tapit. Skattestyrelsen forventer, at din årsindkomst overstiger 500.000 kr. "
-"Det er beregnet på baggrund af de informationer Skattestyrelsen har om dine "
-"indtægter."
-msgstr ""
-
-#: suila/templates/suila/faq.html
-msgid "Forskellige signaler"
-msgstr ""
-
-#: suila/templates/suila/faq.html
-msgid ""
-"Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, "
-"der varierer meget fra måned til måned eller indkomster fra udbytte. Det "
-"giver Skattestyrelsen signaler, der peger i forskellige retninger. "
-"Udbetaling afventer et klarere signal."
+"Når Skattestyrelsen har modtaget oplysninger om din samlede årsindkomst, vil "
+"du få udbetalt eventuelt manglende Suila-tapit."
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -745,17 +723,6 @@ msgstr ""
 
 #: suila/templates/suila/graph.html
 msgid "Kan du ikke se dine tal?"
-msgstr ""
-
-#: suila/templates/suila/graph.html
-#, python-format
-msgid ""
-"Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at du "
-"forventer at have en årsindkomst på 475.000-500.000 kr., vil du ikke modtage "
-"Suila-tapit en gang om måneden. Det er, fordi din estimerede årsindkomst er "
-"tæt på den øvre grænse på 500.000 kr. for at være berettiget til Suila-"
-"tapit. Du modtager i stedet én samlet udbetaling for månederne januar til "
-"november %(this_year)s i januar %(next_year)s."
 msgstr ""
 
 #: suila/templates/suila/graph.html
@@ -982,8 +949,8 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid ""
-"Nedenfor ses en liste over de e-Boks-beskeder, der kan sendes til borgeren "
-"med henblik på at verificere opsætningen og oplysningerne."
+"Nedenfor ses en liste over e-Boks-beskeder, der kan bruges til at verificere "
+"opsætningen og oplysningerne, inden de sendes til borgeren."
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
@@ -1027,11 +994,11 @@ msgstr ""
 msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
+#: suila/templates/suila/person_detail_eboks_send.html
 msgid "Nej"
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
+#: suila/templates/suila/person_detail_eboks_send.html
 msgid "Ja"
 msgstr ""
 
@@ -1060,7 +1027,7 @@ msgid ""
 "Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på "
 "baggrund af din forskudsregistrering. Du kan altid ændre din "
 "forskudsregistrering på <a href=\"https://sullissivik.gl\" "
-"target=\"_blank\">Sullissivik.gl</a>, hvis du mener at den er forkert."
+"target=\"_blank\">Sullissivik.gl</a>, hvis du mener, at den er forkert."
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html suila/views.py
@@ -1149,6 +1116,7 @@ msgid "Denne person har ikke nogen data"
 msgstr ""
 
 #: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 msgid "Du har ikke en profil på Suila.gl"
 msgstr ""
 

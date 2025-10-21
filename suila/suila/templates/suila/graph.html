@@ -35,17 +35,23 @@
     <div class="col-xl-5 mt-xl-0 mt-5 emphasis">
         <h1>{% translate "Kan du ikke se dine tal?" %}</h1>
         <p class="mt-3">
-            {% blocktranslate trimmed with this_year=this_year next_year=this_year|add:1 %}
-            Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at du forventer at have en årsindkomst
-            på 475.000-500.000 kr., vil du ikke modtage Suila-tapit en gang om måneden. Det er, fordi din estimerede
-            årsindkomst er tæt på den øvre grænse på 500.000 kr. for at være berettiget til Suila-tapit. Du modtager i
-            stedet én samlet udbetaling for månederne januar til november {{this_year}} i januar {{next_year}}.
+            {% blocktranslate trimmed %}
+                Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke modtage Suila-tapit, og dine
+                tal vises derfor ikke på grafen.
             {% endblocktranslate %}
         </p>
         <p class="mt-3">
-            {% blocktranslate trimmed %}
-            Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke modtage Suila-tapit, og dine
-            tal vises derfor ikke på grafen.
+            {% blocktranslate trimmed with last_year=this_year|add:-1 this_year=this_year %}
+                Hvis Skattestyrelsens oplysninger fra {{ last_year }} viser, at din årsindkomst nærmede sig 500.000 kr.,
+                og din månedlige indkomst varierede meget i løbet af året,
+                vil du ikke modtage Suila-tapit månedligt i {{ this_year }}.
+            {% endblocktranslate %}
+        </p>
+        <p class="mt-3">
+            {% blocktranslate trimmed with this_year=this_year next_year=this_year|add:1 %}
+                Hvis Skattestyrelsen i løbet af {{ this_year }} modtager oplysninger, der viser, at din forventede
+                årsindkomst er under 500.000 kr., og der samtidig kommer et signal fra arbejdsmarkedet,
+                vil Skattestyrelsen igangsætte månedlige udbetalinger fra januar {{ next_year }}.
             {% endblocktranslate %}
         </p>
     </div>
