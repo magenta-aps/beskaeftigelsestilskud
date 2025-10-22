@@ -17,6 +17,7 @@ from common.models import User
 from common.utils import SuilaJSONEncoder, get_user_who_pressed_pause, omit
 from common.view_mixins import BaseGetFormView, ViewLogMixin
 from dateutil.relativedelta import relativedelta
+from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.base import ContentFile
@@ -40,7 +41,7 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django.views.generic.base import ContextMixin
 from django.views.generic.detail import BaseDetailView
 from django.views.generic.edit import UpdateView
-from django_filters import Filter, FilterSet
+from django_filters import ChoiceFilter, Filter, FilterSet, MultipleChoiceFilter
 from django_filters.views import FilterView
 from django_tables2 import (
     BooleanColumn,
@@ -143,7 +144,8 @@ class PersonPauseTable(Table):
     )
 
     def render_pause_start_date(self, value, record):
-        return record.last_change("paused").date()
+        last_change = record.last_change("paused")
+        return last_change.date() if last_change else "-"
 
     def render_pause_note(self, value, record):
         last_note = (
@@ -163,13 +165,59 @@ class PersonPauseTable(Table):
 class CPRFilter(Filter):
     field_class = CPRField
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault(
+            "widget",
+            forms.TextInput(
+                attrs={
+                    "class": "form-control form-control-sm",  # smaller input
+                    "style": "max-width: 250px;",  # limits width
+                }
+            ),
+        )
+        super().__init__(*args, **kwargs)
+
 
 class PersonFilterSet(FilterSet):
     cpr = CPRFilter("_cpr", label=_("CPR-nummer"), required=True)
 
 
+DEFAULT_PAUSE_REASONS_FILTER = [str(i) for i in range(1, 8)]
+DEFAULT_ALLOW_PAUSE_FILTER = False
+
+
 class PersonPauseFilterSet(FilterSet):
     cpr = CPRFilter("_cpr", label=_("CPR-nummer"), required=False)
+
+    allow_pause = ChoiceFilter(
+        field_name="allow_pause",
+        label=_("Må selv genoptage udbetalinger"),
+        choices=[
+            (True, _("Ja")),
+            (False, _("Nej")),
+        ],
+        widget=forms.Select(
+            attrs={
+                "class": "form-select form-select-sm",
+                "style": "max-width: 250px;",
+            }
+        ),
+        required=False,
+        initial=DEFAULT_ALLOW_PAUSE_FILTER,
+    )
+    pause_reason = MultipleChoiceFilter(
+        field_name="pause_reason",
+        label=_("Årsag til pause"),
+        choices=PauseReasonChoices.choices,
+        conjoined=False,
+        widget=forms.CheckboxSelectMultiple(
+            attrs={
+                "class": "text-dark",
+                "style": "color:black;",
+            }
+        ),
+        initial=DEFAULT_PAUSE_REASONS_FILTER,
+    )
 
 
 class YearMonthMixin:
@@ -262,7 +310,18 @@ class PersonPauseListView(
     ]
 
     def get_queryset(self):
-        return Person.objects.filter(paused=True)
+        qs = Person.objects.filter(paused=True)
+
+        # Apply default pause_reason filter if none provided
+        if not self.request.GET.getlist("pause_reason"):
+            default_reasons = DEFAULT_PAUSE_REASONS_FILTER
+            qs = qs.filter(pause_reason__in=default_reasons)
+
+        # Apply default allow_pause filter if not provided
+        if "allow_pause" not in self.request.GET:
+            qs = qs.filter(allow_pause=DEFAULT_ALLOW_PAUSE_FILTER)
+
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
