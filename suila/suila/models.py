@@ -92,6 +92,7 @@ class StatusChoices(TextChoices):
     RUNNING = "Kører"
     SUCCEEDED = "Gennemført"
     FAILED = "Fejl"
+    DEPENDENCIES_NOT_MET = "Afhængigheder ikke opfyldt"
 
 
 class PauseReasonChoices(IntegerChoices):

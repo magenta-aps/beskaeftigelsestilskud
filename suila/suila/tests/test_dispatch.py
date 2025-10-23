@@ -73,8 +73,9 @@ class TestJobDispatcher(TestCase):
             ManagementCommands.EXPORT_BENEFITS_TO_PRISME
         )
 
+    @mock.patch("suila.dispatch.logger")
     @mock.patch("suila.dispatch.management")
-    def test_call_job(self, management_mock: MagicMock):
+    def test_call_job(self, management_mock: MagicMock, mock_logger: MagicMock):
         self.job_dispatcher.check_dependencies = MagicMock()
         self.job_dispatcher.allow_job = MagicMock()
 
@@ -100,6 +101,13 @@ class TestJobDispatcher(TestCase):
         )
         self.job_dispatcher.call_job(ManagementCommands.ESTIMATE_INCOME, year=2025)
         management_mock.call_command.assert_not_called()
+
+        mock_logger.warning.assert_called_once_with(
+            (
+                "DependencyNotMet exception for job: estimate_income: "
+                "'load_eskat' dependency for 'estimate_income' is not met"
+            )
+        )
 
     @mock.patch("suila.dispatch.logger")
     @mock.patch("suila.dispatch.management")

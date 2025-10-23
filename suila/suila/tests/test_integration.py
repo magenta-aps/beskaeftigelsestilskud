@@ -582,6 +582,11 @@ class IntegrationBaseTest(
 
         self.assert_benefit(total_amount, amount)
 
+    def joblog_qs(self, job_name):
+        return JobLog.objects.filter(name=job_name).exclude(
+            status=StatusChoices.DEPENDENCIES_NOT_MET
+        )
+
 
 class SteadyAverageIncomeTest(IntegrationBaseTest):
 
@@ -946,7 +951,7 @@ class EskatFailureTest(IntegrationBaseTest):
             ManagementCommands.SEND_EBOKS,
         ]:
 
-            self.assertEqual(JobLog.objects.filter(name=job_name).count(), 0)
+            self.assertEqual(self.joblog_qs(job_name).count(), 0)
 
     def test_eskat_succeeds(self):
         self.eskat_session_patcher.side_effect = None
@@ -959,7 +964,7 @@ class EskatFailureTest(IntegrationBaseTest):
             ManagementCommands.SEND_EBOKS,
         ]:
 
-            self.assertEqual(JobLog.objects.filter(name=job_name).count(), 1)
+            self.assertEqual(self.joblog_qs(job_name).count(), 1)
 
 
 class BtaxTests(IntegrationBaseTest):
@@ -982,10 +987,8 @@ class BtaxTests(IntegrationBaseTest):
         # Note: We call commands for month=1 because we run with a 2-month difference.
         self.call_commands(1, day_to_generate_btax_file_on=10)
 
-        calculation_jobs = JobLog.objects.filter(
-            name=ManagementCommands.CALCULATE_BENEFIT
-        )
-        btax_jobs = JobLog.objects.filter(name=ManagementCommands.LOAD_PRISME_B_TAX)
+        calculation_jobs = self.joblog_qs(ManagementCommands.CALCULATE_BENEFIT)
+        btax_jobs = self.joblog_qs(ManagementCommands.LOAD_PRISME_B_TAX)
         succeeded_btax_jobs = btax_jobs.filter(status=StatusChoices.SUCCEEDED)
         failed_btax_jobs = btax_jobs.filter(status=StatusChoices.FAILED)
 
@@ -1065,12 +1068,10 @@ class YearlyJobTests(IntegrationBaseTest):
         ):
 
             self.call_commands(1)
-            estimation_jobs = JobLog.objects.filter(
-                name=ManagementCommands.ESTIMATE_INCOME
-            )
+            estimation_jobs = self.joblog_qs(ManagementCommands.ESTIMATE_INCOME)
             self.assertEqual(estimation_jobs.count(), 0)
 
         # If autoselect succeeds, we should run ESTIMATE_INCOME normally
         self.call_commands(1)
-        estimation_jobs = JobLog.objects.filter(name=ManagementCommands.ESTIMATE_INCOME)
+        estimation_jobs = self.joblog_qs(ManagementCommands.ESTIMATE_INCOME)
         self.assertEqual(estimation_jobs.count(), 1)
