@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from suila.benefit import get_calculation_date, get_eboks_date
-from suila.exceptions import DependenciesNotMet
+from suila.exceptions import ConfigurationError, DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 from suila.types import JOB_NAME, JOB_TYPE
 
@@ -189,6 +189,9 @@ class JobDispatcher:
         ).exists()
 
     def check_dependencies(self, job_name: JOB_NAME):
+        if job_name not in self.dependencies:
+            raise ConfigurationError(f"{job_name} is missing in dependency-dict")
+
         for dependency_job_name in self.dependencies[job_name]:
             job_type: JOB_TYPE = self.jobs[dependency_job_name]["type"]
             if job_type == self.JOB_TYPE_MONTHLY and not self.job_ran_month(
@@ -284,6 +287,8 @@ class JobDispatcher:
             )
         except DependenciesNotMet:
             logger.warning(f"DependencyNotMet exception for job: {name}")
+        except ConfigurationError:
+            logger.exception(f"ConfigurationError exception for job: {name}")
         except management.CommandError:
             logger.exception(f"CommandError exception for job: {name}")
             # NOTE: We just log these errors, since jobs shouldn't prevent us from

@@ -9,7 +9,7 @@ from unittest.mock import ANY, MagicMock
 from django.test import TestCase, override_settings
 
 from suila.dispatch import JobDispatcher
-from suila.exceptions import DependenciesNotMet
+from suila.exceptions import ConfigurationError, DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 
 
@@ -101,6 +101,39 @@ class TestJobDispatcher(TestCase):
         self.job_dispatcher.call_job(ManagementCommands.ESTIMATE_INCOME, year=2025)
         management_mock.call_command.assert_not_called()
 
+    @mock.patch("suila.dispatch.logger")
+    @mock.patch("suila.dispatch.management")
+    def test_call_job_configuration_error(
+        self, management_mock: MagicMock, mock_logger: MagicMock
+    ):
+        self.job_dispatcher.check_dependencies = MagicMock()
+        self.job_dispatcher.allow_job = MagicMock()
+
+        self.job_dispatcher.allow_job.return_value = False
+        self.job_dispatcher.call_job("foo", "die", mucki="bar")
+        management_mock.call_command.assert_not_called()
+
+        self.job_dispatcher.allow_job.return_value = True
+        self.job_dispatcher.call_job("foo", "die", mucki="bar")
+        management_mock.call_command.assert_called_once_with(
+            "foo",
+            "die",
+            mucki="bar",
+            traceback=False,
+            reraise=False,
+            stdout=ANY,
+        )
+        management_mock.call_command.reset_mock()
+
+        self.job_dispatcher.check_dependencies.side_effect = ConfigurationError(
+            "she's a maaaniac maaaniac on the floor. Maaniac at your door. Maaniac ...."
+        )
+        self.job_dispatcher.call_job(ManagementCommands.ESTIMATE_INCOME, year=2025)
+        management_mock.call_command.assert_not_called()
+        mock_logger.exception.assert_called_once_with(
+            "ConfigurationError exception for job: estimate_income"
+        )
+
     def test_job_ran_month(self):
         # Check if a job ran a specific month + verify invalid params don't hinder this
         self.assertTrue(
@@ -155,6 +188,10 @@ class TestJobDispatcher(TestCase):
         }
 
         self.assertFalse(self.job_dispatcher.allow_job("something-darkside"))
+
+    def test_check_dependencies_invalid_job_type(self):
+        with self.assertRaises(ConfigurationError):
+            self.job_dispatcher.check_dependencies("something-darkside")
 
     @mock.patch("suila.dispatch.logger")
     @override_settings(ESKAT_BASE_URL=None)
