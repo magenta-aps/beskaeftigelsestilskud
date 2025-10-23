@@ -285,8 +285,13 @@ class JobDispatcher:
                 stdout=self.stdout,
                 **kwargs,
             )
-        except DependenciesNotMet:
-            logger.warning(f"DependencyNotMet exception for job: {name}")
+        except DependenciesNotMet as e:
+            logger.warning(f"DependencyNotMet exception for job: {name}: {e}")
+
+            # Add joblog object so the job appears in the joblog UI
+            JobLog.objects.create(
+                name=name, status=StatusChoices.DEPENDENCIES_NOT_MET, output=e
+            )
         except ConfigurationError:
             logger.exception(f"ConfigurationError exception for job: {name}")
         except management.CommandError:
