@@ -23,3 +23,8 @@ class CalculationMethodNotSet(Exception):
     def __init__(self, year):
         error_message = f"calculation parameters for {year} are not set."
         super().__init__(error_message)
+
+
+class ConfigurationError(Exception):
+    def __init__(self, message):
+        super().__init__(f"Configuration error: '{message}'")
