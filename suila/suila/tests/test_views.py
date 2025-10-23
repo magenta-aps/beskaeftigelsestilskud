@@ -267,6 +267,8 @@ class TestPersonPauseListView(TimeContextMixin, PersonEnv):
         self.assertEqual(qs.count(), 0)
 
         self.person1.paused = True
+        self.person1.allow_pause = False
+        self.person1.pause_reason = 1
         self.person1.save()
 
         view, response = self.request_get(self.admin_user)
@@ -280,7 +282,7 @@ class TestPersonPauseListView(TimeContextMixin, PersonEnv):
 
         self.assertEqual(row.get_cell_value("cpr"), self.person1.cpr)
         self.assertEqual(row.get_cell_value("name"), self.person1.name)
-        self.assertEqual(row.get_cell_value("allow_pause"), "True")
+        self.assertEqual(row.get_cell_value("allow_pause"), "False")
         self.assertEqual(pause_start_date.day, timezone.now().day)
         self.assertEqual(pause_start_date.month, timezone.now().month)
         self.assertEqual(pause_start_date.year, timezone.now().year)
@@ -292,6 +294,32 @@ class TestPersonPauseListView(TimeContextMixin, PersonEnv):
         context = view.get_context_data()
         row = context["table"].rows[0]
         self.assertEqual(row.get_cell_value("pause_note"), "foo")
+
+    def test_list_view_filters(self):
+        self.person1.paused = True
+        self.person1.allow_pause = True
+        self.person1.pause_reason = 2
+        self.person1.save()
+
+        url = "/persons/paused/"
+        self.client.force_login(self.admin_user)
+        response = self.client.get(url, {"allow_pause": True, "pause_reason": [2]})
+
+        self.assertEqual(response.status_code, 200)
+        qs = response.context["object_list"]
+        self.assertEqual(qs.count(), 1)
+
+        response = self.client.get(url, {"allow_pause": True, "pause_reason": [1]})
+
+        self.assertEqual(response.status_code, 200)
+        qs = response.context["object_list"]
+        self.assertEqual(qs.count(), 0)
+
+        response = self.client.get(url, {"allow_pause": False, "pause_reason": [2]})
+
+        self.assertEqual(response.status_code, 200)
+        qs = response.context["object_list"]
+        self.assertEqual(qs.count(), 0)
 
 
 class TestPersonSearchView(TimeContextMixin, PersonEnv):
