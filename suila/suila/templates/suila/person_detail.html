@@ -180,6 +180,22 @@
             {% action_button _("Skift estimeringsmotor") "settings" "estimation_engine_form" "suila/forms/estimation_engine_form.html" %}
         </div>
         {% endif %}
+        <div class="me-2">
+        <div class="btn-group">
+            <label class="btn btn-outline-primary action-btn-label">Vis år:</label>
+            <div class="btn-group">
+            <button type="button" class="btn btn-primary dropdown-toggle action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                {{ year }}
+            </button>
+                <ul class="dropdown-menu">
+                    {% for available_year in available_years %}
+                    <li><a class="dropdown-item" href="?year={{ available_year }}">{{ available_year}}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        </div>
+
     </div>
 </div>
 {% endif %}

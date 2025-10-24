@@ -388,6 +388,7 @@ class PersonDetailView(
             if relevant_person_month
             else self.person_year.year.year < date.today().year
         )
+        context_data["available_years"] = self.get_available_years()
 
         if relevant_person_month is not None:
             person_month = relevant_person_month.person_month
@@ -495,6 +496,16 @@ class PersonDetailView(
 
         self.log_view(self.object)
         return context_data
+
+    def get_available_years(self):
+        return list(
+            PersonMonth.objects.filter(
+                person_year__person=self.object,
+            )
+            .order_by("person_year__year")
+            .distinct()
+            .values_list("person_year__year", flat=True)
+        )
 
     def get_relevant_person_month(
         self, year=None, month=None
