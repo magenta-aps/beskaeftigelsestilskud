@@ -622,6 +622,13 @@ div.explainer p {
     color: white;
 }
 
+.action-btn-label, .action-btn-label:hover {
+  background-color: transparent;
+  border-color: $action-primary;
+  color: $action-primary;
+  padding: 0.6 * $spacer 1.2 * $spacer;
+}
+
 // Toggle button
 .toggle-option {
   flex: 1;
