@@ -301,25 +301,47 @@ class TestPersonPauseListView(TimeContextMixin, PersonEnv):
         self.person1.pause_reason = 2
         self.person1.save()
 
+        user = User.objects.create(username="test")
+        history_item = self.person1.history.order_by("-history_date").first()
+        history_item.history_user = user
+        history_item.save()
+
         url = "/persons/paused/"
         self.client.force_login(self.admin_user)
-        response = self.client.get(url, {"allow_pause": True, "pause_reason": [2]})
+        response = self.client.get(
+            url, {"allow_pause": True, "self_started_pause": False}
+        )
 
         self.assertEqual(response.status_code, 200)
         qs = response.context["object_list"]
         self.assertEqual(qs.count(), 1)
 
-        response = self.client.get(url, {"allow_pause": True, "pause_reason": [1]})
+        response = self.client.get(
+            url, {"allow_pause": True, "self_started_pause": True}
+        )
 
         self.assertEqual(response.status_code, 200)
         qs = response.context["object_list"]
         self.assertEqual(qs.count(), 0)
 
-        response = self.client.get(url, {"allow_pause": False, "pause_reason": [2]})
+        response = self.client.get(
+            url, {"allow_pause": False, "self_started_pause": False}
+        )
 
         self.assertEqual(response.status_code, 200)
         qs = response.context["object_list"]
         self.assertEqual(qs.count(), 0)
+
+        user.cpr = self.person1.cpr
+        user.save()
+
+        response = self.client.get(
+            url, {"allow_pause": True, "self_started_pause": True}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        qs = response.context["object_list"]
+        self.assertEqual(qs.count(), 1)
 
 
 class TestPersonSearchView(TimeContextMixin, PersonEnv):

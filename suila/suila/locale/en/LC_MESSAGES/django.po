@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-22 06:07-0100\n"
+"POT-Creation-Date: 2025-10-27 07:35-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1119,11 +1119,11 @@ msgstr "Confirmation"
 msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr "Confirm"
 
-#: suila/templates/suila/person_detail_eboks_send.html
+#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
 msgid "Nej"
 msgstr "No"
 
-#: suila/templates/suila/person_detail_eboks_send.html
+#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
 msgid "Ja"
 msgstr "Yes"
 
@@ -1622,12 +1622,12 @@ msgid "Startdato for udbetalingspause"
 msgstr "Start date for payout pause"
 
 #: suila/views.py
-msgid "Årsag til pause"
-msgstr "Cause"
-
-#: suila/views.py
 msgid "Seneste notat"
 msgstr "Latest note"
+
+#: suila/views.py
+msgid "Selvvalgt udbetalingspause"
+msgstr ""
 
 #: suila/views.py
 msgid "Status"
