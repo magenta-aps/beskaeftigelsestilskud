@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 
 from common.fields import CPRField
 from common.models import User
-from common.utils import SuilaJSONEncoder, get_user_who_pressed_pause, omit
+from common.utils import SuilaJSONEncoder, omit
 from common.view_mixins import BaseGetFormView, ViewLogMixin
 from dateutil.relativedelta import relativedelta
 from django import forms
@@ -467,7 +467,7 @@ class PersonDetailView(
                     "in_quarantine": person_year.in_quarantine,
                     "quarantine_reason": person_year.quarantine_reason,
                     "quarantine_weight": relevant_person_month.quarantine_weight,
-                    "user_who_pressed_pause": get_user_who_pressed_pause(person),
+                    "user_who_pressed_pause": person.user_who_pressed_pause,
                     "year": person_year.year.year,
                     "month": person_month.month,
                     "manually_entered_income": person.annual_income_estimate,

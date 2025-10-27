@@ -587,6 +587,35 @@ class Person(PermissionsMixin, models.Model):
         )
 
     @property
+    def user_who_pressed_pause(self) -> str | None:
+        """
+        Returns either "self" or "skattestyrelsen"; Depending on who changed the "pause"
+        attribute on a Person object.
+        """
+        history_records = self.history.order_by("-history_date")
+        user_who_pressed_pause = None
+        for i in range(len(history_records) - 1):
+            new_record = history_records[i]
+            old_record = history_records[i + 1]
+
+            delta = new_record.diff_against(old_record)
+
+            if "paused" in delta.changed_fields:
+                try:
+                    user_who_changed_object = User.objects.get(
+                        id=new_record.history_user_id
+                    )
+                except User.DoesNotExist:
+                    break
+
+                if user_who_changed_object.cpr == self.cpr:
+                    user_who_pressed_pause = "self"
+                else:
+                    user_who_pressed_pause = "skattestyrelsen"
+                break
+        return user_who_pressed_pause
+
+    @property
     def last_year(self) -> PersonYear:
         return self.personyear_set.order_by("-year")[0]
 
