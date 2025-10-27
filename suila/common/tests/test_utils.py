@@ -17,7 +17,6 @@ from common.utils import (
     camelcase_to_snakecase,
     get_income_as_dataframe,
     get_people_in_quarantine,
-    get_user_who_pressed_pause,
     map_between_zero_and_one,
     to_dataframe,
 )
@@ -70,7 +69,7 @@ class TestUtils(TestCase):
         history_item = person.history.order_by("-history_date").first()
         history_item.history_user = user
         history_item.save()
-        self.assertEqual(get_user_who_pressed_pause(person), "skattestyrelsen")
+        self.assertEqual(person.user_who_pressed_pause, "skattestyrelsen")
 
     def test_get_user_who_pressed_pause_none(self):
         person = Person.objects.create(
@@ -78,7 +77,7 @@ class TestUtils(TestCase):
         )
         person.paused = True
         person.save()
-        self.assertIsNone(get_user_who_pressed_pause(person))
+        self.assertIsNone(person.user_who_pressed_pause)
 
 
 class TestStabilityScoreUtils(TestCase):
