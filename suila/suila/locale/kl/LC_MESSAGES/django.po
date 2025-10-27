@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-22 09:45-0100\n"
+"POT-Creation-Date: 2025-10-22 06:07-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -293,7 +293,7 @@ msgstr ""
 
 #: suila/models.py
 msgid "Afdød"
-msgstr ""
+msgstr "Taqusimasoq"
 
 #: suila/models.py
 msgid "Mindreårig"
@@ -615,93 +615,44 @@ msgstr ""
 "Suila-tapinik pisinnaanersutit."
 
 #: suila/templates/suila/faq.html
-msgid "Signal om høj indkomst"
-msgstr "Isertitat qaffasinnerinik nalunaarut"
-
-#: suila/templates/suila/faq.html
-msgid "Ved forventet årsindkomst mellem 475.000-500.000 kr."
+msgid "Forventet indkomst tæt på Suila-tapit grænsen"
 msgstr ""
-"Isertitariumaagassatut naatsorsuutigisatit 475.000 koruunit 500.000 "
-"koruuninillu akornanniipput."
+"Isertitariumaagassatit Suila-tapisisinnaanissavit killinganut qanippallaarpu"
 
-#: suila/templates/suila/faq.html
-msgid ""
-"Da Skattestyrelsen har registreret, at du har en forventet årsindkomst på "
-"475.000 – 500.000 kr., udbetales beløbet ikke endnu. Det betyder følgende:"
-msgstr ""
-"Isertitatit 475.000 koruunit aamma 500.000 koruunit akornanniippata, Suila-"
-"tapisiassatit utaqqisinneqarallassapput. Tamanna isumaqarpoq:"
-
-#: suila/templates/suila/faq.html
+#: suila/templates/suila/faq.html suila/templates/suila/graph.html
 #, python-format
 msgid ""
-"Hvis Skattestyrelsen i løbet af året fortsat modtager oplysninger, der "
-"viser, at du forventer at have en årsindkomst på 475.000-500.000 kr., vil du "
-"ikke modtage Suila-tapit en gang om måneden. Du modtager i stedet én samlet "
-"udbetaling for månederne januar %(this_year)s til november %(this_year)s i "
-"januar %(next_year)s."
+"Hvis Skattestyrelsens oplysninger fra %(last_year)s viser, at din "
+"årsindkomst nærmede sig 500.000 kr., og din månedlige indkomst varierede "
+"meget i løbet af året, vil du ikke modtage Suila-tapit månedligt i "
+"%(this_year)s."
 msgstr ""
-"Akileraartnermut Aqutsisoqarfik nalunaarfigineqarsimappat ukiumut "
-"isertitariumaagassatit 475.000 koruunit 500.000 koruunillu akornanniittut, "
-"qaammatikkaartumik Suila-tapinik tunineqartassanngilatit. Tassunga "
-"pissutaavoq Suila-tapisisinnaanermut isertitatut 500.000 koruunit "
-"killigitinneqarmata. Tassunga taarsiullugu ukioq %(this_year)s-mi qaammatini "
-"januarimiit novemberip tungaanut tapisiassatit ukioq %(next_year)s-mi "
-"januarimi tunniunneqarumaarput."
 
-#: suila/templates/suila/faq.html
+#: suila/templates/suila/faq.html suila/templates/suila/graph.html
+#, python-format
 msgid ""
-"Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at din "
-"forventede årsindkomst er under 475.000 kr., vil Skattestyrelsen igangsætte "
-"månedlige udbetalinger. Det sker den tredje tirsdag i hver måned."
+"Hvis Skattestyrelsen i løbet af %(this_year)s modtager oplysninger, der "
+"viser, at din forventede årsindkomst er under 500.000 kr., og der samtidig "
+"kommer et signal fra arbejdsmarkedet, vil Skattestyrelsen igangsætte "
+"månedlige udbetalinger fra januar %(next_year)s."
 msgstr ""
-"Akileraartarnermut Aqutsisoqarfik nalunaarfigineqarsimappat ukiumut "
-"isertitatavit 475.000 koruunit ataakkaat, qaammatikkaartumik Suila-"
-"tapisisisarnissat aallartinneqassaaq. Tamanna pisarpoq qaammatit tamaasa, "
-"marlunngornerit pingajuanni."
 
 #: suila/templates/suila/faq.html
-msgid ""
-"Hvis din samlede indkomst viser sig at være over 500.000 kr., er du ikke i "
-"målgruppen for Suila-tapit."
-msgstr ""
-"Ukiumut isertitavit 500.000 koruunit sinnerpatigit, Suila-tapisinissannut "
-"isertitatit qaffasippallaalissapput."
-
-#: suila/templates/suila/faq.html
-msgid "Ved forventet årsindkomst der overstiger 500.000 kr."
-msgstr ""
-"Isertitariumaagassatut naatsorsuutigisatit 500.000 koruuninit "
-"qaffasinnerupput"
-
-#: suila/templates/suila/faq.html
-msgid ""
-"Din forventede indkomst er for høj til, at du er i målgruppen for Suila-"
-"tapit. Skattestyrelsen forventer, at din årsindkomst overstiger 500.000 kr. "
-"Det er beregnet på baggrund af de informationer Skattestyrelsen har om dine "
-"indtægter."
-msgstr ""
-"Ukiumut isertitatit 500.000 koruuninit qaffasinneruppata, isertitatit Suila-"
-"tapisisinnaanissannut qaffasippallaarput. Akileraartarnermut Aqutsisoqarfiup "
-"paasissutissat pissarsiarisimasai tunngavigalugit isertitatit "
-"naatsorsorneqarsimapput."
-
-#: suila/templates/suila/faq.html
-msgid "Forskellige signaler"
+msgid "Signal om indkomst under 70.000 kr. eller over 500.000 kr."
 msgstr "Nalunaarnerit assigiinngitsut"
 
 #: suila/templates/suila/faq.html
 msgid ""
-"Skattestyrelsen har oplysninger om, at du de seneste år har haft indkomster, "
-"der varierer meget fra måned til måned eller indkomster fra udbytte. Det "
-"giver Skattestyrelsen signaler, der peger i forskellige retninger. "
-"Udbetaling afventer et klarere signal."
+"Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at din "
+"forventede årsindkomst er under 70.000 kr. eller over 500.000 kr., er du "
+"ikke berettiget til Suila-tapit."
 msgstr ""
-"Akileraartarnermut Aqutsisoqarfiup paasissutissaat pissarsiarisimasai "
-"malillugit isertitatit qaammammiit qaammammut allanngorarput, imaluunniit "
-"sinneqartoorutinit iluanaarutisisimavutit. Akileraartnermut Aqutsisoqarfik "
-"ersarinnerusunik paasissutissaateqalernissaanut Suila-tapisassatit "
-"utaqqisinneqarput."
+
+#: suila/templates/suila/faq.html
+msgid ""
+"Når Skattestyrelsen har modtaget oplysninger om din samlede årsindkomst, vil "
+"du få udbetalt eventuelt manglende Suila-tapit."
+msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid "Et andet signal"
@@ -831,7 +782,7 @@ msgstr ""
 #: suila/templates/suila/person_tax_scope_history.html
 #: suila/templates/suila/root.html
 msgid "Borgersøgning"
-msgstr "Innutaasumik ujaasigit"
+msgstr "Innutaasumik ujaasineq"
 
 #: suila/templates/suila/graph.html suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_preview.html
@@ -865,24 +816,6 @@ msgstr ""
 #: suila/templates/suila/graph.html
 msgid "Kan du ikke se dine tal?"
 msgstr "Suila-tapisiassatit takusinnaanngiligit?"
-
-#: suila/templates/suila/graph.html
-#, python-format
-msgid ""
-"Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at du "
-"forventer at have en årsindkomst på 475.000-500.000 kr., vil du ikke modtage "
-"Suila-tapit en gang om måneden. Det er, fordi din estimerede årsindkomst er "
-"tæt på den øvre grænse på 500.000 kr. for at være berettiget til Suila-"
-"tapit. Du modtager i stedet én samlet udbetaling for månederne januar til "
-"november %(this_year)s i januar %(next_year)s."
-msgstr ""
-"Akileraartnermut Aqutsisoqarfik nalunaarfigineqarsimappat ukiumut "
-"isertitariumaagassatit 475.000 koruunit 500.000 koruunillu akornanniittut, "
-"qaammatikkaartumik Suila-tapinik tunineqartassanngilatit. Tassunga "
-"pissutaavoq Suila-tapisisinnaanermut isertitatut 500.000 koruunit "
-"killigitinneqarmata. Tassunga taarsiullugu ukioq %(this_year)s-mi qaammatini "
-"januarimiit novemberip tungaanut tapisiassatit ukioq %(next_year)s-mi "
-"januarimi tunniunneqarumaarput."
 
 #: suila/templates/suila/graph.html
 msgid ""
@@ -973,6 +906,9 @@ msgid ""
 "du oprette en, før du kan få udbetalt Suila-tapit. Har du ikke en NemKonto, "
 "skal du rette henvendelse til din bank herom."
 msgstr ""
+"Suila-tapit taamaallaat NemKontunut nuunneqartarput. NemKontoqanngikkuit "
+"Suila-tapisiassatit tigusinnanngilatit. Nemkontotaarniaruit aningaaserivinnut "
+"saaffiginninnikkut ikiorneqarsinnaavutit."
 
 #: suila/templates/suila/person_detail.html
 msgid "Bemærk!"
@@ -1168,9 +1104,9 @@ msgstr "e-Boksimukartut"
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid ""
-"Nedenfor ses en liste over de e-Boks-beskeder, der kan sendes til borgeren "
-"med henblik på at verificere opsætningen og oplysningerne."
-msgstr "Uani e-Boksimut nassiunneqartussat eqqortuunersut takusinnaavatit."
+"Nedenfor ses en liste over e-Boks-beskeder, der kan bruges til at verificere "
+"opsætningen og oplysningerne, inden de sendes til borgeren."
+msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
 msgid "Måned"
@@ -1218,11 +1154,11 @@ msgstr "Uppernarsaat"
 msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr "e-Boksimut nassiussilerputit, ingerlaqqissavit?"
 
-#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
+#: suila/templates/suila/person_detail_eboks_send.html
 msgid "Nej"
 msgstr "Naamik"
 
-#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
+#: suila/templates/suila/person_detail_eboks_send.html
 msgid "Ja"
 msgstr "Aap"
 
@@ -1257,7 +1193,7 @@ msgid ""
 "Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på "
 "baggrund af din forskudsregistrering. Du kan altid ændre din "
 "forskudsregistrering på <a href=\"https://sullissivik.gl\" "
-"target=\"_blank\">Sullissivik.gl</a>, hvis du mener at den er forkert."
+"target=\"_blank\">Sullissivik.gl</a>, hvis du mener, at den er forkert."
 msgstr ""
 "Akileraarutit B-t akilerneqarsimasut pillugit paasissutissat illit nammineq "
 "siumoortumik nalunaarsuisimanikkut akileraarutinik B-nik "
@@ -1378,6 +1314,7 @@ msgid "Denne person har ikke nogen data"
 msgstr ""
 
 #: suila/templates/suila/person_no_year.html
+#: suila/templates/suila/person_no_year_text.html
 msgid "Du har ikke en profil på Suila.gl"
 msgstr "Ilinnut tunngasunik suila.gl-imi paasissutissaateqanngilagut"
 
@@ -1465,7 +1402,7 @@ msgstr ""
 
 #: suila/templates/suila/templatetags/dead_info_box.html
 msgid "Afdød (CPR-status)"
-msgstr ""
+msgstr "Taqusimasoq"
 
 #: suila/templates/suila/templatetags/dead_info_box.html
 #: suila/templates/suila/templatetags/manually_entered_income_info_box.html
@@ -1501,7 +1438,7 @@ msgstr ""
 
 #: suila/templates/suila/templatetags/missing_info_box.html
 msgid "Forsvundet (CPR-status)"
-msgstr ""
+msgstr "Tammarmitoq"
 
 #: suila/templates/suila/templatetags/pause_effect_date_info_box.html
 #: suila/templates/suila/templatetags/pause_info_box.html
@@ -1792,7 +1729,7 @@ msgstr ""
 #: suila/views.py
 msgid "Borgeren har genoptaget udbetalinger"
 msgstr ""
-"Suilat-tapit tunniunneqartarnissai innuttaasumit aallarteqqinneqarsimapput."
+"Suilat-tapit tunniunneqartarnissai innuttaasumit aallarteqqinneqarsimapput"
 
 #: suila/views.py
 msgid "Stopper udbetalingspause"
