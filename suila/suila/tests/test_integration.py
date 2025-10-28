@@ -34,6 +34,33 @@ def get_days_in_month(year, month):
     return list(range(1, num_days + 1))
 
 
+class EboksMocks:
+    def setUp(self):
+        super().setUp()
+
+        self.eboks_requests_patcher = patch("suila.integrations.eboks.client.requests")
+        self.eboks_requests_mock = self.eboks_requests_patcher.start()
+        self.addCleanup(self.eboks_requests_mock.stop)
+        self.eboks_session_mock = MagicMock()
+        self.eboks_requests_mock.session.return_value = self.eboks_session_mock
+
+        self.message_json_data = {
+            "message_id": 123,
+            "recipients": [{"status": "sent", "post_processing_status": ""}],
+        }
+
+        def eboks_response_mocker(method, url, *args, **kwargs):
+            response_mock = MagicMock(spec=Response)
+
+            if "dispatchsystem" in url:
+                response_mock.json.return_value = self.message_json_data
+
+            response_mock.status_code = 200
+            return response_mock
+
+        self.eboks_session_mock.request.side_effect = eboks_response_mocker
+
+
 class PrismeMocks:
 
     def setUp(self):
@@ -453,7 +480,7 @@ pitu_test_settings = {
     ESKAT_VERIFY=False,
 )
 class IntegrationBaseTest(
-    PrismeMocks, EskatMocks, U1AMocks, DafoMocks, TransactionTestCase
+    EboksMocks, PrismeMocks, EskatMocks, U1AMocks, DafoMocks, TransactionTestCase
 ):
 
     def setUp(self):
@@ -610,6 +637,15 @@ class SteadyAverageIncomeTest(IntegrationBaseTest):
             self.assert_benefit(amount_sent_to_prisme, 1312)
 
         self.assert_total_benefit(15_750)
+
+    def test_that_eboks_letter_was_sent(self):
+        month = 1
+        self.call_commands(month, reraise=True)
+
+        self.assertLess(
+            self.get_person_month(month).person_year.person.welcome_letter_sent_at,
+            timezone.now(),
+        )
 
 
 class SteadyHighIncomeTest(IntegrationBaseTest):

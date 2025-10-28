@@ -80,6 +80,8 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    send=True,
+                    save=True,
                     stdout=ANY,
                 ),
                 call(
@@ -129,6 +131,8 @@ class TestJobDispatcherCommands(TestCase):
                     traceback=False,
                     reraise=False,
                     verbosity=1,
+                    send=True,
+                    save=True,
                     stdout=ANY,
                 ),
                 call(
@@ -330,6 +334,8 @@ class TestJobDispatcherCommands(TestCase):
                         traceback=False,
                         reraise=False,
                         verbosity=1,
+                        send=True,
+                        save=True,
                         stdout=ANY,
                     ),
                 ]

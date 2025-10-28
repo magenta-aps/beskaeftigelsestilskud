@@ -162,6 +162,8 @@ class Command(SuilaBaseCommand):
             effect_year,
             effect_month,
             verbosity=verbosity,
+            send=True,
+            save=True,
         )
 
         # Load Prisme posting status
