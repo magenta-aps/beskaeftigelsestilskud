@@ -479,6 +479,44 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
             self.assertFalse(response.context_data["table"].orderable)
 
+    def test_get_context_data_partially_taxable_person(self):
+        """
+        Test example from https://redmine.magenta.dk/issues/67176:
+
+        En person er skattepligtig fra 1. juli og har en månedsløn på 50.000 kr. Hvis
+        estimeringen af borgerens årsindkomst estimeres ud fra MonthlyContinuationEngine
+        vil Suila i dag vise en estimeret årsindkomst på 300.000 kr. Suila vil beregne
+        det årlige Suila-tapit ud fra en årsindkomst på 600.000 kr. for at tage højde
+        for skattepligtsperioden.
+
+        Dette medfører, at det årlige Suila-tapit beregnes til 0 kr. (som er det
+        korrekte tal), selvom den viste årsindkomst burde give et årligt Suila-tapit på
+        12.600 kr.
+        """
+        person_year = self.person_year
+        person_year.catchsale_expenses = 0
+        person_year.b_income = 0
+        person_year.b_expenses = 0
+        person_year.save()
+
+        TaxInformationPeriod.objects.create(
+            person_year=self.person_year,
+            tax_scope="FULL",
+            start_date=datetime(2020, 7, 1, tzinfo=timezone.get_current_timezone()),
+            end_date=datetime(2020, 12, 31, tzinfo=timezone.get_current_timezone()),
+        )
+
+        for person_month in PersonMonth.objects.filter(
+            person_year__person__pk=self.person1.pk
+        ):
+            person_month.estimated_year_result = 300_000
+            person_month.save()
+        with self._time_context(year=2020, month=10):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertEqual(
+                response.context_data["estimated_year_result"], Decimal(600_000)
+            )
+
     def test_get_relevant_person_month(self):
 
         person_pk = self.person1.pk

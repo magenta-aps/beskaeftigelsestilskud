@@ -84,6 +84,7 @@ from suila.models import (
     PersonYear,
     StandardWorkBenefitCalculationMethod,
     SuilaEboksMessage,
+    TaxInformationPeriod,
     WorkingTaxCreditCalculationMethod,
     Year,
 )
@@ -418,10 +419,23 @@ class PersonDetailView(
             person_month = relevant_person_month.person_month
             person_year = person_month.person_year
             person = person_year.person
+
             estimated_year_result = (
-                (relevant_person_month.person_month.estimated_year_result or Decimal(0))
-                - person_year.catchsale_expenses
-                + (person_year.b_income - person_year.b_expenses)
+                0
+                if person_month.full_tax_scope_months == 0
+                else (
+                    (
+                        (
+                            relevant_person_month.person_month.estimated_year_result
+                            or Decimal(0)
+                        )
+                        - person_year.catchsale_expenses
+                        + person_year.b_income
+                        - person_year.b_expenses
+                    )
+                    * 12
+                    / person_month.full_tax_scope_months
+                )
             )
 
             paused_last_change = person.last_change("paused")
@@ -561,8 +575,20 @@ class PersonDetailView(
             return None
         else:
             quarantine_weights = settings.QUARANTINE_WEIGHTS  # type: ignore[misc]
+
+            full_tax_scope_months = (
+                TaxInformationPeriod.get_person_month_filter_annotation_for_entire_year(
+                    person_month.person_year.year.year, person_month.month
+                )
+            )
+            annotated_person_month = (
+                PersonMonth.objects.filter(pk=person_month.pk)
+                .annotate(full_tax_scope_months=full_tax_scope_months)
+                .get()
+            )
+
             return RelevantPersonMonth(
-                person_month=person_month,
+                person_month=annotated_person_month,
                 next_payout_date=get_payment_date(
                     person_month.person_year.year.year,
                     person_month.month,
