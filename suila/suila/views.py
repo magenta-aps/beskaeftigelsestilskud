@@ -333,6 +333,9 @@ class PersonPauseListView(
     def get_queryset(self):
         qs = Person.objects.filter(paused=True)
 
+        # Add zero-padded text version of CPR to ensure proper display and sorting
+        qs = qs.annotate(_cpr=LPad(Cast("cpr", CharField()), 10, Value("0")))
+
         # Apply default allow_pause filter if not provided
         if "allow_pause" not in self.request.GET:
             qs = qs.filter(allow_pause=DEFAULT_ALLOW_PAUSE_FILTER)
