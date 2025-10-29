@@ -295,54 +295,6 @@ class TestPersonPauseListView(TimeContextMixin, PersonEnv):
         row = context["table"].rows[0]
         self.assertEqual(row.get_cell_value("pause_note"), "foo")
 
-    def test_list_view_filters(self):
-        self.person1.paused = True
-        self.person1.allow_pause = True
-        self.person1.pause_reason = 2
-        self.person1.save()
-
-        user = User.objects.create(username="test")
-        history_item = self.person1.history.order_by("-history_date").first()
-        history_item.history_user = user
-        history_item.save()
-
-        url = "/persons/paused/"
-        self.client.force_login(self.admin_user)
-        response = self.client.get(
-            url, {"allow_pause": True, "self_started_pause": False}
-        )
-
-        self.assertEqual(response.status_code, 200)
-        qs = response.context["object_list"]
-        self.assertEqual(qs.count(), 1)
-
-        response = self.client.get(
-            url, {"allow_pause": True, "self_started_pause": True}
-        )
-
-        self.assertEqual(response.status_code, 200)
-        qs = response.context["object_list"]
-        self.assertEqual(qs.count(), 0)
-
-        response = self.client.get(
-            url, {"allow_pause": False, "self_started_pause": False}
-        )
-
-        self.assertEqual(response.status_code, 200)
-        qs = response.context["object_list"]
-        self.assertEqual(qs.count(), 0)
-
-        user.cpr = self.person1.cpr
-        user.save()
-
-        response = self.client.get(
-            url, {"allow_pause": True, "self_started_pause": True}
-        )
-
-        self.assertEqual(response.status_code, 200)
-        qs = response.context["object_list"]
-        self.assertEqual(qs.count(), 1)
-
 
 class TestPersonSearchView(TimeContextMixin, PersonEnv):
     view_class = PersonSearchView

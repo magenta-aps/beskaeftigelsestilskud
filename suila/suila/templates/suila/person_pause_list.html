@@ -6,16 +6,15 @@
 {% load render_table from django_tables2 %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item">{% translate "Borgere på udbetalingspause" %}</li>
+<li class="breadcrumb-item">{% translate "Borgere på pålagt udbetalingspause" %}</li>
 {% endblock %}
 
 {% block title %}
-{% translate "Borgere på udbetalingspause" %}
+{% translate "Borgere på pålagt udbetalingspause" %}
 {% endblock %}
 
 {% block content %}
 <div class="row mt-5">
-    {% table_filters filter %}
     {% render_table table %}
 </div>
 {% endblock %}
