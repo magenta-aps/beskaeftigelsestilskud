@@ -733,7 +733,8 @@ class LowIncomeFromJulyTest(IntegrationBaseTest):
 
         for month_number in range(1, 13):
             income = 8000 if month_number >= 7 else 0
-            self.add_monthlyincome_record(self.cpr, month_number, income=income)
+            if income:
+                self.add_monthlyincome_record(self.cpr, month_number, income=income)
 
         self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
         self.add_annualincome_record(self.cpr, salary=8000 * 6)
@@ -743,14 +744,17 @@ class LowIncomeFromJulyTest(IntegrationBaseTest):
     def test_estimate_and_calculate_benefit(self):
         for month in range(1, 13):
             self.call_commands(month)
-            person_month = self.get_person_month(month)
+
             amount_sent_to_prisme = self.get_amount_sent_to_prisme(month)
 
             if month >= 7:
+                person_month = self.get_person_month(month)
                 self.assertEqual(person_month.estimated_year_result, 48_000)
-            else:
-                self.assertEqual(person_month.estimated_year_result, 0)
             self.assert_benefit(amount_sent_to_prisme, 0)
+
+        self.assertEqual(
+            person_month.person_year.person.welcome_letter_sent_at.month, 9
+        )
 
         self.assert_total_benefit(0)
 
