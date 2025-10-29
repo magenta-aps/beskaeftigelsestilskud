@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-27 10:01-0200\n"
+"POT-Creation-Date: 2025-10-29 07:45-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -994,11 +994,11 @@ msgstr ""
 msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
+#: suila/templates/suila/person_detail_eboks_send.html
 msgid "Nej"
 msgstr ""
 
-#: suila/templates/suila/person_detail_eboks_send.html suila/views.py
+#: suila/templates/suila/person_detail_eboks_send.html
 msgid "Ja"
 msgstr ""
 
@@ -1171,7 +1171,7 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_pause_list.html
-msgid "Borgere på udbetalingspause"
+msgid "Borgere på pålagt udbetalingspause"
 msgstr ""
 
 #: suila/templates/suila/root.html

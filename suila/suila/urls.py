@@ -47,7 +47,9 @@ urlpatterns: List[URLResolver | URLPattern] = [
     ),
     path("persons/", PersonSearchView.as_view(), name="person_search"),
     path(
-        "persons/paused/", PersonPauseListView.as_view(), name="person_pause_overview"
+        "persons/forced_pause/",
+        PersonPauseListView.as_view(),
+        name="person_pause_overview",
     ),
     path("persons/<int:pk>/", PersonDetailView.as_view(), name="person_detail"),
     path("persons/<int:pk>/graph/", PersonGraphView.as_view(), name="person_graph"),

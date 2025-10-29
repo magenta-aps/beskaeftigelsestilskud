@@ -615,18 +615,6 @@ class Person(PermissionsMixin, models.Model):
                 break
         return user_who_pressed_pause
 
-    @classmethod
-    def filter_qs_for_self_started_pause(
-        cls, qs: QuerySet[Person], self_started_pause: bool
-    ):
-        persons_who_paused_themselves = [
-            p.pk for p in qs if p.user_who_pressed_pause == "self"
-        ]
-        if self_started_pause:
-            return qs.filter(pk__in=persons_who_paused_themselves)
-        else:
-            return qs.exclude(pk__in=persons_who_paused_themselves)
-
     @property
     def last_year(self) -> PersonYear:
         return self.personyear_set.order_by("-year")[0]

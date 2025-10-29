@@ -33,7 +33,6 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.formats import number_format
-from django.utils.html import escape, format_html
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop, override
@@ -42,7 +41,7 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django.views.generic.base import ContextMixin
 from django.views.generic.detail import BaseDetailView
 from django.views.generic.edit import UpdateView
-from django_filters import ChoiceFilter, Filter, FilterSet
+from django_filters import Filter, FilterSet
 from django_filters.views import FilterView
 from django_tables2 import (
     BooleanColumn,
@@ -54,7 +53,6 @@ from django_tables2 import (
 from django_tables2.columns.linkcolumn import BaseLinkColumn
 from django_tables2.utils import Accessor
 from login.view_mixins import LoginRequiredMixin
-from project.util import strtobool
 
 from suila.data import engine_choices
 from suila.dates import get_pause_effect_date, get_payment_date
@@ -145,17 +143,6 @@ class PersonPauseTable(Table):
         empty_values=(),
         orderable=False,
     )
-    self_started_pause = BooleanColumn(
-        verbose_name=_("Selvvalgt udbetalingspause"),
-        orderable=False,
-    )
-
-    def render_self_started_pause(self, value, record):
-        if record.user_who_pressed_pause == "self":
-            text = "✔"
-        else:
-            text = "✘"
-        return format_html("<span>{}</span>", escape(text))
 
     def render_pause_start_date(self, value, record):
         last_change = record.last_change("paused")
@@ -198,48 +185,6 @@ class PersonFilterSet(FilterSet):
 
 DEFAULT_ALLOW_PAUSE_FILTER = False
 DEFAULT_SELF_STARTED_PAUSE_FILTER = False
-
-
-class PersonPauseFilterSet(FilterSet):
-    cpr = CPRFilter("_cpr", label=_("CPR-nummer"), required=False)
-
-    allow_pause = ChoiceFilter(
-        field_name="allow_pause",
-        label=_("Må selv genoptage udbetalinger"),
-        choices=[
-            (True, _("Ja")),
-            (False, _("Nej")),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "form-select form-select-sm",
-                "style": "max-width: 250px;",
-            }
-        ),
-        required=False,
-        initial=DEFAULT_ALLOW_PAUSE_FILTER,
-    )
-
-    self_started_pause = ChoiceFilter(
-        field_name="self_started_pause",
-        label=_("Selvvalgt udbetalingspause"),
-        choices=[
-            (True, _("Ja")),
-            (False, _("Nej")),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "form-select form-select-sm",
-                "style": "max-width: 250px;",
-            }
-        ),
-        required=False,
-        initial=DEFAULT_SELF_STARTED_PAUSE_FILTER,
-        method="filter_self_started_pause",
-    )
-
-    def filter_self_started_pause(self, queryset, name, value):
-        return Person.filter_qs_for_self_started_pause(queryset, strtobool(value))
 
 
 class YearMonthMixin:
@@ -323,7 +268,6 @@ class PersonPauseListView(
 ):
     model = Person
     table_class = PersonPauseTable
-    filterset_class = PersonPauseFilterSet
     template_name = "suila/person_pause_list.html"
     matomo_pagename = "Person - pauseliste"
 
@@ -332,19 +276,12 @@ class PersonPauseListView(
     ]
 
     def get_queryset(self):
-        qs = Person.objects.filter(paused=True)
+        qs = Person.objects.filter(paused=True, allow_pause=False).exclude(
+            pause_reason__in=[PauseReasonChoices.DEATH, PauseReasonChoices.MISSING]
+        )
 
         # Add zero-padded text version of CPR to ensure proper display and sorting
         qs = qs.annotate(_cpr=LPad(Cast("cpr", CharField()), 10, Value("0")))
-
-        # Apply default allow_pause filter if not provided
-        if "allow_pause" not in self.request.GET:
-            qs = qs.filter(allow_pause=DEFAULT_ALLOW_PAUSE_FILTER)
-
-        if "self_started_pause" not in self.request.GET:
-            qs = Person.filter_qs_for_self_started_pause(
-                qs, DEFAULT_SELF_STARTED_PAUSE_FILTER
-            )
 
         return qs
 
