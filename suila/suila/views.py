@@ -421,7 +421,7 @@ class PersonDetailView(
             person = person_year.person
 
             estimated_year_result = (
-                0
+                Decimal(0)
                 if person_month.full_tax_scope_months == 0
                 else (
                     (
