@@ -19,17 +19,17 @@
   </div> 
 
   {% if paused %}  
-    <div class="mb-3" id="resume_payment_date_container" style="display: none;">
+    <div class="mb-3 hidden" id="resume_payment_date_container">
       {% resume_payments_date_info_box %}
     </div>
   {% else %}  
-    <div class="mb-3" id="pause_effect_date_container" style="display: none;">
+    <div class="mb-3 hidden" id="pause_effect_date_container">
       {% pause_effect_date_info_box %}
     </div>
   {% endif %}
 
   {% if user|has_permissions:"suila.change_person" %}  
-  <div class="mb-3" id="pause_reason_container" style="display: none;">
+  <div class="mb-3 hidden" id="pause_reason_container">
       <label class="form-label d-block" for="pause_reason">{% translate "Begrundelse" %}*</label>
       <select name="pause_reason" id="pause_reason" class="form-select">
         <option value="">-</option>
