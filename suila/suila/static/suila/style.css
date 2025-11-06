@@ -118,3 +118,7 @@ iframe.eboks {
 .pagination .pagination-ellipsis {
     padding: 0.5rem
 }
+
+.hidden {
+    display: none;
+}
