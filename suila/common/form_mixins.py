@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from django.forms import forms
+from django.forms import CheckboxInput, RadioSelect, forms
 
 
 class BootstrapForm(forms.Form):
@@ -25,10 +25,10 @@ class BootstrapForm(forms.Form):
     def set_field_classes(self, name, field, check_for_errors=False):
         classes = self.split_class(field.widget.attrs.get("class"))
         classes.append("mr-2")
-        # if isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect)):
-        #     pass
-        # else:
-        classes.append("form-control")
+        if isinstance(field.widget, (CheckboxInput, RadioSelect)):
+            classes.append("form-check-input")
+        else:
+            classes.append("form-control")
         # if isinstance(field.widget, forms.Select):
         #     classes.append("form-select")
 

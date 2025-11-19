@@ -47,6 +47,25 @@
             {# Show monthly and yearly income inputs #}
             {% bootstrap_field form.estimated_month_income layout="horizontal" horizontal_label_class="col-6" horizontal_field_class="col-6" placeholder="" %}
             {% bootstrap_field form.estimated_year_income layout="horizontal" horizontal_label_class="col-6" horizontal_field_class="col-6" %}
+
+            <div class="row mb-3">
+                <div class="col-6">{% translate "Skattepligtsperiode" %}</div>
+                <div class="col-6">
+                    {# Django-bootstrap-5 can't do this right, so we just have to do it ourselves #}
+                    <div class="mb-3">
+                        {% bootstrap_label form.fully_tax_liable.label %}
+                        <div class="mr-2" id="id_fully_tax_liable">
+                            {% for subwidget in form.fully_tax_liable.subwidgets %}
+                                <div class="form-check d-inline-block mx-2">
+                                    {{ subwidget }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% bootstrap_field form.tax_liable_date %}
+                </div>
+            </div>
+
             {% if user|has_permissions:"suila.use_adminsite_calculator_parameters" %}
             {# Show engine selector #}
             <div class="row align-items-center my-1">
@@ -167,6 +186,12 @@ $(document).ready(function () {
     const yearField = $("[name={{ form.estimated_year_income.name }}]");
     const submitButton = $("button[type=submit]");
     const resetButton = $("button#reset");
+    const fullyTaxLiable = $("[name={{ form.fully_tax_liable.name }}]");
+    const taxLiableDate = $("[name={{ form.tax_liable_date.name }}]");
+
+    const updateTaxLiableDateVisibility = function () {
+        taxLiableDate.parent().toggle(fullyTaxLiable.filter(":checked").val() === "False");
+    };
 
     const enableSubmitOnValidInput = function () {
         // Either expected monthly income or expected yearly income must
@@ -209,8 +234,11 @@ $(document).ready(function () {
         enableSubmitOnValidInput();
     });
 
+    fullyTaxLiable.on("change", updateTaxLiableDateVisibility);
+
     enableSubmitOnValidInput();
     renderChart();
+    updateTaxLiableDateVisibility();
 });
 </script>
 {% endblock %}

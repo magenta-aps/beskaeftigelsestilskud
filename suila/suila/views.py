@@ -1035,6 +1035,7 @@ class CalculatorView(
         return {
             "calculation_engine": engine,
             "method": engine.__class__.__name__,
+            "fully_tax_liable": True,
         }
 
     @cached_property

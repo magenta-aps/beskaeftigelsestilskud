@@ -9,16 +9,18 @@ from django.core.exceptions import ValidationError
 from django.forms import (
     CharField,
     ChoiceField,
+    DateInput,
     DecimalField,
     FileInput,
     Form,
     HiddenInput,
     IntegerField,
     ModelForm,
+    RadioSelect,
     Select,
     Textarea,
 )
-from django.forms.fields import BooleanField
+from django.forms.fields import BooleanField, DateField
 from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
@@ -118,6 +120,17 @@ class CalculatorForm(BootstrapForm):
     )
     estimated_year_income = DecimalField(
         required=True, label=_("Estimeret årsindkomst")
+    )
+    fully_tax_liable = BooleanField(
+        required=False,
+        label=_("Er du fuldt skattepligtig hele året?"),
+        widget=RadioSelect(
+            choices=((True, _("Ja")), (False, _("Nej"))),
+        ),
+    )
+    tax_liable_date = DateField(
+        label=_("Fra hvilken dato er du fuldt skattepligtig?"),
+        widget=DateInput(attrs={"type": "date"}),
     )
 
     method = ChoiceField(

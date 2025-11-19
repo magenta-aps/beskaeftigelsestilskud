@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-29 07:45-0200\n"
+"POT-Creation-Date: 2025-11-19 12:56-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,6 +48,22 @@ msgstr "Estimated monthly income"
 #: suila/forms.py suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Estimeret årsindkomst"
 msgstr "Estimated annual income"
+
+#: suila/forms.py
+msgid "Er du fuldt skattepligtig hele året?"
+msgstr ""
+
+#: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
+msgid "Ja"
+msgstr "Yes"
+
+#: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
+msgid "Nej"
+msgstr "No"
+
+#: suila/forms.py
+msgid "Fra hvilken dato er du fuldt skattepligtig?"
+msgstr ""
 
 #: suila/forms.py suila/views.py
 msgid "Kilde"
@@ -392,6 +408,10 @@ msgid ""
 msgstr ""
 "Note that this calculation is for guidance only. Your personal income "
 "circumstances may affect the final calculation of your Suila-tapit."
+
+#: suila/templates/suila/calculate.html
+msgid "Skattepligtsperiode"
+msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs beregningsmotor"
@@ -1119,14 +1139,6 @@ msgstr "Confirmation"
 msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr "Confirm"
 
-#: suila/templates/suila/person_detail_eboks_send.html
-msgid "Nej"
-msgstr "No"
-
-#: suila/templates/suila/person_detail_eboks_send.html
-msgid "Ja"
-msgstr "Yes"
-
 #: suila/templates/suila/person_detail_income.html
 msgid "Her stammer oplysningerne fra"
 msgstr "Here is where the information comes from"
@@ -1628,10 +1640,6 @@ msgstr ""
 #: suila/views.py
 msgid "Seneste notat"
 msgstr "Latest note"
-
-#: suila/views.py
-msgid "Selvvalgt udbetalingspause"
-msgstr ""
 
 #: suila/views.py
 msgid "Status"

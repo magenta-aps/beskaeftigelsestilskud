@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-29 07:45-0200\n"
+"POT-Creation-Date: 2025-11-19 12:56-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -47,6 +47,22 @@ msgstr "Qaammammut isertitariumaagassatut naatsorsuutigisat"
 #: suila/forms.py suila/templates/suila/forms/annual_income_estimate_form.html
 msgid "Estimeret årsindkomst"
 msgstr "Ukiumut isertitariumaagassatut naatsorsuutigisat"
+
+#: suila/forms.py
+msgid "Er du fuldt skattepligtig hele året?"
+msgstr ""
+
+#: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
+msgid "Ja"
+msgstr "Aap"
+
+#: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
+msgid "Nej"
+msgstr "Naamik"
+
+#: suila/forms.py
+msgid "Fra hvilken dato er du fuldt skattepligtig?"
+msgstr ""
 
 #: suila/forms.py suila/views.py
 msgid "Kilde"
@@ -403,6 +419,10 @@ msgid ""
 msgstr ""
 "Malugiuk, una misingersugaannaammat. Isertitatit Suila-tapinik "
 "naatsorsuinermi aalajangiisuujumaarput."
+
+#: suila/templates/suila/calculate.html
+msgid "Skattepligtsperiode"
+msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs beregningsmotor"
@@ -1154,14 +1174,6 @@ msgstr "Uppernarsaat"
 msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
 msgstr "e-Boksimut nassiussilerputit, ingerlaqqissavit?"
 
-#: suila/templates/suila/person_detail_eboks_send.html
-msgid "Nej"
-msgstr "Naamik"
-
-#: suila/templates/suila/person_detail_eboks_send.html
-msgid "Ja"
-msgstr "Aap"
-
 #: suila/templates/suila/person_detail_income.html
 msgid "Her stammer oplysningerne fra"
 msgstr "Paasissutissat ukunanngaanneerput"
@@ -1675,10 +1687,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "Seneste notat"
-msgstr ""
-
-#: suila/views.py
-msgid "Selvvalgt udbetalingspause"
 msgstr ""
 
 #: suila/views.py
