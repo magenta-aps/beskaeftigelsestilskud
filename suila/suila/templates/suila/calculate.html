@@ -63,7 +63,14 @@
                         </div>
                     </div>
                     {% bootstrap_field form.tax_liable_date %}
+                    <div class="mb-3" id="tax_months"></div>
                 </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-6">{% translate "Beregningsgrundlag" %}</div>
+                <div class="col-6" id="calculation_base"></div>
+                {{ form.calculation_base }}
             </div>
 
             {% if user|has_permissions:"suila.use_adminsite_calculator_parameters" %}
@@ -109,8 +116,10 @@
         <div class="emphasis">
             <p>{% translate "Beregnet Suila-tapit pr. måned:" %}</p>
             <h1>{{ monthly_benefit|format_amount }}</h1>
+            <p class="mt-5">{% translate "Antal skattepligige måneder hvor der udbetales Suila-tapit:" %}</p>
+            <h1>{{ taxable_months }}</h1>
             <p class="mt-5">{% translate "Beregnet Suila-tapit for hele året:" %}</p>
-            <h1>{{ yearly_benefit|format_amount }}</h1>
+            <h1>{{ yearly_adjusted_benefit|format_amount }}</h1>
         </div>
         {% endif %}
     </div>
@@ -188,10 +197,12 @@ $(document).ready(function () {
     const resetButton = $("button#reset");
     const fullyTaxLiable = $("[name={{ form.fully_tax_liable.name }}]");
     const taxLiableDate = $("[name={{ form.tax_liable_date.name }}]");
-
-    const updateTaxLiableDateVisibility = function () {
-        taxLiableDate.parent().toggle(fullyTaxLiable.filter(":checked").val() === "False");
-    };
+    const taxMonths = $("#tax_months");
+    const taxMonthsTemplateSingle = "{% translate 'Skattepligtig i 1 måned' %}";
+    const taxMonthsTemplatePlural = "{% translate 'Skattepligtig i %(months)s måneder' %}";
+    const calculationBase = $("#calculation_base");
+    const calculationBaseField = $("[name={{ form.calculation_base.name }}]");
+    let month_year_scale = 12;
 
     const enableSubmitOnValidInput = function () {
         // Either expected monthly income or expected yearly income must
@@ -205,10 +216,9 @@ $(document).ready(function () {
     }
 
     const renderChart = function () {
-        let data = JSON.parse($("#graph_points").text());
-        let yearlyIncome = parseFloat(yearField.val());
-        let yearlyBenefit = parseFloat("{{ yearly_benefit }}");
-
+        const data = JSON.parse($("#graph_points").text());
+        const yearlyIncome = parseFloat(calculationBaseField.val());
+        const yearlyBenefit = parseFloat("{{ yearly_benefit }}");
         renderGraph("#graph", data, yearlyIncome, yearlyBenefit);
     }
 
@@ -224,21 +234,57 @@ $(document).ready(function () {
         evt.preventDefault();
     });
 
-    monthField.on("change keyup", function () {
-        yearField.val(12 * monthField.val());
+    const updateYearField = function () {
+        yearField.val(month_year_scale * monthField.val());
         enableSubmitOnValidInput();
-    });
+        updateCalculationBase();
+    };
 
-    yearField.on("change keyup", function () {
-        monthField.val(yearField.val() / 12)
+    const updateMonthField = function () {
+        monthField.val(yearField.val() / month_year_scale)
         enableSubmitOnValidInput();
-    });
+        updateCalculationBase();
+    };
 
+    const updateTaxLiableDateVisibility = function () {
+        const visible = fullyTaxLiable.filter(":checked").val() === "False";
+        taxLiableDate.parent().toggle(visible);
+        taxLiableDate.prop("required", visible);
+        updateTaxMonthsInYear();
+    };
+
+    const updateTaxMonthsInYear = function () {
+        if (fullyTaxLiable.filter(":checked").val() === "True" || !taxLiableDate.val()) {
+            month_year_scale = 12;
+        } else {
+            const taxStartDate = new Date(taxLiableDate.val());
+            month_year_scale = 12 - taxStartDate.getMonth() - (taxStartDate.getDate() < 15 ? 0 : 1);
+        }
+        updateYearField();
+        if (month_year_scale === 1) {
+            taxMonths.text(taxMonthsTemplateSingle);
+        } else {
+            taxMonths.text(taxMonthsTemplatePlural.replace("%(months)s", month_year_scale));
+        }
+    }
+
+    const updateCalculationBase = function () {
+        const monthIncome = parseInt(monthField.val()) || 0;
+        const value = monthIncome * 12
+        calculationBase.text(value);
+        calculationBaseField.val(value);
+    }
+
+    monthField.on("change keyup", updateYearField);
+    yearField.on("change keyup", updateMonthField);
     fullyTaxLiable.on("change", updateTaxLiableDateVisibility);
+    taxLiableDate.on("change", updateTaxMonthsInYear);
 
     enableSubmitOnValidInput();
     renderChart();
     updateTaxLiableDateVisibility();
+    updateTaxMonthsInYear();
+    updateCalculationBase();
 });
 </script>
 {% endblock %}

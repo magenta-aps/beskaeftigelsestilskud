@@ -116,10 +116,10 @@ class CalculationParametersForm(BootstrapForm):
 class CalculatorForm(BootstrapForm):
     estimated_month_income = DecimalField(
         required=False,
-        label=_("Estimeret månedsindkomst"),
+        label=_("Estimeret månedsindkomst i Grønland"),
     )
     estimated_year_income = DecimalField(
-        required=True, label=_("Estimeret årsindkomst")
+        required=True, label=_("Estimeret årsindkomst i Grønland")
     )
     fully_tax_liable = BooleanField(
         required=False,
@@ -129,9 +129,27 @@ class CalculatorForm(BootstrapForm):
         ),
     )
     tax_liable_date = DateField(
+        required=False,
         label=_("Fra hvilken dato er du fuldt skattepligtig?"),
         widget=DateInput(attrs={"type": "date"}),
     )
+    calculation_base = DecimalField(
+        widget=HiddenInput,
+    )
+
+    def clean(self):
+        if (
+            not self.cleaned_data["fully_tax_liable"]
+            and not self.cleaned_data["tax_liable_date"]
+        ):
+            raise ValidationError(
+                {
+                    "tax_liable_date": ValidationError(
+                        self.fields["tax_liable_date"].error_messages["required"],
+                        code="required",
+                    )
+                }
+            )
 
     method = ChoiceField(
         choices=[

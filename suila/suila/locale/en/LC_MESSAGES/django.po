@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-19 12:56-0200\n"
+"POT-Creation-Date: 2025-11-20 08:02-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -42,12 +42,12 @@ msgid "Beløb - aftrapningsstart"
 msgstr ""
 
 #: suila/forms.py
-msgid "Estimeret månedsindkomst"
-msgstr "Estimated monthly income"
+msgid "Estimeret månedsindkomst i Grønland"
+msgstr "Estimated monthly income in Greenland"
 
-#: suila/forms.py suila/templates/suila/forms/annual_income_estimate_form.html
-msgid "Estimeret årsindkomst"
-msgstr "Estimated annual income"
+#: suila/forms.py
+msgid "Estimeret årsindkomst i Grønland"
+msgstr "Estimated annual income in Greenland"
 
 #: suila/forms.py
 msgid "Er du fuldt skattepligtig hele året?"
@@ -414,6 +414,10 @@ msgid "Skattepligtsperiode"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
+msgid "Beregningsgrundlag"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
 msgid "Indlæs beregningsmotor"
 msgstr "Load calculation engine"
 
@@ -430,12 +434,25 @@ msgid "Beregnet Suila-tapit pr. måned:"
 msgstr "Calculated Suila-tapit per month:"
 
 #: suila/templates/suila/calculate.html
+msgid "Antal skattepligige måneder hvor der udbetales Suila-tapit:"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
 msgid "Beregnet Suila-tapit for hele året:"
 msgstr "Calculated Suila-tapit per year:"
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs"
 msgstr "Load"
+
+#: suila/templates/suila/calculate.html
+msgid "Skattepligtig i 1 måned"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+#, python-format
+msgid "Skattepligtig i %%(months)s måneder"
+msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
 msgid "Beregningsparametre"
@@ -731,6 +748,10 @@ msgstr "Use automatically estimated annual income"
 #: suila/templates/suila/forms/annual_income_estimate_form.html suila/views.py
 msgid "Benyt manuelt estimeret årsindkomst"
 msgstr "Use manually estimated annual income"
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html
+msgid "Estimeret årsindkomst"
+msgstr "Estimated annual income"
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
 #: suila/templates/suila/forms/estimation_engine_form.html
