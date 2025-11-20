@@ -1224,6 +1224,7 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
                 "max_benefit": "15750.00",
                 "scaledown_rate_percent": "6.3",
                 "scaledown_ceiling": "250000.00",
+                "calculation_base": amount,
             },
         )
         return response
@@ -1235,6 +1236,7 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
                 reverse("suila:calculator"),
                 {
                     "estimated_year_income": "300000",
+                    "calculation_base": "300000",
                     "method": "StandardWorkBenefitCalculationMethod",
                 },
             )
