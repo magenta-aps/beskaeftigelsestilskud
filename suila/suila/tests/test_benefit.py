@@ -422,3 +422,11 @@ class CalculateBenefitTest(BaseTestCase):
 
         with self.assertRaisesMessage(Exception, "foo"):
             self.call_command("calculate_benefit", self.year.year, 1, reraise=True)
+
+    def test_taxable_months(self):
+        method = self.year.calculation_method
+        self.assertEqual(method.taxable_months(date(2025, 1, 7)), 12)
+        self.assertEqual(method.taxable_months(date(2025, 1, 20)), 11)
+        self.assertEqual(method.taxable_months(date(2025, 6, 30)), 6)
+        self.assertEqual(method.taxable_months(date(2025, 7, 1)), 6)
+        self.assertEqual(method.taxable_months(date(2025, 7, 20)), 5)

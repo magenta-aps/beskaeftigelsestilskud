@@ -62,7 +62,7 @@
                             {% endfor %}
                         </div>
                     </div>
-                    {% bootstrap_field form.tax_liable_date %}
+                    {% bootstrap_field form.tax_liable_date wrapper_class="mb-3 d-none" %}
                     <div class="mb-3" id="tax_months"></div>
                 </div>
             </div>
@@ -269,8 +269,8 @@ $(document).ready(function () {
     }
 
     const updateCalculationBase = function () {
-        const monthIncome = parseInt(monthField.val()) || 0;
-        const value = monthIncome * 12
+        const monthIncome = parseFloat(monthField.val()) || 0;
+        const value = Math.floor(monthIncome * 12);
         calculationBase.text(value);
         calculationBaseField.val(value);
     }
