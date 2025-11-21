@@ -9,16 +9,18 @@ from django.core.exceptions import ValidationError
 from django.forms import (
     CharField,
     ChoiceField,
+    DateInput,
     DecimalField,
     FileInput,
     Form,
     HiddenInput,
     IntegerField,
     ModelForm,
+    RadioSelect,
     Select,
     Textarea,
 )
-from django.forms.fields import BooleanField
+from django.forms.fields import BooleanField, DateField
 from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
@@ -114,11 +116,40 @@ class CalculationParametersForm(BootstrapForm):
 class CalculatorForm(BootstrapForm):
     estimated_month_income = DecimalField(
         required=False,
-        label=_("Estimeret månedsindkomst"),
+        label=_("Estimeret månedsindkomst i Grønland"),
     )
     estimated_year_income = DecimalField(
-        required=True, label=_("Estimeret årsindkomst")
+        required=True, label=_("Estimeret årsindkomst i Grønland")
     )
+    fully_tax_liable = BooleanField(
+        required=False,
+        label=_("Er du fuldt skattepligtig hele året?"),
+        widget=RadioSelect(
+            choices=((True, _("Ja")), (False, _("Nej"))),
+        ),
+    )
+    tax_liable_date = DateField(
+        required=False,
+        label=_("Fra hvilken dato er du fuldt skattepligtig?"),
+        widget=DateInput(attrs={"type": "date"}),
+    )
+    calculation_base = DecimalField(
+        widget=HiddenInput,
+    )
+
+    def clean(self):
+        if (
+            not self.cleaned_data["fully_tax_liable"]
+            and not self.cleaned_data["tax_liable_date"]
+        ):
+            raise ValidationError(
+                {
+                    "tax_liable_date": ValidationError(
+                        self.fields["tax_liable_date"].error_messages["required"],
+                        code="required",
+                    )
+                }
+            )
 
     method = ChoiceField(
         choices=[

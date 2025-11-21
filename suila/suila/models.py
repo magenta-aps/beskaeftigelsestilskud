@@ -253,6 +253,12 @@ class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
         )
         return f"{name} for {years}"
 
+    def taxable_months(self, tax_start_date: date) -> int:
+        taxable_months: int = 12 - tax_start_date.month
+        if tax_start_date.day <= 15:
+            taxable_months += 1
+        return taxable_months
+
 
 class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
 

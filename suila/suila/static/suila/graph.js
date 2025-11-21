@@ -146,9 +146,13 @@ const renderGraph = function (selector, data, yearlyIncome, yearlyBenefit) {
                         "x": yearlyIncome,
                         "y": yearlyBenefit,
                         "marker": {
-                            "size": 4,
+                            "size": 6,
+                            "fillColor": "#ffe169",
+                            "strokeColor": "#820041",
                         },
                         "label": {
+                            "offsetX": 0,
+                            "offsetY": 60,
                             "text": [
                                 interpolate(gettext("Årsindkomst: %s"), [formatter.format(yearlyIncome)]),
                                 interpolate(gettext("Suila-tapit: %s"), [formatter.format(monthlyBenefit)]),

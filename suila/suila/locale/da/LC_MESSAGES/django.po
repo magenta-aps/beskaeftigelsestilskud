@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-29 07:45-0200\n"
+"POT-Creation-Date: 2025-11-20 08:02-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,11 +41,27 @@ msgid "Beløb - aftrapningsstart"
 msgstr ""
 
 #: suila/forms.py
-msgid "Estimeret månedsindkomst"
+msgid "Estimeret månedsindkomst i Grønland"
 msgstr ""
 
-#: suila/forms.py suila/templates/suila/forms/annual_income_estimate_form.html
-msgid "Estimeret årsindkomst"
+#: suila/forms.py
+msgid "Estimeret årsindkomst i Grønland"
+msgstr ""
+
+#: suila/forms.py
+msgid "Er du fuldt skattepligtig hele året?"
+msgstr ""
+
+#: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
+msgid "Ja"
+msgstr ""
+
+#: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
+msgid "Nej"
+msgstr ""
+
+#: suila/forms.py
+msgid "Fra hvilken dato er du fuldt skattepligtig?"
 msgstr ""
 
 #: suila/forms.py suila/views.py
@@ -375,6 +391,14 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/calculate.html
+msgid "Skattepligtsperiode"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+msgid "Beregningsgrundlag"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
 msgid "Indlæs beregningsmotor"
 msgstr ""
 
@@ -391,11 +415,24 @@ msgid "Beregnet Suila-tapit pr. måned:"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
+msgid "Antal skattepligige måneder hvor der udbetales Suila-tapit:"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
 msgid "Beregnet Suila-tapit for hele året:"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+msgid "Skattepligtig i 1 måned"
+msgstr ""
+
+#: suila/templates/suila/calculate.html
+#, python-format
+msgid "Skattepligtig i %%(months)s måneder"
 msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
@@ -636,6 +673,10 @@ msgstr ""
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html suila/views.py
 msgid "Benyt manuelt estimeret årsindkomst"
+msgstr ""
+
+#: suila/templates/suila/forms/annual_income_estimate_form.html
+msgid "Estimeret årsindkomst"
 msgstr ""
 
 #: suila/templates/suila/forms/annual_income_estimate_form.html
@@ -992,14 +1033,6 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
 msgid "Er du sikker på at du vil afsende e-Boks-beskeden?"
-msgstr ""
-
-#: suila/templates/suila/person_detail_eboks_send.html
-msgid "Nej"
-msgstr ""
-
-#: suila/templates/suila/person_detail_eboks_send.html
-msgid "Ja"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -1451,10 +1484,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "Seneste notat"
-msgstr ""
-
-#: suila/views.py
-msgid "Selvvalgt udbetalingspause"
 msgstr ""
 
 #: suila/views.py

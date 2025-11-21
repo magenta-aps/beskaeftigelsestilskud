@@ -1035,6 +1035,7 @@ class CalculatorView(
         return {
             "calculation_engine": engine,
             "method": engine.__class__.__name__,
+            "fully_tax_liable": True,
         }
 
     @cached_property
@@ -1090,12 +1091,26 @@ class CalculatorView(
         else:
             method = self.calculation_method
 
-        result = method.calculate(form.cleaned_data["estimated_year_income"])
+        calculation_base = form.cleaned_data["calculation_base"]
+
+        if form.cleaned_data["fully_tax_liable"]:
+            taxable_months = 12
+        else:
+            taxable_months = method.taxable_months(form.cleaned_data["tax_liable_date"])
+
+        q = Decimal(".01")
+
+        yearly_benefit = method.calculate(calculation_base)
+        monthly_benefit = yearly_benefit / 12
+        yearly_adjusted_benefit = taxable_months * monthly_benefit
+
         return self.render_to_response(
             self.get_context_data(
                 form=form,
-                yearly_benefit=str(result),
-                monthly_benefit=str(Decimal(result / 12).quantize(Decimal(".01"))),
+                taxable_months=taxable_months,
+                yearly_benefit=str(yearly_benefit.quantize(q)),
+                yearly_adjusted_benefit=str(yearly_adjusted_benefit.quantize(q)),
+                monthly_benefit=str(monthly_benefit.quantize(q)),
                 graph_points=self.to_json(method.graph_points),
             )
         )
