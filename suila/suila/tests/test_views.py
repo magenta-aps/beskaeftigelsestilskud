@@ -1211,7 +1211,7 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
     view_class = CalculatorView
     maxDiff = None
 
-    def request(self, amount):
+    def request(self, amount, tax_liable_date: date | None = None):
         view, response = self.request_post(
             self.admin_user,
             reverse("suila:calculator"),
@@ -1224,6 +1224,11 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
                 "max_benefit": "15750.00",
                 "scaledown_rate_percent": "6.3",
                 "scaledown_ceiling": "250000.00",
+                "calculation_base": amount,
+                "fully_tax_liable": "True" if tax_liable_date is None else "False",
+                "tax_liable_date": (
+                    tax_liable_date.strftime("%Y-%m-%d") if tax_liable_date else ""
+                ),
             },
         )
         return response
@@ -1235,6 +1240,8 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
                 reverse("suila:calculator"),
                 {
                     "estimated_year_income": "300000",
+                    "calculation_base": "300000",
+                    "fully_tax_liable": "True",
                     "method": "StandardWorkBenefitCalculationMethod",
                 },
             )
@@ -1291,6 +1298,16 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
         self.assertEqual(context["yearly_benefit"], "0.00")
         self.assertEqual(context["monthly_benefit"], "0.00")
 
+    def test_adjust_for_tax_months(self):
+        response = self.request(250000, date(2025, 7, 1))
+        self.assertIsInstance(response, TemplateResponse)
+        context = response.context_data
+        self.assertTrue(context["form"].is_valid(), context["form"].errors)
+        self.assertEqual(context["yearly_benefit"], "15750.00")
+        self.assertEqual(context["yearly_adjusted_benefit"], "7875.00")
+        self.assertEqual(context["monthly_benefit"], "1312.50")
+        self.assertEqual(context["taxable_months"], 6)
+
     def test_get_engines(self):
         self.assertEqual(
             self.view().engines,
@@ -1339,6 +1356,21 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
         self.assertEqual(pageview.kwargs, {})
         self.assertEqual(pageview.params, {})
         self.assertEqual(pageview.itemviews.count(), 0)
+
+    def test_date_required(self):
+        view, response = self.request_post(
+            self.normal_user,
+            reverse("suila:calculator"),
+            {
+                "estimated_year_income": "300000",
+                "calculation_base": "300000",
+                "fully_tax_liable": "False",
+                "method": "StandardWorkBenefitCalculationMethod",
+            },
+        )
+        form = response.context_data["form"]
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors, {"tax_liable_date": ["Dette felt er påkrævet."]})
 
 
 class TestEboksView(TestViewMixin, PersonEnv, TestCase):
