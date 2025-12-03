@@ -27,7 +27,7 @@ class Command(BaseCommand):
         # Create and configure calculation method for a range of years
         first_year = 2020
         current_year = date.today().year
-        for year in range(first_year, current_year + 1):
+        for year in range(first_year, current_year + 2):
             Year.objects.update_or_create(
                 year=year,
                 defaults={
