@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-20 08:02-0200\n"
+"POT-Creation-Date: 2025-12-03 12:06-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -49,7 +49,7 @@ msgstr "Estimated monthly income in Greenland"
 msgid "Estimeret årsindkomst i Grønland"
 msgstr "Estimated annual income in Greenland"
 
-#: suila/forms.py
+#: suila/forms.py suila/templates/suila/calculate.html
 msgid "Er du fuldt skattepligtig hele året?"
 msgstr ""
 
@@ -408,10 +408,6 @@ msgid ""
 msgstr ""
 "Note that this calculation is for guidance only. Your personal income "
 "circumstances may affect the final calculation of your Suila-tapit."
-
-#: suila/templates/suila/calculate.html
-msgid "Skattepligtsperiode"
-msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Beregningsgrundlag"

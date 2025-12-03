@@ -49,11 +49,10 @@
             {% bootstrap_field form.estimated_year_income layout="horizontal" horizontal_label_class="col-6" horizontal_field_class="col-6" %}
 
             <div class="row mb-3">
-                <div class="col-6">{% translate "Skattepligtsperiode" %}</div>
+                <div class="col-6">{% translate "Er du fuldt skattepligtig hele året?" %}</div>
                 <div class="col-6">
                     {# Django-bootstrap-5 can't do this right, so we just have to do it ourselves #}
                     <div class="mb-3">
-                        {% bootstrap_label form.fully_tax_liable.label %}
                         <div class="mr-2" id="id_fully_tax_liable">
                             {% for subwidget in form.fully_tax_liable.subwidgets %}
                                 <div class="form-check d-inline-block mx-2">
@@ -248,7 +247,9 @@ $(document).ready(function () {
 
     const updateTaxLiableDateVisibility = function () {
         const visible = fullyTaxLiable.filter(":checked").val() === "False";
-        taxLiableDate.parent().toggle(visible);
+        const parent = taxLiableDate.parent();
+        parent.toggle(visible);
+        parent.removeClass("d-none");
         taxLiableDate.prop("required", visible);
         updateTaxMonthsInYear();
     };
