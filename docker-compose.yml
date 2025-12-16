@@ -116,7 +116,7 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./suila/:/app
-      - file-data:/upload:ro
+      - file-data:/upload:rw
       - ./log/cron.log:/log/cron.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./dev-environment/crontab:/crontab:ro
