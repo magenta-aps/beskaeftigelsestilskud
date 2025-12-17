@@ -202,6 +202,7 @@ $(document).ready(function () {
     const calculationBase = $("#calculation_base");
     const calculationBaseField = $("[name={{ form.calculation_base.name }}]");
     let month_year_scale = 12;
+    let monthIsLatestEdited = true;
 
     const enableSubmitOnValidInput = function () {
         // Either expected monthly income or expected yearly income must
@@ -261,7 +262,11 @@ $(document).ready(function () {
             const taxStartDate = new Date(taxLiableDate.val());
             month_year_scale = 12 - taxStartDate.getMonth() - (taxStartDate.getDate() < 15 ? 0 : 1);
         }
-        updateYearField();
+        if (monthIsLatestEdited) {
+            updateYearField();
+        } else {
+            updateMonthField();
+        }
         if (month_year_scale === 1) {
             taxMonths.text(taxMonthsTemplateSingle);
         } else {
@@ -276,8 +281,17 @@ $(document).ready(function () {
         calculationBaseField.val(value);
     }
 
+    const monthFieldIsLatestEdited = function () {
+        monthIsLatestEdited = true;
+    }
+    const yearFieldIsLatestEdited = function () {
+        monthIsLatestEdited = false;
+    }
+
     monthField.on("change keyup", updateYearField);
     yearField.on("change keyup", updateMonthField);
+    monthField.on("change keyup", monthFieldIsLatestEdited);
+    yearField.on("change keyup", yearFieldIsLatestEdited);
     fullyTaxLiable.on("change", updateTaxLiableDateVisibility);
     taxLiableDate.on("change", updateTaxMonthsInYear);
 
