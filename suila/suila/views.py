@@ -217,13 +217,25 @@ class PersonYearMonthMixin(YearMonthMixin):
     def person_pk(self) -> int:
         return self.kwargs["pk"]  # type: ignore[attr-defined]
 
-    @cached_property
     def person_year(self):
-        personyear = get_object_or_404(
-            PersonYear,
+        # First try to get the current PersonYear
+        if PersonYear.objects.filter(
             year_id=self.year,
             person_id=self.person_pk,
-        )
+        ).exists():
+            personyear = get_object_or_404(
+                PersonYear,
+                year_id=self.year,
+                person_id=self.person_pk,
+            )
+        elif self.month < settings.MONTH_OF_FIRST_PAYOUT:
+            personyear = get_object_or_404(
+                PersonYear,
+                year_id=self.year - 1,
+                person_id=self.person_pk,
+            )
+        else:
+            raise Http404
         return personyear
 
 
@@ -348,7 +360,7 @@ class PersonDetailView(
                 < (date.today() - relativedelta(months=2)).year
             )
             if relevant_person_month
-            else self.person_year.year.year < date.today().year
+            else self.person_year().year.year < date.today().year
         )
         context_data["available_years"] = self.get_available_years()
 
@@ -724,7 +736,7 @@ class PersonDetailIncomeView(
 
         # Queryset of person years available for this person
         context_data["available_person_years"] = PersonYear.objects.filter(
-            person=self.person_year.person
+            person=self.person_year().person
         ).order_by("-year__year")
 
         self.log_view(self.object)
@@ -754,7 +766,7 @@ class PersonDetailIncomeView(
                 return employer.name
 
         qs = MonthlyIncomeReport.objects.filter(
-            person_month__person_year=self.person_year,
+            person_month__person_year=self.person_year(),
         )
         for item in qs:
             if item.salary_income > 0:
@@ -788,7 +800,7 @@ class PersonDetailIncomeView(
 
     def get_b_tax_payments(self) -> Iterable[IncomeSignal]:
         qs = BTaxPayment.objects.filter(
-            person_month__isnull=False, person_month__person_year=self.person_year
+            person_month__isnull=False, person_month__person_year=self.person_year()
         )
         for item in qs:
             if item.amount_paid > 0:
@@ -806,7 +818,7 @@ class PersonDetailIncomeView(
 
         latest_monthly_income_report_month: int = month(
             MonthlyIncomeReport.objects.filter(
-                Q(person_month__person_year=self.person_year),
+                Q(person_month__person_year=self.person_year()),
                 Q(a_income__gt=0) | Q(u_income__gt=0),
             )
         )
@@ -814,7 +826,7 @@ class PersonDetailIncomeView(
         latest_b_tax_payment_month: int = month(
             BTaxPayment.objects.filter(
                 person_month__isnull=False,
-                person_month__person_year=self.person_year,
+                person_month__person_year=self.person_year(),
                 amount_paid__gt=0,
             )
         )
@@ -855,13 +867,13 @@ class PersonDetailEboksPreView(
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "months": self.person_year.personmonth_set.all().order_by("month"),
+                "months": self.person_year().personmonth_set.all().order_by("month"),
                 "available_person_years": PersonYear.objects.filter(
-                    person=self.person_year.person
+                    person=self.person_year().person
                 ).order_by("-year__year"),
             }
         )
-        self.log_view(self.person_year)
+        self.log_view(self.person_year())
         return context_data
 
 
@@ -1182,7 +1194,6 @@ class PersonDetailNotesView(
     MustHavePersonYearMixin,
     DetailView,
 ):
-
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_notes.html"
@@ -1201,7 +1212,7 @@ class PersonDetailNotesView(
         object: Note = form.save(commit=False)
         assert isinstance(self.request.user, User)
         object.author = self.request.user
-        object.personyear = self.person_year
+        object.personyear = self.person_year()
         object.save()
         formset.instance = object
         formset.save()
@@ -1237,7 +1248,6 @@ class PersonDetailNotesAttachmentView(
     MustHavePersonYearMixin,
     BaseDetailView,
 ):
-
     model = NoteAttachment
     required_object_permissions = ["view"]
 
