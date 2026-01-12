@@ -2447,6 +2447,7 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
             scaledown_ceiling=Decimal("250000.00"),
         )
         cls.year2 = Year.objects.create(year=2025, calculation_method=cls.method2)
+        cls.next_year = datetime.now().year + 1
 
     def test_list_years(self):
         self.client.force_login(self.admin_user)
@@ -2468,7 +2469,9 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
             [[re.sub(r"\s+", "|", cell) for cell in row] for row in table_text],
             [
                 [],
-                ["2026", "", "", "", "", "", "", "Graf|Gem"],
+                # To not change test-data every year, the "next year" part is
+                # calculated based on the current date
+                [str(self.next_year), "", "", "", "", "", "", "Graf|Gem"],
                 [
                     "2025",
                     "17,500",
@@ -2495,7 +2498,7 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
                 "scaledown_ceiling": "300000",
             },
         )
-        year = Year.objects.get(year=2026)
+        year = Year.objects.get(year=self.next_year)
         method = year.calculation_method
         self.assertEqual(method.benefit_rate_percent, 5)
         self.assertEqual(method.personal_allowance, 12000)

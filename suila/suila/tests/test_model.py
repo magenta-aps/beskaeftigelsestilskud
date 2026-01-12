@@ -51,8 +51,11 @@ class ModelTest(TestCase):
             scaledown_rate_percent=Decimal("6.3"),
             scaledown_ceiling=Decimal("250000.00"),
         )
-        cls.year = Year.objects.create(year=2024, calculation_method=cls.calc)
-        cls.year2 = Year.objects.create(year=2025)
+        cls.this_year = datetime.now().year
+        cls.year = Year.objects.create(
+            year=cls.this_year - 1, calculation_method=cls.calc
+        )
+        cls.year2 = Year.objects.create(year=cls.this_year)
         cls.person = Person.objects.create(
             name="Jens Hansen",
             cpr="1234567890",
@@ -247,7 +250,6 @@ class ModelTest(TestCase):
 
 class TestPrismeBatchItem(ModelTest):
     def test_amount_property(self):
-
         prisme_batch = PrismeBatch.objects.create(
             status="sent", export_date=date.today(), prefix=1
         )
@@ -273,7 +275,6 @@ class TestPrismeBatchItem(ModelTest):
 
 
 class TestStandardWorkBenefitCalculationMethod(ModelTest):
-
     def test_low(self):
         self.assertEqual(self.calc.calculate(Decimal("0")), Decimal(0))
         self.assertEqual(self.calc.calculate(Decimal("25000")), Decimal(0))
@@ -399,7 +400,6 @@ class TestStandardWorkBenefitCalculationMethod(ModelTest):
 
 
 class UserModelTest(UserMixin, ModelTest):
-
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -408,7 +408,6 @@ class UserModelTest(UserMixin, ModelTest):
 
 
 class TestPerson(UserModelTest):
-
     def test_string_methods(self):
         self.assertEqual(str(self.person), "Jens Hansen / 1234567890")
 
@@ -574,9 +573,10 @@ class TestPerson(UserModelTest):
 
 
 class TestPersonYear(UserModelTest):
-
     def test_string_methods(self):
-        self.assertEqual(str(self.person_year), "Jens Hansen / 1234567890 (2024)")
+        self.assertEqual(
+            str(self.person_year), f"Jens Hansen / 1234567890 ({self.year.year})"
+        )
 
     def test_next(self):
         self.assertEqual(self.person_year.next, self.person_year2)
@@ -781,12 +781,13 @@ class TestPersonYear(UserModelTest):
 
 
 class TestPersonMonth(UserModelTest):
-
     def test_shortcuts(self):
-        self.assertEqual(self.month1.year, 2024)
+        self.assertEqual(self.month1.year, self.year.year)
 
     def test_string_methods(self):
-        self.assertEqual(str(self.month1), "2024/1 (Jens Hansen / 1234567890)")
+        self.assertEqual(
+            str(self.month1), f"{self.month1.year}/1 (Jens Hansen / 1234567890)"
+        )
 
     def test_amount_sum(self):
         self.assertEqual(self.month1.amount_sum, Decimal(10000))
@@ -886,7 +887,9 @@ class TestPersonMonth(UserModelTest):
     @patch("suila.models.datetime")
     def test_paused_property(self, datetime_mock):
         datetime_mock.side_effect = datetime
-        datetime_mock.now.return_value = pytz.utc.localize(datetime(2024, 5, 1))
+        datetime_mock.now.return_value = pytz.utc.localize(
+            datetime(self.year.year, 5, 1)
+        )
 
         self.person.paused = True
         self.person.save()
@@ -895,9 +898,9 @@ class TestPersonMonth(UserModelTest):
 
         for index, h in enumerate(history_entries):
             if index == 0:
-                h.history_date = datetime(2024, 4, 15, 0, 0, 0)
+                h.history_date = datetime(self.year.year, 4, 15, 0, 0, 0)
             else:
-                h.history_date = datetime(2024, 3, 10, 0, 0, 0)
+                h.history_date = datetime(self.year.year, 3, 10, 0, 0, 0)
             h.save()
 
         # The person did not exist yet on the 1st of March.
@@ -916,12 +919,12 @@ class TestPersonMonth(UserModelTest):
         # Simulate that we calculated benefit on the 16th of April for someone else
         job_log = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_BENEFIT,
-            runtime_end=datetime(2024, 4, 16, 12, 30, 0),
+            runtime_end=datetime(self.year.year, 4, 16, 12, 30, 0),
             status=StatusChoices.SUCCEEDED,
             cpr_param="35435252",
         )
 
-        job_log.runtime = datetime(2024, 4, 16, 12, 0, 0)
+        job_log.runtime = datetime(self.year.year, 4, 16, 12, 0, 0)
         job_log.save()
 
         # The function still checks for the first of april
@@ -930,12 +933,12 @@ class TestPersonMonth(UserModelTest):
         # Simulate that we calculated benefit for this person on the 16th of April
         job_log = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_BENEFIT,
-            runtime_end=datetime(2024, 4, 16, 12, 30, 0),
+            runtime_end=datetime(self.year.year, 4, 16, 12, 30, 0),
             status=StatusChoices.SUCCEEDED,
             cpr_param=self.person.cpr,
         )
 
-        job_log.runtime = datetime(2024, 4, 16, 12, 0, 0)
+        job_log.runtime = datetime(self.year.year, 4, 16, 12, 0, 0)
         job_log.save()
 
         # Now the function checks if the person was paused on the 16th of April instead.
@@ -952,11 +955,11 @@ class TestPersonMonth(UserModelTest):
         # Simulate that we calculated benefit for everyone on the 16th of April
         job_log = JobLog.objects.create(
             name=ManagementCommands.CALCULATE_BENEFIT,
-            runtime_end=datetime(2024, 4, 16, 12, 30, 0),
+            runtime_end=datetime(self.year.year, 4, 16, 12, 30, 0),
             status=StatusChoices.SUCCEEDED,
         )
 
-        job_log.runtime = datetime(2024, 4, 16, 12, 0, 0)
+        job_log.runtime = datetime(self.year.year, 4, 16, 12, 0, 0)
         job_log.save()
 
         # Now the function again checks if the person was paused on the 16th of April.
@@ -964,13 +967,11 @@ class TestPersonMonth(UserModelTest):
 
 
 class TestEmployer(ModelTest):
-
     def test_string_methods(self):
         self.assertEqual(str(self.employer1), "Fredes Fisk (12345678)")
 
 
 class TestIncomeReport(ModelTest):
-
     def test_constructor(self):
         try:
             m = MonthlyIncomeReport()
@@ -985,13 +986,14 @@ class TestIncomeReport(ModelTest):
     def test_shortcuts(self):
         self.assertEqual(self.report1.person_year, self.person_year)
         self.assertEqual(self.report1.person, self.person)
-        self.assertEqual(self.report1.year, 2024)
+        self.assertEqual(self.report1.year, self.year.year)
         self.assertEqual(self.report1.month, 1)
 
     def test_string_methods(self):
         self.assertEqual(
             str(self.report1),
-            "MonthlyIncomeReport for 2024/1 (Jens Hansen / 1234567890) (None)",
+            f"MonthlyIncomeReport for {self.year.year}"
+            "/1 (Jens Hansen / 1234567890) (None)",
         )
 
     def test_annotate_month(self):
@@ -1000,7 +1002,9 @@ class TestIncomeReport(ModelTest):
 
     def test_annotate_year(self):
         qs = MonthlyIncomeReport.objects.filter(pk=self.report1.pk)
-        self.assertEqual(MonthlyIncomeReport.annotate_year(qs).first().f_year, 2024)
+        self.assertEqual(
+            MonthlyIncomeReport.annotate_year(qs).first().f_year, self.year.year
+        )
 
     def test_annotate_person_year(self):
         qs = MonthlyIncomeReport.objects.filter(pk=self.report1.pk)
@@ -1049,7 +1053,6 @@ class TestIncomeReport(ModelTest):
 
 
 class EstimationTest(ModelTest):
-
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -1075,7 +1078,8 @@ class EstimationTest(ModelTest):
     def test_str(self):
         self.assertEqual(
             str(self.result1),
-            "InYearExtrapolationEngine (2024/1 (Jens Hansen / 1234567890)) (A)",
+            f"InYearExtrapolationEngine ({self.year.year}"
+            "/1 (Jens Hansen / 1234567890)) (A)",
         )
 
     def test_annotate_month(self):
@@ -1084,7 +1088,9 @@ class EstimationTest(ModelTest):
 
     def test_annotate_year(self):
         qs = IncomeEstimate.objects.filter(pk=self.result1.pk)
-        self.assertEqual(IncomeEstimate.annotate_year(qs).first().f_year, 2024)
+        self.assertEqual(
+            IncomeEstimate.annotate_year(qs).first().f_year, self.year.year
+        )
 
     def test_annotate_person_year(self):
         qs = IncomeEstimate.objects.filter(pk=self.result1.pk)
@@ -1300,7 +1306,6 @@ class TestTaxInformationPeriod(ModelTest):
         )
 
     def test_get_person_month_filter_annotation_for_entire_year(self):
-
         # self.period1 runs from feb to April
         self.period1.start_date = self._get_datetime(2, 10)
         self.period1.end_date = self._get_datetime(4, 30)
@@ -1335,7 +1340,6 @@ class TestTaxInformationPeriod(ModelTest):
         ]
 
         for expected_result in expected_results:
-
             # Act
             month = expected_result["month"]
 
