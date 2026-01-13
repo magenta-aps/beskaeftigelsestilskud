@@ -95,7 +95,6 @@ def get_latest_note():
 
 
 class TestRootView(TestViewMixin, TestCase):
-
     view_class = RootView
 
     def test_view_log(self):
@@ -322,7 +321,6 @@ class TestPersonSearchView(TimeContextMixin, PersonEnv):
 
     def test_borger_permission_denied(self):
         with self._time_context(year=2020):
-
             with self.assertRaises(PermissionDenied):
                 view, response = self.request_get(self.normal_user)
 
@@ -470,7 +468,6 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             )
 
     def test_get_relevant_person_month(self):
-
         person_pk = self.person1.pk
         person_months = PersonMonth.objects.filter(
             person_year__person__pk=person_pk,
@@ -655,6 +652,27 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     def test_no_personyear(self):
         with self._time_context(year=2021), self.assertRaises(Http404):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+
+    def test_before_first_payout(self):
+        print(PersonYear.objects.all())
+        with self._time_context(year=2021, month=1):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Verify that expected context variables are present
+            self.assertIn("sum_table", response.context_data)
+            self.assertIn("detail_table", response.context_data)
+            self.assertIn("available_person_years", response.context_data)
+            # Verify the values of the context variables
+            self.assertIsInstance(
+                response.context_data["sum_table"], IncomeSumsBySignalTypeTable
+            )
+            self.assertIsInstance(
+                response.context_data["detail_table"], IncomeSignalTable
+            )
+            self.assertQuerySetEqual(
+                response.context_data["available_person_years"],
+                [self.person_year],
+            )
+            self.assertEqual(response.context_data["sum_table"].month, 1)
 
     def test_get_context_data_sum_table_for_january(self):
         # Even if there are income signals in December (which there are in this test),
@@ -1117,7 +1135,6 @@ class TestNoteView(TimeContextMixin, PersonEnv):
 
 
 class TestNoteAttachmentView(TimeContextMixin, PersonEnv):
-
     view_class = PersonDetailNotesAttachmentView
 
     @classmethod
@@ -1192,7 +1209,6 @@ class TestPermissionsRequiredMixin(TestViewMixin, PersonEnv):
 
 
 class TestViewLog(TestViewMixin, TestCase):
-
     class TestView(ViewLogMixin, TemplateView):
         template_name = "suila/root.html"
 
@@ -1374,7 +1390,6 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
 
 
 class TestEboksView(TestViewMixin, PersonEnv, TestCase):
-
     view_class = PersonDetailEboksPreView
 
     def test_get_context_data(self):
@@ -1414,7 +1429,6 @@ class TestEboksView(TestViewMixin, PersonEnv, TestCase):
 
 
 class EboksTest(TestCase):
-
     client_cert_file = NamedTemporaryFile(suffix=".crt")
     client_key_file = NamedTemporaryFile(suffix=".key")
 
@@ -1430,7 +1444,6 @@ class EboksTest(TestCase):
 
 @override_settings(EBOKS=EboksTest.test_settings())
 class TestEboksSendView(TestViewMixin, PersonEnv, EboksTest):
-
     view_class = PersonDetailEboksSendView
 
     @staticmethod
@@ -1556,7 +1569,6 @@ class TestEboksSendView(TestViewMixin, PersonEnv, EboksTest):
 
 
 class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
-
     view_class = GeneratedEboksMessageView
 
     def get(self, user, typ="opgørelse"):
@@ -2133,7 +2145,6 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
         self.assertEqual(context_data["paused"], False)
 
     def test_context_data_person_changed_but_not_paused(self):
-
         person = self.person_year.person
         person.name = "Andersine"
         person.save()
@@ -2282,7 +2293,6 @@ class TestPersonAnnualIncomeEstimateUpdateView(
         self.assertEqual(self.person_year.person.annual_income_estimate, 100_000)
 
     def test_that_person_is_recalculated(self):
-
         month_qs = PersonMonth.objects.filter(person_year=self.person_year)
         self.assertEqual(len(month_qs), 12)
 
@@ -2422,7 +2432,6 @@ class TestPersonTaxScopeHistoryView(TestViewMixin, PersonEnv):
 
 
 class TestCalculationParametersListView(TestViewMixin, TestCase):
-
     view_class = CalculationParametersListView
     url = reverse("suila:calculation_parameters_list")
 
@@ -2585,7 +2594,6 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
 
 
 class TestCalculationParametersGraph(TestViewMixin, TestCase):
-
     view_class = CalculationParametersGraph
     url = reverse("suila:calculation_parameters_graph")
 
