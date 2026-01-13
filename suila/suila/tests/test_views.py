@@ -652,6 +652,26 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
             )
             self.assertEqual(response.context_data["sum_table"].month, 12)
 
+    def test_before_first_payout(self):
+        with self._time_context(year=2021, month=1):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Verify that expected context variables are present
+            self.assertIn("sum_table", response.context_data)
+            self.assertIn("detail_table", response.context_data)
+            self.assertIn("available_person_years", response.context_data)
+            # Verify the values of the context variables
+            self.assertIsInstance(
+                response.context_data["sum_table"], IncomeSumsBySignalTypeTable
+            )
+            self.assertIsInstance(
+                response.context_data["detail_table"], IncomeSignalTable
+            )
+            self.assertQuerySetEqual(
+                response.context_data["available_person_years"],
+                [self.person_year],
+            )
+            self.assertEqual(response.context_data["sum_table"].month, 1)
+
     def test_no_personyear(self):
         with self._time_context(year=2021), self.assertRaises(Http404):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
