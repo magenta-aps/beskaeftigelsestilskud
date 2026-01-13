@@ -219,11 +219,23 @@ class PersonYearMonthMixin(YearMonthMixin):
 
     @cached_property
     def person_year(self):
-        personyear = get_object_or_404(
-            PersonYear,
+        if PersonYear.objects.filter(
             year_id=self.year,
             person_id=self.person_pk,
-        )
+        ).exists():
+            personyear = get_object_or_404(
+                PersonYear,
+                year_id=self.year,
+                person_id=self.person_pk,
+            )
+        elif self.month < settings.MONTH_OF_FIRST_PAYOUT:
+            personyear = get_object_or_404(
+                PersonYear,
+                year_id=self.year - 1,
+                person_id=self.person_pk,
+            )
+        else:
+            raise Http404
         return personyear
 
 
