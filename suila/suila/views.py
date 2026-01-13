@@ -1194,7 +1194,6 @@ class PersonDetailNotesView(
     MustHavePersonYearMixin,
     DetailView,
 ):
-
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_notes.html"
@@ -1249,7 +1248,6 @@ class PersonDetailNotesAttachmentView(
     MustHavePersonYearMixin,
     BaseDetailView,
 ):
-
     model = NoteAttachment
     required_object_permissions = ["view"]
 
