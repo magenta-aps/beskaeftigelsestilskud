@@ -122,7 +122,7 @@ EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
     os.environ.get("EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS", "1")
 )
 
-# month in which the first payout of the yearis run
+# month in which the first payout of the year is run
 MONTH_OF_FIRST_PAYOUT = int(os.environ.get("MONTH_OF_FIRST_PAYOUT", "3"))
 
 
