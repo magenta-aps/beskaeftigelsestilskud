@@ -219,11 +219,23 @@ class PersonYearMonthMixin(YearMonthMixin):
 
     @cached_property
     def person_year(self):
-        personyear = get_object_or_404(
-            PersonYear,
+        if PersonYear.objects.filter(
             year_id=self.year,
             person_id=self.person_pk,
-        )
+        ).exists():
+            personyear = get_object_or_404(
+                PersonYear,
+                year_id=self.year,
+                person_id=self.person_pk,
+            )
+        elif self.month < settings.MONTH_OF_FIRST_PAYOUT:
+            personyear = get_object_or_404(
+                PersonYear,
+                year_id=self.year - 1,
+                person_id=self.person_pk,
+            )
+        else:
+            raise Http404
         return personyear
 
 
@@ -1182,7 +1194,6 @@ class PersonDetailNotesView(
     MustHavePersonYearMixin,
     DetailView,
 ):
-
     model = Person
     context_object_name = "person"
     template_name = "suila/person_detail_notes.html"
@@ -1237,7 +1248,6 @@ class PersonDetailNotesAttachmentView(
     MustHavePersonYearMixin,
     BaseDetailView,
 ):
-
     model = NoteAttachment
     required_object_permissions = ["view"]
 
