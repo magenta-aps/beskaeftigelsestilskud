@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.db import transaction
-from django.db.models import CharField, F, IntegerChoices, Max, Q, QuerySet, Value
+from django.db.models import CharField, F, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -219,23 +219,18 @@ class PersonYearMonthMixin(YearMonthMixin):
 
     @cached_property
     def person_year(self):
-        if PersonYear.objects.filter(
-            year_id=self.year,
-            person_id=self.person_pk,
-        ).exists():
-            personyear = get_object_or_404(
-                PersonYear,
-                year_id=self.year,
-                person_id=self.person_pk,
-            )
-        elif self.month < settings.MONTH_OF_FIRST_PAYOUT:
+        if self.month < settings.MONTH_OF_FIRST_PAYOUT:
             personyear = get_object_or_404(
                 PersonYear,
                 year_id=self.year - 1,
                 person_id=self.person_pk,
             )
         else:
-            raise Http404
+            personyear = get_object_or_404(
+                PersonYear,
+                year_id=self.year,
+                person_id=self.person_pk,
+            )
         return personyear
 
 
@@ -696,17 +691,32 @@ class PersonDetailIncomeView(
     required_object_permissions = ["view"]
     matomo_pagename = "Persondetaljer - indkomst"
 
+    def _get_personmonth_for_summation(self):
+        latest_personmonths = PersonMonth.objects.filter(
+            person_year__person_id=self.person_year.person.id,
+            benefit_calculated__isnull=False,
+        ).order_by(
+            "-person_year__year",
+            "-month",
+        )
+
+        if self.year == timezone.now().year:
+            latest_personmonths = latest_personmonths.filter(
+                month__lte=(self.month - 2) % 12 or 12
+            )
+            return latest_personmonths.first().month
+        return latest_personmonths.first().month
+
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        # Determine which month is the latest month containing income signals.
-        latest_income_month = self._get_latest_income_month()
+        latest_benefit_calculated = self._get_personmonth_for_summation()
 
         # Table summing income by signal type
         context_data["sum_table"] = IncomeSumsBySignalTypeTable(
             self.get_income_signals(),
-            self.year,
-            latest_income_month,
+            self.person_year.year.year,
+            latest_benefit_calculated,
             orderable=False,
         )
 
@@ -811,41 +821,6 @@ class PersonDetailIncomeView(
                     item.amount_paid,
                     item.person_month.year_month,  # type: ignore[union-attr]
                 )
-
-    def _get_latest_income_month(self) -> int:
-        def month(qs: QuerySet, default: int = 1) -> int:
-            return qs.aggregate(month=Max("person_month__month"))["month"] or default
-
-        latest_monthly_income_report_month: int = month(
-            MonthlyIncomeReport.objects.filter(
-                Q(person_month__person_year=self.person_year),
-                Q(a_income__gt=0) | Q(u_income__gt=0),
-            )
-        )
-
-        latest_b_tax_payment_month: int = month(
-            BTaxPayment.objects.filter(
-                person_month__isnull=False,
-                person_month__person_year=self.person_year,
-                amount_paid__gt=0,
-            )
-        )
-
-        # `PersonYearU1AAssessment` do not reference `PersonMonth` but only `PersonYear`
-        # For now, we assume that they "belong" to January.
-        # TODO: revisit when/if `PersonYearU1AAssessment` refer to a `PersonMonth`.
-        latest_u1a_assessment_month = 1
-
-        return min(
-            self.month,  # never use a later month than the current calendar month
-            max(
-                [
-                    latest_monthly_income_report_month,
-                    latest_b_tax_payment_month,
-                    latest_u1a_assessment_month,
-                ]
-            ),
-        )
 
 
 class PersonDetailEboksPreView(
