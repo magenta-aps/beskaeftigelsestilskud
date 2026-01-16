@@ -210,6 +210,7 @@ class PostingStatusImport(SFTPImport):
         num_failed: int = qs.bulk_update(
             matches,
             ["status", "posting_status_file", "error_code", "error_description"],
+            batch_size=1000,
         )
         stdout.write(f"Updated {num_failed} to status=failed")
 
