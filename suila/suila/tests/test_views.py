@@ -633,7 +633,7 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
     view_class = PersonDetailIncomeView
 
     def test_get_context_data(self):
-        with self._time_context(year=2020):
+        with self._time_context(year=2020, month=12):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             # Verify that expected context variables are present
             self.assertIn("sum_table", response.context_data)
@@ -650,7 +650,32 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 response.context_data["available_person_years"],
                 [self.person_year],
             )
+            self.assertEqual(response.context_data["sum_table"].month, 10)
+
+    def test_specfic_year(self):
+        with self._time_context(year=2021, month=2):
+            view, response = self.request_get(
+                self.normal_user,
+                pk=self.person1.pk,
+                year=2020,
+            )
+            # Verify that expected context variables are present
+            self.assertIn("sum_table", response.context_data)
+            self.assertIn("detail_table", response.context_data)
+            self.assertIn("available_person_years", response.context_data)
+            # Verify the values of the context variables
+            self.assertIsInstance(
+                response.context_data["sum_table"], IncomeSumsBySignalTypeTable
+            )
+            self.assertIsInstance(
+                response.context_data["detail_table"], IncomeSignalTable
+            )
+            self.assertQuerySetEqual(
+                response.context_data["available_person_years"],
+                [self.person_year],
+            )
             self.assertEqual(response.context_data["sum_table"].month, 12)
+            self.assertEqual(response.context_data["sum_table"].year, 2020)
 
     def test_before_first_payout(self):
         with self._time_context(year=2021, month=1):
@@ -670,19 +695,30 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 response.context_data["available_person_years"],
                 [self.person_year],
             )
-            self.assertEqual(response.context_data["sum_table"].month, 1)
+            self.assertEqual(response.context_data["sum_table"].month, 11)
+
+        with self._time_context(year=2021, month=2):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Verify that expected context variables are present
+            self.assertIn("sum_table", response.context_data)
+            self.assertIn("detail_table", response.context_data)
+            self.assertIn("available_person_years", response.context_data)
+            # Verify the values of the context variables
+            self.assertIsInstance(
+                response.context_data["sum_table"], IncomeSumsBySignalTypeTable
+            )
+            self.assertIsInstance(
+                response.context_data["detail_table"], IncomeSignalTable
+            )
+            self.assertQuerySetEqual(
+                response.context_data["available_person_years"],
+                [self.person_year],
+            )
+            self.assertEqual(response.context_data["sum_table"].month, 12)
 
     def test_no_personyear(self):
         with self._time_context(year=2021), self.assertRaises(Http404):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
-
-    def test_get_context_data_sum_table_for_january(self):
-        # Even if there are income signals in December (which there are in this test),
-        # the sum table should consider the current calendar month to be the latest
-        # displayable month for the `current_month_sum` column.
-        with self._time_context(year=2020, month=1):
-            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
-            self.assertEqual(response.context_data["sum_table"].month, 1)
 
     def test_get_context_data_no_data(self):
         PersonYear.objects.update_or_create(
