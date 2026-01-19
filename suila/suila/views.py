@@ -693,19 +693,15 @@ class PersonDetailIncomeView(
 
     def _get_personmonth_for_summation(self):
         latest_personmonths = PersonMonth.objects.filter(
+            month__lte=(self.month - 2) % 12 or 12,
+            month__gte=(self.month - 3) % 12 or 12,
             person_year__person_id=self.person_year.person.id,
             benefit_calculated__isnull=False,
         ).order_by(
             "-person_year__year",
             "-month",
         )
-
-        if self.year == timezone.now().year:
-            latest_personmonths = latest_personmonths.filter(
-                month__lte=(self.month - 2) % 12 or 12
-            )
-            return latest_personmonths.first().month
-        return latest_personmonths.first().month
+        return latest_personmonths.first()
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -715,8 +711,8 @@ class PersonDetailIncomeView(
         # Table summing income by signal type
         context_data["sum_table"] = IncomeSumsBySignalTypeTable(
             self.get_income_signals(),
-            self.person_year.year.year,
-            latest_benefit_calculated,
+            latest_benefit_calculated.person_year.year.year,
+            latest_benefit_calculated.month,
             orderable=False,
         )
 
