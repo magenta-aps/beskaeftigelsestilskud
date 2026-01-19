@@ -693,14 +693,27 @@ class PersonDetailIncomeView(
 
     def _get_personmonth_for_summation(self):
         latest_personmonths = PersonMonth.objects.filter(
-            month__lte=(self.month - 2) % 12 or 12,
-            month__gte=(self.month - 3) % 12 or 12,
             person_year__person_id=self.person_year.person.id,
-            benefit_calculated__isnull=False,
-        ).order_by(
+        )
+
+        if (
+            "year" in self.request.GET
+            and self.request.GET["year"] != timezone.now().year
+        ):
+            latest_personmonths = latest_personmonths.filter(
+                person_year__year=self.request.GET["year"],
+            )
+        else:
+            latest_personmonths = latest_personmonths.filter(
+                month__lte=(self.month - 2) % 12 or 12,
+                month__gte=(self.month - 3) % 12 or 12,
+                benefit_calculated__isnull=False,
+            )
+        latest_personmonths = latest_personmonths.order_by(
             "-person_year__year",
             "-month",
         )
+
         return latest_personmonths.first()
 
     def get_context_data(self, **kwargs):
