@@ -695,20 +695,30 @@ class PersonDetailIncomeView(
         latest_personmonths = PersonMonth.objects.filter(
             person_year__person_id=self.person_year.person.id,
         )
+        now = timezone.now()
 
-        if (
-            "year" in self.request.GET
-            and self.request.GET["year"] != timezone.now().year
-        ):
+        if "year" in self.request.GET and self.request.GET["year"] != now.year:
             latest_personmonths = latest_personmonths.filter(
                 person_year__year=self.request.GET["year"],
             )
         else:
             latest_personmonths = latest_personmonths.filter(
-                month__lte=(self.month - 2) % 12 or 12,
-                month__gte=(self.month - 3) % 12 or 12,
-                benefit_calculated__isnull=False,
+                month__lte=(now.month - 2) % 12 or 12,
             )
+            if now.month >= settings.MONTH_OF_FIRST_PAYOUT:
+                latest_personmonths_benefit = latest_personmonths.filter(
+                    benefit_calculated__isnull=False,
+                    person_year__year=now.year,
+                )
+            else:
+                latest_personmonths_benefit = latest_personmonths.filter(
+                    benefit_calculated__isnull=False,
+                    person_year__year=now.year - 1,
+                    month__gte=(now.month - 3) % 12 or 12,
+                )
+            if latest_personmonths_benefit:
+                latest_personmonths = latest_personmonths_benefit
+
         latest_personmonths = latest_personmonths.order_by(
             "-person_year__year",
             "-month",
