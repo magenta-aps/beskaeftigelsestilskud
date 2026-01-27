@@ -59,6 +59,7 @@ services:
       - TEST=false
       - HOME=/tmp/
       - PUBLIC=true
+      - ECHO_INTERFACE=http://localhost:8120
     networks:
       - default
       - database
@@ -86,6 +87,7 @@ services:
       - TEST=false
       - HOME=/tmp/
       - PUBLIC=false
+      - ECHO_INTERFACE=http://localhost:8121
     networks:
       - default
       - database
