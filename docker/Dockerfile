@@ -9,7 +9,7 @@ ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.
     PYTHONUNBUFFERED=1
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir /app && \
-    mkdir -p /var/cache/suila && \
+    mkdir -p /var/cache/idp && \
     mkdir -p /upload/note && \
     mkdir -p /upload/eboks && \
     mkdir -p /upload/prisme && \
@@ -19,9 +19,9 @@ RUN mkdir /app && \
     groupadd -g 75100 -r certificate_exporter && \
     useradd -u 75180 --no-log-init -r -g suila -G certificate_exporter suila && \
     chown -R suila:suila /static && \
-    chown -R suila:suila /var/cache/suila && \
+    chown -R suila:suila /var/cache/idp && \
     chown -R suila:suila /upload && \
-    chmod a+w /var/cache/suila
+    chmod a+w /var/cache/idp
 
 # Font cache for pdf generation
 RUN mkdir -p /home/suila/.cache/fontconfig && \
