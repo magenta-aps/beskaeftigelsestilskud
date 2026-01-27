@@ -90,4 +90,8 @@ fi
 
 python manage.py sql_sequence_reset
 
+if [ $ECHO_INTERFACE ]; then
+    echo "Interface: $ECHO_INTERFACE"
+fi
+
 exec "$@"
