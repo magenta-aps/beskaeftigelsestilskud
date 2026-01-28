@@ -2696,3 +2696,20 @@ class TestCalculationParametersGraph(TestViewMixin, TestCase):
                     }
                 },
             )
+
+
+class EmbeddingTemplateViewTest(TestCase):
+
+    def test_faq(self):
+        response = self.client.get("/faq")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.headers["Referrer-Policy"], "no-referrer-when-downgrade"
+        )
+
+    def test_about(self):
+        response = self.client.get("/about")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.headers["Referrer-Policy"], "no-referrer-when-downgrade"
+        )
