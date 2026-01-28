@@ -5,7 +5,6 @@
 from typing import List
 
 from django.urls import URLPattern, URLResolver, path
-from django.views.generic import TemplateView
 
 from suila.api import api
 from suila.views import (
@@ -13,6 +12,7 @@ from suila.views import (
     CalculationParametersListView,
     CalculatorView,
     EboksMessageView,
+    EmbeddingTemplateView,
     GeneratedEboksMessageView,
     GraphView,
     PersonAnnualIncomeEstimateUpdateView,
@@ -39,10 +39,14 @@ urlpatterns: List[URLResolver | URLPattern] = [
     path("", RootView.as_view(), name="root"),
     path("calculator/", CalculatorView.as_view(), name="calculator"),
     path("graph/", GraphView.as_view(), name="graph"),
-    path("faq/", TemplateView.as_view(template_name="suila/faq.html"), name="faq"),
+    path(
+        "faq/",
+        EmbeddingTemplateView.as_view(template_name="suila/faq.html"),
+        name="faq",
+    ),
     path(
         "about/",
-        TemplateView.as_view(template_name="suila/about.html"),
+        EmbeddingTemplateView.as_view(template_name="suila/about.html"),
         name="about",
     ),
     path("persons/", PersonSearchView.as_view(), name="person_search"),
