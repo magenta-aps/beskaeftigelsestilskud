@@ -19,7 +19,7 @@ LOGGING: dict = {
     },
     "formatters": {
         "simple": {
-            "format": "{levelname} {name}: {message}",
+            "format": "{asctime} {levelname} {name}: {message}",
             "style": "{",
         },
     },
