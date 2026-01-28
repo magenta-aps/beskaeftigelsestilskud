@@ -2706,13 +2706,13 @@ class EmbeddingTemplateViewTest(UserMixin, TestCase):
         self.assertEqual(response.headers["Referrer-Policy"], "same-origin")
 
     def test_faq(self):
-        self.client.force_login(self.normal_user)
+        self.client.force_login(self.admin_user)
         response = self.client.get("/faq")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")
 
     def test_about(self):
-        self.client.force_login(self.normal_user)
+        self.client.force_login(self.admin_user)
         response = self.client.get("/about")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")
