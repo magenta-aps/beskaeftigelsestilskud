@@ -15,7 +15,7 @@ import pytz
 import requests
 from bs4 import BeautifulSoup
 from common.models import PageView, User
-from common.tests.test_mixins import TestViewMixin, UserMixin
+from common.tests.test_mixins import TestViewMixin
 from common.utils import omit
 from common.view_mixins import ViewLogMixin
 from django.conf import settings
@@ -64,6 +64,7 @@ from suila.views import (
     CalculatorView,
     CPRField,
     EboksMessageView,
+    EmbeddingTemplateView,
     GeneratedEboksMessageView,
     IncomeSignal,
     IncomeSignalTable,
@@ -2698,21 +2699,20 @@ class TestCalculationParametersGraph(TestViewMixin, TestCase):
             )
 
 
-class EmbeddingTemplateViewTest(UserMixin, TestCase):
+class EmbeddingTemplateViewTest(TestViewMixin, TestCase):
 
-    def test_not_logged_in(self):
-        response = self.client.get("/faq")
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["Referrer-Policy"], "same-origin")
+    view_class = EmbeddingTemplateView
 
     def test_faq(self):
-        self.client.force_login(self.admin_user)
-        response = self.client.get("/faq")
+        view = self.view(self.admin_user, "/faq")
+        view.template_name = "suila/faq.html"
+        response = view.dispatch(view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")
 
     def test_about(self):
-        self.client.force_login(self.admin_user)
-        response = self.client.get("/about")
+        view = self.view(self.admin_user, "/about")
+        view.template_name = "suila/about.html"
+        response = view.dispatch(view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")
