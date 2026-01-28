@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-03 12:06-0200\n"
+"POT-Creation-Date: 2026-01-28 06:42-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,7 +50,7 @@ msgstr ""
 
 #: suila/forms.py suila/templates/suila/calculate.html
 msgid "Er du fuldt skattepligtig hele året?"
-msgstr ""
+msgstr "Ukioq naallugu tamakkiisumik akileraartussaavit?"
 
 #: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
 msgid "Ja"
@@ -62,7 +62,7 @@ msgstr "Naamik"
 
 #: suila/forms.py
 msgid "Fra hvilken dato er du fuldt skattepligtig?"
-msgstr ""
+msgstr "Ulloq suna aallarnerfigalugu tamakkiisumik akileraartalissavit?"
 
 #: suila/forms.py suila/views.py
 msgid "Kilde"
@@ -236,11 +236,11 @@ msgstr "CPR-normu"
 
 #: suila/models.py suila/views.py
 msgid "Startdato"
-msgstr ""
+msgstr "Ullormiit uannga"
 
 #: suila/models.py suila/views.py
 msgid "Slutdato"
-msgstr ""
+msgstr "Ullormut uunga"
 
 #: suila/models.py
 msgid "Skattepligtighed"
@@ -348,7 +348,7 @@ msgid "Se videoen om Suila-tapit"
 msgstr "Aalasuliaq Suila-tapinut tunngasoq takuuk"
 
 #: suila/templates/suila/about.html
-msgid "https://www.youtube.com/embed/Ti86S9FA6t0"
+msgid "https://www.youtube.com/embed?v=Ti86S9FA6t0"
 msgstr ""
 
 #: suila/templates/suila/about.html
@@ -422,7 +422,7 @@ msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Beregningsgrundlag"
-msgstr ""
+msgstr "Naatsorsuinermi tunngaviusoq."
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs beregningsmotor"
@@ -453,13 +453,13 @@ msgid "Indlæs"
 msgstr "Nuutsikkit/Aakkit"
 
 #: suila/templates/suila/calculate.html
-msgid "Skattepligtig i 1 måned"
-msgstr ""
+msgid "Fuldt skattepligtig i 1 måned."
+msgstr "Qaammat ataaseq tamakkiisumik akileraartartoq."
 
 #: suila/templates/suila/calculate.html
 #, python-format
-msgid "Skattepligtig i %%(months)s måneder"
-msgstr ""
+msgid "Fuldt skattepligtig i %%(months)s måneder."
+msgstr "Qaammatini %%(months)s-ni tamakkiisumik akileraartartoq."
 
 #: suila/templates/suila/calculation_parameters_list.html
 msgid "Beregningsparametre"
@@ -591,7 +591,7 @@ msgstr ""
 "januarimeersuussapput."
 
 #: suila/templates/suila/faq.html
-msgid "https://www.youtube.com/embed/9dbICMOXhM4"
+msgid "https://www.youtube.com/embed?v=9dbICMOXhM4"
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -660,6 +660,10 @@ msgid ""
 "meget i løbet af året, vil du ikke modtage Suila-tapit månedligt i "
 "%(this_year)s."
 msgstr ""
+"Akileraartarnermut Aqutsisoqarfiup paasissutissaanni ukioq %(last_year)s "
+"-imi isertitavit 500.000 kr. pallissimagaat, isertitatillu nikerarsimasut "
+"allassimappat %(this_year)s -imi qaammatit tamaasa Suila-"
+"tapisisassanngilatit."
 
 #: suila/templates/suila/faq.html suila/templates/suila/graph.html
 #, python-format
@@ -669,10 +673,17 @@ msgid ""
 "kommer et signal fra arbejdsmarkedet, vil Skattestyrelsen igangsætte "
 "månedlige udbetalinger fra januar %(next_year)s."
 msgstr ""
+"Akileraartarnermut Aqutsisoqarfik %(this_year)s -imi isertitariumaagassatit "
+"500.000 kr.-init ikinnerusussaasut paasissutissanik pisimappat, "
+"sulisitsisuillu nalunaarsugai aamma takutitsippatta ukiumut isertitassavit "
+"500.000 kr. ataakkaat, Ukioq %(next_year)s -imi jannuaari aallarnerfigalugu "
+"qaammatikkaartumik Suila-tapisisalerumaarputit."
 
 #: suila/templates/suila/faq.html
 msgid "Signal om indkomst under 70.000 kr. eller over 500.000 kr."
-msgstr "Nalunaarnerit assigiinngitsut"
+msgstr ""
+"Nalunaarutigineqarsimavoq isertitavit 70.000 kr. ataakkaat imaluunniit "
+"500.000 kr.-init amerlanerupput."
 
 #: suila/templates/suila/faq.html
 msgid ""
@@ -680,12 +691,18 @@ msgid ""
 "forventede årsindkomst er under 70.000 kr. eller over 500.000 kr., er du "
 "ikke berettiget til Suila-tapit."
 msgstr ""
+"Ukiup ingerlanerani Akileraartarnermut Aqutsisoqarfik "
+"nalunaarfigineqarsimappat isertitariumaagassavit 70.000 kr. ataakkaat "
+"500.000 kr.-iniilluunniit amerlanerusut, taava Suila-tapisisinnaanngilatit."
 
 #: suila/templates/suila/faq.html
 msgid ""
 "Når Skattestyrelsen har modtaget oplysninger om din samlede årsindkomst, vil "
 "du få udbetalt eventuelt manglende Suila-tapit."
 msgstr ""
+"Akileraartarnermut Aqutsisoqarfiup ukiumut isertitarisimasatit pillugit "
+"paasissutissat pisimaleriarpagit, Suila-tapisiassaqarsimaguillu, taava "
+"taakku tunniunneqarumaarput. "
 
 #: suila/templates/suila/faq.html
 msgid "Et andet signal"
@@ -1410,7 +1427,7 @@ msgstr ""
 
 #: suila/templates/suila/person_pause_list.html
 msgid "Borgere på pålagt udbetalingspause"
-msgstr ""
+msgstr "Innuttaasut Suila-tapisinissaminnut unitsinneqarallarsimasut"
 
 #: suila/templates/suila/root.html
 #, python-format
@@ -1518,10 +1535,6 @@ msgstr ""
 #, python-format
 msgid "Suila-tapit udbetalinger vil blive genoptaget fra d. %(date)s."
 msgstr "Suila-tapinik tunniussisarneq aallarteqqissaaq ulloq %(date)s."
-
-#: suila/templates/suila/templatetags/table_filters.html
-msgid "Filtre"
-msgstr "Immikkoortitikkat"
 
 #: suila/templates/suila/templatetags/table_filters.html
 msgid "Søg"
@@ -1692,19 +1705,19 @@ msgstr "Najugaq"
 
 #: suila/views.py
 msgid "Må selv genoptage udbetalinger"
-msgstr ""
+msgstr "Akileraartartup nammineerluni Suila-tapisiassani aallarteqqissinnaavai"
 
 #: suila/views.py
 msgid "Startdato for udbetalingspause"
-msgstr ""
+msgstr "Unitsitsigallarnerup ulloq atuutilerfia"
 
 #: suila/views.py
 msgid "Årsag til pause"
-msgstr ""
+msgstr "Unitsitsigallarnermut pissutaasoq"
 
 #: suila/views.py
 msgid "Seneste notat"
-msgstr ""
+msgstr "Nalunaarut kingulleq"
 
 #: suila/views.py
 msgid "Status"

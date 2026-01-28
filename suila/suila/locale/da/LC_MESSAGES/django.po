@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-03 12:06-0200\n"
+"POT-Creation-Date: 2026-01-28 07:22-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -336,7 +336,7 @@ msgid "Se videoen om Suila-tapit"
 msgstr ""
 
 #: suila/templates/suila/about.html
-msgid "https://www.youtube.com/embed/Ti86S9FA6t0"
+msgid "https://www.youtube.com/embed?v=Ti86S9FA6t0"
 msgstr ""
 
 #: suila/templates/suila/about.html
@@ -423,12 +423,12 @@ msgid "Indlæs"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
-msgid "Skattepligtig i 1 måned"
+msgid "Fuldt skattepligtig i 1 måned."
 msgstr ""
 
 #: suila/templates/suila/calculate.html
 #, python-format
-msgid "Skattepligtig i %%(months)s måneder"
+msgid "Fuldt skattepligtig i %%(months)s måneder."
 msgstr ""
 
 #: suila/templates/suila/calculation_parameters_list.html
@@ -543,7 +543,7 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/faq.html
-msgid "https://www.youtube.com/embed/9dbICMOXhM4"
+msgid "https://www.youtube.com/embed?v=9dbICMOXhM4"
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -1293,10 +1293,6 @@ msgstr ""
 #: suila/templates/suila/templatetags/resume_payments_date_info_box.html
 #, python-format
 msgid "Suila-tapit udbetalinger vil blive genoptaget fra d. %(date)s."
-msgstr ""
-
-#: suila/templates/suila/templatetags/table_filters.html
-msgid "Filtre"
 msgstr ""
 
 #: suila/templates/suila/templatetags/table_filters.html

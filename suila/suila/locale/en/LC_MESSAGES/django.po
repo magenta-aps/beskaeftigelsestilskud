@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-03 12:06-0200\n"
+"POT-Creation-Date: 2026-01-28 06:42-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,7 +51,7 @@ msgstr "Estimated annual income in Greenland"
 
 #: suila/forms.py suila/templates/suila/calculate.html
 msgid "Er du fuldt skattepligtig hele året?"
-msgstr ""
+msgstr "Are you fully liable to pay tax for the entire year?"
 
 #: suila/forms.py suila/templates/suila/person_detail_eboks_send.html
 msgid "Ja"
@@ -63,7 +63,7 @@ msgstr "No"
 
 #: suila/forms.py
 msgid "Fra hvilken dato er du fuldt skattepligtig?"
-msgstr ""
+msgstr "From which date are you fully liable to pay tax?"
 
 #: suila/forms.py suila/views.py
 msgid "Kilde"
@@ -339,8 +339,8 @@ msgid "Se videoen om Suila-tapit"
 msgstr "Watch the video about Suila-tapit"
 
 #: suila/templates/suila/about.html
-msgid "https://www.youtube.com/embed/Ti86S9FA6t0"
-msgstr "https://www.youtube.com/watch?v=MkU15J305wo"
+msgid "https://www.youtube.com/embed?v=Ti86S9FA6t0"
+msgstr "https://www.youtube.com/embed?v=MkU15J305wo"
 
 #: suila/templates/suila/about.html
 msgid "Få mere information om Suila-tapit"
@@ -369,8 +369,8 @@ msgid ""
 "På Skattestyrelsens Facebook side. Du finder Skattestyrelsen på Facebook "
 "under navnet AKA.gl."
 msgstr ""
-"On the Danish Tax Agency's Facebook page. You can find the Danish Tax Agency "
-"on Facebook under the name AKA.gl."
+"On the Tax Agency's Facebook page. You can find the Tax Agency on Facebook "
+"under the name AKA.gl."
 
 #: suila/templates/suila/calculate.html suila/templates/suila/root.html
 msgid "Suila-tapit-beregneren"
@@ -411,7 +411,7 @@ msgstr ""
 
 #: suila/templates/suila/calculate.html
 msgid "Beregningsgrundlag"
-msgstr ""
+msgstr "Basis of calculation"
 
 #: suila/templates/suila/calculate.html
 msgid "Indlæs beregningsmotor"
@@ -442,13 +442,13 @@ msgid "Indlæs"
 msgstr "Load"
 
 #: suila/templates/suila/calculate.html
-msgid "Skattepligtig i 1 måned"
-msgstr ""
+msgid "Fuldt skattepligtig i 1 måned."
+msgstr "Fully liable to tax for 1 month."
 
 #: suila/templates/suila/calculate.html
 #, python-format
-msgid "Skattepligtig i %%(months)s måneder"
-msgstr ""
+msgid "Fuldt skattepligtig i %%(months)s måneder."
+msgstr "Fully liable to tax for %%(months)s months."
 
 #: suila/templates/suila/calculation_parameters_list.html
 msgid "Beregningsparametre"
@@ -494,7 +494,7 @@ msgstr ""
 #: suila/templates/suila/forms/estimation_engine_form.html
 #: suila/templates/suila/forms/pause_form.html
 msgid "Gem"
-msgstr ""
+msgstr "Save"
 
 #: suila/templates/suila/calculation_parameters_list.html
 msgid "Beregningsgraf"
@@ -579,8 +579,8 @@ msgstr ""
 "January is paid out in March, for February in April, and so on."
 
 #: suila/templates/suila/faq.html
-msgid "https://www.youtube.com/embed/9dbICMOXhM4"
-msgstr "https://www.youtube.com/watch?v=p_sDg0eeBbY"
+msgid "https://www.youtube.com/embed?v=9dbICMOXhM4"
+msgstr "https://www.youtube.com/embed?v=p_sDg0eeBbY"
 
 #: suila/templates/suila/faq.html
 msgid ""
@@ -1365,7 +1365,7 @@ msgstr ""
 
 #: suila/templates/suila/person_pause_list.html
 msgid "Borgere på pålagt udbetalingspause"
-msgstr "Citizens on forced payment pause"
+msgstr ""
 
 #: suila/templates/suila/root.html
 #, python-format
@@ -1427,7 +1427,7 @@ msgstr ""
 #: suila/templates/suila/templatetags/pause_info_box.html
 #, python-format
 msgid "Udbetalingspausen vil være gældende fra d. %(date)s."
-msgstr ""
+msgstr "The payment pause will be in effect from %(date)s."
 
 #: suila/templates/suila/templatetags/pause_info_box.html
 msgid "Du har sat dine udbetalinger på pause."
@@ -1469,11 +1469,7 @@ msgstr ""
 #: suila/templates/suila/templatetags/resume_payments_date_info_box.html
 #, python-format
 msgid "Suila-tapit udbetalinger vil blive genoptaget fra d. %(date)s."
-msgstr ""
-
-#: suila/templates/suila/templatetags/table_filters.html
-msgid "Filtre"
-msgstr "Filters"
+msgstr "Suila-tapit payments will resume from %(date)s."
 
 #: suila/templates/suila/templatetags/table_filters.html
 msgid "Søg"
@@ -1644,11 +1640,11 @@ msgstr "Address"
 
 #: suila/views.py
 msgid "Må selv genoptage udbetalinger"
-msgstr "Can resume payments"
+msgstr ""
 
 #: suila/views.py
 msgid "Startdato for udbetalingspause"
-msgstr "Start date for payout pause"
+msgstr ""
 
 #: suila/views.py
 msgid "Årsag til pause"
@@ -1656,7 +1652,7 @@ msgstr ""
 
 #: suila/views.py
 msgid "Seneste notat"
-msgstr "Latest note"
+msgstr ""
 
 #: suila/views.py
 msgid "Status"

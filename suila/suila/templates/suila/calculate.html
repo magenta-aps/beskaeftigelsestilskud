@@ -197,8 +197,8 @@ $(document).ready(function () {
     const fullyTaxLiable = $("[name={{ form.fully_tax_liable.name }}]");
     const taxLiableDate = $("[name={{ form.tax_liable_date.name }}]");
     const taxMonths = $("#tax_months");
-    const taxMonthsTemplateSingle = "{% translate 'Skattepligtig i 1 måned' %}";
-    const taxMonthsTemplatePlural = "{% translate 'Skattepligtig i %(months)s måneder' %}";
+    const taxMonthsTemplateSingle = "{% translate 'Fuldt skattepligtig i 1 måned.' %}";
+    const taxMonthsTemplatePlural = "{% translate 'Fuldt skattepligtig i %(months)s måneder.' %}";
     const calculationBase = $("#calculation_base");
     const calculationBaseField = $("[name={{ form.calculation_base.name }}]");
     let month_year_scale = 12;
