@@ -15,7 +15,7 @@ import pytz
 import requests
 from bs4 import BeautifulSoup
 from common.models import PageView, User
-from common.tests.test_mixins import TestViewMixin
+from common.tests.test_mixins import TestViewMixin, UserMixin
 from common.utils import omit
 from common.view_mixins import ViewLogMixin
 from django.conf import settings
@@ -2698,18 +2698,21 @@ class TestCalculationParametersGraph(TestViewMixin, TestCase):
             )
 
 
-class EmbeddingTemplateViewTest(TestCase):
+class EmbeddingTemplateViewTest(UserMixin, TestCase):
+
+    def test_not_logged_in(self):
+        response = self.client.get("/faq")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Referrer-Policy"], "same-origin")
 
     def test_faq(self):
+        self.client.force_login(self.normal_user)
         response = self.client.get("/faq")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.headers["Referrer-Policy"], "no-referrer-when-downgrade"
-        )
+        self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")
 
     def test_about(self):
+        self.client.force_login(self.normal_user)
         response = self.client.get("/about")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.headers["Referrer-Policy"], "no-referrer-when-downgrade"
-        )
+        self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")

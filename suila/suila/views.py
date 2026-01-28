@@ -1733,5 +1733,6 @@ class CalculationParametersGraph(BaseGetFormView):
 class EmbeddingTemplateView(TemplateView):
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
-        response.headers["Referrer-Policy"] = "no-referrer-when-downgrade"
+        if response.status_code == 200:
+            response.headers["Referrer-Policy"] = "strict-origin"
         return response
