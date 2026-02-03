@@ -1728,3 +1728,11 @@ class CalculationParametersGraph(BaseGetFormView):
 
     def form_invalid(self, form):
         return JsonResponse(data={"errors": form.errors.get_json_data()}, status=400)
+
+
+class EmbeddingTemplateView(TemplateView):
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        if response.status_code == 200:  # pragma: no branch
+            response.headers["Referrer-Policy"] = "strict-origin"
+        return response
