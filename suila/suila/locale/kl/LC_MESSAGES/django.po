@@ -348,7 +348,7 @@ msgid "Se videoen om Suila-tapit"
 msgstr "Aalasuliaq Suila-tapinut tunngasoq takuuk"
 
 #: suila/templates/suila/about.html
-msgid "https://www.youtube.com/embed?v=Ti86S9FA6t0"
+msgid "https://www.youtube.com/embed/Ti86S9FA6t0"
 msgstr ""
 
 #: suila/templates/suila/about.html
@@ -591,7 +591,7 @@ msgstr ""
 "januarimeersuussapput."
 
 #: suila/templates/suila/faq.html
-msgid "https://www.youtube.com/embed?v=9dbICMOXhM4"
+msgid "https://www.youtube.com/embed/9dbICMOXhM4"
 msgstr ""
 
 #: suila/templates/suila/faq.html

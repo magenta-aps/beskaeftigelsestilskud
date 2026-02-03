@@ -64,6 +64,7 @@ from suila.views import (
     CalculatorView,
     CPRField,
     EboksMessageView,
+    EmbeddingTemplateView,
     GeneratedEboksMessageView,
     IncomeSignal,
     IncomeSignalTable,
@@ -2696,3 +2697,22 @@ class TestCalculationParametersGraph(TestViewMixin, TestCase):
                     }
                 },
             )
+
+
+class EmbeddingTemplateViewTest(TestViewMixin, TestCase):
+
+    view_class = EmbeddingTemplateView
+
+    def test_faq(self):
+        view = self.view(self.admin_user, "/faq")
+        view.template_name = "suila/faq.html"
+        response = view.dispatch(view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")
+
+    def test_about(self):
+        view = self.view(self.admin_user, "/about")
+        view.template_name = "suila/about.html"
+        response = view.dispatch(view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Referrer-Policy"], "strict-origin")
