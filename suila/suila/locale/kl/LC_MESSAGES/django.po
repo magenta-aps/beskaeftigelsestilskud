@@ -42,11 +42,11 @@ msgstr ""
 
 #: suila/forms.py
 msgid "Estimeret månedsindkomst i Grønland"
-msgstr ""
+msgstr "Kalaallit nunaanni qaammammut isertitariumaagassatut naatsorsuutigisat"
 
 #: suila/forms.py
 msgid "Estimeret årsindkomst i Grønland"
-msgstr ""
+msgstr "Kalaallit nunaanni ukiumut isertitariumaagassatut naatsorsuutigisat"
 
 #: suila/forms.py suila/templates/suila/calculate.html
 msgid "Er du fuldt skattepligtig hele året?"
@@ -1538,7 +1538,7 @@ msgstr "Suila-tapinik tunniussisarneq aallarteqqissaaq ulloq %(date)s."
 
 #: suila/templates/suila/templatetags/table_filters.html
 msgid "Søg"
-msgstr "Ujaasigit"
+msgstr "Ujaruk"
 
 #: suila/templatetags/amount_tags.py
 msgid "-"
