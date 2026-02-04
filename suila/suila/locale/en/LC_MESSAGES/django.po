@@ -43,11 +43,11 @@ msgstr ""
 
 #: suila/forms.py
 msgid "Estimeret månedsindkomst i Grønland"
-msgstr "Estimated monthly income in Greenland"
+msgstr "Estimated gross monthly income in Greenland"
 
 #: suila/forms.py
 msgid "Estimeret årsindkomst i Grønland"
-msgstr "Estimated annual income in Greenland"
+msgstr "Estimated gross annual income in Greenland"
 
 #: suila/forms.py suila/templates/suila/calculate.html
 msgid "Er du fuldt skattepligtig hele året?"
