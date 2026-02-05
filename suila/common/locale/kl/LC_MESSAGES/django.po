@@ -54,7 +54,7 @@ msgstr "Nalunaarutikka"
 
 #: common/templates/common/_base.html
 msgid "Borgersøgning"
-msgstr "Innutaasumik ujaasigit"
+msgstr "Innutaasumik ujaasineq"
 
 #: common/templates/common/_base.html
 msgid "Alle borgere"
