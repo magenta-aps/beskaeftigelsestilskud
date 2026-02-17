@@ -697,7 +697,7 @@ class PersonDetailIncomeView(
         )
         now = timezone.now()
 
-        if "year" in self.request.GET and self.request.GET["year"] != now.year:
+        if "year" in self.request.GET and int(self.request.GET["year"]) != now.year:
             latest_personmonths = latest_personmonths.filter(
                 person_year__year=self.request.GET["year"],
             )
