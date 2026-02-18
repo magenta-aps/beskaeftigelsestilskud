@@ -697,7 +697,7 @@ class PersonDetailIncomeView(
         )
         now = timezone.now()
 
-        if "year" in self.request.GET and self.request.GET["year"] != now.year:
+        if "year" in self.request.GET and int(self.request.GET["year"]) != now.year:
             latest_personmonths = latest_personmonths.filter(
                 person_year__year=self.request.GET["year"],
             )
@@ -764,15 +764,22 @@ class PersonDetailIncomeView(
         )
 
         # Queryset of person years available for this person
-        context_data["available_person_years"] = PersonYear.objects.filter(
-            person=self.person_year.person
-        ).order_by("-year__year")
+        now = timezone.now()
+        if now.month < settings.MONTH_OF_FIRST_PAYOUT:
+            context_data["available_person_years"] = PersonYear.objects.filter(
+                person=self.person_year.person,
+                year__lt=now.year,
+            ).order_by("-year__year")
+        else:
+            context_data["available_person_years"] = PersonYear.objects.filter(
+                person=self.person_year.person
+            ).order_by("-year__year")
 
         self.log_view(self.object)
         return context_data
 
     def get_income_signals(self) -> list[IncomeSignal]:
-        return sorted(
+        signals = sorted(
             itertools.chain(
                 self.get_monthly_income_signals(),
                 self.get_b_tax_payments(),
@@ -784,6 +791,7 @@ class PersonDetailIncomeView(
                 signal.source,
             ),
         )
+        return signals
 
     def get_monthly_income_signals(self) -> Iterable[IncomeSignal]:
         def format_employer(employer: Employer | None):
