@@ -679,6 +679,17 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
             self.assertEqual(response.context_data["sum_table"].year, 2020)
 
     def test_before_first_payout(self):
+        new_year = PersonYear.objects.create(
+            person=self.person1,
+            year=Year.objects.get(year=2021),
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+        TaxInformationPeriod.objects.get_or_create(
+            person_year=new_year,
+            tax_scope="FULL",
+            start_date=datetime(2021, 1, 1),
+            end_date=datetime(2021, 12, 31),
+        )
         with self._time_context(year=2021, month=1):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             # Verify that expected context variables are present
