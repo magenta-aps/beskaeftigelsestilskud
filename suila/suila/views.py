@@ -343,6 +343,29 @@ class PersonDetailView(
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         user = self.request.user
+        person = self.object
+        context_data.update(
+            {
+                "paused": person.paused,
+                "allow_pause": person.allow_pause,
+                "can_pause": person.allow_pause and (user.cpr == person.cpr),
+                "can_unpause": not (  # Paused person who is dead or missing
+                    person.paused  # may not be unpaused
+                    and person.pause_reason
+                    in (PauseReasonChoices.MISSING, PauseReasonChoices.DEATH)
+                ),
+                "person_id": person.pk,
+                "user_who_pressed_pause": person.user_who_pressed_pause,
+                "manually_entered_income": person.annual_income_estimate,
+                "manually_entered_income_last_change": person.last_change(
+                    "annual_income_estimate"
+                ),
+                "manually_entered_income_formset": NoteAttachmentFormSet(),
+                "pause_formset": NoteAttachmentFormSet(),
+                "estimation_engine_formset": NoteAttachmentFormSet(),
+                "pause_reason": person.pause_reason,
+            }
+        )
 
         # Get the "currently relevant" person month
         relevant_person_month: RelevantPersonMonth = self.get_relevant_person_month()
@@ -362,7 +385,6 @@ class PersonDetailView(
         if relevant_person_month is not None:
             person_month = relevant_person_month.person_month
             person_year = person_month.person_year
-            person = person_year.person
 
             estimated_year_result = (
                 Decimal(0)
@@ -435,27 +457,13 @@ class PersonDetailView(
                     "benefit_calculated": person_month.benefit_calculated,
                     "estimated_year_benefit": person_month.estimated_year_benefit,
                     "estimated_year_result": estimated_year_result,
-                    "paused": person.paused,
-                    "allow_pause": person.allow_pause,
-                    "can_pause": person.allow_pause and (user.cpr == person.cpr),
-                    "can_unpause": not (  # Paused person who is dead or missing
-                        person.paused  # may not be unpaused
-                        and person.pause_reason
-                        in (PauseReasonChoices.MISSING, PauseReasonChoices.DEATH)
-                    ),
-                    "person_id": person.pk,
                     "person_year_id": person_year.pk,
                     "next_year": person_year.year.year + 1,
                     "in_quarantine": person_year.in_quarantine,
                     "quarantine_reason": person_year.quarantine_reason,
                     "quarantine_weight": relevant_person_month.quarantine_weight,
-                    "user_who_pressed_pause": person.user_who_pressed_pause,
                     "year": person_year.year.year,
                     "month": person_month.month,
-                    "manually_entered_income": person.annual_income_estimate,
-                    "manually_entered_income_last_change": person.last_change(
-                        "annual_income_estimate"
-                    ),
                     "paused_last_change": paused_last_change,
                     "civil_state_last_change": civil_state_last_change,
                     "now": now,
@@ -468,7 +476,6 @@ class PersonDetailView(
                     "pause_effect_date": pause_effect_date,
                     "show_pause_effect_date": show_pause_effect_date,
                     "pause_reasons": pause_reasons,
-                    "pause_reason": person.pause_reason,
                     "send_eboks_letter_when_pausing": send_eboks_letter_when_pausing,
                     "estimation_engine_changed": estimation_engine_changed,
                 }
