@@ -364,6 +364,7 @@ class PersonDetailView(
                 "pause_formset": NoteAttachmentFormSet(),
                 "estimation_engine_formset": NoteAttachmentFormSet(),
                 "pause_reason": person.pause_reason,
+                "person_year_id": self.person_year.pk,
             }
         )
 
