@@ -366,13 +366,13 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
         self.assertTrue(person_year_3.in_quarantine)
         self.assertTrue(person_year_4.in_quarantine)
 
-        self.assertIn("modtog for meget", person_year_1.quarantine_reason)
-        self.assertEqual("-", person_year_2.quarantine_reason)
-        self.assertIn("for tæt på bundgrænsen", person_year_3.quarantine_reason)
-        self.assertIn("tæt på Suila-tapit grænsen", person_year_4.quarantine_reason)
+        self.assertIn("modtog for meget", person_year_1.quarantine_reason["label"])
+        self.assertEqual({"label": "-", "value": 0}, person_year_2.quarantine_reason)
+        self.assertIn("tæt på Suila-tapit grænsen", person_year_3.quarantine_reason["label"])
+        self.assertIn("tæt på Suila-tapit grænsen", person_year_4.quarantine_reason["label"])
 
         with override_settings(ENFORCE_QUARANTINE=False):
-            self.assertEqual(person_year_1.quarantine_reason, "")
+            self.assertEqual(person_year_1.quarantine_reason, {"label": "", "value": None})
 
     @override_settings(ENFORCE_QUARANTINE=False)
     def test_no_people_in_quarantine(self):
@@ -414,7 +414,6 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
             response.render()
             soup = str(BeautifulSoup(response.content, features="lxml"))
             self.assertIn("Du modtog for meget tilskud i 2023", soup)
-            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
             self.assertNotIn(
                 "Din forventede årsindkomst er tæt på Suila-tapit grænsen", soup
             )
@@ -423,8 +422,7 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
             response.render()
             soup = str(BeautifulSoup(response.content, features="lxml"))
             self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
-            self.assertIn("Du tjente for tæt på bundgrænsen i 2023", soup)
-            self.assertNotIn(
+            self.assertIn(
                 "Din forventede årsindkomst er tæt på Suila-tapit grænsen", soup
             )
 
@@ -432,7 +430,6 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
             response.render()
             soup = str(BeautifulSoup(response.content, features="lxml"))
             self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
-            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
             self.assertIn(
                 "Din forventede årsindkomst er tæt på Suila-tapit grænsen", soup
             )
@@ -443,7 +440,6 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
             response.render()
             soup = str(BeautifulSoup(response.content, features="lxml"))
             self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
-            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
             self.assertNotIn(
                 "Din forventede årsindkomst er tæt på Suila-tapit grænsen", soup
             )
@@ -454,7 +450,6 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
             response.render()
             soup = str(BeautifulSoup(response.content, features="lxml"))
             self.assertNotIn("Du modtog for meget tilskud i 2023", soup)
-            self.assertNotIn("Du tjente for tæt på bundgrænsen i 2023", soup)
             self.assertNotIn(
                 "Din forventede årsindkomst er tæt på Suila-tapit grænsen", soup
             )
