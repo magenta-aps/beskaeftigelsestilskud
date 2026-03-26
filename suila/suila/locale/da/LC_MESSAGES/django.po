@@ -529,10 +529,10 @@ msgstr ""
 #: suila/templates/suila/faq.html
 msgid ""
 "Ud fra signalerne om indkomst beregnes en forventet årsindkomst. Suila-tapit "
-"udbetales til borgere med en forventet årsindkomst på 70.000 kr. – 500.000 "
-"kr. Dog vil borgere med en forventet årsindkomst på 475.000 - 500.000 kr. "
+"udbetales til borgere med en forventet årsindkomst på 70.000 kr. – 512.000 "
+"kr. Dog vil borgere med en forventet årsindkomst på 475.000 - 512.000 kr. "
 "først modtage Suila-tapit, når Skattestyrelsen kan afklare, om den "
-"forventede årsindkomst holder sig under 500.000 kr."
+"forventede årsindkomst holder sig under 512.000 kr."
 msgstr ""
 
 #: suila/templates/suila/faq.html
@@ -574,7 +574,7 @@ msgstr ""
 msgid ""
 "Du er selvstændig erhvervsdrivende og har ikke indbetalt løbende B-skatter. "
 "Eller du har betalt et beløb, der er så stort, at Skattestyrelsens beregning "
-"viser, at du forventes at komme til at tjene over 500.000 kr. om året. Med "
+"viser, at du forventes at komme til at tjene over 512.000 kr. om året. Med "
 "forskudsregistrering på <a href=\"https://sullissivik.gl\" "
 "target=\"_blank\">Sullissivik.gl</a> kan du give os oplysninger om dine "
 "indkomster som selvstændig erhvervsdrivende. Ud fra din forskudsregistrering "
@@ -590,7 +590,7 @@ msgstr ""
 #, python-format
 msgid ""
 "Hvis Skattestyrelsens oplysninger fra %(last_year)s viser, at din "
-"årsindkomst nærmede sig 500.000 kr., og din månedlige indkomst varierede "
+"årsindkomst nærmede sig 512.000 kr., og din månedlige indkomst varierede "
 "meget i løbet af året, vil du ikke modtage Suila-tapit månedligt i "
 "%(this_year)s."
 msgstr ""
@@ -599,19 +599,19 @@ msgstr ""
 #, python-format
 msgid ""
 "Hvis Skattestyrelsen i løbet af %(this_year)s modtager oplysninger, der "
-"viser, at din forventede årsindkomst er under 500.000 kr., og der samtidig "
+"viser, at din forventede årsindkomst er under 512.000 kr., og der samtidig "
 "kommer et signal fra arbejdsmarkedet, vil Skattestyrelsen igangsætte "
 "månedlige udbetalinger fra januar %(next_year)s."
 msgstr ""
 
 #: suila/templates/suila/faq.html
-msgid "Signal om indkomst under 70.000 kr. eller over 500.000 kr."
+msgid "Signal om indkomst under 70.000 kr. eller over 512.000 kr."
 msgstr ""
 
 #: suila/templates/suila/faq.html
 msgid ""
 "Hvis Skattestyrelsen i løbet af året modtager oplysninger, der viser, at din "
-"forventede årsindkomst er under 70.000 kr. eller over 500.000 kr., er du "
+"forventede årsindkomst er under 70.000 kr. eller over 512.000 kr., er du "
 "ikke berettiget til Suila-tapit."
 msgstr ""
 
@@ -764,7 +764,7 @@ msgstr ""
 
 #: suila/templates/suila/graph.html
 msgid ""
-"Hvis din årsindkomst er under 70.000 kr. eller over 500.000 kr., vil du ikke "
+"Hvis din årsindkomst er under 70.000 kr. eller over 512.000 kr., vil du ikke "
 "modtage Suila-tapit, og dine tal vises derfor ikke på grafen."
 msgstr ""
 
@@ -1284,8 +1284,21 @@ msgstr ""
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 #, python-format
 msgid ""
-"Din forventede årsindkomst er tæt på 500.000 kr., som er grænsen for at "
-"modtage Suila-tapit.<br/> Skattestyrelsen afventer yderligere "
+"Din forventede årsindkomst er tæt på 512.000 kr., som er grænsen for at "
+"modtage Suila-tapit.<br/>"
+msgstr ""
+
+#: suila/templates/suila/templatetags/quarantine_info_box.html
+#, python-format
+msgid ""
+"Din forventede årsindkomst ligger tæt på den nedre beløbsgrænse for "
+"berettigelse til Suila-tapit.<br/>"
+msgstr ""
+
+#: suila/templates/suila/templatetags/quarantine_info_box.html
+#, python-format
+msgid ""
+"Skattestyrelsen afventer yderligere "
 "indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/"
 "> Næste vurdering foretages i januar %(year)s."
 msgstr ""
