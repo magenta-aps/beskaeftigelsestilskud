@@ -42,7 +42,7 @@
         </p>
         <p class="mt-3">
             {% blocktranslate trimmed with last_year=this_year|add:-1 this_year=this_year %}
-                Hvis Skattestyrelsens oplysninger fra {{ last_year }} viser, at din årsindkomst nærmede sig 500.000 kr.,
+                Hvis Skattestyrelsens oplysninger fra {{ last_year }} viser, at din årsindkomst nærmede sig 512.000 kr.,
                 og din månedlige indkomst varierede meget i løbet af året,
                 vil du ikke modtage Suila-tapit månedligt i {{ this_year }}.
             {% endblocktranslate %}
@@ -50,7 +50,7 @@
         <p class="mt-3">
             {% blocktranslate trimmed with this_year=this_year next_year=this_year|add:1 %}
                 Hvis Skattestyrelsen i løbet af {{ this_year }} modtager oplysninger, der viser, at din forventede
-                årsindkomst er under 500.000 kr., og der samtidig kommer et signal fra arbejdsmarkedet,
+                årsindkomst er under 512.000 kr., og der samtidig kommer et signal fra arbejdsmarkedet,
                 vil Skattestyrelsen igangsætte månedlige udbetalinger fra januar {{ next_year }}.
             {% endblocktranslate %}
         </p>
