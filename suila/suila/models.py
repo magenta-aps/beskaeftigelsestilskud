@@ -848,7 +848,7 @@ class PersonYear(PermissionsMixin, models.Model):
         )
 
     @property
-    def quarantine_reason(self) -> str:
+    def quarantine_reason(self) -> dict[str, str | int | None]:
         if settings.ENFORCE_QUARANTINE:  # type: ignore
             reason = QuarantineReason(
                 self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
