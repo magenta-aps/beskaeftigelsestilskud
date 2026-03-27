@@ -8,13 +8,13 @@
     <p>
         {% if quarantine_value == 3 %}
             {% blocktranslate %}
-                Din forventede årsindkomst er tæt på 512.000 kr., som er grænsen for at modtage Suila-tapit.<br/>
-            {% endblocktranslate %}
+                Din forventede årsindkomst er tæt på 512.000 kr., som er grænsen for at modtage Suila-tapit.            {% endblocktranslate %}
         {% elif quarantine_value == 2 %}
             {% blocktranslate %}
-                Din forventede årsindkomst ligger tæt på den nedre beløbsgrænse for berettigelse til Suila-tapit.<br/>
+                Din forventede årsindkomst ligger tæt på den nedre beløbsgrænse for berettigelse til Suila-tapit.
             {% endblocktranslate %}
         {% endif %}
+        </br>
         {% blocktranslate trimmed with year=next_year %}
             Skattestyrelsen afventer yderligere indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/>
             Næste vurdering foretages i januar {{ year }}.

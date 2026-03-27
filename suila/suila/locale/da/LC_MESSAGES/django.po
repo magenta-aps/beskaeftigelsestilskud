@@ -1285,14 +1285,14 @@ msgstr ""
 #, python-format
 msgid ""
 "Din forventede årsindkomst er tæt på 512.000 kr., som er grænsen for at "
-"modtage Suila-tapit.<br/>"
+"modtage Suila-tapit."
 msgstr ""
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 #, python-format
 msgid ""
 "Din forventede årsindkomst ligger tæt på den nedre beløbsgrænse for "
-"berettigelse til Suila-tapit.<br/>"
+"berettigelse til Suila-tapit."
 msgstr ""
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
