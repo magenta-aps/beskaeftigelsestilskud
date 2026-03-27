@@ -208,7 +208,7 @@ class PersonCprStatusChoices(IntegerChoices):
 class QuarantineReason(IntegerChoices):
     NONE = 0, "-"
     RECEIVED_TOO_MUCH = 1, _("Du modtog for meget tilskud i {year}")
-    LOWER_THRESHOLD = 2, _("Du tjente for tæt på bundgrænsen i {year}")
+    LOWER_THRESHOLD = 2, _("Din forventede årsindkomst er tæt på Suila-tapit grænsen")
     UPPER_THRESHOLD = 3, _("Din forventede årsindkomst er tæt på Suila-tapit grænsen")
 
 
@@ -848,16 +848,19 @@ class PersonYear(PermissionsMixin, models.Model):
         )
 
     @property
-    def quarantine_reason(self) -> str:
+    def quarantine_reason(self) -> dict[str, str | int | None]:
         if settings.ENFORCE_QUARANTINE:  # type: ignore
-            label = QuarantineReason(
+            reason = QuarantineReason(
                 self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
-            ).label
+            )
+            value = reason.value
+            label = reason.label
             if "{year}" in label:
                 label = label.format(year=self.year.year - 1)
         else:
             label = ""
-        return label
+            value = None
+        return {"label": label, "value": value}
 
     @property
     def engines_used_for_latest_calculation(self):

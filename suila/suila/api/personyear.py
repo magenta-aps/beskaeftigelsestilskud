@@ -37,7 +37,7 @@ class PersonYearOut(ModelSchema):
 
     @staticmethod
     def resolve_quarantine_reason(obj: PersonYear) -> str:
-        return obj.quarantine_reason
+        return obj.quarantine_reason["label"]  # type: ignore[return-value]
 
     @staticmethod
     def resolve_tax_scope(obj: PersonYear) -> str:
