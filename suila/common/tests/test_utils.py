@@ -211,7 +211,6 @@ class BaseTestCase(TestCase):
         )
 
         for person_year in person_years:
-
             PersonYearAssessment.objects.create(
                 person_year=person_year,
                 valid_from=datetime(
@@ -368,11 +367,17 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
 
         self.assertIn("modtog for meget", person_year_1.quarantine_reason["label"])
         self.assertEqual({"label": "-", "value": 0}, person_year_2.quarantine_reason)
-        self.assertIn("tæt på Suila-tapit grænsen", person_year_3.quarantine_reason["label"])
-        self.assertIn("tæt på Suila-tapit grænsen", person_year_4.quarantine_reason["label"])
+        self.assertIn(
+            "tæt på Suila-tapit grænsen", person_year_3.quarantine_reason["label"]
+        )
+        self.assertIn(
+            "tæt på Suila-tapit grænsen", person_year_4.quarantine_reason["label"]
+        )
 
         with override_settings(ENFORCE_QUARANTINE=False):
-            self.assertEqual(person_year_1.quarantine_reason, {"label": "", "value": None})
+            self.assertEqual(
+                person_year_1.quarantine_reason, {"label": "", "value": None}
+            )
 
     @override_settings(ENFORCE_QUARANTINE=False)
     def test_no_people_in_quarantine(self):
@@ -407,7 +412,6 @@ class QuarantineTest(TimeContextMixin, TestViewMixin, BaseTestCase):
     @override_settings(QUARANTINE_IF_WRONG_PAYOUT=True)
     @override_settings(QUARANTINE_WEIGHTS=[0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 1, 1])
     def test_quarantine_view(self):
-
         # Check that quarantine messages are displayed properly
         with self._time_context(year=2024, month=11):
             view, response = self.request_get(self.admin_user, pk=self.person1.pk)
@@ -465,7 +469,6 @@ class BTaxUtilsTest(TestCase):
 
 class AddWorkingDaysTest(TestCase):
     def test_add_or_subtract_working_days(self):
-
         # 2025-10-3 is a friday.
         # So adding two working days gives Tuesday the 7th
         self.assertEqual(
