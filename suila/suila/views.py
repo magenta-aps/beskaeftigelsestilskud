@@ -1061,31 +1061,34 @@ class CalculatorView(
             "fully_tax_liable": True,
         }
 
+    def engine_dict(self, engine):
+        values = omit(model_to_dict(engine), "id")
+        fields = omit(fields_for_model(engine.__class__), "id")
+        return {
+            "name": str(engine),
+            "class": engine.__class__.__name__,
+            "fields": {
+                fieldname: {
+                    "value": values[fieldname],
+                    "label": field.label,
+                }
+                for fieldname, field in fields.items()
+            },
+        }
+
     @cached_property
     def engines(self):
-        engines = []
-        for engine in WorkingTaxCreditCalculationMethod.subclass_instances():
-            values = omit(model_to_dict(engine), "id")
-            fields = omit(fields_for_model(engine.__class__), "id")
-            engines.append(
-                {
-                    "name": str(engine),
-                    "class": engine.__class__.__name__,
-                    "fields": {
-                        fieldname: {
-                            "value": values[fieldname],
-                            "label": field.label,
-                        }
-                        for fieldname, field in fields.items()
-                    },
-                }
-            )
-        return engines
+        return [
+            self.engine_dict(engine)
+            for engine in WorkingTaxCreditCalculationMethod.subclass_instances()
+        ]
 
     def get_context_data(self, **kwargs):
         self.log_view()
+        year_object = Year.objects.get(year=timezone.now().year)
         context_data = super().get_context_data(**kwargs)
         context_data["engines"] = self.engines
+        context_data["engine"] = self.engine_dict(year_object.calculation_method)
         if "graph_points" in kwargs:
             context_data["graph_points"] = kwargs["graph_points"]
         return context_data
