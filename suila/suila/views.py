@@ -20,7 +20,6 @@ from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.db import transaction
@@ -1718,18 +1717,8 @@ class CalculationParametersListView(
     def form_valid(self, form):
         year, year_created = Year.objects.get_or_create(year=self.next_year())
         method = year.calculation_method
-        create = True
-        if (
-            method is None
-            or Year.objects.filter(
-                calculation_method_object_id=method.pk,
-                calculation_method_content_type=ContentType.objects.get_for_model(
-                    StandardWorkBenefitCalculationMethod
-                ),
-            )
-            .exclude(pk=year.pk)
-            .exists()
-        ):
+        create = False
+        if method is None or method.years.exclude(pk=year.pk).exists():
             create = True
             method = StandardWorkBenefitCalculationMethod()
         for key, value in form.cleaned_data.items():
