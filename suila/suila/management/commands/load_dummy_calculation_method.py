@@ -27,10 +27,31 @@ class Command(BaseCommand):
         # Create and configure calculation method for a range of years
         first_year = 2020
         current_year = date.today().year
-        for year in range(first_year, current_year + 2):
+        for year in range(first_year, current_year):
             Year.objects.update_or_create(
                 year=year,
                 defaults={
                     "calculation_method": method,
+                },
+            )
+
+        new_method, _ = StandardWorkBenefitCalculationMethod.objects.get_or_create(
+            id=2,
+            defaults={
+                "benefit_rate_percent": Decimal("17.5"),
+                "personal_allowance": Decimal("60000.00"),
+                "standard_allowance": Decimal("10000"),
+                "max_benefit": Decimal("16128.00"),
+                "scaledown_rate_percent": Decimal("6.3"),
+                "scaledown_ceiling": Decimal("256000.00"),
+            },
+        )
+
+        current_year = date.today().year
+        for year in range(current_year, current_year + 2):
+            Year.objects.update_or_create(
+                year=year,
+                defaults={
+                    "calculation_method": new_method,
                 },
             )

@@ -83,7 +83,8 @@
             </div>
             {{ form.method }}
             <div id="engine_parameters">
-                {% for fieldname, field in engines.0.fields.items %}
+            {% with current_engine=engine|default:engines.0 %}
+                {% for fieldname, field in current_engine.fields.items %}
                 <div class="row align-items-center my-1">
                     <div class="col-md-6">
                         <label for="{{ fieldname }}">{{ field.label }}</label>
@@ -98,6 +99,7 @@
                     </div>
                 </div>
                 {% endfor %}
+            {% endwith %}
             </div>
             {% endif %}
             <button type="submit" class="btn btn-primary d-inline-flex align-items-center" disabled>
