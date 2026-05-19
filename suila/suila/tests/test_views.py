@@ -2568,6 +2568,7 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
         )
         year = Year.objects.get(year=self.next_year)
         method = year.calculation_method
+        method_pk = method.pk
         self.assertEqual(method.benefit_rate_percent, 5)
         self.assertEqual(method.personal_allowance, 12000)
         self.assertEqual(method.standard_allowance, 9000)
@@ -2576,6 +2577,21 @@ class TestCalculationParametersListView(TestViewMixin, TestCase):
         self.assertEqual(method.scaledown_ceiling, 300000)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], self.url)
+
+        response = self.client.post(
+            self.url,
+            {
+                "benefit_rate_percent": 5,
+                "personal_allowance": "12000",
+                "standard_allowance": "10000",
+                "max_benefit": "17000",
+                "scaledown_rate_percent": "6.7",
+                "scaledown_ceiling": "300000",
+            },
+        )
+        year = Year.objects.get(year=self.next_year)
+        method = year.calculation_method
+        self.assertEqual(method_pk, method.pk)
 
     def test_view_borger_denied(self):
         with self.assertRaises(PermissionDenied):
