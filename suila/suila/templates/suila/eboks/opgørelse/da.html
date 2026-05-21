@@ -56,17 +56,17 @@
         Suila-tapit er navnet for udbetalt beskæftigelsesfradrag. Det blev vedtaget som en del af skattereformen med
         virkning fra 1. januar 2025. Suila-tapit udbetales til borgere med indkomster i form af lønindkomst,
         indhandlingsbeløb, overskud ved selvstændig virksomhed samt modtaget udbyttebetaling. Den udbetaling af
-        Suila-tapit du modtager i marts 2025, er for indkomster optjent i januar 2025.
+        Suila-tapit du modtager i marts {{ year }}, er for indkomster optjent i januar {{ year }}.
     </p>
     <p>
-        På baggrund af din indkomst i 2025 og sammenholdt med dine indkomster i 2024, har Skattestyrelsen beregnet en
-        forventet årsindkomst for 2025. Der udbetales Suila-tapit månedligt, hvis din forventede årsindkomst er mellem
-        70.000 kr. og 500.000 kr.
+    På baggrund af din indkomst i {{ year }} og sammenholdt med dine indkomster i {{ year|add:-1 }}, har Skattestyrelsen beregnet en
+    forventet årsindkomst for {{ year }}. Der udbetales Suila-tapit månedligt, hvis din forventede årsindkomst er mellem
+        70.000 kr. og 512.000 kr.
     </p>
 
     <table style="width: 100%">
         <tr>
-            <td>Udbetaling for januar 2025</td>
+            <td>Udbetaling for {{ income_month }} {{ income_year }}</td>
             <td style="text-align: right; width: 25%">kr. {{ personmonth.benefit_calculated|default_if_none:"0,00" }}</td>
         </tr>
         <tr>
@@ -139,7 +139,7 @@
     <p>
         Oplysning om betalt B-skat stammer fra din egen indbetaling af B-skat på baggrund af din forskudsregistrering
         for
-        2025. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener, at den er forkert. Oplysning
+        {{ year }}. Du kan altid ændre din forskudsregistrering på Sullissivik.gl, hvis du mener, at den er forkert. Oplysning
         om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig. Hvis du har modtaget udbytte
         sidste år, forventer Skattestyrelsen, at du også modtager udbytte i år. På den måde påvirker oplysninger om
         udbytte fra tidligere år beregningen af din forventede årsindkomst for i år.
