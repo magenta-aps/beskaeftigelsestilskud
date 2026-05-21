@@ -57,19 +57,19 @@
         akuersissutigineqarluni 1. januar 2025 aallarnerfigalugu atuutilerpoq. Suila-tapit tunniunneqartarpoq
         innuttaasunut akissarsiortutut aningaasarsialinnut, tunisinikkut isertitalinnut, namminersorluni
         inuussutissarsiummik ingerlataqarnikkut sinneqartoorutilinnut kiisalu iluanaarutisianik tunineqarsimasunut.
-        Suila-tapit 2025-mi martsimi ilinnut tunniunneqartussaq, 2025-mi januarimi aningaasarsiarisimasatit
+        Suila-tapit {{ year }}-mi martsimi ilinnut tunniunneqartussaq, {{ year }}-mi januarimi aningaasarsiarisimasatit
         tunngavigalugit naatsorsugaavoq.
     </p>
     <p>
-        2025-mi aningaasarsiatit tunngavigalugit, 2024-milu aningaasarsiannut sanilliussinikkut 2025-mi ukiumut
+    {{ year }}-mi aningaasarsiatit tunngavigalugit, {{ year|add:"-1" }}-milu aningaasarsiannut sanilliussinikkut {{ year }}-mi ukiumut
         aningaasarsiariumaagassattut naatsorsuutigineqartut Akileraartarnermut Aqutsisoqarfiup naatsorsorpai. Ukiumut
-        aningaasarsiariumaagassattut naatsorsuutigineqartut 70.000 kr.-it 500.000 kr.-illu akornanniippata Suila-tapit
+        aningaasarsiariumaagassattut naatsorsuutigineqartut 70.000 kr.-it 512.000 kr.-illu akornanniippata Suila-tapit
         qaammatikkaartumik tunniunneqartassaaq.
     </p>
 
     <table style="width: 100%">
         <tr>
-            <td>2025-mi januarimut tunngatillugu tunniunneqartussaq</td>
+            <td>{{ income_year }}-mi {{ income_month }}mut tunngatillugu tunniunneqartussaq</td>
             <td style="text-align: right; width: 25%">kr. {{ personmonth.benefit_calculated|default_if_none:"0,00" }}</td>
         </tr>
         <tr>
@@ -142,7 +142,7 @@
         paasiniaassaatit.
     </p>
     <p>
-        Akileraarutit B-t akilersimasat pillugit paasissutissat illit 2025-mut siumoortumik nalunaarsukkatit
+    Akileraarutit B-t akilersimasat pillugit paasissutissat illit {{ year }}-mut siumoortumik nalunaarsukkatit
         tunngavigalugit akileraarutinik B-nik akiliininneersuupput. Siumoortumik nalunaarsuineq eqqunngitsuusorigukku,
         taanna Sullissivik.gl-ikkut sukkulluunniit allanngortissinnaavat. Iluanaarutisiat pillugit paasissutissat
         selskabit ilinnut iluanaarutisiaqartitsisimanerminnik nalunaarutaanneersuupput. Iluanaarutisianik siorna
