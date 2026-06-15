@@ -2736,12 +2736,9 @@ class SuilaEboksMessage(EboksMessage):
     def html(self, language: str):
         template = self.attrs["templates"].get(language)
         if template:
-            income_month = date(self.year, self.month, 1) - relativedelta(months=2)
             context = {
                 **self.context,
                 "month_name": self.month_names[language][self.month - 1],
-                "income_month": self.month_names[language][income_month.month - 1],
-                "income_year": income_month.year,
             }
             return template.render(context)
         else:
