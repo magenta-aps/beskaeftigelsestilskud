@@ -1,11 +1,13 @@
 {# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
 {# SPDX-License-Identifier: MPL-2.0 #}
 {% load i18n %}
+{% load static %}
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% translate "e-Boks-besked" %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'suila/pdf.css' %}">
 </head>
 <body>
 {% block content %}

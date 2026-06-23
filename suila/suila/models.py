@@ -6,6 +6,7 @@ from __future__ import annotations
 import base64
 import calendar
 import logging
+import os
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -57,7 +58,7 @@ from django.utils.translation import override
 from lxml import etree
 from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
-from weasyprint import HTML
+from weasyprint import CSS, HTML
 from weasyprint.text.fonts import FontConfiguration
 
 from suila.data import engine_choices
@@ -990,6 +991,25 @@ class PersonYear(PermissionsMixin, models.Model):
         if action == "view":
             return qs.filter(person__cpr=user.cpr)
         return qs.none()
+
+    @cached_property
+    def aggregation(self):
+        return self.personmonth_set.aggregate(
+            sum_benefit_calculated=Coalesce(Sum("benefit_calculated"), 0),
+            sum_benefit_transferred=Coalesce(Sum("benefit_transferred"), 0),
+        )
+
+    @property
+    def benefit_calculated(self) -> Decimal:
+        return self.aggregation["sum_benefit_calculated"]
+
+    @property
+    def benefit_transferred(self) -> Decimal:
+        return self.aggregation["sum_benefit_transferred"]
+
+    @property
+    def benefit_transfer_difference(self) -> Decimal:
+        return self.benefit_calculated - self.benefit_transferred
 
 
 class TaxInformationPeriod(PermissionsMixin, models.Model):
@@ -2569,6 +2589,16 @@ class SuilaEboksMessage(EboksMessage):
                 "en": get_template("suila/eboks/payout_pause/en.html"),
             },
         },
+        "årsopgørelse": {
+            "content_type": settings.EBOKS["content_type_id"],  # type: ignore
+            "title": ("Årsopgørelse"),
+            "template_folder": "suila/eboks/årsopgørelse",
+            "templates": {
+                # "kl": get_template("suila/eboks/årsopgørelse/kl.html"),
+                "da": get_template("suila/eboks/årsopgørelse/da.html"),
+                # "en": get_template("suila/eboks/årsopgørelse/en.html"),
+            },
+        },
     }
 
     welcome_letter = "opgørelse"
@@ -2744,17 +2774,24 @@ class SuilaEboksMessage(EboksMessage):
         else:
             return None
 
-    @cached_property
+    @property
     def html_docs(self):
         return [h for h in [self.html("kl"), self.html("da"), self.html("en")] if h]
 
-    @cached_property
+    @property
     def pdf(self) -> bytes:
         font_config = FontConfiguration()
         writer = PdfWriter()
         data = BytesIO()
+        css = CSS(
+            filename=os.path.join(
+                settings.BASE_DIR.parent, "suila", "static", "suila", "pdf.css"
+            )
+        )
         for html in self.html_docs:
-            pdf_data = HTML(string=html).write_pdf(font_config=font_config)
+            pdf_data = HTML(string=html).write_pdf(
+                font_config=font_config, stylesheets=[css]
+            )
             writer.append(BytesIO(pdf_data))
             writer.write_stream(data)
         data.seek(0)

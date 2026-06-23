@@ -878,6 +878,7 @@ class PersonDetailEboksPreView(
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
+                "person_year": self.person_year,
                 "months": self.person_year.personmonth_set.all().order_by("month"),
                 "available_person_years": PersonYear.objects.filter(
                     person=self.person_year.person
@@ -913,7 +914,7 @@ class PersonDetailEboksSendView(
         return (
             "afventer"
             if settings.ENFORCE_QUARANTINE and self.person_year.in_quarantine
-            else "opgørelse"
+            else "årsopgørelse"
         )
 
     @property
@@ -1294,7 +1295,7 @@ class GeneratedEboksMessageView(
             month=self.kwargs["month"],
         )
         typ = self.kwargs["type"]
-        if typ not in ("opgørelse", "afventer"):
+        if typ not in ("opgørelse", "afventer", "årsopgørelse"):
             raise Http404
         self.log_view(person_month)
         return super().get_context_data(
@@ -1305,6 +1306,10 @@ class GeneratedEboksMessageView(
         )
 
     def render_to_response(self, context):
+        if self.request.GET.get("format") == "html":
+            return HttpResponse(
+                content=context["message"].html("da"), content_type="text/html"
+            )
         pdf_data = context["message"].pdf
         return HttpResponse(content=pdf_data, content_type="application/pdf")
 
