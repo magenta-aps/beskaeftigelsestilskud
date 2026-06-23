@@ -994,9 +994,24 @@ class PersonYear(PermissionsMixin, models.Model):
 
     @cached_property
     def aggregation(self):
-        return self.personmonth_set.aggregate(
-            sum_benefit_calculated=Coalesce(Sum("benefit_calculated"), 0),
-            sum_benefit_transferred=Coalesce(Sum("benefit_transferred"), 0),
+        aggregation_dict = {}
+        aggregation_dict.update(
+            self.personmonth_set.aggregate(
+                sum_benefit_calculated=Coalesce(Sum("benefit_calculated"), 0),
+                sum_benefit_transferred=Coalesce(Sum("benefit_transferred"), 0),
+            )
+        )
+        aggregation_dict.update(
+            MonthlyIncomeReport.objects.filter(
+                person_month__person_year=self
+            ).aggregate(
+                sum_salary_income=Coalesce(Sum("salary_income"), 0),
+                sum_catchsale_income=Coalesce(Sum("catchsale_income"), 0),
+                sum_u_income=Coalesce(Sum("u_income"), 0),
+                sum_employer_paid_gl_pension_income=Coalesce(
+                    Sum("employer_paid_gl_pension_income"), 0
+                ),
+            )
         )
 
     @property
@@ -1006,6 +1021,10 @@ class PersonYear(PermissionsMixin, models.Model):
     @property
     def benefit_transferred(self) -> Decimal:
         return self.aggregation["sum_benefit_transferred"]
+
+    @property
+    def salary_income(self) -> Decimal:
+        return self.aggregation["sum_salary_income"]
 
     @property
     def benefit_transfer_difference(self) -> Decimal:

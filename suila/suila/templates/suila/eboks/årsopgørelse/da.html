@@ -105,19 +105,19 @@
                 <table>
                     <tr>
                         <td>A-indkomst, herunder lønindkomst og udenlandske pensioner</td>
-                        <td>Xxxx</td>
+                        <td>{{ person_year.sum_salary_income }}</td>
                     </tr>
                     <tr>
                         <td>B-indkomst, herunder indhandling og overskud af virksomhed</td>
-                        <td>Xxxx</td>
+                        <td>{{ person_year.sum_catchsale_income }}</td>
                     </tr>
                     <tr>
                         <td>Udbytter fra grønlandske selskaber</td>
-                        <td>Xxxx</td>
+                        <td>{{ person_year.sum_u_income }}</td>
                     </tr>
                     <tr>
                         <td>Pensionsindbetalinger fra din arbejdsgiver</td>
-                        <td>xxxx</td>
+                        <td>{{ person_year.sum_employer_paid_gl_pension_income }}</td>
                     </tr>
                     <tr>
                         <th>Samlet Suila-tapit indkomstgrundlag</th>

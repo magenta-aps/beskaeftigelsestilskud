@@ -11,7 +11,7 @@
 }
 div.page {
     page-break-after: always;
-    border: 1px dashed #888;
+    border: 1px dashed #fff;
     padding: 0 1cm;
     margin: 0;
     font-family: sans-serif;
@@ -77,9 +77,10 @@ div.year-band-number {
 div.header-image {
     position: absolute;
     right: 7rem;
-    width: 18rem;
-    height: 6rem;
-    border: 1px dashed red;
+    width: 16.5rem;
+    height: 5.75rem;
+    background-image: url('pdf_header.png');
+    background-repeat: no-repeat;
 }
 
 div.page-main {
