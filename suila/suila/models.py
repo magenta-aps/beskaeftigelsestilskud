@@ -2843,7 +2843,11 @@ class SuilaEboksMessage(EboksMessage):
         data = BytesIO()
         css = CSS(
             filename=os.path.join(
-                settings.BASE_DIR.parent, "suila", "static", "suila", "pdf.css"
+                settings.BASE_DIR.parent,  # type: ignore[misc]
+                "suila",
+                "static",
+                "suila",
+                "pdf.css",
             )
         )
         for html in self.html_docs:
