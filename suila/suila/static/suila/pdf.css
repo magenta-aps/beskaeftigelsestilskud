@@ -77,10 +77,11 @@ div.year-band-number {
 div.header-image {
     position: absolute;
     right: 7rem;
-    width: 16.5rem;
+    width: 14.75rem;
     height: 5.75rem;
-    background-image: url('pdf_header.png');
+    background-image: url('logo_right.svg');
     background-repeat: no-repeat;
+    background-size: contain;
 }
 
 div.page-main {

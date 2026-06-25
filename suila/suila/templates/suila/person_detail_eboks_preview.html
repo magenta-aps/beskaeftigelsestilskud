@@ -53,10 +53,10 @@
                         <tr>
                             <td>{{ person_year.year }}</td>
                             <td>
-                                <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=1 type='årsopgørelse' %}?format=html" class="btn btn-primary btm-sm" target="message_frame">
+                                <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=12 type='årsopgørelse' %}?format=html" class="btn btn-primary btm-sm" target="message_frame">
                                     {% translate 'HTML' %}
                                 </a>
-                                <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=1 type='årsopgørelse' %}" class="btn btn-primary btm-sm" target="message_frame">
+                                <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=12 type='årsopgørelse' %}" class="btn btn-primary btm-sm" target="message_frame">
                                     {% translate 'PDF' %}
                                 </a>
                             </td>

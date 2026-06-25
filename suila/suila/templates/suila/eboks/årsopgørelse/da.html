@@ -5,7 +5,7 @@
 
 {% block content %}
 
-    {% with annual_statement=person_year.annual_income_statements.last benefit_calculated=person_year.benefit_calculated benefit_transferred=person_year.benefit_transferred benefit_transfer_difference=person_year.benefit_transfer_difference %}
+    {% with annual_statement=personyear.annual_income_statements.last benefit_calculated=personyear.benefit_calculated benefit_transferred=personyear.benefit_transferred benefit_transfer_difference=personyear.benefit_transfer_difference %}
 
         <div class="page">
             <div class="year-band">
@@ -105,23 +105,23 @@
                 <table>
                     <tr>
                         <td>A-indkomst, herunder lønindkomst og udenlandske pensioner</td>
-                        <td>{{ person_year.sum_salary_income }}</td>
+                        <td>{{ a_income }}</td>
                     </tr>
                     <tr>
                         <td>B-indkomst, herunder indhandling og overskud af virksomhed</td>
-                        <td>{{ person_year.sum_catchsale_income }}</td>
+                        <td>{{ b_income }}</td>
                     </tr>
                     <tr>
                         <td>Udbytter fra grønlandske selskaber</td>
-                        <td>{{ person_year.sum_u_income }}</td>
+                        <td>{{ u_income }}</td>
                     </tr>
                     <tr>
                         <td>Pensionsindbetalinger fra din arbejdsgiver</td>
-                        <td>{{ person_year.sum_employer_paid_gl_pension_income }}</td>
+                        <td>{{ employer_paid_gl_pension_income }}</td>
                     </tr>
                     <tr>
                         <th>Samlet Suila-tapit indkomstgrundlag</th>
-                        <th>Xxxx</th>
+                        <th>{{ sum_income }}</th>
                     </tr>
 
                 </table>

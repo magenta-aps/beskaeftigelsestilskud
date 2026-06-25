@@ -993,26 +993,28 @@ class PersonYear(PermissionsMixin, models.Model):
         return qs.none()
 
     @cached_property
-    def aggregation(self):
+    def aggregation(self) -> Dict[str, Decimal]:
+        zero = Decimal(0)
         aggregation_dict = {}
         aggregation_dict.update(
             self.personmonth_set.aggregate(
-                sum_benefit_calculated=Coalesce(Sum("benefit_calculated"), 0),
-                sum_benefit_transferred=Coalesce(Sum("benefit_transferred"), 0),
+                sum_benefit_calculated=Coalesce(Sum("benefit_calculated"), zero),
+                sum_benefit_transferred=Coalesce(Sum("benefit_transferred"), zero),
             )
         )
         aggregation_dict.update(
             MonthlyIncomeReport.objects.filter(
                 person_month__person_year=self
             ).aggregate(
-                sum_salary_income=Coalesce(Sum("salary_income"), 0),
-                sum_catchsale_income=Coalesce(Sum("catchsale_income"), 0),
-                sum_u_income=Coalesce(Sum("u_income"), 0),
+                sum_salary_income=Coalesce(Sum("salary_income"), zero),
+                sum_catchsale_income=Coalesce(Sum("catchsale_income"), zero),
+                sum_u_income=Coalesce(Sum("u_income"), zero),
                 sum_employer_paid_gl_pension_income=Coalesce(
-                    Sum("employer_paid_gl_pension_income"), 0
+                    Sum("employer_paid_gl_pension_income"), zero
                 ),
             )
         )
+        return aggregation_dict
 
     @property
     def benefit_calculated(self) -> Decimal:
@@ -1029,6 +1031,14 @@ class PersonYear(PermissionsMixin, models.Model):
     @property
     def benefit_transfer_difference(self) -> Decimal:
         return self.benefit_calculated - self.benefit_transferred
+
+    @property
+    def u_income(self):
+        return self.aggregation["sum_u_income"]
+
+    @property
+    def sum_employer_paid_gl_pension_income(self):
+        return self.aggregation["sum_employer_paid_gl_pension_income"]
 
 
 class TaxInformationPeriod(PermissionsMixin, models.Model):
@@ -2717,70 +2727,100 @@ class SuilaEboksMessage(EboksMessage):
             )
             for y in year_range
         ]
-        return {
+
+        context: Dict[str, Any] = {
             "person": self.person,
             "year": self.year,
             "month": self.month,
             "personyear": self.person_month.person_year,
             "personmonth": self.person_month,
-            "sum_income": (self.person_month.estimated_year_result or Decimal(0))
-            + self.person_year.b_income
-            - self.person_year.b_expenses
-            - self.person_year.catchsale_expenses,
-            "pause_reason_da": self.pause_reason("da"),
-            "pause_reason_kl": self.pause_reason("kl"),
-            "pause_reason_en": self.pause_reason("en"),
-            "income": {
-                "catchsale_income": [
-                    Decimal(
-                        sum(
-                            [
-                                report.catchsale_income
-                                for pm in months
-                                for report in pm.monthlyincomereport_set.all()
-                            ]
-                        )
-                    ).quantize(quant)
-                    for months in year_map
-                ],
-                "salary_income": [
-                    Decimal(
-                        sum(
-                            [
-                                report.salary_income
-                                for pm in months
-                                for report in pm.monthlyincomereport_set.all()
-                            ]
-                        )
-                    ).quantize(quant)
-                    for months in year_map
-                ],
-                "btax_paid": [
-                    Decimal(
-                        sum(
-                            [
-                                payment.amount_paid
-                                for pm in months
-                                for payment in pm.btaxpayment_set.all()
-                            ]
-                        )
-                    ).quantize(quant)
-                    for months in year_map
-                ],
-                "capital_income": [
-                    Decimal(
-                        sum(
-                            [
-                                report.u_income
-                                for pm in months
-                                for report in pm.monthlyincomereport_set.all()
-                            ]
-                        )
-                    ).quantize(quant)
-                    for months in year_map
-                ],
-            },
         }
+
+        if self.type == "årsopgørelse":
+            context.update(
+                {
+                    "a_income": self.person_month.estimated_year_result or Decimal(0),
+                    "b_income": self.person_year.b_income
+                    - self.person_year.b_expenses
+                    - self.person_year.catchsale_expenses,
+                    "u_income": self.person_year.u_income,
+                    "employer_paid_gl_pension_income": (
+                        self.person_year.sum_employer_paid_gl_pension_income
+                    ),
+                }
+            )
+
+        if self.type == "payout_pause":
+            context.update(
+                {
+                    "pause_reason_da": self.pause_reason("da"),
+                    "pause_reason_kl": self.pause_reason("kl"),
+                    "pause_reason_en": self.pause_reason("en"),
+                }
+            )
+
+        if self.type in ("afventer", "opgørelse", "årsopgørelse"):
+            context.update(
+                {
+                    "sum_income": (
+                        self.person_month.estimated_year_result or Decimal(0)
+                    )
+                    + self.person_year.b_income
+                    - self.person_year.b_expenses
+                    - self.person_year.catchsale_expenses,
+                    "income": {
+                        "catchsale_income": [
+                            Decimal(
+                                sum(
+                                    [
+                                        report.catchsale_income
+                                        for pm in months
+                                        for report in pm.monthlyincomereport_set.all()
+                                    ]
+                                )
+                            ).quantize(quant)
+                            for months in year_map
+                        ],
+                        "salary_income": [
+                            Decimal(
+                                sum(
+                                    [
+                                        report.salary_income
+                                        for pm in months
+                                        for report in pm.monthlyincomereport_set.all()
+                                    ]
+                                )
+                            ).quantize(quant)
+                            for months in year_map
+                        ],
+                        "btax_paid": [
+                            Decimal(
+                                sum(
+                                    [
+                                        payment.amount_paid
+                                        for pm in months
+                                        for payment in pm.btaxpayment_set.all()
+                                    ]
+                                )
+                            ).quantize(quant)
+                            for months in year_map
+                        ],
+                        "capital_income": [
+                            Decimal(
+                                sum(
+                                    [
+                                        report.u_income
+                                        for pm in months
+                                        for report in pm.monthlyincomereport_set.all()
+                                    ]
+                                )
+                            ).quantize(quant)
+                            for months in year_map
+                        ],
+                    },
+                }
+            )
+        return context
 
     def html(self, language: str):
         template = self.attrs["templates"].get(language)

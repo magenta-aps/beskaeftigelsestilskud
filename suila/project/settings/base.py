@@ -106,6 +106,9 @@ if TESTING:
     # instead of django.utils.timezone
     warnings.filterwarnings("ignore", message=".*naive datetime.*")
 
+    # Run tests in parallel
+    DJANGO_TEST_PROCESSES = 8
+
 CRISPY_TEMPLATE_PACK = "uni_form"
 
 # "calculation_date" is created from "payout_date - {days_offset}"

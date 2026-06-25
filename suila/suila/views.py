@@ -914,7 +914,7 @@ class PersonDetailEboksSendView(
         return (
             "afventer"
             if settings.ENFORCE_QUARANTINE and self.person_year.in_quarantine
-            else "årsopgørelse"
+            else "opgørelse"
         )
 
     @property
@@ -1310,8 +1310,9 @@ class GeneratedEboksMessageView(
             return HttpResponse(
                 content=context["message"].html("da"), content_type="text/html"
             )
-        pdf_data = context["message"].pdf
-        return HttpResponse(content=pdf_data, content_type="application/pdf")
+        else:
+            pdf_data = context["message"].pdf
+            return HttpResponse(content=pdf_data, content_type="application/pdf")
 
 
 @method_decorator(xframe_options_sameorigin, name="dispatch")
