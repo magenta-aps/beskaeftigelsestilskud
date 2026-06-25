@@ -16,6 +16,10 @@ div.page {
     margin: 0;
     font-family: sans-serif;
 }
+div.page.padding {
+    padding-top: 3cm;
+    padding-bottom: 3cm;
+}
 h1 {
     color: #7c0041;
     font-weight: normal;
@@ -77,8 +81,8 @@ div.year-band-number {
 div.header-image {
     position: absolute;
     right: 7rem;
-    width: 14.75rem;
-    height: 5.75rem;
+    width: 14.25rem;
+    height: 5.5rem;
     background-image: url('logo_right.svg');
     background-repeat: no-repeat;
     background-size: contain;

@@ -56,7 +56,7 @@
                                 <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=12 type='årsopgørelse' %}?format=html" class="btn btn-primary btm-sm" target="message_frame">
                                     {% translate 'HTML' %}
                                 </a>
-                                <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=12 type='årsopgørelse' %}" class="btn btn-primary btm-sm" target="message_frame">
+                                <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=12 type='årsopgørelse' %}?format=pdf" class="btn btn-primary btm-sm" target="message_frame">
                                     {% translate 'PDF' %}
                                 </a>
                             </td>
@@ -79,13 +79,19 @@
                                 <tr>
                                     <td>{{ person_month.month|month_name }}</td>
                                     <td>
-                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='opgørelse' %}" class="btn btn-primary btm-sm" target="message_frame">
-                                            {% translate 'Åbn' %}
+                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='opgørelse' %}?format=html" class="btn btn-primary btm-sm" target="message_frame">
+                                            {% translate 'HTML' %}
+                                        </a>
+                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='opgørelse' %}?format=pdf" class="btn btn-primary btm-sm" target="message_frame">
+                                            {% translate 'PDF' %}
                                         </a>
                                     </td>
                                     <td>
-                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='afventer' %}" class="btn btn-primary btm-sm" target="message_frame">
-                                            {% translate 'Åbn' %}
+                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='afventer' %}?format=html" class="btn btn-primary btm-sm" target="message_frame">
+                                            {% translate 'HTML' %}
+                                        </a>
+                                        <a href="{% url 'suila:person_generated_message' pk=object.pk year=year month=person_month.month type='afventer' %}?format=pdf" class="btn btn-primary btm-sm" target="message_frame">
+                                            {% translate 'PDF' %}
                                         </a>
                                     </td>
                                 </tr>

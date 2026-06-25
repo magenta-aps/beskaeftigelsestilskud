@@ -24,12 +24,12 @@
             padding-bottom: 0.5cm;
         }
     </style>
-
+    <div class="page">
     <table style="width: 100%">
         <tr>
             <td style="vertical-align: top">
                 <div class="address">
-                    <div style="padding-left: 20pt">
+                    <div>
                         {{ person.name }}<br/>
                         {% if person.full_address %}
                             {% for line in person.full_address_splitted %}

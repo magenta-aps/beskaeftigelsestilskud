@@ -24,12 +24,13 @@
             padding-bottom: 0.5cm;
         }
     </style>
+    <div class="page">
 
     <table style="width: 100%">
         <tr>
             <td style="vertical-align: top">
                 <div class="address">
-                    <div style="padding-left: 20pt">
+                    <div>
                         {{ person.name }}<br/>
                         {% if person.full_address %}
                             {% for line in person.full_address_splitted %}
@@ -71,7 +72,7 @@
         </tr>
         <tr>
             <td>Tunngavigineqartut: Ukiumut isertitariumaagassatut naatsorsuutigisat</td>
-            <td style="text-align: right; width: 25%">kr. {{ sum_income|default_if_none:"0,00" }}</td>>
+            <td style="text-align: right; width: 25%">kr. {{ sum_income|default_if_none:"0,00" }}</td>
         </tr>
     </table>
 
@@ -83,6 +84,10 @@
         qularnartoqarput. Taamaattumik Suila-tapinik tunniussinnginnermi aningaasarsiatit pillugit paasissutissat
         amerlanerusut utaqqineqarput.
     </p>
+
+    </div>
+
+    <div class="page padding">
 
     <img src="file:///static/suila/graf_grænse_kl.png" style="width: 100%" alt="graf"/>
 
@@ -119,6 +124,9 @@
         illit pisortanut akiitsuit akilersornerannut atorneqarmata.
     </p>
 
+    </div>
+
+    <div class="page padding">
     <h3>
         Paasissutissat
     </h3>
