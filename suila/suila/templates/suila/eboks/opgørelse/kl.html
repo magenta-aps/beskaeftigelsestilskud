@@ -13,34 +13,26 @@
             vertical-align: top;
             text-align: right;
         }
-        div.address {
-            font-size: 0.8rem;
-            font-family: calibri, sans-serif;
-            margin-bottom: 2cm;
-            margin-top: 1.5cm;
-
-            min-height: 4cm;
-            padding-top: 0.5cm;
-            padding-bottom: 0.5cm;
-        }
     </style>
-    <div class="page">
+    <div class="page page-main">
 
     <table style="width: 100%">
         <tr>
             <td style="vertical-align: top">
-                <div class="address">
-                    <div>
-                    {{ person.name }}<br/>
-                    {% if person.full_address %}
-                        {% for line in person.full_address_splitted %}
-                            {{ line }}<br/>
-                        {% endfor %}
-                    {% elif person.foreign_address %}
-                        {{ person.foreign_address }}
-                    {% endif %}
+                <div class="address-container">
+                    <div class="address" style="padding-top: 1cm; padding-left: 1cm;">
+                        {{ person.name }}<br/>
+                        {% if person.full_address %}
+                            {% for line in person.full_address_splitted %}
+                                {{ line }}<br/>
+                            {% endfor %}
+                        {% elif person.foreign_address %}
+                            {{ person.foreign_address }}
+                        {% endif %}
                     </div>
-                    <img src="file:///static/suila/afsender.png" style="width: 192px;" alt="afsender"/>
+                    <div class="address">
+                        <img src="file:///static/suila/afsender.png" style="width: 192px;" alt="afsender"/>
+                    </div>
                 </div>
             </td>
             <td style="text-align: right; vertical-align: top">
@@ -92,7 +84,7 @@
     </p>
     </div>
 
-    <div class="page padding">
+    <div class="page page-main">
     <h3>
         Paasissutissat
     </h3>
@@ -166,7 +158,7 @@
 
     </div>
 
-    <div class="page padding">
+    <div class="page page-main">
 
     <h3>
         Suila-tapit – Aningaasarsiat aamma tunniussisarneq

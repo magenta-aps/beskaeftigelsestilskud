@@ -93,7 +93,7 @@ div.page-main {
     margin-top: 6rem;
 }
 div.address-container {
-    border: 2px solid #ccc;
+    /*border: 2px solid #ccc;*/
 }
 div.address {
     font-size: 0.65rem;
