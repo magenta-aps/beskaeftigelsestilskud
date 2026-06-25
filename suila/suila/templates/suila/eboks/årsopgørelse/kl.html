@@ -37,90 +37,86 @@
                     </div>
 
                 </div>
-                <h1>Årsopgørelse Suila-tapit for {{ year }}</h1>
+                <h1>Ukiumut nalunaarut {{ year }}-mi Suila-tapit</h1>
 
                 <table>
                     <tr>
-                        <th><h3>Resultat</h3></th>
+                        <th><h3>Inernera</h3></th>
                         <th>{{ benefit_transfer_difference }}</th>
                     </tr>
                     <tr>
-                        <td>Baseret på din forventede indkomst fik du udbetalt</td>
+                        <td>Isertitassatut naatsorsuutigisat naapertorlugit tunniunneqarput</td>
                         <td>{{ benefit_transferred }}</td>
                     </tr>
                     <tr>
-                        <td>Baseret på din faktiske indkomst er du berettiget til</td>
+                        <td>Eqqortumik isertitatut naapertorlugit pisassaraatit</td>
                         <td>{{ benefit_calculated }}</td>
                     </tr>
                 </table>
 
                 {% if benefit_transfer_difference == 0 %}
                     <p>
-                        Du skal hverken modtage eller betale penge.
+                        Allagaqaasiaq Aningaasanik tigusassaqanngilatit akiligassaqarnallu.
                     </p>
                 {% elif benefit_transfer_difference >= 100 and benefit_transfer_difference <= 15750 %}
                     <p>
-                        Du modtager pengene på din NemKonto inden 30 dage
+                        Allagaqaasiaq: Ullut 30 iluini aningaasat NemKonto-mut ikineqassapput.
                     </p>
                 {% elif benefit_transfer_difference > 0 and benefit_transfer_difference < 100 %}
                     <p>
-                        Forskellen mellem det Suila-tapit du har fået udbetalt og det du har ret til, er
-                        under 100 kr. Du skal hverken modtage eller betale penge.
+                        Allagaqaasiaq: Suila-tapinik tigusavit assigiinngissutaasa pisinnaasavillu 100 kr. inorpaat.
+                        Aningaasanik tigusassaqanngilatit akiligassaqarnallu.
                     </p>
                 {% elif benefit_transfer_difference < 0 and benefit_transfer_difference > -1999 %}
                     <p>
-                        Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du modtager
-                        tilsvarende mindre i Suila-tapit i {{ next_year }}, hvis du opfylder betingelserne herfor.
+                        Allagaqaasiaq: Pisinnaasatit qaangerlugit Suila-tapinik pissarsisarsimavutit.
+                        {{ next_year }}-mi piumasaqaatinik naammassinnikkuit, Suila-tapinit aningaasat assinganik ilanngaatigineqartassapput.
                     </p>
                 {% elif benefit_transfer_difference < -1999 %}
                     <p>
-                        Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du vil modtage en
-                        faktura med opkrævning af beløbet i din e-Boks.
-                    </p>
-                    <p>
-                        Hvis du modtager en faktura og ikke betaler den rettidigt, pålægges renter fra
-                        betalingsfristen.
+                        Pisinnaasatit qaangerlugit Suila-tapinik  pissarsisarsimavutit. Akiligassanik e-Boks aqqutigalugu nassinneqassaatit.
+                        Akiligassaq tigusimagukku piffissaatillugulu akilernagu, akiliiffissaq qaangiuppat ernialersorneqassapput.
                     </p>
                 {% endif %}
 
 
 
-                <h2>Hvad er Suila-tapit?</h2>
+                <h2>Suila-tapit sunaava?</h2>
                 <p>
-                    Suila-tapit er udbetalt beskæftigelsesfradrag. Suila-tapit udbetales en gang om
-                    måneden baseret på din forventede indkomst fra: arbejde, indhandling, B-
-                    indkomst og udbytte.
+                    Suila-tapit tassaapput sulinermi ilanngaatit tunniunneqartartut.
+                    Suila-tapit qaammammut ataasiarlugit sulinermi aningaasarsiat, tunisinermi isertitat,
+                    B-tut isertitat aamma pissarsiat naapertorlugit amerlassusaat tunniunneqartarput.
                 </p>
                 <p>
-                    Log ind på <a href="https://suila.gl">suila.gl</a> og se de kommende udbetalinger.
+                    <a href="https://suila.gl">Suila.gl</a> ammaruk piffissamilu aggersumi tunniunneqartussat takullugit.
                 </p>
                 <p>
-                    Efter årets afslutning , kender Skattestyrelsen dine faktiske indkomster. Baseret på
-                    de faktiske indkomster, modtager du denne Årsopgørelse for Suila-tapit. Den
-                    viser, om du har fået udbetalt for lidt, for meget eller det korrekte beløb.
+                    Ukiup naareernerani akileraartarnermut aqutsisoqarfiup isertitatit eqqortut ilisimalersimassavai.
+                    Isertitat eqqortut tunngavigalugit ukioq una Suila-tapimi isertitassanut naatsorsuutit tigussavatit.
+                    Tassani takusinnaavat, aningaasat annikippallaartut amerlavallaartulluunniit aamma eqqortut tigusimanerlugit.
                 </p>
 
 
-                <h1>Indkomstgrundlaget for Suila-tapit er beregnet således:</h1>
+                <h1>Suila-tapimi isertitatut tunngavissiaq ima naatsorsorneqartarpoq:</h1>
                 <table>
                     <tr>
-                        <td>A-indkomst, herunder lønindkomst og udenlandske pensioner</td>
+                        <td>A-tut isertitat, tamatumunnga ilanngullugit akissarsiat aamma nunani allani soraarnerussutisiaqalernissamut katersat</td>
                         <td>{{ a_income }}</td>
                     </tr>
                     <tr>
-                        <td>B-indkomst, herunder indhandling og overskud af virksomhed</td>
+                        <td>B-tut isertitat, tamatumunnga ilanngullugit tunisinerit, aamma suliffeqarfimmit sinneqartoorutit</td>
                         <td>{{ b_income }}</td>
                     </tr>
                     <tr>
-                        <td>Udbytter fra grønlandske selskaber</td>
+                        <td>Ingerlatseqatigiiffinnit kalaallinit pigineqartunit iluanaarutit</td>
                         <td>{{ u_income }}</td>
                     </tr>
                     <tr>
-                        <td>Pensionsindbetalinger fra din arbejdsgiver</td>
+                        <td>Sulisitsisumit soraarnerussutisiassat akilerneqartartut</td>
                         <td>{{ employer_paid_gl_pension_income }}</td>
                     </tr>
                     <tr>
-                        <th>Samlet Suila-tapit indkomstgrundlag</th>
+                        <th>Suila-tapimit ataatsimut isertitanut tunngavissaq</th>
                         <th>{{ sum_income }}</th>
                     </tr>
 
@@ -138,35 +134,35 @@
             </div>
             <div class="header-image"></div>
             <div class="page-main">
-                <h2>Hvem modtager Suila-tapit?</h2>
+                <h2>Kina Suila-tapinik pissava?</h2>
                 <p>
-                    Størrelsen af din årlige Suila-tapit afhænger af din indkomst. Du kan
-                    se mere omkring beregningen og hvor dit indkomstgrundlag lægger i
-                    indkomstspændet på suila.gl.
+                    Ukiumut Suila-tapisiassavit annertussusaanni isertitatit apeqqutaapput.
+                    Suila.gl-mi isertitanut tunngavissat ilineqarsimasut atorlugit naatsorsuineq annertunerusumik paasisaqarfigisinnaavat.
                 </p>
 
-                <h2>Her stammer oplysningerne fra:</h2>
-                <h3>A-indkomst</h3>
+                <h2>Paasissutissat uanngaanneerput:</h2>
+                <h3>A-tut isertitat</h3>
                 <p>
-                    Oplysningerne om A-indkomst stammer fra din slutopgørelse af skat. Slutopgørelsen er
-                    baseret på din selvangivelse og dine arbejdsgiveres indberetninger om løn, frie goder og
-                    indbetalinger til udenlandske pensioner.
+                    A-tut isertitatit pillugit paasissutissat akileraartarnermut inaarutaasumik nalunaarutinnit pisarput.
+                    Nammineerlutit nalunaarutinnut aamma sulisitsisuit akissarsiat, ajunngitsorsiassat,
+                    nunanullu allanut soraarnerussutisiassatut akilersorneqartut pillugit nalunaarutaani,
+                    Ukiup naanerani Nammineerlutit nalunaarutinni tunngaviusarput.
                 </p>
-                <h3>B-indkomst</h3>
+                <h3>B-tut isertitat</h3>
                 <p>
-                    Oplysning om B-indkomst stammer fra din slutopgørelse. Slutopgørelsen er baseret på
-                    din selvangivelse og andre indberetninger af din indkomst fra renter, indhandling,
-                    udlejning og anden virksomhedsindkomst.
+                    B-tut isertitat pillugit paasissutissat  akileraartarnermut inaarutaasumik nalunaarutinnik pisarput.
+                    Inaarutaasumik nalunaarut nammineerlutit nalunaarsuinitit aamma ernianit,
+                    attartortitsinernit imaluunniit allatigut isertitaqarfiusuni isertitatit pillugit
+                    allanit nalunaarutigineqartut, tunngavigalugu pisarput.
                 </p>
-                <h3>Udbytte fra grønlandske selskaber</h3>
+                <h3>Kalaallit Nunaanni ingerlatsivinnit ajunngitsorsiassat.</h3>
                 <p>
-                    Oplysning om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig.
+                    Iluanaarutinit paasissutissat iluanaarutitut tunniunneqartutut ingerlatseqatigiiffinniit ilinnut tunniunneqassapput.
                 </p>
-                <h3>Pensionsindbetalinger</h3>
+                <h3>Soraarnerussutisiassanut aaqqissuussinerannut akilersukkat.</h3>
                 <p>
-                    Oplysninger om pensionsindbetalinger vedrører grønlandske pensionsordninger og angår
-                    bl.a. beløb, som din arbejdsgiver har indbetalt til en pensionsopsparing som en del af din
-                    løn.
+                    Kalaallit Nunaanni  Soraarnerussutisiassanut aaqqissuussinernut tunngasut,
+                    kiisalu sulisitsisuit Soraarnerussutisiassanut aaqqissuussinerannut akilertagaanut aningaasartaanut tunngatillugu paasissutissat.
                 </p>
             </div>
         </div>
@@ -182,41 +178,39 @@
             </div>
             <div class="header-image"></div>
             <div class="page-main">
-                <h1>Regler</h1>
+                <h1>Malittarisassat</h1>
                 <p>
-                    Dette brev er en afgørelse om din Suila-tapit.
+                    Aningaasarsianit akileraarutit pillugit Inatsisartut inatsisaat pillugu Namminersorlutik Oqartussat
+                    inatsimmut nalunaarutaat nr. 62, 24. oktober 2025-meersut tunngavigalugit aalajangiisoqarpoq.
                 </p>
                 <p>
-                    Afgørelsen er truffet efter reglerne i Selvstyrets lovbekendtgørelse nr. 62 af 24.
-                    oktober 2025 af Landtingslov om indkomstskat.
+
                 </p>
-                <h2>Betingelser og størrelsen af din Suila-tapit</h2>
+                <h2>Piumasaqaatit aamma Suila-tapisiavit annertussusaat</h2>
                 <p>
-                    Af lovbekendtgørelsens § 38 a, stk. 2 fremgår, at du skal være fuldt skattepligtig
-                    til Grønland og ikke må være bruttobeskattet for at kunne modtage Suila-tapit.
+                    Inatsimmut nalunaarutini § 38. imm. 2-mi takuneqarsinnaavoq, tamakkiisumik Kalaallit Nunaannut
+                    akileraartussaassasutit aammalu Suila-tapinik pissarsissaguit ilanngaateqanngitsumik akileraartartuunak.
                 </p>
                 <p>
-                    Af § 38 b, stk. 1 fremgår:
+                    § 38 b imm. 1-mi takuneqarsinnaavoq:
                 </p>
                 <ul>
                     <li>
-                        Størrelsen af dit Suila-tapit er 17,5 % af den del af dit indkomstgrundlag, der
-                        er over 70.000 kr. (for 2025).
+                        Suila-tapivit annertussusaa isertitassatut tunngavimmit 17,5 %-voq, taannalu 70.000 kr. sinnersimassallugu (2025-mut).
                     </li>
                     <li>
-                        Dit Suila-tapit kan dog ikke være højere end 15.750 kr. (for 2025) (§ 38 b, stk. 2).
-                        Hvis dit indkomstgrundlag er over 250.000 kr. (for 2025) reduceres dit
-                        Suila-tapit med 6,3 % af dit indkomstgrundlag (§ 38 b, stk. 3).
+                        Taamaattoq sulinermut ilanngaat tunniunneqartoq ukiumi isertitaqarfiusumi ataatsimi 15.750 kr.-nit annertunerusinnaanngilaq.
+                        (2025-mut ) (§ 38 b, imm. 2). Isertitatut tunngavigisatut 250.000 kr. qaangersimappagu (2025-mut)
+                        Suila-tapit isertitatut tunngavigisannit 6,3 %-mik annikillissapput. (§ 38 b, imm. 3).
                     </li>
                 </ul>
 
                 <p>
-                    Det betyder, at du ikke er berettiget til Suila-tapit hvis dit indkomstgrundlag er
-                    over 500.000 kr. (for 2025).
+                    Tamanna ima isumaqarpoq, Suila-tapinik tunngaviusumik isertitanit 500.000 kr. qaangersimappagu Suila-tapinik pissarsisinnaanngitsutit. (2025-mut).
                 </p>
                 <p>
-                    Tallene for grænserne for Suila-tabit reguleres hvert år med
-                    satstilpasningsprocenten. Find de aktuelle tal på AKA.gl under meddelelser.
+                    Suila-tapinut killigitinneqartunut kisitsisit ukiut tamaasa akigititanut nalimmassaanermi naleqqussarneqartarput.
+                    Kisitsisit piviusut takukkit AKA.gl-mi nalunaarutit ataanni.
                 </p>
 
                 <h2>Årsopgørelsen - udbetaling og opkrævning</h2>
@@ -251,18 +245,18 @@
             </div>
             <div class="header-image"></div>
             <div class="page-main">
-                <h1>Klagevejledning</h1>
+                <h1>Naammagittaalliuuteqarnissamut ilitsersuut</h1>
                 <p>
-                    Hvis du er uenig i denne årsopgørelse bedes du kontakte Skattestyrelsen.
+                    Ukiumut nalunaarummut isumaqataanngikkuit, qinnuigineqarputit Akileraartarnermut Aqutsisoqarfik attavigeqqullugu.
                 </p>
                 <p>
-                    Denne afgørelse kan påklages til Skatterådet inden for 3 måneder.
+                    Aalajangiineq manna akileraarusiinermik aalajangiisartunut qaammatit pingasut iluini naammagittaalliuutigineqarsinnaavoq.
                 </p>
                 <p>
-                    Eventuelle klager sendes skriftligt og begrundet til:<br/>
-                    <a href="mailto:oed@nanoq.gl">oed@nanoq.gl</a> eller<br/>
+                    Naammagittaalliuutaasinnaasut allakkatigut tunngavilersorlugit uunga nassiunneqassapput:<br/>
+                    <a href="mailto:oed@nanoq.gl">oed@nanoq.gl</a> imaluunniit<br/>
                     <br/>
-                    Skatterådet<br/>
+                    Akileraarusiinermik Aalajangiisartut<br/>
                     Postboks 1037<br/>
                     3900 Nuuk
                 </p>

@@ -2623,9 +2623,8 @@ class SuilaEboksMessage(EboksMessage):
             "title": ("Årsopgørelse"),
             "template_folder": "suila/eboks/årsopgørelse",
             "templates": {
-                # "kl": get_template("suila/eboks/årsopgørelse/kl.html"),
+                "kl": get_template("suila/eboks/årsopgørelse/kl.html"),
                 "da": get_template("suila/eboks/årsopgørelse/da.html"),
-                # "en": get_template("suila/eboks/årsopgørelse/en.html"),
             },
         },
     }
