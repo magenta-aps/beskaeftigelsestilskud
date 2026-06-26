@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-28 07:22-0200\n"
+"POT-Creation-Date: 2026-06-25 12:15-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -163,11 +163,6 @@ msgstr ""
 #: suila/models.py
 #, python-brace-format
 msgid "Du modtog for meget tilskud i {year}"
-msgstr ""
-
-#: suila/models.py
-#, python-brace-format
-msgid "Du tjente for tæt på bundgrænsen i {year}"
 msgstr ""
 
 #: suila/models.py
@@ -991,6 +986,22 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
+msgid "År"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "Type: årsopgørelse"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "HTML"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html
+msgid "PDF"
+msgstr ""
+
+#: suila/templates/suila/person_detail_eboks_preview.html suila/views.py
 msgid "Måned"
 msgstr ""
 
@@ -1000,10 +1011,6 @@ msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_preview.html
 msgid "Type: afventer"
-msgstr ""
-
-#: suila/templates/suila/person_detail_eboks_preview.html
-msgid "Åbn"
 msgstr ""
 
 #: suila/templates/suila/person_detail_eboks_send.html
@@ -1282,25 +1289,26 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
-#, python-format
 msgid ""
-"Din forventede årsindkomst er tæt på 512.000 kr., som er grænsen for at "
-"modtage Suila-tapit."
+"\n"
+"                Din forventede årsindkomst er tæt på 512.000 kr., som er "
+"grænsen for at modtage Suila-tapit.            "
+msgstr ""
+
+#: suila/templates/suila/templatetags/quarantine_info_box.html
+msgid ""
+"\n"
+"                Din forventede årsindkomst ligger tæt på den nedre "
+"beløbsgrænse for berettigelse til Suila-tapit.\n"
+"            "
 msgstr ""
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 #, python-format
 msgid ""
-"Din forventede årsindkomst ligger tæt på den nedre beløbsgrænse for "
-"berettigelse til Suila-tapit."
-msgstr ""
-
-#: suila/templates/suila/templatetags/quarantine_info_box.html
-#, python-format
-msgid ""
-"Skattestyrelsen afventer yderligere "
-"indkomstoplysninger for at afklare, om du er berettiget til Suila-tapit.<br/"
-"> Næste vurdering foretages i januar %(year)s."
+"Skattestyrelsen afventer yderligere indkomstoplysninger for at afklare, om "
+"du er berettiget til Suila-tapit.<br/> Næste vurdering foretages i januar "
+"%(year)s."
 msgstr ""
 
 #: suila/templates/suila/templatetags/resume_payments_date_info_box.html
@@ -1569,10 +1577,6 @@ msgstr ""
 
 #: suila/views.py
 msgid "U-indkomst estimeringsmotor ændret:"
-msgstr ""
-
-#: suila/views.py
-msgid "År"
 msgstr ""
 
 #: suila/views.py
