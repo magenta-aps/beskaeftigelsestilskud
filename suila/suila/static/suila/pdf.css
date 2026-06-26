@@ -16,10 +16,6 @@ div.page {
     margin: 0;
     font-family: sans-serif;
 }
-div.page.padding {
-    padding-top: 3cm;
-    padding-bottom: 3cm;
-}
 h1 {
     color: #7c0041;
     font-weight: normal;
@@ -90,10 +86,10 @@ div.header-image {
 
 div.page-main {
     width: calc(100% - 4rem);
-    margin-top: 6rem;
+    margin-top: 6.5rem;
 }
 div.address-container {
-    /*border: 2px solid #ccc;*/
+    border: 2px solid #ccc;
 }
 div.address {
     font-size: 0.65rem;
