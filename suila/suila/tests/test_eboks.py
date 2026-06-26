@@ -576,10 +576,11 @@ class EboksManagementCommandTestMixin:
     def setUpMocks(self):
         self.quarantine_patcher = patch("common.utils.get_people_in_quarantine")
         self.submit_patcher = patch(
-            "suila.management.commands.send_eboks.ThreadPoolExecutor.submit"
+            "suila.management.commands.send_monthly_eboks_message"
+            ".ThreadPoolExecutor.submit"
         )
         self.eboks_client_patcher = patch(
-            "suila.management.commands.send_eboks.EboksClient"
+            "suila.management.commands.send_monthly_eboks_message.EboksClient"
         )
 
         self.submit_mock = self.submit_patcher.start()

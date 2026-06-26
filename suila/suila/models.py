@@ -2904,7 +2904,7 @@ class SuilaEboksMessage(EboksMessage):
             )
         return context
 
-    def html(self, language: str, extra_context: dict | None):
+    def html(self, language: str, extra_context: dict | None = None):
         template = self.attrs["templates"].get(language)
         if template:
             context = {
@@ -2918,15 +2918,16 @@ class SuilaEboksMessage(EboksMessage):
             return None
 
     def html_docs(self, extra_context):
-        return [
-            h
-            for h in [
-                self.html("kl", extra_context),
-                self.html("da", extra_context),
-                self.html("en", extra_context),
-            ]
-            if h
-        ]
+        return list(
+            filter(
+                None,
+                [
+                    self.html("kl", extra_context),
+                    self.html("da", extra_context),
+                    self.html("en", extra_context),
+                ],
+            )
+        )
 
     @property
     def pdf(self) -> bytes:
