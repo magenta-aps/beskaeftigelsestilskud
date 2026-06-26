@@ -2371,6 +2371,75 @@ class AnnualIncome(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
+    summarized_a_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
+    summarized_b_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
+    summarized_u_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    def update_amounts(self):
+        year = self.person_year.year.year
+        q = Decimal("0.01")
+        a_incomes = [
+            self.salary,
+            self.foreign_pension_income,
+            self.subsidy_foreign_pension_income,
+            self.other_a_income,
+        ]
+        b_incomes = [
+            self.deposit_interest_income,
+            self.bond_interest_income,
+            self.other_interest_income,
+            self.foreign_dividend_income,
+            self.foerign_income,
+            self.group_life_income,
+            self.rental_income,
+            self.other_b_income,
+        ]
+
+
+
+        if year > 2024:
+            a_incomes.append(self.care_fee_income)
+        else:
+            b_incomes.append(self.care_fee_income)
+        if year < 2026:
+            a_incomes.append(self.occupational_benefit)
+
+        self.summarized_a_incomes = Decimal(
+            sum(filter(None, a_incomes))
+        ),quantize(q)
+        self.summarized_b_incomes = Decimal(
+            sum(filter(None, b_incomes))
+        ).quantize(q)
+        self.summarized_u_incomes = self.get_u_income().quantize(q)
+
+        return
+
+    def get_u_income(self) -> Decimal:
+        return self.person_year.amount_sum_by_type(IncomeType.U)
+        
+    def calculate_actual_annual_benefit(self):
+        calculation_method = self.person_year.year.calculation_method
+        
+
+
 
 
 class JobLog(PermissionsMixin, models.Model):
