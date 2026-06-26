@@ -86,6 +86,7 @@ class ManagementCommands(TextChoices):
     CALCULATE_BENEFIT = "calculate_benefit"
     EXPORT_BENEFITS_TO_PRISME = "export_benefits_to_prisme"
     SEND_MONTHLY_EBOKS = "send_monthly_eboks_message"
+    SEND_YEARLY_EBOKS = "send_yearly_eboks_message"
     LOAD_PRISME_BENEFITS_POSTING_STATUS = "load_prisme_benefits_posting_status"
 
 
@@ -2764,6 +2765,7 @@ class SuilaEboksMessage(EboksMessage):
         max_length=12,
         choices=(
             ("opgørelse", "Opgørelse"),
+            ("årsopgørelse", "Årsopgørelse"),
             ("afventer", "Afventer"),
             ("payout_pause", "Udbetalingspause"),
         ),
@@ -2902,20 +2904,29 @@ class SuilaEboksMessage(EboksMessage):
             )
         return context
 
-    def html(self, language: str):
+    def html(self, language: str, extra_context: dict | None):
         template = self.attrs["templates"].get(language)
         if template:
             context = {
                 **self.context,
                 "month_name": self.month_names[language][self.month - 1],
             }
+            if extra_context:
+                context.update(extra_context)
             return template.render(context)
         else:
             return None
 
-    @property
-    def html_docs(self):
-        return [h for h in [self.html("kl"), self.html("da"), self.html("en")] if h]
+    def html_docs(self, extra_context):
+        return [
+            h
+            for h in [
+                self.html("kl", extra_context),
+                self.html("da", extra_context),
+                self.html("en", extra_context),
+            ]
+            if h
+        ]
 
     @property
     def pdf(self) -> bytes:
@@ -2931,7 +2942,7 @@ class SuilaEboksMessage(EboksMessage):
                 "pdf.css",
             )
         )
-        for html in self.html_docs:
+        for html in self.html_docs({"pdf": True}):
             pdf_data = HTML(string=html).write_pdf(
                 font_config=font_config, stylesheets=[css]
             )

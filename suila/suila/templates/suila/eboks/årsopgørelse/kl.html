@@ -5,7 +5,10 @@
 {% load static %}
 
 {% block extra_headers %}
-    <link rel="stylesheet" type="text/css" href="{% static 'suila/pdf.css' %}">
+    {% if not pdf %}
+        {# css file is already included in WeasyPrint call #}
+        <link rel="stylesheet" type="text/css" href="{% static 'suila/pdf.css' %}">
+    {% endif %}
     <style>
         @page {
             @bottom-right {

@@ -16,6 +16,8 @@ from suila.benefit import get_calculation_date, get_eboks_date
 from suila.management.commands.common import SuilaBaseCommand
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
 from suila.models import (
+    AnnualIncome,
+    JobLog,
     ManagementCommands,
     Person,
     PersonMonth,
@@ -374,6 +376,37 @@ class TestJobDispatcherCommands(TestCase):
             self.assertEqual(mock_call_command.call_count, len(expected_calls))
             mock_call_command.assert_has_calls(expected_calls, any_order=True)
             mock_call_command.reset_mock()
+
+    @patch("suila.dispatch.management.call_command")
+    @override_settings(ESKAT_BASE_URL="http://djangotest")
+    def test_yearly_runs(self, mock_call_command: MagicMock):
+        # Test data
+        test_date = timezone.datetime(2026, 5, 1)
+        _, num_days = calendar.monthrange(test_date.year, test_date.month)
+
+        # Mocking
+        mock_call_command.side_effect = _mock_call_command
+
+        JobLog.objects.create(name=ManagementCommands.LOAD_ESKAT)
+
+        AnnualIncome.objects.create(person_year=self.person_year)
+
+        with patch("suila.dispatch.timezone.now") as mock_timezone_now:
+            self._call_job_dispatcher_on_date(test_date, mock_timezone_now)
+
+        expected_calls = [
+            call(
+                ManagementCommands.SEND_YEARLY_EBOKS,
+                2025,
+                traceback=False,
+                reraise=False,
+                verbosity=1,
+                stdout=ANY,
+                send=True,
+                save=True,
+            ),
+        ]
+        mock_call_command.assert_has_calls(expected_calls, any_order=True)
 
     def run_job_dispatcher(
         self,

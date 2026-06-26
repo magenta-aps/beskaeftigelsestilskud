@@ -17,6 +17,7 @@ JOB_NAME: TypeAlias = Literal[
     ManagementCommands.CALCULATE_BENEFIT,
     ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
     ManagementCommands.SEND_MONTHLY_EBOKS,
+    ManagementCommands.SEND_YEARLY_EBOKS,
     ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
 ]
 
