@@ -74,9 +74,8 @@ class Command(SuilaBaseCommand):
                 ]
                 for future in as_completed(futures):
                     suilamessage = future.result()
-                    if suilamessage:
-                        if send:
-                            suilamessage.send(client)
-                        suilamessage.update_welcome_letter()
+                    if send:
+                        suilamessage.send(client)
+                    suilamessage.update_welcome_letter()
                     i += 1
                     self.stdout.write(str(i))
