@@ -74,7 +74,7 @@ class TestJobDispatcherCommands(TestCase):
             self._call_job_dispatcher_on_date(test_date, mock_timezone_now)
             expected_calls = [
                 call(
-                    ManagementCommands.SEND_EBOKS,
+                    ManagementCommands.SEND_MONTHLY_EBOKS,
                     test_date.year - 1,
                     test_date.month - 2 + 12,
                     traceback=False,
@@ -125,7 +125,7 @@ class TestJobDispatcherCommands(TestCase):
                     stdout=ANY,
                 ),
                 call(
-                    ManagementCommands.SEND_EBOKS,
+                    ManagementCommands.SEND_MONTHLY_EBOKS,
                     test_date.year - 1,
                     test_date.month - 2 + 12,
                     traceback=False,
@@ -340,7 +340,7 @@ class TestJobDispatcherCommands(TestCase):
             if day == eboks_date.day:
                 expected_calls += [
                     call(
-                        ManagementCommands.SEND_EBOKS,
+                        ManagementCommands.SEND_MONTHLY_EBOKS,
                         test_date.year,
                         test_date.month - 2,
                         traceback=False,

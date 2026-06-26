@@ -664,7 +664,7 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
 
     def call_command(self, year=2020, month=3, *args, **kwargs):
         core_call_command(
-            ManagementCommands.SEND_EBOKS,
+            ManagementCommands.SEND_MONTHLY_EBOKS,
             year,
             month,
             *args,

@@ -90,7 +90,7 @@ class JobDispatcher:
                 day >= get_calculation_date(year, month).day
             ),
         },
-        ManagementCommands.SEND_EBOKS: {
+        ManagementCommands.SEND_MONTHLY_EBOKS: {
             "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
                 day >= get_eboks_date(year, month).day
@@ -127,7 +127,7 @@ class JobDispatcher:
             ManagementCommands.EXPORT_BENEFITS_TO_PRISME: [
                 ManagementCommands.CALCULATE_BENEFIT,
             ],
-            ManagementCommands.SEND_EBOKS: [
+            ManagementCommands.SEND_MONTHLY_EBOKS: [
                 ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             ],
             ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],

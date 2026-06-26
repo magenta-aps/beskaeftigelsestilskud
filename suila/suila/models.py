@@ -85,7 +85,7 @@ class ManagementCommands(TextChoices):
     ESTIMATE_INCOME = "estimate_income"
     CALCULATE_BENEFIT = "calculate_benefit"
     EXPORT_BENEFITS_TO_PRISME = "export_benefits_to_prisme"
-    SEND_EBOKS = "send_eboks"
+    SEND_MONTHLY_EBOKS = "send_monthly_eboks_message"
     LOAD_PRISME_BENEFITS_POSTING_STATUS = "load_prisme_benefits_posting_status"
 
 
