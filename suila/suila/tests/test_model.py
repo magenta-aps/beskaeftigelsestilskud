@@ -779,6 +779,17 @@ class TestPersonYear(UserModelTest):
                 "til at være berettiget til Suila-tapit.",
             )
 
+    def test_aggregation(self):
+        data1 = self.person_year.aggregation
+        self.assertEqual(data1["sum_salary_income"], Decimal("76000.00"))
+        data2 = self.person_year2.aggregation
+        self.assertEqual(data2["sum_salary_income"], Decimal("8000.00"))
+
+        self.assertEqual(self.person_year.benefit_calculated, Decimal(0))
+        self.assertEqual(self.person_year.benefit_transferred, Decimal(0))
+        self.assertEqual(self.person_year.salary_income, Decimal("76000.00"))
+        self.assertEqual(self.person_year.benefit_transfer_difference, Decimal(0))
+
 
 class TestPersonMonth(UserModelTest):
     def test_shortcuts(self):

@@ -1627,10 +1627,12 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
 
     view_class = GeneratedEboksMessageView
 
-    def get(self, user, typ="opgørelse"):
+    def get(self, user, typ="opgørelse", html=False):
         return self.request_get(
             user,
-            f"/persons/{self.person1.pk}/msg/{self.person_year.year.year}/1/opgørelse/",
+            f"/persons/{self.person1.pk}/msg/"
+            f"{self.person_year.year.year}/1/opgørelse/?format="
+            + ("html" if html else "pdf"),
             pk=self.person1.pk,
             year=self.person_year.year.year,
             month=1,
@@ -1663,8 +1665,8 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
 
-    def test_get_context_data(self):
-        view, response = self.get(self.admin_user)
+    def test_get_context_data_afventer(self):
+        view, response = self.get(self.admin_user, typ="afventer")
         context_data = view.get_context_data()
         personmonth = self.person_year.personmonth_set.get(month=1)
         message = context_data["message"]
@@ -1680,9 +1682,104 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 "personyear": personmonth.person_year,
                 "personmonth": personmonth,
                 "sum_income": Decimal("0.00"),
-                "pause_reason_da": "-",
-                "pause_reason_kl": "-",
-                "pause_reason_en": "-",
+                "income": {
+                    # Passer med indkomster der sættes op i PersonEnv.setUpTestData
+                    "catchsale_income": [
+                        Decimal("0.00"),
+                        Decimal("2310.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "salary_income": [
+                        Decimal("0.00"),
+                        Decimal("2310.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "btax_paid": [
+                        Decimal("0.00"),
+                        Decimal("770.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "capital_income": [
+                        Decimal("0.00"),
+                        Decimal("23100.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                },
+            },
+        )
+
+    def test_get_context_data_opgørelse(self):
+        view, response = self.get(self.admin_user, typ="opgørelse")
+        context_data = view.get_context_data()
+        personmonth = self.person_year.personmonth_set.get(month=1)
+        message = context_data["message"]
+        self.assertIsNotNone(message)
+        self.assertTrue(isinstance(message, SuilaEboksMessage))
+        self.maxDiff = None
+        self.assertEqual(
+            message.context,
+            {
+                "person": self.person1,
+                "year": personmonth.year,
+                "month": personmonth.month,
+                "personyear": personmonth.person_year,
+                "personmonth": personmonth,
+                "sum_income": Decimal("0.00"),
+                "income": {
+                    # Passer med indkomster der sættes op i PersonEnv.setUpTestData
+                    "catchsale_income": [
+                        Decimal("0.00"),
+                        Decimal("2310.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "salary_income": [
+                        Decimal("0.00"),
+                        Decimal("2310.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "btax_paid": [
+                        Decimal("0.00"),
+                        Decimal("770.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                    "capital_income": [
+                        Decimal("0.00"),
+                        Decimal("23100.00"),
+                        Decimal("0.00"),
+                        Decimal("0.00"),
+                    ],
+                },
+            },
+        )
+
+    def test_get_context_data_årsopgørelse(self):
+        view, response = self.get(self.admin_user, typ="årsopgørelse")
+        context_data = view.get_context_data()
+        personmonth = self.person_year.personmonth_set.get(month=1)
+        message = context_data["message"]
+        self.assertIsNotNone(message)
+        self.assertTrue(isinstance(message, SuilaEboksMessage))
+        self.maxDiff = None
+        self.assertEqual(
+            message.context,
+            {
+                "person": self.person1,
+                "year": personmonth.year,
+                "month": personmonth.month,
+                "personyear": personmonth.person_year,
+                "personmonth": personmonth,
+                "sum_income": Decimal("0.00"),
+                "a_income": Decimal("0"),
+                "b_income": Decimal("0.00"),
+                "u_income": Decimal("23100.00"),
+                "employer_paid_gl_pension_income": Decimal("23100.00"),
                 "income": {
                     # Passer med indkomster der sættes op i PersonEnv.setUpTestData
                     "catchsale_income": [
@@ -1725,7 +1822,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
             pageview.kwargs,
             {"pk": self.person1.pk, "month": 1, "type": "opgørelse", "year": 2020},
         )
-        self.assertEqual(pageview.params, {})
+        self.assertEqual(pageview.params, {"format": "pdf"})
         itemviews = list(pageview.itemviews.all())
         self.assertEqual(len(itemviews), 1)
         self.assertEqual(itemviews[0].item, personmonth)
@@ -1736,6 +1833,11 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 self.admin_user,
                 "foobar",
             )
+
+    def test_html(self):
+        view, response = self.get(self.admin_user, "opgørelse", True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "text/html")
 
 
 class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
