@@ -270,6 +270,18 @@ class TestJobDispatcherCommands(TestCase):
                         stdout=ANY,
                     ),
                     call(
+                        ManagementCommands.LOAD_ESKAT,
+                        test_date.year,
+                        "annualincome",
+                        month=None,
+                        cpr=None,
+                        skew=False,
+                        traceback=False,
+                        reraise=False,
+                        verbosity=1,
+                        stdout=ANY,
+                    ),
+                    call(
                         ManagementCommands.LOAD_PRISME_B_TAX,
                         test_date.year,
                         test_date.month,
