@@ -13,12 +13,7 @@ from suila.models import ManagementCommands
 class Command(SuilaBaseCommand):
     filename = __file__
 
-    load_eskat_types = [
-        "expectedincome",
-        "monthlyincome",
-        "taxinformation",
-        "annualincome",
-    ]
+    load_eskat_types = ["expectedincome", "monthlyincome", "taxinformation"]
 
     def add_arguments(self, parser):
         parser.add_argument("--year", type=int)

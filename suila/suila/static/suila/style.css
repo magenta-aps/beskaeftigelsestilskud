@@ -112,7 +112,7 @@ iframe.eboks {
 
 .pagination span.pagination-arrow-links {
     background-color: transparent !important;
-    color: var(--bs-grey);
+    color: var(--bs-grey)
 }
 
 .pagination .pagination-ellipsis {

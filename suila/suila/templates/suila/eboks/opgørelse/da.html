@@ -13,13 +13,23 @@
             vertical-align: top;
             text-align: right;
         }
+        div.address {
+            font-size: 0.8rem;
+            font-family: calibri, sans-serif;
+            margin-bottom: 2cm;
+            margin-top: 1.5cm;
+
+            min-height: 4cm;
+            padding-top: 0.5cm;
+            padding-bottom: 0.5cm;
+        }
     </style>
-    <div class="page page-main">
+
     <table style="width: 100%">
         <tr>
             <td style="vertical-align: top">
-                <div class="address-container">
-                    <div class="address" style="padding-top: 1cm; padding-left: 1cm;">
+                <div class="address">
+                    <div style="padding-left: 20pt">
                         {{ person.name }}<br/>
                         {% if person.full_address %}
                             {% for line in person.full_address_splitted %}
@@ -29,9 +39,7 @@
                             {{ person.foreign_address }}
                         {% endif %}
                     </div>
-                    <div class="address">
-                        <img src="file:///static/suila/afsender.png" style="width: 192px;" alt="afsender"/>
-                    </div>
+                    <img src="file:///static/suila/afsender.png" style="width: 192px;" alt="afsender"/>
                 </div>
             </td>
             <td style="text-align: right; vertical-align: top">
@@ -78,9 +86,6 @@
         Modregning betyder, at du modtager et lavere beløb, fordi dele af beløbet er brugt til at afdrage på din gæld
         til det offentlige.
     </p>
-    </div>
-
-    <div class="page page-main">
     <h3>
         Oplysninger
     </h3>
@@ -149,9 +154,6 @@
         oplysninger der ligger til grund for den månedlige udbetaling, kan du logge ind på Sullissivik.gl og finde
         oplysningerne under ’Beskæftigelsesfradrag’.
     </p>
-    </div>
-
-    <div class="page page-main">
 
     <h3>
         Suila-tapit - Indkomster og udbetaling
@@ -162,6 +164,4 @@
     </p>
 
     <img src="file:///static/suila/graf_da.png" style="width: 100%" alt="graf"/>
-
-    </div>
 {% endblock %}

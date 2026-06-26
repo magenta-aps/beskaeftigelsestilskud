@@ -2,6 +2,11 @@
 {# SPDX-License-Identifier: MPL-2.0 #}
 
 {% extends "suila/eboks/base.html" %}
+{% load static %}
+
+{% block extra_headers %}
+    <link rel="stylesheet" type="text/css" href="{% static 'suila/pdf.css' %}">
+{% endblock %}
 
 {% block content %}
 
