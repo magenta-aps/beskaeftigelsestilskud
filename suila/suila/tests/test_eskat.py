@@ -498,7 +498,7 @@ class TestAnnualIncome(BaseTestCase):
     def test_calculate_actual_annual_benefit(self):
         person = Person.objects.create(cpr="4325264923")
         year2024 = Year.objects.create(
-            year=2025,
+            year=2024,
             calculation_method=StandardWorkBenefitCalculationMethod.objects.create(
                 benefit_rate_percent=Decimal("17.5"),
                 personal_allowance=Decimal("58000.00"),
@@ -513,6 +513,25 @@ class TestAnnualIncome(BaseTestCase):
             person_year=person_year,
             salary=350000,
         )
+        self.assertEqual(income.calculate_actual_annual_benefit(), Decimal("9450.00"))
+
+        year2025 = Year.objects.create(
+            year=2025,
+            calculation_method=StandardWorkBenefitCalculationMethod.objects.create(
+                benefit_rate_percent=Decimal("17.5"),
+                personal_allowance=Decimal("58000.00"),
+                standard_allowance=Decimal("10000"),
+                max_benefit=Decimal("15750.00"),
+                scaledown_rate_percent=Decimal("6.3"),
+                scaledown_ceiling=Decimal("250000.00"),
+            ),
+        )
+        person_year = PersonYear.objects.create(person=person, year=year2025)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            salary=350000,
+        )
+        income.update_amounts()
         self.assertEqual(income.calculate_actual_annual_benefit(), Decimal("9450.00"))
 
 
