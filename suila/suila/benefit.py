@@ -133,9 +133,9 @@ def calculate_benefit(
     df = pd.concat([month_df, estimates_df, payouts_df, assessment_df], axis=1)
 
     # Any months not found in concatenation have been set to NaN, replace with False
-    df["has_signal"].fillna(value=False, inplace=True)
+    df.loc[:, "has_signal"].fillna(value=False, inplace=True)
 
-    df["calculation_basis"] = (
+    df.loc[:, "calculation_basis"] = (
         df["estimated_year_result"]
         .add(df["b_income"], fill_value=0)
         .sub(df["b_expenses"], fill_value=0)
@@ -152,24 +152,28 @@ def calculate_benefit(
     df.loc[np.logical_not(df["has_signal"]), "calculation_basis"] = 0
 
     # Calculate benefit
-    df["estimated_year_benefit"] = (
+    df.loc[:, "estimated_year_benefit"] = (
         df.calculation_basis.fillna(0).map(calculate_benefit_func)
         * safety_factor
         / 12
         * df.full_tax_scope_months.fillna(12)
     )
-    df["actual_year_benefit"] = (
+    df.loc[:, "actual_year_benefit"] = (
         df.actual_year_result.add(df["b_income"], fill_value=0)
         .sub(df["b_expenses"], fill_value=0)
         .sub(df["catchsale_expenses"], fill_value=0)
         .fillna(0)
         .map(calculate_benefit_func)
     )
-    df["prior_benefit_transferred"] = df.loc[:, benefit_cols_this_year].sum(axis=1)
-    df["remaining_benefit_for_year"] = (
+    df.loc[:, "prior_benefit_transferred"] = df.loc[:, benefit_cols_this_year].sum(
+        axis=1
+    )
+    df.loc[:, "remaining_benefit_for_year"] = (
         df.estimated_year_benefit - df.prior_benefit_transferred
     )
-    df["benefit_this_month"] = (df.remaining_benefit_for_year / (13 - month)).round(2)
+    df.loc[:, "benefit_this_month"] = (
+        df.remaining_benefit_for_year / (13 - month)
+    ).round(2)
 
     # Do not payout if the amount is below zero
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
@@ -180,7 +184,9 @@ def calculate_benefit(
     if threshold > 0 and month not in (1, 12):  # type: ignore
         # if the amount is very similar to last month's amount, use the same amount
         # as last month
-        df["benefit_last_month"] = df.loc[:, f"benefit_transferred_month_{month-1}"]
+        df.loc[:, "benefit_last_month"] = df.loc[
+            :, f"benefit_transferred_month_{month-1}"
+        ]
         diff = pd.Series(index=df.index)
         I_diff = df.benefit_last_month > 0
         diff_abs = (df.benefit_this_month - df.benefit_last_month).abs()
@@ -224,7 +230,7 @@ def calculate_benefit(
     # Do not payout if the amount is negative
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
 
-    df["benefit_calculated"] = np.ceil(df["benefit_this_month"])
+    df.loc[:, "benefit_calculated"] = np.ceil(df["benefit_this_month"])
 
     return df
 

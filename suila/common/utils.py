@@ -317,15 +317,15 @@ def get_people_who_might_earn_too_much_or_little(
 
     df = pd.DataFrame()
 
-    df["std_val"] = df_income.std(axis=1).fillna(0)
-    df["annual_income"] = df_income.sum(axis=1)
-    df["upper"] = df.annual_income + df.std_val
-    df["lower"] = df.annual_income - df.std_val
+    df.loc[:, "std_val"] = df_income.std(axis=1).fillna(0)
+    df.loc[:, "annual_income"] = df_income.sum(axis=1)
+    df.loc[:, "upper"] = df.annual_income + df.std_val
+    df.loc[:, "lower"] = df.annual_income - df.std_val
 
-    df["earns_too_little"] = (df.lower.map(calculate_benefit_func) == 0) & (
+    df.loc[:, "earns_too_little"] = (df.lower.map(calculate_benefit_func) == 0) & (
         df.annual_income.map(calculate_benefit_func) != 0
     )
-    df["earns_too_much"] = (df.upper.map(calculate_benefit_func) == 0) & (
+    df.loc[:, "earns_too_much"] = (df.upper.map(calculate_benefit_func) == 0) & (
         df.annual_income.map(calculate_benefit_func) != 0
     )
     return df
@@ -380,16 +380,19 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
     )
     df_2 = get_people_who_might_earn_too_much_or_little(year - 1, cpr_numbers)
 
-    df["total_benefit_transferred"] = (
+    df.loc[:, "total_benefit_transferred"] = (
         df.prior_benefit_transferred + df.benefit_transferred
     )
-    df["error"] = df.total_benefit_transferred - df.actual_year_benefit
-    df["wrong_payout"] = df.error.fillna(0) > quarantine_limit
-    df["earns_too_little"] = df_2.earns_too_little.reindex(df.index, fill_value=False)
-    df["earns_too_much"] = df_2.earns_too_much.reindex(df.index, fill_value=False)
+    df.loc[:, "error"] = df.total_benefit_transferred - df.actual_year_benefit
+    df.loc[:, "wrong_payout"] = df.error.fillna(0) > quarantine_limit
+    df.loc[:, "earns_too_little"] = df_2.earns_too_little.reindex(
+        df.index, fill_value=False
+    )
+    df.loc[:, "earns_too_much"] = df_2.earns_too_much.reindex(
+        df.index, fill_value=False
+    )
 
-    df["in_quarantine"] = False
-    df["quarantine_reason"] = QuarantineReason.NONE
+    df = df.assign(in_quarantine=False, quarantine_reason=QuarantineReason.NONE)
 
     if quarantine_if_wrong_payout:
         df.in_quarantine = df.in_quarantine | df.wrong_payout
@@ -410,8 +413,8 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
         )
 
     df = df.reindex(cpr_numbers)
-    df["quarantine_reason"] = df.quarantine_reason.fillna(QuarantineReason.NONE)
-    df["in_quarantine"].fillna(value=False, inplace=True)
+    df.loc[:, "quarantine_reason"] = df.quarantine_reason.fillna(QuarantineReason.NONE)
+    df.loc[:, "in_quarantine"].fillna(value=False, inplace=True)
     return df
 
 
