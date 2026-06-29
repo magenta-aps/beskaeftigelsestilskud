@@ -2436,8 +2436,14 @@ class AnnualIncome(PermissionsMixin, models.Model):
             or self.summarized_u_income is None
         ):
             self.update_amounts()
-        calculation_method: WorkingTaxCreditCalculationMethod = (
+        calculation_method: WorkingTaxCreditCalculationMethod | None = (
             self.person_year.year.calculation_method
+        )
+        assert (
+            self.summarized_a_income is not None
+            and self.summarized_b_income is not None
+            and self.summarized_u_income is not None
+            and calculation_method is not None
         )
         income_base: Decimal = (
             self.summarized_a_income
