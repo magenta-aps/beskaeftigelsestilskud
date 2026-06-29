@@ -2420,17 +2420,32 @@ class AnnualIncome(PermissionsMixin, models.Model):
         if year < 2026:
             a_incomes.append(self.occupational_benefit)
 
-        self.summarized_a_incomes = Decimal(sum(filter(None, a_incomes))).quantize(q)
-        self.summarized_b_incomes = Decimal(sum(filter(None, b_incomes))).quantize(q)
-        self.summarized_u_incomes = self.get_u_income().quantize(q)
+        self.summarized_a_income = Decimal(sum(filter(None, a_incomes))).quantize(q)
+        self.summarized_b_income = Decimal(sum(filter(None, b_incomes))).quantize(q)
+        self.summarized_u_income = self.get_u_income().quantize(q)
 
         return
 
     def get_u_income(self) -> Decimal:
         return self.person_year.amount_sum_by_type(IncomeType.U)
 
-    # def calculate_actual_annual_benefit(self):
-    #     calculation_method = self.person_year.year.calculation_method
+    def calculate_actual_annual_benefit(self) -> Decimal:
+        if (
+            self.summarized_a_income is None
+            or self.summarized_b_income is None
+            or self.summarized_u_income is None
+        ):
+            self.update_amounts()
+        calculation_method: WorkingTaxCreditCalculationMethod = (
+            self.person_year.year.calculation_method
+        )
+        income_base: Decimal = (
+            self.summarized_a_income
+            + self.summarized_b_income
+            + self.summarized_u_income
+        )
+        benefit: Decimal = calculation_method.calculate(income_base)
+        return benefit
 
 
 class JobLog(PermissionsMixin, models.Model):
