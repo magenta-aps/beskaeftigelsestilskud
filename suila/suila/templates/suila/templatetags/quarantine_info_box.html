@@ -7,10 +7,10 @@
     <b>{% translate quarantine_reason %}</b>
     <p>
         {% if quarantine_value == 3 %}
-            {% blocktranslate %}
+            {% blocktranslate trimmed %}
                 Din forventede årsindkomst er tæt på 512.000 kr., som er grænsen for at modtage Suila-tapit.            {% endblocktranslate %}
         {% elif quarantine_value == 2 %}
-            {% blocktranslate %}
+            {% blocktranslate trimmed %}
                 Din forventede årsindkomst ligger tæt på den nedre beløbsgrænse for berettigelse til Suila-tapit.
             {% endblocktranslate %}
         {% endif %}
