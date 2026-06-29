@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-FROM python:3.12
+FROM python:3.14
 ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
     SUPERCRONIC_SHA1SUM=7dadd4ac827e7bd60b386414dfefc898ae5b6c63\
