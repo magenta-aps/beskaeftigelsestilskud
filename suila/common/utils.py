@@ -411,7 +411,7 @@ def get_people_in_quarantine(year: int, cpr_numbers: Iterable[str]) -> pd.DataFr
 
     df = df.reindex(cpr_numbers)
     df["quarantine_reason"] = df.quarantine_reason.fillna(QuarantineReason.NONE)
-    df["in_quarantine"] = df.in_quarantine.fillna(False)
+    df["in_quarantine"].fillna(value=False, inplace=True)
     return df
 
 

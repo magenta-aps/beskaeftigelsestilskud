@@ -133,7 +133,7 @@ def calculate_benefit(
     df = pd.concat([month_df, estimates_df, payouts_df, assessment_df], axis=1)
 
     # Any months not found in concatenation have been set to NaN, replace with False
-    df["has_signal"] = df["has_signal"].fillna(False)
+    df["has_signal"].fillna(value=False, inplace=True)
 
     df["calculation_basis"] = (
         df["estimated_year_result"]
