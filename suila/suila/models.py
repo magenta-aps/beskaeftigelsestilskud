@@ -2407,13 +2407,11 @@ class AnnualIncome(PermissionsMixin, models.Model):
             self.bond_interest_income,
             self.other_interest_income,
             self.foreign_dividend_income,
-            self.foerign_income,
+            self.foreign_income,
             self.group_life_income,
             self.rental_income,
             self.other_b_income,
         ]
-
-
 
         if year > 2024:
             a_incomes.append(self.care_fee_income)
@@ -2422,24 +2420,17 @@ class AnnualIncome(PermissionsMixin, models.Model):
         if year < 2026:
             a_incomes.append(self.occupational_benefit)
 
-        self.summarized_a_incomes = Decimal(
-            sum(filter(None, a_incomes))
-        ),quantize(q)
-        self.summarized_b_incomes = Decimal(
-            sum(filter(None, b_incomes))
-        ).quantize(q)
+        self.summarized_a_incomes = Decimal(sum(filter(None, a_incomes))).quantize(q)
+        self.summarized_b_incomes = Decimal(sum(filter(None, b_incomes))).quantize(q)
         self.summarized_u_incomes = self.get_u_income().quantize(q)
 
         return
 
     def get_u_income(self) -> Decimal:
         return self.person_year.amount_sum_by_type(IncomeType.U)
-        
-    def calculate_actual_annual_benefit(self):
-        calculation_method = self.person_year.year.calculation_method
-        
 
-
+    # def calculate_actual_annual_benefit(self):
+    #     calculation_method = self.person_year.year.calculation_method
 
 
 class JobLog(PermissionsMixin, models.Model):
