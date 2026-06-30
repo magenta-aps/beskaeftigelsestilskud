@@ -1030,6 +1030,10 @@ class PersonYear(PermissionsMixin, models.Model):
         return self.aggregation["sum_salary_income"]
 
     @property
+    def sum_employer_paid_gl_pension_income(self) -> Decimal:
+        return self.aggregation["sum_employer_paid_gl_pension_income"]
+
+    @property
     def benefit_transfer_difference(self) -> Decimal:
         return self.benefit_calculated - self.benefit_transferred
 
@@ -2822,7 +2826,9 @@ class SuilaEboksMessage(EboksMessage):
                     "a_income": annual_income.summarized_a_income,
                     "b_income": annual_income.summarized_b_income,
                     "u_income": annual_income.summarized_u_income,
-                    "employer_paid_gl_pension_income": 0,
+                    "employer_paid_gl_pension_income": (
+                        self.person_year.sum_employer_paid_gl_pension_income
+                    ),
                     "sum_income": annual_income.summarized_a_income
                     + annual_income.summarized_b_income
                     + annual_income.summarized_u_income,
