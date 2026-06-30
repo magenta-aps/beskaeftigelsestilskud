@@ -2819,16 +2819,21 @@ class SuilaEboksMessage(EboksMessage):
         }
 
         if self.type == "årsopgørelse":
+            annual_income = self.person_year.annual_income_statements.last()
+            benefit = annual_income.calculate_actual_annual_benefit()
             context.update(
                 {
-                    "a_income": self.person_month.estimated_year_result or Decimal(0),
-                    "b_income": self.person_year.b_income
-                    - self.person_year.b_expenses
-                    - self.person_year.catchsale_expenses,
-                    "u_income": self.person_year.u_income,
-                    "employer_paid_gl_pension_income": (
-                        self.person_year.sum_employer_paid_gl_pension_income
-                    ),
+                    "a_income": annual_income.summarized_a_income,
+                    "b_income": annual_income.summarized_b_income,
+                    "u_income": annual_income.summarized_u_income,
+                    "employer_paid_gl_pension_income": 0,
+                    "sum_income": annual_income.summarized_a_income
+                    + annual_income.summarized_b_income
+                    + annual_income.summarized_u_income,
+                    "benefit_calculated": benefit,
+                    "benefit_transferred": self.person_year.benefit_transferred,
+                    "benefit_transfer_difference": benefit
+                    - self.person_year.benefit_transferred,
                 }
             )
 
@@ -2841,7 +2846,7 @@ class SuilaEboksMessage(EboksMessage):
                 }
             )
 
-        if self.type in ("afventer", "opgørelse", "årsopgørelse"):
+        if self.type in ("afventer", "opgørelse"):
             context.update(
                 {
                     "sum_income": (
