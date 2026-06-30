@@ -102,7 +102,7 @@ def cleanup_dummy_files():
     try:
         folder = settings.LOCAL_PRISME_CSV_STORAGE_FULL  # type: ignore[misc]
         for file in os.listdir(folder):
-            if "test" in file.lower():
+            if "test" in file.lower():  # pragma: no branch
                 path = os.path.join(folder, file)
                 if os.path.isfile(path):
                     os.remove(path)
