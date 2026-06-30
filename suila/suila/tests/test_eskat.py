@@ -55,6 +55,7 @@ from suila.models import (
     PersonMonth,
     PersonYear,
     PersonYearAssessment,
+    StandardWorkBenefitCalculationMethod,
     TaxInformationPeriod,
     Year,
 )
@@ -377,6 +378,161 @@ class TestAnnualIncome(BaseTestCase):
         )
         objects_after = len(AnnualIncomeModel.objects.all())
         self.assertEqual(objects_before, objects_after)
+
+    def test_update_amounts(self):
+        person = Person.objects.create(cpr="4325264923")
+        year2024 = Year.objects.create(year=2024)
+        year2025 = Year.objects.create(year=2025)
+        year2026 = Year.objects.create(year=2026)
+        # A-income, year 2024
+        person_year = PersonYear.objects.create(person=person, year=year2024)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            salary=100000,
+            foreign_pension_income=10000,
+            subsidy_foreign_pension_income=1000,
+            other_a_income=100,
+            care_fee_income=10,
+            occupational_benefit=1,
+        )
+        income.update_amounts()
+        self.assertEqual(income.summarized_a_income, Decimal("111101.00"))
+        # A-income, year 2025
+        person_year = PersonYear.objects.create(person=person, year=year2025)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            salary=100000,
+            foreign_pension_income=10000,
+            subsidy_foreign_pension_income=1000,
+            other_a_income=100,
+            care_fee_income=10,
+            occupational_benefit=1,
+        )
+        income.update_amounts()
+        self.assertEqual(income.summarized_a_income, Decimal("111111.00"))
+        # A-income, year 2026
+        person_year = PersonYear.objects.create(person=person, year=year2026)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            salary=100000,
+            foreign_pension_income=10000,
+            subsidy_foreign_pension_income=1000,
+            other_a_income=100,
+            care_fee_income=10,
+            occupational_benefit=1,
+        )
+        income.update_amounts()
+        self.assertEqual(income.summarized_a_income, Decimal("111110.00"))
+
+        # B-income, year 2024
+        person_year = PersonYear.objects.get(person=person, year=year2024)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            deposit_interest_income=1000000,
+            bond_interest_income=100000,
+            other_interest_income=10000,
+            foreign_dividend_income=1000,
+            foreign_income=100,
+            group_life_income=10,
+            rental_income=1,
+            other_b_income=Decimal("0.1"),
+            care_fee_income=Decimal("0.01"),
+        )
+        income.update_amounts()
+        self.assertEqual(income.summarized_b_income, Decimal("1111111.11"))
+        # B-income, year 2025
+        person_year = PersonYear.objects.get(person=person, year=year2025)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            deposit_interest_income=1000000,
+            bond_interest_income=100000,
+            other_interest_income=10000,
+            foreign_dividend_income=1000,
+            foreign_income=100,
+            group_life_income=10,
+            rental_income=1,
+            other_b_income=Decimal("0.1"),
+            care_fee_income=Decimal("0.01"),
+        )
+        income.update_amounts()
+        self.assertEqual(income.summarized_b_income, Decimal("1111111.10"))
+        # B-income, year 2026
+        person_year = PersonYear.objects.get(person=person, year=year2026)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            deposit_interest_income=1000000,
+            bond_interest_income=100000,
+            other_interest_income=10000,
+            foreign_dividend_income=1000,
+            foreign_income=100,
+            group_life_income=10,
+            rental_income=1,
+            other_b_income=Decimal("0.1"),
+            care_fee_income=Decimal("0.01"),
+        )
+        income.update_amounts()
+        self.assertEqual(income.summarized_b_income, Decimal("1111111.10"))
+
+        # U-income
+        person_year = PersonYear.objects.get(person=person, year=year2024)
+        MonthlyIncomeReport.objects.create(
+            month=1,
+            year=2024,
+            person_month=PersonMonth.objects.create(
+                person_year=person_year, month=1, import_date=date.today()
+            ),
+            u_income=Decimal(1000),
+        )
+        MonthlyIncomeReport.objects.create(
+            month=2,
+            year=2024,
+            person_month=PersonMonth.objects.create(
+                person_year=person_year, month=2, import_date=date.today()
+            ),
+            u_income=Decimal(1500),
+        )
+        income = AnnualIncomeModel.objects.create(person_year=person_year)
+        income.update_amounts()
+        self.assertEqual(income.summarized_u_income, Decimal("2500.00"))
+
+    def test_calculate_actual_annual_benefit(self):
+        person = Person.objects.create(cpr="4325264923")
+        year2024 = Year.objects.create(
+            year=2024,
+            calculation_method=StandardWorkBenefitCalculationMethod.objects.create(
+                benefit_rate_percent=Decimal("17.5"),
+                personal_allowance=Decimal("58000.00"),
+                standard_allowance=Decimal("10000"),
+                max_benefit=Decimal("15750.00"),
+                scaledown_rate_percent=Decimal("6.3"),
+                scaledown_ceiling=Decimal("250000.00"),
+            ),
+        )
+        person_year = PersonYear.objects.create(person=person, year=year2024)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            salary=350000,
+        )
+        self.assertEqual(income.calculate_actual_annual_benefit(), Decimal("9450.00"))
+
+        year2025 = Year.objects.create(
+            year=2025,
+            calculation_method=StandardWorkBenefitCalculationMethod.objects.create(
+                benefit_rate_percent=Decimal("17.5"),
+                personal_allowance=Decimal("58000.00"),
+                standard_allowance=Decimal("10000"),
+                max_benefit=Decimal("15750.00"),
+                scaledown_rate_percent=Decimal("6.3"),
+                scaledown_ceiling=Decimal("250000.00"),
+            ),
+        )
+        person_year = PersonYear.objects.create(person=person, year=year2025)
+        income = AnnualIncomeModel.objects.create(
+            person_year=person_year,
+            salary=350000,
+        )
+        income.update_amounts()
+        self.assertEqual(income.calculate_actual_annual_benefit(), Decimal("9450.00"))
 
 
 @override_settings(
