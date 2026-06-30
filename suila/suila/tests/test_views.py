@@ -39,6 +39,7 @@ from requests import Response
 
 from suila.forms import NoteAttachmentFormSet
 from suila.models import (
+    AnnualIncome,
     BTaxPayment,
     Employer,
     IncomeEstimate,
@@ -1760,6 +1761,24 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         )
 
     def test_get_context_data_årsopgørelse(self):
+        with self.assertRaises(ValueError) as ctx:
+            view, response = self.get(self.admin_user, typ="årsopgørelse")
+            view.get_context_data()
+        exception = ctx.exception
+        self.assertEqual(
+            exception.args[0],
+            f"Missing AnnualIncome for PersonYear {self.person_year.pk}",
+        )
+
+        AnnualIncome.objects.create(
+            person_year=self.person_year,
+            salary=100000,
+            foreign_pension_income=10000,
+            subsidy_foreign_pension_income=1000,
+            other_a_income=100,
+            care_fee_income=10,
+            occupational_benefit=1,
+        )
         view, response = self.get(self.admin_user, typ="årsopgørelse")
         context_data = view.get_context_data()
         personmonth = self.person_year.personmonth_set.get(month=1)
@@ -1775,38 +1794,14 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 "month": personmonth.month,
                 "personyear": personmonth.person_year,
                 "personmonth": personmonth,
-                "sum_income": Decimal("0.00"),
-                "a_income": Decimal("0"),
-                "b_income": Decimal("0.00"),
+                "a_income": Decimal("111101.00"),
+                "b_income": Decimal("10.00"),
                 "u_income": Decimal("23100.00"),
-                "employer_paid_gl_pension_income": Decimal("23100.00"),
-                "income": {
-                    # Passer med indkomster der sættes op i PersonEnv.setUpTestData
-                    "catchsale_income": [
-                        Decimal("0.00"),
-                        Decimal("2310.00"),
-                        Decimal("0.00"),
-                        Decimal("0.00"),
-                    ],
-                    "salary_income": [
-                        Decimal("0.00"),
-                        Decimal("2310.00"),
-                        Decimal("0.00"),
-                        Decimal("0.00"),
-                    ],
-                    "btax_paid": [
-                        Decimal("0.00"),
-                        Decimal("770.00"),
-                        Decimal("0.00"),
-                        Decimal("0.00"),
-                    ],
-                    "capital_income": [
-                        Decimal("0.00"),
-                        Decimal("23100.00"),
-                        Decimal("0.00"),
-                        Decimal("0.00"),
-                    ],
-                },
+                "employer_paid_gl_pension_income": 0,
+                "sum_income": Decimal("134211.00"),
+                "benefit_calculated": Decimal("11586.92"),
+                "benefit_transferred": Decimal("0.00"),
+                "benefit_transfer_difference": Decimal("11586.92"),
             },
         )
 

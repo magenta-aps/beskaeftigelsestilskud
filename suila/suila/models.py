@@ -2820,6 +2820,10 @@ class SuilaEboksMessage(EboksMessage):
 
         if self.type == "årsopgørelse":
             annual_income = self.person_year.annual_income_statements.last()
+            if annual_income is None:
+                raise ValueError(
+                    f"Missing AnnualIncome for PersonYear {self.person_year.pk}"
+                )
             benefit = annual_income.calculate_actual_annual_benefit()
             context.update(
                 {
