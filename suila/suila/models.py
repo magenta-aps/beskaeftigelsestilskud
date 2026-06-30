@@ -2371,6 +2371,87 @@ class AnnualIncome(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
+    summarized_a_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
+    summarized_b_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
+    summarized_u_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    def update_amounts(self):
+        year = self.person_year.year.year
+        q = Decimal("0.01")
+        a_incomes = [
+            self.salary,
+            self.foreign_pension_income,
+            self.subsidy_foreign_pension_income,
+            self.other_a_income,
+        ]
+        b_incomes = [
+            self.deposit_interest_income,
+            self.bond_interest_income,
+            self.other_interest_income,
+            self.foreign_dividend_income,
+            self.foreign_income,
+            self.group_life_income,
+            self.rental_income,
+            self.other_b_income,
+        ]
+
+        if year > 2024:
+            a_incomes.append(self.care_fee_income)
+        else:
+            b_incomes.append(self.care_fee_income)
+        if year < 2026:
+            a_incomes.append(self.occupational_benefit)
+
+        self.summarized_a_income = Decimal(sum(filter(None, a_incomes))).quantize(q)
+        self.summarized_b_income = Decimal(sum(filter(None, b_incomes))).quantize(q)
+        self.summarized_u_income = self.get_u_income().quantize(q)
+
+        return
+
+    def get_u_income(self) -> Decimal:
+        return self.person_year.amount_sum_by_type(IncomeType.U)
+
+    def calculate_actual_annual_benefit(self) -> Decimal:
+        if (
+            self.summarized_a_income is None
+            or self.summarized_b_income is None
+            or self.summarized_u_income is None
+        ):
+            self.update_amounts()
+        calculation_method: WorkingTaxCreditCalculationMethod | None = (
+            self.person_year.year.calculation_method
+        )
+        assert (
+            self.summarized_a_income is not None
+            and self.summarized_b_income is not None
+            and self.summarized_u_income is not None
+            and calculation_method is not None
+        )
+        income_base: Decimal = (
+            self.summarized_a_income
+            + self.summarized_b_income
+            + self.summarized_u_income
+        )
+        benefit: Decimal = calculation_method.calculate(income_base)
+        return benefit
 
 
 class JobLog(PermissionsMixin, models.Model):

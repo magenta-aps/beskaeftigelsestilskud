@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-25 12:15-0100\n"
+"POT-Creation-Date: 2026-06-29 10:08-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1462,18 +1462,19 @@ msgstr ""
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 msgid ""
-"\n"
-"                Din forventede årsindkomst er tæt på 512.000 kr., som er "
-"grænsen for at modtage Suila-tapit.            "
+"Din forventede årsindkomst er tæt på 512.000 kr., som er grænsen for at "
+"modtage Suila-tapit."
 msgstr ""
+"Your expected annual income is close to DKK 512,000, which is the threshold "
+"for receiving Suila-tapit."
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 msgid ""
-"\n"
-"                Din forventede årsindkomst ligger tæt på den nedre "
-"beløbsgrænse for berettigelse til Suila-tapit.\n"
-"            "
+"Din forventede årsindkomst ligger tæt på den nedre beløbsgrænse for "
+"berettigelse til Suila-tapit."
 msgstr ""
+"Your expected annual income is close to the lower threshold for being "
+"eligible for Suila-tapit."
 
 #: suila/templates/suila/templatetags/quarantine_info_box.html
 #, python-format
