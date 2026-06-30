@@ -15,7 +15,7 @@ MIDDLEWARE = [
     "django_mitid_auth.middleware.LoginManager",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
-    "django_session_timeout.middleware.SessionTimeoutMiddleware",
+    "django_mitid_auth.session_timeout.SessionTimeoutMiddleware",
     "django_otp.middleware.OTPMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
 ]
