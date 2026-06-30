@@ -1033,14 +1033,6 @@ class PersonYear(PermissionsMixin, models.Model):
     def benefit_transfer_difference(self) -> Decimal:
         return self.benefit_calculated - self.benefit_transferred
 
-    @property
-    def u_income(self):
-        return self.aggregation["sum_u_income"]
-
-    @property
-    def sum_employer_paid_gl_pension_income(self):
-        return self.aggregation["sum_employer_paid_gl_pension_income"]
-
 
 class TaxInformationPeriod(PermissionsMixin, models.Model):
     class Meta:
