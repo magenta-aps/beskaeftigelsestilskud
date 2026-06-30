@@ -8,6 +8,7 @@ import re
 import time
 from concurrent.futures import Future
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -34,6 +35,7 @@ from suila.models import (
     Person,
     PersonMonth,
     PersonYear,
+    StandardWorkBenefitCalculationMethod,
     SuilaEboksMessage,
     TaxInformationPeriod,
     Year,
@@ -644,7 +646,17 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
         self.person, _ = Person.objects.update_or_create(
             cpr="0101011111", location_code=1, full_address="Polarvej 1, 6666 Nuuk"
         )
-        self.year = Year.objects.create(year=2020)
+        self.calculation_method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("60000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        self.year = Year.objects.create(
+            year=2020, calculation_method=self.calculation_method
+        )
         self.person_year = PersonYear.objects.create(
             person=self.person,
             year=self.year,
