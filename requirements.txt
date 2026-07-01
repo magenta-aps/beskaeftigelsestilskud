@@ -39,7 +39,7 @@ more-itertools==9.1.0
 mypy==1.7.0
 mypy-extensions==1.1.0
 numpy==1.26.4
-oracledb==2.2.1
+oracledb==2.5.1
 packaging==24.2
 pandas==2.3.3
 paramiko==3.5.1
