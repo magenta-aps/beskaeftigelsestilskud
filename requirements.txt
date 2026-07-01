@@ -75,7 +75,7 @@ xmlschema==2.5.1
 xmltodict==1.0.4
 tblib==3.0.0
 tenQ @ git+https://github.com/magenta-aps/10Q.git@0.9.0
-datamodel-code-generator==0.66.2
+datamodel-code-generator==0.66.3
 django_compressor==4.6.0
 django-libsass==0.9
 django-crispy-forms==2.6
