@@ -30,7 +30,7 @@ django_csp==3.8
 gl-mitid==1.9.1
 elementpath==4.4.0
 gunicorn==22.0.0
-holidays==0.81
+holidays==0.99
 idna==3.18
 Jinja2==3.1.6
 lxml==5.3.0
