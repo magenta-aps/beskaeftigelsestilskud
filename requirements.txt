@@ -40,7 +40,7 @@ mypy==1.7.0
 mypy-extensions==1.1.0
 numpy==1.26.4
 oracledb==2.2.1
-packaging==24.1
+packaging==24.2
 pandas==2.3.3
 paramiko==3.5.1
 psycopg==3.3.4
