@@ -8,6 +8,7 @@ import re
 import time
 from concurrent.futures import Future
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -28,11 +29,13 @@ from suila.integrations.eboks.client import (
     MessageFailureException,
 )
 from suila.models import (
+    AnnualIncome,
     EboksMessage,
     ManagementCommands,
     Person,
     PersonMonth,
     PersonYear,
+    StandardWorkBenefitCalculationMethod,
     SuilaEboksMessage,
     TaxInformationPeriod,
     Year,
@@ -575,20 +578,32 @@ class EboksManagementCommandTestMixin:
 
     def setUpMocks(self):
         self.quarantine_patcher = patch("common.utils.get_people_in_quarantine")
-        self.submit_patcher = patch(
-            "suila.management.commands.send_eboks.ThreadPoolExecutor.submit"
+        self.monthly_submit_patcher = patch(
+            "suila.management.commands.send_monthly_eboks_message"
+            ".ThreadPoolExecutor.submit"
         )
-        self.eboks_client_patcher = patch(
-            "suila.management.commands.send_eboks.EboksClient"
+        self.monthly_eboks_client_patcher = patch(
+            "suila.management.commands.send_monthly_eboks_message.EboksClient"
+        )
+        self.yearly_submit_patcher = patch(
+            "suila.management.commands.send_yearly_eboks_message"
+            ".ThreadPoolExecutor.submit"
+        )
+        self.yearly_eboks_client_patcher = patch(
+            "suila.management.commands.send_yearly_eboks_message.EboksClient"
         )
 
-        self.submit_mock = self.submit_patcher.start()
         self.quarantine_mock = self.quarantine_patcher.start()
-        self.eboks_client_mock = self.eboks_client_patcher.start()
+        self.monthly_submit_mock = self.monthly_submit_patcher.start()
+        self.monthly_eboks_client_mock = self.monthly_eboks_client_patcher.start()
+        self.yearly_submit_mock = self.yearly_submit_patcher.start()
+        self.yearly_eboks_client_mock = self.yearly_eboks_client_patcher.start()
 
-        self.addCleanup(self.submit_patcher.stop)
         self.addCleanup(self.quarantine_patcher.stop)
-        self.addCleanup(self.eboks_client_patcher.stop)
+        self.addCleanup(self.monthly_submit_patcher.stop)
+        self.addCleanup(self.monthly_eboks_client_patcher.stop)
+        self.addCleanup(self.yearly_submit_patcher.stop)
+        self.addCleanup(self.yearly_eboks_client_patcher.stop)
 
         # Mock the quarantine dataframe. By default a person is NOT in quarantine
         self.quarantine_mock.return_value = self.quarantine_df(False)
@@ -604,7 +619,8 @@ class EboksManagementCommandTestMixin:
             future.add_done_callback(on_done)
             return future
 
-        self.submit_mock.side_effect = mock_submit
+        self.monthly_submit_mock.side_effect = mock_submit
+        self.yearly_submit_mock.side_effect = mock_submit
 
         # Setup mock e-Boks client
         self.recipients = [{"status": "ok", "post_processing_status": ""}]
@@ -619,7 +635,8 @@ class EboksManagementCommandTestMixin:
         self.client_mock.send_message.return_value = self.send_message_response
 
         # Patch the factory method to return the mocked client
-        self.eboks_client_mock.from_settings.return_value = self.client_mock
+        self.monthly_eboks_client_mock.from_settings.return_value = self.client_mock
+        self.yearly_eboks_client_mock.from_settings.return_value = self.client_mock
 
 
 class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin):
@@ -629,7 +646,17 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
         self.person, _ = Person.objects.update_or_create(
             cpr="0101011111", location_code=1, full_address="Polarvej 1, 6666 Nuuk"
         )
-        self.year = Year.objects.create(year=2020)
+        self.calculation_method = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("60000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        self.year = Year.objects.create(
+            year=2020, calculation_method=self.calculation_method
+        )
         self.person_year = PersonYear.objects.create(
             person=self.person,
             year=self.year,
@@ -654,6 +681,7 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
             )
             for i in range(1, 13)
         ]
+        self.annual_income = AnnualIncome.objects.create(person_year=self.person_year)
         self.setUpMocks()
         self.stdout = StringIO()
 
@@ -662,9 +690,9 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
         except FileNotFoundError:
             pass
 
-    def call_command(self, year=2020, month=3, *args, **kwargs):
+    def call_monthly_command(self, year=2020, month=3, *args, **kwargs):
         core_call_command(
-            ManagementCommands.SEND_EBOKS,
+            ManagementCommands.SEND_MONTHLY_EBOKS,
             year,
             month,
             *args,
@@ -672,17 +700,34 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
             **kwargs,
         )
 
-    def test_management_command(self):
-        self.call_command(send=True)
+    def call_yearly_command(self, year=2020, *args, **kwargs):
+        core_call_command(
+            ManagementCommands.SEND_YEARLY_EBOKS,
+            year,
+            *args,
+            stdout=self.stdout,
+            **kwargs,
+        )
+
+    def test_management_command_monthly(self):
+        self.call_monthly_command(send=True)
 
         message = SuilaEboksMessage.objects.get(cpr_cvr="0101011111")
         self.client_mock.send_message.assert_called()
         self.assertEqual(message.status, "sent")
         self.assertEqual(message.type, "opgørelse")
 
+    def test_management_command_yearly(self):
+        self.call_yearly_command(send=True)
+
+        message = SuilaEboksMessage.objects.get(cpr_cvr="0101011111")
+        self.client_mock.send_message.assert_called()
+        self.assertEqual(message.status, "sent")
+        self.assertEqual(message.type, "årsopgørelse")
+
     def test_person_in_quarantine(self):
         self.quarantine_mock.return_value = self.quarantine_df(True)
-        self.call_command(send=True)
+        self.call_monthly_command(send=True)
 
         message = SuilaEboksMessage.objects.get(cpr_cvr="0101011111")
         self.client_mock.send_message.assert_called()
@@ -693,7 +738,7 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
         # Arrange: remove tax information period for person year under test
         self.period.delete()
         # Act
-        self.call_command(send=True)
+        self.call_monthly_command(send=True)
         # Assert: no message was created or sent
         self.client_mock.send_message.assert_not_called()
         self.assertFalse(
@@ -701,12 +746,12 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
         )
 
     def test_person_already_received_welcome_letter(self):
-        self.call_command(month=3, send=True)
+        self.call_monthly_command(month=3, send=True)
 
         self.person.refresh_from_db()
         self.assertTrue(self.person.welcome_letter_sent_at is not None)
 
-        self.call_command(month=4, send=True)
+        self.call_monthly_command(month=4, send=True)
 
         message = SuilaEboksMessage.objects.get(cpr_cvr="0101011111")
         self.client_mock.send_message.assert_called_once()
@@ -724,34 +769,61 @@ class ManagementCommandTest(TransactionTestCase, EboksManagementCommandTestMixin
         ]:
             self.person.full_address = address
             self.person.save()
-            self.call_command(send=True)
+            self.call_monthly_command(send=True)
             self.client_mock.send_message.assert_not_called()
 
-    def test_cpr_arg(self):
-        self.call_command(send=True, cpr="123")
+    def test_cpr_arg_monthly(self):
+        self.call_monthly_command(send=True, cpr="123")
         self.client_mock.send_message.assert_not_called()
 
-        self.call_command(send=True, cpr="0101011111")
+        self.call_monthly_command(send=True, cpr="0101011111")
         self.client_mock.send_message.assert_called_once()
 
-    def test_send_arg(self):
-        self.call_command(send=False)
+    def test_cpr_arg_yearly(self):
+        self.call_yearly_command(send=True, cpr="123")
         self.client_mock.send_message.assert_not_called()
 
-        self.call_command()  # "send" is False by default
+        self.call_yearly_command(send=True, cpr="0101011111")
+        self.client_mock.send_message.assert_called_once()
+
+    def test_send_arg_monthly(self):
+        self.call_monthly_command(send=False)
         self.client_mock.send_message.assert_not_called()
 
-        self.call_command(send=True)
+        self.call_monthly_command()  # "send" is False by default
+        self.client_mock.send_message.assert_not_called()
+
+        self.call_monthly_command(send=True)
         self.client_mock.send_message.assert_called()
 
-    def test_save_arg(self):
-        self.call_command(send=False)
+    def test_send_arg_yearly(self):
+        self.call_yearly_command(send=False)
+        self.client_mock.send_message.assert_not_called()
+        SuilaEboksMessage.objects.filter(type="årsopgørelse").delete()
+
+        self.call_yearly_command()  # "send" is False by default
+        self.client_mock.send_message.assert_not_called()
+        SuilaEboksMessage.objects.filter(type="årsopgørelse").delete()
+
+        self.call_yearly_command(send=True)
+        self.client_mock.send_message.assert_called()
+
+    def test_save_arg_monthly(self):
+        self.call_monthly_command(send=False)
         self.assertNotIn("0101011111.pdf", os.listdir("/tmp"))
 
-        self.call_command(send=False, save=True)
+        self.call_monthly_command(send=False, save=True)
+        self.assertIn("0101011111.pdf", os.listdir("/tmp"))
+
+    def test_save_arg_yearly(self):
+        self.call_yearly_command(send=False)
+        self.assertNotIn("0101011111.pdf", os.listdir("/tmp"))
+        SuilaEboksMessage.objects.filter(type="årsopgørelse").delete()
+
+        self.call_yearly_command(send=False, save=True)
         self.assertIn("0101011111.pdf", os.listdir("/tmp"))
 
     def test_nonexisting_person_month(self):
         PersonMonth.objects.get(month=3).delete()
-        self.call_command(month=3, send=True)
+        self.call_monthly_command(month=3, send=True)
         self.client_mock.send_message.assert_not_called()

@@ -161,11 +161,20 @@ class Command(SuilaBaseCommand):
             verbosity=verbosity,
         )
 
-        # Send eboks messages
+        # Send monthly eboks messages
         job_dispatcher.call_job(
-            ManagementCommands.SEND_EBOKS,
+            ManagementCommands.SEND_MONTHLY_EBOKS,
             effect_year,
             effect_month,
+            verbosity=verbosity,
+            send=True,
+            save=True,
+        )
+
+        # Send yearly eboks messages
+        job_dispatcher.call_job(
+            ManagementCommands.SEND_YEARLY_EBOKS,
+            effect_year - 1,  # Send for previous year
             verbosity=verbosity,
             send=True,
             save=True,

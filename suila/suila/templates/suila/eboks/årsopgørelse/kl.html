@@ -5,7 +5,10 @@
 {% load static %}
 
 {% block extra_headers %}
-    <link rel="stylesheet" type="text/css" href="{% static 'suila/pdf.css' %}">
+    {% if not pdf %}
+        {# css file is already included in WeasyPrint call #}
+        <link rel="stylesheet" type="text/css" href="{% static 'suila/pdf.css' %}">
+    {% endif %}
     <style>
         @page {
             @bottom-right {
@@ -17,14 +20,14 @@
 
 {% block content %}
 
-    {% with next_year=year|add:1 annual_statement=personyear.annual_income_statements.last benefit_calculated=personyear.benefit_calculated benefit_transferred=personyear.benefit_transferred benefit_transfer_difference=personyear.benefit_transfer_difference %}
+    {% with next_year=year|add:1 %}
 
         <div class="page">
             <div class="year-band">
-                <div class="year-band-number" style="top: 12.5%">2025</div>
-                <div class="year-band-number" style="top: 37.5%">2025</div>
-                <div class="year-band-number" style="top: 62.5%">2025</div>
-                <div class="year-band-number" style="top: 87.5%">2025</div>
+                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
             </div>
 
             <div class="header-image"></div>

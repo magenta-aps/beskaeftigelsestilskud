@@ -85,7 +85,8 @@ class ManagementCommands(TextChoices):
     ESTIMATE_INCOME = "estimate_income"
     CALCULATE_BENEFIT = "calculate_benefit"
     EXPORT_BENEFITS_TO_PRISME = "export_benefits_to_prisme"
-    SEND_EBOKS = "send_eboks"
+    SEND_MONTHLY_EBOKS = "send_monthly_eboks_message"
+    SEND_YEARLY_EBOKS = "send_yearly_eboks_message"
     LOAD_PRISME_BENEFITS_POSTING_STATUS = "load_prisme_benefits_posting_status"
 
 
@@ -1029,16 +1030,12 @@ class PersonYear(PermissionsMixin, models.Model):
         return self.aggregation["sum_salary_income"]
 
     @property
+    def sum_employer_paid_gl_pension_income(self) -> Decimal:
+        return self.aggregation["sum_employer_paid_gl_pension_income"]
+
+    @property
     def benefit_transfer_difference(self) -> Decimal:
         return self.benefit_calculated - self.benefit_transferred
-
-    @property
-    def u_income(self):
-        return self.aggregation["sum_u_income"]
-
-    @property
-    def sum_employer_paid_gl_pension_income(self):
-        return self.aggregation["sum_employer_paid_gl_pension_income"]
 
 
 class TaxInformationPeriod(PermissionsMixin, models.Model):
@@ -2764,6 +2761,7 @@ class SuilaEboksMessage(EboksMessage):
         max_length=12,
         choices=(
             ("opgørelse", "Opgørelse"),
+            ("årsopgørelse", "Årsopgørelse"),
             ("afventer", "Afventer"),
             ("payout_pause", "Udbetalingspause"),
         ),
@@ -2817,16 +2815,28 @@ class SuilaEboksMessage(EboksMessage):
         }
 
         if self.type == "årsopgørelse":
+            annual_income = self.person_year.annual_income_statements.last()
+            if annual_income is None:
+                raise ValueError(
+                    f"Missing AnnualIncome for PersonYear {self.person_year.pk}"
+                )
+            benefit = annual_income.calculate_actual_annual_benefit()
             context.update(
                 {
-                    "a_income": self.person_month.estimated_year_result or Decimal(0),
-                    "b_income": self.person_year.b_income
-                    - self.person_year.b_expenses
-                    - self.person_year.catchsale_expenses,
-                    "u_income": self.person_year.u_income,
+                    "a_income": annual_income.summarized_a_income,
+                    "b_income": annual_income.summarized_b_income,
+                    "u_income": annual_income.summarized_u_income,
                     "employer_paid_gl_pension_income": (
                         self.person_year.sum_employer_paid_gl_pension_income
                     ),
+                    "sum_income": annual_income.summarized_a_income
+                    + annual_income.summarized_b_income
+                    + annual_income.summarized_u_income
+                    + self.person_year.sum_employer_paid_gl_pension_income,
+                    "benefit_calculated": benefit,
+                    "benefit_transferred": self.person_year.benefit_transferred,
+                    "benefit_transfer_difference": benefit
+                    - self.person_year.benefit_transferred,
                 }
             )
 
@@ -2839,7 +2849,7 @@ class SuilaEboksMessage(EboksMessage):
                 }
             )
 
-        if self.type in ("afventer", "opgørelse", "årsopgørelse"):
+        if self.type in ("afventer", "opgørelse"):
             context.update(
                 {
                     "sum_income": (
@@ -2902,20 +2912,30 @@ class SuilaEboksMessage(EboksMessage):
             )
         return context
 
-    def html(self, language: str):
+    def html(self, language: str, extra_context: dict | None = None):
         template = self.attrs["templates"].get(language)
         if template:
             context = {
                 **self.context,
                 "month_name": self.month_names[language][self.month - 1],
             }
+            if extra_context:
+                context.update(extra_context)
             return template.render(context)
         else:
             return None
 
-    @property
-    def html_docs(self):
-        return [h for h in [self.html("kl"), self.html("da"), self.html("en")] if h]
+    def html_docs(self, extra_context):
+        return list(
+            filter(
+                None,
+                [
+                    self.html("kl", extra_context),
+                    self.html("da", extra_context),
+                    self.html("en", extra_context),
+                ],
+            )
+        )
 
     @property
     def pdf(self) -> bytes:
@@ -2931,7 +2951,7 @@ class SuilaEboksMessage(EboksMessage):
                 "pdf.css",
             )
         )
-        for html in self.html_docs:
+        for html in self.html_docs({"pdf": True}):
             pdf_data = HTML(string=html).write_pdf(
                 font_config=font_config, stylesheets=[css]
             )
