@@ -988,7 +988,7 @@ class EskatFailureTest(IntegrationBaseTest):
             ManagementCommands.ESTIMATE_INCOME,
             ManagementCommands.CALCULATE_BENEFIT,
             ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-            ManagementCommands.SEND_EBOKS,
+            ManagementCommands.SEND_MONTHLY_EBOKS,
         ]:
 
             self.assertEqual(self.joblog_qs(job_name).count(), 0)
@@ -1001,7 +1001,7 @@ class EskatFailureTest(IntegrationBaseTest):
             ManagementCommands.ESTIMATE_INCOME,
             ManagementCommands.CALCULATE_BENEFIT,
             ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
-            ManagementCommands.SEND_EBOKS,
+            ManagementCommands.SEND_MONTHLY_EBOKS,
         ]:
 
             self.assertEqual(self.joblog_qs(job_name).count(), 1)
