@@ -43,7 +43,7 @@ oracledb==2.2.1
 packaging==24.1
 pandas==2.3.3
 paramiko==3.5.1
-psycopg==3.2.12
+psycopg==3.3.4
 pydot==3.0.4
 pycparser==2.22
 pydantic==2.13.4
