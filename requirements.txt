@@ -41,7 +41,7 @@ mypy-extensions==1.0.0
 numpy==1.26.4
 oracledb==2.2.1
 packaging==24.1
-pandas==2.2.3
+pandas==2.3.3
 paramiko==3.5.1
 psycopg==3.2.12
 pydot==3.0.4
