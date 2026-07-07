@@ -15,7 +15,7 @@ from django.utils import timezone
 from suila.benefit import get_calculation_date, get_eboks_date
 from suila.management.commands.common import SuilaBaseCommand
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
-from suila.models import (  # AnnualIncome,; JobLog,
+from suila.models import (
     ManagementCommands,
     Person,
     PersonMonth,
