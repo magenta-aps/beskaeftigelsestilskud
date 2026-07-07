@@ -172,13 +172,15 @@ class Command(SuilaBaseCommand):
         )
 
         # Send yearly eboks messages
-        job_dispatcher.call_job(
-            ManagementCommands.SEND_YEARLY_EBOKS,
-            effect_year - 1,  # Send for previous year
-            verbosity=verbosity,
-            send=True,
-            save=True,
-        )
+        # disabled until we've run it by hand
+        # and are confident that it works as expected
+        # job_dispatcher.call_job(
+        #     ManagementCommands.SEND_YEARLY_EBOKS,
+        #     effect_year - 1,  # Send for previous year
+        #     verbosity=verbosity,
+        #     send=True,
+        #     save=True,
+        # )
 
         # Load Prisme posting status
         job_dispatcher.call_job(
