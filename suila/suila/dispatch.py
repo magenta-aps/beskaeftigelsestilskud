@@ -265,8 +265,8 @@ class JobDispatcher:
             match (name):
                 case ManagementCommands.CALCULATE_STABILITY_SCORE:
                     job_params["year_param"] = args[0]
-                case ManagementCommands.SEND_YEARLY_EBOKS:
-                    job_params["year_param"] = args[0]
+                # case ManagementCommands.SEND_YEARLY_EBOKS:
+                #     job_params["year_param"] = args[0]
                 case ManagementCommands.LOAD_ESKAT:
                     job_params["type_param"] = args[1]
         except IndexError:
