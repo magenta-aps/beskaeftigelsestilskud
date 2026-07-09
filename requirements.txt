@@ -10,7 +10,7 @@ charset-normalizer==3.4.9
 coverage==7.14.3
 cryptography==42.0.8
 defusedxml==0.7.1
-Django==5.2.15
+Django==5.2.16
 django-bootstrap5==24.3
 django-bootstrap-icons==0.9.0
 django-extensions==3.2.3
