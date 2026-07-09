@@ -6,7 +6,7 @@ asgiref==3.11.1
 beautifulsoup4==4.15.0
 certifi==2026.6.17
 cffi==2.0.0
-charset-normalizer==3.4.7
+charset-normalizer==3.4.9
 coverage==7.14.3
 cryptography==42.0.8
 defusedxml==0.7.1
