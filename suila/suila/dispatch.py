@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from suila.benefit import get_calculation_date, get_eboks_date
 from suila.exceptions import ConfigurationError, DependenciesNotMet
-from suila.models import AnnualIncome, JobLog, ManagementCommands, StatusChoices
+from suila.models import JobLog, ManagementCommands, StatusChoices
 from suila.types import JOB_NAME, JOB_TYPE
 
 logger = logging.getLogger(__name__)
@@ -96,12 +96,6 @@ class JobDispatcher:
                 day >= get_eboks_date(year, month).day
             ),
         },
-        ManagementCommands.SEND_YEARLY_EBOKS: {
-            "type": JOB_TYPE_YEARLY,
-            "validator": lambda year, month, day: (
-                AnnualIncome.objects.filter(person_year__year__year=year - 1).exists()
-            ),
-        },
     }
 
     def __init__(self, day=None, month=None, year=None, reraise=False, stdout=None):
@@ -136,7 +130,6 @@ class JobDispatcher:
             ManagementCommands.SEND_MONTHLY_EBOKS: [
                 ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
             ],
-            ManagementCommands.SEND_YEARLY_EBOKS: [],
             ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS: [],
         }
 
@@ -265,8 +258,6 @@ class JobDispatcher:
             match (name):
                 case ManagementCommands.CALCULATE_STABILITY_SCORE:
                     job_params["year_param"] = args[0]
-                # case ManagementCommands.SEND_YEARLY_EBOKS:
-                #     job_params["year_param"] = args[0]
                 case ManagementCommands.LOAD_ESKAT:
                     job_params["type_param"] = args[1]
         except IndexError:

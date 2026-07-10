@@ -1,8 +1,11 @@
 # SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+
+import random
 from concurrent.futures import Future
 from datetime import datetime, timedelta
+from decimal import Decimal
 from io import StringIO
 from typing import Any, Dict, Set
 from unittest.mock import ANY, MagicMock, call, patch
@@ -18,7 +21,15 @@ from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from requests.exceptions import HTTPError
 
-from suila.models import JobLog, ManagementCommands, Person, PersonYear, StatusChoices
+from suila.models import (
+    AnnualIncome,
+    JobLog,
+    ManagementCommands,
+    Person,
+    PersonYear,
+    StatusChoices,
+    SuilaEboksMessage,
+)
 
 
 class CalculateStabilityScoreTest(BaseTestCase):
@@ -815,3 +826,18 @@ class CreateApiGroup(TestCase):
         self.assertIn("view_personyear", permissions)
         self.assertIn("view_personmonth", permissions)
         self.assertEqual(len(permissions), 4)
+
+
+class GenerateFinalSettlements(BaseTestCase):
+    def test_generate_final_settlements(self):
+        SuilaEboksMessage.objects.all().delete()
+        for person_year in PersonYear.objects.filter(year__year=2024):
+            AnnualIncome.objects.create(
+                person_year=person_year,
+                account_tax_result=Decimal(130000),
+                salary=random.randint(65000, 500000),
+            )
+            person_year.person.full_address = "Nuussuaq 3, Nuussuaq"
+            person_year.save()
+
+        call_command("generate_final_settlements", "2024")
