@@ -26,6 +26,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import (
@@ -50,6 +51,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
 from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.translation import gettext
@@ -86,7 +88,7 @@ class ManagementCommands(TextChoices):
     CALCULATE_BENEFIT = "calculate_benefit"
     EXPORT_BENEFITS_TO_PRISME = "export_benefits_to_prisme"
     SEND_MONTHLY_EBOKS = "send_monthly_eboks_message"
-    SEND_YEARLY_EBOKS = "send_yearly_eboks_message"
+    GENERATE_FINAL_SETTLEMENTS = "generate_final_settlements"
     LOAD_PRISME_BENEFITS_POSTING_STATUS = "load_prisme_benefits_posting_status"
 
 
@@ -2449,6 +2451,102 @@ class AnnualIncome(PermissionsMixin, models.Model):
         )
         benefit: Decimal = calculation_method.calculate(income_base)
         return benefit
+
+
+class FinalSettlement(PermissionsMixin, models.Model):
+
+    # The connection to PersonYear is through AnnualIncome
+    annual_income = models.ForeignKey(
+        AnnualIncome, on_delete=models.CASCADE, related_name="final_settlements"
+    )
+
+    @property
+    def person_year(self):
+        return self.annual_income.person_year
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    # The `SuilaEboxMessage` class contains the code which generates the
+    # PDF.
+    eboks_message = models.OneToOneField(
+        "SuilaEboksMessage", null=True, on_delete=models.SET_NULL
+    )
+    # This is where we store the actual PDF file.
+    storage = settings.LOCAL_EBOKS_PDF_STORAGE  # type: ignore
+    _pdf = models.FileField(
+        # Keep directory name in ASCII range to avoid problems in some OS versions.
+        null=True,
+        upload_to="aarsopgoerelse",
+    )
+
+    @property
+    def pdf(self):
+        if not self.pk:  # Save final settlement before generating PDF.
+            return None
+        if self.eboks_message is None:
+            try:
+                person_month = self.person_year.personmonth_set.get(month=12)
+            except PersonMonth.DoesNotExist:
+                raise ValueError(
+                    "Can't generate final settlement before the year has passed."
+                )
+            self.eboks_message = SuilaEboksMessage.objects.create(
+                person_month=person_month, type="årsopgørelse"
+            )
+            pdf_bytes = self.eboks_message.pdf
+            cpr = self.person_year.person.cpr
+            year = self.person_year.year.year
+            # Include year and CPR in file name to identify.
+            # Include PK to ensure uniqueness.
+            pdf_content = ContentFile(
+                pdf_bytes, name=f"aarsopgoerelse_{year}_{cpr}_{self.pk}.pdf"
+            )
+            self._pdf = pdf_content
+        return self._pdf
+
+    @property
+    def benefit_due_for_year(self):
+        return self.annual_income.calculate_actual_annual_benefit()
+
+    @property
+    def benefit_paid_out_in_year(self):
+        # Unlike the total benefit, this can be a property because it can't
+        # change.
+        return self.person_year.benefit_transferred
+
+    # When FinalSettlement is generated, this is calculated as
+    # `benefit_due_for_year - benefit_paid_out_in_year`.
+    _result = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=False,
+        blank=False,
+    )
+
+    @property
+    def result(self):
+        if (
+            self._result is None
+            or self._result != self.benefit_due_for_year - self.benefit_paid_out_in_year
+        ):
+            result = self.benefit_due_for_year - self.benefit_paid_out_in_year
+            self._result = result
+        return self._result
+
+
+@receiver(pre_save, sender=FinalSettlement)
+def before_save_final_settlement(sender, instance, **kwargs):
+    # Initialize result
+    instance.result
+
+
+@receiver(post_save, sender=FinalSettlement)
+def after_save_final_settlement(sender, instance, **kwargs):
+    # Initialize PDF
+    instance.pdf
 
 
 class JobLog(PermissionsMixin, models.Model):

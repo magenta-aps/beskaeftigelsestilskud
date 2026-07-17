@@ -19,6 +19,7 @@ from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKode
 from suila.integrations.prisme.benefits import BatchExport
 from suila.integrations.prisme.g68g69 import G68G69TransactionWriter
 from suila.models import (
+    AnnualIncome,
     Employer,
     ManagementCommands,
     MonthlyIncomeReport,
@@ -268,6 +269,11 @@ class Command(BaseCommand):
                         ),
                     )
                 person_year.update_quarantine()
+                AnnualIncome.objects.create(
+                    person_year=person_year,
+                    account_tax_result=Decimal(130000),
+                    salary=random.randint(65000, 500000),
+                )
 
             call_command(ManagementCommands.ESTIMATE_INCOME, cpr=person.cpr)
 

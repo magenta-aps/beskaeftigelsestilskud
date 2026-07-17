@@ -17,6 +17,7 @@ from suila.models import (
     AnnualIncome,
     BTaxPayment,
     Employer,
+    FinalSettlement,
     IncomeEstimate,
     IncomeType,
     JobLog,
@@ -215,7 +216,7 @@ class ModelTest(TestCase):
 
         # No IncomeEstimate
 
-        cls.final_settlement = AnnualIncome.objects.create(
+        cls.annual_income = AnnualIncome.objects.create(
             person_year=cls.person_year,
             account_tax_result=Decimal(13000),
         )
@@ -1172,6 +1173,33 @@ class TestPersonYearAssessment(ModelTest):
         self.assertFalse(assessment1.latest)
         assessment2.refresh_from_db()
         self.assertTrue(assessment2.latest)
+
+
+class TestFinalSettlement(ModelTest):
+    def test_pdf_is_none(self):
+        fs = FinalSettlement(annual_income=self.annual_income)
+        pdf = fs.pdf
+        self.assertTrue(pdf is None)
+
+    def test_exception_when_no_december(self):
+        person = Person.objects.create(name="Hans Jensen", cpr="0987654321")
+        year = Year.objects.create(year=2030, calculation_method=self.calc)
+        person_year = PersonYear.objects.create(
+            person=person,
+            year=year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+        annual_income = AnnualIncome.objects.create(
+            person_year=person_year,
+            account_tax_result=Decimal(13000),
+            salary=150000,
+            summarized_a_income=150000,
+            summarized_b_income=0,
+            summarized_u_income=0,
+        )
+        fs = FinalSettlement(annual_income=annual_income)
+        with self.assertRaises(ValueError):
+            fs.save()
 
 
 class TestTaxInformationPeriod(ModelTest):
