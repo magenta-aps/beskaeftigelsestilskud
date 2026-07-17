@@ -194,7 +194,7 @@ services:
 
   suila-matomo-db:
     container_name: suila-matomo-db
-    image: mariadb:11.7.2
+    image: mariadb:11.8.8
     command: --max-allowed-packet=64MB
     volumes:
       - matomo-data:/var/lib/mysql:Z
