@@ -97,7 +97,7 @@ variables:
 .lint-default: &lint-default
   stage: lint
   needs: []
-  image: python:3.12
+  image: python:3.14
   interruptible: true
 
 Lint Commits:
