@@ -69,7 +69,7 @@ class TestGetPaymentDate(BaseEnvMixin, TestCase):
             ),
         )
 
-        self.assertEqual(get_payment_date(self.person_month), date(1991, 2, 7))
+        self.assertEqual(get_payment_date(self.person_month), date(1991, 2, 8))
 
     def test_get_payout_date_bad_g68_content(self):
 

@@ -4,6 +4,7 @@
 import logging
 from datetime import date
 
+from common.utils import add_or_subtract_working_days
 from django.template.defaultfilters import register
 from django.utils import dates
 from django.utils.translation import gettext_lazy as _
@@ -66,7 +67,12 @@ def get_payment_date(person_month: PersonMonth) -> date:
     try:
         for field in G68Transaction.parse(person_month.prismebatchitem.g68_content):
             if isinstance(field, Udbetalingsdato):
-                return field.val
+                # The payment date written to Prisme/G68 is one day before the
+                # "official" payment date (see
+                # `suila.integrations.prisme.benefits.BatchExport.get_payment_date`.)
+                # Therefore, we add back one day to the date recorded in G68 to get the
+                # "official" date.
+                return add_or_subtract_working_days(field.val, 1)
         return _get_payment_date(person_month.year, person_month.month)
     except PrismeBatchItem.DoesNotExist:
         return _get_payment_date(person_month.year, person_month.month)
