@@ -71,67 +71,80 @@
 
                 {% if benefit_transfer_difference == 0 %}
                     <p>
-                        Allagaqaasiaq Aningaasanik tigusassaqanngilatit akiligassaqarnallu.
+                        Aningaasanik tigusassaqanngilatit akiligassaqarnallu.
                     </p>
                 {% elif benefit_transfer_difference >= 100 and benefit_transfer_difference <= 15750 %}
                     <p>
-                        Allagaqaasiaq: Ullut 30 iluini aningaasat NemKonto-mut ikineqassapput.
+                        Ullut 30 ingerlaneranni aningaasat NemKonto-nnut ikineqassapput.
                     </p>
                 {% elif benefit_transfer_difference > 0 and benefit_transfer_difference < 100 %}
                     <p>
-                        Allagaqaasiaq: Suila-tapinik tigusavit assigiinngissutaasa pisinnaasavillu 100 kr. inorpaat.
-                        Aningaasanik tigusassaqanngilatit akiligassaqarnallu.
+                        Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit, 
+                        ukiullu aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit 
+                        Suila-tapisiassavit nikingassutaasa 100 kr. ataappaat.
+
+                        Taamaammat aningaasanik tigusassaqanngilatit akiligassaqarnallu.
                     </p>
                 {% elif benefit_transfer_difference < 0 and benefit_transfer_difference > -1999 %}
                     <p>
-                        Allagaqaasiaq: Pisinnaasatit qaangerlugit Suila-tapinik pissarsisarsimavutit.
-                        {{ next_year }}-mi piumasaqaatinik naammassinnikkuit, Suila-tapinit aningaasat assinganik ilanngaatigineqartassapput.
+                        Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit,
+                        ukiullu aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit 
+                        Suila-tapisiassatit sipporlugit tunniunneqarsimapput. {{ next_year }}-mi 
+                        Suila-tapisisussaaguit, pivallaarutigisimasatit Suila-tapisiassannit
+                        matussuserneqarumaarput.
                     </p>
                 {% elif benefit_transfer_difference < -1999 %}
                     <p>
-                        Pisinnaasatit qaangerlugit Suila-tapinik  pissarsisarsimavutit. Akiligassanik e-Boks aqqutigalugu nassinneqassaatit.
-                        Akiligassaq tigusimagukku piffissaatillugulu akilernagu, akiliiffissaq qaangiuppat ernialersorneqassapput.
+                        Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit, ukiullu 
+                        aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit 
+                        Suila-tapisiassatit sipporlugit tunniunneqarsimapput. 
+                        E-boksikkut pivallaarutigisimasatit akiligassiissutigineqarumaarput. 
+
+                        Akiligassinneqarsimaguit ullorlu akiliiffissaq eqqorlugu akiliisimanngikkuit, 
+                        ullup akiliiffissap kingorna akiligassaq qaavatigut ernialerneqassaaq.
                     </p>
                 {% endif %}
 
 
 
-                <h2>Suila-tapit sunaava?</h2>
+                <h2>Suila-tapit suuppat?</h2>
                 <p>
                     Suila-tapit tassaapput sulinermi ilanngaatit tunniunneqartartut.
                     Suila-tapit qaammammut ataasiarlugit sulinermi aningaasarsiat, tunisinermi isertitat,
-                    B-tut isertitat aamma pissarsiat naapertorlugit amerlassusaat tunniunneqartarput.
+                    isertitat B-t aamma sinneqartoruutinit ilunaarutisiat naapertorlugit tunniunneqartarput.
                 </p>
                 <p>
-                    <a href="https://suila.gl">Suila.gl</a> ammaruk piffissamilu aggersumi tunniunneqartussat takullugit.
+                    <a href="https://suila.gl">Suila.gl</a> iserfigalugu Suila-tapisiariumaagssatit takukkit.
                 </p>
                 <p>
-                    Ukiup naareernerani akileraartarnermut aqutsisoqarfiup isertitatit eqqortut ilisimalersimassavai.
-                    Isertitat eqqortut tunngavigalugit ukioq una Suila-tapimi isertitassanut naatsorsuutit tigussavatit.
-                    Tassani takusinnaavat, aningaasat annikippallaartut amerlavallaartulluunniit aamma eqqortut tigusimanerlugit.
+                    Ukiup aningaasarsiorfiusup qaangiunnerani Akileraartarnermut Aqutsisoqarfimmit 
+                    isertitariumaagassarisimasannut sanilliullugu isertitarisimasatit 
+                    naatsorsorneqarsinnaa-lersimassapput. 
+                    Taamaalillunilu ukiumut nalunaarummi takuneqarsinnaalerluni Suila 
+                    tapisiarisimasatit naapertuunnersut.
                 </p>
 
 
-                <h1>Suila-tapimi isertitatut tunngavissiaq ima naatsorsorneqartarpoq:</h1>
+                <h1>Suila-tapisiassannut isertitatit tunngavigineqartut ima naatsorsorneqarput:</h1>
                 <table>
                     <tr>
-                        <td>A-tut isertitat, tamatumunnga ilanngullugit akissarsiat aamma nunani allani soraarnerussutisiaqalernissamut katersat</td>
+                        <td>Aningaasarsiat A-t, akissarsiat aamma nunani allani soraarnerussutisiaqalernissamut katersat ilanngullugit</td>
                         <td>{{ a_income }}</td>
                     </tr>
                     <tr>
-                        <td>B-tut isertitat, tamatumunnga ilanngullugit tunisinerit, aamma suliffeqarfimmit sinneqartoorutit</td>
+                        <td>Aningaasarsiat B-t, tunisanit isertitat aamma namminersorluni inuussutissarsiummik ingerlatamit sinneqartoorutiineersuupput</td>
                         <td>{{ b_income }}</td>
                     </tr>
                     <tr>
-                        <td>Ingerlatseqatigiiffinnit kalaallinit pigineqartunit iluanaarutit</td>
+                        <td>Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit ilunaarutisiat</td>
                         <td>{{ u_income }}</td>
                     </tr>
                     <tr>
-                        <td>Sulisitsisumit soraarnerussutisiassat akilerneqartartut</td>
+                        <td>Soraarnerussutisiassat sulisitsisumit akilerneqartartut</td>
                         <td>{{ employer_paid_gl_pension_income }}</td>
                     </tr>
                     <tr>
-                        <th>Suila-tapimit ataatsimut isertitanut tunngavissaq</th>
+                        <th>Suila-tapisiassavit naatsorsorneqarnerini isertitatit tunngavigineqartut</th>
                         <th>{{ sum_income }}</th>
                     </tr>
 
@@ -149,65 +162,60 @@
             </div>
             <div class="header-image"></div>
             <div class="page-main">
-                <h2>Kina Suila-tapinik pissava?</h2>
+                <h2>Kikkut Suila-tapinik pisinnaappat?</h2>
                 <p>
-                    Ukiumut Suila-tapisiassavit annertussusaanni isertitatit apeqqutaapput.
-                    Suila.gl-mi isertitanut tunngavissat ilineqarsimasut atorlugit naatsorsuineq annertunerusumik paasisaqarfigisinnaavat.
+                    Suila-tapisinissamut ukiumut isertitavit annertussusaat apeqqutaavoq.
+                    Suila-tapit isertitallu tunngavigineqartut naatsorsorneqariaasiat,
+                    isertitatillu Suila-tapisinissannut tunngaviliinersut suila.gl-imi takusinnaavatit.
                 </p>
 
-                <h2>Paasissutissat uanngaanneerput:</h2>
-                <h3>A-tut isertitat</h3>
+                <h2>Paasissutissat ukunanngaanneerput:</h2>
+                <h3>Aningaasarsiat A-t</h3>
                 <p>
-                    A-tut isertitatit pillugit paasissutissat akileraartarnermut inaarutaasumik nalunaarutinnit pisarput.
-                    Nammineerlutit nalunaarutinnut aamma sulisitsisuit akissarsiat, ajunngitsorsiassat,
-                    nunanullu allanut soraarnerussutisiassatut akilersorneqartut pillugit nalunaarutaani,
-                    Ukiup naanerani Nammineerlutit nalunaarutinni tunngaviusarput.
-                </p>
-                <h3>B-tut isertitat</h3>
-                <p>
-                    B-tut isertitat pillugit paasissutissat  akileraartarnermut inaarutaasumik nalunaarutinnik pisarput.
-                    Inaarutaasumik nalunaarut nammineerlutit nalunaarsuinitit aamma ernianit,
-                    attartortitsinernit imaluunniit allatigut isertitaqarfiusuni isertitatit pillugit
-                    allanit nalunaarutigineqartut, tunngavigalugu pisarput.
-                </p>
-                <h3>Kalaallit Nunaanni ingerlatsivinnit ajunngitsorsiassat.</h3>
-                <p>
-                    Iluanaarutinit paasissutissat iluanaarutitut tunniunneqartutut ingerlatseqatigiiffinniit ilinnut tunniunneqassapput.
-                </p>
-                <h3>Soraarnerussutisiassanut aaqqissuussinerannut akilersukkat.</h3>
-                <p>
-                    Kalaallit Nunaanni  Soraarnerussutisiassanut aaqqissuussinernut tunngasut,
-                    kiisalu sulisitsisuit Soraarnerussutisiassanut aaqqissuussinerannut akilertagaanut aningaasartaanut tunngatillugu paasissutissat.
-                </p>
-            </div>
-        </div>
+                    Aningaasarsiat A-t pillugit paasissutissat inaarummik naatsorsuummit aaneqartarput. 
 
-        
-        <div class="page">
-
-            <div class="year-band">
-                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
-            </div>
-            <div class="header-image"></div>
-            <div class="page-main">
-                <h1>Malittarisassat</h1>
+                    Nammineerlutit nalunaarsukkannit aamma sulisitsisuit anigaasarsiannut,
+                    ajunngitsorsiannut, soraarnerussutisiaqalernissannut Kalaallit Nunaata
+                    avataaniittunut aaqqissuussinernut akiliutiutigisimasaminut tunngatillugu
+                    nalunaarutaannit, inaarummik naatsorsuutini paasissutissat aaneqartarput.
+                </p>
+                <h3>Aningaasarsiat B-t</h3>
                 <p>
-                    Uku allakkat tassaapput, Suila-tapit pillugit inaarutaasumik nalunaarutit.
+                    Aningaasarsiat B-t pillugit paasissutissat inaarummik naatsorsuummit aaneqartarput.
+                    Inaarummik naatsorsuummi paasissutissat nammineerlutit nalunaarsukkannit,
+                    tunitsivinnut tunisatit pillugit nalunaarutigeqarsimasunit, namminersorlutit
+                    inuussutissarsiummi ingerlatanni isertitannit, attartortitsinernit aamma
+                    ernianit aaneqartarput. 
+                </p>
+                <h3>Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit ilunaarutisiat</h3>
+                <p>
+                    Sinneqartoorutinit iluanaarutisiat pillugit paasissutissat iluanaarutisianit ilinnut 
+                    tunniunneqarsimasutut ingerlatseqatigiiffinniit nalunaarutigineqarsimasunit aaneqartarput.
+                </p>
+                <h3>Soraarnerussutisiassanut akilersukkat</h3>
+                <p>
+                    Kalaallit Nunaanni  Soraarnerussutisiassanut aaqqissuussinernut tunngapput, 
+                    kiisalu sulisitsisuit Soraarnerussutisiassanut aaqqissuussinerannut akilertagaanut 
+                    aningaasartaanut tunngatillugu paasissutissat. 
+                </p>
+
+                <h1>Inatsisit</h1>
+                <p>
+                    Una allakkiaq Suila-tapitit pillugu aalajangiinermik imaqarpoq.
                 </p>
                 <p>
-                    Aningaasarsianit akileraarutit pillugit Inatsisartut inatsisaat pillugu Namminersorlutik Oqartussat
-                    inatsimmut nalunaarutaat nr. 62, 24. oktober 2025-meersut tunngavigalugit aalajangiisoqarpoq.
+                    Aningaasarsianit akileraarutit pillugit Inatsisartut inatsisaat pillugu 
+                    Namminersorlutik Oqartussat inatsimmut nalunaarutaat nr. 62, 24. oktober
+                    2025-meersut tunngavigalugit aalajangiisoqarpoq.
                 </p>
                 <p>
 
                 </p>
-                <h2>Piumasaqaatit aamma Suila-tapisiavit annertussusaat</h2>
+                <h2>Pisussaaffiitit aamma Suila-tapisiavit annertussusilerneqarnerat</h2>
                 <p>
-                    Inatsimmut nalunaarutini § 38. imm. 2-mi takuneqarsinnaavoq, tamakkiisumik Kalaallit Nunaannut
-                    akileraartussaassasutit aammalu Suila-tapinik pissarsissaguit ilanngaateqanngitsumik akileraartartuunak.
+                    Inatsimmut nalunaarutini § 38. imm. 2-mi takuneqarsinnaavoq, tamakkiisumik Kalaallit 
+                    Nunaannut akileraartussaassasutit aammalu Suila-tapinik pissarsissaguit 
+                    ilanngaateqanngitsumik akileraartartuunak.
                 </p>
                 <p>
                     § 38 b imm. 1-mi takuneqarsinnaavoq:
@@ -230,8 +238,21 @@
                     Suila-tapinut killigitinneqartunut kisitsisit ukiut tamaasa akigititanut nalimmassaanermi naleqqussarneqartarput.
                     Kisitsisit piviusut takukkit AKA.gl-mi nalunaarutit ataanni.
                 </p>
+            </div>
+        </div>
 
-                <h2>Ukiumut naatsorsuutit - tunniussineq akiliinerlu</h2>
+        
+        <div class="page">
+
+            <div class="year-band">
+                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
+            </div>
+            <div class="header-image"></div>
+            <div class="page-main">
+                <h2>Ukiumut nalunaarutit - tunniussinerit akiligassiinerillu</h2>
                 <p>
                     § 38 f, imm. 1-mi takuneqarsinnaavoq Akileraartarnermut Pisortaqarfiup ukiut
                     tamaasa 1. september nallertinnagu Siuliani Suila-tapinik pissarsisarsimanermut
@@ -252,19 +273,8 @@
                     akiligassiineq atorlugu akiligassanngortinneqassapput.
                     Tamanna § 38 g. imm. 2-mi takuneqarsinnaavoq.
                 </p>
-            </div>
-        </div>
 
-        
-        <div class="page">
-            <div class="year-band">
-                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
-            </div>
-            <div class="header-image"></div>
-            <div class="page-main">
+
                 <h1>Naammagittaalliuuteqarnissamut ilitsersuut</h1>
                 <p>
                     Ukiumut nalunaarummut isumaqataanngikkuit, qinnuigineqarputit Akileraartarnermut Aqutsisoqarfik attavigeqqullugu.
