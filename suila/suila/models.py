@@ -750,6 +750,43 @@ class Person(PermissionsMixin, models.Model):
             logger.exception(e)
             raise
 
+    #surplus_benefit = models.DecimalField(
+    #    null=False,
+    #    blank=False,
+    #    default=Decimal(0),
+    #    max_digits=12,
+    #    decimal_places=2,
+    #)
+
+    def surplus_benefit(self, year: int | None) -> Decimal:
+        # Summarize added surplus benefit from årsopgørelser and deduct whatever is
+        # spent by PersonMonth
+        surplus_benefit_dict = {}
+        if year:
+            # TODO: Something's wrong here
+            personmonth_qs = PersonMonth.objects.filter(
+                person_year__person=self,
+                offset_surplus_benefit__gt=0,
+                person_year__year__lte=year,
+                )
+            finalsettlement_qs = FinalSettlement.objects.filter(
+                person_year__person=self.person,
+                person_year__year__lte=year,
+            )
+        else:
+            personmonth_qs = PersonMonth.objects.filter(
+                person_year__person=self.person,
+                offset_surplus_benefit__gt=0,
+            )
+            finalsettlement_qs = FinalSettlement.objects.filter(
+                person_year__person=self.person,
+            )
+        spent_surplus = personmonth_qs.aggregate(spent=Sum("offset_surplus_benefit"))["spent"]
+        acquired_surplus = finalsettlement_qs.aggregate(acquired=Sum("result"))["acquired"]
+
+        # NOTE: Return dict with spent surplus, acquired surplus and remaining surplus
+        return {"surplus_acquired_surplus - spent_surplus
+
 
 pre_save.connect(
     Person.pre_save,
@@ -1254,6 +1291,13 @@ class PersonMonth(PermissionsMixin, models.Model):
 
     has_paid_b_tax = models.BooleanField(
         default=False,
+    )
+
+    offset_surplus_benefit = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
     )
 
     @property
