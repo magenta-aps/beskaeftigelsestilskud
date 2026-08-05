@@ -96,6 +96,10 @@ def calculate_benefit(
         has_full_tax_scope_in_month=True,
     )
 
+    month_qs = month_qs.annotate(
+        surplus_benefit=person__surplus_benefit
+    )
+
     month_qs = PersonMonth.signal_qs(month_qs)
     month_df = to_dataframe(
         month_qs,
@@ -174,6 +178,13 @@ def calculate_benefit(
     df.loc[:, "benefit_this_month"] = (
         df.remaining_benefit_for_year / (13 - month)
     ).round(2)
+
+    # Offset surplus benefit first
+    df["offset_surplus_benefit"] = df.loc[
+        df.surplus_benefit > 0,
+        ["benefit_this_month", "surplus_benefit"]
+    ].min(axis=1)
+    df.loc[df.surplus_benefit > 0, "benefit_this_month"] -= df["offset_surplus_benefit"]
 
     # Do not payout if the amount is below zero
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0

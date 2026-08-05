@@ -33,6 +33,7 @@ class Command(SuilaBaseCommand):
             "estimated_year_benefit",
             "actual_year_benefit",
             "estimated_year_result",
+            "offset_surplus_benefit",
         ]
 
         benefit = calculate_benefit(month, year, kwargs["cpr"])
