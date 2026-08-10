@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+import json
 import os
 from ast import literal_eval
 
@@ -13,7 +13,7 @@ PRISME = {
     "port": int(os.environ.get("PRISME_PORT") or 22),
     "username": os.environ["PRISME_USER"],
     "password": os.environ["PRISME_PASSWORD"],
-    "known_hosts": os.environ.get("PRISME_KNOWN_HOSTS") or None,
+    "known_hosts": json.loads(os.environ.get("PRISME_KNOWN_HOSTS") or "[]"),
     # Configuration for G68/G69 export
     "user_number": int(os.environ.get("PRISME_USER_NUMBER", "0900")),
     "machine_id": int(os.environ["PRISME_MACHINE_ID"]),
