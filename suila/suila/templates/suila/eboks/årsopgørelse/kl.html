@@ -3,6 +3,7 @@
 
 {% extends "suila/eboks/base.html" %}
 {% load static %}
+{% load amount_tags %}
 
 {% block extra_headers %}
     {% if not pdf %}
@@ -57,15 +58,15 @@
                 <table>
                     <tr>
                         <th><h3>Inernera</h3></th>
-                        <th>{{ benefit_transfer_difference }}</th>
+                        <th>{{ benefit_transfer_difference|format_amount }}</th>
                     </tr>
                     <tr>
                         <td>Isertitassatut naatsorsuutigisat naapertorlugit tunniunneqarput</td>
-                        <td>{{ benefit_transferred }}</td>
+                        <td>{{ benefit_transferred|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Eqqortumik isertitatut naapertorlugit pisassaraatit</td>
-                        <td>{{ benefit_calculated }}</td>
+                        <td>{{ benefit_calculated|format_amount }}</td>
                     </tr>
                 </table>
 
@@ -124,31 +125,6 @@
                     tapisiarisimasatit naapertuunnersut.
                 </p>
 
-
-                <h1>Suila-tapisiassannut isertitatit tunngavigineqartut ima naatsorsorneqarput:</h1>
-                <table>
-                    <tr>
-                        <td>Aningaasarsiat A-t, akissarsiat aamma nunani allani soraarnerussutisiaqalernissamut katersat ilanngullugit</td>
-                        <td>{{ a_income }}</td>
-                    </tr>
-                    <tr>
-                        <td>Aningaasarsiat B-t, tunisanit isertitat aamma namminersorluni inuussutissarsiummik ingerlatamit sinneqartoorutiineersuupput</td>
-                        <td>{{ b_income }}</td>
-                    </tr>
-                    <tr>
-                        <td>Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit ilunaarutisiat</td>
-                        <td>{{ u_income }}</td>
-                    </tr>
-                    <tr>
-                        <td>Soraarnerussutisiassat sulisitsisumit akilerneqartartut</td>
-                        <td>{{ employer_paid_gl_pension_income }}</td>
-                    </tr>
-                    <tr>
-                        <th>Suila-tapisiassavit naatsorsorneqarnerini isertitatit tunngavigineqartut</th>
-                        <th>{{ sum_income }}</th>
-                    </tr>
-
-                </table>
             </div>
         </div>
 
@@ -162,12 +138,52 @@
             </div>
             <div class="header-image"></div>
             <div class="page-main">
+
+                <h1>Suila-tapisiassannut isertitatit tunngavigineqartut ima naatsorsorneqarput:</h1>
+                <table>
+                    <tr>
+                        <td>Aningaasarsiat A-t, akissarsiat aamma nunani allani soraarnerussutisiaqalernissamut katersat ilanngullugit</td>
+                        <td>{{ a_income|format_amount }}</td>
+                    </tr>
+                    <tr>
+                        <td>Aningaasarsiat B-t, tunisanit isertitat aamma namminersorluni inuussutissarsiummik ingerlatamit sinneqartoorutiineersuupput</td>
+                        <td>{{ b_income|format_amount }}</td>
+                    </tr>
+                    <tr>
+                        <td>Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit ilunaarutisiat</td>
+                        <td>{{ u_income|format_amount }}</td>
+                    </tr>
+                    <tr>
+                        <td>Soraarnerussutisiassat sulisitsisumit akilerneqartartut</td>
+                        <td>{{ employer_paid_gl_pension_income|format_amount }}</td>
+                    </tr>
+                    <tr>
+                        <th>Suila-tapisiassavit naatsorsorneqarnerini isertitatit tunngavigineqartut</th>
+                        <th>{{ sum_income|format_amount }}</th>
+                    </tr>
+
+                </table>
+
                 <h2>Kikkut Suila-tapinik pisinnaappat?</h2>
                 <p>
                     Suila-tapisinissamut ukiumut isertitavit annertussusaat apeqqutaavoq.
                     Suila-tapit isertitallu tunngavigineqartut naatsorsorneqariaasiat,
                     isertitatillu Suila-tapisinissannut tunngaviliinersut suila.gl-imi takusinnaavatit.
                 </p>
+
+            </div>
+        </div>
+
+        <div class="page">
+
+            <div class="year-band">
+                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
+            </div>
+            <div class="header-image"></div>
+            <div class="page-main">
 
                 <h2>Paasissutissat ukunanngaanneerput:</h2>
                 <h3>Aningaasarsiat A-t</h3>
@@ -199,6 +215,7 @@
                     aningaasartaanut tunngatillugu paasissutissat. 
                 </p>
 
+
                 <h1>Inatsisit</h1>
                 <p>
                     Una allakkiaq Suila-tapitit pillugu aalajangiinermik imaqarpoq.
@@ -210,6 +227,20 @@
                 </p>
                 <p>
 
+            </div>
+        </div>
+
+        
+        <div class="page">
+
+            <div class="year-band">
+                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
+            </div>
+            <div class="header-image"></div>
+            <div class="page-main">
                 </p>
                 <h2>Pisussaaffiitit aamma Suila-tapisiavit annertussusilerneqarnerat</h2>
                 <p>
@@ -238,20 +269,6 @@
                     Suila-tapinut killigitinneqartunut kisitsisit ukiut tamaasa akigititanut nalimmassaanermi naleqqussarneqartarput.
                     Kisitsisit piviusut takukkit AKA.gl-mi nalunaarutit ataanni.
                 </p>
-            </div>
-        </div>
-
-        
-        <div class="page">
-
-            <div class="year-band">
-                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
-            </div>
-            <div class="header-image"></div>
-            <div class="page-main">
                 <h2>Ukiumut nalunaarutit - tunniussinerit akiligassiinerillu</h2>
                 <p>
                     § 38 f, imm. 1-mi takuneqarsinnaavoq Akileraartarnermut Pisortaqarfiup ukiut
@@ -274,6 +291,20 @@
                     Tamanna § 38 g. imm. 2-mi takuneqarsinnaavoq.
                 </p>
 
+            </div>
+        </div>
+
+        
+        <div class="page">
+
+            <div class="year-band">
+                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
+            </div>
+            <div class="header-image"></div>
+            <div class="page-main">
 
                 <h1>Naammagittaalliuuteqarnissamut ilitsersuut</h1>
                 <p>
