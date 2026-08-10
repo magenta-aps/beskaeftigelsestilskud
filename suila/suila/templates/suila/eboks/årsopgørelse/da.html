@@ -3,6 +3,7 @@
 
 {% extends "suila/eboks/base.html" %}
 {% load static %}
+{% load amount_tags %}
 
 {% block extra_headers %}
     {% if not pdf %}
@@ -50,15 +51,15 @@
                 <table>
                     <tr>
                         <th><h3>Resultat</h3></th>
-                        <th>{{ benefit_transfer_difference }}</th>
+                        <th>{{ benefit_transfer_difference|format_amount }}</th>
                     </tr>
                     <tr>
                         <td>Baseret på din forventede indkomst fik du udbetalt</td>
-                        <td>{{ benefit_transferred }}</td>
+                        <td>{{ benefit_transferred|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Baseret på din faktiske indkomst er du berettiget til</td>
-                        <td>{{ benefit_calculated }}</td>
+                        <td>{{ benefit_calculated|format_amount }}</td>
                     </tr>
                 </table>
 
@@ -103,7 +104,7 @@
                     Log ind på <a href="https://suila.gl">suila.gl</a> og se de kommende udbetalinger.
                 </p>
                 <p>
-                    Efter årets afslutning , kender Skattestyrelsen dine faktiske indkomster. Baseret på
+                    Efter årets afslutning, kender Skattestyrelsen dine faktiske indkomster. Baseret på
                     de faktiske indkomster, modtager du denne Årsopgørelse for Suila-tapit. Den
                     viser, om du har fået udbetalt for lidt, for meget eller det korrekte beløb.
                 </p>
@@ -113,23 +114,23 @@
                 <table>
                     <tr>
                         <td>A-indkomst, herunder lønindkomst og udenlandske pensioner</td>
-                        <td>{{ a_income }}</td>
+                        <td>{{ a_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>B-indkomst, herunder indhandling og overskud af virksomhed</td>
-                        <td>{{ b_income }}</td>
+                        <td>{{ b_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Udbytter fra grønlandske selskaber</td>
-                        <td>{{ u_income }}</td>
+                        <td>{{ u_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Pensionsindbetalinger fra din arbejdsgiver</td>
-                        <td>{{ employer_paid_gl_pension_income }}</td>
+                        <td>{{ employer_paid_gl_pension_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <th>Samlet Suila-tapit indkomstgrundlag</th>
-                        <th>{{ sum_income }}</th>
+                        <th>{{ sum_income|format_amount }}</th>
                     </tr>
 
                 </table>
@@ -176,8 +177,20 @@
                     bl.a. beløb, som din arbejdsgiver har indbetalt til en pensionsopsparing som en del af din
                     løn.
                 </p>
+            </div>
+        </div>
 
-                <h2>Regler</h2>
+        <div class="page">
+            <div class="year-band">
+                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
+            </div>
+            <div class="header-image"></div>
+            <div class="page-main">
+
+                <h1>Regler</h1>
                 <p>
                     Dette brev er en afgørelse om din Suila-tapit.
                 </p>
@@ -213,20 +226,7 @@
                     Tallene for grænserne for Suila-tabit reguleres hvert år med
                     satstilpasningsprocenten. Find de aktuelle tal på AKA.gl under meddelelser.
                 </p>
-            </div>
-        </div>
 
-        
-        <div class="page">
-
-            <div class="year-band">
-                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
-                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
-            </div>
-            <div class="header-image"></div>
-            <div class="page-main">
                 <h2>Årsopgørelsen - udbetaling og opkrævning</h2>
                 <p>
                     Af § 38 f, stk. 1 fremgår, at Skattestyrelsen hvert år inden den 1. september skal
@@ -246,7 +246,20 @@
                     Hvis du har modtaget for meget Suila-tapit med 2.000 kr. eller mere skal dette
                     opkræves med en faktura til dig. Dette fremgår af § 38 g, stk. 2.
                 </p>
+            </div>
+        </div>
 
+        
+        <div class="page">
+
+            <div class="year-band">
+                <div class="year-band-number" style="top: 12.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 37.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 62.5%">{{year}}</div>
+                <div class="year-band-number" style="top: 87.5%">{{year}}</div>
+            </div>
+            <div class="header-image"></div>
+            <div class="page-main">
 
                 <h1>Klagevejledning</h1>
                 <p>
