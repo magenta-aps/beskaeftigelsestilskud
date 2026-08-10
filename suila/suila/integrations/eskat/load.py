@@ -96,7 +96,7 @@ class Handler:
     @classmethod
     def get_person_month(cls, cpr: str, year: int | None, month: int) -> PersonMonth:
         qs = PersonMonth.objects.select_related("person_year__person")
-        person_month = qs.get(
+        person_month = qs.get(  # type: ignore[misc]
             person_year__person__cpr=cpr,
             person_year__year__year=year,
             month=month,

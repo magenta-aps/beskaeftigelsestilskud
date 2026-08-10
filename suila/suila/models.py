@@ -57,6 +57,7 @@ from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
+from django_stubs_ext import StrOrPromise
 from lxml import etree
 from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
@@ -852,7 +853,7 @@ class PersonYear(PermissionsMixin, models.Model):
         )
 
     @property
-    def quarantine_reason(self) -> dict[str, str | int | None]:
+    def quarantine_reason(self) -> dict[str, StrOrPromise | int | None]:
         if settings.ENFORCE_QUARANTINE:  # type: ignore
             reason = QuarantineReason(
                 self.quarantine_df.loc[self.person.cpr, "quarantine_reason"]
@@ -1088,10 +1089,15 @@ class TaxInformationPeriod(PermissionsMixin, models.Model):
         # Check if the last day is in the queryset.
         # A minute is subtracted because Postgres ranges are [) by default:
         # That means inclusive at the start, exclusive at the end.
-        queryset = queryset.filter(period__contains=last_day - relativedelta(minutes=1))
-        subquery: QuerySet[TaxInformationPeriod] = queryset.filter(
-            person_year=OuterRef("person_year"),
-            period__overlap=month_period,
+        # `period` is a queryset annotation, hence the `type: ignore`s below.
+        queryset = queryset.filter(  # type: ignore[misc]
+            period__contains=last_day - relativedelta(minutes=1)
+        )
+        subquery: QuerySet[TaxInformationPeriod] = (
+            queryset.filter(  # type: ignore[misc]
+                person_year=OuterRef("person_year"),
+                period__overlap=month_period,
+            )
         )
         return Exists(subquery)
 
@@ -1395,7 +1401,8 @@ class PersonMonth(PermissionsMixin, models.Model):
         queryset = TaxInformationPeriod.get_annotated_queryset(
             required_tax_scope=tax_scope
         )
-        return queryset.filter(
+        # `period` is a queryset annotation, hence the `type: ignore`
+        return queryset.filter(  # type: ignore[misc]
             person_year=self.person_year,
             period__overlap=month_period,
         ).exists()
