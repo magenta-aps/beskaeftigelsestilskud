@@ -5,14 +5,10 @@ import logging
 from io import BytesIO
 
 from django.conf import settings
-from tenacity import (
-    after_log,
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_fixed,
-)
+from tenacity import after_log, retry, retry_if_exception_type, stop_after_attempt
 from tenQ.client import ClientException, get_file_in_prisme_folder, list_prisme_folder
+
+from suila.integrations.prisme.retry import retry_wait
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +18,7 @@ class SFTPImport:
         retry=retry_if_exception_type(ClientException),
         reraise=True,  # raise `ClientException` if final retry attempt fails
         stop=stop_after_attempt(10),
-        wait=wait_fixed(1),  # 1 second before retry
+        wait=retry_wait,  # settings.PRISME_RETRY_WAIT_SECONDS before retry
         after=after_log(logger, logging.WARNING),  # log all retry attempts
     )
 

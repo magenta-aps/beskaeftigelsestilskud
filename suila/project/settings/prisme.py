@@ -5,6 +5,7 @@ import json
 import os
 from ast import literal_eval
 
+from project.settings.base import TESTING
 from project.settings.upload import MEDIA_ROOT
 
 PRISME = {
@@ -29,6 +30,13 @@ PRISME = {
         os.environ.get("PRISME_MOD11_SEPARATE_CPRS", "[]")
     ),
 }
+
+# Seconds to wait between retries when talking to Prisme over SFTP. Zero while
+# testing, so the tests covering the retry paths do not spend ten real seconds
+# each sleeping.
+PRISME_RETRY_WAIT_SECONDS = (
+    0.0 if TESTING else float(os.environ.get("PRISME_RETRY_WAIT_SECONDS", "1"))
+)
 
 # Relative to settings.MEDIA_ROOT
 LOCAL_PRISME_CSV_STORAGE = "prisme"

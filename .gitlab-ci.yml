@@ -155,6 +155,12 @@ Lint Javascript:
     - name: postgres:16
       alias: suila-db
   variables:
+    # Number of processes used by `manage.py test --parallel`. Each one gets its
+    # own clone of the test database, so raising this trades runner memory for
+    # wall-clock time. Left explicit rather than letting Django default to
+    # `cpu_count()`, which on a shared runner reports the host's cores and not
+    # the quota this job actually gets.
+    DJANGO_TEST_PROCESSES: "4"
     # Simulate development environment while running tests so we use mockup data
     DJANGO_SECRET_KEY: e$s6@0(hs5ja79-&!l7vt^onoe4h^*bv_e4hj&wt5^8*&x76-$
     TZ: Europe/Copenhagen
