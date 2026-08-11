@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """Django's command-line utility for administrative tasks."""
+import multiprocessing
 import os
 import sys
 
@@ -24,4 +25,11 @@ def main():
 
 
 if __name__ == "__main__":
+    # Python 3.14 changed the default multiprocessing start method on Linux from
+    # "fork" to "forkserver". Django's parallel test runner only supports "fork"
+    # and "spawn": under "forkserver" `--parallel` silently degrades to a single
+    # process (see django.test.runner.get_max_test_processes), so the whole test
+    # suite runs serially. Request "fork" explicitly to keep `--parallel` working.
+    if "test" in sys.argv[1:2]:
+        multiprocessing.set_start_method("fork", force=True)
     main()

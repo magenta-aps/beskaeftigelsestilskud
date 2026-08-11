@@ -18,13 +18,7 @@ from django.db.models import CharField, Exists, F, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
 from django.utils.numberformat import format as format_number
 from simple_history.utils import bulk_update_with_history
-from tenacity import (
-    after_log,
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_fixed,
-)
+from tenacity import after_log, retry, retry_if_exception_type, stop_after_attempt
 from tenQ.client import ClientException, put_file_in_prisme_folder
 from tenQ.writer.g68 import TransaktionstypeEnum, UdbetalingsberettigetIdentKodeEnum
 
@@ -34,6 +28,7 @@ from suila.integrations.prisme.g68g69 import (
     G68G69TransactionWriter,
 )
 from suila.integrations.prisme.mod11 import validate_mod11
+from suila.integrations.prisme.retry import retry_wait
 from suila.models import (
     PersonMonth,
     PrismeAccountAlias,
@@ -362,7 +357,7 @@ class BatchExport:
         retry=retry_if_exception_type(ClientException),
         reraise=True,  # raise `ClientException` if final retry attempt fails
         stop=stop_after_attempt(10),
-        wait=wait_fixed(1),  # 1 second before retry
+        wait=retry_wait,  # settings.PRISME_RETRY_WAIT_SECONDS before retry
         after=after_log(logger, logging.WARNING),  # log all retry attempts
     )
     def _put_file_in_prisme_folder(
