@@ -118,7 +118,7 @@ class BatchExport:
                 )
                 yield (
                     current_batch,
-                    remaining_qs.filter(
+                    remaining_qs.filter(  # type: ignore[misc]
                         prefix=person_month.prefix  # type: ignore[attr-defined]
                     ),
                 )
