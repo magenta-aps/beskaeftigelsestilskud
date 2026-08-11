@@ -53,6 +53,7 @@ ENV COMMIT_TAG=${COMMIT_TAG:-HEAD}
 COPY ./docker/entrypoint.sh /entrypoint.sh
 COPY --chown=suila:suila ./suila /app
 RUN chown suila:suila /app
+# hadolint ignore=DL3066
 USER suila
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]

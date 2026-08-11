@@ -123,12 +123,12 @@ Lint Python:
 
 Lint Dockerfiles:
   <<: *lint-default
-  image: hadolint/hadolint:v2.12.0-debian
+  image: hadolint/hadolint:v2.15.1-debian
   before_script:
     - apt-get -y update
     - apt-get -y install --no-install-recommends git
   script:
-    - git ls-files --exclude='Dockerfile*' --ignored | xargs --max-lines=1 hadolint
+    - git ls-files --exclude='Dockerfile*' --ignored --cached | xargs --max-lines=1 hadolint
 
 Lint REUSE compliance:
   extends: .lint-default
