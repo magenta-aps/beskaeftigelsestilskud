@@ -11,6 +11,7 @@ from common.tests.test_utils import BaseTestCase
 from common.utils import get_income_estimates_df, isnan
 from django.conf import settings
 from django.test import override_settings
+from more_itertools import one
 
 from suila.benefit import (
     calculate_benefit,
@@ -430,3 +431,40 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertEqual(method.taxable_months(date(2025, 6, 30)), 6)
         self.assertEqual(method.taxable_months(date(2025, 7, 1)), 6)
         self.assertEqual(method.taxable_months(date(2025, 7, 20)), 5)
+
+    def test_pivot_table_for_large_dataframes(self):
+        """
+        Numpy 1.26.4 cannot handle large datasets in python 3.14. It messes up the index
+        of the resulting dataframe. This test will fail if numpy 1.26.4 is used.
+
+        This test simply tests the pandas pivot_table command, which is used in
+        `get_payout_df` in `benefit.py`
+
+        It is critical that the pivot_table method is reliable. Therefore we test it
+        here
+
+        The pandas bug is documented here:
+            https://github.com/pandas-dev/pandas/issues/63314
+
+        The failure which occurs if pivot_table fails is documented here:
+            https://redmine.magenta.dk/issues/71194
+
+        """
+        cpr_numbers = [str(n).zfill(5) for n in range(10_000)]
+
+        data = [[10, m] for m in range(1, 6)] * len(cpr_numbers)
+
+        month_df = pd.DataFrame(
+            data,
+            index=[item for item in cpr_numbers for _ in range(5)],
+            columns=["benefit_transferred", "month"],
+        )
+
+        pivot_df = month_df.pivot_table(
+            values="benefit_transferred",
+            index=month_df.index,
+            columns="month",
+            aggfunc=one,
+        )
+
+        self.assertEqual(len(set(pivot_df.index)), len(cpr_numbers))
