@@ -19,7 +19,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from debug_toolbar.toolbar import debug_toolbar_urls
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
@@ -53,7 +52,12 @@ urlpatterns = [
     ),
     path("", include(tf_urls)),
     path("metrics/", include(metrics_urls)),
-] + debug_toolbar_urls()
+]
+
+if "debug_toolbar" in settings.INSTALLED_APPS:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+
+    urlpatterns += debug_toolbar_urls()
 
 if settings.MITID_TEST_ENABLED:  # type: ignore[misc]
     urlpatterns.append(
