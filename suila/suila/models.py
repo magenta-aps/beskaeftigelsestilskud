@@ -2417,6 +2417,7 @@ class AnnualIncome(PermissionsMixin, models.Model):
             self.group_life_income,
             self.rental_income,
             self.other_b_income,
+            self.account_share_business_amount,
         ]
 
         if year > 2024:
