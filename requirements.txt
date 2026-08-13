@@ -35,7 +35,7 @@ idna==3.18
 Jinja2==3.1.6
 lxml==5.4.0
 MarkupSafe==2.1.5
-more-itertools==9.1.0
+more-itertools==11.1.0
 mypy==2.3.0
 mypy-extensions==1.1.0
 numpy==2.5.2
