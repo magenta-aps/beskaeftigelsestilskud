@@ -2,35 +2,42 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from csp import constants as csp_constants
 from project.settings.base import DEBUG, HOST_DOMAIN
 from project.settings.matomo import MATOMO
 
-CSP_DEFAULT_SRC = (
-    "'self'",
-    "localhost:8120" if DEBUG else HOST_DOMAIN,
-    MATOMO["host"],
-)
-CSP_SCRIPT_SRC_ATTR = (
-    "'self'",
-    "'unsafe-inline'",
-    "localhost:8000" if DEBUG else HOST_DOMAIN,
-    MATOMO["host"],
-)
-CSP_STYLE_SRC_ATTR = (
-    "'self'",
-    "'unsafe-inline'",
-)
-CSP_STYLE_SRC_ELEM = (
-    "'self'",
-    "'unsafe-inline'",
-    "cdn.jsdelivr.net",
-)
-CSP_IMG_SRC = (
-    "'self'",
-    "data:",
-    "django-ninja.dev",
-)
-CSP_FRAME_SRC = (
-    "'self'",
-    "https://www.youtube.com",
-)
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": [
+            "'self'",
+            "localhost:8120" if DEBUG else HOST_DOMAIN,
+            MATOMO["host"],
+            # Replaced by 'nonce-<value>' when a view uses `request.csp_nonce`
+            csp_constants.NONCE,
+        ],
+        "script-src-attr": [
+            "'self'",
+            "'unsafe-inline'",
+            "localhost:8000" if DEBUG else HOST_DOMAIN,
+            MATOMO["host"],
+        ],
+        "style-src-attr": [
+            "'self'",
+            "'unsafe-inline'",
+        ],
+        "style-src-elem": [
+            "'self'",
+            "'unsafe-inline'",
+            "cdn.jsdelivr.net",
+        ],
+        "img-src": [
+            "'self'",
+            "data:",
+            "django-ninja.dev",
+        ],
+        "frame-src": [
+            "'self'",
+            "https://www.youtube.com",
+        ],
+    },
+}
