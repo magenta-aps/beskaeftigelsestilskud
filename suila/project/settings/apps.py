@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "simple_history",
     "compressor",
     "crispy_forms",
+    "csp",
 ]
 if not TESTING:
     INSTALLED_APPS.append("debug_toolbar")
