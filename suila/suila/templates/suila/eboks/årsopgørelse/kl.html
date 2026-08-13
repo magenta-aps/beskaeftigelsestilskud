@@ -55,9 +55,9 @@
                 </div>
                 <h1>Ukiumut nalunaarut {{ year }}-mi Suila-tapit</h1>
 
-                <table>
+                <table style="border-collapse: collapse">
                     <tr>
-                        <th><h3>Inernera</h3></th>
+                        <th>Inernera</th>
                         <th>{{ benefit_transfer_difference|format_amount }}</th>
                     </tr>
                     <tr>
@@ -143,23 +143,23 @@
                 <table>
                     <tr>
                         <td>Aningaasarsiat A-t, akissarsiat aamma nunani allani soraarnerussutisiaqalernissamut katersat ilanngullugit</td>
-                        <td>{{ a_income|format_amount }}</td>
+                        <td style="white-space: nowrap">{{ a_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Aningaasarsiat B-t, tunisanit isertitat aamma namminersorluni inuussutissarsiummik ingerlatamit sinneqartoorutiineersuupput</td>
-                        <td>{{ b_income|format_amount }}</td>
+                        <td style="white-space: nowrap">{{ b_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit ilunaarutisiat</td>
-                        <td>{{ u_income|format_amount }}</td>
+                        <td style="white-space: nowrap">{{ u_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Soraarnerussutisiassat sulisitsisumit akilerneqartartut</td>
-                        <td>{{ employer_paid_gl_pension_income|format_amount }}</td>
+                        <td style="white-space: nowrap">{{ employer_paid_gl_pension_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <th>Suila-tapisiassavit naatsorsorneqarnerini isertitatit tunngavigineqartut</th>
-                        <th>{{ sum_income|format_amount }}</th>
+                        <th style="white-space: nowrap">{{ sum_income|format_amount }}</th>
                     </tr>
 
                 </table>
