@@ -9,7 +9,7 @@ import pandas as pd
 from common import utils
 from common.utils import to_dataframe
 from django.conf import settings
-from django.db.models import Exists
+from django.db.models import Exists, F
 from more_itertools import one
 from numpy import float64
 
@@ -118,6 +118,9 @@ def calculate_benefit(
     if cpr:
         person_year_qs = person_year_qs.filter(person__cpr=cpr)
 
+    # Add data on available surplus benefit
+    person_year_qs = person_year_qs.annotate(surplus_benefit=F("person__surplus_benefit"))
+
     assessment_df = to_dataframe(
         person_year_qs,
         index="person__cpr",
@@ -127,6 +130,7 @@ def calculate_benefit(
             "catchsale_expenses": float,
             "person__paused": bool,
             "person__annual_income_estimate": float,
+            "surplus_benefit": float,
         },
     )
 
