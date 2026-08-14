@@ -750,18 +750,29 @@ class Person(PermissionsMixin, models.Model):
             logger.exception(e)
             raise
 
-    #surplus_benefit = models.DecimalField(
-    #    null=False,
-    #    blank=False,
-    #    default=Decimal(0),
-    #    max_digits=12,
-    #    decimal_places=2,
-    #)
+    surplus_benefit = models.DecimalField(
+        null=False,
+        blank=False,
+        default=Decimal(0),
+        max_digits=12,
+        decimal_places=2,
+    )
 
-    def surplus_benefit(self, year: int | None) -> Decimal:
+    def calculate_surplus_benefit(
+        self, year: int | None, save: bool = False
+    ) -> Dict[str,Decimal]:
+        """
+        TODO: We need to find out what the exact implementation of this system should
+        be. What do we mean, when we look at a specific year? Does it mean surplus
+        benefit accrued during that year, and spent during the next? Are we measuring
+        FinalSettlement to FinalSettlement?
+
+
+        """
         # Summarize added surplus benefit from årsopgørelser and deduct whatever is
         # spent by PersonMonth
         surplus_benefit_dict = {}
+        # Year-specific functionality needs tweaks. Focus on general situation first
         if year:
             # TODO: Something's wrong here
             personmonth_qs = PersonMonth.objects.filter(
@@ -781,11 +792,20 @@ class Person(PermissionsMixin, models.Model):
             finalsettlement_qs = FinalSettlement.objects.filter(
                 person_year__person=self.person,
             )
-        spent_surplus = personmonth_qs.aggregate(spent=Sum("offset_surplus_benefit"))["spent"]
+        offset_surplus = personmonth_qs.aggregate(spent=Sum("offset_surplus_benefit"))["spent"]
         acquired_surplus = finalsettlement_qs.aggregate(acquired=Sum("result"))["acquired"]
+        surplus_benefit = acquired_surplus - offset_surplus
+        if save:
+            self.surplus_benefit = surplus_benefit
+            self.save(update_fields="surplus_benefit")
 
-        # NOTE: Return dict with spent surplus, acquired surplus and remaining surplus
-        return {"surplus_acquired_surplus - spent_surplus
+        # NOTE: Return dict with spent surplus, acquired surplus and remaining surplus.
+        # We need to figure out the structure of this dict first, though
+        return {
+            "current_surplus_benefit": surplus_benefit,
+            "total_acquired_surplus": acquired_surplus,
+            "total_offset_surplus": offset_surplus
+        }
 
 
 pre_save.connect(
