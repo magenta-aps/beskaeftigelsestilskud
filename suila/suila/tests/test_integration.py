@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import calendar
+import re
+from collections import defaultdict
 from datetime import date, datetime
 from decimal import Decimal
 from io import BytesIO, StringIO
@@ -109,47 +111,39 @@ class PrismeMocks:
 
 class EskatMocks:
 
+    @staticmethod
+    def empty_eskat_response():
+        return {
+            "data": [],
+            "message": "string",
+            "chunk": 1,
+            "chunkSize": 0,
+            "totalChunks": 1,
+            "totalRecordsInChunks": 0,
+        }
+
+    @staticmethod
+    def year_in_url(url):
+        """
+        Return the tax year that an eskat URL asks for.
+
+        The year is the first four-digit element of the path. Examples:
+            - /api/annualincome/get/chunks/all/2024?chunk=1&chunkSize=20
+            - /api/monthlyincome/get/1234567892/2024/7 (the CPR number has 10 digits)
+        """
+        path = url.split("?")[0]
+        match = re.search(r"/(\d{4})(?=/|$)", path)
+        return int(match.group(1)) if match else None
+
     def setUp(self):
         super().setUp()
 
-        self.taxinformation_json_data = {
-            "data": [],
-            "message": (
-                "https://eskatdrift/eTaxCommonDataApi/api/"
-                "taxinformation/get/chunks/all/2025"
-            ),
-            "chunk": 1,
-            "chunkSize": 0,
-            "totalChunks": 1,
-            "totalRecordsInChunks": 0,
-        }
-
-        self.monthlyincome_json_data = {
-            "data": [],
-            "message": "string",
-            "chunk": 1,
-            "chunkSize": 0,
-            "totalChunks": 1,
-            "totalRecordsInChunks": 0,
-        }
-
-        self.annualincome_json_data = {
-            "data": [],
-            "message": "string",
-            "chunk": 1,
-            "chunkSize": 0,
-            "totalChunks": 1,
-            "totalRecordsInChunks": 0,
-        }
-
-        self.expectedincome_json_data = {
-            "data": [],
-            "message": "string",
-            "chunk": 1,
-            "chunkSize": 0,
-            "totalChunks": 1,
-            "totalRecordsInChunks": 0,
-        }
+        # Eskat data, keyed by the tax year it belongs to. Just like the real API, the
+        # mock only serves the records belonging to the year which is being asked for.
+        self.taxinformation_json_data = defaultdict(self.empty_eskat_response)
+        self.monthlyincome_json_data = defaultdict(self.empty_eskat_response)
+        self.annualincome_json_data = defaultdict(self.empty_eskat_response)
+        self.expectedincome_json_data = defaultdict(self.empty_eskat_response)
 
         self.eskat_session_patcher = patch(
             "suila.integrations.eskat.client.requests.Session"
@@ -163,32 +157,45 @@ class EskatMocks:
         def eskat_response_mocker(url, *args, **kwargs):
 
             response_mock = MagicMock(spec=Response)
+            year = self.year_in_url(url)
 
             if "taxinformation" in url:
-                response_mock.json.return_value = self.taxinformation_json_data
+                response_mock.json.return_value = self.taxinformation_json_data[year]
             elif "monthlyincome" in url:
-                response_mock.json.return_value = self.monthlyincome_json_data
+                response_mock.json.return_value = self.monthlyincome_json_data[year]
             elif "expectedincome" in url:
-                response_mock.json.return_value = self.expectedincome_json_data
+                response_mock.json.return_value = self.expectedincome_json_data[year]
             elif "annualincome" in url:
-                response_mock.json.return_value = self.annualincome_json_data
+                response_mock.json.return_value = self.annualincome_json_data[year]
 
             response_mock.status_code = 200
             return response_mock
 
         mock_eskat_session_instance.get.side_effect = eskat_response_mocker
 
-    def _get_datetime(self, month: int, day: int):
+    @staticmethod
+    def add_eskat_record(json_data, year, record):
+        """
+        Add a single record to the (year-keyed) data served by the eskat mock
+        """
+        json_data[year]["data"] += [record]
+        json_data[year]["chunkSize"] += 1
+        json_data[year]["totalRecordsInChunks"] += 1
+
+    def _get_datetime(self, month: int, day: int, year: int):
         return datetime(
-            self.year, month, day, tzinfo=timezone.get_current_timezone()
+            year, month, day, tzinfo=timezone.get_current_timezone()
         ).strftime("%Y-%m-%dT%H:%M:%S")
 
-    def add_expectedincome_record(self, cpr, b_income=0):
-        self.expectedincome_json_data["data"] += [
+    def add_expectedincome_record(self, cpr, b_income=0, year=None):
+        year = year or self.year
+        self.add_eskat_record(
+            self.expectedincome_json_data,
+            year,
             {
                 "cpr": cpr,
-                "year": self.year,
-                "valid_from": f"{self.year}-01-01T00:00:00",
+                "year": year,
+                "valid_from": f"{year}-01-01T00:00:00",
                 "do_expect_a_income": True,
                 "capital_income": b_income,
                 "education_support_income": 0,
@@ -199,36 +206,40 @@ class EskatMocks:
                 "gross_business_income": 0.0,
                 "catch_sale_factory_income": 0.0,
                 "catch_sale_market_income": 0.0,
-            }
-        ]
-        self.expectedincome_json_data["chunkSize"] += 1
-        self.expectedincome_json_data["totalRecordsInChunks"] += 1
+            },
+        )
 
-    def add_taxinformation_record(self, cpr, tax_scope, start_date, end_date):
-        self.taxinformation_json_data["data"] += [
+    def add_taxinformation_record(
+        self, cpr, tax_scope, start_date, end_date, year=None
+    ):
+        year = year or self.year
+        self.add_eskat_record(
+            self.taxinformation_json_data,
+            year,
             {
                 "cpr": cpr,
-                "year": self.year,
+                "year": year,
                 "taxScope": tax_scope,
-                "startDate": self._get_datetime(start_date[0], start_date[1]),
-                "endDate": self._get_datetime(end_date[0], end_date[1]),
+                "startDate": self._get_datetime(start_date[0], start_date[1], year),
+                "endDate": self._get_datetime(end_date[0], end_date[1], year),
                 "catchSalePct": None,
                 "taxMunicipalityNumber": "32",
                 "cprMunicipalityCode": self.location_code,
                 "regionNumber": None,
                 "regionName": "",
                 "districtName": "Nuuk",
-            }
-        ]
-        self.taxinformation_json_data["chunkSize"] += 1
-        self.taxinformation_json_data["totalRecordsInChunks"] += 1
+            },
+        )
 
-    def add_monthlyincome_record(self, cpr, month, income=0):
-        self.monthlyincome_json_data["data"] += [
+    def add_monthlyincome_record(self, cpr, month, income=0, year=None):
+        year = year or self.year
+        self.add_eskat_record(
+            self.monthlyincome_json_data,
+            year,
             {
                 "cpr": cpr,
                 "cvr": "567",
-                "year": self.year,
+                "year": year,
                 "month": month,
                 "salaryIncome": income,
                 "catchsaleIncome": 0,
@@ -242,17 +253,17 @@ class EskatMocks:
                 "foreignPensionIncome": 0,
                 "civilServantPensionIncome": 0,
                 "otherPensionIncome": 0,
-            }
-        ]
+            },
+        )
 
-        self.monthlyincome_json_data["chunkSize"] += 1
-        self.monthlyincome_json_data["totalRecordsInChunks"] += 1
-
-    def add_annualincome_record(self, cpr, salary=0):
-        self.annualincome_json_data["data"] += [
+    def add_annualincome_record(self, cpr, salary=0, year=None):
+        year = year or self.year
+        self.add_eskat_record(
+            self.annualincome_json_data,
+            year,
             {
                 "cpr": cpr,
-                "year": self.year,
+                "year": year,
                 "salary": salary,
                 "public_assistance_income": None,
                 "retirement_pension_income": None,
@@ -289,41 +300,40 @@ class EskatMocks:
                 "account_tax_result": None,
                 "account_share_business_amount": None,
                 "shareholder_dividend_income": None,
-            }
-        ]
-        self.annualincome_json_data["chunkSize"] += 1
-        self.annualincome_json_data["totalRecordsInChunks"] += 1
+            },
+        )
 
 
 class U1AMocks:
+
+    @staticmethod
+    def empty_u1a_response():
+        return {
+            "items": [],
+            "count": 0,
+        }
+
     def setUp(self):
         super().setUp()
 
-        self.list_u1a_response = {
-            "items": [],
-            "count": 0,
-        }
-
-        self.u1a_item_response = {
-            "items": [],
-            "count": 0,
-        }
-
-        self.u1a_unique_cpr_response = {
-            "items": [],
-            "count": 0,
-        }
+        # U1A data, keyed by the year (regnskabsår) it belongs to. Just like the real
+        # API, the mock only serves the records belonging to the year being asked for.
+        self.list_u1a_response = defaultdict(self.empty_u1a_response)
+        self.u1a_item_response = defaultdict(self.empty_u1a_response)
+        self.u1a_unique_cpr_response = defaultdict(self.empty_u1a_response)
 
         def u1a_response_mocker(url, *args, **kwargs):
 
             response_mock = MagicMock(spec=Response)
+            params = kwargs.get("params", {})
+            year = params.get("year") or params.get("regnskabsår")
 
             if "u1a-items/unique/cprs" in url:
-                response_mock.json.return_value = self.u1a_unique_cpr_response
+                response_mock.json.return_value = self.u1a_unique_cpr_response[year]
             elif "u1a-items" in url:
-                response_mock.json.return_value = self.u1a_item_response
+                response_mock.json.return_value = self.u1a_item_response[year]
             elif "u1a" in url:
-                response_mock.json.return_value = self.list_u1a_response
+                response_mock.json.return_value = self.list_u1a_response[year]
 
             response_mock.status_code = 200
             return response_mock
@@ -334,7 +344,9 @@ class U1AMocks:
 
         get_u1a_mock.get.side_effect = u1a_response_mocker
 
-    def add_u1a_record(self, cpr, udbytte=0):
+    def add_u1a_record(self, cpr, udbytte=0, year=None):
+        year = year or self.year
+
         # Create AKAPU1A dict with proper types
         item = {
             "id": 1,
@@ -343,20 +355,20 @@ class U1AMocks:
             "virksomhedsnavn": "Test virksomhed",
             "cvr": "12345678",
             "email": "test@example.com",
-            "regnskabsår": self.year,
+            "regnskabsår": year,
             "u1_udfyldt": False,
             "udbytte": Decimal(udbytte),
             "by": "Aarhus",
-            "dato": date.fromisoformat("2025-09-23"),
-            "dato_vedtagelse": date.fromisoformat("2025-09-24"),
+            "dato": date(year, 9, 23),
+            "dato_vedtagelse": date(year, 9, 24),
             "underskriftsberettiget": "Test Berettiget",
-            "oprettet": datetime.fromisoformat("2025-09-16T12:00:00"),
+            "oprettet": datetime(year, 9, 16, 12, 0, 0),
             "oprettet_af_cpr": cpr,
         }
 
         # Append to list of U1A items
-        self.list_u1a_response["items"].append(item)
-        self.list_u1a_response["count"] += 1
+        self.list_u1a_response[year]["items"].append(item)
+        self.list_u1a_response[year]["count"] += 1
 
         # Create AKAPU1AItem dict with proper types
         u1a_item = {
@@ -369,15 +381,15 @@ class U1AMocks:
             "by": "Aarhus",
             "land": "Danmark",
             "udbytte": Decimal(udbytte),
-            "oprettet": datetime.fromisoformat("2025-09-23T12:00:00"),
+            "oprettet": datetime(year, 9, 23, 12, 0, 0),
         }
 
-        self.u1a_item_response["items"].append(u1a_item)
-        self.u1a_item_response["count"] += 1
+        self.u1a_item_response[year]["items"].append(u1a_item)
+        self.u1a_item_response[year]["count"] += 1
 
         # Keep track of unique CPRs
-        self.u1a_unique_cpr_response["items"].append(cpr)
-        self.u1a_unique_cpr_response["count"] += 1
+        self.u1a_unique_cpr_response[year]["items"].append(cpr)
+        self.u1a_unique_cpr_response[year]["count"] += 1
 
 
 class DafoMocks:
@@ -483,10 +495,15 @@ class IntegrationBaseTest(
     EboksMocks, PrismeMocks, EskatMocks, U1AMocks, DafoMocks, TransactionTestCase
 ):
 
+    # The tax years this test processes. Subclasses which need to process more than a
+    # single year override this. `self.year` is the first of the years and is used
+    # whenever a year is not passed explicitly.
+    years = [2024]
+
     def setUp(self):
         self.stdout = StringIO()
         self.months_to_generate_btax_files_for = []
-        self.year = 2024
+        self.year = self.years[0]
         self.cpr = "1234567892"
         self.location_code = "956"
         super().setUp()
@@ -504,7 +521,9 @@ class IntegrationBaseTest(
 
         # calculation_method should be entered manually by skattestyrelsen.
         # That is why we create a couple of years here and attach the calculation_method
-        for year in [self.year - 1, self.year, self.year + 1]:
+        # (the year before and the year after the processed years are needed because
+        # jobs for a given tax year run in the following calendar year)
+        for year in range(min(self.years) - 1, max(self.years) + 2):
             Year.objects.create(year=year, calculation_method=calculation_method)
 
         # patch the default before creating any PersonYear objects to be
@@ -521,18 +540,26 @@ class IntegrationBaseTest(
     def call_commands(
         self,
         effect_month,
+        effect_year=None,
         day_to_generate_btax_file_on=1,
         reraise=False,
     ):
         """
         Calls the job dispatcher for each day for a month.
 
+        Parameters
+        ------------
+        effect_month : int
+            Month to calculate benefit for
+        effect_year : int
+            Year to calculate benefit for. Defaults to the first year of the test.
+
         Notes
         ---------
         reraise can be set to True for debugging purposes. When reraise is False,
         jobs will silently fail without making a test explode.
         """
-        effect_year = self.year
+        effect_year = effect_year or self.year
 
         year = effect_year
         month = effect_month + 2
@@ -541,7 +568,7 @@ class IntegrationBaseTest(
             year += 1
 
         months_to_generate_btax_files_for = self.months_to_generate_btax_files_for or [
-            item["month"] for item in self.monthlyincome_json_data["data"]
+            item["month"] for item in self.monthlyincome_json_data[effect_year]["data"]
         ]
 
         for day in get_days_in_month(year, month):
@@ -575,13 +602,14 @@ class IntegrationBaseTest(
         self.assertGreater(benefit_calculated, correct_benefit - 12)
         self.assertLess(benefit_calculated, correct_benefit + 12)
 
-    def get_amount_sent_to_prisme(self, month):
+    def get_amount_sent_to_prisme(self, month, year=None):
+        year = year or self.year
         for call in self.prisme_mock.call_args_list:
             args, kwargs = call
             filename = args[3]
 
             if "G68_export" in filename and filename.endswith(
-                f"{str(month).zfill(2)}.g68"
+                f"_{year}_{str(month).zfill(2)}.g68"
             ):
                 content = args[1].read().decode("utf-8")
                 args[1].seek(0)  # Reset so we can read this file again later
@@ -592,19 +620,19 @@ class IntegrationBaseTest(
                         return int(field.val) / 10_000
         return 0
 
-    def get_person_month(self, month):
+    def get_person_month(self, month, year=None):
 
         return PersonMonth.objects.get(
             person_year__person__cpr=self.cpr,
             month=month,
-            person_year__year__year=self.year,
+            person_year__year__year=year or self.year,
         )
 
-    def assert_total_benefit(self, amount):
+    def assert_total_benefit(self, amount, year=None):
 
         total_amount = 0
         for month in range(1, 13):
-            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
             total_amount += amount_sent_to_prisme
 
         self.assert_benefit(total_amount, amount)
@@ -1115,6 +1143,47 @@ class YearlyJobTests(IntegrationBaseTest):
         self.call_commands(1)
         estimation_jobs = self.joblog_qs(ManagementCommands.ESTIMATE_INCOME)
         self.assertEqual(estimation_jobs.count(), 1)
+
+
+class MultipleYearsTest(IntegrationBaseTest):
+
+    years = [2024, 2025]
+
+    def setUp(self):
+        super().setUp()
+
+        for year in self.years:
+            for month_number in range(1, 13):
+                self.add_monthlyincome_record(
+                    self.cpr, month_number, income=20000, year=year
+                )
+
+            self.add_taxinformation_record(
+                self.cpr, "FULL", (1, 1), (12, 31), year=year
+            )
+            self.add_annualincome_record(self.cpr, salary=20000 * 12, year=year)
+            self.add_expectedincome_record(self.cpr, b_income=0, year=year)
+            self.add_u1a_record(self.cpr, udbytte=0, year=year)
+
+    def test_estimate_and_calculate_benefit(self):
+        """
+        Simple test to validate that a person gets paid out the proper amount two years
+        in a row.
+
+        The person earns 20.000 kr per month. So we expect the person to receive the
+        maximum benefit (15.750kr). Which means he gets paid out 1312 kr per month.
+
+        Just like in SteadyAverageIncomeTest. Just for two years in a row.
+        """
+        for year in self.years:
+            for month in range(1, 13):
+                self.call_commands(month, year)
+                person_month = self.get_person_month(month, year)
+                amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+                self.assertEqual(person_month.estimated_year_result, 240_000)
+                self.assert_benefit(amount_sent_to_prisme, 1312)
+
+            self.assert_total_benefit(15_750, year)
 
 
 class NonTaxablePersonTest(IntegrationBaseTest):
