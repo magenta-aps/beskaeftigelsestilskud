@@ -13,7 +13,7 @@
     <style>
         @page {
             @bottom-right {
-                content: "Quppernernit " counter(pages) "-init qupperneq " counter(page)
+                content: "Quppernernit " counter(pages) "-nit qupperneq " counter(page)
             }
         }
     </style>
@@ -61,11 +61,11 @@
                         <th>{{ benefit_transfer_difference|format_amount }}</th>
                     </tr>
                     <tr>
-                        <td>Isertitassatut naatsorsuutigisat naapertorlugit tunniunneqarput</td>
+                        <td>Ukiumut isertariumaagassatit naapertorlugit tunniunneqarput</td>
                         <td>{{ benefit_transferred|format_amount }}</td>
                     </tr>
                     <tr>
-                        <td>Eqqortumik isertitatut naapertorlugit pisassaraatit</td>
+                        <td>Ukiup naanerani isertitarisimasatit naapertorlugit pisassaraatit</td>
                         <td>{{ benefit_calculated|format_amount }}</td>
                     </tr>
                 </table>
@@ -143,23 +143,23 @@
                 <table>
                     <tr>
                         <td>Aningaasarsiat A-t, akissarsiat aamma nunani allani soraarnerussutisiaqalernissamut katersat ilanngullugit</td>
-                        <td style="white-space: nowrap">{{ a_income|format_amount }}</td>
+                        <td style="white-space: nowrap; vertical-align: top;">{{ a_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Aningaasarsiat B-t, tunisanit isertitat aamma namminersorluni inuussutissarsiummik ingerlatamit sinneqartoorutiineersuupput</td>
-                        <td style="white-space: nowrap">{{ b_income|format_amount }}</td>
+                        <td style="white-space: nowrap; vertical-align: top;">{{ b_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit ilunaarutisiat</td>
-                        <td style="white-space: nowrap">{{ u_income|format_amount }}</td>
+                        <td style="white-space: nowrap; vertical-align: top;">{{ u_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <td>Soraarnerussutisiassat sulisitsisumit akilerneqartartut</td>
-                        <td style="white-space: nowrap">{{ employer_paid_gl_pension_income|format_amount }}</td>
+                        <td style="white-space: nowrap; vertical-align: top;">{{ employer_paid_gl_pension_income|format_amount }}</td>
                     </tr>
                     <tr>
                         <th>Suila-tapisiassavit naatsorsorneqarnerini isertitatit tunngavigineqartut</th>
-                        <th style="white-space: nowrap">{{ sum_income|format_amount }}</th>
+                        <th style="white-space: nowrap; vertical-align: top;">{{ sum_income|format_amount }}</th>
                     </tr>
 
                 </table>
