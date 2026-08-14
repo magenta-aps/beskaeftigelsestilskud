@@ -28,7 +28,7 @@ django-tables2==2.8.0
 django-two-factor-auth==1.18.1
 django_csp==4.0
 gl-mitid==1.9.1
-elementpath==4.8.0
+elementpath==5.1.4
 gunicorn==22.0.0
 holidays==0.102
 idna==3.18
