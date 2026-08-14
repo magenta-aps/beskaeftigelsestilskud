@@ -340,7 +340,7 @@ class CalculateBenefitTest(BaseTestCase):
                 [1050.0, 1056.0],
                 name="benefit_calculated",
                 dtype=pd.Float64Dtype(),
-                index=pd.Index(["1234567890", "1234567891"], dtype="object"),
+                index=pd.Index(["1234567890", "1234567891"]),
             ),
         )
 
