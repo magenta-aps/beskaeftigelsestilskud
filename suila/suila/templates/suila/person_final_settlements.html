@@ -1,0 +1,261 @@
+{# SPDX-FileCopyrightText: 2026 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% extends "common/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block breadcrumb %}
+{% if user.is_authenticated and user|has_permissions:"suila.view_person,suila.view_personyear" %}
+<li class="breadcrumb-item"><a href="{% url 'suila:person_search' %}">{% translate "Borgersøgning" %}</a></li>
+{% endif %}
+<li class="breadcrumb-item"><a href="{% url 'suila:person_detail' pk=person.pk %}">{% translate "Mit overblik" %}</a></li>
+<li class="breadcrumb-item">{% translate "Årsopgørelse" %}</li>
+{% endblock %}
+
+{% block title %}
+    {% blocktranslate trimmed with year=person_year.year.year %}
+    Årsopgørelse Suila-tapit for {{ year }}
+    {% endblocktranslate %}
+{% endblock %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-12">
+        <table class="table">
+            <tr>
+                <td>
+                    <span class="fw-bold fs-5">{% translate 'Resultat' %}</span>
+                </td>
+                <td class="text-end">
+                    <span class="fw-bold fs-5 text-success">{{ benefit_transfer_difference|format_amount }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% translate 'Baseret på din forventede indkomst fik du udbetalt' %}
+                </td>
+                <td class="text-end">
+                    {{ benefit_transferred|format_amount }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% translate 'Baseret på din faktiske indkomst er du berettiget til' %}
+                </td>
+                <td class="text-end">
+                    {{ benefit_calculated|format_amount }}
+                </td>
+            </tr>
+        </table>
+        <div class="emphasis">
+            {% blocktranslate trimmed %}
+            Du modtager pengene på din NemKonto inden 30 dage.
+            {% endblocktranslate %}
+        </div>
+
+        <h2 class="mt-5 mb-3">{% translate 'Hvad er Suila-tapit?' %}</h2>
+        <p>
+            {% blocktranslate trimmed %}
+            Suila-tapit er udbetalt beskæftigelsesfradrag. Suila-tapit udbetales en gang om måneden baseret på din forventede indkomst fra: arbejde, indhandling, B-indkomst og udbytte.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Efter årets afslutning kender Skattestyrelsen dine faktiske indkomster. Baseret på de faktiske indkomster modtager du denne Årsopgørelse for Suila-tapit. Den viser, om du har fået udbetalt for lidt, for meget eller det korrekte beløb.
+            {% endblocktranslate %}
+        </p>
+
+        <h2 class="mt-5 mb-3">{% translate 'Indkomstgrundlaget for Suila-tapit er beregnet således:' %}</h2>
+        <table class="table">
+            <tr>
+                <td>
+                    {% translate 'A-indkomst, herunder lønindkomst og udenlandske pensioner' %}
+                </td>
+                <td class="text-end">
+                    {{ a_income|format_amount }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% translate 'B-indkomst, herunder indhandling og overskud af virksomhed' %}
+                </td>
+                <td class="text-end">
+                    {{ b_income|format_amount }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% translate 'Udbytter fra grønlandske selskaber' %}
+                </td>
+                <td class="text-end">
+                    {{ u_income|format_amount }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% translate 'Pensionsindbetalinger fra din arbejdsgiver' %}
+                </td>
+                <td class="text-end">
+                    {{ employer_paid_gl_pension_income|format_amount }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>{% translate 'Samlet Suila-tapit indkomstgrundlag' %}</b>
+                </td>
+                <td class="text-end">
+                    <b>{{ sum_income|format_amount }}</b>
+                </td>
+            </tr>
+        </table>
+
+        <div class="sidebar">
+            <h2 class="mb-3">{% translate 'Her stammer oplysningerne fra:' %}</h2>
+            <p>
+                <b>{% translate 'A-indkomst' %}</b>
+            </p>
+            <p>
+                {% blocktranslate trimmed %}
+                Oplysningerne om A-indkomst stammer fra din slutopgørelse af skat. Slutopgørelsen er baseret på din selvangivelse og dine arbejdsgiveres indberetninger om løn, frie goder og indbetalinger til udenlandske pensioner.
+                {% endblocktranslate %}
+            </p>
+            <p>
+                <b>{% translate 'B-indkomst' %}</b>
+            </p>
+            <p>
+                {% blocktranslate trimmed %}
+                Oplysning om B-indkomst stammer fra din slutopgørelse. Slutopgørelsen er baseret på din selvangivelse og andre indberetninger af din indkomst fra renter, indhandling, udlejning og anden virksomhedsindkomst.
+                {% endblocktranslate %}
+            </p>
+            <p>
+                <b>{% translate 'Udbytte fra grønlandske selskaber' %}</b>
+            </p>
+            <p>
+                {% blocktranslate trimmed %}
+                Oplysning om udbytte stammer fra selskabernes indberetning af udloddet udbytte til dig.
+                {% endblocktranslate %}
+            </p>
+            <p>
+                <b>{% translate 'Pensionsindbetalinger' %}</b>
+            </p>
+            <p>
+                {% blocktranslate trimmed %}
+                Oplysninger om pensionsindbetalinger vedrører grønlandske pensionsordninger og angår bl.a. beløb, som din arbejdsgiver har indbetalt til en pensionsopsparing som en del af din løn.
+                {% endblocktranslate %}
+            </p>
+        </div>
+
+        <h2 class="mt-5 mb-3">{% translate 'Hvem modtager Suila-tapit?' %}</h2>
+        <p>
+            {% blocktranslate trimmed %}
+            Størrelsen af din årlige Suila-tapit afhænger af din indkomst. Du kan se mere omkring beregningen og hvor dit indkomstgrundlag lægger i indkomstspændet på
+            <a href="https://suila.gl">suila.gl</a>.
+            {% endblocktranslate %}
+        </p>
+
+        <h2 class="mt-5 mb-3">{% translate 'Regler' %}</h2>
+        <p>
+            {% blocktranslate trimmed %}
+            Dette brev er en afgørelse om din Suila-tapit.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Afgørelsen er truffet efter reglerne i Selvstyrets lovbekendtgørelse nr. 62 af 24. oktober 2025 af Landtingslov om indkomstskat.
+            {% endblocktranslate %}
+        </p>
+
+        <h3 class="mt-4 mb-3">{% translate 'Betingelser og størrelsen af din Suila-tapit' %}</h3>
+        <p>
+            {% blocktranslate trimmed %}
+            Af lovbekendtgørelsens § 38 a, stk. 2 fremgår, at du skal være fuldt skattepligtig til Grønland og ikke må være bruttobeskattet for at kunne modtage Suila-tapit.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Af § 38 b, stk. 1 fremgår:
+            {% endblocktranslate %}
+        </p>
+        <ol>
+            <li>
+                {% blocktranslate trimmed %}
+                Størrelsen af dit Suila-tapit er 17,5 % af den del af dit indkomstgrundlag, der er over 70.000 kr. (for 2025).
+                {% endblocktranslate %}
+            </li>
+            <li>
+                {% blocktranslate trimmed %}
+                Dit Suila-tapit kan dog ikke være højere end 15.750 kr. (for 2025) (§ 38 b, stk. 2). Hvis dit indkomstgrundlag er over 250.000 kr. (for 2025) reduceres dit Suila-tapit med 6,3 % af dit indkomstgrundlag (§ 38 b, stk. 3).
+                {% endblocktranslate %}
+            </li>
+        </ol>
+        <p>
+            {% blocktranslate trimmed %}
+            Det betyder, at du ikke er berettiget til Suila-tapit hvis dit indkomstgrundlag er over 500.000 kr. (for 2025).
+            {% endblocktranslate %}
+        </p>
+            <p>
+            {% blocktranslate trimmed %}
+            Tallene for grænserne for Suila-tapit reguleres hvert år med satstilpasningsprocenten. Find de aktuelle tal på AKA.gl under meddelelser.
+            {% endblocktranslate %}
+        </p>
+
+        <h3 class="mt-4 mb-3">{% translate 'Årsopgørelsen – udbetaling og opkrævning' %}</h3>
+        <p>
+            {% blocktranslate trimmed %}
+            Af § 38 f, stk. 1 fremgår, at Skattestyrelsen hvert år inden den 1. september skal sende dig en årsopgørelse for det foregående års Suila-tapit.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Hvis opgørelsen viser, at du igennem det år det drejer sig om har modtaget for lidt forudbetalt Suila-tapit, skal Skattestyrelsen udbetale det resterende beløb inden for 1 måned.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Hvis årsopgørelsen viser, at du har fået for meget udbetalt, skal dette opkræves efter samme lovs § 38 g. Heraf fremgår, at for meget udbetalt Suila-tapit skal opkræves ved at reducere dine fremtidige udbetalinger af Suila-tapit.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Hvis du har modtaget for meget Suila-tapit med 2.000 kr. eller mere skal dette opkræves med en faktura til dig. Dette fremgår af § 38 g, stk. 2.
+            {% endblocktranslate %}
+        </p>
+
+        <h2 class="mt-5 mb-3">{% translate 'Klagevejledning' %}</h2>
+        <p>
+            {% blocktranslate trimmed %}
+            Hvis du er uenig i denne årsopgørelse bedes du kontakte Skattestyrelsen.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Denne afgørelse kan påklages til Skatterådet inden for 3 måneder.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Eventuelle klager sendes skriftligt og begrundet til:
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            <a href="mailto:oed@nanoq.gl">oed@nanoq.gl</a> eller
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+            Skatterådet
+            {% endblocktranslate %}
+            <br>
+            {% blocktranslate trimmed %}
+            Postboks 1037
+            {% endblocktranslate %}
+            <br>
+            {% blocktranslate trimmed %}
+            3900 Nuuk
+            {% endblocktranslate %}
+        </p>
+    </div>
+</div>
+{% endblock %}
