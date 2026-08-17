@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import logging
 import random
 from concurrent.futures import Future
 from datetime import datetime, timedelta
@@ -23,6 +24,7 @@ from requests.exceptions import HTTPError
 
 from suila.models import (
     AnnualIncome,
+    FinalSettlement,
     JobLog,
     ManagementCommands,
     Person,
@@ -841,3 +843,50 @@ class GenerateFinalSettlements(BaseTestCase):
             person_year.save()
 
         call_command("generate_final_settlements", "2024")
+
+    def test_generate_final_settlements_without_person_months(self):
+        """
+        `FinalSettlement.pdf` raises a ValueError when the person year has no
+        person months at all, so the command must not pick up such person years
+        in the first place.
+        """
+        SuilaEboksMessage.objects.all().delete()
+        person_years = PersonYear.objects.filter(year__year=2024)
+        for person_year in person_years:
+            AnnualIncome.objects.create(
+                person_year=person_year,
+                account_tax_result=Decimal(130000),
+                salary=random.randint(65000, 500000),
+            )
+            person_year.person.full_address = "Nuussuaq 3, Nuussuaq"
+            person_year.person.save()
+
+        # Remove all months for one of the person years only, so we can verify
+        # that the remaining ones are still handled.
+        skipped_person_year = person_years.first()
+        skipped_person_year.personmonth_set.all().delete()
+
+        with self.assertLogs(
+            "suila.management.commands.generate_final_settlements",
+            level=logging.DEBUG,
+        ) as logs:
+            call_command("generate_final_settlements", "2024")
+
+        self.assertIn(
+            f"Generated {person_years.count() - 1} final settlements",
+            logs.output[-1],
+        )
+        # The person year without months is skipped entirely ...
+        self.assertFalse(
+            FinalSettlement.objects.filter(
+                annual_income__person_year=skipped_person_year
+            ).exists()
+        )
+        # ... while every other person year gets exactly one final settlement.
+        for person_year in person_years.exclude(pk=skipped_person_year.pk):
+            self.assertEqual(
+                FinalSettlement.objects.filter(
+                    annual_income__person_year=person_year
+                ).count(),
+                1,
+            )
