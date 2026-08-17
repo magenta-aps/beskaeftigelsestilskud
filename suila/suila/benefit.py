@@ -96,10 +96,6 @@ def calculate_benefit(
         has_full_tax_scope_in_month=True,
     )
 
-    month_qs = month_qs.annotate(
-        surplus_benefit=person__surplus_benefit
-    )
-
     month_qs = PersonMonth.signal_qs(month_qs)
     month_df = to_dataframe(
         month_qs,
