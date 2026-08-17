@@ -2038,7 +2038,7 @@ class PrismePostingStatusFile(models.Model):
 
 class PrismeBatchItem(PermissionsMixin, models.Model):
     class Meta:
-        unique_together = ("prisme_batch", "person_month")
+        unique_together = ("prisme_batch", "person_month", "final_settlement")
 
     class PostingStatus(models.TextChoices):
         Sent = "sent", _("Sendt til udbetaling")
@@ -2052,6 +2052,13 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
 
     person_month = models.OneToOneField(
         PersonMonth,
+        null=True,
+        on_delete=models.CASCADE,
+    )
+
+    final_settlement = models.OneToOneField(
+        "FinalSettlement",
+        null=True,
         on_delete=models.CASCADE,
     )
 
