@@ -2495,10 +2495,10 @@ class FinalSettlement(PermissionsMixin, models.Model):
             return None
         if self.eboks_message is None:
             try:
-                person_month = self.person_year.personmonth_set.get(month=12)
+                person_month = self.person_year.personmonth_set.latest("month")
             except PersonMonth.DoesNotExist:
                 raise ValueError(
-                    "Can't generate final settlement before the year has passed."
+                    "Can't generate final settlement for a person_year without months"
                 )
             self.eboks_message = SuilaEboksMessage.objects.create(
                 person_month=person_month, type="årsopgørelse"

@@ -23,8 +23,9 @@ class Command(SuilaBaseCommand):
         person_years = (
             PersonYear.objects.filter(
                 year_id=year,
-                # Require an associated AnnualIncome object
+                # Require an associated AnnualIncome object and at least 1 personmonth
                 annual_income_statements__isnull=False,
+                personmonth__isnull=False,
             )
             .exclude(
                 # Exclude those that already have a message
@@ -40,7 +41,7 @@ class Command(SuilaBaseCommand):
                 | Q(person__full_address__contains="Administrativ")
             )
         )
-        person_years = person_years.select_related("person")
+        person_years = person_years.distinct().select_related("person")
 
         def handle_person_year(person_year):
             annual_income = person_year.annual_income_statements.last()
