@@ -877,6 +877,8 @@ class PersonFinalSettlementsView(
 
         # Show data from 2025 in 2026, etc.
         person_year = self.person_year.prev
+        if person_year is None:
+            raise Http404(f"Cannot find previous PersonYear for {self.person_year.pk}")
 
         # Note: this is copied from `SuilaEboksMessage.context` and slightly modified
         annual_income = person_year.annual_income_statements.last()
@@ -903,12 +905,6 @@ class PersonFinalSettlementsView(
             }
         )
         # (end of copied code)
-
-        # final_settlements: QuerySet[FinalSettlement] = FinalSettlement.objects.filter(
-        #     annual_income__person_year__person=self.object,
-        #     annual_income__person_year__year=self.person_year.year.year - 1,
-        # ).order_by("-pk")
-        # context_data["final_settlement"] = final_settlements.first()
 
         self.log_view(items=[person_year, annual_income])
         return context_data
