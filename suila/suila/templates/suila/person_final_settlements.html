@@ -28,7 +28,15 @@
                     <span class="fw-bold fs-5">{% translate 'Resultat' %}</span>
                 </td>
                 <td class="text-end">
+                    {% if benefit_transfer_difference < -1999 %}
+                    <span class="fw-bold fs-5 text-danger">{{ benefit_transfer_difference|format_amount }}</span>
+                    {% elif benefit_transfer_difference >= -1999 and benefit_transfer_difference < 0 %}
+                    <span class="fw-bold fs-5 warning">{{ benefit_transfer_difference|format_amount }}</span>
+                    {% elif benefit_transfer_difference >= 0 and benefit_transfer_difference < 100 %}
+                    <span class="fw-bold fs-5">{{ benefit_transfer_difference|format_amount }}</span>
+                    {% elif benefit_transfer_difference >= 100 and benefit_transfer_difference <= 15750 %}
                     <span class="fw-bold fs-5 text-success">{{ benefit_transfer_difference|format_amount }}</span>
+                    {% endif %}
                 </td>
             </tr>
             <tr>
@@ -49,9 +57,46 @@
             </tr>
         </table>
         <div class="emphasis">
-            {% blocktranslate trimmed %}
-            Du modtager pengene på din NemKonto inden 30 dage.
-            {% endblocktranslate %}
+            {% if benefit_transfer_difference == 0 %}
+            <p>
+                {% blocktranslate trimmed %}
+                Du skal hverken modtage eller betale penge.
+                {% endblocktranslate %}
+            </p>
+            {% elif benefit_transfer_difference >= 100 and benefit_transfer_difference <= 15750 %}
+            <p>
+                {% blocktranslate trimmed %}
+                Du modtager pengene på din NemKonto inden 30 dage.
+                {% endblocktranslate %}
+            </p>
+            {% elif benefit_transfer_difference > 0 and benefit_transfer_difference < 100 %}
+            <p>
+                {% blocktranslate trimmed %}
+                Forskellen mellem det Suila-tapit du har fået udbetalt og det du har ret til, er
+                under 100 kr. Du skal hverken modtage eller betale penge.
+                {% endblocktranslate %}
+            </p>
+            {% elif benefit_transfer_difference < 0 and benefit_transfer_difference > -1999 %}
+            <p>
+                {% blocktranslate trimmed %}
+                Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du modtager
+                tilsvarende mindre i Suila-tapit i {{ next_year }}, hvis du opfylder betingelserne herfor.
+                {% endblocktranslate %}
+            </p>
+            {% elif benefit_transfer_difference < -1999 %}
+            <p>
+                {% blocktranslate trimmed %}
+                Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du vil modtage en
+                faktura med opkrævning af beløbet i din e-Boks.
+                {% endblocktranslate %}
+            </p>
+            <p>
+                {% blocktranslate trimmed %}
+                Hvis du modtager en faktura og ikke betaler den rettidigt, pålægges renter fra
+                betalingsfristen.
+                {% endblocktranslate %}
+            </p>
+            {% endif %}
         </div>
 
         <h2 class="mt-5 mb-3">{% translate 'Hvad er Suila-tapit?' %}</h2>
@@ -157,7 +202,7 @@
         <h2 class="mt-5 mb-3">{% translate 'Regler' %}</h2>
         <p>
             {% blocktranslate trimmed %}
-            Dette brev er en afgørelse om din Suila-tapit.
+            Dette er en afgørelse om din Suila-tapit.
             {% endblocktranslate %}
         </p>
         <p>
@@ -177,7 +222,7 @@
             Af § 38 b, stk. 1 fremgår:
             {% endblocktranslate %}
         </p>
-        <ol>
+        <ul>
             <li>
                 {% blocktranslate trimmed %}
                 Størrelsen af dit Suila-tapit er 17,5 % af den del af dit indkomstgrundlag, der er over 70.000 kr. (for 2025).
@@ -188,7 +233,7 @@
                 Dit Suila-tapit kan dog ikke være højere end 15.750 kr. (for 2025) (§ 38 b, stk. 2). Hvis dit indkomstgrundlag er over 250.000 kr. (for 2025) reduceres dit Suila-tapit med 6,3 % af dit indkomstgrundlag (§ 38 b, stk. 3).
                 {% endblocktranslate %}
             </li>
-        </ol>
+        </ul>
         <p>
             {% blocktranslate trimmed %}
             Det betyder, at du ikke er berettiget til Suila-tapit hvis dit indkomstgrundlag er over 500.000 kr. (for 2025).
