@@ -11,6 +11,10 @@
     {
       "matchPackageNames": ["django-stubs", "django-stubs-ext"],
       "groupName": "django-stubs"
+    },
+    {
+      "matchPackageNames": ["pytz", "types-pytz"],
+      "groupName": "django-stubs"
     }
   ]
 }
