@@ -45,7 +45,7 @@ class BatchExport:
         self._year = year
         self._month = month
 
-    def get_person_month_queryset(self) -> QuerySet[PersonMonth]:
+    def get_queryset(self) -> QuerySet[PersonMonth]:
         # Find all person months for this year/month which:
         # - have not yet been exported,
         # - have a full tax scope period overlapping the given month,
@@ -156,6 +156,13 @@ class BatchExport:
                     remaining_non_mod11,
                 )
 
+    def get_prisme_account_alias_lookup(
+        self, person_month: PersonMonth
+    ) -> tuple[str | None, int]:
+        location_code: str | None = person_month.person_year.person.location_code
+        tax_year: int = person_month.person_year.year.year
+        return location_code, tax_year
+
     def get_prisme_batch_item(
         self,
         prisme_batch: PrismeBatch,
@@ -163,8 +170,7 @@ class BatchExport:
         writer: G68G69TransactionWriter,
     ) -> PrismeBatchItem | None:
         # Find Prisme account alias for this municipality and tax year
-        location_code: str | None = person_month.person_year.person.location_code
-        tax_year: int = person_month.person_year.year.year
+        location_code, tax_year = self.get_prisme_account_alias_lookup(person_month)
         try:
             account_alias = PrismeAccountAlias.objects.get(
                 tax_municipality_location_code=location_code,
@@ -194,7 +200,7 @@ class BatchExport:
             UdbetalingsberettigetIdentKodeEnum.CPR,
             cpr,
             int(account_alias.alias),
-            person_month.benefit_calculated,  # type: ignore[arg-type]
+            self.get_payment_amount(person_month),  # type: ignore[arg-type]
             self.get_payment_date(person_month),
             self.get_posting_date(person_month),
             self.get_posting_text(person_month),
@@ -202,13 +208,27 @@ class BatchExport:
             self.get_transaction_text(person_month),
         )
 
+        return self._get_prisme_batch_item_instance(
+            prisme_batch,
+            person_month,
+            transaction_pair,
+            invoice_no,
+        )
+
+    def _get_prisme_batch_item_instance(
+        self,
+        prisme_batch: PrismeBatch,
+        obj,
+        transaction_pair,
+        invoice_no,
+    ) -> PrismeBatchItem:
         return PrismeBatchItem(
             prisme_batch=prisme_batch,
-            person_month=person_month,
+            person_month=obj,
             g68_content=transaction_pair.g68,
             g69_content=transaction_pair.g69,
             invoice_no=invoice_no,
-            paused=person_month.person_year.person.paused,
+            paused=obj.person_year.person.paused,
         )
 
     def get_posting_text(self, person_month: PersonMonth) -> str:
@@ -235,6 +255,9 @@ class BatchExport:
             "SUILA_G68_export_"
             f"{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
         )
+
+    def get_payment_amount(self, obj) -> Decimal:
+        return obj.benefit_calculated
 
     def get_payment_date(self, person_month: PersonMonth) -> date:
         # Payment date in Prisme is one day before the "official" payment date.
@@ -374,9 +397,9 @@ class BatchExport:
         )
 
     def export_batches(self, stdout: OutputWrapper, verbosity: int):
-        person_month_queryset: QuerySet[PersonMonth] = self.get_person_month_queryset()
+        queryset: QuerySet[PersonMonth] = self.get_queryset()
 
-        num_person_months: int = person_month_queryset.count()
+        num_person_months: int = queryset.count()
         num_succeeded_batches: int = 0
         num_failed_batches: int = 0
 
@@ -387,7 +410,7 @@ class BatchExport:
 
         prisme_batch: PrismeBatch
         person_months: QuerySet[PersonMonth]
-        for prisme_batch, person_months in self.get_batches(person_month_queryset):
+        for prisme_batch, person_months in self.get_batches(queryset):
             # Instantiate a new writer for each Prisme batch, ensuring that the line
             # numbers start from 0, etc.
             writer: G68G69TransactionWriter = self.get_g68_g69_transaction_writer()

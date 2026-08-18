@@ -69,7 +69,7 @@ class TestBatchExport(TestCase):
         self._add_person_month(cpr, benefit_calculated)
         export = self._get_instance()
         # Act
-        queryset = export.get_person_month_queryset()
+        queryset = export.get_queryset()
         # Assert
         self.assertQuerySetEqual(
             queryset,
@@ -95,12 +95,12 @@ class TestBatchExport(TestCase):
         # Arrange
         export = self._get_instance()
         # Act
-        queryset = export.get_person_month_queryset()
+        queryset = export.get_queryset()
         # Assert
         self.assertEqual(queryset.count(), 1)
 
     def test_get_batches(self):
-        """Given a `PersonMonth` queryset from the `get_person_month_queryset` method,
+        """Given a `PersonMonth` queryset from the `get_queryset` method,
         the method should return a generator that yields one `PrismeBatch` and its
         matching `PersonMonth` objects for each unique `prefix`.
         """
@@ -114,7 +114,7 @@ class TestBatchExport(TestCase):
         self._add_person_month(3101000001, Decimal("1000"))  # batch 32 (non-mod11)
         # Arrange
         export = self._get_instance()
-        queryset = export.get_person_month_queryset()
+        queryset = export.get_queryset()
         # Act
         batches: list[tuple[PrismeBatch, QuerySet[PersonMonth]]] = list(
             export.get_batches(queryset)
@@ -626,7 +626,7 @@ class TestBatchExport(TestCase):
         # `PrismeBatchItem` object.) Thus, the batch export will not "see" them
         # again.
         self.assertQuerySetEqual(
-            export.get_person_month_queryset(),
+            export.get_queryset(),
             PersonMonth.objects.none(),
         )
         # Assert: CLI output is written to `stdout`
@@ -641,7 +641,7 @@ class TestBatchExport(TestCase):
         prisme_batch: PrismeBatch,
     ) -> tuple[PrismeBatchItem, PersonMonth]:
         # Helper method to call `get_prisme_batch_item`
-        person_month = export.get_person_month_queryset().first()
+        person_month = export.get_queryset().first()
         writer = export.get_g68_g69_transaction_writer()
         prisme_batch_item = export.get_prisme_batch_item(
             prisme_batch,
