@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+# SPDX-FileCopyrightText: 2024 Magenta F('pk')<info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
@@ -266,7 +266,6 @@ class WorkingTaxCreditCalculationMethod(PermissionsMixin, models.Model):
 
 
 class StandardWorkBenefitCalculationMethod(WorkingTaxCreditCalculationMethod):
-
     benefit_rate_percent = models.DecimalField(
         verbose_name=_("Procentsats for Suila-tapit"),
         help_text=_(
@@ -758,9 +757,7 @@ class Person(PermissionsMixin, models.Model):
         decimal_places=2,
     )
 
-    def calculate_surplus_benefit(
-        self, year: int | None, save: bool = False
-    ) -> Dict[str,Decimal]:
+    def calculate_surplus_benefit(self, save: bool = False) -> Dict[str, Decimal]:
         """
         TODO: We need to find out what the exact implementation of this system should
         be. What do we mean, when we look at a specific year? Does it mean surplus
@@ -769,42 +766,32 @@ class Person(PermissionsMixin, models.Model):
 
 
         """
-        # Summarize added surplus benefit from årsopgørelser and deduct whatever is
-        # spent by PersonMonth
-        surplus_benefit_dict = {}
-        # Year-specific functionality needs tweaks. Focus on general situation first
-        if year:
-            # TODO: Something's wrong here
-            personmonth_qs = PersonMonth.objects.filter(
-                person_year__person=self,
-                offset_surplus_benefit__gt=0,
-                person_year__year__lte=year,
-                )
-            finalsettlement_qs = FinalSettlement.objects.filter(
-                person_year__person=self.person,
-                person_year__year__lte=year,
-            )
-        else:
-            personmonth_qs = PersonMonth.objects.filter(
-                person_year__person=self.person,
-                offset_surplus_benefit__gt=0,
-            )
-            finalsettlement_qs = FinalSettlement.objects.filter(
-                person_year__person=self.person,
-            )
-        offset_surplus = personmonth_qs.aggregate(spent=Sum("offset_surplus_benefit"))["spent"]
-        acquired_surplus = finalsettlement_qs.aggregate(acquired=Sum("result"))["acquired"]
-        surplus_benefit = acquired_surplus - offset_surplus
+        personmonth_qs = PersonMonth.objects.filter(
+            person_year__person=F("pk"),
+            offset_surplus_benefit__gt=0,
+        )
+        finalsettlement_qs = FinalSettlement.objects.filter(
+            annual_income__person_year__person=F("pk"),
+        )
+        offset_surplus = (
+            personmonth_qs.aggregate(spent=Sum("offset_surplus_benefit"))["spent"] or 0
+        )
+        acquired_surplus = (
+            finalsettlement_qs.aggregate(acquired=Sum("_result"))["acquired"] or 0
+        )
+        # We have - acquired_surplus, because FinalSettlement stores the values with
+        # flipped sign of what we expect here
+        surplus_benefit = 0 - acquired_surplus - offset_surplus
         if save:
             self.surplus_benefit = surplus_benefit
-            self.save(update_fields="surplus_benefit")
+            self.save(update_fields=["surplus_benefit"])
 
         # NOTE: Return dict with spent surplus, acquired surplus and remaining surplus.
         # We need to figure out the structure of this dict first, though
         return {
             "current_surplus_benefit": surplus_benefit,
             "total_acquired_surplus": acquired_surplus,
-            "total_offset_surplus": offset_surplus
+            "total_offset_surplus": offset_surplus,
         }
 
 
@@ -816,7 +803,6 @@ pre_save.connect(
 
 
 class PersonYear(PermissionsMixin, models.Model):
-
     class Meta:
         unique_together = (("person", "year"),)
         indexes = [
@@ -926,7 +912,6 @@ class PersonYear(PermissionsMixin, models.Model):
 
     @property
     def engines_used_for_latest_calculation(self):
-
         last_job = (
             JobLog.objects.filter(
                 name=ManagementCommands.CALCULATE_BENEFIT,
@@ -1150,11 +1135,9 @@ class TaxInformationPeriod(PermissionsMixin, models.Model):
         queryset = queryset.filter(  # type: ignore[misc]
             period__contains=last_day - relativedelta(minutes=1)
         )
-        subquery: QuerySet[TaxInformationPeriod] = (
-            queryset.filter(  # type: ignore[misc]
-                person_year=OuterRef("person_year"),
-                period__overlap=month_period,
-            )
+        subquery: QuerySet[TaxInformationPeriod] = queryset.filter(  # type: ignore[misc]
+            person_year=OuterRef("person_year"),
+            period__overlap=month_period,
         )
         return Exists(subquery)
 
@@ -1230,7 +1213,6 @@ class TaxInformationPeriod(PermissionsMixin, models.Model):
 
 
 class PersonMonth(PermissionsMixin, models.Model):
-
     class Meta:
         indexes = [
             Index(fields=("month",)),
@@ -1495,7 +1477,6 @@ class Employer(PermissionsMixin, models.Model):
 
 
 class MonthlyIncomeReport(PermissionsMixin, models.Model):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if hasattr(self, "person_month"):
@@ -1793,7 +1774,6 @@ class BTaxPayment(PermissionsMixin, models.Model):
 
 
 class IncomeEstimate(PermissionsMixin, models.Model):
-
     class Meta:
         unique_together = (("engine", "person_month", "income_type"),)
 
@@ -2526,7 +2506,6 @@ class AnnualIncome(PermissionsMixin, models.Model):
 
 
 class FinalSettlement(PermissionsMixin, models.Model):
-
     # The connection to PersonYear is through AnnualIncome
     annual_income = models.ForeignKey(
         AnnualIncome, on_delete=models.CASCADE, related_name="final_settlements"
@@ -2697,7 +2676,8 @@ class EboksMessage(PermissionsMixin, models.Model):
         db_index=True,
     )
     contents = models.FileField(
-        null=True, upload_to=settings.LOCAL_EBOKS_PDF_STORAGE  # type: ignore
+        null=True,
+        upload_to=settings.LOCAL_EBOKS_PDF_STORAGE,  # type: ignore
     )
 
     @classmethod
@@ -2833,7 +2813,6 @@ class EboksMessage(PermissionsMixin, models.Model):
 
 
 class SuilaEboksMessage(EboksMessage):
-
     type_map = {
         "opgørelse": {
             "content_type": settings.EBOKS["content_type_id"],  # type: ignore
