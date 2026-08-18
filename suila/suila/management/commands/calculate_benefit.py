@@ -7,7 +7,7 @@ from simple_history.utils import bulk_update_with_history
 
 from suila.benefit import calculate_benefit
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import PersonMonth
+from suila.models import Person, PersonMonth
 
 
 class Command(SuilaBaseCommand):
@@ -36,7 +36,6 @@ class Command(SuilaBaseCommand):
             "offset_surplus_benefit",
         ]
 
-        benefit = calculate_benefit(month, year, kwargs["cpr"])
 
         person_month_qs = PersonMonth.objects.filter(
             person_year__year__year=year,
@@ -44,8 +43,15 @@ class Command(SuilaBaseCommand):
             prismebatchitem__isnull=True,
         ).select_related("person_year__person")
 
-        person_months_to_update = []
+        person_qs = Person.objects.filter(pk__in=person_month_qs.values_list("person_year__person").distinct())
+        for person in person_qs:
+            person.calculate_surplus_benefit(save=True)
 
+
+        benefit = calculate_benefit(month, year, kwargs["cpr"])
+
+        person_months_to_update = []
+        
         for person_month in person_month_qs:
             cpr = person_month.person_year.person.cpr
             if cpr in benefit.index:
