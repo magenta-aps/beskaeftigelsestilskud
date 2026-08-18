@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1
+# Keep the syntax directive above on line 1; it is ignored if any comment precedes it.
+
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -43,13 +46,17 @@ RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main"
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt
-COPY mypy.ini /app/mypy.ini
 
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Keep pip's http/wheel cache in a build cache mount instead of throwing it away.
+# Anything that has to be built from source (or downloaded again) is then reused
+# by later builds, so editing requirements.txt no longer costs a full rebuild.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r /app/requirements.txt
 
 ARG COMMIT_TAG
 ENV COMMIT_TAG=${COMMIT_TAG:-HEAD}
 
+COPY mypy.ini /app/mypy.ini
 COPY ./docker/entrypoint.sh /entrypoint.sh
 COPY --chown=suila:suila ./suila /app
 RUN chown suila:suila /app

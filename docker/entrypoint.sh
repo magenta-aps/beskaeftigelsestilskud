@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 set -e
+COLLECTSTATIC=${COLLECTSTATIC:=true}
 MAKE_MIGRATIONS=${MAKE_MIGRATIONS:=false}
 MIGRATE=${MIGRATE:=false}
 TEST=${TEST:=false}
@@ -20,8 +21,10 @@ LOAD_PRISME_ACCOUNT_ALIASES=${LOAD_PRISME_ACCOUNT_ALIASES:=false}
 
 python manage.py wait_for_db
 
-python manage.py collectstatic --no-input --clear
-python manage.py compress --force
+if [ "${COLLECTSTATIC,,}" = true ]; then
+  python manage.py collectstatic --no-input --clear
+  python manage.py compress --force
+fi
 
 if [ "${MAKE_MIGRATIONS,,}" = true ]; then
   echo 'generating migrations'

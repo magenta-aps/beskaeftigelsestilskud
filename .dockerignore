@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+# The image only needs requirements.txt, mypy.ini, docker/entrypoint.sh and suila/.
+# Everything else is excluded so it neither bloats the build context nor
+# invalidates layer caches when it changes.
+
+.git
+.gitignore
+.gitlab-ci.yml
+.pre-commit-config.yaml
+.renovaterc
+.eslint
+.spyproject
+.vscode
+docker-compose*.yml
+README.md
+REUSE.toml
+LICENSES
+rfc
+scripts
+bf
+data
+log
+dev-environment
+nj.py
+
+# Local caches and build artefacts
+**/__pycache__
+**/*.pyc
+**/.mypy_cache
+**/.pytest_cache
+**/.coverage
+**/.coverage.*
+**/htmlcov
+**/node_modules
+**/*.log
+**/*.swp
+
+# Untracked local test data (suila/data/ is gitignored)
+suila/data

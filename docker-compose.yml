@@ -20,6 +20,7 @@ services:
       - ./dev-environment/cert:/ssl:ro
       - ./dev-environment/crontab:/crontab:ro
       - file-data:/upload:rw
+      - static-data:/static:rw
     environment:
       - MAKE_MIGRATIONS=true
       - MIGRATE=true
@@ -54,8 +55,11 @@ services:
       - ./log/suila.log:/log/suila.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./mypy.ini:/mypy.ini:ro
+      - static-data:/static:rw
     environment:
       - PULL_IDP_METADATA=true
+      # suila-init has already collected/compressed into the shared static-data volume
+      - COLLECTSTATIC=false
       - TEST=false
       - HOME=/tmp/
       - PUBLIC=true
@@ -83,7 +87,10 @@ services:
       - ./log/suila.log:/log/suila.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./mypy.ini:/mypy.ini:ro
+      - static-data:/static:rw
     environment:
+      # suila-init has already collected/compressed into the shared static-data volume
+      - COLLECTSTATIC=false
       - TEST=false
       - HOME=/tmp/
       - PUBLIC=false
@@ -122,7 +129,10 @@ services:
       - ./log/cron.log:/log/cron.log:rw
       - ./dev-environment/cert:/ssl:ro
       - ./dev-environment/crontab:/crontab:ro
+      - static-data:/static:rw
     environment:
+      # suila-init has already collected/compressed into the shared static-data volume
+      - COLLECTSTATIC=false
       - TEST=false
       - HOME=/tmp/
     command: [ "supercronic", "/crontab" ]
@@ -231,6 +241,7 @@ volumes:
   matomo-data:
   matomo-config:
   file-data:
+  static-data:
 
 networks:
   default:
