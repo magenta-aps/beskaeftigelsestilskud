@@ -79,6 +79,7 @@ from suila.views import (
     PersonDetailNotesView,
     PersonDetailView,
     PersonFilterSet,
+    PersonFinalSettlementsView,
     PersonGraphView,
     PersonMonthTable,
     PersonPauseListView,
@@ -985,6 +986,114 @@ class TestPersonGraphView(TimeContextMixin, PersonEnv):
         itemviews = list(pageview.itemviews.all())
         self.assertEqual(len(itemviews), 1)
         self.assertEqual(itemviews[0].item, self.person1)
+
+
+class TestPersonFinalSettlementsView(TimeContextMixin, PersonEnv):
+    view_class = PersonFinalSettlementsView
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.method1 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        cls.prev_year = Year.objects.create(
+            year=2019,
+            calculation_method=cls.method1,
+        )
+        cls.prev_person_year = PersonYear.objects.create(
+            person=cls.person1,
+            year=cls.prev_year,
+        )
+        cls.annual_income = AnnualIncome.objects.create(
+            person_year=cls.prev_person_year,
+            summarized_a_income=Decimal("1000"),
+            summarized_b_income=Decimal("2000"),
+            summarized_u_income=Decimal("3000"),
+        )
+
+    def test_404_on_nonexistent_person_year(self):
+        # Request settlement for 2018 - no matching PersonYear
+        with self.assertRaises(Http404):
+            self.request_get(
+                self.normal_user,
+                f"/persons/{self.person1.pk}/settlement/?year=2019",
+                pk=self.person1.pk,
+            )
+
+    def test_404_on_nonexistent_annual_income(self):
+        # Request settlement for 2019 - no matching AnnualIncome
+        AnnualIncome.objects.filter(person_year=self.prev_person_year).delete()
+        with self.assertRaises(Http404):
+            self.request_get(
+                self.normal_user,
+                f"/persons/{self.person1.pk}/settlement/?year=2020",
+                pk=self.person1.pk,
+            )
+
+    def test_get_context_data(self):
+        with self._time_context(year=2020):
+            expected_keys = {
+                "person_year",
+                "a_income",
+                "b_income",
+                "u_income",
+                "employer_paid_gl_pension_income",
+                "sum_income",
+                "benefit_calculated",
+                "benefit_transferred",
+                "benefit_transfer_difference",
+            }
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertTrue(expected_keys.issubset(response.context_data))
+
+    # The tests below are copied from `TestPersonDetailView`
+
+    def test_borger_see_only_self(self):
+        with self._time_context(year=2020):
+            self.request_get(self.normal_user, pk=self.person1.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person2.pk)
+            with self.assertRaises(PermissionDenied):
+                self.request_get(self.normal_user, pk=self.person3.pk)
+
+    def test_other_see_none(self):
+        with self.assertRaises(PermissionDenied):
+            self.request_get(self.other_user, pk=self.person1.pk)
+
+    def test_view_anonymous_denied(self):
+        view, response = self.request_get(self.no_user, "", pk=self.person1.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person2.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+        view, response = self.request_get(self.no_user, "", pk=self.person3.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], "/login?next=/")
+
+    def test_view_log(self):
+        self.request_get(
+            self.admin_user,
+            f"/persons/{self.person1.pk}/settlement/?year=2020",
+            pk=self.person1.pk,
+        )
+        logs = PageView.objects.all()
+        self.assertEqual(logs.count(), 1)
+        pageview = logs[0]
+        self.assertEqual(pageview.class_name, "PersonFinalSettlementsView")
+        self.assertEqual(pageview.user, self.admin_user)
+        self.assertEqual(pageview.kwargs, {"pk": self.person1.pk})
+        self.assertEqual(pageview.params, {"year": "2020"})
+        itemviews = list(pageview.itemviews.all())
+        self.assertEqual(len(itemviews), 2)
+        self.assertEqual(itemviews[0].item, self.prev_person_year)
+        self.assertEqual(itemviews[1].item, self.annual_income)
 
 
 class TestNoteView(TimeContextMixin, PersonEnv):

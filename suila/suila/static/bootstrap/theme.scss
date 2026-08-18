@@ -28,6 +28,8 @@ $waiting-light: #bccded;
 $rejected: #af1d1d;
 $rejected-light: #f8cfcf;
 
+$warning1: #c17b00;
+
 // Override Bootstrap defaults
 $primary: $primary;
 $secondary: $secondary;
@@ -649,4 +651,8 @@ div.explainer p {
   content: "✔";
   position: absolute;
   left: 10px;
+}
+
+.warning {
+  color: $warning1;
 }
