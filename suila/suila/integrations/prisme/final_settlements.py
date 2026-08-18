@@ -1,28 +1,29 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
+from datetime import date
 from decimal import Decimal
 
-from django.core.management.base import OutputWrapper
+from dateutil.relativedelta import TU, relativedelta
 from django.db.models import CharField, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
 
 from suila.integrations.prisme.benefits import BatchExport
-from suila.models import FinalSettlement
-
-# Use account numbers for 2025
+from suila.models import FinalSettlement, PrismeBatch, PrismeBatchItem
 
 
 class FinalSettlementExport(BatchExport):
     def __init__(self, year: int):
         self._year = year
+        self._month = date.today().month
 
-    def get_final_settlement_queryset(self):
+    def get_queryset(self):
         qs: QuerySet[FinalSettlement] = FinalSettlement.objects.filter(
             annual_income__person_year__year__year=self._year,
             prismebatchitem__isnull=True,
             _result__isnull=False,
-        ).exclude(_result=Decimal("0"))
+            _result__gt=0,
+        )
 
         # Annotate with string version of CPR (zero-padded to 10 digits)
         qs = qs.annotate(
@@ -38,5 +39,35 @@ class FinalSettlementExport(BatchExport):
         qs = qs.order_by("prefix", "annual_income__person_year__person__cpr")
         return qs
 
-    def export_batches(self, stdout: OutputWrapper, verbosity: int):
-        pass
+    def get_prisme_account_alias_lookup(self, obj: FinalSettlement) -> tuple[str, int]:
+        location_code: str | None = obj.annual_income.person_year.person.location_code
+        tax_year: int = self._year
+        return location_code, tax_year
+
+    def get_payment_amount(self, obj: FinalSettlement) -> Decimal:
+        return obj._result
+
+    def get_payment_date(self, obj: FinalSettlement) -> date:
+        return date(self._year, self._month, 1) + relativedelta(weekday=TU(+3))
+
+    def get_posting_date(self, obj: FinalSettlement) -> date:
+        return date(self._year, self._month, 1) + relativedelta(weekday=TU(+2))
+
+    def get_posting_text(self, obj: FinalSettlement) -> str:
+        return f"Suila.gl - Årsopgørelse {self._year}"
+
+    def _get_prisme_batch_item_instance(
+        self,
+        prisme_batch: PrismeBatch,
+        obj,
+        transaction_pair,
+        invoice_no,
+    ) -> PrismeBatchItem:
+        return PrismeBatchItem(
+            prisme_batch=prisme_batch,
+            final_settlement=obj,
+            g68_content=transaction_pair.g68,
+            g69_content=transaction_pair.g69,
+            invoice_no=invoice_no,
+            paused=obj.annual_income.person_year.person.paused,
+        )
