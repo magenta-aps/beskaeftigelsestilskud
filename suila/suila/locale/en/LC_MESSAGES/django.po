@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 10:08-0100\n"
+"POT-Creation-Date: 2026-08-18 07:32-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -325,7 +325,9 @@ msgstr "U1A IDs in AKAP"
 msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
 msgstr ""
 
-#: suila/templates/suila/about.html suila/templates/suila/root.html
+#: suila/templates/suila/about.html
+#: suila/templates/suila/person_final_settlements.html
+#: suila/templates/suila/root.html
 msgid "Hvad er Suila-tapit?"
 msgstr "What is Suila-tapit?"
 
@@ -801,6 +803,7 @@ msgstr ""
 #: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_final_settlements.html
 #: suila/templates/suila/person_search.html
 #: suila/templates/suila/person_tax_scope_history.html
 #: suila/templates/suila/root.html
@@ -812,6 +815,7 @@ msgstr "Search for individual"
 #: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_final_settlements.html
 #: suila/templates/suila/person_tax_scope_history.html
 #: suila/templates/suila/root.html
 msgid "Mit overblik"
@@ -1004,7 +1008,12 @@ msgstr ""
 "tapit."
 
 #: suila/templates/suila/person_detail.html
+msgid "Årsopgørelser"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_send.html
+#: suila/templates/suila/person_final_settlements.html
 msgid "Årsopgørelse"
 msgstr "Annual statement"
 
@@ -1184,6 +1193,7 @@ msgstr ""
 "purchasing station."
 
 #: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_final_settlements.html
 msgid "B-indkomst"
 msgstr "B-Income"
 
@@ -1217,6 +1227,7 @@ msgstr ""
 "your expected income for this year."
 
 #: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_final_settlements.html
 msgid "Pensionsindbetalinger"
 msgstr "Pension contributions"
 
@@ -1299,6 +1310,266 @@ msgstr "Messsage"
 #: suila/templates/suila/person_detail_notes.html
 msgid "Filer"
 msgstr "Files"
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid "Årsopgørelse Suila-tapit for %(year)s"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Resultat"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Baseret på din forventede indkomst fik du udbetalt"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Baseret på din faktiske indkomst er du berettiget til"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Du skal hverken modtage eller betale penge."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Du modtager pengene på din NemKonto inden 30 dage."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Forskellen mellem det Suila-tapit du har fået udbetalt og det du har ret "
+"til, er under 100 kr. Du skal hverken modtage eller betale penge."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid ""
+"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du "
+"modtager tilsvarende mindre i Suila-tapit i %(next_year)s, hvis du opfylder "
+"betingelserne herfor."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du vil "
+"modtage en faktura med opkrævning af beløbet i din e-Boks."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis du modtager en faktura og ikke betaler den rettidigt, pålægges renter "
+"fra betalingsfristen."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Suila-tapit er udbetalt beskæftigelsesfradrag. Suila-tapit udbetales en gang "
+"om måneden baseret på din forventede indkomst fra: arbejde, indhandling, B-"
+"indkomst og udbytte."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Efter årets afslutning kender Skattestyrelsen dine faktiske indkomster. "
+"Baseret på de faktiske indkomster modtager du denne Årsopgørelse for Suila-"
+"tapit. Den viser, om du har fået udbetalt for lidt, for meget eller det "
+"korrekte beløb."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Indkomstgrundlaget for Suila-tapit er beregnet således:"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "A-indkomst, herunder lønindkomst og udenlandske pensioner"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "B-indkomst, herunder indhandling og overskud af virksomhed"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Udbytter fra grønlandske selskaber"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Pensionsindbetalinger fra din arbejdsgiver"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Samlet Suila-tapit indkomstgrundlag"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Her stammer oplysningerne fra:"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "A-indkomst"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysningerne om A-indkomst stammer fra din slutopgørelse af skat. "
+"Slutopgørelsen er baseret på din selvangivelse og dine arbejdsgiveres "
+"indberetninger om løn, frie goder og indbetalinger til udenlandske pensioner."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysning om B-indkomst stammer fra din slutopgørelse. Slutopgørelsen er "
+"baseret på din selvangivelse og andre indberetninger af din indkomst fra "
+"renter, indhandling, udlejning og anden virksomhedsindkomst."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Udbytte fra grønlandske selskaber"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysning om udbytte stammer fra selskabernes indberetning af udloddet "
+"udbytte til dig."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysninger om pensionsindbetalinger vedrører grønlandske pensionsordninger "
+"og angår bl.a. beløb, som din arbejdsgiver har indbetalt til en "
+"pensionsopsparing som en del af din løn."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Hvem modtager Suila-tapit?"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Størrelsen af din årlige Suila-tapit afhænger af din indkomst. Du kan se "
+"mere omkring beregningen og hvor dit indkomstgrundlag lægger i "
+"indkomstspændet på <a href=\"https://suila.gl\">suila.gl</a>."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Regler"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Dette er en afgørelse om din Suila-tapit."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Afgørelsen er truffet efter reglerne i Selvstyrets lovbekendtgørelse nr. 62 "
+"af 24. oktober 2025 af Landtingslov om indkomstskat."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Betingelser og størrelsen af din Suila-tapit"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Af lovbekendtgørelsens § 38 a, stk. 2 fremgår, at du skal være fuldt "
+"skattepligtig til Grønland og ikke må være bruttobeskattet for at kunne "
+"modtage Suila-tapit."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Af § 38 b, stk. 1 fremgår:"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid ""
+"Størrelsen af dit Suila-tapit er 17,5 %% af den del af dit indkomstgrundlag, "
+"der er over 70.000 kr. (for 2025)."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid ""
+"Dit Suila-tapit kan dog ikke være højere end 15.750 kr. (for 2025) (§ 38 b, "
+"stk. 2). Hvis dit indkomstgrundlag er over 250.000 kr. (for 2025) reduceres "
+"dit Suila-tapit med 6,3 %% af dit indkomstgrundlag (§ 38 b, stk. 3)."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Det betyder, at du ikke er berettiget til Suila-tapit hvis dit "
+"indkomstgrundlag er over 500.000 kr. (for 2025)."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Tallene for grænserne for Suila-tapit reguleres hvert år med "
+"satstilpasningsprocenten. Find de aktuelle tal på AKA.gl under meddelelser."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Årsopgørelsen – udbetaling og opkrævning"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Af § 38 f, stk. 1 fremgår, at Skattestyrelsen hvert år inden den 1. "
+"september skal sende dig en årsopgørelse for det foregående års Suila-tapit."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis opgørelsen viser, at du igennem det år det drejer sig om har modtaget "
+"for lidt forudbetalt Suila-tapit, skal Skattestyrelsen udbetale det "
+"resterende beløb inden for 1 måned."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis årsopgørelsen viser, at du har fået for meget udbetalt, skal dette "
+"opkræves efter samme lovs § 38 g. Heraf fremgår, at for meget udbetalt Suila-"
+"tapit skal opkræves ved at reducere dine fremtidige udbetalinger af Suila-"
+"tapit."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis du har modtaget for meget Suila-tapit med 2.000 kr. eller mere skal "
+"dette opkræves med en faktura til dig. Dette fremgår af § 38 g, stk. 2."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Klagevejledning"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis du er uenig i denne årsopgørelse bedes du kontakte Skattestyrelsen."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Denne afgørelse kan påklages til Skatterådet inden for 3 måneder."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Eventuelle klager sendes skriftligt og begrundet til:"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "<a href=\"mailto:oed@nanoq.gl\">oed@nanoq.gl</a> eller"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Skatterådet"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Postboks 1037"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "3900 Nuuk"
+msgstr ""
 
 #: suila/templates/suila/person_no_year.html
 msgid "Denne person har ikke nogen data"

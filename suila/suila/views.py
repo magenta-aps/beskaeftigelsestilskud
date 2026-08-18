@@ -859,6 +859,57 @@ class PersonDetailIncomeView(
                 )
 
 
+class PersonFinalSettlementsView(
+    LoginRequiredMixin,
+    PermissionsRequiredMixin,
+    PersonYearMonthMixin,
+    ViewLogMixin,
+    DetailView,
+):
+    model = Person
+    context_object_name = "person"
+    template_name = "suila/person_final_settlements.html"
+    required_object_permissions = ["view"]
+    matomo_pagename = "Persondetaljer - årsopgørelser"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        # Show data from 2025 in 2026, etc.
+        person_year = self.person_year.prev
+        if person_year is None:
+            raise Http404(f"Cannot find previous PersonYear for {self.person_year.pk}")
+
+        # Note: this is copied from `SuilaEboksMessage.context` and slightly modified
+        annual_income = person_year.annual_income_statements.last()
+        if annual_income is None:
+            raise Http404(f"Missing AnnualIncome for PersonYear {person_year.pk}")
+        benefit = annual_income.calculate_actual_annual_benefit()
+        context_data.update(
+            {
+                "person_year": person_year,
+                "a_income": annual_income.summarized_a_income,
+                "b_income": annual_income.summarized_b_income,
+                "u_income": annual_income.summarized_u_income,
+                "employer_paid_gl_pension_income": (
+                    person_year.sum_employer_paid_gl_pension_income
+                ),
+                "sum_income": annual_income.summarized_a_income
+                + annual_income.summarized_b_income
+                + annual_income.summarized_u_income
+                + person_year.sum_employer_paid_gl_pension_income,
+                "benefit_calculated": benefit,
+                "benefit_transferred": person_year.benefit_transferred,
+                "benefit_transfer_difference": benefit
+                - person_year.benefit_transferred,
+            }
+        )
+        # (end of copied code)
+
+        self.log_view(items=[person_year, annual_income])
+        return context_data
+
+
 class PersonDetailEboksPreView(
     LoginRequiredMixin,
     PermissionsRequiredMixin,
