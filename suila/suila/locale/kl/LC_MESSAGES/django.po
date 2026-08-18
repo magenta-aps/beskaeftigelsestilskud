@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 10:08-0100\n"
+"POT-Creation-Date: 2026-08-18 07:32-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -334,7 +334,9 @@ msgstr ""
 msgid "Udbetalt/godskrevet udbytte i DKK, før skat"
 msgstr ""
 
-#: suila/templates/suila/about.html suila/templates/suila/root.html
+#: suila/templates/suila/about.html
+#: suila/templates/suila/person_final_settlements.html
+#: suila/templates/suila/root.html
 msgid "Hvad er Suila-tapit?"
 msgstr "Suila-tapit suuppat?"
 
@@ -834,6 +836,7 @@ msgstr ""
 #: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_final_settlements.html
 #: suila/templates/suila/person_search.html
 #: suila/templates/suila/person_tax_scope_history.html
 #: suila/templates/suila/root.html
@@ -845,6 +848,7 @@ msgstr "Innutaasumik ujaasineq"
 #: suila/templates/suila/person_detail_eboks_send.html
 #: suila/templates/suila/person_detail_income.html
 #: suila/templates/suila/person_detail_notes.html
+#: suila/templates/suila/person_final_settlements.html
 #: suila/templates/suila/person_tax_scope_history.html
 #: suila/templates/suila/root.html
 msgid "Mit overblik"
@@ -1049,7 +1053,12 @@ msgstr ""
 "tunngavigineqarsimasut uani paasisaqarfigikkit."
 
 #: suila/templates/suila/person_detail.html
+msgid "Årsopgørelser"
+msgstr ""
+
+#: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_send.html
+#: suila/templates/suila/person_final_settlements.html
 msgid "Årsopgørelse"
 msgstr "Ukiumoortumik naatsorsuineq"
 
@@ -1245,6 +1254,7 @@ msgstr ""
 "paasiniaassaatit."
 
 #: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_final_settlements.html
 msgid "B-indkomst"
 msgstr "Isertitat B-t"
 
@@ -1281,6 +1291,7 @@ msgstr ""
 "naatsorsukkani ukioq kingulleq iluanaarutisiarisimasatit sunnerneqassapput."
 
 #: suila/templates/suila/person_detail_income.html
+#: suila/templates/suila/person_final_settlements.html
 msgid "Pensionsindbetalinger"
 msgstr "Soraarnerussutisiassanut akiliutit"
 
@@ -1368,6 +1379,358 @@ msgstr "Nalunaarut"
 #: suila/templates/suila/person_detail_notes.html
 msgid "Filer"
 msgstr "Filit"
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid "Årsopgørelse Suila-tapit for %(year)s"
+msgstr "Ukiumut nalunaarut %(year)s-mi Suila-tapit"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Resultat"
+msgstr "Inernera"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Baseret på din forventede indkomst fik du udbetalt"
+msgstr "Ukiumut isertariumaagassatit naapertorlugit tunniunneqarput"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Baseret på din faktiske indkomst er du berettiget til"
+msgstr "Ukiup naanerani isertitarisimasatit naapertorlugit pisassaraatit"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Du skal hverken modtage eller betale penge."
+msgstr "Aningaasanik tigusassaqanngilatit akiligassaqarnallu."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Du modtager pengene på din NemKonto inden 30 dage."
+msgstr "Ullut 30 ingerlaneranni aningaasat NemKonto-nnut ikineqassapput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Forskellen mellem det Suila-tapit du har fået udbetalt og det du har ret "
+"til, er under 100 kr. Du skal hverken modtage eller betale penge."
+msgstr ""
+"Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit, ukiullu "
+"aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit Suila-"
+"tapisiassavit nikingassutaasa 100 kr. ataappaat. Taamaammat aningaasanik "
+"tigusassaqanngilatit akiligassaqarnallu."
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid ""
+"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du "
+"modtager tilsvarende mindre i Suila-tapit i %(next_year)s, hvis du opfylder "
+"betingelserne herfor."
+msgstr ""
+"Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit, ukiullu "
+"aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit Suila-"
+"tapisiassatit sipporlugit tunniunneqarsimapput. %(next_year)s-mi Suila-"
+"tapisisussaaguit, pivallaarutigisimasatit Suila-tapisiassannit "
+"matussuserneqarumaarput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du vil "
+"modtage en faktura med opkrævning af beløbet i din e-Boks."
+msgstr ""
+"Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit, ukiullu "
+"aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit Suila-"
+"tapisiassatit sipporlugit tunniunneqarsimapput. E-boksikkut "
+"pivallaarutigisimasatit akiligassiissutigineqarumaarput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis du modtager en faktura og ikke betaler den rettidigt, pålægges renter "
+"fra betalingsfristen."
+msgstr ""
+"Akiligassinneqarsimaguit ullorlu akiliiffissaq eqqorlugu "
+"akiliisimanngikkuit, ullup akiliiffissap kingorna akiligassaq qaavatigut "
+"ernialerneqassaaq."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Suila-tapit er udbetalt beskæftigelsesfradrag. Suila-tapit udbetales en gang "
+"om måneden baseret på din forventede indkomst fra: arbejde, indhandling, B-"
+"indkomst og udbytte."
+msgstr ""
+"Suila-tapit tassaapput sulinermi ilanngaatit tunniunneqartartut. Suila-tapit "
+"qaammammut ataasiarlugit sulinermi aningaasarsiat, tunisinermi isertitat, "
+"isertitat B-t aamma sinneqartoruutinit ilunaarutisiat naapertorlugit "
+"tunniunneqartarput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Efter årets afslutning kender Skattestyrelsen dine faktiske indkomster. "
+"Baseret på de faktiske indkomster modtager du denne Årsopgørelse for Suila-"
+"tapit. Den viser, om du har fået udbetalt for lidt, for meget eller det "
+"korrekte beløb."
+msgstr ""
+"Ukiup aningaasarsiorfiusup qaangiunnerani Akileraartarnermut "
+"Aqutsisoqarfimmit isertitariumaagassarisimasannut sanilliullugu "
+"isertitarisimasatit naatsorsorneqarsinnaa-lersimassapput. Taamaalillunilu "
+"ukiumut nalunaarummi takuneqarsinnaalerluni Suila tapisiarisimasatit "
+"naapertuunnersut."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Indkomstgrundlaget for Suila-tapit er beregnet således:"
+msgstr ""
+"Suila-tapisiassannut isertitatit tunngavigineqartut ima naatsorsorneqarput:"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "A-indkomst, herunder lønindkomst og udenlandske pensioner"
+msgstr ""
+"Aningaasarsiat A-t, akissarsiat aamma nunani allani "
+"soraarnerussutisiaqalernissamut katersat ilanngullugit"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "B-indkomst, herunder indhandling og overskud af virksomhed"
+msgstr ""
+"Aningaasarsiat B-t, tunisanit isertitat aamma namminersorluni "
+"inuussutissarsiummik ingerlatamit sinneqartoorutiineersuupput"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Udbytter fra grønlandske selskaber"
+msgstr ""
+"Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit "
+"ilunaarutisiat"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Pensionsindbetalinger fra din arbejdsgiver"
+msgstr "Soraarnerussutisiassat sulisitsisumit akilerneqartartut"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Samlet Suila-tapit indkomstgrundlag"
+msgstr ""
+"Suila-tapisiassavit naatsorsorneqarnerini isertitatit tunngavigineqartut"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Her stammer oplysningerne fra:"
+msgstr "Paasissutissat ukunanngaanneerput"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "A-indkomst"
+msgstr "Aningaasarsiat A-t"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysningerne om A-indkomst stammer fra din slutopgørelse af skat. "
+"Slutopgørelsen er baseret på din selvangivelse og dine arbejdsgiveres "
+"indberetninger om løn, frie goder og indbetalinger til udenlandske pensioner."
+msgstr ""
+"Aningaasarsiat A-t pillugit paasissutissat inaarummik naatsorsuummit "
+"aaneqartarput. Nammineerlutit nalunaarsukkannit aamma sulisitsisuit "
+"anigaasarsiannut, ajunngitsorsiannut, soraarnerussutisiaqalernissannut "
+"Kalaallit Nunaata avataaniittunut aaqqissuussinernut "
+"akiliutiutigisimasaminut tunngatillugu nalunaarutaannit, inaarummik "
+"naatsorsuutini paasissutissat aaneqartarput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysning om B-indkomst stammer fra din slutopgørelse. Slutopgørelsen er "
+"baseret på din selvangivelse og andre indberetninger af din indkomst fra "
+"renter, indhandling, udlejning og anden virksomhedsindkomst."
+msgstr ""
+"Aningaasarsiat B-t pillugit paasissutissat inaarummik naatsorsuummit "
+"aaneqartarput. Inaarummik naatsorsuummi paasissutissat nammineerlutit "
+"nalunaarsukkannit, tunitsivinnut tunisatit pillugit "
+"nalunaarutigeqarsimasunit, namminersorlutit inuussutissarsiummi ingerlatanni "
+"isertitannit, attartortitsinernit aamma ernianit aaneqartarput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Udbytte fra grønlandske selskaber"
+msgstr ""
+"Ingerlatseqatigiiffinnit kalaallit nunaanniittunit sinneqartoruutinit "
+"ilunaarutisiat"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysning om udbytte stammer fra selskabernes indberetning af udloddet "
+"udbytte til dig."
+msgstr ""
+"Sinneqartoorutinit iluanaarutisiat pillugit paasissutissat iluanaarutisianit "
+"ilinnut tunniunneqarsimasutut ingerlatseqatigiiffinniit "
+"nalunaarutigineqarsimasunit aaneqartarput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Oplysninger om pensionsindbetalinger vedrører grønlandske pensionsordninger "
+"og angår bl.a. beløb, som din arbejdsgiver har indbetalt til en "
+"pensionsopsparing som en del af din løn."
+msgstr ""
+"Kalaallit Nunaanni  Soraarnerussutisiassanut aaqqissuussinernut tunngapput, "
+"kiisalu sulisitsisuit Soraarnerussutisiassanut aaqqissuussinerannut "
+"akilertagaanut aningaasartaanut tunngatillugu paasissutissat."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Hvem modtager Suila-tapit?"
+msgstr "Kikkut Suila-tapinik pisinnaappat?"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Størrelsen af din årlige Suila-tapit afhænger af din indkomst. Du kan se "
+"mere omkring beregningen og hvor dit indkomstgrundlag lægger i "
+"indkomstspændet på <a href=\"https://suila.gl\">suila.gl</a>."
+msgstr ""
+"Suila-tapisinissamut ukiumut isertitavit annertussusaat apeqqutaavoq. Suila-"
+"tapit isertitallu tunngavigineqartut naatsorsorneqariaasiat, isertitatillu "
+"Suila-tapisinissannut tunngaviliinersut <a href=\"https://"
+"suila.gl\">suila.gl</a>-imi takusinnaavatit."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Regler"
+msgstr "Inatsisit"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Dette er en afgørelse om din Suila-tapit."
+msgstr "Una Suila-tapitit pillugu aalajangiinermik."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Afgørelsen er truffet efter reglerne i Selvstyrets lovbekendtgørelse nr. 62 "
+"af 24. oktober 2025 af Landtingslov om indkomstskat."
+msgstr ""
+"Aningaasarsianit akileraarutit pillugit Inatsisartut inatsisaat pillugu "
+"Namminersorlutik Oqartussat inatsimmut nalunaarutaat nr. 62, 24. oktober "
+"2025-meersut tunngavigalugit aalajangiisoqarpoq."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Betingelser og størrelsen af din Suila-tapit"
+msgstr "Pisussaaffiitit aamma Suila-tapisiavit annertussusilerneqarnerat"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Af lovbekendtgørelsens § 38 a, stk. 2 fremgår, at du skal være fuldt "
+"skattepligtig til Grønland og ikke må være bruttobeskattet for at kunne "
+"modtage Suila-tapit."
+msgstr ""
+"Inatsimmut nalunaarutini § 38. imm. 2-mi takuneqarsinnaavoq, tamakkiisumik "
+"Kalaallit Nunaannut akileraartussaassasutit aammalu Suila-tapinik "
+"pissarsissaguit ilanngaateqanngitsumik akileraartartuunak."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Af § 38 b, stk. 1 fremgår:"
+msgstr "§ 38 b imm. 1-mi takuneqarsinnaavoq:"
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid ""
+"Størrelsen af dit Suila-tapit er 17,5 %% af den del af dit indkomstgrundlag, "
+"der er over 70.000 kr. (for 2025)."
+msgstr ""
+"Suila-tapivit annertussusaa isertitassatut tunngavimmit 17,5 %%-voq, "
+"taannalu 70.000 kr. sinnersimassallugu (2025-mut)."
+
+#: suila/templates/suila/person_final_settlements.html
+#, python-format
+msgid ""
+"Dit Suila-tapit kan dog ikke være højere end 15.750 kr. (for 2025) (§ 38 b, "
+"stk. 2). Hvis dit indkomstgrundlag er over 250.000 kr. (for 2025) reduceres "
+"dit Suila-tapit med 6,3 %% af dit indkomstgrundlag (§ 38 b, stk. 3)."
+msgstr ""
+"Taamaattoq sulinermut ilanngaat tunniunneqartoq ukiumi isertitaqarfiusumi "
+"ataatsimi 15.750 kr.-nit annertunerusinnaanngilaq. (2025-mut ) (§ 38 b, imm. "
+"2). Isertitatut tunngavigisatut 250.000 kr. qaangersimappagu (2025-mut) "
+"Suila-tapit isertitatut tunngavigisannit 6,3 %%-mik annikillissapput. (§ 38 "
+"b, imm. 3)."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Det betyder, at du ikke er berettiget til Suila-tapit hvis dit "
+"indkomstgrundlag er over 500.000 kr. (for 2025)."
+msgstr ""
+"Tamanna ima isumaqarpoq, Suila-tapinik tunngaviusumik isertitanit 500.000 "
+"kr. qaangersimappagu Suila-tapinik pissarsisinnaanngitsutit. (2025-mut)."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Tallene for grænserne for Suila-tapit reguleres hvert år med "
+"satstilpasningsprocenten. Find de aktuelle tal på AKA.gl under meddelelser."
+msgstr ""
+"Suila-tapinut killigitinneqartunut kisitsisit ukiut tamaasa akigititanut "
+"nalimmassaanermi naleqqussarneqartarput. Kisitsisit piviusut takukkit AKA.gl-"
+"mi nalunaarutit ataanni."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Årsopgørelsen – udbetaling og opkrævning"
+msgstr "Ukiumut nalunaarutit - tunniussinerit akiligassiinerillu"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Af § 38 f, stk. 1 fremgår, at Skattestyrelsen hvert år inden den 1. "
+"september skal sende dig en årsopgørelse for det foregående års Suila-tapit."
+msgstr ""
+"§ 38 f, imm. 1-mi takuneqarsinnaavoq Akileraartarnermut Pisortaqarfiup ukiut "
+"tamaasa 1. september nallertinnagu Siuliani Suila-tapinik "
+"pissarsisarsimanermut ukiumut nalunaarut ilinnut nassiutissagaa."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis opgørelsen viser, at du igennem det år det drejer sig om har modtaget "
+"for lidt forudbetalt Suila-tapit, skal Skattestyrelsen udbetale det "
+"resterende beløb inden for 1 måned."
+msgstr ""
+"Ukiumut nalunaarutip takutippagu ukiup pineqartup ingerlanerani Suila-"
+"tapinik annikippallaartunik pisarsimasutit, taava qaammatip ataatsip "
+"ingerlanerani Akileraartarnermut Aqutsisoqarfiup sinneruttut tunniutissavai."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis årsopgørelsen viser, at du har fået for meget udbetalt, skal dette "
+"opkræves efter samme lovs § 38 g. Heraf fremgår, at for meget udbetalt Suila-"
+"tapit skal opkræves ved at reducere dine fremtidige udbetalinger af Suila-"
+"tapit."
+msgstr ""
+"Ukiumut nalunaarutip takutippagu annertuallaartunik pisarsimasutit, taava § "
+"38 g. naapertorlugu taakkua uterteqquneqassapput, tamannalu siunissami Suila-"
+"tapinik pissarsiassakkut ilanngartuinermik ingerlanneqassalluni."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis du har modtaget for meget Suila-tapit med 2.000 kr. eller mere skal "
+"dette opkræves med en faktura til dig. Dette fremgår af § 38 g, stk. 2."
+msgstr ""
+"Suila-tapinik 2.000 kr. imaluunniit sinnerlugu annertuallaartumik "
+"pisarsimaguit akiligassiineq atorlugu akiligassanngortinneqassapput. Tamanna "
+"§ 38 g. imm. 2-mi takuneqarsinnaavoq."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Klagevejledning"
+msgstr "Naammagittaalliuuteqarnissamut ilitsersuut"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid ""
+"Hvis du er uenig i denne årsopgørelse bedes du kontakte Skattestyrelsen."
+msgstr ""
+"Ukiumut nalunaarummut isumaqataanngikkuit, qinnuigineqarputit "
+"Akileraartarnermut Aqutsisoqarfik attavigeqqullugu."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Denne afgørelse kan påklages til Skatterådet inden for 3 måneder."
+msgstr ""
+"Aalajangiineq manna akileraarusiinermik aalajangiisartunut qaammatit "
+"pingasut iluini naammagittaalliuutigineqarsinnaavoq."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Eventuelle klager sendes skriftligt og begrundet til:"
+msgstr ""
+"Naammagittaalliuutaasinnaasut allakkatigut tunngavilersorlugit uunga "
+"nassiunneqassapput:"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "<a href=\"mailto:oed@nanoq.gl\">oed@nanoq.gl</a> eller"
+msgstr "<a href=\"mailto:oed@nanoq.gl\">oed@nanoq.gl</a> imaluunniit"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Skatterådet"
+msgstr "Akileraarusiinermik Aalajangiisartut"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Postboks 1037"
+msgstr "Postboks 1037"
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "3900 Nuuk"
+msgstr "3900 Nuuk"
 
 #: suila/templates/suila/person_no_year.html
 msgid "Denne person har ikke nogen data"
