@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 07:32-0100\n"
+"POT-Creation-Date: 2026-08-18 13:35-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1161,6 +1161,10 @@ msgstr ""
 #: suila/templates/suila/person_final_settlements.html
 #, python-format
 msgid "Årsopgørelse Suila-tapit for %(year)s"
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Dato: 20.08.2026"
 msgstr ""
 
 #: suila/templates/suila/person_final_settlements.html
