@@ -114,8 +114,10 @@ def calculate_benefit(
     if cpr:
         person_year_qs = person_year_qs.filter(person__cpr=cpr)
 
-    # Add data on available surplus benefit
-    person_year_qs = person_year_qs.annotate(surplus_benefit=F("person__surplus_benefit"))
+    # Add data on available benefit difference, sign flipped for computational ease
+    person_year_qs = person_year_qs.annotate(
+        benefit_difference=-F("person__benefit_difference")
+    )
 
     assessment_df = to_dataframe(
         person_year_qs,
@@ -126,7 +128,7 @@ def calculate_benefit(
             "catchsale_expenses": float,
             "person__paused": bool,
             "person__annual_income_estimate": float,
-            "surplus_benefit": float,
+            "benefit_difference": float,
         },
     )
 
@@ -135,6 +137,7 @@ def calculate_benefit(
 
     # Combine for ease-of-use
     df = pd.concat([month_df, estimates_df, payouts_df, assessment_df], axis=1)
+
 
     # Any months not found in concatenation have been set to NaN, replace with False
     df.fillna({"has_signal": False}, inplace=True)
@@ -180,11 +183,14 @@ def calculate_benefit(
     ).round(2)
 
     # Offset surplus benefit first
-    df["offset_surplus_benefit"] = df.loc[
-        df.surplus_benefit > 0,
-        ["benefit_this_month", "surplus_benefit"]
+    df["offset_benefit_difference"] = df.loc[
+        df.benefit_difference > 0,
+        ["benefit_this_month", "benefit_difference"]
     ].min(axis=1)
-    df.loc[df.surplus_benefit > 0, "benefit_this_month"] -= df["offset_surplus_benefit"]
+    df.loc[
+        df.benefit_difference > 0,
+        "benefit_this_month"
+    ] -= df["offset_benefit_difference"]
 
     # Do not payout if the amount is below zero
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
@@ -242,7 +248,6 @@ def calculate_benefit(
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
 
     df.loc[:, "benefit_calculated"] = np.ceil(df["benefit_this_month"])
-
     return df
 
 

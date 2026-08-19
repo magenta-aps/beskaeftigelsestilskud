@@ -33,7 +33,7 @@ class Command(SuilaBaseCommand):
             "estimated_year_benefit",
             "actual_year_benefit",
             "estimated_year_result",
-            "offset_surplus_benefit",
+            "offset_benefit_difference",
         ]
 
 
@@ -45,7 +45,7 @@ class Command(SuilaBaseCommand):
 
         person_qs = Person.objects.filter(pk__in=person_month_qs.values_list("person_year__person").distinct())
         for person in person_qs:
-            person.calculate_surplus_benefit(save=True)
+            person.calculate_benefit_difference(save=True)
 
 
         benefit = calculate_benefit(month, year, kwargs["cpr"])

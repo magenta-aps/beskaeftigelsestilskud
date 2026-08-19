@@ -749,51 +749,55 @@ class Person(PermissionsMixin, models.Model):
             logger.exception(e)
             raise
 
-    surplus_benefit = models.DecimalField(
+    benefit_difference = models.DecimalField(
         null=False,
+        default=Decimal('0'),
         blank=False,
-        default=Decimal(0),
         max_digits=12,
         decimal_places=2,
     )
 
-    def calculate_surplus_benefit(self, save: bool = False) -> Dict[str, Decimal]:
+    def calculate_benefit_difference(self, save: bool = False) -> Dict[str, Decimal]:
         """
-        TODO: We need to find out what the exact implementation of this system should
-        be. What do we mean, when we look at a specific year? Does it mean surplus
-        benefit accrued during that year, and spent during the next? Are we measuring
-        FinalSettlement to FinalSettlement?
-
-
+        We need a clear view of which ways benefit_difference can be added and offset.
+        Negative difference (person received too much benefit/person owes benefit):
+            Small amount (0-1999kr.):
+                Offset through decreased benefit_transferred in PersonMonth payments
+            Large amount (2000kr.+):
+                Charged through Prisme
+        Positive difference (person received too little benefit):
+            Tiny amount (0-99kr.):
+                Amount will not be paid out
+            Larger amount (100kr.+):
+                Paid out within 30 days
+        NOTE: Special rules apply, if person has not been active in Suila for 5 years.
+        In this case any extraneous benefit is sent to be charged through Prisme
         """
         personmonth_qs = PersonMonth.objects.filter(
             person_year__person=F("pk"),
-            offset_surplus_benefit__gt=0,
+            offset_benefit_difference__gt=0,
         )
         finalsettlement_qs = FinalSettlement.objects.filter(
             annual_income__person_year__person=F("pk"),
         )
-        offset_surplus = (
-            personmonth_qs.aggregate(spent=Sum("offset_surplus_benefit"))["spent"] or 0
+        pm_benefit_offset = (
+            personmonth_qs.aggregate(spent=Sum("offset_benefit_difference"))["spent"] or 0
         )
-        acquired_surplus = (
+        fs_benefit_difference = (
             finalsettlement_qs.aggregate(acquired=Sum("_result"))["acquired"] or 0
         )
-        # We have - acquired_surplus, because FinalSettlement stores the values with
-        # flipped sign of what we expect here
-        surplus_benefit = 0 - acquired_surplus - offset_surplus
+
+        benefit_difference = fs_benefit_difference + pm_benefit_offset
         if save:
-            self.surplus_benefit = surplus_benefit
-            self.save(update_fields=["surplus_benefit"])
+            self.benefit_difference = benefit_difference
+            self.save(update_fields=["benefit_difference"])
 
         # NOTE: Return dict with spent surplus, acquired surplus and remaining surplus.
-        # We need to figure out the structure of this dict first, though
         return {
-            "current_surplus_benefit": surplus_benefit,
-            "total_acquired_surplus": acquired_surplus,
-            "total_offset_surplus": offset_surplus,
+            "current_benefit_difference": benefit_difference,
+            "total_acquired_surplus": fs_benefit_difference,
+            "total_offset_surplus": pm_benefit_offset,
         }
-
 
 pre_save.connect(
     Person.pre_save,
@@ -1295,7 +1299,7 @@ class PersonMonth(PermissionsMixin, models.Model):
         default=False,
     )
 
-    offset_surplus_benefit = models.DecimalField(
+    offset_benefit_difference = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
