@@ -119,3 +119,12 @@ def table_filters(filters):
     return {  # pragma: no cover
         "filter": filters,
     }
+
+
+@register.inclusion_tag(
+    "suila/templatetags/surplus_benefit_info_box.html", takes_context=True
+)
+def surplus_benefit_info_box(context):
+    return {  # pragma: no cover
+        **context.flatten(),
+    }
