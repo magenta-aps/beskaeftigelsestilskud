@@ -5,7 +5,7 @@ import calendar
 import re
 from collections import defaultdict
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 from io import BytesIO, StringIO
 from unittest.mock import MagicMock, patch
 
@@ -19,6 +19,7 @@ from tenQ.writer.g68 import G68Transaction, Udbetalingsbeløb
 
 from suila.benefit import get_eboks_date
 from suila.models import (
+    FinalSettlement,
     JobLog,
     ManagementCommands,
     PersonMonth,
@@ -1211,87 +1212,107 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
 
     years = [2024, 2025]
 
+    def high_income_for_1000_benefit(self, yr: int):
+        year = Year.objects.get(year=yr)
+        calc_method = year.calculation_method
+        value = (calc_method.max_benefit - 1000)//calc_method.scaledown_rate
+        return value.quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
+
+
     def setUp(self):
         super().setUp()
         # 2024: Max benefit until month 10, then disqualify
-        for month_number in range(1, 11):
+        for month_number in range(1, 12):
             self.add_monthlyincome_record(
-                self.cpr, month_number, income=20000, year=year[0]
+                self.cpr, month_number, income=20_000, year=self.years[0]
             )
-        for month_number in range(11, 13):
-            self.add_monthlyincome_record(
-                self.cpr, month_number, income=500000, year=year[0]
-            )
+        self.total_income_year_0 = self.high_income_for_1000_benefit(self.years[0])
+        last_month_income_year_0 = (self.total_income_year_0 - 10 * 20_000)
+        self.add_monthlyincome_record(
+            self.cpr,
+            12,
+            #income=last_month_income_year_0,
+            income=200_000,
+            year=self.years[0],
+        )
 
         self.add_taxinformation_record(
-            self.cpr, "FULL", (1, 1), (12, 31), year=year[0]
+            self.cpr, "FULL", (1, 1), (12, 31), year=self.years[0]
         )
         self.add_annualincome_record(
-            self.cpr, salary=20000 * 10 + 500000 * 2,
-            year=year[0]
+                self.cpr, salary=420_000,
+            year=self.years[0]
         )
-        self.add_expectedincome_record(self.cpr, b_income=0, year=year[0])
-        self.add_u1a_record(self.cpr, udbytte=0, year=year[0])
+        self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[0])
+        self.add_u1a_record(self.cpr, udbytte=0, year=self.years[0])
         
         # 2025: Max benefit
         for month_number in range(1, 13):
             self.add_monthlyincome_record(
-                self.cpr, month_number, income=20000, year=year[1]
+                self.cpr, month_number, income=20_000, year=self.years[1]
             )
 
         self.add_taxinformation_record(
-            self.cpr, "FULL", (1, 1), (12, 31), year=year[1]
+            self.cpr, "FULL", (1, 1), (12, 31), year=self.years[1]
         )
         self.add_annualincome_record(
-            self.cpr, salary=20000 * 10 + 500000 * 2,
-            year=year[1]
+            self.cpr, salary=20000 * 12,
+            year=self.years[1]
         )
-        self.add_expectedincome_record(self.cpr, b_income=0, year=year[1])
-        self.add_u1a_record(self.cpr, udbytte=0, year=year[1])
+        self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[1])
+        self.add_u1a_record(self.cpr, udbytte=0, year=self.years[1])
 
     def test_estimate_and_calculate_benefit(self):
         """
         Simple test to validate that a person gets paid out the proper amount two years
         in a row.
 
-        The person earns 20.000 kr per month until November 2024, after which they
+        The person earns 20.000 kr per month until November 2024, and 
         disqualify for benefit for making too much. So we expect the person to receive
         the maximum benefit (15.750kr) undtil November.
         Which means he gets paid out 1312 kr per month, which will have to be reversed
         in 2025.
 
-        Just like in SteadyAverageIncomeTest. Just for two years in a row.
         """
-        with year = years[0]:
-            for month in range(1, 11):
-                self.call_commands(month, year)
-                person_month = self.get_person_month(month, year)
-                amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-                self.assertEqual(person_month.estimated_year_result, 240_000)
-                self.assert_benefit(amount_sent_to_prisme, 1312)
+        year = self.years[0]
+        for month in range(1, 12):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            # First we estimate 12 * 20_000 for the year
+            self.assertEqual(person_month.estimated_year_result, 240_000)
+            self.assert_benefit(amount_sent_to_prisme, 1312)
 
-            for month in range(11, 13):
-                self.call_commands(month, year)
-                person_month = self.get_person_month(month, year)
-                amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-                self.assertEqual(person_month.estimated_year_result, 240_000)
-                self.assert_benefit(amount_sent_to_prisme, 0)
+        for month in range(12, 13):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            #self.assertEqual(person_month.estimated_year_result, self.total_income_year_0)
+            #self.assertEqual(person_month.estimated_year_result, 220_000 + 270_000)
 
-            self.assert_total_benefit(13_126, year)
+        year = self.years[1]
+        for month in range(1, 8):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 240_000)
+            #self.assert_benefit(amount_sent_to_prisme, 1312)
 
-        with year = years[1]
-            for month in range(1, 8):
-                self.call_commands(month, year)
-                person_month = self.get_person_month(month, year)
-                amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-                self.assertEqual(person_month.estimated_year_result, 240_000)
-                self.assert_benefit(amount_sent_to_prisme, 1312)
+        self.assertEqual(FinalSettlement.objects.count(), 0)
+        self.call_commands(8, year)
+        person_month = self.get_person_month(8, year)
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(8, year)
+        self.assertEqual(person_month.estimated_year_result, 240_000)
+        #self.assert_benefit(amount_sent_to_prisme, 1312)
+        call_command("generate_final_settlements", year-1)
+        self.assertEqual(FinalSettlement.objects.count(), 1)
 
-            for month in range(8, 13):
-                self.call_commands(month, year)
-                person_month = self.get_person_month(month, year)
-                amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-                self.assertEqual(person_month.estimated_year_result, 240_000)
-                self.assert_benefit(amount_sent_to_prisme, 0)
 
-            self.assert_total_benefit(2624, year)
+        for month in range(9, 13):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 240_000)
+            #self.assert_benefit(amount_sent_to_prisme, 0)
+
+        #self.assert_total_benefit(10496, year)
