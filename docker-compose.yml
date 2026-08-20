@@ -216,7 +216,7 @@ services:
       - "3306:3306"
 
   suila-traefik:
-    image: traefik:v2.11
+    image: traefik:v3.7
     container_name: suila-traefik
     networks:
       - default
