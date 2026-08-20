@@ -1,0 +1,32 @@
+{# SPDX-FileCopyrightText: 2025 Magenta ApS <info@magenta.dk> #}
+{# SPDX-License-Identifier: MPL-2.0 #}
+
+{% load i18n %}
+
+<div class="me-2 mb-3 info">
+    <p>{% translate "Du har fået udbetalt for meget Suila-tapit" %}</p>
+    <p>
+        {% blocktranslate trimmed %}
+        Din årsopgørelse viser, at dit udbetalte Suila-tapit har været højere end 
+        det beløb, du er berettiget til. 
+        Beløbet fratrækkes derfor i dine kommende udbetalinger.
+        {% endblocktranslate %}
+    </p>
+    <p>
+        {% blocktranslate trimmed %}
+        Beløb, der mangler at blive fratrukket: {{ surplus_benefit }} kr.
+        {% endblocktranslate %}
+    </p>
+    <p>
+        {% blocktranslate trimmed %}
+        Når hele beløbet er fratrukket, vil du igen få udbetalt Suila-tapit,
+        hvis du er berettiget til det.
+        {% endblocktranslate %}
+    </p>
+    <i>
+        {% blocktranslate trimmed %}
+            Sidst ændret:
+        {% endblocktranslate %}           
+        {{ surplus_benefit_last_change }}
+    </i>
+</div>

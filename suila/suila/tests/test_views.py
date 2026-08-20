@@ -42,6 +42,7 @@ from suila.models import (
     AnnualIncome,
     BTaxPayment,
     Employer,
+    FinalSettlement,
     IncomeEstimate,
     ManagementCommands,
     MonthlyIncomeReport,
@@ -429,6 +430,57 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertEqual(
                 response.context_data["benefit_calculated"], Decimal("10.0")
             )
+            self.assertIsNone(response.context_data["estimated_year_benefit"])
+            self.assertEqual(response.context_data["estimated_year_result"], Decimal(0))
+            self.assertIsInstance(response.context_data["table"], PersonMonthTable)
+            self.assertFalse(response.context_data["table"].orderable)
+
+    def test_get_context_data_with_surplus_benefit(self):
+        self.method1 = StandardWorkBenefitCalculationMethod.objects.create(
+            benefit_rate_percent=Decimal("17.5"),
+            personal_allowance=Decimal("58000.00"),
+            standard_allowance=Decimal("10000"),
+            max_benefit=Decimal("15750.00"),
+            scaledown_rate_percent=Decimal("6.3"),
+            scaledown_ceiling=Decimal("250000.00"),
+        )
+        self.prev_year = Year.objects.create(
+            year=2019,
+            calculation_method=self.method1,
+        )
+        self.prev_person_year = PersonYear.objects.create(
+            person=self.person1,
+            year=self.prev_year,
+        )
+        PersonMonth.objects.create(
+            person_year=self.prev_person_year,
+            month=6,
+            import_date=date.today(),
+            benefit_transferred=1000,
+        )
+        self.annual_income = AnnualIncome.objects.create(
+            person_year=self.prev_person_year,
+            summarized_a_income=Decimal("1000"),
+            summarized_b_income=Decimal("2000"),
+            summarized_u_income=Decimal("3000"),
+        )
+        self.finalsettlement = FinalSettlement.objects.create(
+            annual_income=self.annual_income,
+        )
+        with self._time_context(year=2020):  # December 2020
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            # Verify that expected context variables are present
+            self.assertIn("next_payout_date", response.context_data)
+            self.assertIn("benefit_calculated", response.context_data)
+            self.assertIn("estimated_year_benefit", response.context_data)
+            self.assertIn("estimated_year_result", response.context_data)
+            self.assertIn("table", response.context_data)
+            self.assertIsNotNone(response.context_data["surplus_benefit_last_change"])
+            self.assertEqual(response.context_data["surplus_benefit"], 1000)
+            self.assertIsNotNone(response.context_data["next_payout_date"])
+            # The expected payout for the next month is 10, however this amount is
+            # offset by the surplus benefit from the FinalSettlement
+            self.assertEqual(response.context_data["benefit_calculated"], Decimal("0"))
             self.assertIsNone(response.context_data["estimated_year_benefit"])
             self.assertEqual(response.context_data["estimated_year_result"], Decimal(0))
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)

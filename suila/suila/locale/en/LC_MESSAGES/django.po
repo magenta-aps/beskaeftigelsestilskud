@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 13:35-0100\n"
+"POT-Creation-Date: 2026-08-20 10:52-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1674,6 +1674,7 @@ msgstr ""
 #: suila/templates/suila/templatetags/manually_entered_income_info_box.html
 #: suila/templates/suila/templatetags/missing_info_box.html
 #: suila/templates/suila/templatetags/pause_info_box.html
+#: suila/templates/suila/templatetags/surplus_benefit_info_box.html
 msgid "Sidst ændret:"
 msgstr "Last changed:"
 
@@ -1766,6 +1767,28 @@ msgstr ""
 #, python-format
 msgid "Suila-tapit udbetalinger vil blive genoptaget fra d. %(date)s."
 msgstr "Suila-tapit payments will resume from %(date)s."
+
+#: suila/templates/suila/templatetags/surplus_benefit_info_box.html
+msgid "Du har fået udbetalt for meget Suila-tapit"
+msgstr ""
+
+#: suila/templates/suila/templatetags/surplus_benefit_info_box.html
+msgid ""
+"Din årsopgørelse viser, at dit udbetalte Suila-tapit har været højere end "
+"det beløb, du er berettiget til. Beløbet fratrækkes derfor i dine kommende "
+"udbetalinger."
+msgstr ""
+
+#: suila/templates/suila/templatetags/surplus_benefit_info_box.html
+#, python-format
+msgid "Beløb, der mangler at blive fratrukket: %(surplus_benefit)s kr."
+msgstr ""
+
+#: suila/templates/suila/templatetags/surplus_benefit_info_box.html
+msgid ""
+"Når hele beløbet er fratrukket, vil du igen få udbetalt Suila-tapit, hvis du "
+"er berettiget til det."
+msgstr ""
 
 #: suila/templates/suila/templatetags/table_filters.html
 msgid "Søg"
