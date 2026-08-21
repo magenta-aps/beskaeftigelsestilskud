@@ -14,7 +14,7 @@ from dateutil.relativedelta import TU, relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
-from django.db.models import CharField, Exists, F, QuerySet, Value
+from django.db.models import CharField, Exists, F, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
 from django.utils.numberformat import format as format_number
 from simple_history.utils import bulk_update_with_history
@@ -45,6 +45,9 @@ class BaseExport:
         raise NotImplementedError("must be defined by subclass")  # pragma: no cover
 
     def get_prisme_account_alias_lookup(self, obj) -> tuple[str | None, int]:
+        raise NotImplementedError("must be implemented by subclass")  # pragma: no cover
+
+    def get_non_mod11_lookup(self, mod11_separate_cprs: list[str]) -> Q:
         raise NotImplementedError("must be implemented by subclass")  # pragma: no cover
 
     def get_posting_text(self, obj) -> str:
@@ -140,7 +143,7 @@ class BaseExport:
             if mod11_separate_cprs:
                 # Yield separate batch for *each* CPR
                 sub_qs: QuerySet = non_mod11.filter(
-                    person_year__person__cpr__in=mod11_separate_cprs
+                    self.get_non_mod11_lookup(mod11_separate_cprs)
                 )
                 for obj in sub_qs:
                     logger.info(
@@ -159,7 +162,7 @@ class BaseExport:
             # Yield a *combined* batch for the non-mod11 CPRs *not in*
             # `mod11_separate_cprs`
             remaining_non_mod11: QuerySet = non_mod11.exclude(
-                person_year__person__cpr__in=mod11_separate_cprs
+                self.get_non_mod11_lookup(mod11_separate_cprs),
             )
             if remaining_non_mod11.exists():
                 yield (
@@ -459,6 +462,9 @@ class BatchExport(BaseExport):
         tax_year: int = obj.person_year.year.year
         return location_code, tax_year
 
+    def get_non_mod11_lookup(self, mod11_separate_cprs: list[str]) -> Q:
+        return Q(person_year__person__cpr__in=mod11_separate_cprs)
+
     def get_posting_text(self, obj: PersonMonth) -> str:
         cpr: str = obj.identifier  # type: ignore[attr-defined]
         date_formatted: str = obj.year_month.strftime("%b%y").upper()
@@ -508,7 +514,8 @@ class BatchExport(BaseExport):
         )
 
     def get_control_list_data(self) -> QuerySet:
-        # Fetch all Prisme batch items created for this year and month
+        # Fetch all Prisme batch items created for this year and month that are related
+        # to a person month.
         prisme_batch_items: QuerySet[PrismeBatchItem] = (
             PrismeBatchItem.objects.select_related("person_month__person_year__person")
             .filter(
@@ -550,7 +557,6 @@ class BatchExport(BaseExport):
         )
 
     def print_control_list_success_banner(self, stdout):
-        pass  # can be implemented by subclass
         stdout.write(
             f"Exported control list for year={self._year}, month={self._month}."
         )
