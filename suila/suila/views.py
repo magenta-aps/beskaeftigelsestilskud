@@ -930,6 +930,8 @@ class PersonFinalSettlementsView(
         )
         # (end of copied code)
 
+        context_data["this_year"] = self.person_year.year.year
+
         self.log_view(items=[person_year, annual_income])
         return context_data
 
