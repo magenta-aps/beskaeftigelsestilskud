@@ -5,7 +5,7 @@
 import logging
 import random
 from concurrent.futures import Future
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import StringIO
 from typing import Any, Dict, Set
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from common.tests.test_utils import BaseTestCase
 from django.contrib.auth.models import Group
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from django.db import connections
 from django.forms import model_to_dict
 from django.test import TestCase, TransactionTestCase
@@ -890,3 +890,17 @@ class GenerateFinalSettlements(BaseTestCase):
                 ).count(),
                 1,
             )
+
+
+class ExportFinalSettlementsToPrismeTest(BaseTestCase):
+    @patch(
+        "suila.integrations.prisme.final_settlements."
+        "FinalSettlementExport.export_batches"
+    )
+    def test_command_invokes_export(self, mock_export_batches):
+        call_command("export_final_settlements_to_prisme")
+        self.assertTrue(mock_export_batches.called)
+
+    def test_command_fails_on_current_year(self):
+        with self.assertRaises(CommandError):
+            call_command("export_final_settlements_to_prisme", year=date.today().year)
