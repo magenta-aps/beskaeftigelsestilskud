@@ -41,7 +41,7 @@ mypy-extensions==1.1.0
 numpy==2.5.2
 packaging==26.3
 pandas==3.0.5
-paramiko==3.5.1
+paramiko==5.0.0
 psycopg==3.3.4
 pydot==3.0.4
 pycparser==2.23
