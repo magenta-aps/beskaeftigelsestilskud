@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 
 from dateutil.relativedelta import TU, relativedelta
-from django.db.models import CharField, QuerySet, Value
+from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
 
 from suila.integrations.prisme.benefits import BaseExport
@@ -47,6 +47,9 @@ class FinalSettlementExport(BaseExport):
         tax_year: int = self._year
         return location_code, tax_year
 
+    def get_non_mod11_lookup(self, mod11_separate_cprs: list[str]) -> Q:
+        return Q(annual_income__person_year__person__cpr__in=mod11_separate_cprs)
+
     def get_posting_text(self, obj: FinalSettlement) -> str:
         cpr: str = obj.identifier  # type: ignore[attr-defined]
         date_formatted: str = self.get_posting_date(obj).strftime("%b%y").upper()
@@ -71,10 +74,48 @@ class FinalSettlementExport(BaseExport):
         )
 
     def get_control_list_data(self) -> QuerySet:
-        return PrismeBatchItem.objects.none()  # TODO: implement
+        # Fetch all Prisme batch items created for this year that are related to a final
+        # settlement.
+        prisme_batch_items: QuerySet[PrismeBatchItem] = (
+            PrismeBatchItem.objects.select_related(
+                "final_settlement__annual_income__person_year__person"
+            )
+            .filter(
+                final_settlement__annual_income__person_year__year=self._year,
+            )
+            .order_by(
+                "final_settlement__annual_income__person_year__person__cpr",
+                "prisme_batch__prefix",
+            )
+            .annotate(
+                cpr=F("final_settlement__annual_income__person_year__person__cpr"),
+            )
+        )
+        return prisme_batch_items
 
     def get_control_list_filename(self) -> str:
         return f"SUILA_kontrolliste_aarsopgoerelse_{self._year}_{self._month:02}.csv"
+
+    def print_start_banner(self, stdout, num_objects: int) -> None:
+        stdout.write(
+            f"Found {num_objects} object(s) to export for year={self._year} ..."
+        )
+
+    def print_success_banner(
+        self, stdout, num_objects: int, num_succeeded_batches: int
+    ) -> None:
+        stdout.write(
+            f"Exported {num_succeeded_batches} batch(es) ({num_objects} object(s)) "
+            f"for year={self._year}."
+        )
+
+    def print_failed_banner(self, stdout, num_failed_batches: int):
+        stdout.write(
+            f"FAILED to export {num_failed_batches} batch(es) for year={self._year}."
+        )
+
+    def print_control_list_success_banner(self, stdout):
+        stdout.write(f"Exported control list for year={self._year}.")
 
     def _get_prisme_batch_item_instance(
         self,
