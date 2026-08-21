@@ -20,7 +20,11 @@ class BaseEnvMixin:
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.person = Person.objects.create(name="Person", cpr="1234567890")
+        cls.person = Person.objects.create(
+            name="Person",
+            cpr="1234567890",
+            location_code="956",
+        )
         cls.employer = Employer.objects.create(name="Employer", cvr=12345678)
         cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
             benefit_rate_percent=Decimal("17.5"),

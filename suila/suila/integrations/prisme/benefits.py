@@ -185,7 +185,7 @@ class BaseExport:
             )
         except PrismeAccountAlias.DoesNotExist:
             logger.error(
-                "No Prisme account alias found for tax municipality location code %r,"
+                "No Prisme account alias found for tax municipality location code %r, "
                 "tax year %r, person %r",
                 location_code,
                 tax_year,

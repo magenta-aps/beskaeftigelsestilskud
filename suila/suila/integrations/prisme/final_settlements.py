@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 
 from dateutil.relativedelta import TU, relativedelta
+from django.conf import settings
 from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
 
@@ -14,7 +15,8 @@ from suila.models import FinalSettlement, PrismeBatch, PrismeBatchItem
 
 class FinalSettlementExport(BaseExport):
     def __init__(self, year: int):
-        assert year < date.today().year, f"`year` must be less than {date.today().year}"
+        if year >= date.today().year:
+            raise ValueError(f"`year` must be less than {date.today().year}")
         self._year = year
         self._month = date.today().month
 
@@ -23,7 +25,7 @@ class FinalSettlementExport(BaseExport):
             annual_income__person_year__year__year=self._year,
             prismebatchitem__isnull=True,
             _result__isnull=False,
-            _result__gt=0,
+            _result__gt=settings.PRISME.get("final_settlement_amount_threshold", 99),
         )
 
         # Annotate with string version of CPR (zero-padded to 10 digits)
