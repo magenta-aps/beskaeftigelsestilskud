@@ -25,7 +25,7 @@ class FinalSettlementExport(BaseExport):
             annual_income__person_year__year__year=self._year,
             prismebatchitem__isnull=True,
             _result__isnull=False,
-            _result__gt=settings.PRISME.get("final_settlement_amount_threshold", 99),
+            _result__gte=settings.PRISME.get("final_settlement_amount_threshold", 100),
         )
 
         # Annotate with string version of CPR (zero-padded to 10 digits)
