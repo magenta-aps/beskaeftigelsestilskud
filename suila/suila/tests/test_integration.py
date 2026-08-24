@@ -19,6 +19,7 @@ from tenQ.writer.g68 import G68Transaction, Udbetalingsbeløb
 
 from suila.benefit import get_eboks_date
 from suila.models import (
+    FinalSettlement,
     JobLog,
     ManagementCommands,
     PersonMonth,
@@ -602,7 +603,12 @@ class IntegrationBaseTest(
         self.assertGreater(benefit_calculated, correct_benefit - 12)
         self.assertLess(benefit_calculated, correct_benefit + 12)
 
-    def get_amount_sent_to_prisme(self, month, year=None):
+    def get_amount_sent_to_prisme(
+        self,
+        month,
+        year=None,
+        pattern=None,
+    ):
         year = year or self.year
         for call in self.prisme_mock.call_args_list:
             args, kwargs = call
@@ -611,13 +617,14 @@ class IntegrationBaseTest(
             if "G68_export" in filename and filename.endswith(
                 f"_{year}_{str(month).zfill(2)}.g68"
             ):
-                content = args[1].read().decode("utf-8")
-                args[1].seek(0)  # Reset so we can read this file again later
-                parsed_content = G68Transaction.parse(content)
+                if pattern is None or pattern in filename:
+                    content = args[1].read().decode("utf-8")
+                    args[1].seek(0)  # Reset so we can read this file again later
+                    parsed_content = G68Transaction.parse(content)
 
-                for field in parsed_content:
-                    if isinstance(field, Udbetalingsbeløb):
-                        return int(field.val) / 10_000
+                    for field in parsed_content:
+                        if isinstance(field, Udbetalingsbeløb):
+                            return int(field.val) / 10_000
         return 0
 
     def get_person_month(self, month, year=None):
@@ -1205,3 +1212,46 @@ class NonTaxablePersonTest(IntegrationBaseTest):
         amount_sent_to_prisme = self.get_amount_sent_to_prisme(month)
         self.assert_benefit(amount_sent_to_prisme, 0)
         self.assert_total_benefit(0)
+
+
+class TestFinalSettlements(IntegrationBaseTest):
+    # Simulate income and Suila-tapit registered in 2025, and settled via final
+    # settlements in 2026.
+    years = [2025, 2026]
+
+    def setUp(self):
+        super().setUp()
+        # Ensure that we have a location code for our test person.
+        # This is a required to be able to export a G68/G69 line to Prisme.
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        # Create annual income report, creating a difference between the Suila-tapit
+        # calculated so far, and the actual Suila-tapit owed to the person
+        self.add_annualincome_record(self.cpr, salary=24000 * 12)
+        # Create income in 2025, and calculate Suila-tapit based on that
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(self.cpr, month_number, income=25000)
+            self.call_commands(month_number, self.year)
+
+    def test_settlement_flow(self):
+        expected_difference = Decimal("756.00")
+        call_command("generate_final_settlements", self.years[0])
+        self.assert_final_settlement_exists(self.cpr, expected_difference)
+        call_command("export_final_settlements_to_prisme", year=self.years[0])
+        self.assert_final_settlement_transferred(expected_difference)
+
+    def assert_final_settlement_exists(self, cpr, result):
+        self.assertQuerySetEqual(
+            FinalSettlement.objects.all(),
+            [(cpr, result)],
+            transform=lambda obj: (
+                obj.annual_income.person_year.person.cpr,
+                obj._result,
+            ),
+            ordered=False,
+        )
+
+    def assert_final_settlement_transferred(self, result):
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(
+            date.today().month, pattern="aarsopgoerelse"
+        )
+        self.assertEqual(amount_sent_to_prisme, result)
