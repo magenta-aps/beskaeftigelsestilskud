@@ -91,6 +91,7 @@ class ManagementCommands(TextChoices):
     SEND_MONTHLY_EBOKS = "send_monthly_eboks_message"
     GENERATE_FINAL_SETTLEMENTS = "generate_final_settlements"
     LOAD_PRISME_BENEFITS_POSTING_STATUS = "load_prisme_benefits_posting_status"
+    EXPORT_FINAL_SETTLEMENTS_TO_PRISME = "export_final_settlements_to_prisme"
 
 
 class StatusChoices(TextChoices):
