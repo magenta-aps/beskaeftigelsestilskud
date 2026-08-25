@@ -1222,7 +1222,7 @@ class TestFinalSettlements(IntegrationBaseTest):
     def setUp(self):
         super().setUp()
         # Ensure that we have a location code for our test person.
-        # This is a required to be able to export a G68/G69 line to Prisme.
+        # This is required to be able to export a G68/G69 line to Prisme.
         self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
         # Create annual income report, creating a difference between the Suila-tapit
         # calculated so far, and the actual Suila-tapit owed to the person
@@ -1233,6 +1233,14 @@ class TestFinalSettlements(IntegrationBaseTest):
             self.call_commands(month_number, self.year)
 
     def test_settlement_flow(self):
+        # During the year, we have "received" 12 monthly income records of kr. 25.000
+        # each, so we have paid out Suila-tapit according to an expected yearly salary
+        # of (12 * 25.000) = kr. 300.000, yielding a total yearly Suila-tapit of
+        # kr. 13.356.
+        # But the annual income record (containing the _actual_ yearly salary) says that
+        # the citizen's total yearly salary was (12 * 24.000) = 288,000, yielding a
+        # total yearly Suila-tapit of kr. 14.112.
+        # Thus, we owe the citizen the difference: 14.112 - 13.356 = kr. 756,00.
         expected_difference = Decimal("756.00")
         call_command("generate_final_settlements", self.years[0])
         self.assert_final_settlement_exists(self.cpr, expected_difference)
