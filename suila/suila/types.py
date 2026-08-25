@@ -19,6 +19,7 @@ JOB_NAME: TypeAlias = Literal[
     ManagementCommands.SEND_MONTHLY_EBOKS,
     ManagementCommands.GENERATE_FINAL_SETTLEMENTS,
     ManagementCommands.LOAD_PRISME_BENEFITS_POSTING_STATUS,
+    ManagementCommands.EXPORT_FINAL_SETTLEMENTS_TO_PRISME,
 ]
 
 JOB_TYPE: TypeAlias = Literal["yearly", "monthly", "daily"]

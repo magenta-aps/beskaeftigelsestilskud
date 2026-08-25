@@ -91,6 +91,7 @@ class ManagementCommands(TextChoices):
     SEND_MONTHLY_EBOKS = "send_monthly_eboks_message"
     GENERATE_FINAL_SETTLEMENTS = "generate_final_settlements"
     LOAD_PRISME_BENEFITS_POSTING_STATUS = "load_prisme_benefits_posting_status"
+    EXPORT_FINAL_SETTLEMENTS_TO_PRISME = "export_final_settlements_to_prisme"
 
 
 class StatusChoices(TextChoices):
@@ -2038,7 +2039,7 @@ class PrismePostingStatusFile(models.Model):
 
 class PrismeBatchItem(PermissionsMixin, models.Model):
     class Meta:
-        unique_together = ("prisme_batch", "person_month")
+        unique_together = ("prisme_batch", "person_month", "final_settlement")
 
     class PostingStatus(models.TextChoices):
         Sent = "sent", _("Sendt til udbetaling")
@@ -2052,6 +2053,13 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
 
     person_month = models.OneToOneField(
         PersonMonth,
+        null=True,
+        on_delete=models.CASCADE,
+    )
+
+    final_settlement = models.OneToOneField(
+        "FinalSettlement",
+        null=True,
         on_delete=models.CASCADE,
     )
 
