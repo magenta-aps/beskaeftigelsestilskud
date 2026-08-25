@@ -1,0 +1,138 @@
+# SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+from datetime import date
+from decimal import Decimal
+
+from dateutil.relativedelta import TU, relativedelta
+from django.conf import settings
+from django.db.models import CharField, F, Q, QuerySet, Value
+from django.db.models.functions import Cast, LPad, Substr
+
+from suila.integrations.prisme.benefits import BaseExport
+from suila.models import FinalSettlement, PrismeBatch, PrismeBatchItem
+
+
+class FinalSettlementExport(BaseExport):
+    def __init__(self, year: int):
+        if year >= date.today().year:
+            raise ValueError(f"`year` must be less than {date.today().year}")
+        self._year = year
+        self._month = date.today().month
+
+    def get_queryset(self):
+        qs: QuerySet[FinalSettlement] = FinalSettlement.objects.filter(
+            annual_income__person_year__year__year=self._year,
+            prismebatchitem__isnull=True,
+            _result__isnull=False,
+            _result__gte=settings.PRISME.get("final_settlement_amount_threshold", 100),
+        )
+
+        # Annotate with string version of CPR (zero-padded to 10 digits)
+        qs = qs.annotate(
+            identifier=LPad(
+                Cast("annual_income__person_year__person__cpr", CharField()),
+                10,
+                Value("0"),
+            )
+        )
+        # Annotate with prefix (first two digits of CPR)
+        qs = qs.annotate(prefix=Substr("identifier", 1, 2))
+        # Order by prefix and CPR
+        qs = qs.order_by("prefix", "annual_income__person_year__person__cpr")
+        return qs
+
+    def get_prisme_account_alias_lookup(
+        self, obj: FinalSettlement
+    ) -> tuple[str | None, int]:
+        location_code: str | None = obj.annual_income.person_year.person.location_code
+        tax_year: int = self._year
+        return location_code, tax_year
+
+    def get_non_mod11_lookup(self, mod11_separate_cprs: list[str]) -> Q:
+        return Q(annual_income__person_year__person__cpr__in=mod11_separate_cprs)
+
+    def get_posting_text(self, obj: FinalSettlement) -> str:
+        cpr: str = obj.identifier  # type: ignore[attr-defined]
+        date_formatted: str = self.get_posting_date(obj).strftime("%b%y").upper()
+        return f"SUILA-TAPIT-{cpr}-{date_formatted}"
+
+    def get_transaction_text(self, obj: FinalSettlement) -> str:
+        return f"Suila.gl - Årsopgørelse {self._year}"
+
+    def get_payment_amount(self, obj: FinalSettlement) -> Decimal | None:
+        return obj._result
+
+    def get_payment_date(self, obj: FinalSettlement) -> date:
+        return date(self._year, self._month, 1) + relativedelta(years=1, weekday=TU(+3))
+
+    def get_posting_date(self, obj: FinalSettlement) -> date:
+        return date(self._year, self._month, 1) + relativedelta(years=1, weekday=TU(+2))
+
+    def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
+        return (
+            "SUILA_aarsopgoerelse_G68_export_"
+            f"{prisme_batch.prefix:02}_{self._year + 1}_{self._month:02}.g68"
+        )
+
+    def get_control_list_data(self) -> QuerySet:
+        # Fetch all Prisme batch items created for this year that are related to a final
+        # settlement.
+        prisme_batch_items: QuerySet[PrismeBatchItem] = (
+            PrismeBatchItem.objects.select_related(
+                "final_settlement__annual_income__person_year__person"
+            )
+            .filter(
+                final_settlement__annual_income__person_year__year=self._year,
+            )
+            .order_by(
+                "final_settlement__annual_income__person_year__person__cpr",
+                "prisme_batch__prefix",
+            )
+            .annotate(
+                cpr=F("final_settlement__annual_income__person_year__person__cpr"),
+            )
+        )
+        return prisme_batch_items
+
+    def get_control_list_filename(self) -> str:
+        return (
+            f"SUILA_kontrolliste_aarsopgoerelse_{self._year + 1}_{self._month:02}.csv"
+        )
+
+    def print_start_banner(self, stdout, num_objects: int) -> None:
+        stdout.write(
+            f"Found {num_objects} object(s) to export for year={self._year} ..."
+        )
+
+    def print_success_banner(
+        self, stdout, num_objects: int, num_succeeded_batches: int
+    ) -> None:
+        stdout.write(
+            f"Exported {num_succeeded_batches} batch(es) ({num_objects} object(s)) "
+            f"for year={self._year}."
+        )
+
+    def print_failed_banner(self, stdout, num_failed_batches: int):
+        stdout.write(
+            f"FAILED to export {num_failed_batches} batch(es) for year={self._year}."
+        )
+
+    def print_control_list_success_banner(self, stdout):
+        stdout.write(f"Exported control list for year={self._year}.")
+
+    def _get_prisme_batch_item_instance(
+        self,
+        prisme_batch: PrismeBatch,
+        obj,
+        transaction_pair,
+        invoice_no,
+    ) -> PrismeBatchItem:
+        return PrismeBatchItem(
+            prisme_batch=prisme_batch,
+            final_settlement=obj,
+            g68_content=transaction_pair.g68,
+            g69_content=transaction_pair.g69,
+            invoice_no=invoice_no,
+            paused=obj.annual_income.person_year.person.paused,
+        )

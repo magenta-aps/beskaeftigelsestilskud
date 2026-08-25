@@ -23,8 +23,11 @@ from tenQ.writer.g68 import (
     Udbetalingsdato,
 )
 
-from suila.integrations.prisme.benefits import BatchExport
+from suila.integrations.prisme.benefits import BaseExport, BatchExport
+from suila.integrations.prisme.final_settlements import FinalSettlementExport
 from suila.models import (
+    AnnualIncome,
+    FinalSettlement,
     ManagementCommands,
     Person,
     PersonMonth,
@@ -34,21 +37,14 @@ from suila.models import (
     TaxInformationPeriod,
     Year,
 )
+from suila.tests.mixins import BaseEnvMixin
 
 
-class TestBatchExport(TestCase):
-
+class ExportTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        call_command(
-            "load_prisme_account_aliases",
-        )
-
-    def test_init(self):
-        export = self._get_instance()
-        self.assertEqual(export._year, 2025)
-        self.assertEqual(export._month, 1)
+        call_command("load_prisme_account_aliases")
 
     @classmethod
     def tearDownClass(cls):
@@ -59,7 +55,64 @@ class TestBatchExport(TestCase):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    def test_get_person_month_queryset(self):
+    def _assert_prisme_batch_items_state(
+        self,
+        export: BaseExport,
+        mock_put_file_in_prisme_folder,
+        stdout,
+        batch_prefixes: list[int],
+        file_paths: list[tuple[str, str]],
+    ):
+        # Assert: `PrismeBatch` object(s) exist with the expected status
+        self.assertQuerySetEqual(
+            PrismeBatch.objects.filter(prismebatchitem__isnull=False)
+            .order_by("prefix")
+            .all(),
+            [
+                (batch_prefix, PrismeBatch.Status.Sent.value)
+                for batch_prefix in batch_prefixes
+            ],
+            transform=lambda obj: (obj.prefix, obj.status),
+        )
+        # Assert: the expected file(s) are uploaded to the expected folder(s)
+        self.assertListEqual(
+            [
+                # Get folder name and filename from call arguments
+                (call.args[2], call.args[3])
+                for call in mock_put_file_in_prisme_folder.call_args_list
+            ],
+            file_paths,
+        )
+        # Assert: all objects are now exported (= have a corresponding `PrismeBatchItem`
+        # object.) Thus, the batch export will not "see" them again.
+        self.assertQuerySetEqual(export.get_queryset(), [])
+        # Assert: CLI output is written to `stdout`
+        stdout.write.assert_called()
+
+    def _assert_stdout_write_contains(self, stdout, text: str):
+        self.assertIn(
+            text,
+            "\n".join(
+                call.args[0]
+                for call in stdout.write.call_args_list
+                if len(call.args) > 0
+            ),
+        )
+
+    def _get_floating_field(self, transaction: str, field: int, length: int = 3) -> str:
+        field: str = str(field).zfill(length)
+        match: re.Match = re.match(rf".*&{field}(?P<val>[^&]+)(&.*|$)", transaction)
+        self.assertIsNotNone(match)
+        return match.groupdict()["val"]
+
+
+class TestBatchExport(ExportTest):
+    def test_init(self):
+        export = self._get_instance()
+        self.assertEqual(export._year, 2025)
+        self.assertEqual(export._month, 1)
+
+    def test_get_queryset(self):
         """Given one or more `PersonMonth` objects, the method should return a queryset
         containing each `PersonMonth`, annotated with an `identifier` and `prefix`.
         """
@@ -69,7 +122,7 @@ class TestBatchExport(TestCase):
         self._add_person_month(cpr, benefit_calculated)
         export = self._get_instance()
         # Act
-        queryset = export.get_person_month_queryset()
+        queryset = export.get_queryset()
         # Assert
         self.assertQuerySetEqual(
             queryset,
@@ -83,7 +136,7 @@ class TestBatchExport(TestCase):
             transform=lambda obj: (obj.identifier, obj.prefix, obj.benefit_calculated),
         )
 
-    def test_get_person_year_queryset_excludes_person_months_without_benefit(self):
+    def test_get_queryset_excludes_person_months_without_benefit(self):
         """Given one or more `PersonMonth` objects, the method should skip objects that
         have a `benefit_calculated` which is 0 or None.
         """
@@ -95,12 +148,12 @@ class TestBatchExport(TestCase):
         # Arrange
         export = self._get_instance()
         # Act
-        queryset = export.get_person_month_queryset()
+        queryset = export.get_queryset()
         # Assert
         self.assertEqual(queryset.count(), 1)
 
     def test_get_batches(self):
-        """Given a `PersonMonth` queryset from the `get_person_month_queryset` method,
+        """Given a `PersonMonth` queryset from the `get_queryset` method,
         the method should return a generator that yields one `PrismeBatch` and its
         matching `PersonMonth` objects for each unique `prefix`.
         """
@@ -114,7 +167,7 @@ class TestBatchExport(TestCase):
         self._add_person_month(3101000001, Decimal("1000"))  # batch 32 (non-mod11)
         # Arrange
         export = self._get_instance()
-        queryset = export.get_person_month_queryset()
+        queryset = export.get_queryset()
         # Act
         batches: list[tuple[PrismeBatch, QuerySet[PersonMonth]]] = list(
             export.get_batches(queryset)
@@ -412,11 +465,18 @@ class TestBatchExport(TestCase):
                 stdout,
                 # Single batch with prefix 31
                 [31],
+                [
+                    # Single file in "normal" folder
+                    ("g68g69", "SUILA_G68_export_31_2025_01.g68"),
+                    # One control list
+                    ("kontrolliste", "SUILA_kontrolliste_2025_01.csv"),
+                ],
+            )
+            self._assert_prisme_batch_items_values(
                 # Single batch item with prefix 31
                 [("3101000000", 31)],
-                # Single file in "normal" folder
-                [("g68g69", "SUILA_G68_export_31_2025_01.g68")],
             )
+
         person_month.refresh_from_db()
         self.assertGreater(person_month.benefit_transferred, 0)
 
@@ -441,15 +501,19 @@ class TestBatchExport(TestCase):
                 stdout,
                 # Two batches, prefixes 31 and 32
                 [31, 32],
+                [
+                    # Two files, one in normal folder, and one in non-mod11 folder
+                    ("g68g69", "SUILA_G68_export_31_2025_01.g68"),
+                    ("g68g69_mod11_cpr", "SUILA_G68_export_32_2025_01.g68"),
+                    # One control list
+                    ("kontrolliste", "SUILA_kontrolliste_2025_01.csv"),
+                ],
+            )
+            self._assert_prisme_batch_items_values(
                 # Two batch items, prefix 31 and 32
                 [
                     ("3101000000", 31),  # valid CPR
                     ("3101000001", 32),  # non mod11 CPR
-                ],
-                # Two files, one in normal folder, and one in non-mod11 folder
-                [
-                    ("g68g69", "SUILA_G68_export_31_2025_01.g68"),
-                    ("g68g69_mod11_cpr", "SUILA_G68_export_32_2025_01.g68"),
                 ],
             )
 
@@ -477,11 +541,17 @@ class TestBatchExport(TestCase):
                 stdout,
                 # One batch, whose "prefix" is identical to the CPR
                 [3101000001],
+                [
+                    # One file in the non-mod11 folder, using the CPR as prefix (instead
+                    # of 32.)
+                    ("g68g69_mod11_cpr", "SUILA_G68_export_3101000001_2025_01.g68"),
+                    # One control list
+                    ("kontrolliste", "SUILA_kontrolliste_2025_01.csv"),
+                ],
+            )
+            self._assert_prisme_batch_items_values(
                 # One batch item
                 [("3101000001", 3101000001)],
-                # One file in the non-mod11 folder, using the CPR as prefix (instead of
-                # 32.)
-                [("g68g69_mod11_cpr", "SUILA_G68_export_3101000001_2025_01.g68")],
             )
 
     def test_export_batches_handles_none(self):
@@ -576,62 +646,6 @@ class TestBatchExport(TestCase):
                         stdout, "FAILED to export 2 batch(es)"
                     )
 
-    def _assert_stdout_write_contains(self, stdout, text: str):
-        self.assertIn(
-            text,
-            "\n".join(
-                call.args[0]
-                for call in stdout.write.call_args_list
-                if len(call.args) > 0
-            ),
-        )
-
-    def _assert_prisme_batch_items_state(
-        self,
-        export: BatchExport,
-        mock_put_file_in_prisme_folder,
-        stdout,
-        batch_prefixes: list[int],
-        items: list[tuple[str, int]],
-        file_paths: list[tuple[str, str]],
-    ):
-        # Assert: `PrismeBatch` object(s) exist with the expected status
-        self.assertQuerySetEqual(
-            PrismeBatch.objects.order_by("prefix").all(),
-            [
-                (batch_prefix, PrismeBatch.Status.Sent.value)
-                for batch_prefix in batch_prefixes
-            ],
-            transform=lambda obj: (obj.prefix, obj.status),
-        )
-        # Assert: `PrismeBatchItem` object(s) exist for the expected prefixes and CPRs
-        self.assertQuerySetEqual(
-            PrismeBatchItem.objects.order_by("prisme_batch__prefix").all(),
-            items,
-            transform=lambda obj: (
-                obj.person_month.person_year.person.cpr,
-                obj.prisme_batch.prefix,
-            ),
-        )
-        # Assert: the expected file(s) are uploaded to the expected folder(s)
-        self.assertListEqual(
-            [
-                # Get folder name and filename from call arguments
-                (call.args[2], call.args[3])
-                for call in mock_put_file_in_prisme_folder.call_args_list
-            ],
-            file_paths + [("kontrolliste", "SUILA_kontrolliste_2025_01.csv")],
-        )
-        # Assert: all `PersonMonth` objects are now exported (= have a corresponding
-        # `PrismeBatchItem` object.) Thus, the batch export will not "see" them
-        # again.
-        self.assertQuerySetEqual(
-            export.get_person_month_queryset(),
-            PersonMonth.objects.none(),
-        )
-        # Assert: CLI output is written to `stdout`
-        stdout.write.assert_called()
-
     def _get_instance(self, year: int = 2025, month: int = 1) -> BatchExport:
         return BatchExport(year, month)
 
@@ -641,7 +655,7 @@ class TestBatchExport(TestCase):
         prisme_batch: PrismeBatch,
     ) -> tuple[PrismeBatchItem, PersonMonth]:
         # Helper method to call `get_prisme_batch_item`
-        person_month = export.get_person_month_queryset().first()
+        person_month = export.get_queryset().first()
         writer = export.get_g68_g69_transaction_writer()
         prisme_batch_item = export.get_prisme_batch_item(
             prisme_batch,
@@ -680,8 +694,201 @@ class TestBatchExport(TestCase):
         )
         return person_month
 
-    def _get_floating_field(self, transaction: str, field: int, length: int = 3) -> str:
-        field: str = str(field).zfill(length)
-        match: re.Match = re.match(rf".*&{field}(?P<val>[^&]+)(&.*|$)", transaction)
-        self.assertIsNotNone(match)
-        return match.groupdict()["val"]
+    def _assert_prisme_batch_items_values(self, items: list[tuple[str, int]]):
+        # # Assert: `PrismeBatchItem` object(s) exist for the expected prefixes and CPRs
+        self.assertQuerySetEqual(
+            PrismeBatchItem.objects.order_by("prisme_batch__prefix").all(),
+            items,
+            transform=lambda obj: (
+                obj.person_month.person_year.person.cpr,
+                obj.prisme_batch.prefix,
+            ),
+        )
+
+
+class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.year.year = 2025
+        cls.year.save()
+        cls.personyear.year = cls.year
+        cls.personyear.save()
+        cls.prisme_batch, _ = PrismeBatch.objects.get_or_create(
+            prefix=int(cls.person.cpr[0]), export_date=date(2025, 1, 1)
+        )
+
+    def test_init(self):
+        export = self._get_instance()
+        self.assertEqual(export._year, 2025)
+        self.assertEqual(export._month, date.today().month)
+
+    def test_get_queryset(self):
+        # Arrange
+        self._add_final_settlement(Decimal("200_000"))
+        export = self._get_instance()
+        # Act
+        queryset = export.get_queryset()
+        # Assert
+        self.assertQuerySetEqual(
+            queryset,
+            [
+                (
+                    # "identifier": CPR as string
+                    str(self.person.cpr),
+                    # "prefix": first two digits of CPR (as string)
+                    str(self.person.cpr)[:2],
+                    # `_result`: amount owed to/by person
+                    self.calc.max_benefit,
+                )
+            ],
+            transform=lambda obj: (obj.identifier, obj.prefix, obj._result),
+        )
+
+    def test_get_queryset_excludes_zero_results(self):
+        # Arrange
+        self._add_final_settlement(Decimal("0"))
+        export = self._get_instance()
+        # Act
+        queryset = export.get_queryset()
+        # Assert
+        self.assertQuerySetEqual(queryset, [])
+
+    def test_get_prisme_batch_item(self):
+        # Arrange
+        self._add_final_settlement(Decimal("200_000"))
+        export = self._get_instance()
+        final_settlement = export.get_queryset()[0]
+
+        # Act
+        prisme_batch_item = export.get_prisme_batch_item(
+            self.prisme_batch,
+            final_settlement,
+            export.get_g68_g69_transaction_writer(),
+        )
+
+        # Assert basic attributes are present
+        self.assertEqual(prisme_batch_item.prisme_batch, self.prisme_batch)
+        self.assertEqual(prisme_batch_item.final_settlement, final_settlement)
+        self.assertIsInstance(prisme_batch_item.g68_content, str)
+        self.assertIsInstance(prisme_batch_item.g69_content, str)
+
+        # Assert: the expected account alias is found in the G69 transaction
+        account_alias = self._get_floating_field(prisme_batch_item.g69_content, 111)
+        self.assertEqual(
+            account_alias,
+            # Finanslov, art, kommunekode, skatteår
+            "240614" + "242040195" + "10400" + "25",
+        )
+
+        # Assert: G69 contains CPR in `Ydelsesmodtager` (field 133) and specifies CPR
+        # (02) in `YdelsesmodtagerNrkode` (field 132)
+        ydelsesmodtager_nrkode = self._get_floating_field(
+            prisme_batch_item.g69_content, 132
+        )
+        ydelsesmodtager = self._get_floating_field(prisme_batch_item.g69_content, 133)
+        self.assertEqual(ydelsesmodtager_nrkode, "02")
+        self.assertEqual(ydelsesmodtager, self.person.cpr)
+
+        # Assert: the field `Posteringstekst` is present and its value follows the
+        # expected format.
+        posting_text = self._get_floating_field(prisme_batch_item.g69_content, 153)
+        expected_date = date(self.personyear.year.year + 1, date.today().month, 1)
+        expected_date_formatted = expected_date.strftime("%b%y").upper()
+        self.assertEqual(
+            posting_text, f"SUILA-TAPIT-{self.person.cpr}-{expected_date_formatted}"
+        )
+
+        # Assert: the field `BetalingstekstLinje` contains the expected text in
+        # floating field 40 (which is the first `BetalingstekstLinje` field.)
+        payment_text = self._get_floating_field(
+            prisme_batch_item.g68_content,
+            BetalingstekstLinje._min_id,
+            length=2,
+        )
+        self.assertEqual(
+            payment_text, f"Suila.gl - Årsopgørelse {self.personyear.year.year}"
+        )
+
+        # Assert: the field `Fakturanummer` is present and its value follows the
+        # expected format.
+        # Format: Prisme batch ID (15 digits, zero padded), followed by line number
+        # (5 digits, zero padded.)
+        invoice_no = self._get_floating_field(
+            prisme_batch_item.g68_content,
+            Fakturanummer.id,
+            length=2,
+        )
+        self.assertRegex(invoice_no, f"{self.prisme_batch.pk:015d}\\d{{5}}")
+        self.assertEqual(invoice_no, prisme_batch_item.invoice_no)
+
+    def test_export_batches(self):
+        # Arrange
+        self._add_final_settlement(Decimal("200_000"))
+        export = self._get_instance()
+        stdout = Mock()
+        with patch(
+            "suila.integrations.prisme.benefits.put_file_in_prisme_folder"
+        ) as mock_put_file_in_prisme_folder:
+            # Act
+            export.export_batches(stdout, verbosity=2)
+            # Assert
+            mock_put_file_in_prisme_folder.assert_called()
+            self._assert_prisme_batch_items_state(
+                export,
+                mock_put_file_in_prisme_folder,
+                stdout,
+                # One batch, prefix 32 (non-mod11 CPR)
+                [32],
+                # Folders and filenames written
+                [
+                    # One regular file written to non-mod11 folder
+                    (
+                        "g68g69_mod11_cpr",
+                        "SUILA_aarsopgoerelse_G68_export_32_"
+                        f"{export._year + 1}_{export._month:02d}.g68",
+                    ),
+                    # One control list file
+                    (
+                        "kontrolliste",
+                        "SUILA_kontrolliste_aarsopgoerelse_"
+                        f"{export._year + 1}_{export._month:02d}.csv",
+                    ),
+                ],
+            )
+
+    def test_export_batches_reports_failure(self):
+        for verbosity in (1, 2):
+            self._add_final_settlement(Decimal("200_000"))
+            export = self._get_instance()
+            stdout = Mock()
+            with patch(
+                "suila.integrations.prisme.benefits.put_file_in_prisme_folder",
+                side_effect=ClientException("Uh-oh"),
+            ):
+                with self.subTest(verbosity=verbosity):
+                    # Act
+                    export.export_batches(stdout, verbosity=verbosity)
+                    # Assert
+                    self._assert_stdout_write_contains(
+                        stdout, "FAILED to export 1 batch(es)"
+                    )
+
+    def _get_instance(self) -> FinalSettlementExport:
+        return FinalSettlementExport(2025)
+
+    def _add_final_settlement(self, income: Decimal) -> FinalSettlement:
+        for month in range(13):
+            self.get_or_create_person_month(month, import_date=date(2025, 1, 1))
+        annual_income, _ = AnnualIncome.objects.get_or_create(
+            person_year=self.personyear,
+            defaults={
+                "summarized_a_income": income,
+                "summarized_b_income": Decimal("0"),
+                "summarized_u_income": Decimal("0"),
+            },
+        )
+        final_settlement, _ = FinalSettlement.objects.get_or_create(
+            annual_income=annual_income,
+        )
+        return final_settlement
