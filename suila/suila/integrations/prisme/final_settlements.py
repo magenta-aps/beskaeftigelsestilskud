@@ -64,15 +64,15 @@ class FinalSettlementExport(BaseExport):
         return obj._result
 
     def get_payment_date(self, obj: FinalSettlement) -> date:
-        return date(self._year, self._month, 1) + relativedelta(weekday=TU(+3))
+        return date(self._year, self._month, 1) + relativedelta(years=1, weekday=TU(+3))
 
     def get_posting_date(self, obj: FinalSettlement) -> date:
-        return date(self._year, self._month, 1) + relativedelta(weekday=TU(+2))
+        return date(self._year, self._month, 1) + relativedelta(years=1, weekday=TU(+2))
 
     def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
         return (
             "SUILA_aarsopgoerelse_G68_export_"
-            f"{prisme_batch.prefix:02}_{self._year}_{self._month:02}.g68"
+            f"{prisme_batch.prefix:02}_{self._year + 1}_{self._month:02}.g68"
         )
 
     def get_control_list_data(self) -> QuerySet:
@@ -96,7 +96,9 @@ class FinalSettlementExport(BaseExport):
         return prisme_batch_items
 
     def get_control_list_filename(self) -> str:
-        return f"SUILA_kontrolliste_aarsopgoerelse_{self._year}_{self._month:02}.csv"
+        return (
+            f"SUILA_kontrolliste_aarsopgoerelse_{self._year + 1}_{self._month:02}.csv"
+        )
 
     def print_start_banner(self, stdout, num_objects: int) -> None:
         stdout.write(

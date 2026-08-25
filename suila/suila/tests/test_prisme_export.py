@@ -781,7 +781,7 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
         # Assert: the field `Posteringstekst` is present and its value follows the
         # expected format.
         posting_text = self._get_floating_field(prisme_batch_item.g69_content, 153)
-        expected_date = date(self.personyear.year.year, date.today().month, 1)
+        expected_date = date(self.personyear.year.year + 1, date.today().month, 1)
         expected_date_formatted = expected_date.strftime("%b%y").upper()
         self.assertEqual(
             posting_text, f"SUILA-TAPIT-{self.person.cpr}-{expected_date_formatted}"
