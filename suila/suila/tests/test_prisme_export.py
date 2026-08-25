@@ -65,7 +65,9 @@ class ExportTest(TestCase):
     ):
         # Assert: `PrismeBatch` object(s) exist with the expected status
         self.assertQuerySetEqual(
-            PrismeBatch.objects.order_by("prefix").all(),
+            PrismeBatch.objects.filter(prismebatchitem__isnull=False)
+            .order_by("prefix")
+            .all(),
             [
                 (batch_prefix, PrismeBatch.Status.Sent.value)
                 for batch_prefix in batch_prefixes
@@ -79,7 +81,7 @@ class ExportTest(TestCase):
                 (call.args[2], call.args[3])
                 for call in mock_put_file_in_prisme_folder.call_args_list
             ],
-            file_paths + [("kontrolliste", "SUILA_kontrolliste_2025_01.csv")],
+            file_paths,
         )
         # Assert: all objects are now exported (= have a corresponding `PrismeBatchItem`
         # object.) Thus, the batch export will not "see" them again.
@@ -463,8 +465,12 @@ class TestBatchExport(ExportTest):
                 stdout,
                 # Single batch with prefix 31
                 [31],
-                # Single file in "normal" folder
-                [("g68g69", "SUILA_G68_export_31_2025_01.g68")],
+                [
+                    # Single file in "normal" folder
+                    ("g68g69", "SUILA_G68_export_31_2025_01.g68"),
+                    # One control list
+                    ("kontrolliste", "SUILA_kontrolliste_2025_01.csv"),
+                ],
             )
             self._assert_prisme_batch_items_values(
                 # Single batch item with prefix 31
@@ -495,10 +501,12 @@ class TestBatchExport(ExportTest):
                 stdout,
                 # Two batches, prefixes 31 and 32
                 [31, 32],
-                # Two files, one in normal folder, and one in non-mod11 folder
                 [
+                    # Two files, one in normal folder, and one in non-mod11 folder
                     ("g68g69", "SUILA_G68_export_31_2025_01.g68"),
                     ("g68g69_mod11_cpr", "SUILA_G68_export_32_2025_01.g68"),
+                    # One control list
+                    ("kontrolliste", "SUILA_kontrolliste_2025_01.csv"),
                 ],
             )
             self._assert_prisme_batch_items_values(
@@ -533,9 +541,13 @@ class TestBatchExport(ExportTest):
                 stdout,
                 # One batch, whose "prefix" is identical to the CPR
                 [3101000001],
-                # One file in the non-mod11 folder, using the CPR as prefix (instead of
-                # 32.)
-                [("g68g69_mod11_cpr", "SUILA_G68_export_3101000001_2025_01.g68")],
+                [
+                    # One file in the non-mod11 folder, using the CPR as prefix (instead
+                    # of 32.)
+                    ("g68g69_mod11_cpr", "SUILA_G68_export_3101000001_2025_01.g68"),
+                    # One control list
+                    ("kontrolliste", "SUILA_kontrolliste_2025_01.csv"),
+                ],
             )
             self._assert_prisme_batch_items_values(
                 # One batch item
@@ -822,15 +834,28 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
             export.export_batches(stdout, verbosity=2)
             # Assert
             mock_put_file_in_prisme_folder.assert_called()
-            # self._assert_prisme_batch_items_state(
-            #     export,
-            #     mock_put_file_in_prisme_folder,
-            #     stdout,
-            #     # One batch, prefix 32
-            #     [32],
-            #     # File written to non-mod11 folder
-            #     [("g68g69_mod11_cpr", "SUILA_G68_export_32_2025_01.g68")],
-            # )
+            self._assert_prisme_batch_items_state(
+                export,
+                mock_put_file_in_prisme_folder,
+                stdout,
+                # One batch, prefix 32 (non-mod11 CPR)
+                [32],
+                # Folders and filenames written
+                [
+                    # One regular file written to non-mod11 folder
+                    (
+                        "g68g69_mod11_cpr",
+                        "SUILA_aarsopgoerelse_G68_export_32_"
+                        f"{export._year + 1}_{export._month:02d}.g68",
+                    ),
+                    # One control list file
+                    (
+                        "kontrolliste",
+                        "SUILA_kontrolliste_aarsopgoerelse_"
+                        f"{export._year + 1}_{export._month:02d}.csv",
+                    ),
+                ],
+            )
 
     def test_export_batches_reports_failure(self):
         for verbosity in (1, 2):
