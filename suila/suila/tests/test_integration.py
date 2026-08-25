@@ -603,28 +603,30 @@ class IntegrationBaseTest(
         self.assertGreater(benefit_calculated, correct_benefit - 12)
         self.assertLess(benefit_calculated, correct_benefit + 12)
 
+    def get_g68_filename_match(self, filename, year, month):
+        return "G68_export" in filename and filename.endswith(
+            f"_{year}_{str(month).zfill(2)}.g68"
+        )
+
     def get_amount_sent_to_prisme(
         self,
         month,
         year=None,
-        pattern=None,
     ):
         year = year or self.year
         for call in self.prisme_mock.call_args_list:
             args, kwargs = call
             filename = args[3]
 
-            if "G68_export" in filename and filename.endswith(
-                f"_{year}_{str(month).zfill(2)}.g68"
-            ):
-                if pattern is None or pattern in filename:
-                    content = args[1].read().decode("utf-8")
-                    args[1].seek(0)  # Reset so we can read this file again later
-                    parsed_content = G68Transaction.parse(content)
+            if self.get_g68_filename_match(filename, year, month):
+                content = args[1].read().decode("utf-8")
+                args[1].seek(0)  # Reset so we can read this file again later
+                parsed_content = G68Transaction.parse(content)
 
-                    for field in parsed_content:
-                        if isinstance(field, Udbetalingsbeløb):
-                            return int(field.val) / 10_000
+                for field in parsed_content:
+                    if isinstance(field, Udbetalingsbeløb):
+                        return int(field.val) / 10_000
+
         return 0
 
     def get_person_month(self, month, year=None):
@@ -1258,8 +1260,11 @@ class TestFinalSettlements(IntegrationBaseTest):
             ordered=False,
         )
 
-    def assert_final_settlement_transferred(self, result):
-        amount_sent_to_prisme = self.get_amount_sent_to_prisme(
-            date.today().month, pattern="aarsopgoerelse"
+    def get_g68_filename_match(self, filename, year, month):
+        return "aarsopgoerelse_G68_export" in filename and filename.endswith(
+            f"_{year + 1}_{str(month).zfill(2)}.g68"
         )
+
+    def assert_final_settlement_transferred(self, result):
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(date.today().month)
         self.assertEqual(amount_sent_to_prisme, result)
