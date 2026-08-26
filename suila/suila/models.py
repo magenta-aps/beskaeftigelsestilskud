@@ -2414,6 +2414,7 @@ class AnnualIncome(PermissionsMixin, models.Model):
             self.salary,
             self.foreign_pension_income,
             self.subsidy_foreign_pension_income,
+            self.person_year.sum_employer_paid_gl_pension_income,
             self.other_a_income,
         ]
         b_incomes = [
