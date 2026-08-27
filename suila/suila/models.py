@@ -1049,7 +1049,10 @@ class PersonYear(PermissionsMixin, models.Model):
         year_end: datetime = datetime(self.year.year + 1, 1, 1, tzinfo=tzinfo)
         queryset = (
             TaxInformationPeriod.get_annotated_queryset(required_tax_scope="FULL")
-            .filter(person_year=self, period__overlap=(year_start, year_end))
+            .filter(
+                person_year=self,
+                period__overlap=(year_start, year_end),  # type: ignore[misc]
+            )
             .order_by("period")  # type: ignore[misc]
         )
         # Sum all periods in queryset
