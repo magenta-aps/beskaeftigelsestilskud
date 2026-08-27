@@ -1268,3 +1268,84 @@ class TestFinalSettlements(IntegrationBaseTest):
     def assert_final_settlement_transferred(self, result):
         amount_sent_to_prisme = self.get_amount_sent_to_prisme(date.today().month)
         self.assertEqual(amount_sent_to_prisme, result)
+
+
+class TestFinalSettlementsWithEPP(IntegrationBaseTest):
+    # Simulate income and Suila-tapit registered in 2025, and settled via final
+    # settlements in 2026. This version uses employer paid pension, to verify
+    # that it gets calculated as A-income correctly
+    years = [2025, 2026]
+
+    def setUp(self):
+        super().setUp()
+        # Ensure that we have a location code for our test person.
+        # This is required to be able to export a G68/G69 line to Prisme.
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        # Create annual income report, creating a difference between the Suila-tapit
+        # calculated so far, and the actual Suila-tapit owed to the person
+        self.add_annualincome_record(self.cpr, salary=20000 * 12)
+        # Create income in 2025, and calculate Suila-tapit based on that
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record_with_epp(self.cpr, month_number, income=21000)
+            self.call_commands(month_number, self.year)
+
+    def test_settlement_flow(self):
+        # During the year, we have "received" 12 monthly income records of kr. 25.000
+        # each, so we have paid out Suila-tapit according to an expected yearly salary
+        # of (12 * 25.000) = kr. 300.000, yielding a total yearly Suila-tapit of
+        # kr. 13.356.
+        # But the annual income record (containing the _actual_ yearly salary) says that
+        # the citizen's total yearly salary was (12 * 24.000) = 288,000, yielding a
+        # total yearly Suila-tapit of kr. 14.112.
+        # Thus, we owe the citizen the difference: 14.112 - 13.356 = kr. 756,00.
+        expected_difference = Decimal("756.00")
+        call_command("generate_final_settlements", self.years[0])
+        self.assert_final_settlement_exists(self.cpr, expected_difference)
+        call_command("export_final_settlements_to_prisme", year=self.years[0])
+        self.assert_final_settlement_transferred(expected_difference)
+
+    def add_monthlyincome_record_with_epp(self, cpr, month, income=0, year=None):
+        # Auxillary function to include handling of employer paid pension
+        year = year or self.year
+        self.add_eskat_record(
+            self.monthlyincome_json_data,
+            year,
+            {
+                "cpr": cpr,
+                "cvr": "567",
+                "year": year,
+                "month": month,
+                "salaryIncome": income,
+                "catchsaleIncome": 0,
+                "publicAssistanceIncome": 0,
+                "alimonyIncome": 0,
+                "disGisIncome": 0,
+                "retirementPensionIncome": 0,
+                "disabilityPensionIncome": 0,
+                "ignoredBenefitsIncome": 0,
+                "employerPaidGLPensionIncome": 4000,
+                "foreignPensionIncome": 0,
+                "civilServantPensionIncome": 0,
+                "otherPensionIncome": 0,
+            },
+        )
+
+    def assert_final_settlement_exists(self, cpr, result):
+        self.assertQuerySetEqual(
+            FinalSettlement.objects.all(),
+            [(cpr, result)],
+            transform=lambda obj: (
+                obj.annual_income.person_year.person.cpr,
+                obj._result,
+            ),
+            ordered=False,
+        )
+
+    def get_g68_filename_match(self, filename, year, month):
+        return "aarsopgoerelse_G68_export" in filename and filename.endswith(
+            f"_{year + 1}_{str(month).zfill(2)}.g68"
+        )
+
+    def assert_final_settlement_transferred(self, result):
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(date.today().month)
+        self.assertEqual(amount_sent_to_prisme, result)
