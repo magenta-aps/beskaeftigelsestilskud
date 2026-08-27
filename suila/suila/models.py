@@ -1042,17 +1042,15 @@ class PersonYear(PermissionsMixin, models.Model):
         return self.benefit_calculated - self.benefit_transferred
 
     @cached_property
-    def tax_days(self, required_tax_scope: str = "FULL") -> int:
+    def tax_days(self) -> int:
         # Find all tax periods that overlap this year
         tzinfo = timezone.get_current_timezone()
         year_start: datetime = datetime(self.year.year, 1, 1, tzinfo=tzinfo)
         year_end: datetime = datetime(self.year.year + 1, 1, 1, tzinfo=tzinfo)
         queryset = (
-            TaxInformationPeriod.get_annotated_queryset(
-                required_tax_scope=required_tax_scope,
-            )
+            TaxInformationPeriod.get_annotated_queryset(required_tax_scope="FULL")
             .filter(person_year=self, period__overlap=(year_start, year_end))
-            .order_by("period")
+            .order_by("period")  # type: ignore[misc]
         )
         # Sum all periods in queryset
         sum_days: int = 0
