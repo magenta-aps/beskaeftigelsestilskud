@@ -791,6 +791,39 @@ class TestPersonYear(UserModelTest):
         self.assertEqual(self.person_year.salary_income, Decimal("76000.00"))
         self.assertEqual(self.person_year.benefit_transfer_difference, Decimal(0))
 
+    def test_tax_days_handles_multiple_periods(self):
+        # Arrange: create multiple tax information periods. The first pair overlaps,
+        # the second pair does not. Also, place bounds of periods outside current year.
+        self._add_tax_information_period(
+            # Dec 1 - Jan 15 counts as 15 days *in this year*
+            start_date=date(self.year.year - 1, 12, 1),
+            end_date=date(self.year.year, 1, 15),
+        )
+        self._add_tax_information_period(
+            # Jan 10 - Feb 1 = 22 days, minus 5 days of overlap = 17 days
+            start_date=date(self.year.year, 1, 10),
+            end_date=date(self.year.year, 2, 1),
+        )
+        self._add_tax_information_period(
+            # Dec 30 - Jan 15 = counts as 2 days *in this year*
+            start_date=date(self.year.year, 12, 30),
+            end_date=date(self.year.year + 1, 1, 15),
+        )
+        # Act
+        tax_days = self.person_year.tax_days
+        # Assert: 15 + 17 + 2 days are counted as tax days for this person year
+        self.assertEqual(tax_days, 15 + 17 + 2)
+
+    def _add_tax_information_period(
+        self, start_date: date, end_date: date
+    ) -> TaxInformationPeriod:
+        return TaxInformationPeriod.objects.create(
+            person_year=self.person_year,
+            tax_scope="FULL",
+            start_date=start_date,
+            end_date=end_date,
+        )
+
 
 class TestPersonMonth(UserModelTest):
     def test_shortcuts(self):
