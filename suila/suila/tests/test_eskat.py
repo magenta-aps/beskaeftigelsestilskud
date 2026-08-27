@@ -509,6 +509,12 @@ class TestAnnualIncome(BaseTestCase):
             ),
         )
         person_year = PersonYear.objects.create(person=person, year=year2024)
+        TaxInformationPeriod.objects.create(
+            person_year=person_year,
+            tax_scope="FULL",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 12, 31),
+        )
         income = AnnualIncomeModel.objects.create(
             person_year=person_year,
             salary=350000,
@@ -527,6 +533,12 @@ class TestAnnualIncome(BaseTestCase):
             ),
         )
         person_year = PersonYear.objects.create(person=person, year=year2025)
+        TaxInformationPeriod.objects.create(
+            person_year=person_year,
+            tax_scope="FULL",
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+        )
         income = AnnualIncomeModel.objects.create(
             person_year=person_year,
             salary=350000,
