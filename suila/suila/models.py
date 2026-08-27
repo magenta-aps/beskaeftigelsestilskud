@@ -2514,7 +2514,11 @@ class AnnualIncome(PermissionsMixin, models.Model):
         # Scale `income_base` according to this number of valid tax days for the person
         assert 0 <= self.person_year.tax_days <= 366
         tax_days: Decimal = Decimal(self.person_year.tax_days)
-        total_days: Decimal = Decimal("365")  # TODO: use 366 in leap years
+        total_days: Decimal = (
+            Decimal("366")
+            if calendar.isleap(self.person_year.year.year)
+            else Decimal("365")
+        )
         income_base_scaled = (income_base / tax_days) * total_days
         logger.info(
             "%r: tax_days=%r income_base=%r income_base_scaled=%r",
