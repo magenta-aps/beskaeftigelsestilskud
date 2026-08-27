@@ -8,7 +8,7 @@ import calendar
 import logging
 import os
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
@@ -1040,6 +1040,50 @@ class PersonYear(PermissionsMixin, models.Model):
     @property
     def benefit_transfer_difference(self) -> Decimal:
         return self.benefit_calculated - self.benefit_transferred
+
+    @cached_property
+    def tax_days(self, required_tax_scope: str = "FULL") -> int:
+        # Find all tax periods that overlap this year
+        tzinfo = timezone.get_current_timezone()
+        year_start: datetime = datetime(self.year.year, 1, 1, tzinfo=tzinfo)
+        year_end: datetime = datetime(self.year.year + 1, 1, 1, tzinfo=tzinfo)
+        queryset = (
+            TaxInformationPeriod.get_annotated_queryset(
+                required_tax_scope=required_tax_scope,
+            )
+            .filter(person_year=self, period__overlap=(year_start, year_end))
+            .order_by("period")
+        )
+        # Sum all periods in queryset
+        sum_days: int = 0
+        merged = self._merge_periods(queryset, year_start, year_end)
+        for start, end in merged:
+            logger.debug("start=%r end=%r days=%r", start, end, (end - start).days)
+            sum_days += (end - start).days
+        return sum_days
+
+    def _merge_periods(self, queryset, min_date, max_date):
+        # Adapted from
+        # https://learn.programmingline.com/learn/dsa/dsa-overlapping-ranges
+        if not queryset.exists():
+            return []
+        # Initial state
+        merged = [
+            [
+                max(queryset[0].start_date, min_date),
+                min(queryset[0].end_date + timedelta(days=1), max_date),
+            ]
+        ]
+        # Add remaining periods to state
+        for taxinfo in queryset[1:]:
+            start = max(taxinfo.start_date, min_date)
+            end = min(taxinfo.end_date + timedelta(days=1), max_date)
+            last_start, last_end = merged[-1]
+            if start <= last_end:
+                merged[-1][1] = max(last_end, end)
+            else:
+                merged.append([start, end])
+        return merged
 
 
 class TaxInformationPeriod(PermissionsMixin, models.Model):
@@ -2466,7 +2510,23 @@ class AnnualIncome(PermissionsMixin, models.Model):
             + self.summarized_b_income
             + self.summarized_u_income
         )
-        benefit: Decimal = calculation_method.calculate(income_base)
+
+        # Scale `income_base` according to this number of valid tax days for the person
+        assert 0 <= self.person_year.tax_days <= 366
+        tax_days: Decimal = Decimal(self.person_year.tax_days)
+        total_days: Decimal = Decimal("365")  # TODO: use 366 in leap years
+        income_base_scaled = (income_base / tax_days) * total_days
+        logger.info(
+            "%r: tax_days=%r income_base=%r income_base_scaled=%r",
+            self.person_year,
+            tax_days,
+            income_base,
+            income_base_scaled,
+        )
+
+        # Calculate the Suila-tapit that the person is due, according to their actual
+        # income base.
+        benefit: Decimal = calculation_method.calculate(income_base_scaled)
         return benefit
 
 
