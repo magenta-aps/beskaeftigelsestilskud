@@ -714,8 +714,11 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
         cls.year.save()
         cls.personyear.year = cls.year
         cls.personyear.save()
-        cls.prisme_batch, _ = PrismeBatch.objects.get_or_create(
-            prefix=int(cls.person.cpr[0]), export_date=date(2025, 1, 1)
+        TaxInformationPeriod.objects.create(
+            person_year=cls.personyear,
+            tax_scope="FULL",
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
         )
 
     def test_init(self):
@@ -759,6 +762,9 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
         self._add_final_settlement(Decimal("200_000"))
         export = self._get_instance()
         final_settlement = export.get_queryset()[0]
+        self.prisme_batch, _ = PrismeBatch.objects.get_or_create(
+            prefix=int(self.person.cpr[0]), export_date=date(2025, 1, 1)
+        )
 
         # Act
         prisme_batch_item = export.get_prisme_batch_item(

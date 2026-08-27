@@ -1948,6 +1948,12 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
             care_fee_income=care_fee,
             occupational_benefit=occupation,
         )
+        TaxInformationPeriod.objects.create(
+            person_year=self.person_year,
+            tax_scope="FULL",
+            start_date=date(self.person_year.year.year, 1, 1),
+            end_date=date(self.person_year.year.year, 12, 31),
+        )
 
         q = Decimal("0.01")
         total_a_income_theory = Decimal(
