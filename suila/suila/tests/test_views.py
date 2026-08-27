@@ -44,6 +44,7 @@ from suila.models import (
     Employer,
     FinalSettlement,
     IncomeEstimate,
+    IncomeType,
     ManagementCommands,
     MonthlyIncomeReport,
     Note,
@@ -1931,15 +1932,37 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
             f"Missing AnnualIncome for PersonYear {self.person_year.pk}",
         )
 
+        salary = 100000
+        foreign_pension = 10000
+        subsidy_foreign_pension = 1000
+        other_a = 100
+        care_fee = 10  # NB: This test runs as 2020, where care_fee is b_income
+        occupation = 1
+
         AnnualIncome.objects.create(
             person_year=self.person_year,
-            salary=100000,
-            foreign_pension_income=10000,
-            subsidy_foreign_pension_income=1000,
-            other_a_income=100,
-            care_fee_income=10,
-            occupational_benefit=1,
+            salary=salary,
+            foreign_pension_income=foreign_pension,
+            subsidy_foreign_pension_income=subsidy_foreign_pension,
+            other_a_income=other_a,
+            care_fee_income=care_fee,
+            occupational_benefit=occupation,
         )
+
+        q = Decimal("0.01")
+        total_a_income_theory = Decimal(
+            salary
+            + foreign_pension
+            + subsidy_foreign_pension
+            + other_a
+            + occupation
+            + self.person_year.sum_employer_paid_gl_pension_income
+        ).quantize(q)
+        total_b_income_theory = Decimal(care_fee).quantize(q)
+        total_u_income_theory = Decimal(
+            self.person_year.amount_sum_by_type(IncomeType.U)
+        ).quantize(q)
+
         view, response = self.get(self.admin_user, typ="årsopgørelse")
         context_data = view.get_context_data()
         personmonth = self.person_year.personmonth_set.get(month=1)
@@ -1955,14 +1978,18 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 "month": personmonth.month,
                 "personyear": personmonth.person_year,
                 "personmonth": personmonth,
-                "a_income": Decimal("111101.00"),
-                "b_income": Decimal("10.00"),
-                "u_income": Decimal("23100.00"),
+                "a_income": total_a_income_theory,
+                "b_income": total_b_income_theory,
+                "u_income": total_u_income_theory,
                 "employer_paid_gl_pension_income": Decimal("23100.00"),
-                "sum_income": Decimal("157311.00"),
-                "benefit_calculated": Decimal("11586.92"),
+                "sum_income": (
+                    total_a_income_theory
+                    + total_b_income_theory
+                    + total_u_income_theory
+                ),
+                "benefit_calculated": Decimal("15629.42"),
                 "benefit_transferred": Decimal("0.00"),
-                "benefit_transfer_difference": Decimal("11586.92"),
+                "benefit_transfer_difference": Decimal("15629.42"),
             },
         )
 
