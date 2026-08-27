@@ -2489,6 +2489,34 @@ class AnnualIncome(PermissionsMixin, models.Model):
     def get_u_income(self) -> Decimal:
         return self.person_year.amount_sum_by_type(IncomeType.U)
 
+    def get_scaled_income_base(self, income_base: Decimal) -> Decimal:
+        # Scale `income_base` according to this number of valid tax days for the person
+        if self.person_year.tax_days <= 0:
+            logger.info(
+                "%r: tax_days=%r income_base=%r income_base_scaled=0",
+                self.person_year,
+                self.person_year.tax_days,
+                income_base,
+            )
+            return Decimal("0")
+
+        assert 0 < self.person_year.tax_days <= 366
+        tax_days: Decimal = Decimal(self.person_year.tax_days)
+        total_days: Decimal = (
+            Decimal("366")
+            if calendar.isleap(self.person_year.year.year)
+            else Decimal("365")
+        )
+        income_base_scaled = income_base * (total_days / tax_days)
+        logger.info(
+            "%r: tax_days=%r income_base=%r income_base_scaled=%r",
+            self.person_year,
+            tax_days,
+            income_base,
+            income_base_scaled,
+        )
+        return income_base_scaled
+
     def calculate_actual_annual_benefit(self) -> Decimal:
         if (
             self.summarized_a_income is None
@@ -2511,25 +2539,9 @@ class AnnualIncome(PermissionsMixin, models.Model):
             + self.summarized_u_income
         )
 
-        # Scale `income_base` according to this number of valid tax days for the person
-        assert 0 <= self.person_year.tax_days <= 366
-        tax_days: Decimal = Decimal(self.person_year.tax_days)
-        total_days: Decimal = (
-            Decimal("366")
-            if calendar.isleap(self.person_year.year.year)
-            else Decimal("365")
-        )
-        income_base_scaled = (income_base / tax_days) * total_days
-        logger.info(
-            "%r: tax_days=%r income_base=%r income_base_scaled=%r",
-            self.person_year,
-            tax_days,
-            income_base,
-            income_base_scaled,
-        )
-
         # Calculate the Suila-tapit that the person is due, according to their actual
         # income base.
+        income_base_scaled: Decimal = self.get_scaled_income_base(income_base)
         benefit: Decimal = calculation_method.calculate(income_base_scaled)
         return benefit
 
