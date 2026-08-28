@@ -844,11 +844,28 @@ class GenerateFinalSettlements(BaseTestCase):
 
         call_command("generate_final_settlements", "2024")
         num_of_final_settlements = FinalSettlement.objects.count()
-
+        call_command("generate_final_settlements", "2024")
+        self.assertEqual(FinalSettlement.objects.count(), num_of_final_settlements)
         call_command("generate_final_settlements", "2024", force_recreate=True)
+        self.assertEqual(FinalSettlement.objects.count(), 2 * num_of_final_settlements)
+
+    def test_generate_final_settlements_for_ids(self):
+        SuilaEboksMessage.objects.all().delete()
+        for person_year in PersonYear.objects.filter(year__year=2024):
+            AnnualIncome.objects.create(
+                person_year=person_year,
+                account_tax_result=Decimal(130000),
+                salary=random.randint(65000, 500000),
+            )
+            person_year.person.full_address = "Nuussuaq 3, Nuussuaq"
+            person_year.save()
+        call_command(
+            "generate_final_settlements", "2024", ids=[Person.objects.last().pk]
+        )
+        self.assertEqual(FinalSettlement.objects.count(), 1)
         self.assertEqual(
-            FinalSettlement.objects.count(),
-            2 * num_of_final_settlements
+            FinalSettlement.objects.first().annual_income.person_year.person.pk,
+            Person.objects.last().pk,
         )
 
     def test_generate_final_settlements_without_person_months(self):
