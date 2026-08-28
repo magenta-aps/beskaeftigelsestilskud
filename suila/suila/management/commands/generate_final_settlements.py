@@ -22,9 +22,6 @@ class Command(SuilaBaseCommand):
 
     def _handle(self, *args, **kwargs):
         year = kwargs["year"]
-        if kwargs["ids"]:
-            print(kwargs["ids"])
-            return 0
         person_years = (
             PersonYear.objects.filter(
                 year_id=year,
@@ -42,7 +39,7 @@ class Command(SuilaBaseCommand):
                 | Q(person__full_address__contains="Administrativ")
             )
         )
-        if not kwargs["force-recreate"]:
+        if not kwargs["force_recreate"]:
             person_years = person_years.exclude(
                 # Exclude those that already have a message
                 personmonth__suilaeboksmessage__type="årsopgørelse"
