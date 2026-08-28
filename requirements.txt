@@ -11,7 +11,7 @@ coverage==7.15.4
 cryptography==42.0.8
 defusedxml==0.7.1
 Django==5.2.17
-django-bootstrap5==26.2
+django-bootstrap5==26.3
 django-bootstrap-icons==0.9.0
 django-extensions==4.1
 django-debug-toolbar==7.1.1
