@@ -1962,7 +1962,6 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
             + subsidy_foreign_pension
             + other_a
             + occupation
-            + self.person_year.sum_employer_paid_gl_pension_income
         ).quantize(q)
         total_b_income_theory = Decimal(care_fee).quantize(q)
         total_u_income_theory = Decimal(
@@ -1992,6 +1991,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                     total_a_income_theory
                     + total_b_income_theory
                     + total_u_income_theory
+                    + self.person_year.sum_employer_paid_gl_pension_income
                 ),
                 "benefit_calculated": Decimal("15629.42"),
                 "benefit_transferred": Decimal("0.00"),

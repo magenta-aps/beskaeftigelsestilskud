@@ -916,11 +916,12 @@ class PersonFinalSettlementsView(
                 "b_income": annual_income.summarized_b_income,
                 "u_income": annual_income.summarized_u_income,
                 "employer_paid_gl_pension_income": (
-                    person_year.sum_employer_paid_gl_pension_income
+                    annual_income.employer_paid_gl_pension_income
                 ),
                 "sum_income": annual_income.summarized_a_income
                 + annual_income.summarized_b_income
-                + annual_income.summarized_u_income,
+                + annual_income.summarized_u_income
+                + annual_income.employer_paid_gl_pension_income,
                 "benefit_calculated": benefit,
                 "benefit_transferred": person_year.benefit_transferred,
                 "benefit_transfer_difference": benefit

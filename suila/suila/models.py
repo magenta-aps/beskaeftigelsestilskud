@@ -2451,6 +2451,13 @@ class AnnualIncome(PermissionsMixin, models.Model):
         null=True,
         blank=True,
     )
+    employer_paid_gl_pension_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=None,
+        null=True,
+        blank=True,
+    )
 
     def update_amounts(self):
         year = self.person_year.year.year
@@ -2459,7 +2466,6 @@ class AnnualIncome(PermissionsMixin, models.Model):
             self.salary,
             self.foreign_pension_income,
             self.subsidy_foreign_pension_income,
-            self.person_year.sum_employer_paid_gl_pension_income,
             self.other_a_income,
         ]
         b_incomes = [
@@ -2484,6 +2490,9 @@ class AnnualIncome(PermissionsMixin, models.Model):
         self.summarized_a_income = Decimal(sum(filter(None, a_incomes))).quantize(q)
         self.summarized_b_income = Decimal(sum(filter(None, b_incomes))).quantize(q)
         self.summarized_u_income = self.get_u_income().quantize(q)
+        self.employer_paid_gl_pension_income = (
+            self.person_year.sum_employer_paid_gl_pension_income
+        )
 
         return
 
@@ -2523,6 +2532,7 @@ class AnnualIncome(PermissionsMixin, models.Model):
             self.summarized_a_income is None
             or self.summarized_b_income is None
             or self.summarized_u_income is None
+            or self.employer_paid_gl_pension_income is None
         ):
             self.update_amounts()
         calculation_method: WorkingTaxCreditCalculationMethod | None = (
@@ -2533,11 +2543,13 @@ class AnnualIncome(PermissionsMixin, models.Model):
             and self.summarized_b_income is not None
             and self.summarized_u_income is not None
             and calculation_method is not None
+            and self.employer_paid_gl_pension_income is not None
         )
         income_base: Decimal = (
             self.summarized_a_income
             + self.summarized_b_income
             + self.summarized_u_income
+            + self.employer_paid_gl_pension_income
         )
 
         # Calculate the Suila-tapit that the person is due, according to their actual
@@ -3019,11 +3031,12 @@ class SuilaEboksMessage(EboksMessage):
                     "b_income": annual_income.summarized_b_income,
                     "u_income": annual_income.summarized_u_income,
                     "employer_paid_gl_pension_income": (
-                        self.person_year.sum_employer_paid_gl_pension_income
+                        annual_income.employer_paid_gl_pension_income
                     ),
                     "sum_income": annual_income.summarized_a_income
                     + annual_income.summarized_b_income
-                    + annual_income.summarized_u_income,
+                    + annual_income.summarized_u_income
+                    + annual_income.employer_paid_gl_pension_income,
                     "benefit_calculated": benefit,
                     "benefit_transferred": self.person_year.benefit_transferred,
                     "benefit_transfer_difference": benefit
