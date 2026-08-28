@@ -16,20 +16,21 @@ class Command(SuilaBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
+        parser.add_argument("--force-recreate", type=bool, default=False)
+        parser.add_argument("--ids", nargs="+", type=int, help="List of User IDs torun")
         super().add_arguments(parser)
 
     def _handle(self, *args, **kwargs):
         year = kwargs["year"]
+        if kwargs["ids"]:
+            print(kwargs["ids"])
+            return 0
         person_years = (
             PersonYear.objects.filter(
                 year_id=year,
                 # Require an associated AnnualIncome object and at least 1 personmonth
                 annual_income_statements__isnull=False,
                 personmonth__isnull=False,
-            )
-            .exclude(
-                # Exclude those that already have a message
-                personmonth__suilaeboksmessage__type="årsopgørelse"
             )
             .exclude(
                 person__full_address="",
@@ -41,6 +42,15 @@ class Command(SuilaBaseCommand):
                 | Q(person__full_address__contains="Administrativ")
             )
         )
+        if not kwargs["force-recreate"]:
+            person_years = person_years.exclude(
+                # Exclude those that already have a message
+                personmonth__suilaeboksmessage__type="årsopgørelse"
+            )
+
+        if kwargs["ids"]:
+            person_years = person_years.filter(person__pk__in=kwargs["ids"])
+
         person_years = person_years.distinct().select_related("person")
 
         def handle_person_year(person_year):
