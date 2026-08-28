@@ -1957,11 +1957,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
 
         q = Decimal("0.01")
         total_a_income_theory = Decimal(
-            salary
-            + foreign_pension
-            + subsidy_foreign_pension
-            + other_a
-            + occupation
+            salary + foreign_pension + subsidy_foreign_pension + other_a + occupation
         ).quantize(q)
         total_b_income_theory = Decimal(care_fee).quantize(q)
         total_u_income_theory = Decimal(
