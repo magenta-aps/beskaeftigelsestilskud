@@ -843,6 +843,13 @@ class GenerateFinalSettlements(BaseTestCase):
             person_year.save()
 
         call_command("generate_final_settlements", "2024")
+        num_of_final_settlements = FinalSettlement.objects.count()
+
+        call_command("generate_final_settlements", "2024", force_recreate=True)
+        self.assertEqual(
+            FinalSettlement.objects.count(),
+            2 * num_of_final_settlements
+        )
 
     def test_generate_final_settlements_without_person_months(self):
         """
