@@ -591,6 +591,14 @@ class Person(PermissionsMixin, models.Model):
         default=None,
     )
 
+    benefit_difference = models.DecimalField(
+        null=False,
+        default=Decimal('0'),
+        blank=False,
+        max_digits=12,
+        decimal_places=2,
+    )
+
     def __str__(self):
         return (
             f"{self.name} / {self.cpr}"
@@ -750,6 +758,48 @@ class Person(PermissionsMixin, models.Model):
             # Signals don't propagate exceptions, so we must print it explicitly
             logger.exception(e)
             raise
+
+    def calculate_benefit_difference(self, save: bool = False) -> Dict[str, Decimal]:
+        """
+        We need a clear view of which ways benefit_difference can be added and offset.
+        Negative difference (person received too much benefit/person owes benefit):
+            Small amount (0-1999kr.):
+                Offset through decreased benefit_transferred in PersonMonth payments
+            Large amount (2000kr.+):
+                Charged through Prisme
+        Positive difference (person received too little benefit):
+            Tiny amount (0-99kr.):
+                Amount will not be paid out
+            Larger amount (100kr.+):
+                Paid out within 30 days
+        NOTE: Special rules apply, if person has not been active in Suila for 5 years.
+        In this case any extraneous benefit is sent to be charged through Prisme
+        """
+        personmonth_qs = PersonMonth.objects.filter(
+            person_year__person=F("pk"),
+            offset_benefit_difference__gt=0,
+        )
+        finalsettlement_qs = FinalSettlement.objects.filter(
+            annual_income__person_year__person=F("pk"),
+        )
+        pm_benefit_offset = (
+            personmonth_qs.aggregate(spent=Sum("offset_benefit_difference"))["spent"] or 0
+        )
+        fs_benefit_difference = (
+            finalsettlement_qs.aggregate(acquired=Sum("_result"))["acquired"] or 0
+        )
+
+        benefit_difference = fs_benefit_difference + pm_benefit_offset
+        if save:
+            self.benefit_difference = benefit_difference
+            self.save(update_fields=["benefit_difference"])
+
+        # NOTE: Return dict with spent surplus, acquired surplus and remaining surplus.
+        return {
+            "current_benefit_difference": benefit_difference,
+            "total_acquired_surplus": fs_benefit_difference,
+            "total_offset_surplus": pm_benefit_offset,
+        }
 
 
 pre_save.connect(
@@ -1288,6 +1338,12 @@ class PersonMonth(PermissionsMixin, models.Model):
         blank=True,
     )
     estimated_year_result = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    offset_benefit_difference = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
