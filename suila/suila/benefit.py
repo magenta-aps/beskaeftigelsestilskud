@@ -9,7 +9,7 @@ import pandas as pd
 from common import utils
 from common.utils import to_dataframe
 from django.conf import settings
-from django.db.models import Exists
+from django.db.models import Exists, F
 from more_itertools import one
 from numpy import float64
 
@@ -114,6 +114,11 @@ def calculate_benefit(
     if cpr:
         person_year_qs = person_year_qs.filter(person__cpr=cpr)
 
+    # Add benefit difference, flip sign for calculation purposes
+    person_year_qs = person_year_qs.annotate(
+        benefit_difference=-F("person__benefit_difference")
+    )
+
     assessment_df = to_dataframe(
         person_year_qs,
         index="person__cpr",
@@ -123,6 +128,7 @@ def calculate_benefit(
             "catchsale_expenses": float,
             "person__paused": bool,
             "person__annual_income_estimate": float,
+            "benefit_difference": float,
         },
     )
 
@@ -174,6 +180,16 @@ def calculate_benefit(
     df.loc[:, "benefit_this_month"] = (
         df.remaining_benefit_for_year / (13 - month)
     ).round(2)
+
+    # Offset surplus benefit first
+    df["offset_benefit_difference"] = df.loc[
+        df.benefit_difference > 0,
+        ["benefit_this_month", "benefit_difference"]
+    ].min(axis=1)
+    df.loc[
+        df.benefit_difference > 0,
+        "benefit_this_month"
+    ] -= df["offset_benefit_difference"]
 
     # Do not payout if the amount is below zero
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
