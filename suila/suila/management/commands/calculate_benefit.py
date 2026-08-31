@@ -7,7 +7,7 @@ from simple_history.utils import bulk_update_with_history
 
 from suila.benefit import calculate_benefit
 from suila.management.commands.common import SuilaBaseCommand
-from suila.models import PersonMonth
+from suila.models import Person, PersonMonth
 
 
 class Command(SuilaBaseCommand):
@@ -33,15 +33,20 @@ class Command(SuilaBaseCommand):
             "estimated_year_benefit",
             "actual_year_benefit",
             "estimated_year_result",
+            "offset_benefit_difference",
         ]
-
-        benefit = calculate_benefit(month, year, kwargs["cpr"])
 
         person_month_qs = PersonMonth.objects.filter(
             person_year__year__year=year,
             month=month,
             prismebatchitem__isnull=True,
         ).select_related("person_year__person")
+
+        person_qs = Person.objects.filter(pk__in=person_month_qs.values_list("person_year__person").distinct())
+        for person in person_qs:
+            person.calculate_benefit_difference(save=True)
+
+        benefit = calculate_benefit(month, year, kwargs["cpr"])
 
         person_months_to_update = []
 
