@@ -16,7 +16,7 @@ class Command(SuilaBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("year", type=int)
-        parser.add_argument("--force-recreate", type=bool, default=False)
+        parser.add_argument("--force-recreate", default=False, action="store_true")
         parser.add_argument("--ids", nargs="+", type=int, help="List of User IDs torun")
         super().add_arguments(parser)
 
