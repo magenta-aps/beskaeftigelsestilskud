@@ -1234,9 +1234,9 @@
           "description": "Gets or sets the shareholder dividend income.",
           "type": "number"
         },
-        "employerPaidGLPensionIncome": {
+        "pensionpayment": {
           "format": "double",
-          "description": "Gets or sets the employer paid Grenlandic Pension Income for a person. (felt: 13)",
+          "description": "Gets or sets the Pension payment from A11#170.",
           "type": "number"
         }
       }

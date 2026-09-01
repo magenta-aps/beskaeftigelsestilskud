@@ -1034,10 +1034,6 @@ class PersonYear(PermissionsMixin, models.Model):
         return self.aggregation["sum_salary_income"]
 
     @property
-    def sum_employer_paid_gl_pension_income(self) -> Decimal:
-        return self.aggregation["sum_employer_paid_gl_pension_income"]
-
-    @property
     def benefit_transfer_difference(self) -> Decimal:
         return self.benefit_calculated - self.benefit_transferred
 
@@ -2490,6 +2486,9 @@ class AnnualIncome(PermissionsMixin, models.Model):
         self.summarized_a_income = Decimal(sum(filter(None, a_incomes))).quantize(q)
         self.summarized_b_income = Decimal(sum(filter(None, b_incomes))).quantize(q)
         self.summarized_u_income = self.get_u_income().quantize(q)
+        self.employer_paid_gl_pension_income = (
+            self.employer_paid_gl_pension_income or Decimal(0)
+        )
 
         return
 
