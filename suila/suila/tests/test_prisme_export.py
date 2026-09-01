@@ -892,6 +892,7 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
                 "summarized_a_income": income,
                 "summarized_b_income": Decimal("0"),
                 "summarized_u_income": Decimal("0"),
+                "employer_paid_gl_pension_income": Decimal("0"),
             },
         )
         final_settlement, _ = FinalSettlement.objects.get_or_create(
