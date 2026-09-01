@@ -2490,8 +2490,12 @@ class AnnualIncome(PermissionsMixin, models.Model):
         self.summarized_a_income = Decimal(sum(filter(None, a_incomes))).quantize(q)
         self.summarized_b_income = Decimal(sum(filter(None, b_incomes))).quantize(q)
         self.summarized_u_income = self.get_u_income().quantize(q)
-        self.employer_paid_gl_pension_income = (
-            self.person_year.sum_employer_paid_gl_pension_income
+        self.save(
+            update_fields=[
+                "summarized_a_income",
+                "summarized_b_income",
+                "summarized_u_income",
+            ]
         )
 
         return
