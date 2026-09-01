@@ -233,6 +233,7 @@ class TestAnnualIncome(BaseTestCase):
             "account_tax_result": None,
             "account_share_business_amount": None,
             "shareholder_dividend_income": None,
+            "employer_paid_gl_pension_income": None,
         }
     ] + [
         {
@@ -274,6 +275,7 @@ class TestAnnualIncome(BaseTestCase):
             "account_tax_result": None,
             "account_share_business_amount": None,
             "shareholder_dividend_income": None,
+            "employer_paid_gel_pension_income": None,
         }
     ]
 
