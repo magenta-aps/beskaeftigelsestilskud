@@ -301,6 +301,7 @@ class EskatMocks:
                 "account_tax_result": None,
                 "account_share_business_amount": None,
                 "shareholder_dividend_income": None,
+                "pensionpayment": None,
             },
         )
 
@@ -1283,10 +1284,10 @@ class TestFinalSettlementsWithEPP(IntegrationBaseTest):
         self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
         # Create annual income report, creating a difference between the Suila-tapit
         # calculated so far, and the actual Suila-tapit owed to the person
-        self.add_annualincome_record(self.cpr, salary=20000 * 12)
+        self.add_annualincome_record_with_epp(self.cpr, salary=20000 * 12)
         # Create income in 2025, and calculate Suila-tapit based on that
         for month_number in range(1, 13):
-            self.add_monthlyincome_record_with_epp(self.cpr, month_number, income=21000)
+            self.add_monthlyincome_record(self.cpr, month_number, income=25000)
             self.call_commands(month_number, self.year)
 
     def test_settlement_flow(self):
@@ -1294,9 +1295,9 @@ class TestFinalSettlementsWithEPP(IntegrationBaseTest):
         # each, so we have paid out Suila-tapit according to an expected yearly salary
         # of (12 * 25.000) = kr. 300.000, yielding a total yearly Suila-tapit of
         # kr. 13.356.
-        # But the annual income record (containing the _actual_ yearly salary) says that
-        # the citizen's total yearly salary was (12 * 24.000) = 288,000, yielding a
-        # total yearly Suila-tapit of kr. 14.112.
+        # But the annual income record (containing the _actual_ yearly salary) finds
+        # the citizen's total yearly income: (12 * 20.000 + 12 * 4.000 EPP) = 288,000
+        # yielding a total yearly Suila-tapit of kr. 14.112.
         # Thus, we owe the citizen the difference: 14.112 - 13.356 = kr. 756,00.
         expected_difference = Decimal("756.00")
         call_command("generate_final_settlements", self.years[0])
@@ -1304,29 +1305,52 @@ class TestFinalSettlementsWithEPP(IntegrationBaseTest):
         call_command("export_final_settlements_to_prisme", year=self.years[0])
         self.assert_final_settlement_transferred(expected_difference)
 
-    def add_monthlyincome_record_with_epp(self, cpr, month, income=0, year=None):
+    def add_annualincome_record_with_epp(self, cpr, salary=0, year=None):
         # Auxillary function to include handling of employer paid pension
         year = year or self.year
         self.add_eskat_record(
-            self.monthlyincome_json_data,
+            self.annualincome_json_data,
             year,
             {
                 "cpr": cpr,
-                "cvr": "567",
                 "year": year,
-                "month": month,
-                "salaryIncome": income,
-                "catchsaleIncome": 0,
-                "publicAssistanceIncome": 0,
-                "alimonyIncome": 0,
-                "disGisIncome": 0,
-                "retirementPensionIncome": 0,
-                "disabilityPensionIncome": 0,
-                "ignoredBenefitsIncome": 0,
-                "employerPaidGLPensionIncome": 4000,
-                "foreignPensionIncome": 0,
-                "civilServantPensionIncome": 0,
-                "otherPensionIncome": 0,
+                "salary": salary,
+                "public_assistance_income": None,
+                "retirement_pension_income": None,
+                "disability_pension_income": None,
+                "ignored_benefits": None,
+                "occupational_benefit": None,
+                "foreign_pension_income": None,
+                "subsidy_foreign_pension_income": None,
+                "dis_gis_income": None,
+                "other_a_income": None,
+                "deposit_interest_income": None,
+                "bond_interest_income": None,
+                "other_interest_income": None,
+                "education_support_income": None,
+                "care_fee_income": None,
+                "alimony_income": None,
+                "foreign_dividend_income": None,
+                "foreign_income": None,
+                "free_journey_income": None,
+                "group_life_income": None,
+                "rental_income": None,
+                "other_b_income": None,
+                "free_board_income": None,
+                "free_lodging_income": None,
+                "free_housing_income": None,
+                "free_phone_income": None,
+                "free_car_income": None,
+                "free_internet_income": None,
+                "free_boat_income": None,
+                "free_other_income": None,
+                "pension_payment_income": None,
+                "catch_sale_market_income": None,
+                "catch_sale_factory_income": None,
+                "account_tax_result": None,
+                "account_share_business_amount": None,
+                "shareholder_dividend_income": None,
+                "pensionpayment": 4000 * 12,
             },
         )
 

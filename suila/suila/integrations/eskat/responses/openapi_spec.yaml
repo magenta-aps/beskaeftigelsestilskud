@@ -1003,6 +1003,10 @@ components:
           format: double
           description: Gets or sets the shareholder dividend income.
           type: number
+        pensionpayment:
+          format: double
+          description: "Gets or sets the Pension payment from A11#170."
+          type: number
     ExpectedIncome:
       type: object
       properties:

@@ -189,6 +189,9 @@ class AnnualIncomeHandler(Handler):
                         continue
 
                     field_values = omit(asdict(item), "cpr", "year")
+                    field_values["employer_paid_gl_pension_income"] = field_values.pop(
+                        "pensionpayment"
+                    )
                     key = (item.cpr, item.year)
                     if key in objs_to_create:
                         postponed.append(item)

@@ -464,6 +464,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             summarized_a_income=Decimal("1000"),
             summarized_b_income=Decimal("2000"),
             summarized_u_income=Decimal("3000"),
+            employer_paid_gl_pension_income=Decimal("1500"),
         )
         self.finalsettlement = FinalSettlement.objects.create(
             annual_income=self.annual_income,
@@ -1068,6 +1069,7 @@ class TestPersonFinalSettlementsView(TimeContextMixin, PersonEnv):
             summarized_a_income=Decimal("1000"),
             summarized_b_income=Decimal("2000"),
             summarized_u_income=Decimal("3000"),
+            employer_paid_gl_pension_income=Decimal("1500"),
         )
 
     def test_404_on_nonexistent_person_year(self):
@@ -1938,6 +1940,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         other_a = 100
         care_fee = 10  # NB: This test runs as 2020, where care_fee is b_income
         occupation = 1
+        employer_paid_gl_pension_income = 23100
 
         AnnualIncome.objects.create(
             person_year=self.person_year,
@@ -1947,6 +1950,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
             other_a_income=other_a,
             care_fee_income=care_fee,
             occupational_benefit=occupation,
+            employer_paid_gl_pension_income=employer_paid_gl_pension_income,
         )
         TaxInformationPeriod.objects.create(
             person_year=self.person_year,
@@ -1957,12 +1961,7 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
 
         q = Decimal("0.01")
         total_a_income_theory = Decimal(
-            salary
-            + foreign_pension
-            + subsidy_foreign_pension
-            + other_a
-            + occupation
-            + self.person_year.sum_employer_paid_gl_pension_income
+            salary + foreign_pension + subsidy_foreign_pension + other_a + occupation
         ).quantize(q)
         total_b_income_theory = Decimal(care_fee).quantize(q)
         total_u_income_theory = Decimal(
@@ -1987,11 +1986,12 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
                 "a_income": total_a_income_theory,
                 "b_income": total_b_income_theory,
                 "u_income": total_u_income_theory,
-                "employer_paid_gl_pension_income": Decimal("23100.00"),
+                "employer_paid_gl_pension_income": employer_paid_gl_pension_income,
                 "sum_income": (
                     total_a_income_theory
                     + total_b_income_theory
                     + total_u_income_theory
+                    + employer_paid_gl_pension_income
                 ),
                 "benefit_calculated": Decimal("15629.42"),
                 "benefit_transferred": Decimal("0.00"),
