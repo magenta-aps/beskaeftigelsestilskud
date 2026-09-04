@@ -525,9 +525,12 @@ class PersonDetailView(
     def get_relevant_person_month(
         self, year=None, month=None
     ) -> RelevantPersonMonth | None:
-        max_date: date = date(
-            year or self.year, month or self.month, 1
-        ) - relativedelta(months=2)
+        relevant_year = year or self.year
+        relevant_month = month or self.month
+        max_date: date = date(relevant_year, relevant_month, 1)
+        time_since_max_date = date.today() - max_date
+        if time_since_max_date.days <= 60:
+            max_date = max_date - relativedelta(months=2)
         try:
             person_months = PersonMonth.objects.filter(
                 person_year__person=self.object,
@@ -575,6 +578,7 @@ class PersonDetailView(
 
     def get_table_data(self):
         relevant_person_month = self.get_relevant_person_month()
+        print("***", relevant_person_month, "***")
         if relevant_person_month:
             return (
                 PersonMonth.objects.select_related(
