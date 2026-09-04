@@ -152,7 +152,7 @@ Lint Javascript:
   dependencies: []
   needs: [ "Build" ]
   services:
-    - name: postgres:16
+    - name: postgres:18
       alias: suila-db
   variables:
     # Number of processes used by `manage.py test --parallel`. Each one gets its
