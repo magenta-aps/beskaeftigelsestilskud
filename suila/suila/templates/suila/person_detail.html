@@ -224,10 +224,12 @@
         {% url "suila:person_detail_income" pk=person.pk as person_income_url %}
         {% jumbo_link person_income_url _("Mine signaler - få information om beregningsgrundlaget for dit Suila-tapit") "assignment" %}
     </div>
+    {% comment %}Disabled until Sept 10 2026
     <div class="g-col-6 jumbo">
         {% url "suila:person_final_settlements" pk=person.pk as person_final_settlements_url %}
         {% jumbo_link person_final_settlements_url _("Årsopgørelser") "assignment" %}
     </div>
+    {% endcomment %}
     {% endif %}
     {% if user|has_permissions:"suila.view_eboksmessage" and user|has_permissions:"suila.create_eboksmessage" %}
     <div class="g-col-4 jumbo">
