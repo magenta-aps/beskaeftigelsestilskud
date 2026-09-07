@@ -1373,3 +1373,33 @@ class TestFinalSettlementsWithEPP(IntegrationBaseTest):
     def assert_final_settlement_transferred(self, result):
         amount_sent_to_prisme = self.get_amount_sent_to_prisme(date.today().month)
         self.assertEqual(amount_sent_to_prisme, result)
+
+
+class TestFinalSettlementsTaxDays(IntegrationBaseTest):
+
+    def setUp(self):
+        super().setUp()
+        self.year = 2025
+        # Ensure that we have a location code for our test person.
+        # This is required to be able to export a G68/G69 line to Prisme.
+        # Ensure person is not tax liable for the entire year
+        self.add_taxinformation_record(self.cpr, "FULL", (9, 1), (12, 31))
+        # Create annual income report, creating a difference between the Suila-tapit
+        # calculated so far, and the actual Suila-tapit owed to the person
+        self.add_annualincome_record(self.cpr, salary=20_000 * 4)
+        # Create income in 2025, and calculate Suila-tapit based on that
+        for month_number in range(9, 13):
+            self.add_monthlyincome_record(self.cpr, month_number, income=20_000)
+            self.call_commands(month_number, self.year)
+
+    def test_settlement_flow(self):
+        # Person arrives in September, and makes 20.000 kr. pr. month.
+        # This extrapolates to 240.000 kr. yearly income, lending a yielding a yearly
+        # benefit of 15.570 kr.. This is then corrected for tax days
+        # (122 / 365) * 15.570 = 5.264 kr. in total benefit for the year
+        call_command("generate_final_settlements", self.year)
+        fs = FinalSettlement.objects.last()
+        self.assert_benefit(
+            fs.annual_income.calculate_actual_annual_benefit(),
+            Decimal("5264"),
+        )

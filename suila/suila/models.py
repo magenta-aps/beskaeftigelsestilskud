@@ -2499,7 +2499,7 @@ class AnnualIncome(PermissionsMixin, models.Model):
         # Return fraction of year, which the person is tax liable for
         if self.person_year.tax_days <= 0:
             logger.info(
-                "%r: tax_days=%r income_base=%r income_base_scaled=0",
+                "%r: tax_days=%r income_base=%r extrapolated_income_base=0",
                 self.person_year,
                 self.person_year.tax_days,
             )
@@ -2559,7 +2559,7 @@ class AnnualIncome(PermissionsMixin, models.Model):
             income_base,
             extrapolated_income_base,
         )
-        return benefit
+        return benefit.quantize(Decimal("0.01"))
 
 
 class FinalSettlement(PermissionsMixin, models.Model):
