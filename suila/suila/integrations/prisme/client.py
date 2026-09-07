@@ -19,7 +19,6 @@ class SuilaInvoiceLine(InvoiceLine):
         unit_price: int | Decimal,
         text: str,
         locality_code: int | str,
-        type_account: int | str,
         beneficiary: int | str,
     ):
         prisme_settings = settings.PRISME  # type: ignore[misc]
@@ -32,7 +31,7 @@ class SuilaInvoiceLine(InvoiceLine):
                 "Afdeling": prisme_settings["department_recid"],
                 "Finanslov": prisme_settings["finance_law_id"],
                 "Formaal": str(prisme_settings["purpose_id"]).zfill(10),
-                "ArtsKontoplan": str(type_account).zfill(9),
+                "ArtsKontoplan": str(prisme_settings["type_account_plan_id"]).zfill(9),
                 "Sted": str(locality_code).zfill(6),
             },
             beneficiary=str(beneficiary),
@@ -50,7 +49,7 @@ class SuilaInvoiceRequest(InvoiceRequest):
         text: str,
         files: List[File],
         lines: List[SuilaInvoiceLine],
-        cvr: str | int,
+        cpr: str | int,
         year: int,
     ):
         prisme_settings = settings.PRISME  # type: ignore[misc]
@@ -77,7 +76,7 @@ class SuilaInvoiceRequest(InvoiceRequest):
             ],
             lines=lines,
         )
-        self.cvr = cvr
+        self.cpr = cpr
 
         self.customer_group = f"2100{str(year)[-2:]}"
 
@@ -85,7 +84,7 @@ class SuilaInvoiceRequest(InvoiceRequest):
     def dict(self) -> Dict[str, str | int | datetime | Dict[str, List[dict]]]:
         d = super().dict
         d["custTable"] = {
-            "IdentificationNumber": self.cvr,
+            "IdentificationNumber": self.cpr,
             "CustGroup": self.customer_group,
         }
         return d
@@ -98,7 +97,7 @@ class SuilaInvoiceRequest(InvoiceRequest):
             text=self.text,
             lines=self.lines,
             files=[],
-            cvr=self.cvr,
+            cpr=self.cpr,
         )
         request.files = self.files
         return request
