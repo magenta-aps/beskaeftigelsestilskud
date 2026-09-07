@@ -66,6 +66,7 @@ from weasyprint.text.fonts import FontConfiguration
 
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
+from suila.integrations.prisme.client import SuilaInvoiceLine, SuilaInvoiceRequest
 from suila.model_mixins import PermissionsMixin
 
 logger = logging.getLogger(__name__)
@@ -2543,6 +2544,50 @@ class FinalSettlement(PermissionsMixin, models.Model):
             result = self.benefit_due_for_year - self.benefit_paid_out_in_year
             self._result = result
         return self._result
+
+    def send_invoice(self):
+        amount = -self.result
+        if amount > 0:
+            print(f"Send invoice for {amount} DKK")
+            person_year: PersonYear = self.person_year
+            person: Person = person_year.person
+
+            location_code_map = {
+                955: "010300",
+                956: "010400",
+                957: "010500",
+                959: "010600",
+                960: "010700",
+                None: "019000",
+            }
+            locality_code = location_code_map.get(person.location_code)
+            # Kommune Kujalleq:
+            # Kommuneqarfik Sermersooq:
+            # Qeqqata Kommunia:
+            # Kommune Qeqertalik:
+            # Avannaata Kommunia:
+            # Udenfor kommunal inddeling: 019000
+
+            request = SuilaInvoiceRequest(
+                invoice_date=timezone.now(),
+                due_date=timezone.now(),
+                accounting_date=timezone.now(),
+                text="SUILA",
+                cpr=person.cpr,
+                year=person_year.year,
+                files=[],
+                lines=[
+                    SuilaInvoiceLine(
+                        description="HEP",
+                        quantity=1,
+                        unit_price=amount,
+                        text="HEY",
+                        locality_code=locality_code,
+                        beneficiary=person.cpr,
+                    )
+                ],
+            )
+            print(request.xml)
 
 
 @receiver(pre_save, sender=FinalSettlement)
