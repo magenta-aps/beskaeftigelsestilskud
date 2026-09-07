@@ -783,10 +783,14 @@ class Person(PermissionsMixin, models.Model):
             annual_income__person_year__person=F("pk"),
         )
         pm_benefit_offset = (
-            personmonth_qs.aggregate(spent=Sum("offset_benefit_difference"))["spent"] or 0
+            personmonth_qs.aggregate(
+                spent=Sum("offset_benefit_difference")
+            )["spent"] or Decimal("0")
         )
         fs_benefit_difference = (
-            finalsettlement_qs.aggregate(acquired=Sum("_result"))["acquired"] or 0
+            finalsettlement_qs.aggregate(
+                acquired=Sum("_result")
+            )["acquired"] or Decimal("0")
         )
 
         benefit_difference = fs_benefit_difference + pm_benefit_offset

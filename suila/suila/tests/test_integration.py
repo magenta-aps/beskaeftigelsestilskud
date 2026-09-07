@@ -1411,42 +1411,33 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
 
     def setUp(self):
         super().setUp()
-        # 2024: Max benefit until month 10, then disqualify
-        for month_number in range(1, 12):
+        # 2024:
+        for month_number in range(1, 13):
             self.add_monthlyincome_record(
-                self.cpr, month_number, income=20_000, year=self.years[0]
+                self.cpr, month_number, income=24_000, year=self.years[0]
             )
-        self.total_income_year_0 = 420_000
-        last_month_income_year_0 = (self.total_income_year_0 - 11 * 20_000)
-        self.add_monthlyincome_record(
-            self.cpr,
-            12,
-            #income=last_month_income_year_0,
-            income=200_000,
-            year=self.years[0],
-        )
 
         self.add_taxinformation_record(
             self.cpr, "FULL", (1, 1), (12, 31), year=self.years[0]
         )
         self.add_annualincome_record(
-                self.cpr, salary=420_000,
+                self.cpr, salary=300_000,
             year=self.years[0]
         )
         self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[0])
         self.add_u1a_record(self.cpr, udbytte=0, year=self.years[0])
         
-        # 2025: Max benefit
+        # 2025:
         for month_number in range(1, 13):
             self.add_monthlyincome_record(
-                self.cpr, month_number, income=20_000, year=self.years[1]
+                self.cpr, month_number, income=24_000, year=self.years[1]
             )
 
         self.add_taxinformation_record(
             self.cpr, "FULL", (1, 1), (12, 31), year=self.years[1]
         )
         self.add_annualincome_record(
-            self.cpr, salary=20000 * 12,
+            self.cpr, salary=288_000,
             year=self.years[1]
         )
         self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[1])
@@ -1454,56 +1445,49 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
 
     def test_estimate_and_calculate_benefit(self):
         """
-        Simple test to validate that a person gets paid out the proper amount two years
-        in a row.
-
-        The person earns 20.000 kr per month until November 2024, and 
-        disqualify for benefit for making too much. So we expect the person to receive
-        the maximum benefit (15.750kr) undtil November.
-        Which means he gets paid out 1312 kr per month, which will have to be reversed
-        in 2025.
+        During year, we receive 12 monthlyincome records of 24.000 kr.,
+        adding to a yearly income of 288.000 kr., yielding a yearly Suila-tapit
+        of 14.112 kr. (1176 kr. pr . month).
+        However, the actual yearly income was 12 * 25.000 kr. = 300.000kr.,
+        yielding only 13.356 kr. of Suila-tapit (1113 kr. pr. month).
+        This leads the citizen to have received 756 kr. of surplus Suila-tapit,
+        which must be offset in the months following the FinalSettlement generation.
 
         """
         year = self.years[0]
-        for month in range(1, 12):
+        for month in range(1, 13):
             self.call_commands(month, year)
             person_month = self.get_person_month(month, year)
             amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-            # First we estimate 12 * 20_000 for the year
-            self.assertEqual(person_month.estimated_year_result, 240_000)
-            self.assert_benefit(amount_sent_to_prisme, 1312)
-
-        for month in range(12, 13):
-            self.call_commands(month, year)
-            person_month = self.get_person_month(month, year)
-            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-            #self.assertEqual(person_month.estimated_year_result, self.total_income_year_0)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
 
         year = self.years[1]
         for month in range(1, 8):
             self.call_commands(month, year)
             person_month = self.get_person_month(month, year)
-            print(f"QUAR?: {person_month.person_year.in_quarantine}")
             amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-            self.assertEqual(person_month.estimated_year_result, 240_000)
-            #self.assert_benefit(amount_sent_to_prisme, 1312)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
 
+        # August, 2025, where we generate final settlements for 2024
         self.assertEqual(FinalSettlement.objects.count(), 0)
         self.call_commands(8, year)
         person_month = self.get_person_month(8, year)
         amount_sent_to_prisme = self.get_amount_sent_to_prisme(8, year)
-        self.assertEqual(person_month.estimated_year_result, 240_000)
-        #self.assert_benefit(amount_sent_to_prisme, 1312)
+        self.assertEqual(person_month.estimated_year_result, 288_000)
         call_command("generate_final_settlements", year-1)
         self.assertEqual(FinalSettlement.objects.count(), 1)
 
+        # September, 2025, offset the 756 kr. owed from 2024 final settlement
+        self.call_commands(month, year)
+        person_month = self.get_person_month(month, year)
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+        self.assertEqual(person_month.estimated_year_result, 288_000)
+        # TODO: Problem with "amount_sent-to_prisme", because it wprk son the annual income, and not on the calculated benefit pr. month
+        self.assert_benefit(amount_sent_to_prisme, 1176 - 756)
 
-        for month in range(9, 13):
-            print(f"IN MONTH {month} of {year}")
+        for month in range(10, 13):
             self.call_commands(month, year)
             person_month = self.get_person_month(month, year)
             amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
-            self.assertEqual(person_month.estimated_year_result, 240_000)
-            #self.assert_benefit(amount_sent_to_prisme, 0)
-
-        #self.assert_total_benefit(10496, year)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1176)
