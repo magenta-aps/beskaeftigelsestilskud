@@ -382,6 +382,7 @@ class PersonDetailView(
                 "person_year_id": self.person_year.pk,
                 "surplus_benefit": surplus_benefit,
                 "surplus_benefit_last_change": surplus_benefit_last_change,
+                "show_surplus_benefit_status": settings.SHOW_SURPLUS_BENEFIT_STATUS,
             }
         )
 
