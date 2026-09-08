@@ -2495,14 +2495,13 @@ class AnnualIncome(PermissionsMixin, models.Model):
     def get_u_income(self) -> Decimal:
         return self.person_year.amount_sum_by_type(IncomeType.U)
 
-    def get_scaled_income_base(self, income_base: Decimal) -> Decimal:
-        # Scale `income_base` according to this number of valid tax days for the person
+    def get_taxday_scaling(self) -> Decimal:
+        # Return fraction of year, which the person is tax liable for
         if self.person_year.tax_days <= 0:
             logger.info(
-                "%r: tax_days=%r income_base=%r income_base_scaled=0",
+                "%r: tax_days=%r income_base=%r extrapolated_income_base=0",
                 self.person_year,
                 self.person_year.tax_days,
-                income_base,
             )
             return Decimal("0")
 
@@ -2513,15 +2512,7 @@ class AnnualIncome(PermissionsMixin, models.Model):
             if calendar.isleap(self.person_year.year.year)
             else Decimal("365")
         )
-        income_base_scaled = income_base * (total_days / tax_days)
-        logger.info(
-            "%r: tax_days=%r income_base=%r income_base_scaled=%r",
-            self.person_year,
-            tax_days,
-            income_base,
-            income_base_scaled,
-        )
-        return income_base_scaled
+        return tax_days / total_days
 
     def calculate_actual_annual_benefit(self) -> Decimal:
         if (
@@ -2550,9 +2541,25 @@ class AnnualIncome(PermissionsMixin, models.Model):
 
         # Calculate the Suila-tapit that the person is due, according to their actual
         # income base.
-        income_base_scaled: Decimal = self.get_scaled_income_base(income_base)
-        benefit: Decimal = calculation_method.calculate(income_base_scaled)
-        return benefit
+        taxday_scaling = self.get_taxday_scaling()
+        if taxday_scaling == Decimal(0):
+            return Decimal(0)
+        # Extrapolate to an income base, as if person had been tax liable for full year
+        extrapolated_income_base = income_base / taxday_scaling
+        # Calculate benefit for whole year based on extrapolated income
+        whole_year_benefit: Decimal = calculation_method.calculate(
+            extrapolated_income_base
+        )
+        # Scale calculated benefit to tax-liable fraction of year
+        benefit = whole_year_benefit * taxday_scaling
+        logger.info(
+            "%r: tax_days=%r income_base=%r extrapolated_income_base=%r",
+            self.person_year,
+            self.person_year.tax_days,
+            income_base,
+            extrapolated_income_base,
+        )
+        return benefit.quantize(Decimal("0.01"))
 
 
 class FinalSettlement(PermissionsMixin, models.Model):
