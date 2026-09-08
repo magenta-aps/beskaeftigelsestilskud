@@ -459,6 +459,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             import_date=date.today(),
             benefit_transferred=1000,
         )
+
         self.annual_income = AnnualIncome.objects.create(
             person_year=self.prev_person_year,
             summarized_a_income=Decimal("1000"),
@@ -469,6 +470,16 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         self.finalsettlement = FinalSettlement.objects.create(
             annual_income=self.annual_income,
         )
+        self.annual_income1 = AnnualIncome.objects.create(
+            person_year=self.prev_person_year,
+            summarized_a_income=Decimal("1000"),
+            summarized_b_income=Decimal("2000"),
+            summarized_u_income=Decimal("3000"),
+            employer_paid_gl_pension_income=Decimal("1500"),
+        )
+        self.finalsettlement1 = FinalSettlement.objects.create(
+            annual_income=self.annual_income1,
+        )
         with self._time_context(year=2020):  # December 2020
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             # Verify that expected context variables are present
@@ -478,6 +489,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertIn("estimated_year_result", response.context_data)
             self.assertIn("table", response.context_data)
             self.assertIsNotNone(response.context_data["surplus_benefit_last_change"])
+            # Check that the 2 FinalSettlements are **not** summed to a result of 2000
             self.assertEqual(response.context_data["surplus_benefit"], 1000)
             self.assertIsNotNone(response.context_data["next_payout_date"])
             # The expected payout for the next month is 10, however this amount is

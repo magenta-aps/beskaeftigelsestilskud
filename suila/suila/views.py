@@ -345,20 +345,29 @@ class PersonDetailView(
         context_data = super().get_context_data(**kwargs)
         user = self.request.user
         person = self.object
-        finalsettlements = FinalSettlement.objects.filter(
-            annual_income__person_year__person=person,
-            _result__lt=0,
-        ).order_by(
-            "annual_income__person_year",
-            "-created"
-        ).distinct("annual_income__person_year")
-        finalsettlement_surplus_benefit = (
-            finalsettlements.aggregate(acquired=Sum("_result"))["acquired"] or 0
+
+        distinct_year_latest_finalsettlements = (
+            FinalSettlement.objects.filter(
+                _result__lt=0,
+                annual_income__person_year__person=person,
+            )
+            .order_by("annual_income__person_year", "-created")
+            .distinct("annual_income__person_year")
         )
+
+        pks = list(distinct_year_latest_finalsettlements.values_list("pk", flat=True))
+
+        latest_finalsettlements = FinalSettlement.objects.filter(pk__in=pks)
+        finalsettlement_surplus_benefit = (
+            latest_finalsettlements.aggregate(sum=Sum("_result"))["sum"] or 0
+        )
+
         # Flip the sign, since FinalSettlement _result stores debt with a negative sign
         surplus_benefit = -finalsettlement_surplus_benefit
 
-        surplus_benefit_last_change = finalsettlements.order_by("-created").first()
+        surplus_benefit_last_change = latest_finalsettlements.order_by(
+            "-created"
+        ).first()
         if surplus_benefit_last_change:
             surplus_benefit_last_change = surplus_benefit_last_change.created
 
