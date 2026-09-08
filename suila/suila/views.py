@@ -348,7 +348,10 @@ class PersonDetailView(
         finalsettlements = FinalSettlement.objects.filter(
             annual_income__person_year__person=person,
             _result__lt=0,
-        )
+        ).order_by(
+            "annual_income__person_year",
+            "-created"
+        ).distinct("annual_income__person_year")
         finalsettlement_surplus_benefit = (
             finalsettlements.aggregate(acquired=Sum("_result"))["acquired"] or 0
         )
