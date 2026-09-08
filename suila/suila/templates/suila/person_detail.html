@@ -43,7 +43,7 @@
     {% if estimation_engine_changed %}
         {% estimation_engine_info_box %}
     {% endif %}
-    {% if surplus_benefit %}
+    {% if surplus_benefit and show_surplus_benefit_status %}
         {% surplus_benefit_info_box %}
     {% endif %}
     </div>

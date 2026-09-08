@@ -124,6 +124,8 @@ EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
 
 # month in which the first payout of the year is run
 MONTH_OF_FIRST_PAYOUT = int(os.environ.get("MONTH_OF_FIRST_PAYOUT", "3"))
+# Once #71212 is done, change default to True
+SHOW_SURPLUS_BENEFIT_STATUS = bool(os.environ.get("SHOW_SURPLUS_BENEFIT_STATUS", False))
 
 
 def show_toolbar(request):
