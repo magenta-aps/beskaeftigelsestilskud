@@ -35,6 +35,7 @@ def format_amount(
 ) -> str:
     if amount is None:
         return _("-")
+    amount = round(amount, decimal_pos)  # type: ignore
     formatted_amount: str = number_format(
         amount,
         decimal_pos=decimal_pos,
