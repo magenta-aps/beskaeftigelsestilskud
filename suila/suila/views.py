@@ -1213,9 +1213,9 @@ class CalculatorView(
             self.get_context_data(
                 form=form,
                 taxable_months=taxable_months,
-                yearly_benefit=str(yearly_benefit.quantize(q)),
-                yearly_adjusted_benefit=str(yearly_adjusted_benefit.quantize(q)),
-                monthly_benefit=str(monthly_benefit.quantize(q)),
+                yearly_benefit=yearly_benefit.quantize(q),
+                yearly_adjusted_benefit=yearly_adjusted_benefit.quantize(q),
+                monthly_benefit=monthly_benefit.quantize(q),
                 graph_points=self.to_json(method.graph_points),
             )
         )
