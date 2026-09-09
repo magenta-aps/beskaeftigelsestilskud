@@ -1479,15 +1479,15 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
                 },
             )
             context_data = response.context_data
-            self.assertEqual(context_data["yearly_benefit"], "12600.00")
-            self.assertEqual(context_data["monthly_benefit"], "1050.00")
+            self.assertEqual(context_data["yearly_benefit"], Decimal("12600.00"))
+            self.assertEqual(context_data["monthly_benefit"], Decimal("1050.00"))
 
     def test_calculator_zero(self):
         response = self.request(0)
         self.assertIsInstance(response, TemplateResponse)
         self.assertTrue(response.context_data["form"].is_valid())
-        self.assertEqual(response.context_data["yearly_benefit"], "0.00")
-        self.assertEqual(response.context_data["monthly_benefit"], "0.00")
+        self.assertEqual(response.context_data["yearly_benefit"], Decimal("0.00"))
+        self.assertEqual(response.context_data["monthly_benefit"], Decimal("0.00"))
         self.assertJSONEqual(
             response.context_data["graph_points"],
             [
@@ -1504,41 +1504,41 @@ class TestCalculator(TimeContextMixin, PersonEnv, TestCase):
         self.assertIsInstance(response, TemplateResponse)
         context = response.context_data
         self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["yearly_benefit"], "5600.00")
-        self.assertEqual(context["monthly_benefit"], "466.67")
+        self.assertEqual(context["yearly_benefit"], Decimal("5600.00"))
+        self.assertEqual(context["monthly_benefit"], Decimal("466.67"))
 
     def test_calculator_ramp_plateau(self):
         response = self.request(250000)
         self.assertIsInstance(response, TemplateResponse)
         context = response.context_data
         self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["yearly_benefit"], "15750.00")
-        self.assertEqual(context["monthly_benefit"], "1312.50")
+        self.assertEqual(context["yearly_benefit"], Decimal("15750.00"))
+        self.assertEqual(context["monthly_benefit"], Decimal("1312.50"))
 
     def test_calculator_ramp_down(self):
         response = self.request(350000)
         self.assertIsInstance(response, TemplateResponse)
         context = response.context_data
         self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["yearly_benefit"], "9450.00")
-        self.assertEqual(context["monthly_benefit"], "787.50")
+        self.assertEqual(context["yearly_benefit"], Decimal("9450.00"))
+        self.assertEqual(context["monthly_benefit"], Decimal("787.50"))
 
     def test_calculator_ramp_over(self):
         response = self.request(500000)
         self.assertIsInstance(response, TemplateResponse)
         context = response.context_data
         self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["yearly_benefit"], "0.00")
-        self.assertEqual(context["monthly_benefit"], "0.00")
+        self.assertEqual(context["yearly_benefit"], Decimal("0.00"))
+        self.assertEqual(context["monthly_benefit"], Decimal("0.00"))
 
     def test_adjust_for_tax_months(self):
         response = self.request(250000, date(2025, 7, 1))
         self.assertIsInstance(response, TemplateResponse)
         context = response.context_data
         self.assertTrue(context["form"].is_valid(), context["form"].errors)
-        self.assertEqual(context["yearly_benefit"], "15750.00")
-        self.assertEqual(context["yearly_adjusted_benefit"], "7875.00")
-        self.assertEqual(context["monthly_benefit"], "1312.50")
+        self.assertEqual(context["yearly_benefit"], Decimal("15750.00"))
+        self.assertEqual(context["yearly_adjusted_benefit"], Decimal("7875.00"))
+        self.assertEqual(context["monthly_benefit"], Decimal("1312.50"))
         self.assertEqual(context["taxable_months"], 6)
 
     def test_get_engines(self):
