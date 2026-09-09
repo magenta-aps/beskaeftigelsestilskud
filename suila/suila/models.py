@@ -2498,11 +2498,6 @@ class AnnualIncome(PermissionsMixin, models.Model):
     def get_taxday_scaling(self) -> Decimal:
         # Return fraction of year, which the person is tax liable for
         if self.person_year.tax_days <= 0:
-            logger.info(
-                "%r: tax_days=%r income_base=%r extrapolated_income_base=0",
-                self.person_year,
-                self.person_year.tax_days,
-            )
             return Decimal("0")
 
         assert 0 < self.person_year.tax_days <= 366
