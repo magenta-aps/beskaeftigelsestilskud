@@ -870,9 +870,8 @@ class GenerateFinalSettlements(BaseTestCase):
 
     def test_generate_final_settlements_without_person_months(self):
         """
-        `FinalSettlement.pdf` raises a ValueError when the person year has no
-        person months at all, so the command must not pick up such person years
-        in the first place.
+        A final settlement should also be generateable for a person without person
+        months
         """
         SuilaEboksMessage.objects.all().delete()
         person_years = PersonYear.objects.filter(year__year=2024)
@@ -897,11 +896,11 @@ class GenerateFinalSettlements(BaseTestCase):
             call_command("generate_final_settlements", "2024")
 
         self.assertIn(
-            f"Generated {person_years.count() - 1} final settlements",
+            f"Generated {person_years.count()} final settlements",
             logs.output[-1],
         )
-        # The person year without months is skipped entirely ...
-        self.assertFalse(
+        # The person year without months is NOT skipped
+        self.assertTrue(
             FinalSettlement.objects.filter(
                 annual_income__person_year=skipped_person_year
             ).exists()

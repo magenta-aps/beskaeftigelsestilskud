@@ -2590,14 +2590,8 @@ class FinalSettlement(PermissionsMixin, models.Model):
         if not self.pk:  # Save final settlement before generating PDF.
             return None
         if self.eboks_message is None:
-            try:
-                person_month = self.person_year.personmonth_set.latest("month")
-            except PersonMonth.DoesNotExist:
-                raise ValueError(
-                    "Can't generate final settlement for a person_year without months"
-                )
             self.eboks_message = SuilaEboksMessage.objects.create(
-                person_month=person_month, type="årsopgørelse"
+                person_year=self.person_year, type="årsopgørelse"
             )
             pdf_bytes = self.eboks_message.pdf
             cpr = self.person_year.person.cpr
@@ -2956,7 +2950,10 @@ class SuilaEboksMessage(EboksMessage):
     }
 
     person_month = models.ForeignKey(
-        PersonMonth, null=False, blank=False, on_delete=models.CASCADE
+        PersonMonth, null=True, blank=True, on_delete=models.CASCADE
+    )
+    person_year = models.ForeignKey(
+        PersonYear, null=True, blank=True, on_delete=models.CASCADE
     )
 
     type = models.CharField(
@@ -2976,20 +2973,18 @@ class SuilaEboksMessage(EboksMessage):
         return self.type_map[self.type]
 
     @property
-    def month(self):
-        return self.person_month.month
-
-    @property
     def year(self) -> int:
-        return self.person_year.year_id
-
-    @cached_property
-    def person_year(self) -> PersonYear:
-        return self.person_month.person_year
+        if self.person_year:
+            return self.person_year.year_id
+        else:
+            return self.person_month.person_year.year_id  # type: ignore
 
     @property
     def person(self):
-        return self.person_month.person
+        if self.person_month:
+            return self.person_month.person
+        else:
+            return self.person_year.person
 
     def pause_reason(self, language: str):
         if not self.person.pause_reason:
@@ -3000,26 +2995,18 @@ class SuilaEboksMessage(EboksMessage):
     @cached_property
     def context(self):
         quant = Decimal("0.01")
-        year_range = range(self.year, self.year - 3, -1)
-        year_map = [[self.person_month]] + [
-            PersonMonth.objects.filter(
-                person_year__person=self.person, person_year__year_id=y
-            )
-            for y in year_range
-        ]
 
         context: Dict[str, Any] = {
             "person": self.person,
             "year": self.year,
-            "month": self.month,
-            "personyear": self.person_month.person_year,
+            "personyear": self.person_year or self.person_month.person_year,
             "personmonth": self.person_month,
         }
 
         if self.type == "årsopgørelse":
             annual_income = self.person_year.annual_income_statements.last()
             if annual_income is None:
-                raise ValueError(
+                raise ValueError(  # pragma: no cover
                     f"Missing AnnualIncome for PersonYear {self.person_year.pk}"
                 )
             benefit = annual_income.calculate_actual_annual_benefit()
@@ -3048,18 +3035,30 @@ class SuilaEboksMessage(EboksMessage):
                     "pause_reason_da": self.pause_reason("da"),
                     "pause_reason_kl": self.pause_reason("kl"),
                     "pause_reason_en": self.pause_reason("en"),
+                    "month": self.person_month.month,
                 }
             )
 
         if self.type in ("afventer", "opgørelse"):
+
+            year = self.person_month.person_year.year_id
+            year_range = range(year, year - 3, -1)
+
+            year_map = [[self.person_month]] + [
+                PersonMonth.objects.filter(
+                    person_year__person=self.person, person_year__year_id=y
+                )
+                for y in year_range
+            ]
             context.update(
                 {
+                    "month": self.person_month.month,
                     "sum_income": (
                         self.person_month.estimated_year_result or Decimal(0)
                     )
-                    + self.person_year.b_income
-                    - self.person_year.b_expenses
-                    - self.person_year.catchsale_expenses,
+                    + self.person_month.person_year.b_income
+                    - self.person_month.person_year.b_expenses
+                    - self.person_month.person_year.catchsale_expenses,
                     "income": {
                         "catchsale_income": [
                             Decimal(
@@ -3117,10 +3116,16 @@ class SuilaEboksMessage(EboksMessage):
     def html(self, language: str, extra_context: dict | None = None):
         template = self.attrs["templates"].get(language)
         if template:
-            context = {
-                **self.context,
-                "month_name": self.month_names[language][self.month - 1],
-            }
+
+            if self.person_month:
+                context = {
+                    **self.context,
+                    "month_name": self.month_names[language][
+                        self.person_month.month - 1
+                    ],
+                }
+            else:
+                context = self.context
             if extra_context:
                 context.update(extra_context)
             return template.render(context)
@@ -3163,10 +3168,13 @@ class SuilaEboksMessage(EboksMessage):
         return data.read()
 
     def update_fields(self, force_update=False):
-        month_name = self.month_names["da"][self.month - 1]
-        self.title = self.attrs["title"].format(month=month_name)
+        if self.person_month:
+            month_name = self.month_names["da"][self.person_month.month - 1]
+            self.title = self.attrs["title"].format(month=month_name)
+        else:
+            self.title = self.attrs["title"]
         self.content_type = self.attrs["content_type"]
-        self.cpr_cvr = self.person_month.person.cpr
+        self.cpr_cvr = self.person.cpr
         if not self.contents or force_update:
             self.set_pdf_data(self.pdf)
 

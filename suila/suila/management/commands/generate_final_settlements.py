@@ -25,9 +25,10 @@ class Command(SuilaBaseCommand):
         person_years = (
             PersonYear.objects.filter(
                 year_id=year,
-                # Require an associated AnnualIncome object and at least 1 personmonth
+                # Require an associated AnnualIncome object
+                # A person month is not required. Because it is possible to get a payout
+                # Even without having received suila-tapit
                 annual_income_statements__isnull=False,
-                personmonth__isnull=False,
             )
             .exclude(
                 person__full_address="",
@@ -42,7 +43,7 @@ class Command(SuilaBaseCommand):
         if not kwargs["force_recreate"]:
             person_years = person_years.exclude(
                 # Exclude those that already have a message
-                personmonth__suilaeboksmessage__type="årsopgørelse"
+                suilaeboksmessage__type="årsopgørelse"
             )
 
         if kwargs["ids"]:

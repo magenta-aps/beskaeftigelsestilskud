@@ -521,9 +521,9 @@ class SuilaMessageTest(EboksTest):
         )
 
     def test_title(self):
-        self.assertEqual(self.message1.month, 1)
+        self.assertEqual(self.message1.person_month.month, 1)
         self.assertEqual(self.message1.title, "Suila-tapit udbetaling for januar")
-        self.assertEqual(self.message2.month, 1)
+        self.assertEqual(self.message2.person_month.month, 1)
         self.assertEqual(self.message2.title, "Suila-tapit udbetaling for januar")
 
     def test_content_type(self):

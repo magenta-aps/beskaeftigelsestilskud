@@ -1372,14 +1372,25 @@ class GeneratedEboksMessageView(
             person_year__year_id=self.kwargs["year"],
             month=self.kwargs["month"],
         )
+        person_year = get_object_or_404(
+            PersonYear,
+            person=self.object,
+            year_id=self.kwargs["year"],
+        )
         typ = self.kwargs["type"]
         if typ not in ("opgørelse", "afventer", "årsopgørelse"):
             raise Http404
+
+        if typ == "årsopgørelse":
+            message = SuilaEboksMessage(person_year=person_year, type=typ)
+        else:
+            message = SuilaEboksMessage(person_month=person_month, type=typ)
+
         self.log_view(person_month)
         return super().get_context_data(
             **{
                 **kwargs,
-                "message": SuilaEboksMessage(person_month=person_month, type=typ),
+                "message": message,
             }
         )
 
