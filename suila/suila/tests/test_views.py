@@ -1980,9 +1980,8 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
             {
                 "person": self.person1,
                 "year": personmonth.year,
-                "month": personmonth.month,
                 "personyear": personmonth.person_year,
-                "personmonth": personmonth,
+                "personmonth": None,
                 "a_income": total_a_income_theory,
                 "b_income": total_b_income_theory,
                 "u_income": total_u_income_theory,
