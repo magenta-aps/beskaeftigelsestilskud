@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-10 07:30-0100\n"
+"POT-Creation-Date: 2026-09-10 14:34-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1006,6 +1006,10 @@ msgid ""
 msgstr ""
 "My signals –find information about the calculation basis for your Suila-"
 "tapit."
+
+#: suila/templates/suila/person_detail.html
+msgid "Årsopgørelser"
+msgstr ""
 
 #: suila/templates/suila/person_detail.html
 #: suila/templates/suila/person_detail_eboks_send.html
