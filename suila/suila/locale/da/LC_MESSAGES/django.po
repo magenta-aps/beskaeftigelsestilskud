@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-07 08:02-0100\n"
+"POT-Creation-Date: 2026-09-10 07:30-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -408,7 +408,7 @@ msgid "Beregnet Suila-tapit pr. måned:"
 msgstr ""
 
 #: suila/templates/suila/calculate.html
-msgid "Antal skattepligige måneder hvor der udbetales Suila-tapit:"
+msgid "Antal skattepligtige måneder hvor der udbetales Suila-tapit:"
 msgstr ""
 
 #: suila/templates/suila/calculate.html

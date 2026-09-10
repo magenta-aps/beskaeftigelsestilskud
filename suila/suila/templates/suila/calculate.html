@@ -113,11 +113,11 @@
         </form>
     </div>
     <div class="col-xl-6 mt-xl-0 mt-5">
-        {% if monthly_benefit or yearly_benefit %}
+        {% if monthly_benefit is not None or yearly_benefit is not None %}
         <div class="emphasis">
             <p>{% translate "Beregnet Suila-tapit pr. måned:" %}</p>
             <h1>{{ monthly_benefit|format_amount:2 }}</h1>
-            <p class="mt-5">{% translate "Antal skattepligige måneder hvor der udbetales Suila-tapit:" %}</p>
+            <p class="mt-5">{% translate "Antal skattepligtige måneder hvor der udbetales Suila-tapit:" %}</p>
             <h1>{{ taxable_months }}</h1>
             <p class="mt-5">{% translate "Beregnet Suila-tapit for hele året:" %}</p>
             <h1>{{ yearly_adjusted_benefit|format_amount:2 }}</h1>
