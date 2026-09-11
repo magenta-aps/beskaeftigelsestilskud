@@ -106,7 +106,7 @@ services:
   suila-db:
     # Do not set `user` here
     container_name: suila-db
-    image: postgres:16
+    image: postgres:18
     env_file:
       - ./dev-environment/suila.env
     volumes:
