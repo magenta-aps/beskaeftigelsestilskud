@@ -583,7 +583,6 @@ class PersonDetailView(
                 )
                 .filter(
                     person_year=relevant_person_month.person_month.person_year,
-                    month__lte=relevant_person_month.person_month.month,
                 )
                 .order_by("month")
             )
