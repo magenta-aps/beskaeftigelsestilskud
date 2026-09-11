@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import date, datetime
 from decimal import Decimal
@@ -9,6 +10,8 @@ from prisme.client import Prisme
 from prisme.file import File as InvoiceFile
 from prisme.invoice import InvoiceLine, InvoiceRequest, InvoiceResponse
 from prisme.request import ResponseType
+
+logger = logging.getLogger(__name__)
 
 
 class SuilaInvoiceLine(InvoiceLine):
@@ -127,8 +130,11 @@ class SuilaInvoiceResponse(InvoiceResponse):
     def __init__(self, request: SuilaInvoiceRequest, xml: str):
         super().__init__(request, xml)
         if self.data is not None:
-            self.rec_id = self.data["CustInvoiceTable"]["RecId"]
-            self.invoice_id = self.data["CustInvoiceTable"]["InvoiceId"]
+            self.rec_id = self.data.get("CustInvoiceTable", {}).get("RecId")
+            self.invoice_id = self.data.get("CustInvoiceTable", {}).get("InvoiceId")
+        else:
+            self.rec_id = None
+            self.invoice_id = None
 
 
 class PrismeClient(Prisme):
@@ -164,31 +170,38 @@ class PrismeClient(Prisme):
     @staticmethod
     def mock_service(
         request_object: SuilaInvoiceRequest, debug_context: Any = None
-    ) -> List[SuilaInvoiceResponse]:  # pragma: no cover
+    ) -> SuilaInvoiceResponse:  # pragma: no cover
         print("Mock call to Prisme:")
         print(request_object.xml)
 
         PrismeClient.mock_recid_counter += 1
-        return [
-            SuilaInvoiceResponse(
-                request_object,
-                f"""
-                <CustInvoiceTable>
-                <RecId>{PrismeClient.mock_recid_counter}</RecId>
-                <HarborTaxIdFUJ>{request_object.afgift_id}</HarborTaxIdFUJ>
-                <InvoiceId>{PrismeClient.mock_recid_counter}</InvoiceId>
-                </CustInvoiceTable>
-                """,
-            )
-        ]
+        SuilaInvoiceResponse(
+            request_object,
+            f"""
+            <CustInvoiceTable>
+            <RecId>{PrismeClient.mock_recid_counter}</RecId>
+            <HarborTaxIdFUJ>{request_object.afgift_id}</HarborTaxIdFUJ>
+            <InvoiceId>{PrismeClient.mock_recid_counter}</InvoiceId>
+            </CustInvoiceTable>
+            """,
+        )
 
     def process_service(
         self, request_object: SuilaInvoiceRequest, debug_context: Any = None
-    ) -> List[ResponseType]:
+    ) -> SuilaInvoiceResponse:
         if self.mock:
             return self.mock_service(request_object, debug_context)
         else:
-            return super().process_service(request_object, debug_context)
+            responses = super().process_service(request_object, debug_context)
+            if len(responses) > 1:
+                response_str = "\n".join([response.xml for response in responses])
+                logger.warning(
+                    "Multiple responses returned from Prisme. Expected 1, got "
+                    + str(len(responses))
+                    + ":\n"
+                    + response_str
+                )
+            return responses[0]
 
     def create_request_header(
         self, method: str, area: str = "Suila", client_version: int = 1

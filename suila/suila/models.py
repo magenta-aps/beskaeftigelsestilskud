@@ -66,7 +66,12 @@ from weasyprint.text.fonts import FontConfiguration
 
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
-from suila.integrations.prisme.client import SuilaInvoiceLine, SuilaInvoiceRequest
+from suila.integrations.prisme.client import (
+    PrismeClient,
+    SuilaInvoiceLine,
+    SuilaInvoiceRequest,
+    SuilaInvoiceResponse,
+)
 from suila.model_mixins import PermissionsMixin
 
 logger = logging.getLogger(__name__)
@@ -2490,6 +2495,8 @@ class FinalSettlement(PermissionsMixin, models.Model):
         upload_to="aarsopgoerelse",
     )
 
+    invoice_sent = models.BooleanField(default=False)
+
     @property
     def pdf(self):
         if not self.pk:  # Save final settlement before generating PDF.
@@ -2545,7 +2552,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
             self._result = result
         return self._result
 
-    def send_invoice(self):
+    def send_invoice(self, client: PrismeClient):
         amount = -self.result
         if amount > 0:
             print(f"Send invoice for {amount} DKK")
@@ -2588,6 +2595,13 @@ class FinalSettlement(PermissionsMixin, models.Model):
                 ],
             )
             print(request.xml)
+            response: SuilaInvoiceResponse = client.process_service(request)
+            if response and response.rec_id:
+                print("Got response for invoice")
+                self.invoice_sent = True
+                self.save(update_fields=("invoice_sent",))
+            else:
+                print("Did not get rec_id for invoice")
 
 
 @receiver(pre_save, sender=FinalSettlement)
