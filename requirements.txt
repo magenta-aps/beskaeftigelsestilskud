@@ -46,7 +46,7 @@ psycopg==3.3.5
 pydot==3.0.4
 pycparser==2.23
 pydantic==2.13.5
-pyOpenSSL==24.1.0
+pyOpenSSL==26.4.0
 pypdf==5.9.0
 pysaml2==7.5.4
 python-dateutil==2.9.0.post0
