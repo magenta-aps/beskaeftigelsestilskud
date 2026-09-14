@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date, timedelta
+from decimal import Decimal
 from fractions import Fraction
 
 import numpy as np
@@ -10,7 +11,7 @@ from common import utils
 from common.utils import to_dataframe
 from dateutil.relativedelta import FR, TU, relativedelta
 from django.conf import settings
-from django.db.models import Exists, F
+from django.db.models import Exists, F, Q, Sum
 from more_itertools import one
 from numpy import float64
 
@@ -104,6 +105,7 @@ def calculate_benefit(
         dtypes={
             "has_signal": bool,
             "full_tax_scope_months": int,
+            "offset_benefit_difference": float,
         },
     )
 
@@ -117,7 +119,12 @@ def calculate_benefit(
 
     # Add benefit difference, flip sign for calculation purposes
     person_year_qs = person_year_qs.annotate(
-        benefit_difference=-F("person__benefit_difference")
+        benefit_difference=-F("person__benefit_difference"),
+        prior_offset_benefit_difference=Sum(
+            "personmonth__offset_benefit_difference",
+            filter=Q(personmonth__month__lt=month),
+            default=Decimal("0"),
+        ),
     )
 
     assessment_df = to_dataframe(
@@ -130,6 +137,7 @@ def calculate_benefit(
             "person__paused": bool,
             "person__annual_income_estimate": float,
             "benefit_difference": float,
+            "prior_offset_benefit_difference": float,
         },
     )
 
@@ -176,7 +184,9 @@ def calculate_benefit(
         axis=1
     )
     df.loc[:, "remaining_benefit_for_year"] = (
-        df.estimated_year_benefit - df.prior_benefit_transferred
+        df.estimated_year_benefit
+        - df.prior_benefit_transferred
+        - df.prior_offset_benefit_difference
     )
     df.loc[:, "benefit_this_month"] = (
         df.remaining_benefit_for_year / (13 - month)
