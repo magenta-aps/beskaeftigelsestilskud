@@ -1247,7 +1247,12 @@ class TestFinalSettlements(IntegrationBaseTest):
         expected_difference = Decimal("756.00")
         call_command("generate_final_settlements", self.years[0])
         self.assert_final_settlement_exists(self.cpr, expected_difference)
-        call_command("export_final_settlements_to_prisme", year=self.years[0])
+        call_command(
+            "export_final_settlements_to_prisme",
+            year=self.years[0],
+            posting_date=date(2026, 9, 16),
+            payment_date=date(2026, 9, 17),
+        )
         self.assert_final_settlement_transferred(expected_difference)
 
     def assert_final_settlement_exists(self, cpr, result):
@@ -1302,7 +1307,12 @@ class TestFinalSettlementsWithEPP(IntegrationBaseTest):
         expected_difference = Decimal("756.00")
         call_command("generate_final_settlements", self.years[0])
         self.assert_final_settlement_exists(self.cpr, expected_difference)
-        call_command("export_final_settlements_to_prisme", year=self.years[0])
+        call_command(
+            "export_final_settlements_to_prisme",
+            year=self.years[0],
+            posting_date=date(2026, 9, 16),
+            payment_date=date(2026, 9, 17),
+        )
         self.assert_final_settlement_transferred(expected_difference)
 
     def add_annualincome_record_with_epp(self, cpr, salary=0, year=None):
