@@ -21,7 +21,7 @@ ais_a = ais.annotate(
 )
 
 df = pd.DataFrame(
-    list(ais_a.values_list("cpr", "latest_result", "first_result")),
+    list(ais_a.values_list("cpr", "first_result", "latest_result")),
     columns=["CPR", "Result-20/8", "Result-10/9"],
 )
 df["Difference"] = df["Result-10/9"] - df["Result-20/8"]
