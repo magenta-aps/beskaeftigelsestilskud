@@ -4,7 +4,6 @@
 from datetime import date
 from decimal import Decimal
 
-from dateutil.relativedelta import TU, relativedelta
 from django.conf import settings
 from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Cast, LPad, Substr
@@ -14,20 +13,31 @@ from suila.models import FinalSettlement, PrismeBatch, PrismeBatchItem
 
 
 class FinalSettlementExport(BaseExport):
-    def __init__(self, year: int):
+    def __init__(self, year: int, posting_date: date, payment_date: date):
         if year >= date.today().year:
             raise ValueError(f"`year` must be less than {date.today().year}")
         self._year = year
         self._month = date.today().month
+        self._posting_date = posting_date
+        self._payment_date = payment_date
 
     def get_queryset(self):
+        # Find the primary key of each latest `FinalSettlement` for each `PersonYear`
+        latest_per_person_year: QuerySet[FinalSettlement] = (
+            FinalSettlement.objects.order_by(
+                "annual_income__person_year__pk", "-created"
+            ).distinct("annual_income__person_year__pk")
+        )
+        pks: list[int] = list(latest_per_person_year.values_list("pk", flat=True))
+        # Find the `FinalSettlement` queryset of relevant final settlements for this
+        # tax year.
         qs: QuerySet[FinalSettlement] = FinalSettlement.objects.filter(
+            pk__in=pks,
             annual_income__person_year__year__year=self._year,
             prismebatchitem__isnull=True,
             _result__isnull=False,
             _result__gte=settings.PRISME.get("final_settlement_amount_threshold", 100),
         )
-
         # Annotate with string version of CPR (zero-padded to 10 digits)
         qs = qs.annotate(
             identifier=LPad(
@@ -64,10 +74,10 @@ class FinalSettlementExport(BaseExport):
         return obj._result
 
     def get_payment_date(self, obj: FinalSettlement) -> date:
-        return date(self._year, self._month, 1) + relativedelta(years=1, weekday=TU(+3))
+        return self._payment_date
 
     def get_posting_date(self, obj: FinalSettlement) -> date:
-        return date(self._year, self._month, 1) + relativedelta(years=1, weekday=TU(+2))
+        return self._posting_date
 
     def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
         return (

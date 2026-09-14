@@ -14,6 +14,7 @@ from unittest.mock import ANY, MagicMock, call, patch
 import numpy as np
 import pandas as pd
 from common.tests.test_utils import BaseTestCase
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import Group
 from django.core.management import CommandError, call_command
 from django.db import connections
@@ -921,9 +922,18 @@ class ExportFinalSettlementsToPrismeTest(BaseTestCase):
         "FinalSettlementExport.export_batches"
     )
     def test_command_invokes_export(self, mock_export_batches):
-        call_command("export_final_settlements_to_prisme")
+        call_command(
+            "export_final_settlements_to_prisme",
+            posting_date=date.today(),
+            payment_date=date.today() + relativedelta(days=1),
+        )
         self.assertTrue(mock_export_batches.called)
 
     def test_command_fails_on_current_year(self):
         with self.assertRaises(CommandError):
-            call_command("export_final_settlements_to_prisme", year=date.today().year)
+            call_command(
+                "export_final_settlements_to_prisme",
+                year=date.today().year,
+                posting_date=date.today(),
+                payment_date=date.today() + relativedelta(days=1),
+            )

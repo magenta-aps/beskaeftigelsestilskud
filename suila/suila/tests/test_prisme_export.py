@@ -881,7 +881,7 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
                     )
 
     def _get_instance(self) -> FinalSettlementExport:
-        return FinalSettlementExport(2025)
+        return FinalSettlementExport(2025, date(2026, 9, 16), date(2026, 9, 17))
 
     def _add_final_settlement(self, income: Decimal) -> FinalSettlement:
         for month in range(13):
