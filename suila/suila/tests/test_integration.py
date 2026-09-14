@@ -1247,8 +1247,48 @@ class TestFinalSettlements(IntegrationBaseTest):
         expected_difference = Decimal("756.00")
         call_command("generate_final_settlements", self.years[0])
         self.assert_final_settlement_exists(self.cpr, expected_difference)
-        call_command("export_final_settlements_to_prisme", year=self.years[0])
+        call_command(
+            "export_final_settlements_to_prisme",
+            year=self.years[0],
+            posting_date=date(2026, 9, 16),
+            payment_date=date(2026, 9, 17),
+        )
         self.assert_final_settlement_transferred(expected_difference)
+
+    def test_export_is_idempotent(self):
+        def run():
+            stdout = StringIO()
+            call_command(
+                "export_final_settlements_to_prisme",
+                year=self.years[0],
+                posting_date=date(2026, 9, 16),
+                payment_date=date(2026, 9, 17),
+                stdout=stdout,
+            )
+            return stdout
+
+        # Arrange: create two sets of final settlements
+        call_command("generate_final_settlements", self.years[0])
+        call_command("generate_final_settlements", self.years[0])
+        # Act: first invocation exports objects to Prisme
+        stdout = run()
+        self.assertIn(
+            "Found 1 object(s) to export for year=2025 ...", stdout.getvalue()
+        )
+        self.assertIn(
+            "Exported 1 batch(es) (1 object(s)) for year=2025.", stdout.getvalue()
+        )
+        # Act: second invocation: exports nothing to Prisme
+        stdout = run()
+        self.assertNotIn(
+            "Found 1 object(s) to export for year=2025 ...", stdout.getvalue()
+        )
+        self.assertNotIn(
+            "Exported 1 batch(es) (1 object(s)) for year=2025.", stdout.getvalue()
+        )
+        self.assertIn(
+            "Found 0 object(s) to export for year=2025 ...", stdout.getvalue()
+        )
 
     def assert_final_settlement_exists(self, cpr, result):
         self.assertQuerySetEqual(
@@ -1302,7 +1342,12 @@ class TestFinalSettlementsWithEPP(IntegrationBaseTest):
         expected_difference = Decimal("756.00")
         call_command("generate_final_settlements", self.years[0])
         self.assert_final_settlement_exists(self.cpr, expected_difference)
-        call_command("export_final_settlements_to_prisme", year=self.years[0])
+        call_command(
+            "export_final_settlements_to_prisme",
+            year=self.years[0],
+            posting_date=date(2026, 9, 16),
+            payment_date=date(2026, 9, 17),
+        )
         self.assert_final_settlement_transferred(expected_difference)
 
     def add_annualincome_record_with_epp(self, cpr, salary=0, year=None):
