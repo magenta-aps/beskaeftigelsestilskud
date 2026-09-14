@@ -1556,12 +1556,12 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
             self.cpr, "FULL", (1, 1), (12, 31), year=self.years[0]
         )
         self.add_annualincome_record(
-                self.cpr, salary=300_000,
+            self.cpr, salary=300_000,
             year=self.years[0]
         )
         self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[0])
         self.add_u1a_record(self.cpr, udbytte=0, year=self.years[0])
-        
+
         # 2025:
         for month_number in range(1, 13):
             self.add_monthlyincome_record(
@@ -1582,9 +1582,9 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
         """
         During year, we receive 12 monthlyincome records of 24.000 kr.,
         adding to a yearly income of 288.000 kr., yielding a yearly Suila-tapit
-        of 14.112 kr. (1176 kr. pr . month).
+        of 13.356 kr. (1113 kr. pr . month).
         However, the actual yearly income was 12 * 25.000 kr. = 300.000kr.,
-        yielding only 13.356 kr. of Suila-tapit (1113 kr. pr. month).
+        yielding only 12.600 kr. of Suila-tapit (1050 kr. pr. month).
         This leads the citizen to have received 756 kr. of surplus Suila-tapit,
         which must be offset in the months following the FinalSettlement generation.
 
@@ -1595,6 +1595,7 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
             person_month = self.get_person_month(month, year)
             amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
             self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
 
         year = self.years[1]
         for month in range(1, 8):
@@ -1602,6 +1603,7 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
             person_month = self.get_person_month(month, year)
             amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
             self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
 
         # August, 2025, where we generate final settlements for 2024
         self.assertEqual(FinalSettlement.objects.count(), 0)
@@ -1611,18 +1613,18 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
         self.assertEqual(person_month.estimated_year_result, 288_000)
         call_command("generate_final_settlements", year-1)
         self.assertEqual(FinalSettlement.objects.count(), 1)
+        self.assert_benefit(amount_sent_to_prisme, 1113)
 
         # September, 2025, offset the 756 kr. owed from 2024 final settlement
-        self.call_commands(month, year)
-        person_month = self.get_person_month(month, year)
-        amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+        self.call_commands(9, year)
+        person_month = self.get_person_month(9, year)
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(9, year)
         self.assertEqual(person_month.estimated_year_result, 288_000)
-        # TODO: Problem with "amount_sent-to_prisme", because it wprk son the annual income, and not on the calculated benefit pr. month
-        self.assert_benefit(amount_sent_to_prisme, 1176 - 756)
+        self.assert_benefit(amount_sent_to_prisme, 1113 - 756)
 
         for month in range(10, 13):
             self.call_commands(month, year)
             person_month = self.get_person_month(month, year)
             amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
             self.assertEqual(person_month.estimated_year_result, 288_000)
-            self.assert_benefit(amount_sent_to_prisme, 1176)
+            self.assert_benefit(amount_sent_to_prisme, 1113)

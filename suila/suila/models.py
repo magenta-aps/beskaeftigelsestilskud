@@ -782,11 +782,15 @@ class Person(PermissionsMixin, models.Model):
         In this case any extraneous benefit is sent to be charged through Prisme
         """
         personmonth_qs = PersonMonth.objects.filter(
-            person_year__person=F("pk"),
-            offset_benefit_difference__gt=0,
+            person_year__person__pk=F("person_year__person__pk"),
+        )
+        personmonth_qs = personmonth_qs.filter(
+            offset_benefit_difference__gt=Decimal("0")
         )
         finalsettlement_qs = FinalSettlement.objects.filter(
-            annual_income__person_year__person=F("pk"),
+            annual_income__person_year__person=F(
+                "annual_income__person_year__person__pk"
+            ),
         )
         pm_benefit_offset = (
             personmonth_qs.aggregate(
