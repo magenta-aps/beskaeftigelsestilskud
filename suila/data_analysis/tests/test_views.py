@@ -74,6 +74,7 @@ class TestSimulationJSONEncoder(TestCase):
             "address_line_3": None,
             "address_line_4": None,
             "address_line_5": None,
+            "benefit_difference": 0.0,
             "cpr": "",
             "full_address": None,
             "id": cls.person.pk,
