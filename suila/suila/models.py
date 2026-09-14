@@ -593,7 +593,7 @@ class Person(PermissionsMixin, models.Model):
 
     benefit_difference = models.DecimalField(
         null=False,
-        default=Decimal('0'),
+        default=Decimal("0"),
         blank=False,
         max_digits=12,
         decimal_places=2,
@@ -786,16 +786,12 @@ class Person(PermissionsMixin, models.Model):
                 "annual_income__person_year__person__pk"
             ),
         )
-        pm_benefit_offset = (
-            personmonth_qs.aggregate(
-                spent=Sum("offset_benefit_difference")
-            )["spent"] or Decimal("0")
-        )
-        fs_benefit_difference = (
-            finalsettlement_qs.aggregate(
-                acquired=Sum("_result")
-            )["acquired"] or Decimal("0")
-        )
+        pm_benefit_offset = personmonth_qs.aggregate(
+            spent=Sum("offset_benefit_difference")
+        )["spent"] or Decimal("0")
+        fs_benefit_difference = finalsettlement_qs.aggregate(acquired=Sum("_result"))[
+            "acquired"
+        ] or Decimal("0")
 
         benefit_difference = fs_benefit_difference + pm_benefit_offset
         if save:
