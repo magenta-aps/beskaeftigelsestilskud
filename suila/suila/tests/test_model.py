@@ -572,6 +572,26 @@ class TestPerson(UserModelTest):
         self.assertEqual(self.person.paused, paused_before)
         self.assertEqual(self.person.pause_reason, reason_before)
 
+    def test_calculate_benefit_difference(self):
+        self.month6.offset_benefit_difference = 1000
+        self.month1.benefit_transferred = 1500
+        fs = FinalSettlement(annual_income=self.annual_income)
+        self.month1.save()
+        self.month6.save()
+        fs.save()
+        res = self.person.calculate_benefit_difference()
+        self.assertDictEqual(
+            res,
+            {
+                "current_benefit_difference": Decimal("-500.00"),
+                "total_acquired_surplus": Decimal("-1500.00"),
+                "total_offset_surplus": Decimal("1000.00"),
+            },
+        )
+        self.assertEqual(self.person.benefit_difference, Decimal("0"))
+        self.person.calculate_benefit_difference(save=True)
+        self.assertEqual(self.person.benefit_difference, Decimal("-500.00"))
+
 
 class TestPersonYear(UserModelTest):
     def test_string_methods(self):
