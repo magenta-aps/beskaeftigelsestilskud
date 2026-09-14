@@ -67,11 +67,6 @@ class Command(SuilaBaseCommand):
             cols_to_update,
             batch_size=1000,
         )
-        person_month = PersonMonth.objects.filter(
-            person_year__year__year=year,
-            month=month,
-            prismebatchitem__isnull=True,
-        )[0]
 
         self._write_verbose("Done")
 
