@@ -42,7 +42,9 @@ class Command(SuilaBaseCommand):
             prismebatchitem__isnull=True,
         ).select_related("person_year__person")
 
-        person_qs = Person.objects.filter(pk__in=person_month_qs.values_list("person_year__person").distinct())
+        person_qs = Person.objects.filter(
+            pk__in=person_month_qs.values_list("person_year__person").distinct()
+        )
         for person in person_qs:
             person.calculate_benefit_difference(save=True)
 
@@ -65,6 +67,11 @@ class Command(SuilaBaseCommand):
             cols_to_update,
             batch_size=1000,
         )
+        person_month = PersonMonth.objects.filter(
+            person_year__year__year=year,
+            month=month,
+            prismebatchitem__isnull=True,
+        )[0]
 
         self._write_verbose("Done")
 
