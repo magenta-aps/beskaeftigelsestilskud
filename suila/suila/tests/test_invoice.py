@@ -1,111 +1,149 @@
+from datetime import date
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from django.conf import settings
 from django.test import TestCase, override_settings
 from prisme.client import Prisme
-from prisme.exceptions import PrismeException
 
 from suila.integrations.prisme.client import (
     InvoiceCustomTableResponse,
+    PrismeClient,
     SuilaInvoiceRequest,
 )
+from suila.models import AnnualIncome, FinalSettlement, Person, PersonYear, Year
 
 
 class InvoiceTest(TestCase):
 
-    @override_settings(
-        PRISME={
-            **settings.PRISME,
-            "department_recid": "1000",
-        }
-    )
-    def test_invoice_lines(self):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        with (
+            patch.object(
+                FinalSettlement,
+                "result",
+                new_callable=PropertyMock,
+                return_value=Decimal("-1234.56"),
+            ),
+            patch.object(
+                FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
+            ),
+        ):
+            cls.final_settlement = FinalSettlement.objects.create(
+                annual_income=AnnualIncome.objects.create(
+                    person_year=PersonYear.objects.create(
+                        person=Person.objects.create(
+                            cpr="1234567890",
+                        ),
+                        year=Year.objects.create(
+                            year=2026,
+                        ),
+                    )
+                ),
+                _result=Decimal("1234.56"),
+            )
 
-        lines = self.form.invoice_lines
-        self.assertEqual(len(lines), 3)
-
-        harbor_tax_line = lines[0].dict
-        self.assertEqual(harbor_tax_line["Description"], "Harbour tax")
-        self.assertEqual(harbor_tax_line["Quantity"], 1)
-        self.assertEqual(harbor_tax_line["UnitPrice"], "15500000.00")
-        self.assertEqual(harbor_tax_line["AmountCur"], "15500000.00")
-        self.assertEqual(
-            harbor_tax_line["InvoiceTxt"],
-            "Upernavik, 2024.05.01 12:00 - 2024.06.01 12:00",
-        )
-        self.assertEqual(
-            harbor_tax_line["ledgerDimensionSegments"],
-            {
-                "ledgerDimensionSegment": [
-                    {"Name": "Afdeling", "Value": "1000"},
-                    {"Name": "Finanslov", "Value": 0},
-                    {"Name": "Formaal", "Value": "0000000000"},
-                    {
-                        "Name": "ArtsKontoplan",
-                        "Value": "000001111",
-                    },
-                    {"Name": "Sted", "Value": "001234"},
-                ]
-            },
-        )
-
-        passenger_tax_line = lines[1].dict
-        self.assertEqual(passenger_tax_line["Description"], "Passenger tax")
-        self.assertEqual(passenger_tax_line["Quantity"], 5000)
-        self.assertEqual(passenger_tax_line["UnitPrice"], "10.00")
-        self.assertEqual(passenger_tax_line["AmountCur"], "50000.00")
-        self.assertEqual(passenger_tax_line["InvoiceTxt"], "5000 passengers")
-
-        disembarkment_tax_line = lines[2].dict
-        self.assertEqual(disembarkment_tax_line["Description"], "Disembarkment tax")
-        self.assertEqual(disembarkment_tax_line["Quantity"], 1000)
-        self.assertEqual(disembarkment_tax_line["UnitPrice"], "20.00")
-        self.assertEqual(disembarkment_tax_line["AmountCur"], "20000.00")
-        self.assertEqual(
-            disembarkment_tax_line["InvoiceTxt"],
-            "Hans Ø, 2024.05.01 12:00, 1000 passengers",
-        )
-        self.assertEqual(
-            disembarkment_tax_line["ledgerDimensionSegments"],
-            {
-                "ledgerDimensionSegment": [
-                    {"Name": "Afdeling", "Value": "1000"},
-                    {"Name": "Finanslov", "Value": 0},
-                    {"Name": "Formaal", "Value": "0000000000"},
-                    {
-                        "Name": "ArtsKontoplan",
-                        "Value": "000002222",
-                    },
-                    {"Name": "Sted", "Value": "010500"},
-                ]
-            },
-        )
+    @staticmethod
+    def strip_whitespace(string):
+        return "".join(string.split())
 
     @override_settings(PRISME={**settings.PRISME, "mock": False})
-    @patch.object(Prisme, "process_service")
-    def test_send_invoice(self, mock_process_service):
-        mock_return = MagicMock()
-        mock_return.rec_id = 1
-        mock_return.afgift_id = 1
-        mock_return.invoice_id = 1
-        mock_process_service.side_effect = [
-            PrismeException(250, "Debitorkonto findes ikke", {}),
-            mock_return,
-            mock_return,
-        ]
-        self.form.submit()
-        self.form.send_invoice()
-        mock_process_service.assert_called()
-        invoice_request = mock_process_service.call_args[0][0]
-        self.assertIsInstance(invoice_request, SuilaInvoiceRequest)
-        data = invoice_request.dict
-        self.assertEqual(data["HarborTaxIdFUJ"], self.form.pk)
-        self.assertEqual(len(invoice_request.lines), 3)
-        self.assertEqual(
-            sum([line.quantity * line.unit_price for line in invoice_request.lines]),
-            Decimal("15570000.00"),
-        )
+    def test_send_invoice(self):
+        with (
+            patch.object(Prisme, "process_service") as mock_process_service,
+            patch.object(
+                FinalSettlement,
+                "result",
+                new_callable=PropertyMock,
+                return_value=Decimal("-1234.56"),
+            ),
+            patch.object(
+                FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
+            ),
+        ):
+            mock_return = MagicMock()
+            mock_return.rec_id = 1
+            mock_return.afgift_id = 1
+            mock_return.invoice_id = 1
+
+            self.final_settlement.send_invoice(
+                client=PrismeClient.from_settings(),
+                accounting_date=date(2026, 9, 15),
+                due_date=date(2026, 9, 20),
+                invoice_date=date(2026, 9, 25),
+            )
+
+            mock_process_service.assert_called()
+            invoice_request = mock_process_service.call_args[0][0]
+            self.assertIsInstance(invoice_request, SuilaInvoiceRequest)
+            self.assertEqual(len(invoice_request.lines), 1)
+            self.assertEqual(
+                sum(
+                    [line.quantity * line.unit_price for line in invoice_request.lines]
+                ),
+                Decimal("10.00"),
+            )
+            self.assertEqual(
+                self.strip_whitespace(invoice_request.xml),
+                self.strip_whitespace(
+                    """
+                <custinvoicetable>
+                  <AccountingDate>2026-09-15T00:00:00</AccountingDate>
+                  <ContactPersonId>SEL-005486</ContactPersonId>
+                  <CurrencyCode>DKK</CurrencyCode>
+                  <DueDate>2026-09-20T00:00:00</DueDate>
+                  <EinvoiceEANNum>5701234012344</EinvoiceEANNum>
+                  <InvoiceDate>2026-09-25T00:00:00</InvoiceDate>
+                  <InvoiceIntroTxt>SUILA</InvoiceIntroTxt>
+                  <LedgerYear></LedgerYear>
+                  <OMDepartmentRecIdExtFUJ>5637153652</OMDepartmentRecIdExtFUJ>
+                  <PurchOrderFormNum>Bins</PurchOrderFormNum>
+                  <custTable>
+                    <CustGroup>210026</CustGroup>
+                    <IdentificationNumber>1234567890</IdentificationNumber>
+                  </custTable>
+                  <custinvoiceLines>
+                    <custinvoiceLine>
+                      <AmountCur>10.00</AmountCur>
+                      <Beneficiary>1234567890</Beneficiary>
+                      <Description>SUILA 2026</Description>
+                      <InvoiceTxt>Suila-tapit 2026</InvoiceTxt>
+                      <ProjCategoryId>1</ProjCategoryId>
+                      <Project>Suila</Project>
+                      <Quantity>1</Quantity>
+                      <UnitPrice>10.00</UnitPrice>
+                      <ledgerDimensionSegments>
+                        <ledgerDimensionSegment>
+                          <Name>Afdeling</Name>
+                          <Value>12345</Value>
+                        </ledgerDimensionSegment>
+                        <ledgerDimensionSegment>
+                          <Name>Finanslov</Name>
+                          <Value>2222</Value>
+                        </ledgerDimensionSegment>
+                        <ledgerDimensionSegment>
+                          <Name>Formaal</Name>
+                          <Value>0000003333</Value>
+                        </ledgerDimensionSegment>
+                        <ledgerDimensionSegment>
+                          <Name>ArtsKontoplan</Name>
+                          <Value>000004444</Value>
+                        </ledgerDimensionSegment>
+                        <ledgerDimensionSegment>
+                          <Name>Sted</Name>
+                          <Value>019000</Value>
+                        </ledgerDimensionSegment>
+                      </ledgerDimensionSegments>
+                    </custinvoiceLine>
+                  </custinvoiceLines>
+                  <files>
+                    <file></file>
+                  </files>
+                </custinvoicetable>
+                """
+                ),
+            )
 
     def test_custtable_response(self):
         response = InvoiceCustomTableResponse(
