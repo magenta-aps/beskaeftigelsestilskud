@@ -156,7 +156,6 @@ class PrismeClient(Prisme):
             f"""
             <CustInvoiceTable>
             <RecId>{PrismeClient.mock_recid_counter}</RecId>
-            <HarborTaxIdFUJ>{request_object.afgift_id}</HarborTaxIdFUJ>
             <InvoiceId>{PrismeClient.mock_recid_counter}</InvoiceId>
             </CustInvoiceTable>
             """,

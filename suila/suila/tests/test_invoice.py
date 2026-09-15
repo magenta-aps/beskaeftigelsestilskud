@@ -57,6 +57,16 @@ class InvoiceTest(TestCase):
         client2 = PrismeClient.from_settings()
         self.assertEqual(client1, client2)
 
+    @override_settings(PRISME={**settings.PRISME, "mock": True})
+    def test_prismeclient_mock(self):
+        PrismeClient.instance = None
+        try:
+            client = PrismeClient.from_settings()
+            self.assertTrue(client.mock)
+            self.assertEqual(client.wsdl_file, "")
+        finally:
+            PrismeClient.instance = None
+
     @override_settings(PRISME={**settings.PRISME, "mock": False})
     def test_send_invoice_nonnegative(self):
         with (
@@ -219,3 +229,13 @@ class InvoiceTest(TestCase):
         )
         self.assertEqual(response.rec_id, "1234")
         self.assertEqual(response.invoice_id, "5678")
+
+    def test_response_fail(self):
+        response = SuilaInvoiceResponse(
+            None,
+            """
+            <SomeError></SomeError>
+            """,
+        )
+        self.assertIsNone(response.rec_id)
+        self.assertIsNone(response.invoice_id)
