@@ -2699,7 +2699,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
                 self.invoice_sent = True
                 self.save(update_fields=("invoice_sent",))
             else:
-                print("Did not get rec_id for invoice")
+                print("Did not get rec_id for invoice")  # pragma: no cover
 
 
 @receiver(pre_save, sender=FinalSettlement)

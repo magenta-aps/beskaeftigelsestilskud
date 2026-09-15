@@ -52,6 +52,33 @@ class InvoiceTest(TestCase):
         return "".join(string.split())
 
     @override_settings(PRISME={**settings.PRISME, "mock": False})
+    def test_send_invoice_nonnegative(self):
+        with (
+            patch.object(Prisme, "process_service") as mock_process_service,
+            patch.object(
+                FinalSettlement,
+                "result",
+                new_callable=PropertyMock,
+                return_value=Decimal("1234.56"),
+            ),
+            patch.object(
+                FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
+            ),
+        ):
+            mock_return = MagicMock()
+            mock_return.rec_id = 1
+            mock_return.afgift_id = 1
+            mock_return.invoice_id = 1
+
+            self.final_settlement.send_invoice(
+                client=PrismeClient.from_settings(),
+                accounting_date=date(2026, 9, 15),
+                due_date=date(2026, 9, 20),
+                invoice_date=date(2026, 9, 25),
+            )
+            mock_process_service.assert_not_called()
+
+    @override_settings(PRISME={**settings.PRISME, "mock": False})
     def test_send_invoice(self):
         with (
             patch.object(Prisme, "process_service") as mock_process_service,
