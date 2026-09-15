@@ -232,7 +232,9 @@ class EskatMocks:
             },
         )
 
-    def add_monthlyincome_record(self, cpr, month, income=0, year=None):
+    def add_monthlyincome_record(
+        self, cpr, month, income=0, year=None, foreign_pension_income=0
+    ):
         year = year or self.year
         self.add_eskat_record(
             self.monthlyincome_json_data,
@@ -251,13 +253,15 @@ class EskatMocks:
                 "disabilityPensionIncome": 0,
                 "ignoredBenefitsIncome": 0,
                 "employerPaidGLPensionIncome": 0,
-                "foreignPensionIncome": 0,
+                "foreignPensionIncome": foreign_pension_income,
                 "civilServantPensionIncome": 0,
                 "otherPensionIncome": 0,
             },
         )
 
-    def add_annualincome_record(self, cpr, salary=0, year=None):
+    def add_annualincome_record(
+        self, cpr, salary=0, year=None, foreign_pension_income=None
+    ):
         year = year or self.year
         self.add_eskat_record(
             self.annualincome_json_data,
@@ -271,7 +275,7 @@ class EskatMocks:
                 "disability_pension_income": None,
                 "ignored_benefits": None,
                 "occupational_benefit": None,
-                "foreign_pension_income": None,
+                "foreign_pension_income": foreign_pension_income,
                 "subsidy_foreign_pension_income": None,
                 "dis_gis_income": None,
                 "other_a_income": None,
@@ -684,6 +688,54 @@ class SteadyAverageIncomeTest(IntegrationBaseTest):
             self.get_person_month(month).person_year.person.welcome_letter_sent_at,
             timezone.now(),
         )
+
+
+class ForeignPensionIncomeTest(IntegrationBaseTest):
+    """
+    Foreign pension is A income, and must be included in the monthly estimation,
+    just like salary.
+
+    This test is similar to SteadyAverageIncomeTest, where a person earns a steady
+    20.000 kr every month and receives 15.750kr. in total benefit.
+
+    In this test, the person also earns a steady 20.000 kr every month, but the amount
+    is divided into income (15.000kr.) and foreign pension income (5000kr.).
+
+    We therefore expect the exact same total benefit as in the SteadyAverageIncomeTest
+    (15.750kr.)
+
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr,
+                month_number,
+                income=15000,
+                foreign_pension_income=5000,
+            )
+
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        self.add_annualincome_record(
+            self.cpr,
+            salary=15000 * 12,
+            foreign_pension_income=5000 * 12,
+        )
+        self.add_expectedincome_record(self.cpr, b_income=0)
+        self.add_u1a_record(self.cpr, udbytte=0)
+
+    def test_estimate_and_calculate_benefit(self):
+        for month in range(1, 13):
+            self.call_commands(month)
+            person_month = self.get_person_month(month)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month)
+
+            self.assertEqual(person_month.estimated_year_result, 240_000)
+            self.assert_benefit(amount_sent_to_prisme, 1312)
+
+        self.assert_total_benefit(15_750)
 
 
 class SteadyHighIncomeTest(IntegrationBaseTest):

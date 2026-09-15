@@ -246,8 +246,9 @@ class Command(BaseCommand):
                     month=month,
                     year=year,
                     defaults={
-                        "salary_income": income - 100,
+                        "salary_income": income - 200,
                         "employer_paid_gl_pension_income": Decimal(100),
+                        "foreign_pension_income": Decimal(100),
                         "employer": employer,
                     },
                 )
