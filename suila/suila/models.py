@@ -1626,6 +1626,7 @@ class MonthlyIncomeReport(PermissionsMixin, models.Model):
             self.salary_income
             + self.employer_paid_gl_pension_income
             + self.catchsale_income
+            + self.foreign_pension_income
         ).quantize(q)
         self.u_income = self.u_income.quantize(q)
 
