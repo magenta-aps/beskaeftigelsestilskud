@@ -2678,7 +2678,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
                     SuilaInvoiceLine(
                         description=f"SUILA {year}",
                         quantity=1,
-                        unit_price=10,
+                        unit_price=amount,
                         text=f"Suila-tapit {year}",
                         locality_code=locality_code,
                         beneficiary=person.cpr,

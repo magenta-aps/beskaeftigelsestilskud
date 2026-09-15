@@ -45,6 +45,13 @@ class SuilaInvoiceLine(InvoiceLine):
             project_category=prisme_settings["project_category_id"],
         )
 
+    @property
+    def dict(self) -> Dict[str, str | int | Dict[str, List[dict]] | None]:
+        return {
+            **super().dict,
+            "UnitPrice": "",
+        }
+
 
 class SuilaInvoiceRequest(InvoiceRequest):
     def __init__(

@@ -189,7 +189,7 @@ class InvoiceTest(TestCase):
                 sum(
                     [line.quantity * line.unit_price for line in invoice_request.lines]
                 ),
-                Decimal("10.00"),
+                Decimal("1234.56"),
             )
             self.assertEqual(
                 self.strip_whitespace(invoice_request.xml),
@@ -212,14 +212,14 @@ class InvoiceTest(TestCase):
                   </custTable>
                   <custinvoiceLines>
                     <custinvoiceLine>
-                      <AmountCur>10.00</AmountCur>
+                      <AmountCur>1234.56</AmountCur>
                       <Beneficiary>1234567890</Beneficiary>
                       <Description>SUILA 2026</Description>
                       <InvoiceTxt>Suila-tapit 2026</InvoiceTxt>
                       <ProjCategoryId>1</ProjCategoryId>
                       <Project>Suila</Project>
                       <Quantity>1</Quantity>
-                      <UnitPrice>10.00</UnitPrice>
+                      <UnitPrice></UnitPrice>
                       <ledgerDimensionSegments>
                         <ledgerDimensionSegment>
                           <Name>Afdeling</Name>
