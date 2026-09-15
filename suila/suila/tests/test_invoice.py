@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, PropertyMock, patch

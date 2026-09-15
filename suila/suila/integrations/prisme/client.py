@@ -80,6 +80,7 @@ class SuilaInvoiceRequest(InvoiceRequest):
             lines=lines,
         )
         self.cpr = cpr
+        self.year = year
 
         self.customer_group = f"2100{str(year)[-2:]}"
 
@@ -92,37 +93,9 @@ class SuilaInvoiceRequest(InvoiceRequest):
         }
         return d
 
-    def create_custom_table_request(self) -> "InvoiceCustomTableRequest":
-        request = InvoiceCustomTableRequest(
-            invoice_date=self.invoice_date,
-            due_date=self.due_date,
-            accounting_date=self.accounting_date,
-            text=self.text,
-            lines=self.lines,
-            files=[],
-            cpr=self.cpr,
-        )
-        request.files = self.files
-        return request
-
     @classmethod
     def response_class(cls) -> type[ResponseType]:
         return SuilaInvoiceResponse  # pragma: no cover
-
-
-class InvoiceCustomTableResponse(InvoiceResponse):
-    def __init__(self, request: SuilaInvoiceRequest, xml: str):
-        super().__init__(request, xml)
-        if self.data is not None:
-            self.account_num = int(self.data["CustTable"]["AccountNum"])
-
-
-class InvoiceCustomTableRequest(SuilaInvoiceRequest):
-    method = "CreateCustTable"
-
-    @classmethod
-    def response_class(cls) -> type[ResponseType]:
-        return InvoiceCustomTableResponse  # pragma: no cover
 
 
 class SuilaInvoiceResponse(InvoiceResponse):
