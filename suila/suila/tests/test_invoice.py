@@ -18,6 +18,7 @@ from suila.models import AnnualIncome, FinalSettlement, Person, PersonYear, Year
 
 
 class InvoiceTest(TestCase):
+    maxDiff = None
 
     @classmethod
     def setUpTestData(cls):
@@ -66,6 +67,37 @@ class InvoiceTest(TestCase):
             self.assertEqual(client.wsdl_file, "")
         finally:
             PrismeClient.instance = None
+
+    @override_settings(PRISME={**settings.PRISME, "mock": False})
+    def test_prismeclient_multiple_returns(self):
+        with (
+            patch.object(
+                Prisme,
+                "process_service",
+                return_value=[
+                    SuilaInvoiceResponse(
+                        None,
+                        "<CustInvoiceTable><RecId>111</RecId>"
+                        "<InvoiceId>222</InvoiceId></CustInvoiceTable>",
+                    ),
+                    SuilaInvoiceResponse(
+                        None,
+                        "<CustInvoiceTable><RecId>333</RecId>"
+                        "<InvoiceId>444</InvoiceId></CustInvoiceTable>",
+                    ),
+                ],
+            ),
+            patch("suila.integrations.prisme.client.logger.warning") as mock_log,
+        ):
+            client = PrismeClient.from_settings()
+            response = client.process_service(None)
+            self.assertEqual(response.rec_id, "111")
+            mock_log.assert_called_with(
+                "Multiple responses returned from Prisme. Expected 1, got 2:\n"
+                "<CustInvoiceTable><RecId>111</RecId><InvoiceId>222</InvoiceId>"
+                "</CustInvoiceTable>\n<CustInvoiceTable><RecId>333</RecId>"
+                "<InvoiceId>444</InvoiceId></CustInvoiceTable>"
+            )
 
     @override_settings(PRISME={**settings.PRISME, "mock": False})
     def test_send_invoice_nonnegative(self):
@@ -233,9 +265,7 @@ class InvoiceTest(TestCase):
     def test_response_fail(self):
         response = SuilaInvoiceResponse(
             None,
-            """
-            <SomeError></SomeError>
-            """,
+            None,
         )
         self.assertIsNone(response.rec_id)
         self.assertIsNone(response.invoice_id)
