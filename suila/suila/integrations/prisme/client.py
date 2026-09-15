@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
 import logging
 import os
 from datetime import date, datetime
@@ -148,7 +151,7 @@ class PrismeClient(Prisme):
         print(request_object.xml)
 
         PrismeClient.mock_recid_counter += 1
-        SuilaInvoiceResponse(
+        return SuilaInvoiceResponse(
             request_object,
             f"""
             <CustInvoiceTable>
