@@ -2651,7 +2651,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
         invoice_date: date,
     ):
         amount = -self.result
-        if amount > 0:
+        if amount > 0 and not self.invoice_sent:
             print(f"Send invoice for {amount} DKK")
             person_year: PersonYear = self.person_year
             person: Person = person_year.person
@@ -2692,8 +2692,8 @@ class FinalSettlement(PermissionsMixin, models.Model):
                     )
                 ],
             )
-            print(request.xml)
-            print("Not sending yet")
+            # print(request.xml)
+            # print("Not sending yet")
             response: SuilaInvoiceResponse = client.process_service(request)
             if response and response.rec_id:
                 print("Got response for invoice")
