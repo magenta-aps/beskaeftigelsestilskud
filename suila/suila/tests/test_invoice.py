@@ -9,11 +9,7 @@ from django.conf import settings
 from django.test import TestCase, override_settings
 from prisme.client import Prisme
 
-from suila.integrations.prisme.client import (
-    InvoiceCustomTableResponse,
-    PrismeClient,
-    SuilaInvoiceRequest,
-)
+from suila.integrations.prisme.client import PrismeClient, SuilaInvoiceRequest
 from suila.models import AnnualIncome, FinalSettlement, Person, PersonYear, Year
 
 
@@ -174,16 +170,3 @@ class InvoiceTest(TestCase):
                 """
                 ),
             )
-
-    def test_custtable_response(self):
-        response = InvoiceCustomTableResponse(
-            None,
-            """
-            <CustTable><AccountNum>1234</AccountNum></CustTable>
-            """,
-        )
-        self.assertEqual(response.account_num, 1234)
-
-    def test_custtable_response_none(self):
-        response = InvoiceCustomTableResponse(None, None)
-        self.assertFalse(hasattr(response, "account_num"))
