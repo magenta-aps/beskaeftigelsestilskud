@@ -64,8 +64,7 @@ class FinalSettlementExport(BaseExport):
 
     def get_posting_text(self, obj: FinalSettlement) -> str:
         cpr: str = obj.identifier  # type: ignore[attr-defined]
-        date_formatted: str = self.get_posting_date(obj).strftime("%b%y").upper()
-        return f"SUILA-TAPIT-{cpr}-{date_formatted}"
+        return f"SUILA-TAPIT-{cpr}-ÅOP{self._year - 2000}"
 
     def get_transaction_text(self, obj: FinalSettlement) -> str:
         return f"Suila.gl - Årsopgørelse {self._year}"
@@ -81,8 +80,7 @@ class FinalSettlementExport(BaseExport):
 
     def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
         return (
-            "SUILA_aarsopgoerelse_G68_export_"
-            f"{prisme_batch.prefix:02}_{self._year + 1}_{self._month:02}.g68"
+            f"SUILA_aarsopgoerelse_G68_export_{prisme_batch.prefix:02}_{self._year}.g68"
         )
 
     def get_control_list_data(self) -> QuerySet:

@@ -799,11 +799,7 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
         # Assert: the field `Posteringstekst` is present and its value follows the
         # expected format.
         posting_text = self._get_floating_field(prisme_batch_item.g69_content, 153)
-        expected_date = date(self.personyear.year.year + 1, date.today().month, 1)
-        expected_date_formatted = expected_date.strftime("%b%y").upper()
-        self.assertEqual(
-            posting_text, f"SUILA-TAPIT-{self.person.cpr}-{expected_date_formatted}"
-        )
+        self.assertEqual(posting_text, f"SUILA-TAPIT-{self.person.cpr}-ÅOP25")
 
         # Assert: the field `BetalingstekstLinje` contains the expected text in
         # floating field 40 (which is the first `BetalingstekstLinje` field.)
@@ -851,8 +847,7 @@ class TestFinalSettlementExport(BaseEnvMixin, ExportTest):
                     # One regular file written to non-mod11 folder
                     (
                         "g68g69_mod11_cpr",
-                        "SUILA_aarsopgoerelse_G68_export_32_"
-                        f"{export._year + 1}_{export._month:02d}.g68",
+                        "SUILA_aarsopgoerelse_G68_export_32_" f"{export._year}.g68",
                     ),
                     # One control list file
                     (

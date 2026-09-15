@@ -1303,7 +1303,7 @@ class TestFinalSettlements(IntegrationBaseTest):
 
     def get_g68_filename_match(self, filename, year, month):
         return "aarsopgoerelse_G68_export" in filename and filename.endswith(
-            f"_{year + 1}_{str(month).zfill(2)}.g68"
+            f"_{year}.g68"
         )
 
     def assert_final_settlement_transferred(self, result):
@@ -1412,7 +1412,7 @@ class TestFinalSettlementsWithEPP(IntegrationBaseTest):
 
     def get_g68_filename_match(self, filename, year, month):
         return "aarsopgoerelse_G68_export" in filename and filename.endswith(
-            f"_{year + 1}_{str(month).zfill(2)}.g68"
+            f"_{year}.g68"
         )
 
     def assert_final_settlement_transferred(self, result):
