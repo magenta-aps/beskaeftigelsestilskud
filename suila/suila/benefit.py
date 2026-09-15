@@ -222,13 +222,17 @@ def calculate_benefit(
 
     # If you are on pause you get nothing (also not in December)
     # Man får pengene på kontoen når årsopgørelsen er færdig (august året efter).
-    df.loc[df.paused.fillna(False), "benefit_this_month"] = 0
+    df.loc[
+        df.paused.fillna(False),
+        ["benefit_this_month", "offset_benefit_difference"]
+    ] = 0
 
     # If you are in quarantine you get nothing (unless it's for october)
     if enforce_quarantine:
         df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
         if quarantine_weight <= 0:
             weight_on_remainder: Fraction = Fraction(0, 1)
+            df.loc[df_quarantine.in_quarantine, "offset_benefit_difference"] = 0
         else:
             # quarantine_weight = factor for year payment to month payment
             # we need a factor for `remaining year payment` to month payment
@@ -247,12 +251,27 @@ def calculate_benefit(
         df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = (
             df.remaining_benefit_for_year * float64(weight_on_remainder)
         )
+        # Re-offset benefit difference for people in quarantine
+        df.loc[df_quarantine.in_quarantine, "offset_benefit_difference"] = df.loc[
+            (df.benefit_difference > 0) & df_quarantine.in_quarantine,
+            ["benefit_this_month", "benefit_difference"]
+        ].min(axis=1)
+        df.loc[
+            (df.benefit_difference > 0) & df_quarantine.in_quarantine,
+            "benefit_this_month"
+        ] -= df[
+            "offset_benefit_difference"
+        ]
+
         df.loc[
             df_quarantine.in_quarantine, "remaining_benefit_for_year"
         ] -= df.benefit_this_month
 
     # Do not payout if the amount is negative
-    df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
+    df.loc[
+        df.benefit_this_month < 0,
+        ["benefit_this_month", "offset_benefit_difference"]
+    ] = 0
 
     df.loc[:, "benefit_calculated"] = np.ceil(df["benefit_this_month"])
 
