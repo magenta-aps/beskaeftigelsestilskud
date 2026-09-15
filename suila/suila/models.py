@@ -2657,14 +2657,14 @@ class FinalSettlement(PermissionsMixin, models.Model):
             person: Person = person_year.person
 
             location_code_map = {
-                955: "010300",
-                956: "010400",
-                957: "010500",
-                959: "010600",
-                960: "010700",
+                "955": "010300",
+                "956": "010400",
+                "957": "010500",
+                "959": "010600",
+                "960": "010700",
                 None: "019000",
             }
-            locality_code = location_code_map.get(person.location_code)
+            locality_code: str = location_code_map.get(person.location_code) or "019000"
             # Kommune Kujalleq:
             # Kommuneqarfik Sermersooq:
             # Qeqqata Kommunia:
