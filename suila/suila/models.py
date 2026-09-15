@@ -2651,7 +2651,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
     ):
         amount = -self.result
         if amount > 0 and not self.invoice_sent:
-            print(f"Send invoice for {amount} DKK")
+            logger.info(f"Send invoice for {amount} DKK")
             person_year: PersonYear = self.person_year
             person: Person = person_year.person
 
@@ -2664,12 +2664,6 @@ class FinalSettlement(PermissionsMixin, models.Model):
                 None: "019000",
             }
             locality_code: str = location_code_map.get(person.location_code) or "019000"
-            # Kommune Kujalleq:
-            # Kommuneqarfik Sermersooq:
-            # Qeqqata Kommunia:
-            # Kommune Qeqertalik:
-            # Avannaata Kommunia:
-            # Udenfor kommunal inddeling: 019000
 
             year: int = person_year.year.year
             request = SuilaInvoiceRequest(
@@ -2691,15 +2685,15 @@ class FinalSettlement(PermissionsMixin, models.Model):
                     )
                 ],
             )
-            # print(request.xml)
-            # print("Not sending yet")
             response: SuilaInvoiceResponse = client.process_service(request)
             if response and response.rec_id:
-                print("Got response for invoice")
+                logger.info(f"Got response for invoice for {person.cpr} in {year}")
                 self.invoice_sent = True
                 self.save(update_fields=("invoice_sent",))
             else:
-                print("Did not get rec_id for invoice")  # pragma: no cover
+                logger.info(  # pragma: no cover
+                    f"Did not get response for invoice for {person.cpr} in {year}"
+                )
 
 
 @receiver(pre_save, sender=FinalSettlement)
