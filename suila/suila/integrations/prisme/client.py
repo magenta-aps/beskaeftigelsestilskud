@@ -166,7 +166,7 @@ class PrismeClient(Prisme):
         self, request_object: SuilaInvoiceRequest, debug_context: Any = None
     ) -> SuilaInvoiceResponse:
         if self.mock:
-            return self.mock_service(request_object, debug_context)
+            return self.mock_service(request_object, debug_context)  # pragma: no cover
         else:
             responses = super().process_service(request_object, debug_context)
             if len(responses) > 1:

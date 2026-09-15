@@ -9,7 +9,11 @@ from django.conf import settings
 from django.test import TestCase, override_settings
 from prisme.client import Prisme
 
-from suila.integrations.prisme.client import PrismeClient, SuilaInvoiceRequest
+from suila.integrations.prisme.client import (
+    PrismeClient,
+    SuilaInvoiceRequest,
+    SuilaInvoiceResponse,
+)
 from suila.models import AnnualIncome, FinalSettlement, Person, PersonYear, Year
 
 
@@ -46,6 +50,12 @@ class InvoiceTest(TestCase):
     @staticmethod
     def strip_whitespace(string):
         return "".join(string.split())
+
+    @override_settings(PRISME={**settings.PRISME, "mock": False})
+    def test_prismeclient_idempotent(self):
+        client1 = PrismeClient.from_settings()
+        client2 = PrismeClient.from_settings()
+        self.assertEqual(client1, client2)
 
     @override_settings(PRISME={**settings.PRISME, "mock": False})
     def test_send_invoice_nonnegative(self):
@@ -170,3 +180,13 @@ class InvoiceTest(TestCase):
                 """
                 ),
             )
+
+    def test_response(self):
+        response = SuilaInvoiceResponse(
+            None,
+            """
+            <CustInvoiceTable><RecId>1234</RecId><InvoiceId>5678</InvoiceId></CustInvoiceTable>
+            """,
+        )
+        self.assertEqual(response.rec_id, 1234)
+        self.assertEqual(response.invoice_id, 5678)
