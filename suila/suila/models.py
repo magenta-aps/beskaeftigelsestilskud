@@ -8,7 +8,7 @@ import calendar
 import logging
 import os
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
@@ -2643,7 +2643,14 @@ class FinalSettlement(PermissionsMixin, models.Model):
             self._result = result
         return self._result
 
-    def send_invoice(self, client: PrismeClient):
+    def send_invoice(
+        self,
+        client: PrismeClient,
+        accounting_date: date,
+        due_date: date,
+        invoice_date: date,
+        text: str,
+    ):
         amount = -self.result
         if amount > 0:
             print(f"Send invoice for {amount} DKK")
@@ -2666,20 +2673,21 @@ class FinalSettlement(PermissionsMixin, models.Model):
             # Avannaata Kommunia:
             # Udenfor kommunal inddeling: 019000
 
+            year: int = person_year.year.year
             request = SuilaInvoiceRequest(
-                invoice_date=timezone.now(),
-                due_date=timezone.now(),
-                accounting_date=timezone.now(),
+                invoice_date=datetime.combine(invoice_date, time.min),
+                due_date=datetime.combine(due_date, time.min),
+                accounting_date=datetime.combine(accounting_date, time.min),
                 text="SUILA",
                 cpr=person.cpr,
-                year=person_year.year,
+                year=year,
                 files=[],
                 lines=[
                     SuilaInvoiceLine(
-                        description="HEP",
+                        description=f"SUILA {year}",
                         quantity=1,
-                        unit_price=amount,
-                        text="HEY",
+                        unit_price="",
+                        text=f"Suila-tapit {year}",
                         locality_code=locality_code,
                         beneficiary=person.cpr,
                     )
