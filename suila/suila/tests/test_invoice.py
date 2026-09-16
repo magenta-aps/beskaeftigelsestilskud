@@ -217,7 +217,7 @@ class InvoiceTest(TestCase):
                   <InvoiceDate>2026-09-25T00:00:00</InvoiceDate>
                   <InvoiceIntroTxt>SUILA</InvoiceIntroTxt>
                   <LedgerYear></LedgerYear>
-                  <OMDepartmentRecIdExtFUJ>5637153652</OMDepartmentRecIdExtFUJ>
+                  <OMDepartmentRecIdExtFUJ>1122334455</OMDepartmentRecIdExtFUJ>
                   <PurchOrderFormNum>00045</PurchOrderFormNum>
                   <custTable>
                     <CustGroup>210026</CustGroup>
