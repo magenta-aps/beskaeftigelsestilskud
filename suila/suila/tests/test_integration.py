@@ -738,6 +738,44 @@ class ForeignPensionIncomeTest(IntegrationBaseTest):
         self.assert_total_benefit(15_750)
 
 
+class ForeignPensionIncomeWithoutIncomeTest(IntegrationBaseTest):
+    """
+    Same as ForeignPensionIncomeTest but for the case where a person gets ALL his income
+    through foreign pension.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr,
+                month_number,
+                income=0,
+                foreign_pension_income=20000,
+            )
+
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        self.add_annualincome_record(
+            self.cpr,
+            salary=0,
+            foreign_pension_income=20000 * 12,
+        )
+        self.add_expectedincome_record(self.cpr, b_income=0)
+        self.add_u1a_record(self.cpr, udbytte=0)
+
+    def test_estimate_and_calculate_benefit(self):
+        for month in range(1, 13):
+            self.call_commands(month)
+            person_month = self.get_person_month(month)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month)
+
+            self.assertEqual(person_month.estimated_year_result, 240_000)
+            self.assert_benefit(amount_sent_to_prisme, 1312)
+
+        self.assert_total_benefit(15_750)
+
+
 class SteadyHighIncomeTest(IntegrationBaseTest):
 
     def setUp(self):
