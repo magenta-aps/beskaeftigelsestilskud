@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
+from decimal import Decimal
 
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
@@ -194,3 +195,159 @@ class UpdateBenefitTransferredTest(MigratorTestCase):
         ).objects.get(month=1)
 
         self.assertEqual(person_month.benefit_transferred, 0)
+
+
+class ForeignPensionIncomeMigrationMixin:
+    """Sets up income reports for two person months:
+
+    - `self.person_month1` has a report with foreign pension (plus a second report
+      without, belonging to another employer)
+    - `self.person_month2` has a single report without foreign pension
+
+    `a_income` and `amount_sum` are written explicitly, since the model methods that
+    normally maintain them are not available on the historical models.
+    """
+
+    def create_income_data(self, apps, a_income, amount_sum):
+        Year = apps.get_model("suila", "Year")
+        Person = apps.get_model("suila", "Person")
+        PersonYear = apps.get_model("suila", "PersonYear")
+        PersonMonth = apps.get_model("suila", "PersonMonth")
+        Employer = apps.get_model("suila", "Employer")
+        MonthlyIncomeReport = apps.get_model("suila", "MonthlyIncomeReport")
+
+        year = Year.objects.create(year=2026)
+        person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
+        person_year = PersonYear.objects.create(
+            person=person,
+            year=year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+
+        def create_person_month(month, amount_sum):
+            return PersonMonth.objects.create(
+                person_year=person_year,
+                month=month,
+                import_date=date.today(),
+                amount_sum=amount_sum,
+            )
+
+        def create_report(person_month, employer, a_income, **kwargs):
+            return MonthlyIncomeReport.objects.create(
+                person_month=person_month,
+                employer=employer,
+                month=person_month.month,
+                year=person_month.person_year.year_id,
+                a_income=a_income,
+                **kwargs,
+            )
+
+        employer1 = Employer.objects.create(cvr=12345678)
+        employer2 = Employer.objects.create(cvr=87654321)
+
+        # A person month where one of the two reports has foreign pension. Its
+        # `amount_sum` covers both reports, and includes U income.
+        self.person_month1 = create_person_month(1, amount_sum)
+        create_report(
+            self.person_month1,
+            employer1,
+            a_income,
+            salary_income=Decimal("15000.00"),
+            employer_paid_gl_pension_income=Decimal("100.00"),
+            catchsale_income=Decimal("400.00"),
+            foreign_pension_income=Decimal("5000.00"),
+            u_income=Decimal("1000.00"),
+        )
+        create_report(
+            self.person_month1,
+            employer2,
+            Decimal("1000.00"),
+            salary_income=Decimal("1000.00"),
+        )
+
+        # A person month without foreign pension. Its `a_income` and `amount_sum` are
+        # deliberately inconsistent with the income fields, so that the test can tell
+        # whether the migration touched them.
+        self.person_month2 = create_person_month(2, Decimal("99.00"))
+        create_report(
+            self.person_month2,
+            employer1,
+            Decimal("99.00"),
+            salary_income=Decimal("8000.00"),
+        )
+
+    def get_report(self, month, cvr):
+        return self.new_state.apps.get_model(
+            "suila", "MonthlyIncomeReport"
+        ).objects.get(person_month__month=month, employer__cvr=cvr)
+
+    def get_person_month(self, month):
+        return self.new_state.apps.get_model("suila", "PersonMonth").objects.get(
+            month=month
+        )
+
+
+class AddForeignPensionToAIncomeTest(
+    ForeignPensionIncomeMigrationMixin, MigratorTestCase
+):
+    migrate_from = ("suila", "0068_suilaeboksmessage_person_year_and_more")
+    migrate_to = ("suila", "0069_recalculate_a_income_with_foreign_pension")
+
+    def prepare(self):
+        # `a_income` and `amount_sum` as they were calculated before foreign pension
+        # became part of the A income: 15000 + 100 + 400 = 15500, and
+        # 15500 + 1000 (other report) + 1000 (U income) = 17500.
+        self.create_income_data(
+            self.old_state.apps,
+            a_income=Decimal("15500.00"),
+            amount_sum=Decimal("17500.00"),
+        )
+
+    def test_foreign_pension_is_added_to_a_income(self):
+        self.assertEqual(
+            self.get_report(1, 12345678).a_income,
+            Decimal("20500.00"),  # 15.500 + 5.000 = 20.500
+        )
+
+    def test_amount_sum_is_updated(self):
+        self.assertEqual(
+            self.get_person_month(1).amount_sum,
+            Decimal("22500.00"),  # 17500 + 5000 = 22500
+        )
+
+    def test_reports_without_foreign_pension_are_untouched(self):
+        # The report belonging to the same person month as the recalculated one
+        self.assertEqual(self.get_report(1, 87654321).a_income, Decimal("1000.00"))
+        # ... and a person month with no foreign pension at all
+        self.assertEqual(self.get_report(2, 12345678).a_income, Decimal("99.00"))
+        self.assertEqual(self.get_person_month(2).amount_sum, Decimal("99.00"))
+
+
+class RemoveForeignPensionFromAIncomeTest(
+    ForeignPensionIncomeMigrationMixin, MigratorTestCase
+):
+    """The migration is reversible, so that the change can be rolled back together
+    with the code that introduced it.
+    """
+
+    migrate_from = ("suila", "0069_recalculate_a_income_with_foreign_pension")
+    migrate_to = ("suila", "0068_suilaeboksmessage_person_year_and_more")
+
+    def prepare(self):
+        self.create_income_data(
+            self.old_state.apps,
+            a_income=Decimal("20500.00"),
+            amount_sum=Decimal("22500.00"),
+        )
+
+    def test_foreign_pension_is_removed_from_a_income(self):
+        self.assertEqual(
+            self.get_report(1, 12345678).a_income,
+            Decimal("15500.00"),  # 20.500 - 5.000 = 15.500
+        )
+
+    def test_amount_sum_is_updated(self):
+        self.assertEqual(
+            self.get_person_month(1).amount_sum,
+            Decimal("17500.00"),  # 22500 - 5000 = 17500
+        )

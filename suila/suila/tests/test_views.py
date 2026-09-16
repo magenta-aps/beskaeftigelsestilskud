@@ -823,6 +823,43 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
                 IncomeSignalType.Pension, [signal.signal_type for signal in result]
             )
 
+    def test_get_foreign_pension_income_signal(self):
+        # Register foreign pension in September and October for "Employer 1"
+        for month, amount in ((9, Decimal("500.00")), (10, Decimal("1000.00"))):
+            report = MonthlyIncomeReport.objects.get(
+                person_month__person_year=self.person_year,
+                person_month__month=month,
+                employer__cvr=1,
+            )
+            report.foreign_pension_income = amount
+            report.save()
+
+        with self._time_context(year=2020):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+
+            # The signals appear in the detail table, with the employer as source
+            self.assertListEqual(
+                [
+                    signal
+                    for signal in view.get_income_signals()
+                    if signal.signal_type == IncomeSignalType.UdenlandskPension
+                ],
+                [
+                    IncomeSignal(
+                        IncomeSignalType.UdenlandskPension,
+                        "Employer 1",
+                        Decimal("1000.00"),
+                        date(2020, 10, 1),
+                    ),
+                    IncomeSignal(
+                        IncomeSignalType.UdenlandskPension,
+                        "Employer 1",
+                        Decimal("500.00"),
+                        date(2020, 9, 1),
+                    ),
+                ],
+            )
+
     def test_get_income_signals(self):
         with self._time_context(year=2020):
             # Act

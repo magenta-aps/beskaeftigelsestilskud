@@ -2159,6 +2159,10 @@ msgid "Pensionsindbetaling"
 msgstr "Soraarnerussutisiassanut akiliutit"
 
 #: suila/views.py
+msgid "Udenlandsk pension"
+msgstr ""
+
+#: suila/views.py
 msgid "Betalte B-skatter"
 msgstr "Akileraarutit B-t akilerneqarsimasut"
 

@@ -1994,6 +1994,10 @@ msgid "Pensionsindbetaling"
 msgstr "Pension contribution"
 
 #: suila/views.py
+msgid "Udenlandsk pension"
+msgstr "Foreign pension"
+
+#: suila/views.py
 msgid "Betalte B-skatter"
 msgstr "Paid B-Tax"
 
