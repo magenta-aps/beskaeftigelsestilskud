@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 
 from django.conf import settings
 from django.db.models import CharField, F, Q, QuerySet, Value
@@ -70,7 +70,8 @@ class FinalSettlementExport(BaseExport):
         return f"Suila.gl - Årsopgørelse {self._year}"
 
     def get_payment_amount(self, obj: FinalSettlement) -> Decimal | None:
-        return obj._result
+        result = obj._result
+        return result.quantize(Decimal("1"), rounding=ROUND_HALF_EVEN)
 
     def get_payment_date(self, obj: FinalSettlement) -> date:
         return self._payment_date
