@@ -2593,7 +2593,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
     )
 
     invoice_sent = models.BooleanField(default=False)
-    red_id = models.CharField(max_length=20, null=True)
+    rec_id = models.CharField(max_length=20, null=True)
     invoice_id = models.CharField(max_length=20, null=True)
 
     @property
@@ -2652,7 +2652,8 @@ class FinalSettlement(PermissionsMixin, models.Model):
         due_date: date,
         invoice_date: date,
     ):
-        amount = -self.result
+        amount = -self._result
+        print(f"amount: {amount}")
         if amount > 0 and not self.invoice_sent:
             logger.info(f"Send invoice for {amount} DKK")
             person_year: PersonYear = self.person_year
@@ -2685,9 +2686,11 @@ class FinalSettlement(PermissionsMixin, models.Model):
                         text=f"Suila-tapit {year}",
                         locality_code=locality_code,
                         beneficiary=person.cpr,
+                        year=year,
                     )
                 ],
             )
+            print("READY")
             response: SuilaInvoiceResponse = client.process_service(request)
             if response and response.rec_id:
                 logger.info(f"Got response for invoice for {person.cpr} in {year}")

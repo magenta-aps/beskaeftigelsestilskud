@@ -24,6 +24,7 @@ class SuilaInvoiceLine(InvoiceLine):
         text: str,
         locality_code: int | str,
         beneficiary: int | str,
+        year: int,
     ):
         prisme_settings = settings.PRISME  # type: ignore[misc]
         super().__init__(
@@ -37,6 +38,7 @@ class SuilaInvoiceLine(InvoiceLine):
                 "Formaal": str(prisme_settings["purpose_id"]).zfill(10),
                 "ArtsKontoplan": str(prisme_settings["type_account_plan_id"]).zfill(9),
                 "Sted": str(locality_code).zfill(6),
+                "SkatteAar": str(year)[-2:],
             },
             beneficiary=str(beneficiary),
             project=prisme_settings["project_name"],
@@ -170,6 +172,7 @@ class PrismeClient(Prisme):
     def process_service(
         self, request_object: SuilaInvoiceRequest, debug_context: Any = None
     ) -> SuilaInvoiceResponse:
+        print("process_service")
         if self.mock:
             return self.mock_service(request_object, debug_context)  # pragma: no cover
         else:

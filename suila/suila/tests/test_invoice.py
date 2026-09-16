@@ -34,15 +34,27 @@ class InvoiceTest(TestCase):
                 FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
             ),
         ):
-            cls.final_settlement = FinalSettlement.objects.create(
+            year = Year.objects.create(
+                year=2026,
+            )
+            cls.final_settlement1 = FinalSettlement.objects.create(
                 annual_income=AnnualIncome.objects.create(
                     person_year=PersonYear.objects.create(
                         person=Person.objects.create(
                             cpr="1234567890",
                         ),
-                        year=Year.objects.create(
-                            year=2026,
+                        year=year,
+                    )
+                ),
+                _result=Decimal("-1234.56"),
+            )
+            cls.final_settlement2 = FinalSettlement.objects.create(
+                annual_income=AnnualIncome.objects.create(
+                    person_year=PersonYear.objects.create(
+                        person=Person.objects.create(
+                            cpr="1234567891",
                         ),
+                        year=year,
                     )
                 ),
                 _result=Decimal("1234.56"),
@@ -118,7 +130,7 @@ class InvoiceTest(TestCase):
             mock_return.afgift_id = 1
             mock_return.invoice_id = 1
 
-            self.final_settlement.send_invoice(
+            self.final_settlement2.send_invoice(
                 client=PrismeClient.from_settings(),
                 accounting_date=date(2026, 9, 15),
                 due_date=date(2026, 9, 20),
@@ -140,14 +152,10 @@ class InvoiceTest(TestCase):
                 FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
             ),
         ):
-            self.final_settlement.invoice_sent = True
-            self.final_settlement.save(update_fields=("invoice_sent",))
-            mock_return = MagicMock()
-            mock_return.rec_id = 1
-            mock_return.afgift_id = 1
-            mock_return.invoice_id = 1
+            self.final_settlement1.invoice_sent = True
+            self.final_settlement1.save(update_fields=("invoice_sent",))
 
-            self.final_settlement.send_invoice(
+            self.final_settlement1.send_invoice(
                 client=PrismeClient.from_settings(),
                 accounting_date=date(2026, 9, 15),
                 due_date=date(2026, 9, 20),
@@ -158,7 +166,17 @@ class InvoiceTest(TestCase):
     @override_settings(PRISME={**settings.PRISME, "mock": False})
     def test_send_invoice(self):
         with (
-            patch.object(Prisme, "process_service") as mock_process_service,
+            patch.object(
+                Prisme,
+                "process_service",
+                return_value=[
+                    SuilaInvoiceResponse(
+                        None,
+                        "<CustInvoiceTable><RecId>111</RecId>"
+                        "<InvoiceId>222</InvoiceId></CustInvoiceTable>",
+                    )
+                ],
+            ) as mock_process_service,
             patch.object(
                 FinalSettlement,
                 "result",
@@ -169,12 +187,7 @@ class InvoiceTest(TestCase):
                 FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
             ),
         ):
-            mock_return = MagicMock()
-            mock_return.rec_id = 1
-            mock_return.afgift_id = 1
-            mock_return.invoice_id = 1
-
-            self.final_settlement.send_invoice(
+            self.final_settlement1.send_invoice(
                 client=PrismeClient.from_settings(),
                 accounting_date=date(2026, 9, 15),
                 due_date=date(2026, 9, 20),
@@ -197,15 +210,15 @@ class InvoiceTest(TestCase):
                     """
                 <custinvoicetable>
                   <AccountingDate>2026-09-15T00:00:00</AccountingDate>
-                  <ContactPersonId>SEL-005486</ContactPersonId>
+                  <ContactPersonId></ContactPersonId>
                   <CurrencyCode>DKK</CurrencyCode>
                   <DueDate>2026-09-20T00:00:00</DueDate>
-                  <EinvoiceEANNum>5701234012344</EinvoiceEANNum>
+                  <EinvoiceEANNum></EinvoiceEANNum>
                   <InvoiceDate>2026-09-25T00:00:00</InvoiceDate>
                   <InvoiceIntroTxt>SUILA</InvoiceIntroTxt>
                   <LedgerYear></LedgerYear>
                   <OMDepartmentRecIdExtFUJ>5637153652</OMDepartmentRecIdExtFUJ>
-                  <PurchOrderFormNum>Bins</PurchOrderFormNum>
+                  <PurchOrderFormNum>00045</PurchOrderFormNum>
                   <custTable>
                     <CustGroup>210026</CustGroup>
                     <IdentificationNumber>1234567890</IdentificationNumber>
@@ -216,7 +229,7 @@ class InvoiceTest(TestCase):
                       <Beneficiary>1234567890</Beneficiary>
                       <Description>SUILA 2026</Description>
                       <InvoiceTxt>Suila-tapit 2026</InvoiceTxt>
-                      <ProjCategoryId>1</ProjCategoryId>
+                      <ProjCategoryId></ProjCategoryId>
                       <Project>Suila</Project>
                       <Quantity>1</Quantity>
                       <UnitPrice></UnitPrice>
@@ -241,6 +254,10 @@ class InvoiceTest(TestCase):
                           <Name>Sted</Name>
                           <Value>019000</Value>
                         </ledgerDimensionSegment>
+                        <ledgerDimensionSegment>
+                          <Name>SkatteAar</Name>
+                          <Value>26</Value>
+                        </ledgerDimensionSegment>
                       </ledgerDimensionSegments>
                     </custinvoiceLine>
                   </custinvoiceLines>
@@ -250,6 +267,7 @@ class InvoiceTest(TestCase):
                 </custinvoicetable>
                 """
                 ),
+                invoice_request.xml,
             )
 
     def test_response(self):
