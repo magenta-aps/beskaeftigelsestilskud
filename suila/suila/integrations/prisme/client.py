@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
-import os
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Dict, List
@@ -10,7 +9,6 @@ from typing import Any, Dict, List
 from django.conf import settings
 from django.core.files import File
 from prisme.client import Prisme
-from prisme.file import File as InvoiceFile
 from prisme.invoice import InvoiceLine, InvoiceRequest, InvoiceResponse
 from prisme.request import ResponseType
 
@@ -77,15 +75,15 @@ class SuilaInvoiceRequest(InvoiceRequest):
             accounting_date=accounting_date,
             text=text,
             files=[
-                InvoiceFile(
-                    # TODO: Hvilken fil skal med?
-                    name=os.path.basename(file.name),
-                    path=os.path.join(
-                        settings.STORAGE_PDF, file.name  # type: ignore[misc]
-                    ),
-                )
-                for file in files
-                if file.name
+                # InvoiceFile(
+                #     # TODO: Hvilken fil skal med?
+                #     name=os.path.basename(file.name),
+                #     path=os.path.join(
+                #         settings.MEDIA_ROOT, file.name  # type: ignore[misc]
+                #     ),
+                # )
+                # for file in files
+                # if file.name
             ],
             lines=lines,
         )

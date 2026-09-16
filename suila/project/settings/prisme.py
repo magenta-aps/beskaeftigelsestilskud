@@ -7,6 +7,7 @@ from ast import literal_eval
 
 from project.settings.base import TESTING
 from project.settings.upload import MEDIA_ROOT
+from project.util import strtobool
 
 PRISME = {
     # SFTP credentials, etc.
@@ -29,7 +30,7 @@ PRISME = {
     "mod11_separate_cprs": literal_eval(
         os.environ.get("PRISME_MOD11_SEPARATE_CPRS", "[]")
     ),
-    "mock": os.environ.get("PRISME_MOCK", False),
+    "mock": bool(strtobool(os.environ.get("PRISME_MOCK", False))),
     "wsdl": os.environ.get("PRISME_WSDL", ""),
     "auth": {
         "basic": {

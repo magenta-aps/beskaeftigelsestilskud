@@ -2593,6 +2593,8 @@ class FinalSettlement(PermissionsMixin, models.Model):
     )
 
     invoice_sent = models.BooleanField(default=False)
+    red_id = models.CharField(max_length=20, null=True)
+    invoice_id = models.CharField(max_length=20, null=True)
 
     @property
     def pdf(self):
@@ -2690,7 +2692,9 @@ class FinalSettlement(PermissionsMixin, models.Model):
             if response and response.rec_id:
                 logger.info(f"Got response for invoice for {person.cpr} in {year}")
                 self.invoice_sent = True
-                self.save(update_fields=("invoice_sent",))
+                self.rec_id = response.rec_id
+                self.invoice_id = response.invoice_id
+                self.save(update_fields=("invoice_sent", "rec_id", "invoice_id"))
             else:
                 logger.info(  # pragma: no cover
                     f"Did not get response for invoice for {person.cpr} in {year}"
