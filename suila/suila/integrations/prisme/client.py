@@ -75,6 +75,7 @@ class SuilaInvoiceRequest(InvoiceRequest):
             accounting_date=accounting_date,
             text=text,
             files=[
+                # Udkommenteret fordi vi indtil videre ikke skal sende filer med
                 # InvoiceFile(
                 #     # TODO: Hvilken fil skal med?
                 #     name=os.path.basename(file.name),
