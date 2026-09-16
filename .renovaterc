@@ -18,6 +18,10 @@
     {
       "matchPackageNames": ["pytz", "types-pytz"],
       "groupName": "django-stubs"
+    },
+    {
+      "matchPackageNames": ["paramiko"],
+      "enabled": false
     }
   ]
 }
