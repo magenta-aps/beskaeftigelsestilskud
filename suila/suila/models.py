@@ -8,7 +8,7 @@ import calendar
 import logging
 import os
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
@@ -66,6 +66,12 @@ from weasyprint.text.fonts import FontConfiguration
 
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
+from suila.integrations.prisme.client import (
+    PrismeClient,
+    SuilaInvoiceLine,
+    SuilaInvoiceRequest,
+    SuilaInvoiceResponse,
+)
 from suila.model_mixins import PermissionsMixin
 
 logger = logging.getLogger(__name__)
@@ -2586,6 +2592,10 @@ class FinalSettlement(PermissionsMixin, models.Model):
         upload_to="aarsopgoerelse",
     )
 
+    invoice_sent = models.BooleanField(default=False)
+    rec_id = models.CharField(max_length=20, null=True)
+    invoice_id = models.CharField(max_length=20, null=True)
+
     @property
     def pdf(self):
         if not self.pk:  # Save final settlement before generating PDF.
@@ -2634,6 +2644,64 @@ class FinalSettlement(PermissionsMixin, models.Model):
             result = self.benefit_due_for_year - self.benefit_paid_out_in_year
             self._result = result
         return self._result
+
+    def send_invoice(
+        self,
+        client: PrismeClient,
+        accounting_date: date,
+        due_date: date,
+        invoice_date: date,
+    ):
+        amount = -self._result
+        print(f"amount: {amount}")
+        if amount > 0 and not self.invoice_sent:
+            logger.info(f"Send invoice for {amount} DKK")
+            person_year: PersonYear = self.person_year
+            person: Person = person_year.person
+
+            location_code_map = {
+                "955": "010300",
+                "956": "010400",
+                "957": "010500",
+                "959": "010600",
+                "960": "010700",
+                None: "019000",
+            }
+            locality_code: str = location_code_map.get(person.location_code) or "019000"
+
+            year: int = person_year.year.year
+            request = SuilaInvoiceRequest(
+                invoice_date=datetime.combine(invoice_date, time.min),
+                due_date=datetime.combine(due_date, time.min),
+                accounting_date=datetime.combine(accounting_date, time.min),
+                text="SUILA",
+                cpr=person.cpr,
+                year=year,
+                files=[],
+                lines=[
+                    SuilaInvoiceLine(
+                        description=f"SUILA {year}",
+                        quantity=1,
+                        unit_price=amount,
+                        text=f"Suila-tapit {year}",
+                        locality_code=locality_code,
+                        beneficiary=person.cpr,
+                        year=year,
+                    )
+                ],
+            )
+            print("READY")
+            response: SuilaInvoiceResponse = client.process_service(request)
+            if response and response.rec_id:
+                logger.info(f"Got response for invoice for {person.cpr} in {year}")
+                self.invoice_sent = True
+                self.rec_id = response.rec_id
+                self.invoice_id = response.invoice_id
+                self.save(update_fields=("invoice_sent", "rec_id", "invoice_id"))
+            else:
+                logger.info(  # pragma: no cover
+                    f"Did not get response for invoice for {person.cpr} in {year}"
+                )
 
 
 @receiver(pre_save, sender=FinalSettlement)

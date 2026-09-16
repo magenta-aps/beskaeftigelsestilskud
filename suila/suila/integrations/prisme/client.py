@@ -1,0 +1,195 @@
+# SPDX-FileCopyrightText: 2026 Magenta ApS <info@magenta.dk>
+#
+# SPDX-License-Identifier: MPL-2.0
+import logging
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any, Dict, List
+
+from django.conf import settings
+from django.core.files import File
+from prisme.client import Prisme
+from prisme.invoice import InvoiceLine, InvoiceRequest, InvoiceResponse
+from prisme.request import ResponseType
+
+logger = logging.getLogger(__name__)
+
+
+class SuilaInvoiceLine(InvoiceLine):
+    def __init__(
+        self,
+        description: str,
+        quantity: int,
+        unit_price: int | Decimal,
+        text: str,
+        locality_code: int | str,
+        beneficiary: int | str,
+        year: int,
+    ):
+        prisme_settings = settings.PRISME  # type: ignore[misc]
+        super().__init__(
+            description=description,
+            quantity=quantity,
+            unit_price=unit_price,
+            text=text,
+            ledger_dimension={
+                "Afdeling": prisme_settings["department_recid"],
+                "Finanslov": prisme_settings["finance_law_id"],
+                "Formaal": str(prisme_settings["purpose_id"]).zfill(10),
+                "ArtsKontoplan": str(prisme_settings["type_account_plan_id"]).zfill(9),
+                "Sted": str(locality_code).zfill(6),
+                "SkatteAar": str(year)[-2:],
+            },
+            beneficiary=str(beneficiary),
+            project=prisme_settings["project_name"],
+            project_category=prisme_settings["project_category_id"],
+        )
+
+    @property
+    def dict(self) -> Dict[str, str | int | Dict[str, List[dict]] | None]:
+        return {
+            **super().dict,
+            "UnitPrice": "",
+        }
+
+
+class SuilaInvoiceRequest(InvoiceRequest):
+    def __init__(
+        self,
+        invoice_date: datetime | date,
+        due_date: datetime | date,
+        accounting_date: datetime | date,
+        text: str,
+        files: List[File],
+        lines: List[SuilaInvoiceLine],
+        cpr: str | int,
+        year: int,
+    ):
+        prisme_settings = settings.PRISME  # type: ignore[misc]
+        super().__init__(
+            currency_code=prisme_settings["currency_code"],
+            department_recid=prisme_settings["department_recid_ext"],
+            invoice_ean=prisme_settings["invoice_ean"],
+            order_form_num=prisme_settings["order_form_num"],
+            contact_person_id=prisme_settings["contact_person_id"],
+            invoice_date=invoice_date,
+            due_date=due_date,
+            accounting_date=accounting_date,
+            text=text,
+            files=[
+                # Udkommenteret fordi vi indtil videre ikke skal sende filer med
+                # InvoiceFile(
+                #     # TODO: Hvilken fil skal med?
+                #     name=os.path.basename(file.name),
+                #     path=os.path.join(
+                #         settings.MEDIA_ROOT, file.name  # type: ignore[misc]
+                #     ),
+                # )
+                # for file in files
+                # if file.name
+            ],
+            lines=lines,
+        )
+        self.cpr = cpr
+        self.year = year
+
+        self.customer_group = f"2100{str(year)[-2:]}"
+
+    @property
+    def dict(self) -> Dict[str, str | int | datetime | Dict[str, List[dict]]]:
+        d = super().dict
+        d["custTable"] = {
+            "IdentificationNumber": self.cpr,
+            "CustGroup": self.customer_group,
+        }
+        return d
+
+    @classmethod
+    def response_class(cls) -> type[ResponseType]:
+        return SuilaInvoiceResponse  # pragma: no cover
+
+
+class SuilaInvoiceResponse(InvoiceResponse):
+
+    def __init__(self, request: SuilaInvoiceRequest, xml: str):
+        super().__init__(request, xml)
+        if self.data is not None:
+            self.rec_id = self.data.get("CustInvoiceTable", {}).get("RecId")
+            self.invoice_id = self.data.get("CustInvoiceTable", {}).get("InvoiceId")
+        else:
+            self.rec_id = None
+            self.invoice_id = None
+
+
+class PrismeClient(Prisme):
+
+    mock_recid_counter = 0
+    instance = None
+
+    def __init__(
+        self,
+        wsdl_file: str,
+        auth: Dict[str, str],
+        proxy: Dict[str, str] | None = None,
+        mock=False,
+    ):
+        super().__init__(wsdl_file, auth, proxy)
+        self.mock = mock
+
+    @staticmethod
+    def from_settings() -> "PrismeClient":
+        prisme_settings: Dict[str, Any] = settings.PRISME  # type: ignore[misc]
+        if not PrismeClient.instance:
+            if prisme_settings.get("mock", False):
+                PrismeClient.instance = PrismeClient("", auth={}, proxy=None, mock=True)
+            else:
+                PrismeClient.instance = PrismeClient(
+                    wsdl_file=prisme_settings["wsdl"],
+                    auth=prisme_settings["auth"],
+                    proxy=prisme_settings["proxy"],
+                    mock=False,
+                )
+        return PrismeClient.instance
+
+    @staticmethod
+    def mock_service(
+        request_object: SuilaInvoiceRequest, debug_context: Any = None
+    ) -> SuilaInvoiceResponse:  # pragma: no cover
+        print("Mock call to Prisme:")
+        print(request_object.xml)
+
+        PrismeClient.mock_recid_counter += 1
+        return SuilaInvoiceResponse(
+            request_object,
+            f"""
+            <CustInvoiceTable>
+            <RecId>{PrismeClient.mock_recid_counter}</RecId>
+            <InvoiceId>{PrismeClient.mock_recid_counter}</InvoiceId>
+            </CustInvoiceTable>
+            """,
+        )
+
+    def process_service(
+        self, request_object: SuilaInvoiceRequest, debug_context: Any = None
+    ) -> SuilaInvoiceResponse:
+        print("process_service")
+        if self.mock:
+            return self.mock_service(request_object, debug_context)  # pragma: no cover
+        else:
+            responses = super().process_service(request_object, debug_context)
+            if len(responses) > 1:
+                response_str = "\n".join([response.xml for response in responses])
+                logger.warning(
+                    "Multiple responses returned from Prisme. Expected 1, got "
+                    + str(len(responses))
+                    + ":\n"
+                    + response_str
+                )
+            return responses[0]
+
+    def create_request_header(
+        self, method: str, area: str = "Suila", client_version: int = 1
+    ) -> Any:
+        return super().create_request_header(
+            method, area, client_version
+        )  # pragma: no cover
