@@ -469,12 +469,7 @@ class PersonDetailView(
             else:
                 estimation_engine_changed = False
 
-            if person_month.benefit_calculated and surplus_benefit:
-                benefit_calculated = max(
-                    person_month.benefit_calculated - surplus_benefit, Decimal("0")
-                )
-            else:
-                benefit_calculated = person_month.benefit_calculated
+            benefit_calculated = person_month.benefit_calculated
 
             context_data.update(
                 {
