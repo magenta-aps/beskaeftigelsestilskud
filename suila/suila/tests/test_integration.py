@@ -1610,6 +1610,7 @@ class HandleSurplusBenefitTest(IntegrationBaseTest):
         self.assert_benefit(amount_sent_to_prisme, 1113)
 
         # September, 2025, offset the 756 kr. owed from 2024 final settlement
+        call_command("calculate_benefit", year, 9)  # Check for idempotency
         self.call_commands(9, year)
         person_month = self.get_person_month(9, year)
         amount_sent_to_prisme = self.get_amount_sent_to_prisme(9, year)

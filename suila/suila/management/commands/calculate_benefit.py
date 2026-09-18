@@ -46,7 +46,7 @@ class Command(SuilaBaseCommand):
             pk__in=person_month_qs.values_list("person_year__person").distinct()
         )
         for person in person_qs:
-            person.calculate_benefit_difference(save=True)
+            person.calculate_benefit_difference(year=year, month=month)
 
         benefit = calculate_benefit(month, year, kwargs["cpr"])
 
@@ -67,6 +67,8 @@ class Command(SuilaBaseCommand):
             cols_to_update,
             batch_size=1000,
         )
+        for person in person_qs:
+            person.calculate_benefit_difference(save=True)
 
         self._write_verbose("Done")
 
