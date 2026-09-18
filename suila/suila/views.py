@@ -347,7 +347,7 @@ class PersonDetailView(
         person = self.object
         # NOTE: Once #70633 is complete, replace the following with
         # surplus_benefit_last_change = person.calculate_benefit_difference()
-        #### CUT HERE ###
+        # ----CUT HERE----
         finalsettlements = FinalSettlement.objects.filter(
             annual_income__person_year__person=person,
             _result__lt=0,
@@ -361,7 +361,7 @@ class PersonDetailView(
         surplus_benefit_last_change = finalsettlements.order_by("-created").first()
         if surplus_benefit_last_change:
             surplus_benefit_last_change = surplus_benefit_last_change.created
-        #### TO HERE ####
+        # ----TO HERE----
         context_data.update(
             {
                 "paused": person.paused,

@@ -437,6 +437,8 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertFalse(response.context_data["table"].orderable)
 
     def test_get_context_data_with_surplus_benefit(self):
+        # NOTE: Until #70633 is done, this test should return the same as
+        # test_get_context_data
         self.method1 = StandardWorkBenefitCalculationMethod.objects.create(
             benefit_rate_percent=Decimal("17.5"),
             personal_allowance=Decimal("58000.00"),
@@ -480,9 +482,11 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertIsNotNone(response.context_data["surplus_benefit_last_change"])
             self.assertEqual(response.context_data["surplus_benefit"], 1000)
             self.assertIsNotNone(response.context_data["next_payout_date"])
-            # The expected payout for the next month is 10, however this amount is
-            # offset by the surplus benefit from the FinalSettlement
-            self.assertEqual(response.context_data["benefit_calculated"], Decimal("0"))
+            # The expected payout for the next month is 10. nce #70633 is done,
+            # this will be offset by the surplus benefit
+            self.assertEqual(
+                response.context_data["benefit_calculated"], Decimal("10.0")
+            )
             self.assertIsNone(response.context_data["estimated_year_benefit"])
             self.assertEqual(response.context_data["estimated_year_result"], Decimal(0))
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
