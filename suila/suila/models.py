@@ -765,7 +765,12 @@ class Person(PermissionsMixin, models.Model):
             logger.exception(e)
             raise
 
-    def calculate_benefit_difference(self, save: bool = False) -> Dict[str, Decimal]:
+    def calculate_benefit_difference(
+        self,
+        save: bool = False,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, Decimal]:
         """
         We need a clear view of which ways benefit_difference can be added and offset.
         Negative difference (person received too much benefit/person owes benefit):
@@ -783,30 +788,50 @@ class Person(PermissionsMixin, models.Model):
         """
         personmonth_qs = PersonMonth.objects.filter(
             person_year__person__pk=self.pk,
+            offset_benefit_difference__gt=Decimal("0"),
         )
-        personmonth_qs = personmonth_qs.filter(
-            offset_benefit_difference__gt=Decimal("0")
+        finalsettlement_pks = (
+            FinalSettlement.objects.filter(
+                annual_income__person_year__person__pk=self.pk,
+            )
+            .order_by("annual_income__person_year", "-created")
+            .distinct("annual_income__person_year")
+            .values_list("pk", flat=True)
         )
-        finalsettlement_qs = FinalSettlement.objects.filter(
-            annual_income__person_year__person__pk=self.pk,
+        finalsettlement_qs = FinalSettlement.objects.filter(pk__in=finalsettlement_pks)
+        if year and month:
+            personmonth_qs = personmonth_qs.filter(
+                Q(person_year__year__lt=year)
+                | Q(person_year__year=year, month__lt=month)
+            )
+            month_year = date(year, month, 1)
+            finalsettlement_qs = finalsettlement_qs.filter(created__lt=month_year)
+        prismebatchitem_qs = PrismeBatchItem.objects.filter(
+            final_settlement__in=finalsettlement_qs
         )
+
         pm_benefit_offset = personmonth_qs.aggregate(
             spent=Sum("offset_benefit_difference")
         )["spent"] or Decimal("0")
         fs_benefit_difference = finalsettlement_qs.aggregate(acquired=Sum("_result"))[
             "acquired"
         ] or Decimal("0")
+        pbi_benefit_payout = prismebatchitem_qs.aggregate(paid=Sum("_amount"))[
+            "paid"
+        ] or Decimal("0")
 
-        benefit_difference = fs_benefit_difference + pm_benefit_offset
+        benefit_difference = (
+            fs_benefit_difference + pm_benefit_offset - pbi_benefit_payout
+        )
         if save:
             self.benefit_difference = benefit_difference
             self.save(update_fields=["benefit_difference"])
 
-        # NOTE: Return dict with spent surplus, acquired surplus and remaining surplus.
         return {
             "current_benefit_difference": benefit_difference,
             "total_acquired_surplus": fs_benefit_difference,
             "total_offset_surplus": pm_benefit_offset,
+            "total_deficit_benefit_paid": pbi_benefit_payout,
         }
 
 
@@ -2219,9 +2244,20 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
         blank=False,
     )
 
+    _amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     @property
     def amount(self):
-        return get_amount_from_g68_content(self.g68_content)
+        amount = get_amount_from_g68_content(self.g68_content)
+        if self._amount != amount:
+            self._amount = amount
+            self.save(update_fields=["_amount"])
+        return amount
 
 
 class AnnualIncome(PermissionsMixin, models.Model):
@@ -2711,7 +2747,6 @@ class FinalSettlement(PermissionsMixin, models.Model):
         invoice_date: date,
     ):
         amount = -self._result
-        print(f"amount: {amount}")
         if amount > 0 and not self.invoice_sent:
             logger.info(f"Send invoice for {amount} DKK")
             person_year: PersonYear = self.person_year
