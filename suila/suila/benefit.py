@@ -195,14 +195,11 @@ def calculate_benefit(
     # Offset surplus benefit first
     df["offset_benefit_difference"] = df.loc[
         (df.benefit_difference > 0) & (df.benefit_this_month >= 0),
-        ["benefit_this_month", "benefit_difference"]
+        ["benefit_this_month", "benefit_difference"],
     ].min(axis=1)
     df.loc[
-        (df.benefit_difference > 0) & (df.benefit_this_month >= 0),
-        "benefit_this_month"
-    ] -= df[
-        "offset_benefit_difference"
-    ]
+        (df.benefit_difference > 0) & (df.benefit_this_month >= 0), "benefit_this_month"
+    ] -= df["offset_benefit_difference"]
 
     # Do not payout if the amount is below zero
     df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
@@ -228,8 +225,7 @@ def calculate_benefit(
     # If you are on pause you get nothing (also not in December)
     # Man får pengene på kontoen når årsopgørelsen er færdig (august året efter).
     df.loc[
-        df.paused.fillna(False),
-        ["benefit_this_month", "offset_benefit_difference"]
+        df.paused.fillna(False), ["benefit_this_month", "offset_benefit_difference"]
     ] = 0
 
     # If you are in quarantine you get nothing (unless it's for october)
@@ -259,14 +255,12 @@ def calculate_benefit(
         # Re-offset benefit difference for people in quarantine
         df.loc[df_quarantine.in_quarantine, "offset_benefit_difference"] = df.loc[
             (df.benefit_difference > 0) & df_quarantine.in_quarantine,
-            ["benefit_this_month", "benefit_difference"]
+            ["benefit_this_month", "benefit_difference"],
         ].min(axis=1)
         df.loc[
             (df.benefit_difference > 0) & df_quarantine.in_quarantine,
-            "benefit_this_month"
-        ] -= df[
-            "offset_benefit_difference"
-        ]
+            "benefit_this_month",
+        ] -= df["offset_benefit_difference"]
 
         df.loc[
             df_quarantine.in_quarantine, "remaining_benefit_for_year"
@@ -274,8 +268,7 @@ def calculate_benefit(
 
     # Do not payout if the amount is negative
     df.loc[
-        df.benefit_this_month < 0,
-        ["benefit_this_month", "offset_benefit_difference"]
+        df.benefit_this_month < 0, ["benefit_this_month", "offset_benefit_difference"]
     ] = 0
 
     df.loc[:, "benefit_calculated"] = np.ceil(df["benefit_this_month"])
