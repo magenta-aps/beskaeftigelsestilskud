@@ -59,7 +59,8 @@ def calculate_benefit(
         12,
     )
     accumulated_weight = Fraction(
-        sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]), 12  # type: ignore
+        sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]),  # type: ignore
+        12,
     )
     if month == 12:
         safety_factor = 1
@@ -193,7 +194,9 @@ def calculate_benefit(
 
     # Offset surplus benefit first
     df["offset_benefit_difference"] = df.loc[
-        (df.benefit_difference > 0) & (df.benefit_this_month >= 0),
+        (df.benefit_difference > 0)
+        & (df.benefit_difference < 2000)
+        & (df.benefit_this_month >= 0),
         ["benefit_this_month", "benefit_difference"],
     ].min(axis=1)
     df.loc[
@@ -210,7 +213,7 @@ def calculate_benefit(
         # if the amount is very similar to last month's amount, use the same amount
         # as last month
         df.loc[:, "benefit_last_month"] = df.loc[
-            :, f"benefit_transferred_month_{month-1}"
+            :, f"benefit_transferred_month_{month - 1}"
         ]
         diff = pd.Series(index=df.index)
         I_diff = df.benefit_last_month > 0
