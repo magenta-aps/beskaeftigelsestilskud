@@ -351,3 +351,82 @@ class RemoveForeignPensionFromAIncomeTest(
             self.get_person_month(1).amount_sum,
             Decimal("17500.00"),  # 22500 - 5000 = 17500
         )
+
+
+class AddAmountToPrismeBatchItemTest(MigratorTestCase):
+    migrate_from = ("suila", "0070_finalsettlement_invoice_id_and_more")
+    migrate_to = ("suila", "0071_historicalperson_benefit_difference_and_more")
+
+    def prepare(self):
+        Year = self.old_state.apps.get_model("suila", "Year")
+        Person = self.old_state.apps.get_model("suila", "Person")
+        PersonYear = self.old_state.apps.get_model("suila", "PersonYear")
+        PersonMonth = self.old_state.apps.get_model("suila", "PersonMonth")
+        PrismeBatch = self.old_state.apps.get_model("suila", "PrismeBatch")
+        PrismeBatchItem = self.old_state.apps.get_model("suila", "PrismeBatchItem")
+        FinalSettlement = self.old_state.apps.get_model("suila", "FinalSettlement")
+        AnnualIncome = self.old_state.apps.get_model("suila", "AnnualIncome")
+
+        self.year = Year.objects.create(year=2025)
+        self.person = Person.objects.create(name="Jens Hansen", cpr="1234567890")
+
+        self.person_year = PersonYear.objects.create(
+            person=self.person,
+            year=self.year,
+            preferred_estimation_engine_a="InYearExtrapolationEngine",
+        )
+        # Create personmonth with 2.600kr. benefit transferred.
+        self.person_month = PersonMonth.objects.create(
+            person_year=self.person_year,
+            month=1,
+            import_date=date.today(),
+            benefit_transferred=2600,
+            benefit_calculated=0,
+        )
+        # Create annualIncome of 300.000kr., leading to 12.600kr. total benefit
+        self.annual_income = AnnualIncome.objects.create(
+            person_year=self.person_year,
+            salary=Decimal("300_000"),
+        )
+        # Final settlement will have result 12.600kr. - 2.600kr. = 10.000kr.
+        self.final_settlement = FinalSettlement.objects.create(
+            annual_income=self.annual_income,
+            _result=Decimal("10_000"),
+        )
+        self.prisme_batch = PrismeBatch.objects.create(
+            status="sent", export_date=date.today(), prefix=1
+        )
+
+        self.prisme_item_person_month = PrismeBatchItem.objects.create(
+            person_month=self.person_month,
+            prisme_batch=self.prisme_batch,
+            g68_content=(
+                "000G6800004011&020900&0300&"
+                "07000000000000000000&0800000260000&"  # 2600 kr.
+                "09+&1002&1100000101001111&1220250414&"
+                "16202504080080400004&"
+                "1700000000000027100004&40www.suila.gl takuuk"
+            ),
+        )
+        self.prisme_item_final_settlement = PrismeBatchItem.objects.create(
+            final_settlement=self.final_settlement,
+            prisme_batch=self.prisme_batch,
+            g68_content=(
+                "000G6800004011&020900&0300&"
+                "07000000000000000000&0800001000000&"  # 10.000 kr.
+                "09+&1002&1100000101001111&1220250414&"
+                "16202504080080400004&"
+                "1700000000000027100004&40www.suila.gl takuuk"
+            ),
+        )
+
+    def test_migration(self):
+        prisme_item_person_month = self.new_state.apps.get_model(
+            "suila", "PersonMonth"
+        ).objects.get(month=1).prismebatchitem
+        prisme_item_final_settlement = self.new_state.apps.get_model(
+            "suila", "FinalSettlement"
+        ).objects.first().prismebatchitem
+
+        self.assertEqual(prisme_item_final_settlement._amount, Decimal("10_000"))
+        self.assertIsNone(prisme_item_person_month._amount)
