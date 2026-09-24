@@ -364,6 +364,7 @@ class PersonDetailView(
         # ----TO HERE----
         context_data.update(
             {
+                "is_borgerservice": user.groups.filter(name="Borgerservice").exists(),
                 "paused": person.paused,
                 "allow_pause": person.allow_pause,
                 "can_pause": person.allow_pause and (user.cpr == person.cpr),

@@ -419,6 +419,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
         with self._time_context(year=2020):  # December 2020
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             # Verify that expected context variables are present
+            self.assertIn("is_borgerservice", response.context_data)
             self.assertIn("next_payout_date", response.context_data)
             self.assertIn("benefit_calculated", response.context_data)
             self.assertIn("estimated_year_benefit", response.context_data)

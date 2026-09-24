@@ -162,7 +162,7 @@
 </div>
 
 {% if person_id %}
-{% if user|has_permissions:"suila.change_person" or can_pause  %}
+{% if user|has_permissions:"suila.change_person" or can_pause or is_borgerservice %}
 <div class="row mt-5">
     <h2> Handlinger </h2>
 </div>
