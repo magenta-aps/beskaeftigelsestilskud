@@ -27,7 +27,7 @@ django-stubs-ext==6.1.1
 django-tables2==3.0.1
 django-two-factor-auth==1.18.1
 django_csp==4.0
-gl-mitid==1.9.1
+gl-mitid==1.9.3
 gl-prisme==0.2.5
 elementpath==4.8.0
 gunicorn==26.2.0
