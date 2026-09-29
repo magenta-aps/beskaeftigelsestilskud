@@ -1834,15 +1834,15 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
 
     view_class = GeneratedEboksMessageView
 
-    def get(self, user, typ="opgørelse", html=False):
+    def get(self, user, typ="opgørelse", html=False, month=1):
         return self.request_get(
             user,
             f"/persons/{self.person1.pk}/msg/"
-            f"{self.person_year.year.year}/1/opgørelse/?format="
+            f"{self.person_year.year.year}/{month}/{typ}/?format="
             + ("html" if html else "pdf"),
             pk=self.person1.pk,
             year=self.person_year.year.year,
-            month=1,
+            month=month,
             type=typ,
         )
 
@@ -2068,6 +2068,40 @@ class TestGeneratedEboksMessageView(TestViewMixin, PersonEnv, TestCase):
         view, response = self.get(self.admin_user, "opgørelse", True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/html")
+
+    def test_årsopgørelse_without_person_month(self):
+        # The eboks preview page always links to the annual settlement using
+        # month 12. A person without a PersonMonth for December must still be
+        # able to see their annual settlement.
+        self.person_year.personmonth_set.filter(month=12).delete()
+        AnnualIncome.objects.create(person_year=self.person_year, salary=100000)
+        TaxInformationPeriod.objects.create(
+            person_year=self.person_year,
+            tax_scope="FULL",
+            start_date=date(self.person_year.year.year, 1, 1),
+            end_date=date(self.person_year.year.year, 12, 31),
+        )
+        for html in (True, False):
+            with self.subTest(html=html):
+                view, response = self.get(
+                    self.admin_user, typ="årsopgørelse", html=html, month=12
+                )
+                self.assertEqual(response.status_code, 200)
+                message = view.get_context_data()["message"]
+                self.assertEqual(message.person_year, self.person_year)
+                self.assertIsNone(message.person_month)
+
+        # The view is logged against the PersonYear, not a PersonMonth
+        itemviews = list(PageView.objects.last().itemviews.all())
+        self.assertEqual(len(itemviews), 1)
+        self.assertEqual(itemviews[0].item, self.person_year)
+
+    def test_opgørelse_without_person_month(self):
+        self.person_year.personmonth_set.filter(month=12).delete()
+        for typ in ("opgørelse", "afventer"):
+            with self.subTest(typ=typ):
+                with self.assertRaises(Http404):
+                    self.get(self.admin_user, typ=typ, month=12)
 
 
 class TestEboksMessageView(TestViewMixin, PersonEnv, TestCase):
