@@ -1373,12 +1373,6 @@ class GeneratedEboksMessageView(
     required_model_permissions = ["suila.view_eboksmessage"]
 
     def get_context_data(self, **kwargs):
-        person_month = get_object_or_404(
-            PersonMonth,
-            person_year__person=self.object,
-            person_year__year_id=self.kwargs["year"],
-            month=self.kwargs["month"],
-        )
         person_year = get_object_or_404(
             PersonYear,
             person=self.object,
@@ -1389,11 +1383,20 @@ class GeneratedEboksMessageView(
             raise Http404
 
         if typ == "årsopgørelse":
+            # The annual settlement is based on the PersonYear alone. Do not
+            # require a PersonMonth, as the person may not have one for the
+            # month given in the URL (e.g. no income in December).
             message = SuilaEboksMessage(person_year=person_year, type=typ)
+            self.log_view(person_year)
         else:
+            person_month = get_object_or_404(
+                PersonMonth,
+                person_year=person_year,
+                month=self.kwargs["month"],
+            )
             message = SuilaEboksMessage(person_month=person_month, type=typ)
+            self.log_view(person_month)
 
-        self.log_view(person_month)
         return super().get_context_data(
             **{
                 **kwargs,
