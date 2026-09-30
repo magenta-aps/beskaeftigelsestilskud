@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 from django.conf import settings
 from django.test import TestCase, override_settings
 from prisme.client import Prisme
+from prisme.exceptions import PrismeException
 
 from suila.integrations.prisme.client import (
     PrismeClient,
@@ -169,12 +170,13 @@ class InvoiceTest(TestCase):
             patch.object(
                 Prisme,
                 "process_service",
-                return_value=[
+                side_effect=[
+                    PrismeException(250, "Debitorkonto findes ikke", {}),
                     SuilaInvoiceResponse(
                         None,
                         "<CustInvoiceTable><RecId>111</RecId>"
                         "<InvoiceId>222</InvoiceId></CustInvoiceTable>",
-                    )
+                    ),
                 ],
             ) as mock_process_service,
             patch.object(

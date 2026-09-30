@@ -59,6 +59,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 from django_stubs_ext import StrOrPromise
 from lxml import etree
+from prisme.exceptions import PrismeException
 from pypdf import PdfWriter
 from simple_history.models import HistoricalRecords
 from weasyprint import CSS, HTML
@@ -67,6 +68,7 @@ from weasyprint.text.fonts import FontConfiguration
 from suila.data import engine_choices
 from suila.integrations.eboks.client import EboksClient, MessageFailureException
 from suila.integrations.prisme.client import (
+    InvoiceCustomTableRequest,
     PrismeClient,
     SuilaInvoiceLine,
     SuilaInvoiceRequest,
@@ -2690,8 +2692,20 @@ class FinalSettlement(PermissionsMixin, models.Model):
                     )
                 ],
             )
-            print("READY")
-            response: SuilaInvoiceResponse = client.process_service(request)
+            try:
+                response: SuilaInvoiceResponse = client.process_service(request)
+            except PrismeException as e:
+                if "Debitorkonto findes ikke" in e.text:
+                    create_account_request: InvoiceCustomTableRequest = (
+                        request.create_custom_table_request()
+                    )
+                    # Create debitorkonto
+                    client.process_service(create_account_request)
+                    # Try again
+                    response = client.process_service(request)
+                else:
+                    raise
+
             if response and response.rec_id:
                 logger.info(f"Got response for invoice for {person.cpr} in {year}")
                 self.invoice_sent = True
