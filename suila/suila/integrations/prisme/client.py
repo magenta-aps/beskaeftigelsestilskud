@@ -39,6 +39,7 @@ class SuilaInvoiceLine(InvoiceLine):
                 "ArtsKontoplan": str(prisme_settings["type_account_plan_id"]).zfill(9),
                 "Sted": str(locality_code).zfill(6),
                 "SkatteAar": str(year)[-2:],
+                "Aktivitet": "010015",
             },
             beneficiary=str(beneficiary),
             project=prisme_settings["project_name"],

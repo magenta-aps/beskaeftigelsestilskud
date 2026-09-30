@@ -30,7 +30,7 @@ class InvoiceTest(TestCase):
                 FinalSettlement,
                 "result",
                 new_callable=PropertyMock,
-                return_value=Decimal("-1234.56"),
+                return_value=Decimal("-12345.67"),
             ),
             patch.object(
                 FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
@@ -48,7 +48,7 @@ class InvoiceTest(TestCase):
                         year=year,
                     )
                 ),
-                _result=Decimal("-1234.56"),
+                _result=Decimal("-12345.67"),
             )
             cls.final_settlement2 = FinalSettlement.objects.create(
                 annual_income=AnnualIncome.objects.create(
@@ -59,7 +59,7 @@ class InvoiceTest(TestCase):
                         year=year,
                     )
                 ),
-                _result=Decimal("1234.56"),
+                _result=Decimal("12345.67"),
             )
 
     @staticmethod
@@ -121,7 +121,7 @@ class InvoiceTest(TestCase):
                 FinalSettlement,
                 "result",
                 new_callable=PropertyMock,
-                return_value=Decimal("1234.56"),
+                return_value=Decimal("12345.67"),
             ),
             patch.object(
                 FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
@@ -148,7 +148,7 @@ class InvoiceTest(TestCase):
                 FinalSettlement,
                 "result",
                 new_callable=PropertyMock,
-                return_value=Decimal("-1234.56"),
+                return_value=Decimal("-12345.67"),
             ),
             patch.object(
                 FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
@@ -192,7 +192,7 @@ class InvoiceTest(TestCase):
                 FinalSettlement,
                 "result",
                 new_callable=PropertyMock,
-                return_value=Decimal("-1234.56"),
+                return_value=Decimal("-12345.67"),
             ),
             patch.object(
                 FinalSettlement, "pdf", new_callable=PropertyMock, return_value=None
@@ -213,7 +213,7 @@ class InvoiceTest(TestCase):
                 sum(
                     [line.quantity * line.unit_price for line in invoice_request.lines]
                 ),
-                Decimal("1234.56"),
+                12346,
             )
             self.assertEqual(
                 self.strip_whitespace(invoice_request.xml),
@@ -236,7 +236,7 @@ class InvoiceTest(TestCase):
                   </custTable>
                   <custinvoiceLines>
                     <custinvoiceLine>
-                      <AmountCur>1234.56</AmountCur>
+                      <AmountCur>12346.00</AmountCur>
                       <Beneficiary>1234567890</Beneficiary>
                       <Description>SUILA 2026</Description>
                       <InvoiceTxt>Suila-tapit 2026</InvoiceTxt>
@@ -268,6 +268,10 @@ class InvoiceTest(TestCase):
                         <ledgerDimensionSegment>
                           <Name>SkatteAar</Name>
                           <Value>26</Value>
+                        </ledgerDimensionSegment>
+                        <ledgerDimensionSegment>
+                          <Name>Aktivitet</Name>
+                          <Value>010015</Value>
                         </ledgerDimensionSegment>
                       </ledgerDimensionSegments>
                     </custinvoiceLine>
