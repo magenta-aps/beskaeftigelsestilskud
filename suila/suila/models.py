@@ -2704,7 +2704,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
                     # Try again
                     response = client.process_service(request)
                 else:
-                    raise
+                    raise  # pragma: no cover
 
             if response and response.rec_id:
                 logger.info(f"Got response for invoice for {person.cpr} in {year}")

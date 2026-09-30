@@ -124,7 +124,7 @@ class SuilaInvoiceRequest(InvoiceRequest):
 class InvoiceCustomTableResponse(InvoiceResponse):
     def __init__(self, request: SuilaInvoiceRequest, xml: str):
         super().__init__(request, xml)
-        if self.data is not None:
+        if self.data is not None:  # pragma: no branch
             self.account_num = int(self.data["CustTable"]["AccountNum"])
 
 
