@@ -2654,9 +2654,8 @@ class FinalSettlement(PermissionsMixin, models.Model):
         due_date: date,
         invoice_date: date,
     ):
-        amount = -self._result
-        print(f"amount: {amount}")
-        if amount > 0 and not self.invoice_sent:
+        amount = round(-self._result)
+        if amount >= 2000 and not self.invoice_sent:
             logger.info(f"Send invoice for {amount} DKK")
             person_year: PersonYear = self.person_year
             person: Person = person_year.person
