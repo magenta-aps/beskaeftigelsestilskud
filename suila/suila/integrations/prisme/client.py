@@ -108,6 +108,33 @@ class SuilaInvoiceRequest(InvoiceRequest):
     def response_class(cls) -> type[ResponseType]:
         return SuilaInvoiceResponse  # pragma: no cover
 
+    def create_custom_table_request(self) -> "InvoiceCustomTableRequest":
+        return InvoiceCustomTableRequest(
+            invoice_date=self.invoice_date,
+            due_date=self.due_date,
+            accounting_date=self.accounting_date,
+            text=self.text,
+            files=self.files,
+            lines=self.lines,
+            cpr=self.cpr,
+            year=self.year,
+        )
+
+
+class InvoiceCustomTableResponse(InvoiceResponse):
+    def __init__(self, request: SuilaInvoiceRequest, xml: str):
+        super().__init__(request, xml)
+        if self.data is not None:  # pragma: no branch
+            self.account_num = int(self.data["CustTable"]["AccountNum"])
+
+
+class InvoiceCustomTableRequest(SuilaInvoiceRequest):
+    method = "CreateCustTable"
+
+    @classmethod
+    def response_class(cls) -> type[ResponseType]:
+        return InvoiceCustomTableResponse  # pragma: no cover
+
 
 class SuilaInvoiceResponse(InvoiceResponse):
 
@@ -172,7 +199,6 @@ class PrismeClient(Prisme):
     def process_service(
         self, request_object: SuilaInvoiceRequest, debug_context: Any = None
     ) -> SuilaInvoiceResponse:
-        print("process_service")
         if self.mock:
             return self.mock_service(request_object, debug_context)  # pragma: no cover
         else:
