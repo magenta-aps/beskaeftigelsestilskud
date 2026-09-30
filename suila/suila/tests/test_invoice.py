@@ -269,6 +269,10 @@ class InvoiceTest(TestCase):
                           <Name>SkatteAar</Name>
                           <Value>26</Value>
                         </ledgerDimensionSegment>
+                        <ledgerDimensionSegment>
+                          <Name>Aktivitet</Name>
+                          <Value>010015</Value>
+                        </ledgerDimensionSegment>
                       </ledgerDimensionSegments>
                     </custinvoiceLine>
                   </custinvoiceLines>
