@@ -236,7 +236,7 @@ class InvoiceTest(TestCase):
                   </custTable>
                   <custinvoiceLines>
                     <custinvoiceLine>
-                      <AmountCur>12346</AmountCur>
+                      <AmountCur>12346.00</AmountCur>
                       <Beneficiary>1234567890</Beneficiary>
                       <Description>SUILA 2026</Description>
                       <InvoiceTxt>Suila-tapit 2026</InvoiceTxt>
