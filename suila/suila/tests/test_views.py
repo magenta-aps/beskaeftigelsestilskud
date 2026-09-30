@@ -437,6 +437,15 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
             self.assertIsInstance(response.context_data["table"], PersonMonthTable)
             self.assertFalse(response.context_data["table"].orderable)
 
+    def test_no_personyear_for_current_year_falls_back_to_latest(self):
+        # Person 1 only has data for 2020, but we are now in 2021
+        with self._time_context(year=2021, month=6):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(view.year, 2020)
+            self.assertEqual(view.month, 12)
+            self.assertEqual(view.person_year, self.person_year)
+
     def test_get_context_data_with_surplus_benefit(self):
         # NOTE: Until #70633 is done, this test should return the same as
         # test_get_context_data
@@ -791,7 +800,18 @@ class TestPersonDetailIncomeView(TimeContextMixin, PersonEnv):
 
     def test_no_personyear(self):
         with self._time_context(year=2021), self.assertRaises(Http404):
+            view, response = self.request_get(
+                self.normal_user,
+                f"/persons/{self.person1.pk}/income/?year=2021",
+                pk=self.person1.pk,
+            )
+
+    def test_no_personyear_for_current_year_falls_back_to_latest(self):
+        with self._time_context(year=2021):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(view.year, 2020)
+            self.assertEqual(view.person_year, self.person_year)
 
     def test_get_context_data_no_data(self):
         PersonYear.objects.update_or_create(
@@ -1036,7 +1056,11 @@ class TestPersonGraphView(TimeContextMixin, PersonEnv):
         # Arrange: request graph for year where no person months are available
         with self._time_context(year=2021):
             # Act
-            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            view, response = self.request_get(
+                self.normal_user,
+                f"/persons/{self.person1.pk}/graph/?year=2021",
+                pk=self.person1.pk,
+            )
             # Assert
             self.assertNotIn("yearly_income", response.context_data)
             self.assertNotIn("yearly_benefit", response.context_data)

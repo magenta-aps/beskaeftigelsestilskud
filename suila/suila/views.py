@@ -219,6 +219,29 @@ class PersonYearMonthMixin(YearMonthMixin):
         return self.kwargs["pk"]  # type: ignore[attr-defined]
 
     @cached_property
+    def year(self) -> int:
+        try:
+            return int(self.request.GET.get("year"))  # type: ignore[attr-defined]
+        except (TypeError, ValueError):
+            pass
+        # No (valid) year given: Use the current year if the person has data for it
+        # (or for the previous year, if we have not yet reached the first payout
+        # month.) Otherwise fall back to the latest year the person has data for.
+        now = timezone.now()
+        person_years = PersonYear.objects.filter(person_id=self.person_pk)
+        first_payout_month = settings.MONTH_OF_FIRST_PAYOUT  # type: ignore
+        wanted_year = now.year - 1 if now.month < first_payout_month else now.year
+        if person_years.filter(year_id=wanted_year).exists():
+            return now.year
+        latest_year = (
+            person_years.filter(year_id__lte=now.year)
+            .order_by("-year_id")
+            .values_list("year_id", flat=True)
+            .first()
+        )
+        return latest_year or now.year
+
+    @cached_property
     def person_year(self):
         if self.month < settings.MONTH_OF_FIRST_PAYOUT:
             personyear = get_object_or_404(
