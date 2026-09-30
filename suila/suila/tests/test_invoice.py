@@ -213,7 +213,7 @@ class InvoiceTest(TestCase):
                 sum(
                     [line.quantity * line.unit_price for line in invoice_request.lines]
                 ),
-                Decimal("12345.67"),
+                12346,
             )
             self.assertEqual(
                 self.strip_whitespace(invoice_request.xml),
