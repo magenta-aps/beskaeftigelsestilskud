@@ -172,11 +172,13 @@ class InvoiceTest(TestCase):
                 "process_service",
                 side_effect=[
                     PrismeException(250, "Debitorkonto findes ikke", {}),
-                    SuilaInvoiceResponse(
-                        None,
-                        "<CustInvoiceTable><RecId>111</RecId>"
-                        "<InvoiceId>222</InvoiceId></CustInvoiceTable>",
-                    ),
+                    [
+                        SuilaInvoiceResponse(
+                            None,
+                            "<CustInvoiceTable><RecId>111</RecId>"
+                            "<InvoiceId>222</InvoiceId></CustInvoiceTable>",
+                        )
+                    ],
                 ],
             ) as mock_process_service,
             patch.object(
