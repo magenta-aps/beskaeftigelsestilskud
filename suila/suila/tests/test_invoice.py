@@ -11,6 +11,7 @@ from prisme.client import Prisme
 from prisme.exceptions import PrismeException
 
 from suila.integrations.prisme.client import (
+    InvoiceCustomTableResponse,
     PrismeClient,
     SuilaInvoiceRequest,
     SuilaInvoiceResponse,
@@ -173,11 +174,17 @@ class InvoiceTest(TestCase):
                 side_effect=[
                     PrismeException(250, "Debitorkonto findes ikke", {}),
                     [
+                        InvoiceCustomTableResponse(
+                            None,
+                            "<CustTable><AccountNum>111</AccountNum>" "</CustTable>",
+                        ),
+                    ],
+                    [
                         SuilaInvoiceResponse(
                             None,
                             "<CustInvoiceTable><RecId>111</RecId>"
                             "<InvoiceId>222</InvoiceId></CustInvoiceTable>",
-                        )
+                        ),
                     ],
                 ],
             ) as mock_process_service,
