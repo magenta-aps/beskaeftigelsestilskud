@@ -627,7 +627,7 @@ class TestPersonDetailView(TimeContextMixin, PersonEnv):
                     # For both March and April, the next payout date is in March, as
                     # there is no `PersonMonth` for February in this test.
                     self.assertEqual(
-                        response.context_data["next_payout_date"], date(2025, 3, 18)
+                        response.context_data["next_payout_date"], date(2025, 3, 21)
                     )
 
     def test_get_table_data(self):
@@ -2667,15 +2667,17 @@ class TestPersonPauseUpdateView(TimeContextMixin, TestViewMixin, PersonEnv):
 
         # Get context data the day after
         context_data = self.get_context_data(2020, 5, 3)
-        self.assertEqual(context_data["pause_effect_date"], date(2020, 5, 19))
+        # The third Friday of May 2025 is on the 15th
+        self.assertEqual(context_data["pause_effect_date"], date(2020, 5, 15))
 
         # We should show the date from which the pause becomes effective,
         # because it is in the future
         self.assertEqual(context_data["show_pause_effect_date"], True)
 
         # Get context data on the payout date
-        context_data = self.get_context_data(2020, 5, 19)
-        self.assertEqual(context_data["pause_effect_date"], date(2020, 5, 19))
+        # (The third Friday of May 2025 is on the 15th)
+        context_data = self.get_context_data(2020, 5, 15)
+        self.assertEqual(context_data["pause_effect_date"], date(2020, 5, 15))
 
         # We should show the date from which the pause becomes effective,
         # because it becomes effective today

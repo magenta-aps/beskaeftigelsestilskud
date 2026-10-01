@@ -10,7 +10,7 @@ from io import BytesIO, StringIO
 from typing import Generator
 
 from common.utils import add_or_subtract_working_days
-from dateutil.relativedelta import TU, relativedelta
+from dateutil.relativedelta import FR, relativedelta
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from django.db import transaction
@@ -487,9 +487,9 @@ class BatchExport(BaseExport):
         return add_or_subtract_working_days(get_payment_date(obj.year, obj.month), -1)
 
     def get_posting_date(self, obj: PersonMonth) -> date:
-        # Posting date is the second Tuesday two months after the given `PersonMonth`.
-        # E.g. for a `PersonMonth` in February 2025, the posting date is April 8, 2025.
-        return obj.year_month + relativedelta(months=2, weekday=TU(+2))
+        # Posting date is the second Friday two months after the given `PersonMonth`.
+        # E.g. for a `PersonMonth` in February 2025, the posting date is April 11, 2025.
+        return obj.year_month + relativedelta(months=2, weekday=FR(+2))
 
     def get_destination_filename(self, prisme_batch: PrismeBatch) -> str:
         return (

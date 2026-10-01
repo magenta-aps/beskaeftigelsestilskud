@@ -18,7 +18,7 @@ from suila.models import (
 )
 
 
-class TestPauseEffectDate(TestCase):
+class TestDateFunctions(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.calc = StandardWorkBenefitCalculationMethod.objects.create(
@@ -130,4 +130,5 @@ class TestPauseEffectDate(TestCase):
         )
 
     def test_get_payment_date(self):
-        self.assertEqual(get_payment_date(2025, 8), date(2025, 10, 21))
+        # The third Friday of October 2025 is on the 17th
+        self.assertEqual(get_payment_date(2025, 8), date(2025, 10, 17))
