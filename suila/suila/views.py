@@ -927,13 +927,30 @@ class PersonFinalSettlementsView(
     required_object_permissions = ["view"]
     matomo_pagename = "Persondetaljer - årsopgørelser"
 
+    @cached_property
+    def year(self) -> int:
+        # Do not fall back to the latest year the person has data for (as
+        # `PersonYearMonthMixin` does), as the settlement is always for the year
+        # before the requested (or current) year, regardless of whether the person
+        # has data for the requested year.
+        return YearMonthMixin.year.func(self)  # type: ignore[attr-defined]
+
+    @cached_property
+    def person_year(self):
+        # Show data from 2025 in 2026, etc.
+        year = self.year
+        if self.month < settings.MONTH_OF_FIRST_PAYOUT:
+            year -= 1
+        return get_object_or_404(
+            PersonYear,
+            year_id=year - 1,
+            person_id=self.person_pk,
+        )
+
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        # Show data from 2025 in 2026, etc.
-        person_year = self.person_year.prev
-        if person_year is None:
-            raise Http404(f"Cannot find previous PersonYear for {self.person_year.pk}")
+        person_year = self.person_year
 
         # Note: this is copied from `SuilaEboksMessage.context` and slightly modified
         annual_income = person_year.annual_income_statements.last()
@@ -961,7 +978,7 @@ class PersonFinalSettlementsView(
         )
         # (end of copied code)
 
-        context_data["this_year"] = self.person_year.year.year
+        context_data["this_year"] = person_year.year.year + 1
 
         self.log_view(items=[person_year, annual_income])
         return context_data

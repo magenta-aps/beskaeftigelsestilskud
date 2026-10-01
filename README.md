@@ -135,6 +135,12 @@ To run tests only in a specific file run
 docker exec suila-web-private bash -c 'coverage run manage.py test data_analysis.tests.test_views'
 ```
 
+To run all tests except the (slow) integration tests run:
+
+```
+docker exec suila-web-private bash -c 'coverage run manage.py test --parallel --exclude-tag=integration ; coverage combine ; coverage report --show-missing'
+```
+
 To run type checks run:
 
 ```shell

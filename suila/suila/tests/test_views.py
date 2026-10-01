@@ -1173,6 +1173,31 @@ class TestPersonFinalSettlementsView(TimeContextMixin, PersonEnv):
             view, response = self.request_get(self.normal_user, pk=self.person1.pk)
             self.assertTrue(expected_keys.issubset(response.context_data))
 
+    def test_no_personyear_for_current_year(self):
+        # Person 1 has data for 2019 and 2020, but not for 2021. In 2021, the
+        # settlement for 2020 should be shown (not the one for 2019.)
+        AnnualIncome.objects.create(
+            person_year=self.person_year,
+            salary=Decimal("1000"),
+        )
+        with self._time_context(year=2021, month=10):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.context_data["person_year"], self.person_year)
+            self.assertEqual(response.context_data["this_year"], 2021)
+            self.assertEqual(response.context_data["a_income"], Decimal("1000.00"))
+
+    def test_before_first_payout_month(self):
+        # Before the first payout month of 2021, we still show the settlement for
+        # 2019 (and not the one for 2020)
+        with self._time_context(year=2021, month=settings.MONTH_OF_FIRST_PAYOUT - 1):
+            view, response = self.request_get(self.normal_user, pk=self.person1.pk)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                response.context_data["person_year"], self.prev_person_year
+            )
+            self.assertEqual(response.context_data["this_year"], 2020)
+
     # The tests below are copied from `TestPersonDetailView`
 
     def test_borger_see_only_self(self):
