@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from suila.dates import get_last_working_day, get_pause_effect_date, get_payment_date
+from suila.dates import get_pause_effect_date, get_payment_date
 from suila.models import (
     Person,
     PersonMonth,
@@ -131,8 +131,3 @@ class TestPauseEffectDate(TestCase):
 
     def test_get_payment_date(self):
         self.assertEqual(get_payment_date(2025, 8), date(2025, 10, 21))
-
-    def test_get_last_working_day(self):
-        self.assertEqual(get_last_working_day(2025, 10), date(2025, 10, 31))
-        self.assertEqual(get_last_working_day(2025, 11), date(2025, 11, 28))
-        self.assertEqual(get_last_working_day(2025, 12), date(2025, 12, 31))

@@ -1,29 +1,11 @@
 # SPDX-FileCopyrightText: 2024 Magenta ApS <info@magenta.dk>
 #
 # SPDX-License-Identifier: MPL-2.0
-import calendar
 from datetime import date
 
-import holidays
 from dateutil.relativedelta import TU, relativedelta
 
 from suila.models import PersonMonth
-
-
-def get_last_working_day(year: int, month: int) -> date:
-    """
-    Returns the last working day for a given month
-    """
-    holiday_calendar = holidays.GL()  # type: ignore
-
-    # Start from the last day of the month
-    day_to_return = date(year, month, calendar.monthrange(year, month)[1])
-
-    # Go backwards until we find a working day
-    while not holiday_calendar.is_working_day(day_to_return):
-        day_to_return -= relativedelta(days=1)
-
-    return day_to_return
 
 
 def get_payment_date(year: int, month: int) -> date:
@@ -32,11 +14,6 @@ def get_payment_date(year: int, month: int) -> date:
     # E.g. if `year` and `month` specifies February 2025, the official payment date is
     # April 15, 2025.
     return date(year, month, 1) + relativedelta(months=2, weekday=TU(+3))
-    # Code for using last workday of the month:
-    # if month <= 10:
-    #     return get_last_working_day(year, month + 2)
-    # else:
-    #     return get_last_working_day(year + 1, month - 12 + 2)
 
 
 def get_pause_effect_date(person_month: PersonMonth):
