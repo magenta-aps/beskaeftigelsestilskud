@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
 from django.core.management import call_command
-from django.test import TransactionTestCase, override_settings
+from django.test import TransactionTestCase, override_settings, tag
 from django.utils import timezone
 from requests.models import Response
 from tenQ.writer.g68 import G68Transaction, Udbetalingsbeløb
@@ -497,6 +497,7 @@ pitu_test_settings = {
     ESKAT_PASSWORD="testpass",
     ESKAT_VERIFY=False,
 )
+@tag("integration")
 class IntegrationBaseTest(
     EboksMocks, PrismeMocks, EskatMocks, U1AMocks, DafoMocks, TransactionTestCase
 ):
