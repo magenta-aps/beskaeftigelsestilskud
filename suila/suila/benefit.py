@@ -259,6 +259,7 @@ def calculate_benefit(
         # Re-offset benefit difference for people in quarantine
         df.loc[df_quarantine.in_quarantine, "offset_benefit_difference"] = df.loc[
             (df.benefit_difference > 0)
+            & (df.benefit_this_month >= 0)
             & (
                 df.benefit_difference < settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD
             )
