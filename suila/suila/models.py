@@ -790,7 +790,6 @@ class Person(PermissionsMixin, models.Model):
         """
         personmonth_qs = PersonMonth.objects.filter(
             person_year__person__pk=self.pk,
-            offset_benefit_difference__gt=Decimal("0"),
         )
         finalsettlement_pks = (
             FinalSettlement.objects.filter(
@@ -825,8 +824,8 @@ class Person(PermissionsMixin, models.Model):
         benefit_difference = (
             fs_benefit_difference + pm_benefit_offset - pbi_benefit_payout
         )
+        self.benefit_difference = benefit_difference
         if save:
-            self.benefit_difference = benefit_difference
             self.save(update_fields=["benefit_difference"])
 
         return {
@@ -1383,6 +1382,7 @@ class PersonMonth(PermissionsMixin, models.Model):
         decimal_places=2,
         null=True,
         blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
     )
 
     has_paid_b_tax = models.BooleanField(
