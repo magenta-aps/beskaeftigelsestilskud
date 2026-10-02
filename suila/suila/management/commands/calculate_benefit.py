@@ -45,8 +45,6 @@ class Command(SuilaBaseCommand):
         person_qs = Person.objects.filter(
             pk__in=person_month_qs.values_list("person_year__person").distinct()
         )
-        for person in person_qs:
-            person.calculate_benefit_difference(year=year, month=month)
 
         benefit = calculate_benefit(month, year, kwargs["cpr"])
 

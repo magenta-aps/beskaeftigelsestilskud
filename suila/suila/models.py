@@ -824,8 +824,8 @@ class Person(PermissionsMixin, models.Model):
         benefit_difference = (
             fs_benefit_difference + pm_benefit_offset - pbi_benefit_payout
         )
-        self.benefit_difference = benefit_difference
         if save:
+            self.benefit_difference = benefit_difference
             self.save(update_fields=["benefit_difference"])
 
         return {
