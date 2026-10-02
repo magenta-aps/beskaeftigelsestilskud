@@ -3,6 +3,20 @@
 import django.core.validators
 from decimal import Decimal
 from django.db import migrations, models
+from common.model_utils import get_amount_from_g68_content
+
+
+def set_amount_from_g68_data(apps, schema_editor):
+    PrismeBatchItem = apps.get_model("suila", "PrismeBatchItem")
+    prismebatchitems = PrismeBatchItem.objects.filter(
+        final_settlement__isnull=False,
+        _amount__isnull=True,
+    )
+    for prismebatchitem in prismebatchitems:
+        prismebatchitem._amount = get_amount_from_g68_content(
+            prismebatchitem.g68_content
+        )
+        prismebatchitem.save(update_fields=["_amount"])
 
 
 class Migration(migrations.Migration):
@@ -54,5 +68,8 @@ class Migration(migrations.Migration):
             field=models.DecimalField(
                 blank=True, decimal_places=2, max_digits=12, null=True
             ),
+        ),
+        migrations.RunPython(
+            set_amount_from_g68_data
         ),
     ]

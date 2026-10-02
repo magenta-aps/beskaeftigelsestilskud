@@ -63,6 +63,9 @@ def calculate_benefit(
         sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]),  # type: ignore
         12,
     )
+    benefit_threshold = (
+        settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD  # type: ignore
+    )
     if month == 12:
         safety_factor = 1
     else:
@@ -256,12 +259,14 @@ def calculate_benefit(
 
     # Offset surplus benefit once final benefit has been determined
     df["offset_benefit_difference"] = df.loc[
-        (df.benefit_difference > 0)
-        & (df.benefit_difference < settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD),
+        (df.benefit_difference > 0) & (df.benefit_difference < benefit_threshold),
         ["benefit_this_month", "benefit_difference"],
     ].min(axis=1)
     df.loc[
-        (df.benefit_difference > 0) & (df.benefit_this_month >= 0), "benefit_this_month"
+        (df.benefit_difference > 0)
+        & (df.benefit_this_month >= 0)
+        & df.offset_benefit_difference,
+        "benefit_this_month",
     ] -= df["offset_benefit_difference"]
 
     df.loc[:, "benefit_calculated"] = np.ceil(df["benefit_this_month"])
