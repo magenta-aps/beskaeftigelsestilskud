@@ -266,9 +266,8 @@ class TestPrismeBatchItem(ModelTest):
             ),
         )
 
-        self.assertIsNone(prisme_batch_item._amount)
-        self.assertEqual(prisme_batch_item.amount, 317)
         self.assertEqual(prisme_batch_item._amount, 317)
+        self.assertEqual(prisme_batch_item.amount, 317)
 
         with self.assertRaises(ValueError):
             prisme_batch_item.g68_content = "foo"

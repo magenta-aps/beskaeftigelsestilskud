@@ -2264,10 +2264,14 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
     @property
     def amount(self):
         amount = get_amount_from_g68_content(self.g68_content)
-        if self._amount != amount:
-            self._amount = amount
-            self.save(update_fields=["_amount"])
-        return amount
+        self._amount = amount
+        return self._amount
+
+@receiver(pre_save, sender=PrismeBatchItem)
+def before_save_prisme_batch_item(sender, instance, **kwargs):
+    # Initialize result
+    if instance.g68_content:
+        instance.amount
 
 
 class AnnualIncome(PermissionsMixin, models.Model):
@@ -2757,7 +2761,10 @@ class FinalSettlement(PermissionsMixin, models.Model):
         invoice_date: date,
     ):
         amount = round(-self._result)
-        if amount >= 2000 and not self.invoice_sent:
+        if (
+            amount >= settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD
+            and not self.invoice_sent
+        ):
             logger.info(f"Send invoice for {amount} DKK")
             person_year: PersonYear = self.person_year
             person: Person = person_year.person
