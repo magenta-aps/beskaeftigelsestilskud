@@ -805,8 +805,16 @@ class Person(PermissionsMixin, models.Model):
                 Q(person_year__year__lt=year)
                 | Q(person_year__year=year, month__lt=month)
             )
-            month_year = date(year, month, 1)
-            finalsettlement_qs = finalsettlement_qs.filter(created__lt=month_year)
+            # FinalSettlements are created in August (month 8).
+            # Don't include FS from year, if looking prior to FS creation
+            if month < 9:
+                finalsettlement_qs = finalsettlement_qs.filter(
+                    annual_income__person_year__year__lt=year,
+                )
+            else:
+                finalsettlement_qs = finalsettlement_qs.filter(
+                    annual_income__person_year__year__lte=year,
+                )
         prismebatchitem_qs = PrismeBatchItem.objects.filter(
             final_settlement__in=finalsettlement_qs
         )
