@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from common import utils
 from common.utils import to_dataframe
+from dateutil.relativedelta import FR, TU, relativedelta
 from django.conf import settings
 from django.db.models import Exists
 from more_itertools import one
@@ -297,22 +298,23 @@ def get_payout_df(month: int, year: int, cpr: str | None = None) -> pd.DataFrame
 
 def get_payout_date(year: int, month: int) -> date:
     """
-    Returns the date of a given month's third tuesday.
+    Returns the date of a given month's third friday.
     """
-    weekday_of_first_day = date(year, month, 1).weekday()
-    first_tuesday = 9 - weekday_of_first_day
-    if first_tuesday > 7:
-        first_tuesday -= 7
-    return date(year, month, first_tuesday + 14)
+    return date(year, month, 1) + relativedelta(weekday=FR(+3))
 
 
 def get_calculation_date(year: int, month: int) -> date:
     """Get date for when to do calculations in a month
 
-    The day before the 2nd tuesday in a month - Can be changed by modifying
+    The friday before the 2nd tuesday in a month - Can be changed by modifying
     `settings.CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS`.
+
+    Note: this is (still) relative to the 3rd tuesday of the month, which was the
+    payout date before it was moved to the 3rd friday. This keeps the calculation
+    date unchanged.
     """
-    return get_payout_date(year, month) - timedelta(
+    third_tuesday = date(year, month, 1) + relativedelta(weekday=TU(+3))
+    return third_tuesday - timedelta(
         days=settings.CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS  # type: ignore
     )
 
@@ -320,7 +322,7 @@ def get_calculation_date(year: int, month: int) -> date:
 def get_eboks_date(year: int, month: int):
     """Get date for when to send EBOKS messages to citizens.
 
-    The day before the 3rd tuesday in the month
+    The day before the 3rd friday in the month
     """
 
     return get_payout_date(year, month) - timedelta(
