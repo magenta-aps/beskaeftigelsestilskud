@@ -152,7 +152,7 @@ class SuilaInvoiceResponse(InvoiceResponse):
 class PrismeClient(Prisme):
 
     mock_recid_counter = 0
-    instance = None
+    instance: "PrismeClient | None" = None
 
     def __init__(
         self,
