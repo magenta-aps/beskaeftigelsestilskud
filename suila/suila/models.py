@@ -809,11 +809,11 @@ class Person(PermissionsMixin, models.Model):
             # Don't include FS from year, if looking prior to FS creation
             if month < 9:
                 finalsettlement_qs = finalsettlement_qs.filter(
-                    annual_income__person_year__year__lt=year,
+                    annual_income__person_year__year__lt=year - 1,
                 )
             else:
                 finalsettlement_qs = finalsettlement_qs.filter(
-                    annual_income__person_year__year__lte=year,
+                    annual_income__person_year__year__lte=year - 1,
                 )
         prismebatchitem_qs = PrismeBatchItem.objects.filter(
             final_settlement__in=finalsettlement_qs
@@ -2267,6 +2267,7 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
         self._amount = amount
         return self._amount
 
+
 @receiver(pre_save, sender=PrismeBatchItem)
 def before_save_prisme_batch_item(sender, instance, **kwargs):
     # Initialize result
@@ -2762,7 +2763,7 @@ class FinalSettlement(PermissionsMixin, models.Model):
     ):
         amount = round(-self._result)
         if (
-            amount >= settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD
+            amount >= settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD  # type: ignore
             and not self.invoice_sent
         ):
             logger.info(f"Send invoice for {amount} DKK")
