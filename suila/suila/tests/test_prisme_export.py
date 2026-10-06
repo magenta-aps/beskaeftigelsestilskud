@@ -297,15 +297,15 @@ class TestBatchExport(ExportTest):
         prisme_batch_item, person_month = self._get_prisme_batch_item(
             export, prisme_batch
         )
-        # Assert: the G68 `Udbetalingsdato` is third Monday of the month two months
-        # after the `PersonMonth` to export.
+        # Assert: the G68 `Udbetalingsdato` is the working day before the third Friday
+        # of the month two months after the `PersonMonth` to export.
         for field in G68Transaction.parse(prisme_batch_item.g68_content):
             if isinstance(field, Udbetalingsdato):
-                self.assertEqual(field.val, date(2025, 3, 17))  # March 17, 2025
-        # Assert: the G68 "posteringsdato" (field 110) is the second Tuesday of the
+                self.assertEqual(field.val, date(2025, 3, 20))  # March 20, 2025
+        # Assert: the G68 "posteringsdato" (field 110) is the second Friday of the
         # month two months after the `PersonMonth` to export.
         posteringsdato = self._get_floating_field(prisme_batch_item.g69_content, 110)
-        self.assertEqual(posteringsdato, "20250311")  # March 11, 2025
+        self.assertEqual(posteringsdato, "20250314")  # March 14, 2025
 
     def test_get_payment_date(self):
         # Arrange
@@ -313,7 +313,7 @@ class TestBatchExport(ExportTest):
         # Act
         export = self._get_instance()
         # Assert
-        self.assertEqual(export.get_payment_date(february), date(2025, 4, 14))
+        self.assertEqual(export.get_payment_date(february), date(2025, 4, 16))
 
     def test_get_posting_date(self):
         # Arrange
@@ -321,7 +321,7 @@ class TestBatchExport(ExportTest):
         # Act
         export = self._get_instance()
         # Assert
-        self.assertEqual(export.get_posting_date(february), date(2025, 4, 8))
+        self.assertEqual(export.get_posting_date(february), date(2025, 4, 11))
 
     def test_upload_batch_handles_sftp_success(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method

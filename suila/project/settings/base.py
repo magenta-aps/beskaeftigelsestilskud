@@ -108,16 +108,16 @@ if TESTING:
 
 CRISPY_TEMPLATE_PACK = "uni_form"
 
-# "calculation_date" is created from "payout_date - {days_offset}"
-# "payout_date" is the 3rd tuesday in the month.
-# So if this value is "11", it will be "friday in week 1"
+# "calculation_date" is created from "3rd tuesday in the month - {days_offset}"
+# (the 3rd tuesday was the payout date before it was moved to the 3rd friday.)
+# So if this value is "11", it will be "the friday before the 2nd tuesday"
 CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
     os.environ.get("CALCULATION_DATE_PAYOUT_DATE_OFFSET_DAYS", "11")
 )
 
 # "eboks_date" is created from "payout_date - {days_offset}".
-# "payout_date" is the 3rd tuesday in the month.
-# So if this value is "1", it will be "monday in week 3"
+# "payout_date" is the 3rd friday in the month.
+# So if this value is "1", it will be "the 3rd thursday in the month"
 EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
     os.environ.get("EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS", "1")
 )
