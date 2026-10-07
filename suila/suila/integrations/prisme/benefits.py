@@ -249,7 +249,7 @@ class BaseExport:
             buf.write(b"\r\n")
             buf.write(prisme_batch_item.g69_content.encode("utf-8"))
             buf.write(b"\r\n")
-            prisme_batch_item._amount = get_amount_from_g68_content(
+            prisme_batch_item.amount = get_amount_from_g68_content(
                 prisme_batch_item.g68_content
             )
         buf.seek(0)

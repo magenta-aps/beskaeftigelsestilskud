@@ -825,7 +825,7 @@ class Person(PermissionsMixin, models.Model):
         fs_benefit_difference = finalsettlement_qs.aggregate(acquired=Sum("_result"))[
             "acquired"
         ] or Decimal("0")
-        pbi_benefit_payout = prismebatchitem_qs.aggregate(paid=Sum("_amount"))[
+        pbi_benefit_payout = prismebatchitem_qs.aggregate(paid=Sum("amount"))[
             "paid"
         ] or Decimal("0")
 
@@ -2254,25 +2254,19 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
         blank=False,
     )
 
-    _amount = models.DecimalField(
+    amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
     )
 
-    @property
-    def amount(self):
-        amount = get_amount_from_g68_content(self.g68_content)
-        self._amount = amount
-        return self._amount
-
 
 @receiver(pre_save, sender=PrismeBatchItem)
 def before_save_prisme_batch_item(sender, instance, **kwargs):
     # Initialize result
     if instance.g68_content:
-        instance.amount
+        instance.amount = get_amount_from_g68_content(instance.g68_content)
 
 
 class AnnualIncome(PermissionsMixin, models.Model):

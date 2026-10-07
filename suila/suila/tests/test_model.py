@@ -266,7 +266,6 @@ class TestPrismeBatchItem(ModelTest):
             ),
         )
 
-        self.assertEqual(prisme_batch_item._amount, 317)
         self.assertEqual(prisme_batch_item.amount, 317)
 
         with self.assertRaises(ValueError):
@@ -585,7 +584,7 @@ class TestPerson(UserModelTest):
         PrismeBatchItem.objects.create(
             final_settlement=fs,
             prisme_batch=prisme_batch,
-            _amount=Decimal("150.00"),
+            amount=Decimal("150.00"),
             g68_content=(
                 "000G6800004011&020900&0300&"
                 "07000000000000000000&0800000015000&"

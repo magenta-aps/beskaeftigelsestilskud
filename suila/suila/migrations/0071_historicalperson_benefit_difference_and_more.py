@@ -10,13 +10,13 @@ def set_amount_from_g68_data(apps, schema_editor):
     PrismeBatchItem = apps.get_model("suila", "PrismeBatchItem")
     prismebatchitems = PrismeBatchItem.objects.filter(
         final_settlement__isnull=False,
-        _amount__isnull=True,
+        amount__isnull=True,
     )
     for prismebatchitem in prismebatchitems:
-        prismebatchitem._amount = get_amount_from_g68_content(
+        prismebatchitem.amount = get_amount_from_g68_content(
             prismebatchitem.g68_content
         )
-        prismebatchitem.save(update_fields=["_amount"])
+        prismebatchitem.save(update_fields=["amount"])
 
 
 class Migration(migrations.Migration):
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="prismebatchitem",
-            name="_amount",
+            name="amount",
             field=models.DecimalField(
                 blank=True, decimal_places=2, max_digits=12, null=True
             ),

@@ -364,7 +364,7 @@ class TestBatchExport(ExportTest):
             self.assertGreater(pbis.count(), 0)
             for pbi in pbis:
                 self.assertEqual(
-                    pbi._amount, get_amount_from_g68_content(pbi.g68_content)
+                    pbi.amount, get_amount_from_g68_content(pbi.g68_content)
                 )
 
     def test_upload_batch_handles_sftp_failure(self):
