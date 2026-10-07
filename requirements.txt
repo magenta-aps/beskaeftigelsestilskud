@@ -60,7 +60,7 @@ six==1.17.0
 soupsieve==2.10
 sqlparse==0.6.0
 tabulate==0.10.0
-tenacity==9.1.4
+tenacity==9.2.1
 types-python-dateutil==2.9.0.20260807
 types-pytz==2026.5.0.20261006
 types-PyYAML==6.0.12.20260906
