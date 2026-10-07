@@ -9,7 +9,7 @@ from django.core import management
 from django.db.models import Q
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date, get_eboks_date
+from suila.benefit import get_calculation_date, get_eboks_date, get_prisme_export_date
 from suila.exceptions import ConfigurationError, DependenciesNotMet
 from suila.models import JobLog, ManagementCommands, StatusChoices
 from suila.types import JOB_NAME, JOB_TYPE
@@ -87,7 +87,7 @@ class JobDispatcher:
         ManagementCommands.EXPORT_BENEFITS_TO_PRISME: {
             "type": JOB_TYPE_MONTHLY,
             "validator": lambda year, month, day: (
-                day >= get_calculation_date(year, month).day
+                day >= get_prisme_export_date(year, month).day
             ),
         },
         ManagementCommands.SEND_MONTHLY_EBOKS: {

@@ -122,6 +122,14 @@ EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
     os.environ.get("EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS", "1")
 )
 
+# "prisme_export_date" is created from "payout_date - {days_offset}".
+# When this value is equal to 4 we export files to Prisme four days before the payout
+# date. Meaning "monday before the third friday in a month".
+PRISME_EXPORT_DATE_PAYOUT_DATE_OFFSET_DAYS = int(
+    os.environ.get("PRISME_EXPORT_DATE_PAYOUT_DATE_OFFSET_DAYS", "4")
+)
+
+
 # month in which the first payout of the year is run
 MONTH_OF_FIRST_PAYOUT = int(os.environ.get("MONTH_OF_FIRST_PAYOUT", "3"))
 # Once #71212 is done, change default to True

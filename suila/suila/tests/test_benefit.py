@@ -18,6 +18,7 @@ from suila.benefit import (
     get_calculation_date,
     get_payout_date,
     get_payout_df,
+    get_prisme_export_date,
 )
 from suila.exceptions import CalculationMethodNotSet
 from suila.models import PersonMonth, PersonYear, PrismeBatch, PrismeBatchItem
@@ -328,6 +329,22 @@ class CalculateBenefitTest(BaseTestCase):
         self.assertEqual(get_calculation_date(2025, 10), date(2025, 10, 10))
         self.assertEqual(get_calculation_date(2025, 11), date(2025, 11, 7))
         self.assertEqual(get_calculation_date(2025, 12), date(2025, 12, 5))
+
+    def test_get_prisme_export_date(self):
+        self.assertEqual(get_prisme_export_date(2024, 11), date(2024, 11, 11))
+        self.assertEqual(get_prisme_export_date(2024, 12), date(2024, 12, 16))
+        self.assertEqual(get_prisme_export_date(2025, 1), date(2025, 1, 13))
+        self.assertEqual(get_prisme_export_date(2025, 2), date(2025, 2, 17))
+        self.assertEqual(get_prisme_export_date(2025, 3), date(2025, 3, 17))
+        self.assertEqual(get_prisme_export_date(2025, 4), date(2025, 4, 14))
+        self.assertEqual(get_prisme_export_date(2025, 5), date(2025, 5, 12))
+        self.assertEqual(get_prisme_export_date(2025, 6), date(2025, 6, 16))
+        self.assertEqual(get_prisme_export_date(2025, 7), date(2025, 7, 14))
+        self.assertEqual(get_prisme_export_date(2025, 8), date(2025, 8, 11))
+        self.assertEqual(get_prisme_export_date(2025, 9), date(2025, 9, 15))
+        self.assertEqual(get_prisme_export_date(2025, 10), date(2025, 10, 13))
+        self.assertEqual(get_prisme_export_date(2025, 11), date(2025, 11, 17))
+        self.assertEqual(get_prisme_export_date(2025, 12), date(2025, 12, 15))
 
     def test_benefit_calculated_ceil_rounding(self):
         df = calculate_benefit(1, self.year.year)
