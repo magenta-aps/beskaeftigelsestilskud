@@ -1539,3 +1539,175 @@ class TestFinalSettlementsTaxDays(IntegrationBaseTest):
             fs.annual_income.calculate_actual_annual_benefit(),
             Decimal("5264"),
         )
+
+
+class HandleSurplusBenefitTest(IntegrationBaseTest):
+
+    years = [2024, 2025]
+
+    def setUp(self):
+        super().setUp()
+        # 2024:
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr, month_number, income=24_000, year=self.years[0]
+            )
+
+        self.add_taxinformation_record(
+            self.cpr, "FULL", (1, 1), (12, 31), year=self.years[0]
+        )
+        self.add_annualincome_record(self.cpr, salary=300_000, year=self.years[0])
+        self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[0])
+        self.add_u1a_record(self.cpr, udbytte=0, year=self.years[0])
+
+        # 2025:
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr, month_number, income=24_000, year=self.years[1]
+            )
+
+        self.add_taxinformation_record(
+            self.cpr, "FULL", (1, 1), (12, 31), year=self.years[1]
+        )
+        self.add_annualincome_record(self.cpr, salary=288_000, year=self.years[1])
+        self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[1])
+        self.add_u1a_record(self.cpr, udbytte=0, year=self.years[1])
+
+    def test_estimate_and_calculate_benefit(self):
+        """
+        During year, we receive 12 monthlyincome records of 24.000 kr.,
+        adding to a yearly income of 288.000 kr., yielding a yearly Suila-tapit
+        of 13.356 kr. (1113 kr. pr . month).
+        However, the actual yearly income was 12 * 25.000 kr. = 300.000kr.,
+        yielding only 12.600 kr. of Suila-tapit (1050 kr. pr. month).
+        This leads the citizen to have received 756 kr. of surplus Suila-tapit,
+        which must be offset in the months following the FinalSettlement generation.
+
+        """
+        year = self.years[0]
+        for month in range(1, 13):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
+
+        year = self.years[1]
+        for month in range(1, 8):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
+
+        # August, 2025, where we generate final settlements for 2024
+        self.assertEqual(FinalSettlement.objects.count(), 0)
+        self.call_commands(8, year)
+        person_month = self.get_person_month(8, year)
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(8, year)
+        self.assertEqual(person_month.estimated_year_result, 288_000)
+        call_command("generate_final_settlements", year - 1)
+        self.assertEqual(FinalSettlement.objects.count(), 1)
+        self.assert_benefit(amount_sent_to_prisme, 1113)
+
+        # September, 2025, offset the 756 kr. owed from 2024 final settlement
+        call_command("calculate_benefit", year, 9)  # Check for idempotency
+        self.call_commands(9, year)
+        person_month = self.get_person_month(9, year)
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(9, year)
+        self.assertEqual(person_month.estimated_year_result, 288_000)
+        self.assert_benefit(amount_sent_to_prisme, 1113 - 756)
+
+        for month in range(10, 13):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
+
+
+class HandleSurplusBenefitOver2000Test(IntegrationBaseTest):
+
+    years = [2024, 2025]
+
+    def setUp(self):
+        super().setUp()
+        # 2024:
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr, month_number, income=24_000, year=self.years[0]
+            )
+
+        self.add_taxinformation_record(
+            self.cpr, "FULL", (1, 1), (12, 31), year=self.years[0]
+        )
+        self.add_annualincome_record(self.cpr, salary=320_000, year=self.years[0])
+        self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[0])
+        self.add_u1a_record(self.cpr, udbytte=0, year=self.years[0])
+
+        # 2025:
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr, month_number, income=24_000, year=self.years[1]
+            )
+
+        self.add_taxinformation_record(
+            self.cpr, "FULL", (1, 1), (12, 31), year=self.years[1]
+        )
+        self.add_annualincome_record(self.cpr, salary=288_000, year=self.years[1])
+        self.add_expectedincome_record(self.cpr, b_income=0, year=self.years[1])
+        self.add_u1a_record(self.cpr, udbytte=0, year=self.years[1])
+
+    def test_estimate_and_calculate_benefit(self):
+        """
+        During year, we receive 12 monthlyincome records of 24.000 kr.,
+        adding to a yearly income of 288.000 kr., yielding a yearly Suila-tapit
+        of 13.356 kr. (1113 kr. pr . month).
+        However, the actual yearly income was 320.000 kr.,
+        yielding only 11.340 kr. of Suila-tapit.
+        This leads the citizen to have received 2.016 kr. of surplus Suila-tapit,
+        which is too large to offset with monthly benefit calculations, and must
+        be billed through Prisme.
+
+        """
+        year = self.years[0]
+        for month in range(1, 13):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
+
+        year = self.years[1]
+        for month in range(1, 8):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
+
+        # August, 2025, where we generate final settlements for 2024
+        self.assertEqual(FinalSettlement.objects.count(), 0)
+        self.call_commands(8, year)
+        person_month = self.get_person_month(8, year)
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(8, year)
+        self.assertEqual(person_month.estimated_year_result, 288_000)
+        call_command("generate_final_settlements", year - 1)
+        self.assertEqual(FinalSettlement.objects.count(), 1)
+        self.assert_benefit(amount_sent_to_prisme, 1113)
+
+        # September, 2025, do no offset 2016 kr. owed from 2024 final settlement,
+        # as this should be taken care of through a prisme collection
+        call_command("calculate_benefit", year, 9)
+        self.call_commands(9, year)
+        person_month = self.get_person_month(9, year)
+        amount_sent_to_prisme = self.get_amount_sent_to_prisme(9, year)
+        self.assertEqual(person_month.estimated_year_result, 288_000)
+        self.assert_benefit(amount_sent_to_prisme, 1113)
+
+        for month in range(10, 13):
+            self.call_commands(month, year)
+            person_month = self.get_person_month(month, year)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+            self.assertEqual(person_month.estimated_year_result, 288_000)
+            self.assert_benefit(amount_sent_to_prisme, 1113)
