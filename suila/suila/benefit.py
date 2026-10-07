@@ -325,3 +325,12 @@ def get_eboks_date(year: int, month: int):
     return get_payout_date(year, month) - timedelta(
         days=settings.EBOKS_DATE_PAYOUT_DATE_OFFSET_DAYS  # type: ignore
     )
+
+
+def get_prisme_export_date(year: int, month: int) -> date:
+    """Get date for when to export G68/69 files to Prisme
+
+    The 2nd tuesday in the month. This is always after the calculation date and
+    before the due date in the G68/69 files (the working day before the payout date.)
+    """
+    return date(year, month, 1) + relativedelta(weekday=TU(+2))

@@ -12,7 +12,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from suila.benefit import get_calculation_date, get_eboks_date
+from suila.benefit import get_calculation_date, get_eboks_date, get_prisme_export_date
 from suila.management.commands.common import SuilaBaseCommand
 from suila.management.commands.job_dispatcher import Command as JobDispatcherCommand
 from suila.models import (
@@ -63,9 +63,10 @@ class TestJobDispatcherCommands(TestCase):
         with self.subTest("Test Janaruary 2025"):
             test_date = get_eboks_date(2025, 1) + timedelta(days=1)
 
-            # Run the calculations jobs for the month to mimic a more realistic flow
+            # Run the calculation and prisme export jobs for the month to mimic a more
+            # realistic flow
             self._call_job_dispatcher_on_date(
-                get_calculation_date(test_date.year, test_date.month),
+                get_prisme_export_date(test_date.year, test_date.month),
                 mock_timezone_now,
             )
             mock_call_command.reset_mock()
@@ -98,9 +99,10 @@ class TestJobDispatcherCommands(TestCase):
         with self.subTest("Test February 2025"):
             test_date = get_eboks_date(2025, 2) + timedelta(days=1)
 
-            # Run the calculations jobs for the month to mimic a more realistic flow
+            # Run the calculation and prisme export jobs for the month to mimic a more
+            # realistic flow
             self._call_job_dispatcher_on_date(
-                get_calculation_date(test_date.year, test_date.month),
+                get_prisme_export_date(test_date.year, test_date.month),
                 mock_timezone_now,
             )
             mock_call_command.reset_mock()
@@ -205,6 +207,7 @@ class TestJobDispatcherCommands(TestCase):
         # Test data
         test_date = timezone.datetime(2025, 5, 1)
         calculation_date = get_calculation_date(test_date.year, test_date.month)
+        prisme_export_date = get_prisme_export_date(test_date.year, test_date.month)
         eboks_date = get_eboks_date(test_date.year, test_date.month)
         _, num_days = calendar.monthrange(test_date.year, test_date.month)
 
@@ -326,6 +329,10 @@ class TestJobDispatcherCommands(TestCase):
                         reraise=False,
                         stdout=ANY,
                     ),
+                ]
+
+            if day == prisme_export_date.day:
+                expected_calls += [
                     call(
                         ManagementCommands.EXPORT_BENEFITS_TO_PRISME,
                         year=test_date.year,
