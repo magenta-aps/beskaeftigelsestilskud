@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.db import transaction
-from django.db.models import CharField, F, IntegerChoices, QuerySet, Sum, Value
+from django.db.models import CharField, F, IntegerChoices, QuerySet, Value
 from django.db.models.functions import Cast, LPad
 from django.forms.models import BaseInlineFormSet, fields_for_model, model_to_dict
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -71,7 +71,6 @@ from suila.integrations.eboks.client import EboksClient
 from suila.models import (
     BTaxPayment,
     Employer,
-    FinalSettlement,
     IncomeType,
     ManagementCommands,
     MonthlyIncomeReport,
@@ -368,23 +367,16 @@ class PersonDetailView(
         context_data = super().get_context_data(**kwargs)
         user = self.request.user
         person = self.object
-        # NOTE: Once #70633 is complete, replace the following with
-        # surplus_benefit_last_change = person.calculate_benefit_difference()
-        # ----CUT HERE----
-        finalsettlements = FinalSettlement.objects.filter(
-            annual_income__person_year__person=person,
-            _result__lt=0,
-        )
-        finalsettlement_surplus_benefit = (
-            finalsettlements.aggregate(acquired=Sum("_result"))["acquired"] or 0
-        )
-        # Flip the sign, since FinalSettlement _result stores debt with a negative sign
-        surplus_benefit = -finalsettlement_surplus_benefit
+        benefit_difference_dict = person.calculate_benefit_difference()[
+            "current_benefit_difference"
+        ]
+        benefit_difference = benefit_difference_dict["current_benefit_difference"]
+        benefit_difference_last_change = benefit_difference_dict[
+            "benefit_difference_last_change"
+        ]
+        # The surplus benefit has an opposite sign og the benefit difference
+        surplus_benefit = -benefit_difference
 
-        surplus_benefit_last_change = finalsettlements.order_by("-created").first()
-        if surplus_benefit_last_change:
-            surplus_benefit_last_change = surplus_benefit_last_change.created
-        # ----TO HERE----
         context_data.update(
             {
                 "is_borgerservice": user.groups.filter(name="Borgerservice").exists(),
@@ -408,8 +400,11 @@ class PersonDetailView(
                 "pause_reason": person.pause_reason,
                 "person_year_id": self.person_year.pk,
                 "surplus_benefit": surplus_benefit,
-                "surplus_benefit_last_change": surplus_benefit_last_change,
-                "show_surplus_benefit_status": settings.SHOW_SURPLUS_BENEFIT_STATUS,
+                "benefit_difference_last_change": benefit_difference_last_change,
+                "show_surplus_benefit_status": (
+                    settings.SHOW_SURPLUS_BENEFIT_STATUS and
+                    0 < surplus_benefit < settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD
+                ),
             }
         )
 

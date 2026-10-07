@@ -832,6 +832,30 @@ class Person(PermissionsMixin, models.Model):
         benefit_difference = (
             fs_benefit_difference + pm_benefit_offset - pbi_benefit_payout
         )
+
+        # Find last change to benefit difference
+        last_pm_change = personmonth_qs.exclude(
+            offset_benefit_difference__isnull=True
+        ).last()
+        last_pm_change = (
+            last_pm_change.year_month if last_pm_changeis not None else None
+        )
+        last_finalsettlement_change = finalsettlement_qs.sort_by("-created").first()
+        last_finalsettlement_change = (
+            last_finalsettlement_change.created if last_finalsettlement_change is not None else None
+        )
+        last_prismebatchitem_change = prismebatchitem_qs.sort_by("-prisme_batch__export_date").first()
+        last_prismebatchitem_change = (
+            last_prismebatchitem_change.prisme_batch.export_date if last_prismebatchitem_change is not None else None
+        )
+        # Create list of the latest changes, with all falsy values filtered out
+        last_changes = list(filter(None, [
+            last_pm_change,
+            last_finalsettlement_change,
+            last_prismebatchitem_change,
+        ]))
+        last_change = max(last_changes)
+
         if save:
             self.benefit_difference = benefit_difference
             self.save(update_fields=["benefit_difference"])
@@ -841,6 +865,7 @@ class Person(PermissionsMixin, models.Model):
             "total_acquired_surplus": fs_benefit_difference,
             "total_offset_surplus": pm_benefit_offset,
             "total_deficit_benefit_paid": pbi_benefit_payout,
+            "benefit_difference_last_change": last_change,
         }
 
 
