@@ -429,4 +429,4 @@ class AddAmountToPrismeBatchItemTest(MigratorTestCase):
         ).objects.first().prismebatchitem
 
         self.assertEqual(prisme_item_final_settlement.amount, Decimal("10_000"))
-        self.assertIsNone(prisme_item_person_month.amount)
+        self.assertEqual(prisme_item_person_month.amount, Decimal("2600"))

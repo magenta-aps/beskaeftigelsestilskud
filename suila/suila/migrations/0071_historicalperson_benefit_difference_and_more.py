@@ -8,9 +8,8 @@ from common.model_utils import get_amount_from_g68_content
 
 def set_amount_from_g68_data(apps, schema_editor):
     PrismeBatchItem = apps.get_model("suila", "PrismeBatchItem")
-    prismebatchitems = PrismeBatchItem.objects.filter(
-        final_settlement__isnull=False,
-        amount__isnull=True,
+    prismebatchitems = PrismeBatchItem.objects.exclude(
+        g68_content__isnull=True
     )
     for prismebatchitem in prismebatchitems:
         prismebatchitem.amount = get_amount_from_g68_content(
