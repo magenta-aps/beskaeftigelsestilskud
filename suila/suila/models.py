@@ -599,6 +599,14 @@ class Person(PermissionsMixin, models.Model):
         default=None,
     )
 
+    benefit_difference = models.DecimalField(
+        null=False,
+        default=Decimal("0"),
+        blank=False,
+        max_digits=12,
+        decimal_places=2,
+    )
+
     def __str__(self):
         return (
             f"{self.name} / {self.cpr}"
@@ -758,6 +766,82 @@ class Person(PermissionsMixin, models.Model):
             # Signals don't propagate exceptions, so we must print it explicitly
             logger.exception(e)
             raise
+
+    def calculate_benefit_difference(
+        self,
+        save: bool = False,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, Decimal]:
+        """
+        We need a clear view of which ways benefit_difference can be added and offset.
+        Negative difference (person received too much benefit/person owes benefit):
+            Small amount (0-1999kr.):
+                Offset through decreased benefit_transferred in PersonMonth payments
+            Large amount (2000kr.+):
+                Charged through Prisme
+        Positive difference (person received too little benefit):
+            Tiny amount (0-99kr.):
+                Amount will not be paid out
+            Larger amount (100kr.+):
+                Paid out within 30 days
+        NOTE: Special rules apply, if person has not been active in Suila for 5 years.
+        In this case any extraneous benefit is sent to be charged through Prisme
+        """
+        personmonth_qs = PersonMonth.objects.filter(
+            person_year__person__pk=self.pk,
+        )
+        finalsettlement_pks = (
+            FinalSettlement.objects.filter(
+                annual_income__person_year__person__pk=self.pk,
+            )
+            .order_by("annual_income__person_year", "-created")
+            .distinct("annual_income__person_year")
+            .values_list("pk", flat=True)
+        )
+        finalsettlement_qs = FinalSettlement.objects.filter(pk__in=finalsettlement_pks)
+        if year and month:
+            personmonth_qs = personmonth_qs.filter(
+                Q(person_year__year__lt=year)
+                | Q(person_year__year=year, month__lt=month)
+            )
+            # FinalSettlements are created in August (month 8).
+            # Don't include FS from year, if looking prior to FS creation
+            if month < 9:
+                finalsettlement_qs = finalsettlement_qs.filter(
+                    annual_income__person_year__year__lt=year - 1,
+                )
+            else:
+                finalsettlement_qs = finalsettlement_qs.filter(
+                    annual_income__person_year__year__lte=year - 1,
+                )
+        prismebatchitem_qs = PrismeBatchItem.objects.filter(
+            final_settlement__in=finalsettlement_qs
+        )
+
+        pm_benefit_offset = personmonth_qs.aggregate(
+            spent=Sum("offset_benefit_difference")
+        )["spent"] or Decimal("0")
+        fs_benefit_difference = finalsettlement_qs.aggregate(acquired=Sum("_result"))[
+            "acquired"
+        ] or Decimal("0")
+        pbi_benefit_payout = prismebatchitem_qs.aggregate(paid=Sum("amount"))[
+            "paid"
+        ] or Decimal("0")
+
+        benefit_difference = (
+            fs_benefit_difference + pm_benefit_offset - pbi_benefit_payout
+        )
+        if save:
+            self.benefit_difference = benefit_difference
+            self.save(update_fields=["benefit_difference"])
+
+        return {
+            "current_benefit_difference": benefit_difference,
+            "total_acquired_surplus": fs_benefit_difference,
+            "total_offset_surplus": pm_benefit_offset,
+            "total_deficit_benefit_paid": pbi_benefit_payout,
+        }
 
 
 pre_save.connect(
@@ -1300,6 +1384,13 @@ class PersonMonth(PermissionsMixin, models.Model):
         decimal_places=2,
         null=True,
         blank=True,
+    )
+    offset_benefit_difference = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
     )
 
     has_paid_b_tax = models.BooleanField(
@@ -2163,9 +2254,19 @@ class PrismeBatchItem(PermissionsMixin, models.Model):
         blank=False,
     )
 
-    @property
-    def amount(self):
-        return get_amount_from_g68_content(self.g68_content)
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+
+@receiver(pre_save, sender=PrismeBatchItem)
+def before_save_prisme_batch_item(sender, instance, **kwargs):
+    # Initialize result
+    if instance.g68_content:
+        instance.amount = get_amount_from_g68_content(instance.g68_content)
 
 
 class AnnualIncome(PermissionsMixin, models.Model):
@@ -2655,7 +2756,10 @@ class FinalSettlement(PermissionsMixin, models.Model):
         invoice_date: date,
     ):
         amount = round(-self._result)
-        if amount >= 2000 and not self.invoice_sent:
+        if (
+            amount >= settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD  # type: ignore
+            and not self.invoice_sent
+        ):
             logger.info(f"Send invoice for {amount} DKK")
             person_year: PersonYear = self.person_year
             person: Person = person_year.person

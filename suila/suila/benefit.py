@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date, timedelta
+from decimal import Decimal
 from fractions import Fraction
 
 import numpy as np
@@ -10,7 +11,7 @@ from common import utils
 from common.utils import to_dataframe
 from dateutil.relativedelta import FR, TU, relativedelta
 from django.conf import settings
-from django.db.models import Exists
+from django.db.models import Exists, F, Q, Sum
 from more_itertools import one
 from numpy import float64
 
@@ -59,7 +60,11 @@ def calculate_benefit(
         12,
     )
     accumulated_weight = Fraction(
-        sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]), 12  # type: ignore
+        sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]),  # type: ignore
+        12,
+    )
+    benefit_threshold = (
+        settings.SURPLUS_BENEFIT_MONTHLY_OFFSET_THRESHOLD  # type: ignore
     )
     if month == 12:
         safety_factor = 1
@@ -104,6 +109,7 @@ def calculate_benefit(
         dtypes={
             "has_signal": bool,
             "full_tax_scope_months": int,
+            "offset_benefit_difference": float,
         },
     )
 
@@ -115,6 +121,16 @@ def calculate_benefit(
     if cpr:
         person_year_qs = person_year_qs.filter(person__cpr=cpr)
 
+    # Add benefit difference, flip sign for calculation purposes
+    person_year_qs = person_year_qs.annotate(
+        benefit_difference=-F("person__benefit_difference"),
+        prior_offset_benefit_difference=Sum(
+            "personmonth__offset_benefit_difference",
+            filter=Q(personmonth__month__lt=month),
+            default=Decimal("0"),
+        ),
+    )
+
     assessment_df = to_dataframe(
         person_year_qs,
         index="person__cpr",
@@ -124,6 +140,8 @@ def calculate_benefit(
             "catchsale_expenses": float,
             "person__paused": bool,
             "person__annual_income_estimate": float,
+            "benefit_difference": float,
+            "prior_offset_benefit_difference": float,
         },
     )
 
@@ -170,7 +188,9 @@ def calculate_benefit(
         axis=1
     )
     df.loc[:, "remaining_benefit_for_year"] = (
-        df.estimated_year_benefit - df.prior_benefit_transferred
+        df.estimated_year_benefit
+        - df.prior_benefit_transferred
+        - df.prior_offset_benefit_difference
     )
     df.loc[:, "benefit_this_month"] = (
         df.remaining_benefit_for_year / (13 - month)
@@ -186,7 +206,7 @@ def calculate_benefit(
         # if the amount is very similar to last month's amount, use the same amount
         # as last month
         df.loc[:, "benefit_last_month"] = df.loc[
-            :, f"benefit_transferred_month_{month-1}"
+            :, f"benefit_transferred_month_{month - 1}"
         ]
         diff = pd.Series(index=df.index)
         I_diff = df.benefit_last_month > 0
@@ -199,13 +219,16 @@ def calculate_benefit(
 
     # If you are on pause you get nothing (also not in December)
     # Man får pengene på kontoen når årsopgørelsen er færdig (august året efter).
-    df.loc[df.paused.fillna(False), "benefit_this_month"] = 0
+    df.loc[
+        df.paused.fillna(False), ["benefit_this_month", "offset_benefit_difference"]
+    ] = 0
 
     # If you are in quarantine you get nothing (unless it's for october)
     if enforce_quarantine:
         df_quarantine = utils.get_people_in_quarantine(year, df.index.to_list())
         if quarantine_weight <= 0:
             weight_on_remainder: Fraction = Fraction(0, 1)
+            df.loc[df_quarantine.in_quarantine, "offset_benefit_difference"] = 0
         else:
             # quarantine_weight = factor for year payment to month payment
             # we need a factor for `remaining year payment` to month payment
@@ -224,12 +247,27 @@ def calculate_benefit(
         df.loc[df_quarantine.in_quarantine, "benefit_this_month"] = (
             df.remaining_benefit_for_year * float64(weight_on_remainder)
         )
+
         df.loc[
             df_quarantine.in_quarantine, "remaining_benefit_for_year"
         ] -= df.benefit_this_month
 
     # Do not payout if the amount is negative
-    df.loc[df.benefit_this_month < 0, "benefit_this_month"] = 0
+    df.loc[
+        df.benefit_this_month < 0, ["benefit_this_month", "offset_benefit_difference"]
+    ] = 0
+
+    # Offset surplus benefit once final benefit has been determined
+    df["offset_benefit_difference"] = df.loc[
+        (df.benefit_difference > 0) & (df.benefit_difference < benefit_threshold),
+        ["benefit_this_month", "benefit_difference"],
+    ].min(axis=1)
+    df.loc[
+        (df.benefit_difference > 0)
+        & (df.benefit_this_month >= 0)
+        & df.offset_benefit_difference,
+        "benefit_this_month",
+    ] -= df["offset_benefit_difference"]
 
     df.loc[:, "benefit_calculated"] = np.ceil(df["benefit_this_month"])
 

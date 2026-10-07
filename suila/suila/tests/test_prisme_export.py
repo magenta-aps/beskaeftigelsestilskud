@@ -10,6 +10,7 @@ from decimal import Decimal
 from io import TextIOWrapper
 from unittest.mock import ANY, MagicMock, Mock, patch
 
+from common.model_utils import get_amount_from_g68_content
 from django.conf import settings
 from django.core.management import call_command
 from django.db.models import QuerySet
@@ -359,10 +360,12 @@ class TestBatchExport(ExportTest):
             self.assertEqual(prisme_batch.status, PrismeBatch.Status.Sent)
             self.assertEqual(prisme_batch.failed_message, "")
             # Assert: `PrismeBatchItem` objects exist for this batch
-            self.assertGreater(
-                PrismeBatchItem.objects.filter(prisme_batch=prisme_batch).count(),
-                0,
-            )
+            pbis = PrismeBatchItem.objects.filter(prisme_batch=prisme_batch)
+            self.assertGreater(pbis.count(), 0)
+            for pbi in pbis:
+                self.assertEqual(
+                    pbi.amount, get_amount_from_g68_content(pbi.g68_content)
+                )
 
     def test_upload_batch_handles_sftp_failure(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method

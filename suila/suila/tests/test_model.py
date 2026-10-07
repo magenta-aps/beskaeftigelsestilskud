@@ -254,7 +254,6 @@ class TestPrismeBatchItem(ModelTest):
         prisme_batch = PrismeBatch.objects.create(
             status="sent", export_date=date.today(), prefix=1
         )
-
         prisme_batch_item = PrismeBatchItem.objects.create(
             person_month=self.month1,
             prisme_batch=prisme_batch,
@@ -571,6 +570,43 @@ class TestPerson(UserModelTest):
         self.person.on_cpr_status_change(self.person.cpr_status, self.person.cpr_status)
         self.assertEqual(self.person.paused, paused_before)
         self.assertEqual(self.person.pause_reason, reason_before)
+
+    def test_calculate_benefit_difference(self):
+        self.month6.offset_benefit_difference = 1000
+        self.month1.benefit_transferred = 1500
+        fs = FinalSettlement(annual_income=self.annual_income)
+        self.month1.save()
+        self.month6.save()
+        fs.save()
+        prisme_batch = PrismeBatch.objects.create(
+            status="sent", export_date=date.today(), prefix=1
+        )
+        PrismeBatchItem.objects.create(
+            final_settlement=fs,
+            prisme_batch=prisme_batch,
+            amount=Decimal("150.00"),
+            g68_content=(
+                "000G6800004011&020900&0300&"
+                "07000000000000000000&0800000015000&"
+                "09+&1002&1100000101001111&1220250414&"
+                "16202504080080400004&"
+                "1700000000000027100004&40www.suila.gl takuuk"
+            ),
+        )
+
+        res = self.person.calculate_benefit_difference()
+        self.assertDictEqual(
+            res,
+            {
+                "current_benefit_difference": Decimal("-650.00"),
+                "total_acquired_surplus": Decimal("-1500.00"),
+                "total_offset_surplus": Decimal("1000.00"),
+                "total_deficit_benefit_paid": Decimal("150.00"),
+            },
+        )
+        self.assertEqual(self.person.benefit_difference, Decimal("0"))
+        self.person.calculate_benefit_difference(save=True)
+        self.assertEqual(self.person.benefit_difference, Decimal("-650.00"))
 
 
 class TestPersonYear(UserModelTest):
