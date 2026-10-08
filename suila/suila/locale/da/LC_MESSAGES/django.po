@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-11 10:07-0100\n"
+"POT-Creation-Date: 2026-10-08 09:14-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1500,6 +1500,12 @@ msgstr ""
 
 #: suila/templates/suila/root.html
 msgid "OK"
+msgstr ""
+
+#: suila/templates/suila/root.html
+msgid ""
+"Bemærk: Udbetalingen af Suila-tapit vil fra oktober 2026 ske den tredje "
+"fredag i måneden."
 msgstr ""
 
 #: suila/templates/suila/templatetags/dead_info_box.html

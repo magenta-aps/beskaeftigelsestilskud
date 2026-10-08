@@ -72,6 +72,16 @@ Velkommen {{ name }}
 {# Borger links #}
     {% if has_personyears %}
 
+    {# Begin alert - to be removed on Oct 16, 2026 #}
+    <div class="grid gap-5 mt-3 mb-2">
+        <div class="g-col-12 alert alert-danger">
+        {% blocktranslate trimmed %}
+        Bemærk: Udbetalingen af Suila-tapit vil fra oktober 2026 ske den tredje fredag i måneden.
+        {% endblocktranslate %}
+        </div>
+    </div>
+    {# End alert #}
+
     <div class="grid gap-5 mt-5">
         <div class="g-col-6 jumbo">
             {% url "suila:person_detail" pk=person.pk as person_detail_url %}
