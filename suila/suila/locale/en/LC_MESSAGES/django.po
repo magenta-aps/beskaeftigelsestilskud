@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 09:14-0100\n"
+"POT-Creation-Date: 2026-10-08 09:40-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -336,8 +336,8 @@ msgid "Se videoen om Suila-tapit"
 msgstr "Watch the video about Suila-tapit"
 
 #: suila/templates/suila/about.html
-msgid "https://www.youtube.com/embed/Ti86S9FA6t0"
-msgstr "https://www.youtube.com/embed/MkU15J305wo"
+msgid "https://www.youtube-nocookie.com/embed/4cixeF5HsJM?si=jpv7c3nVmIETlVJh"
+msgstr "https://www.youtube-nocookie.com/embed/MkU15J305wo?si=N01iYLr8i1beLML_"
 
 #: suila/templates/suila/about.html
 msgid "Få mere information om Suila-tapit"

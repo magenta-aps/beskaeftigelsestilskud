@@ -38,6 +38,7 @@ CONTENT_SECURITY_POLICY = {
         "frame-src": [
             "'self'",
             "https://www.youtube.com",
+            "https://www.youtube-nocookie.com",
         ],
     },
 }
