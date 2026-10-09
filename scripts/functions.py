@@ -573,7 +573,9 @@ def estimate_annual_income(df_a, df_b, estimation_engine_a, estimation_engine_b)
     return df_estimates
 
 
-def calculate_payout(df_estimates, df_annual, treshold=0.05, truncate_amount=0):
+def calculate_payout(
+    df_estimates, df_annual, treshold=0.05, truncate_amount=0, safety_factor=1
+):
     """
     Calculate payout given a set of estimates
 
@@ -610,7 +612,7 @@ def calculate_payout(df_estimates, df_annual, treshold=0.05, truncate_amount=0):
 
             estimated_year_benefit = df_estimates.loc[:, this_month].map(
                 calculate_benefit
-            )
+            ) * (1 if month_index == 11 else safety_factor)
             actual_year_benefit = df_annual.loc[:, year].map(calculate_benefit)
 
             prior_months = df_payout.loc[:, past_months]
