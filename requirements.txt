@@ -39,7 +39,7 @@ MarkupSafe==3.0.4
 more-itertools==11.1.0
 mypy==2.4.0
 mypy-extensions==1.1.0
-numpy==2.5.3
+numpy==2.5.4
 packaging==26.3
 pandas==3.0.6
 paramiko==3.5.1
