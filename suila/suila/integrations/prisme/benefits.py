@@ -9,7 +9,6 @@ from decimal import Decimal
 from io import BytesIO, StringIO
 from typing import Generator
 
-from common.model_utils import get_amount_from_g68_content
 from common.utils import add_or_subtract_working_days
 from dateutil.relativedelta import FR, relativedelta
 from django.conf import settings
@@ -249,9 +248,6 @@ class BaseExport:
             buf.write(b"\r\n")
             buf.write(prisme_batch_item.g69_content.encode("utf-8"))
             buf.write(b"\r\n")
-            prisme_batch_item.amount = get_amount_from_g68_content(
-                prisme_batch_item.g68_content
-            )
         buf.seek(0)
 
         try:
