@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 12:07-0100\n"
+"POT-Creation-Date: 2026-10-16 10:57-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1828,12 +1828,28 @@ msgid "OK"
 msgstr ""
 
 #: suila/templates/suila/root.html
+msgid "Mulige forsinkelser i udbetalingerne"
+msgstr "Akiliinerit kinguaattoorsinnaapput"
+
+#: suila/templates/suila/root.html
 msgid ""
-"Bemærk: Udbetalingen af Suila-tapit vil fra oktober 2026 ske den tredje "
-"fredag i måneden."
+"Grundet tekniske problemer i it-systemerne kan der forekomme forsinkelser i "
+"alle former for udbetalinger fra Grønlands Selvstyre til bankkonti i såvel "
+"Grønland som Danmark. Dette kan særligt påvirke udbetalinger i perioden fra "
+"fredag den 16. oktober til mandag den 19. oktober 2026."
 msgstr ""
-"Malugiuk: Oktober 2026 aallarnerfigalugu Suila-Tapit tunniunneqartalissapput "
-"qaammaammi tallimanngornerup pingajuani."
+"IT-kkut aaqqissuussatigut ajornartorsiorneq pissutigalugu Namminersorlutik "
+"Oqartussanit bankini kontonut akiliinerit nunatsinni Danmarkimilu "
+"kinguaattoorsinnaapput. Tamanna tallimanngorneq 16. oktoberimit – "
+"ataasinngorneq 19. oktoberimut 2026-mi akiliinernut annermik sunniuteqassaaq."
+
+#: suila/templates/suila/root.html
+msgid "Der arbejdes på at løse problemet hurtigst muligt."
+msgstr "Teknikerit aaqqiiniarsaripput."
+
+#: suila/templates/suila/root.html
+msgid "Grønlands Selvstyre beklager ulejligheden."
+msgstr "Namminersorlutik Oqartussat tamanna ajuusaarutigaat."
 
 #: suila/templates/suila/templatetags/dead_info_box.html
 msgid "Afdød (CPR-status)"
