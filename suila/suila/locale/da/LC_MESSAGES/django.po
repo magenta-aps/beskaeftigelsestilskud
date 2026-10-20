@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:57-0100\n"
+"POT-Creation-Date: 2026-10-20 08:07-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1500,26 +1500,6 @@ msgstr ""
 
 #: suila/templates/suila/root.html
 msgid "OK"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Mulige forsinkelser i udbetalingerne"
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid ""
-"Grundet tekniske problemer i it-systemerne kan der forekomme forsinkelser i "
-"alle former for udbetalinger fra Grønlands Selvstyre til bankkonti i såvel "
-"Grønland som Danmark. Dette kan særligt påvirke udbetalinger i perioden fra "
-"fredag den 16. oktober til mandag den 19. oktober 2026."
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Der arbejdes på at løse problemet hurtigst muligt."
-msgstr ""
-
-#: suila/templates/suila/root.html
-msgid "Grønlands Selvstyre beklager ulejligheden."
 msgstr ""
 
 #: suila/templates/suila/templatetags/dead_info_box.html

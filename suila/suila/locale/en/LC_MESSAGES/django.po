@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:57-0100\n"
+"POT-Creation-Date: 2026-10-20 08:07-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1665,30 +1665,6 @@ msgstr "Two factor authentification is now active."
 #: suila/templates/suila/root.html
 msgid "OK"
 msgstr "OK"
-
-#: suila/templates/suila/root.html
-msgid "Mulige forsinkelser i udbetalingerne"
-msgstr "Possible delays in payments"
-
-#: suila/templates/suila/root.html
-msgid ""
-"Grundet tekniske problemer i it-systemerne kan der forekomme forsinkelser i "
-"alle former for udbetalinger fra Grønlands Selvstyre til bankkonti i såvel "
-"Grønland som Danmark. Dette kan særligt påvirke udbetalinger i perioden fra "
-"fredag den 16. oktober til mandag den 19. oktober 2026."
-msgstr ""
-"Due to technical issues in the IT systems, delays may occur in all types of "
-"payments from the Government of Greenland to bank accounts in both Greenland "
-"and Denmark. This may particularly affect payments in the period from "
-"Friday, October 16 to Monday, October 19, 2026."
-
-#: suila/templates/suila/root.html
-msgid "Der arbejdes på at løse problemet hurtigst muligt."
-msgstr "Work is underway to resolve the issue as quickly as possible."
-
-#: suila/templates/suila/root.html
-msgid "Grønlands Selvstyre beklager ulejligheden."
-msgstr "The Government of Greenland apologizes for the inconvenience."
 
 #: suila/templates/suila/templatetags/dead_info_box.html
 msgid "Afdød (CPR-status)"

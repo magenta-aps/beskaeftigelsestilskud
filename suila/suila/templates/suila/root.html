@@ -72,37 +72,6 @@ Velkommen {{ name }}
 {# Borger links #}
     {% if has_personyears %}
 
-    {# Begin alert - to be removed in the week starting Oct 19, 2026 #}
-    <div class="grid gap-5 mt-3 mb-2">
-        <div class="g-col-12 alert alert-danger">
-            <p>
-                <b>
-                    {% blocktranslate trimmed %}
-                    Mulige forsinkelser i udbetalingerne
-                    {% endblocktranslate %}
-                </b>
-            </p>
-            <p>
-                {% blocktranslate trimmed %}
-                Grundet tekniske problemer i it-systemerne kan der forekomme forsinkelser i alle former for
-                udbetalinger fra Grønlands Selvstyre til bankkonti i såvel Grønland som Danmark. Dette kan særligt
-                påvirke udbetalinger i perioden fra fredag den 16. oktober til mandag den 19. oktober 2026.
-                {% endblocktranslate %}
-            </p>
-            <p>
-                {% blocktranslate trimmed %}
-                Der arbejdes på at løse problemet hurtigst muligt.
-                {% endblocktranslate %}
-            </p>
-            <p>
-                {% blocktranslate trimmed %}
-                Grønlands Selvstyre beklager ulejligheden.
-                {% endblocktranslate %}
-            </p>
-        </div>
-    </div>
-    {# End alert #}
-
     <div class="grid gap-5 mt-5">
         <div class="g-col-6 jumbo">
             {% url "suila:person_detail" pk=person.pk as person_detail_url %}
