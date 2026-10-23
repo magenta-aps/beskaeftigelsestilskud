@@ -79,24 +79,11 @@
                 under 100 kr. Du skal hverken modtage eller betale penge.
                 {% endblocktranslate %}
             </p>
-            {% elif benefit_transfer_difference < 0 and benefit_transfer_difference > -1999 %}
+            {% elif benefit_transfer_difference < 0 %}
             <p>
                 {% blocktranslate trimmed %}
-                Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du modtager
-                tilsvarende mindre i Suila-tapit i {{ this_year }}, hvis du opfylder betingelserne herfor.
-                {% endblocktranslate %}
-            </p>
-            {% elif benefit_transfer_difference < -1999 %}
-            <p>
-                {% blocktranslate trimmed %}
-                Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du vil modtage en
-                faktura med opkrævning af beløbet i din e-Boks.
-                {% endblocktranslate %}
-            </p>
-            <p>
-                {% blocktranslate trimmed %}
-                Hvis du modtager en faktura og ikke betaler den rettidigt, pålægges renter fra
-                betalingsfristen.
+                Du har fået udbetalt mere i Suila-tapit end du er berettiget til i 2025.
+                Beløbet vil ikke blive opkrævet.
                 {% endblocktranslate %}
             </p>
             {% endif %}
