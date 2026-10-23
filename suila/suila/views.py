@@ -620,8 +620,8 @@ class IncomeSignalType(IntegerChoices):
     Indhandling = (1, _("Indhandling"))
     BetaltBSkat = (2, _("Betalt B-skat"))
     Udbytte = (3, _("Udbytte"))
-    Pension = (4, _("Pensionsindbetaling"))
-    UdenlandskPension = (5, _("Udenlandsk pension"))
+    Pension = (4, _("Arbejdsgiverbetalt pension (Grønland)"))
+    UdenlandskPension = (5, _("Arbejdsgiverbetalt pension (udland)"))
 
 
 @dataclass(frozen=True)
