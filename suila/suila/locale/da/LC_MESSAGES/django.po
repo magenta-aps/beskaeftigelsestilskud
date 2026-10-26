@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-20 08:07-0100\n"
+"POT-Creation-Date: 2026-10-23 09:00-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -333,7 +333,7 @@ msgid "Se videoen om Suila-tapit"
 msgstr ""
 
 #: suila/templates/suila/about.html
-msgid "https://www.youtube-nocookie.com/embed/4cixeF5HsJM?si=jpv7c3nVmIETlVJh"
+msgid "https://www.youtube-nocookie.com/embed/EUpdb85hkCk?si=uvGn0-tTzfvqJ8ND"
 msgstr ""
 
 #: suila/templates/suila/about.html
@@ -1090,8 +1090,7 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
-#: suila/templates/suila/person_final_settlements.html
-msgid "Pensionsindbetalinger"
+msgid "Arbejdsgiverbetalt pension"
 msgstr ""
 
 #: suila/templates/suila/person_detail_income.html
@@ -1194,23 +1193,9 @@ msgid ""
 msgstr ""
 
 #: suila/templates/suila/person_final_settlements.html
-#, python-format
 msgid ""
-"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du "
-"modtager tilsvarende mindre i Suila-tapit i %(this_year)s, hvis du opfylder "
-"betingelserne herfor."
-msgstr ""
-
-#: suila/templates/suila/person_final_settlements.html
-msgid ""
-"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du vil "
-"modtage en faktura med opkrævning af beløbet i din e-Boks."
-msgstr ""
-
-#: suila/templates/suila/person_final_settlements.html
-msgid ""
-"Hvis du modtager en faktura og ikke betaler den rettidigt, pålægges renter "
-"fra betalingsfristen."
+"Du har fået udbetalt mere i Suila-tapit end du er berettiget til i 2025. "
+"Beløbet vil ikke blive opkrævet."
 msgstr ""
 
 #: suila/templates/suila/person_final_settlements.html
@@ -1282,6 +1267,10 @@ msgstr ""
 msgid ""
 "Oplysning om udbytte stammer fra selskabernes indberetning af udloddet "
 "udbytte til dig."
+msgstr ""
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Pensionsindbetalinger"
 msgstr ""
 
 #: suila/templates/suila/person_final_settlements.html
@@ -1811,11 +1800,11 @@ msgid "Betalt B-skat"
 msgstr ""
 
 #: suila/views.py
-msgid "Pensionsindbetaling"
+msgid "Arbejdsgiverbetalt pension (Grønland)"
 msgstr ""
 
 #: suila/views.py
-msgid "Udenlandsk pension"
+msgid "Arbejdsgiverbetalt pension (udland)"
 msgstr ""
 
 #: suila/views.py
