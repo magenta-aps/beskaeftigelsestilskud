@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-20 08:07-0100\n"
+"POT-Creation-Date: 2026-10-23 08:58-0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -345,7 +345,7 @@ msgid "Se videoen om Suila-tapit"
 msgstr "Aalasuliaq Suila-tapinut tunngasoq takuuk"
 
 #: suila/templates/suila/about.html
-msgid "https://www.youtube-nocookie.com/embed/4cixeF5HsJM?si=jpv7c3nVmIETlVJh"
+msgid "https://www.youtube-nocookie.com/embed/EUpdb85hkCk?si=uvGn0-tTzfvqJ8ND"
 msgstr ""
 
 #: suila/templates/suila/about.html
@@ -1291,9 +1291,8 @@ msgstr ""
 "naatsorsukkani ukioq kingulleq iluanaarutisiarisimasatit sunnerneqassapput."
 
 #: suila/templates/suila/person_detail_income.html
-#: suila/templates/suila/person_final_settlements.html
-msgid "Pensionsindbetalinger"
-msgstr "Soraarnerussutisiassanut akiliutit"
+msgid "Arbejdsgiverbetalt pension"
+msgstr "Soraarnerussutisiassat sulisitsisumit akilerneqartut"
 
 #: suila/templates/suila/person_detail_income.html
 msgid ""
@@ -1420,36 +1419,12 @@ msgstr ""
 "tigusassaqanngilatit akiligassaqarnallu."
 
 #: suila/templates/suila/person_final_settlements.html
-#, python-format
 msgid ""
-"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du "
-"modtager tilsvarende mindre i Suila-tapit i %(this_year)s, hvis du opfylder "
-"betingelserne herfor."
+"Du har fået udbetalt mere i Suila-tapit end du er berettiget til i 2025. "
+"Beløbet vil ikke blive opkrævet."
 msgstr ""
-"Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit, ukiullu "
-"aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit Suila-"
-"tapisiassatit sipporlugit tunniunneqarsimapput. %(this_year)s-mi Suila-"
-"tapisisussaaguit, pivallaarutigisimasatit Suila-tapisiassannit "
-"matussuserneqarumaarput."
-
-#: suila/templates/suila/person_final_settlements.html
-msgid ""
-"Du har fået udbetalt mere i Suila-tapit end du var berettiget til. Du vil "
-"modtage en faktura med opkrævning af beløbet i din e-Boks."
-msgstr ""
-"Isertitariumaagassatit naapertorlugit Suila-tapisiarisimasatit, ukiullu "
-"aningaasarsiorfiusup qaangiunnerani isertitarisimasatit naapertorlugit Suila-"
-"tapisiassatit sipporlugit tunniunneqarsimapput. E-boksikkut "
-"pivallaarutigisimasatit akiligassiissutigineqarumaarput."
-
-#: suila/templates/suila/person_final_settlements.html
-msgid ""
-"Hvis du modtager en faktura og ikke betaler den rettidigt, pålægges renter "
-"fra betalingsfristen."
-msgstr ""
-"Akiligassinneqarsimaguit ullorlu akiliiffissaq eqqorlugu "
-"akiliisimanngikkuit, ullup akiliiffissap kingorna akiligassaq qaavatigut "
-"ernialerneqassaaq."
+"2025-mi Suila-tapinik amerlavallaartunik tunineqarsimavutit. Aningaasat "
+"taakku utertillugit akileqquneqassanngillat."
 
 #: suila/templates/suila/person_final_settlements.html
 msgid ""
@@ -1554,6 +1529,10 @@ msgstr ""
 "Sinneqartoorutinit iluanaarutisiat pillugit paasissutissat iluanaarutisianit "
 "ilinnut tunniunneqarsimasutut ingerlatseqatigiiffinniit "
 "nalunaarutigineqarsimasunit aaneqartarput."
+
+#: suila/templates/suila/person_final_settlements.html
+msgid "Pensionsindbetalinger"
+msgstr "Soraarnerussutisiassanut akiliutit"
 
 #: suila/templates/suila/person_final_settlements.html
 msgid ""
@@ -2155,12 +2134,13 @@ msgid "Betalt B-skat"
 msgstr "Akileraarutit b-t akilerneqarsimasut"
 
 #: suila/views.py
-msgid "Pensionsindbetaling"
-msgstr "Soraarnerussutisiassanut akiliutit"
+msgid "Arbejdsgiverbetalt pension (Grønland)"
+msgstr ""
+"Kalaallit Nunaanni soraarnerussutisiassat sulisitsisumit akilerneqartut"
 
 #: suila/views.py
-msgid "Udenlandsk pension"
-msgstr ""
+msgid "Arbejdsgiverbetalt pension (udland)"
+msgstr "Nunani allani soraarnerussutisiassat sulisitsisumit akilerneqartut"
 
 #: suila/views.py
 msgid "Betalte B-skatter"
