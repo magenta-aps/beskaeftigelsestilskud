@@ -4,5 +4,5 @@
 
 import os
 
-AKAP_HOST = os.environ.get("AKAP_HOST", "https://akap.sullissivik.gl")
+AKAP_HOST = os.environ.get("AKAP_HOST", "akap-web")
 AKAP_API_SECRET = os.environ.get("AKAP_API_SECRET", "supersecret")
