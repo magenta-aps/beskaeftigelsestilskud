@@ -63,7 +63,7 @@ services:
 
 ### Import of U1A data from AKA-Selvbetjening
 
-By default the host-domain for AKA-Selvbetjening is set to the prod-server, `https://akap.sullissivik.gl`, but our `./dev-environment/suila.env`-settings will set this to `https://test.akap.sullissivik.gl`.
+By default the host-domain for AKA-Selvbetjening is set to the prod-server`, but our `./dev-environment/suila.env`-settings will set this to the corresponding test server.
 
 if we want to interact with our local development version instead of the test-server, we need to connect
 the `suila-web`-container to AKA-Selvbetjening's container network. This can be done by adding the following
