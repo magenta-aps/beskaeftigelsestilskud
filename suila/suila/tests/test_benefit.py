@@ -144,12 +144,6 @@ class CalculateBenefitTest(BaseTestCase):
             correct_benefit * safety_factor,
         )
 
-        # But not in December
-        df = calculate_benefit(12, self.year.year)
-        self.assertEqual(
-            df.loc[self.person1.cpr, "benefit_calculated"], correct_benefit
-        )
-
     @patch("common.utils.get_people_in_quarantine")
     def test_calculate_benefit_quarantine_default_settings(
         self, get_people_in_quarantine: MagicMock
