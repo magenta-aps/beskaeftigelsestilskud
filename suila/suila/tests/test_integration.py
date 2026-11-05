@@ -1287,6 +1287,103 @@ class MultipleYearsTest(IntegrationBaseTest):
             self.assert_total_benefit(15_750, year)
 
 
+@override_settings(CALCULATION_SAFETY_FACTOR=Decimal("0.5"))
+class SteadyAverageIncomeWithSafetyFactorTest(IntegrationBaseTest):
+    """
+    Like SteadyAverageIncomeTest, but with a safety factor of 0.5, run for two years.
+
+    With a safety factor of 0.5 we pay out only half of what we think the person is
+    entitled to during the year - also in December. The other half is paid out
+    through the final settlement ("årsopgørelse") the following year.
+    """
+
+    years = [2024, 2025]
+
+    def setUp(self):
+        super().setUp()
+
+        for year in self.years:
+            for month_number in range(1, 13):
+                self.add_monthlyincome_record(
+                    self.cpr, month_number, income=20000, year=year
+                )
+
+            self.add_taxinformation_record(
+                self.cpr, "FULL", (1, 1), (12, 31), year=year
+            )
+            self.add_annualincome_record(self.cpr, salary=20000 * 12, year=year)
+            self.add_expectedincome_record(self.cpr, b_income=0, year=year)
+            self.add_u1a_record(self.cpr, udbytte=0, year=year)
+
+    def get_final_settlement_amount_sent_to_prisme(self, year):
+        for call in self.prisme_mock.call_args_list:
+            args, kwargs = call
+            filename = args[3]
+            if "aarsopgoerelse_G68_export" in filename and filename.endswith(
+                f"_{year}.g68"
+            ):
+                content = args[1].read().decode("utf-8")
+                args[1].seek(0)
+                for field in G68Transaction.parse(content):
+                    if isinstance(field, Udbetalingsbeløb):
+                        return Decimal(field.val) / 10_000
+        return Decimal(0)
+
+    def test_estimate_and_calculate_benefit(self):
+        """
+        The person earns 20.000 kr per month, which entitles them to the maximum
+        benefit of 15.750 kr per year. With a safety factor of 0.5 we expect to pay
+        out half of that (7.875 kr, i.e. ~656 kr per month) during the year,
+        including December. The remaining 7.875 kr must be paid out by the final
+        settlement for that year.
+        """
+        full_year_benefit = Decimal("15750")
+
+        for year in self.years:
+            for month in range(1, 13):
+                self.call_commands(month, year)
+                person_month = self.get_person_month(month, year)
+                amount_sent_to_prisme = self.get_amount_sent_to_prisme(month, year)
+                self.assertEqual(person_month.estimated_year_result, 240_000)
+                self.assert_benefit(amount_sent_to_prisme, 656)
+
+            # Only half of the benefit is paid out during the year (also in December)
+            self.assert_total_benefit(full_year_benefit / 2, year)
+
+        for year in self.years:
+            person_year = PersonYear.objects.get(person__cpr=self.cpr, year_id=year)
+            paid_out_in_year = person_year.benefit_transferred
+
+            call_command("generate_final_settlements", year)
+            final_settlement = FinalSettlement.objects.get(
+                annual_income__person_year=person_year
+            )
+
+            # The final settlement pays out exactly what is missing ...
+            self.assertEqual(final_settlement.benefit_due_for_year, full_year_benefit)
+            self.assertEqual(
+                final_settlement._result, full_year_benefit - paid_out_in_year
+            )
+            # ... which is (roughly) the half that the safety factor held back
+            self.assert_benefit(final_settlement._result, full_year_benefit / 2)
+
+            call_command(
+                "export_final_settlements_to_prisme",
+                year=year,
+                posting_date=date(year + 1, 9, 16),
+                payment_date=date(year + 1, 9, 17),
+            )
+            settlement_sent_to_prisme = self.get_final_settlement_amount_sent_to_prisme(
+                year
+            )
+            self.assertEqual(settlement_sent_to_prisme, final_settlement._result)
+
+            # In total the person has received the full benefit for the year
+            self.assertEqual(
+                paid_out_in_year + settlement_sent_to_prisme, full_year_benefit
+            )
+
+
 class NonTaxablePersonTest(IntegrationBaseTest):
 
     def setUp(self):

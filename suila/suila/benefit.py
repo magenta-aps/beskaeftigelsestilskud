@@ -61,10 +61,7 @@ def calculate_benefit(
     accumulated_weight = Fraction(
         sum(settings.QUARANTINE_WEIGHTS[0 : month - 1]), 12  # type: ignore
     )
-    if month == 12:
-        safety_factor = 1
-    else:
-        safety_factor = float(settings.CALCULATION_SAFETY_FACTOR)  # type: ignore
+    safety_factor = float(settings.CALCULATION_SAFETY_FACTOR)  # type: ignore
     calculation_method = Year.objects.get(year=year).calculation_method
 
     if not calculation_method:
