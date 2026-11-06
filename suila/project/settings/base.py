@@ -71,8 +71,6 @@ QUARANTINE_WEIGHTS = json.loads(
 
 if len(QUARANTINE_WEIGHTS) != 12:
     raise ValueError("Configured QUARANTINE_WEIGHTS must have 12 numbers")
-if sum(QUARANTINE_WEIGHTS) != 12:
-    raise ValueError("Configured QUARANTINE_WEIGHTS must sum to 12")
 
 
 class XMLFilter(logging.Filter):

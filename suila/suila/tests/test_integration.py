@@ -657,6 +657,20 @@ class IntegrationBaseTest(
             status=StatusChoices.DEPENDENCIES_NOT_MET
         )
 
+    def get_final_settlement_amount_sent_to_prisme(self, year):
+        for call in self.prisme_mock.call_args_list:
+            args, kwargs = call
+            filename = args[3]
+            if "aarsopgoerelse_G68_export" in filename and filename.endswith(
+                f"_{year}.g68"
+            ):
+                content = args[1].read().decode("utf-8")
+                args[1].seek(0)
+                for field in G68Transaction.parse(content):
+                    if isinstance(field, Udbetalingsbeløb):
+                        return Decimal(field.val) / 10_000
+        return Decimal(0)
+
 
 class SteadyAverageIncomeTest(IntegrationBaseTest):
 
@@ -1315,20 +1329,6 @@ class SteadyAverageIncomeWithSafetyFactorTest(IntegrationBaseTest):
             self.add_expectedincome_record(self.cpr, b_income=0, year=year)
             self.add_u1a_record(self.cpr, udbytte=0, year=year)
 
-    def get_final_settlement_amount_sent_to_prisme(self, year):
-        for call in self.prisme_mock.call_args_list:
-            args, kwargs = call
-            filename = args[3]
-            if "aarsopgoerelse_G68_export" in filename and filename.endswith(
-                f"_{year}.g68"
-            ):
-                content = args[1].read().decode("utf-8")
-                args[1].seek(0)
-                for field in G68Transaction.parse(content):
-                    if isinstance(field, Udbetalingsbeløb):
-                        return Decimal(field.val) / 10_000
-        return Decimal(0)
-
     def test_estimate_and_calculate_benefit(self):
         """
         The person earns 20.000 kr per month, which entitles them to the maximum
@@ -1382,6 +1382,88 @@ class SteadyAverageIncomeWithSafetyFactorTest(IntegrationBaseTest):
             self.assertEqual(
                 paid_out_in_year + settlement_sent_to_prisme, full_year_benefit
             )
+
+
+@override_settings(QUARANTINE_WEIGHTS=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+class QuarantineWithZeroWeightsTest(IntegrationBaseTest):
+    """
+    With QUARANTINE_WEIGHTS = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] a person in
+    quarantine gets nothing paid out during the year - not even in December. The
+    entire benefit for the year is paid out through the final settlement
+    ("årsopgørelse") the following year.
+    """
+
+    years = [2024, 2025]
+
+    def setUp(self):
+        super().setUp()
+
+        # 2024: The person alternates between earning 20.000 and 60.000 kr per month.
+        # That is 480.000 kr for the year, which is just below the limit (500.000 kr)
+        # for receiving benefit. But the monthly income varies so much that the
+        # person is on the edge of earning too much (annual income + standard
+        # deviation > 500.000 kr). The person is therefore put in quarantine in 2025.
+        for month_number in range(1, 13):
+            income = 20000 if month_number % 2 else 60000
+            self.add_monthlyincome_record(
+                self.cpr, month_number, income=income, year=2024
+            )
+        self.add_annualincome_record(self.cpr, salary=480_000, year=2024)
+
+        # 2025: The person earns a steady 20.000 kr per month, which entitles them to
+        # the maximum benefit of 15.750 kr.
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr, month_number, income=20000, year=2025
+            )
+        self.add_annualincome_record(self.cpr, salary=20000 * 12, year=2025)
+
+        for year in self.years:
+            self.add_taxinformation_record(
+                self.cpr, "FULL", (1, 1), (12, 31), year=year
+            )
+            self.add_expectedincome_record(self.cpr, b_income=0, year=year)
+            self.add_u1a_record(self.cpr, udbytte=0, year=year)
+
+    def test_estimate_and_calculate_benefit(self):
+        full_year_benefit = Decimal("15750")
+
+        for month in range(1, 13):
+            self.call_commands(month, 2024)
+
+        person_year_2024 = PersonYear.objects.get(person__cpr=self.cpr, year_id=2024)
+        self.assertFalse(person_year_2024.in_quarantine)
+
+        for month in range(1, 13):
+            self.call_commands(month, 2025)
+            person_month = self.get_person_month(month, 2025)
+
+            # Nothing is paid out in any month - including November and December
+            self.assertEqual(person_month.benefit_calculated, 0)
+            self.assertEqual(self.get_amount_sent_to_prisme(month, 2025), 0)
+
+        person_year_2025 = PersonYear.objects.get(person__cpr=self.cpr, year_id=2025)
+        self.assertTrue(person_year_2025.in_quarantine)
+        self.assertEqual(person_year_2025.benefit_transferred, 0)
+        self.assert_total_benefit(0, 2025)
+
+        # The final settlement pays out the entire benefit for the year
+        call_command("generate_final_settlements", 2025)
+        final_settlement = FinalSettlement.objects.get(
+            annual_income__person_year=person_year_2025
+        )
+        self.assertEqual(final_settlement.benefit_due_for_year, full_year_benefit)
+        self.assertEqual(final_settlement._result, full_year_benefit)
+
+        call_command(
+            "export_final_settlements_to_prisme",
+            year=2025,
+            posting_date=date(2026, 9, 16),
+            payment_date=date(2026, 9, 17),
+        )
+        self.assertEqual(
+            self.get_final_settlement_amount_sent_to_prisme(2025), full_year_benefit
+        )
 
 
 class NonTaxablePersonTest(IntegrationBaseTest):
