@@ -815,6 +815,32 @@ class SteadyHighIncomeTest(IntegrationBaseTest):
         self.assert_total_benefit(8_820)
 
 
+@override_settings(CALCULATION_STICKY_THRESHOLD=Decimal("0.05"))
+class SteadyIncomeStickyTest(IntegrationBaseTest):
+
+    def setUp(self):
+        super().setUp()
+
+        for month_number in range(1, 13):
+            self.add_monthlyincome_record(
+                self.cpr,
+                month_number,
+                income=30000 + (-1) ** month_number * 100,
+            )
+
+        self.add_taxinformation_record(self.cpr, "FULL", (1, 1), (12, 31))
+        self.add_annualincome_record(self.cpr, salary=30000 * 12)
+        self.add_expectedincome_record(self.cpr, b_income=0)
+        self.add_u1a_record(self.cpr, udbytte=0)
+
+    def test_estimate_and_calculate_benefit(self):
+        for month in range(1, 12):  # Stickyness doesn't impact December
+            self.call_commands(month)
+            amount_sent_to_prisme = self.get_amount_sent_to_prisme(month)
+            # Assert that, except December, all months have the same benefit
+            self.assert_benefit(amount_sent_to_prisme, 735)
+
+
 class SteadyLowIncomeTest(IntegrationBaseTest):
 
     def setUp(self):
