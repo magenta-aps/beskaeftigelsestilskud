@@ -43,7 +43,7 @@ numpy==2.5.4
 packaging==26.3
 pandas==3.1.1
 paramiko==3.5.1
-psycopg==3.3.8
+psycopg==3.3.9
 pydot==4.0.1
 pycparser==3.12
 pydantic==2.14.3
