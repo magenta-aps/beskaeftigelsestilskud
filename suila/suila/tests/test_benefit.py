@@ -310,18 +310,24 @@ class CalculateBenefitTest(BaseTestCase):
     def test_get_calculation_date(self):
         self.assertEqual(get_calculation_date(2024, 11), date(2024, 11, 8))
         self.assertEqual(get_calculation_date(2024, 12), date(2024, 12, 6))
-        self.assertEqual(get_calculation_date(2025, 1), date(2025, 1, 10))
+        self.assertEqual(get_calculation_date(2025, 1), date(2025, 1, 3))
         self.assertEqual(get_calculation_date(2025, 2), date(2025, 2, 7))
         self.assertEqual(get_calculation_date(2025, 3), date(2025, 3, 7))
         self.assertEqual(get_calculation_date(2025, 4), date(2025, 4, 4))
-        self.assertEqual(get_calculation_date(2025, 5), date(2025, 5, 9))
+        self.assertEqual(get_calculation_date(2025, 5), date(2025, 5, 2))
         self.assertEqual(get_calculation_date(2025, 6), date(2025, 6, 6))
         self.assertEqual(get_calculation_date(2025, 7), date(2025, 7, 4))
         self.assertEqual(get_calculation_date(2025, 8), date(2025, 8, 8))
         self.assertEqual(get_calculation_date(2025, 9), date(2025, 9, 5))
-        self.assertEqual(get_calculation_date(2025, 10), date(2025, 10, 10))
+        self.assertEqual(get_calculation_date(2025, 10), date(2025, 10, 3))
         self.assertEqual(get_calculation_date(2025, 11), date(2025, 11, 7))
         self.assertEqual(get_calculation_date(2025, 12), date(2025, 12, 5))
+
+        # Test dates from https://redmine.magenta.dk/attachments/35511
+        self.assertEqual(get_calculation_date(2026, 11), date(2026, 11, 6))
+        self.assertEqual(get_calculation_date(2026, 12), date(2026, 12, 4))
+        self.assertEqual(get_calculation_date(2027, 1), date(2027, 1, 8))
+        self.assertEqual(get_calculation_date(2027, 2), date(2027, 2, 5))
 
     def test_benefit_calculated_ceil_rounding(self):
         df = calculate_benefit(1, self.year.year)
