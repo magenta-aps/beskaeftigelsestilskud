@@ -302,10 +302,10 @@ class TestBatchExport(ExportTest):
         for field in G68Transaction.parse(prisme_batch_item.g68_content):
             if isinstance(field, Udbetalingsdato):
                 self.assertEqual(field.val, date(2025, 3, 20))  # March 20, 2025
-        # Assert: the G68 "posteringsdato" (field 110) is the second Friday of the
+        # Assert: the G68 "posteringsdato" (field 110) is the second Tuesday of the
         # month two months after the `PersonMonth` to export.
         posteringsdato = self._get_floating_field(prisme_batch_item.g69_content, 110)
-        self.assertEqual(posteringsdato, "20250314")  # March 14, 2025
+        self.assertEqual(posteringsdato, "20250311")  # March 11, 2025
 
     def test_get_payment_date(self):
         # Arrange
@@ -321,7 +321,22 @@ class TestBatchExport(ExportTest):
         # Act
         export = self._get_instance()
         # Assert
-        self.assertEqual(export.get_posting_date(february), date(2025, 4, 11))
+        self.assertEqual(export.get_posting_date(february), date(2025, 4, 8))
+
+        # Test dates from https://redmine.magenta.dk/attachments/35511
+        # Note that the document says 11/1-2027 for January,
+        # This is assumed to be a typo.
+        for year, month, expected in [
+            (2026, 9, date(2026, 11, 10)),
+            (2026, 10, date(2026, 12, 8)),
+            (2026, 11, date(2027, 1, 12)),
+            (2026, 12, date(2027, 2, 9)),
+        ]:
+            with self.subTest(year=year, month=month):
+                person_month = self._add_person_month(
+                    311270000, Decimal("1000"), year=year, month=month
+                )
+                self.assertEqual(export.get_posting_date(person_month), expected)
 
     def test_upload_batch_handles_sftp_success(self):
         """Given a `PrismeBatch` object and a `PrismeBatchItem` queryset, the method
