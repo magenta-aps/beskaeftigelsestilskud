@@ -42,7 +42,7 @@ Velkommen {{ name }}
         </div>
     </div>
 </div>
-
+    
 {% if user|has_permissions:"suila.view_person,suila.view_personyear" %}
 
 {# Borgerservice links #}
@@ -68,6 +68,10 @@ Velkommen {{ name }}
 </div>
 
 {% else %}
+
+    {# Begin alert - to be removed later #}
+    {% include "suila/information_message.html" %}
+    {# End alert #}
 
 {# Borger links #}
     {% if has_personyears %}

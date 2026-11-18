@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 09:00-0100\n"
+"POT-Creation-Date: 2026-11-18 07:00-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -765,6 +765,80 @@ msgstr ""
 msgid ""
 "Hvis din årsindkomst er under 70.000 kr. eller over 512.000 kr., vil du ikke "
 "modtage Suila-tapit, og dine tal vises derfor ikke på grafen."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid "Meddelelse om justering i beskæftigelsesfradrag (Suila-tapit) for 2026"
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid "Ændringer i udbetalingen af Suila-tapit i 2026"
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Skattestyrelsen ændrer på udbetalingen af Suila-tapit "
+"(beskæftigelsesfradraget) for resten af 2026. Det sker efter, at nogle "
+"borgere har fået udbetalt flere penge, end de forventes at have ret til. "
+"Skattestyrelsen vil derfor tilpasse udbetalingerne for at mindske risikoen "
+"for, at borgerne senere skal betale penge tilbage."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid "Hvad betyder det for dig?"
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Hvis du har fået mere udbetalt, end du var berettiget til for 2025: Din "
+"udbetaling af Suila-tapit kan blive sat på pause resten af 2026."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Hvis du ikke har fået for meget udbetalt: Dine resterende udbetalinger kan "
+"blive sat ned i forhold til det beløb, du oprindeligt skulle have haft."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid "Mister du retten til pengene?"
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Nej. Ændringen handler om de løbende udbetalinger og ikke om din endelige "
+"ret til Suila-tapit."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Når året er slut, og din faktiske indkomst er gjort op, beregner "
+"Skattestyrelsen, hvor meget du har ret til."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Hvis du har fået for lidt udbetalt, får du forskellen udbetalt efter den "
+"endelige opgørelse."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid "Hvad med eftergivelsen for 2025?"
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Hvis du tidligere har fået eftergivet penge, gælder eftergivelsen stadig."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid "De nye ændringer gælder kun for udbetalingerne for resten af 2026."
+msgstr ""
+
+#: suila/templates/suila/information_message.html
+msgid ""
+"Skattestyrelsen vil senere vurdere, om der også skal ske ændringer i "
+"udbetalingerne for 2027."
 msgstr ""
 
 #: suila/templates/suila/person_detail.html
