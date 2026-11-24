@@ -219,6 +219,7 @@ class AnnualIncomeHandler(Handler):
                                     setattr(annual_income, name, value)
                                     changed = True
                             if changed:
+                                annual_income.load = load
                                 objs_to_update[key] = annual_income
 
                 objs_to_create_list = list(objs_to_create.values())
