@@ -6,15 +6,15 @@ from itertools import batched
 from typing import List
 
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
 
 from suila.integrations.eskat.client import EskatClient
 from suila.integrations.eskat.load import AnnualIncomeHandler
+from suila.management.commands.common import SuilaBaseCommand
 from suila.models import AnnualIncome, DataLoad
 
 
-class Command(BaseCommand):
-    def handle(self):
+class Command(SuilaBaseCommand):
+    def _handle(self):
         current_year = date.today().year
         for year in range(current_year - 5, current_year + 1):
             updated_annual_incomes: List[AnnualIncome] = self.fetch_annual_income(year)
